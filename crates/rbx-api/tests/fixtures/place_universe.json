@@ -1,0 +1,23 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Place 1818 to its universe, no sign-in.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/universes/v1/places/1818/universe"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "universeId": 13058
+        }
+      }
+    }
+  ]
+}

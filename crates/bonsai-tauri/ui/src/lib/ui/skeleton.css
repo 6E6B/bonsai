@@ -1,0 +1,17 @@
+@layer components {
+  [data-component="skeleton"] {
+    display: block;
+    border-radius: var(--radius-sm);
+    background: var(--color-control);
+  }
+
+  [data-component="skeleton"][data-animate] {
+    animation: skeleton-pulse 1.4s var(--ease) infinite;
+  }
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}

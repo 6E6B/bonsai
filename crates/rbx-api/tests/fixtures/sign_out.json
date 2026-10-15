@@ -1,0 +1,21 @@
+{
+  "captured": "2026-10-14",
+  "source": "auth v2 spec (vendor/roblox-api-tracker): POST /v2/logout returns an empty object",
+  "note": "Sign out ends the session on Roblox before the account is removed from the app.",
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "host": "auth.roblox.com",
+        "path": "/v2/logout"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    }
+  ]
+}

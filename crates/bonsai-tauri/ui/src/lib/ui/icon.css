@@ -1,0 +1,7 @@
+/* Icons keep their size. An SVG in a flex row shrinks like any flex item, so a long label
+ * next to it squeezed it to a sliver. */
+@layer components {
+  [data-component="icon"] {
+    flex-shrink: 0;
+  }
+}

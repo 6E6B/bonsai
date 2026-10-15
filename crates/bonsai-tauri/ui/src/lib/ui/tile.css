@@ -1,0 +1,102 @@
+@layer components {
+  [data-component="tile"] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-fg);
+    text-align: left;
+    cursor: default;
+  }
+
+  [data-component="tile"] [data-slot="media"] {
+    position: relative;
+    display: block;
+    margin-bottom: 4px;
+    border-radius: var(--radius-lg);
+    transition: box-shadow var(--duration) var(--ease);
+  }
+
+  [data-component="tile"] [data-component="thumbnail"] {
+    width: 100%;
+  }
+
+  /* Hover tint as an overlay, like buttons. A filter would make WebKitGTK repaint the image. */
+  [data-component="tile"] [data-slot="media"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    transition: background-color var(--duration) var(--ease);
+    pointer-events: none;
+  }
+
+  [data-component="tile"]:hover [data-slot="media"]::after {
+    background-color: var(--color-hover);
+  }
+
+  [data-component="tile"][data-selected] [data-slot="media"] {
+    box-shadow: 0 0 0 2px var(--color-accent);
+  }
+
+  [data-component="tile"]:focus-visible {
+    outline: none;
+  }
+
+  [data-component="tile"]:focus-visible [data-slot="media"] {
+    box-shadow: 0 0 0 2px var(--color-focus);
+  }
+
+  [data-component="tile"] [data-slot="badge"] {
+    position: absolute;
+    z-index: 1;
+    top: 4px;
+    left: 4px;
+  }
+
+  /* Bare marks on the picture, no chip. A drop shadow keeps them readable on light pictures. */
+  [data-component="tile"] [data-slot="marker"] {
+    --pips-empty: color-mix(in srgb, var(--color-on-media) 30%, transparent);
+
+    position: absolute;
+    z-index: 1;
+    top: 4px;
+    right: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 18px;
+    color: var(--color-on-media);
+    filter: var(--shadow-on-media);
+  }
+
+  [data-component="tile"] [data-slot="text"] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  [data-component="tile"] [data-slot="title"] {
+    display: -webkit-box;
+    overflow: hidden;
+    font-weight: 500;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  [data-component="tile"] [data-slot="subtitle"] {
+    overflow: hidden;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-component="tile"][data-fixed] [data-slot="text"] {
+    min-height: calc(2 * var(--text-base--line-height) + var(--text-sm--line-height) + 2px);
+  }
+}

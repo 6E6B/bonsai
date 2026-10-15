@@ -1,0 +1,59 @@
+{
+  "captured": "2026-10-14",
+  "source": "synthetic",
+  "note": "Searching builderman's (156) friends for \"bu\", two pages. Needs a cookie (live probe without one: 401 code 9002), and none was available; the body shape is CursoredPagedResultFriendResponse, the same as the live friends/find capture in people.json.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/friends/search",
+        "query": {
+          "query": "bu",
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "PreviousCursor": null,
+          "PageItems": [
+            { "id": 9000000101, "hasVerifiedBadge": false },
+            { "id": 9000000102, "hasVerifiedBadge": true }
+          ],
+          "NextCursor": "page2",
+          "HasMore": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/friends/search",
+        "query": {
+          "query": "bu",
+          "limit": "50",
+          "cursor": "page2"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "PreviousCursor": "page1",
+          "PageItems": [
+            { "id": 9000000103, "hasVerifiedBadge": false }
+          ],
+          "NextCursor": null,
+          "HasMore": false
+        }
+      }
+    }
+  ]
+}

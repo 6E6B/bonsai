@@ -1,0 +1,148 @@
+/* Tab strip. Tabs share the width and shrink down to their icon before the strip scrolls. The
+ * active tab takes the page color so it reads as attached to the page below, and stays wide
+ * enough for its close button. */
+@layer components {
+  [data-component="tab-strip"] {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  [data-component="tab-strip"] :is([data-slot="context-trigger"], [data-slot="root"]) {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+  }
+
+  [data-component="tab-strip"] [data-slot="list"] {
+    position: relative;
+    display: flex;
+    flex: 1;
+    gap: 1px;
+    min-width: 0;
+    height: 32px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    user-select: none;
+  }
+
+  [data-component="tab-strip"] [data-slot="tab"] {
+    position: relative;
+    display: flex;
+    flex: 0 1 200px;
+    align-items: center;
+    min-width: 40px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    color: var(--color-fg-muted);
+    transition: background-color var(--duration) var(--ease);
+    /* Lets the parts below react to the tab's own width. */
+    container-type: inline-size;
+  }
+
+  [data-component="tab-strip"] [data-slot="tab"][data-active] {
+    min-width: 96px;
+    background: var(--color-canvas);
+    color: var(--color-fg);
+  }
+
+  [data-component="tab-strip"] [data-slot="tab"][data-pinned] {
+    flex: 0 0 40px;
+    min-width: 40px;
+  }
+
+  [data-component="tab-strip"] [data-slot="list"]:not([data-dragging]) [data-slot="tab"]:hover:not([data-active]) {
+    background: var(--color-hover);
+  }
+
+  [data-component="tab-strip"] [data-slot="tab"][data-dragging] {
+    z-index: 1;
+    background: var(--color-raised);
+    color: var(--color-fg);
+    box-shadow: var(--shadow-popover);
+    transition: none;
+    will-change: transform;
+  }
+
+  [data-component="tab-strip"] [data-slot="trigger"] {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    height: 100%;
+    padding: 0 6px 0 12px;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: left;
+    cursor: default;
+  }
+
+  [data-component="tab-strip"] [data-slot="trigger"]:focus-visible {
+    outline-offset: -2px;
+  }
+
+  [data-component="tab-strip"] [data-slot="title"] {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Pinned and squeezed tabs show only the icon, centered. */
+  [data-component="tab-strip"] [data-slot="tab"][data-pinned] [data-slot="trigger"] {
+    justify-content: center;
+    padding: 0;
+  }
+
+  [data-component="tab-strip"] [data-slot="tab"][data-pinned] [data-slot="title"] {
+    display: none;
+  }
+
+  @container (width < 72px) {
+    [data-component="tab-strip"] [data-slot="trigger"] {
+      justify-content: center;
+      padding: 0;
+    }
+
+    [data-component="tab-strip"] [data-slot="title"],
+    [data-component="tab-strip"] [data-slot="close"] {
+      display: none;
+    }
+  }
+
+  [data-component="tab-strip"] [data-slot="close"] {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--color-fg-faint);
+    opacity: 0;
+  }
+
+  [data-component="tab-strip"] [data-slot="tab"]:is(:hover, [data-active]) [data-slot="close"] {
+    opacity: 1;
+  }
+
+  [data-component="tab-strip"] [data-slot="close"]:hover {
+    background: var(--color-hover);
+    color: var(--color-fg);
+  }
+
+  [data-component="tab-strip"] [data-slot="actions"] {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 2px;
+    height: 32px;
+  }
+}

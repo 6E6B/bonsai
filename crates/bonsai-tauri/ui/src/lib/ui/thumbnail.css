@@ -1,0 +1,38 @@
+@layer components {
+  [data-component="thumbnail"] {
+    position: relative;
+    display: block;
+    flex-shrink: 0;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-control);
+    background-image: var(--sheen-soft);
+    box-shadow: var(--shadow-media);
+  }
+
+  [data-component="thumbnail"][data-shape="wide"] {
+    aspect-ratio: 16 / 9;
+  }
+
+  [data-component="thumbnail"] [data-slot="frame"] {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  [data-component="thumbnail"] [data-slot="image"] {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  [data-component="thumbnail"] [data-slot="fallback"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--color-fg-faint);
+  }
+}

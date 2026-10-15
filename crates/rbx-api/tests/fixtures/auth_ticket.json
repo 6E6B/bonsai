@@ -1,0 +1,46 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "POST without a token gets 403 + x-csrf-token, the retry gets the ticket header.",
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "host": "auth.roblox.com",
+        "path": "/v1/authentication-ticket",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "body": {
+          "code": 0,
+          "message": "Token Validation Failed"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "auth.roblox.com",
+        "path": "/v1/authentication-ticket",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "rbx-authentication-ticket": "ticket-redacted"
+        },
+        "body": {}
+      }
+    }
+  ]
+}

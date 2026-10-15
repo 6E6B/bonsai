@@ -1,0 +1,42 @@
+@layer components {
+  [data-component="meter"] {
+    --meter-fill: var(--color-fg-muted);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  [data-component="meter"][data-level="high"] {
+    --meter-fill: var(--color-warning);
+  }
+
+  [data-component="meter"][data-level="full"] {
+    --meter-fill: var(--color-danger);
+  }
+
+  [data-component="meter"] [data-slot="track"] {
+    flex: 1;
+    min-width: 32px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: var(--radius-full);
+    background: var(--color-control);
+    box-shadow: var(--shadow-well);
+  }
+
+  [data-component="meter"] [data-slot="fill"] {
+    width: var(--kb-meter-fill-width);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--meter-fill);
+  }
+
+  [data-component="meter"] [data-slot="value"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}

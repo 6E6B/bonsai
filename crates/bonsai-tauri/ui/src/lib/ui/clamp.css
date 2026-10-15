@@ -1,0 +1,32 @@
+@layer components {
+  [data-component="clamp"] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  [data-component="clamp"] [data-slot="body"] {
+    overflow: hidden;
+    max-height: calc(var(--clamp-lines) * 1lh);
+  }
+
+  /* Fade the last line so a cut never shows half a line of text. */
+  [data-component="clamp"] [data-slot="body"][data-cut]:not([data-open]) {
+    mask-image: linear-gradient(to bottom, black calc(100% - 2lh), transparent);
+  }
+
+  [data-component="clamp"] [data-slot="body"][data-open] {
+    max-height: none;
+  }
+
+  [data-component="clamp"] [data-slot="toggle"] {
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+
+  [data-component="clamp"] [data-slot="toggle"]:hover {
+    color: var(--color-accent-hover);
+  }
+}

@@ -1,0 +1,87 @@
+@layer components {
+  [data-component="nav-item"] {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: var(--control-lg);
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--color-fg-muted);
+    font-weight: 500;
+    text-align: left;
+    cursor: default;
+    transition:
+      background-color var(--duration) var(--ease),
+      color var(--duration) var(--ease);
+  }
+
+  [data-component="nav-item"]:hover {
+    background: var(--color-hover);
+    color: var(--color-fg);
+  }
+
+  [data-component="nav-item"][data-active] {
+    background: var(--color-active);
+    color: var(--color-fg);
+  }
+
+  [data-component="nav-item"] [data-component="icon"] {
+    flex-shrink: 0;
+  }
+
+  [data-component="nav-item"] [data-slot="label"] {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-component="nav-item"] [data-slot="shortcut"] {
+    color: var(--color-fg-faint);
+    font-size: var(--text-xs);
+    opacity: 0;
+    transition: opacity var(--duration) var(--ease);
+  }
+
+  [data-component="nav-item"]:is(:hover, :focus-visible) [data-slot="shortcut"] {
+    opacity: 1;
+  }
+
+  [data-component="nav-item"] [data-slot="count"] {
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+  }
+}
+
+@layer components {
+  [data-component="nav-item"][data-compact] {
+    position: relative;
+    justify-content: center;
+    width: var(--control-lg);
+    padding: 0;
+  }
+
+  [data-component="nav-item"][data-compact] :is([data-slot="label"], [data-slot="shortcut"]) {
+    display: none;
+  }
+
+  [data-component="nav-item"][data-compact] [data-slot="count"] {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 8px;
+    height: 8px;
+    padding: 0;
+    font-size: 0;
+  }
+}

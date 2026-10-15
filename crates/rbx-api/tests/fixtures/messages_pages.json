@@ -1,0 +1,99 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Private messages inbox, page numbers 0 and 1 of size 2.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages",
+        "query": {
+          "pageNumber": "0",
+          "pageSize": "2"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "collection": [
+            {
+              "body": "<span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Hello, and welcome to Roblox—a platform for people all over the world to connect, share experiences, and express themselves in immersive digital environments, all made by users just like you.</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Before you jump in and start exploring, here are a few tips:</span></font></span>\r<br />\r<br /><p align=\"justify\" style=\"margin: 0px;\"><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">A safe, kind, and positive community is our top priority. To ensure you have the best possible experience, configure your </span></font></span><a href=\"https://www.roblox.com/my/account#!/security\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>security and privacy settings </strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">and be sure to review our </span></font></span><a href=\"https://en.help.roblox.com/hc/en-us/articles/203313410\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>rules and account safety tips</strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">.</span></font></span></p>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">There are endless ways to </span></font></span><a href=\"https://en.help.roblox.com/hc/en-us/articles/203313600\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>customize your avatar </strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">with accessories, faces, emotes, and more. After you’ve set up your avatar, check out some of the </span></font></span><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong><a href=\"https://www.roblox.com/charts#/sortName/Most_engaging_V4?country=all&amp;device=computer\">most popular experiences</a>&#160;<a href=\"https://www.roblox.com/games/?SortFilter=1&amp;TimeFilter=0&amp;GenreFilter=1#/sortName/PopularInCountry\"></a></strong></span></font></span><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">from the community!</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Roblox is even better with friends. You can chat with them or invite them into your sessions at any time, even if they’re accessing Roblox on a different device than yours.&#160;</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">That’s all there is to it. Enjoy!</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Sincerely,</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Builderman, CEO of Roblox</span></font></span>",
+              "created": "2026-09-27T04:05:27.092Z",
+              "id": 1383100930419480,
+              "isRead": false,
+              "isReportAbuseDisplayed": false,
+              "isSystemMessage": true,
+              "recipient": {
+                "displayName": "TestUser",
+                "hasVerifiedBadge": false,
+                "id": 1000001,
+                "name": "TestUser"
+              },
+              "sender": {
+                "displayName": "Roblox",
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox"
+              },
+              "subject": "Welcome to Roblox!",
+              "updated": "2026-10-13T04:21:01.942Z"
+            }
+          ],
+          "pageNumber": 0,
+          "totalCollectionSize": 1,
+          "totalPages": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages",
+        "query": {
+          "pageNumber": "1",
+          "pageSize": "2"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "collection": [
+            {
+              "body": "<span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Hello, and welcome to Roblox—a platform for people all over the world to connect, share experiences, and express themselves in immersive digital environments, all made by users just like you.</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Before you jump in and start exploring, here are a few tips:</span></font></span>\r<br />\r<br /><p align=\"justify\" style=\"margin: 0px;\"><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">A safe, kind, and positive community is our top priority. To ensure you have the best possible experience, configure your </span></font></span><a href=\"https://www.roblox.com/my/account#!/security\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>security and privacy settings </strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">and be sure to review our </span></font></span><a href=\"https://en.help.roblox.com/hc/en-us/articles/203313410\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>rules and account safety tips</strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">.</span></font></span></p>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">There are endless ways to </span></font></span><a href=\"https://en.help.roblox.com/hc/en-us/articles/203313600\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>customize your avatar </strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">with accessories, faces, emotes, and more. After you’ve set up your avatar, check out some of the </span></font></span><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong><a href=\"https://www.roblox.com/charts#/sortName/Most_engaging_V4?country=all&amp;device=computer\">most popular experiences</a>&#160;<a href=\"https://www.roblox.com/games/?SortFilter=1&amp;TimeFilter=0&amp;GenreFilter=1#/sortName/PopularInCountry\"></a></strong></span></font></span><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">from the community!</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Roblox is even better with friends. You can chat with them or invite them into your sessions at any time, even if they’re accessing Roblox on a different device than yours.&#160;</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">That’s all there is to it. Enjoy!</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Sincerely,</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Builderman, CEO of Roblox</span></font></span>",
+              "created": "2026-09-27T04:05:27.092Z",
+              "id": 1383100930419480,
+              "isRead": false,
+              "isReportAbuseDisplayed": false,
+              "isSystemMessage": true,
+              "recipient": {
+                "displayName": "TestUser",
+                "hasVerifiedBadge": false,
+                "id": 1000001,
+                "name": "TestUser"
+              },
+              "sender": {
+                "displayName": "Roblox",
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox"
+              },
+              "subject": "Welcome to Roblox!",
+              "updated": "2026-10-13T04:21:01.942Z"
+            }
+          ],
+          "pageNumber": 0,
+          "totalCollectionSize": 1,
+          "totalPages": 1
+        }
+      }
+    }
+  ]
+}

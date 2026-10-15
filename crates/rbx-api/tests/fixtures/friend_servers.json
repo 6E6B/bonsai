@@ -1,0 +1,50 @@
+{
+  "captured": "2026-10-14",
+  "source": "hand-written",
+  "note": "Synthetic. Shape of GET /v1/games/{placeId}/servers/1 (friends' servers) from the tracker's GameServerResponse; ids and names are placeholders.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/games/920587237/servers/1",
+        "query": {
+          "limit": "100"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": "00000000-0000-0000-0000-000000000001",
+              "maxPlayers": 48,
+              "playing": 12,
+              "playerTokens": [],
+              "players": [
+                {
+                  "playerToken": "",
+                  "id": 156,
+                  "name": "builderman",
+                  "displayName": "builderman"
+                }
+              ],
+              "fps": 59.9,
+              "ping": 80
+            },
+            {
+              "maxPlayers": 48,
+              "playing": 3,
+              "players": []
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

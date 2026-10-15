@@ -1,0 +1,82 @@
+/* Account rail slot. A pill on the left edge marks the active account, like Discord's server
+ * list; it is the account's color tag, or the text color when it has none. */
+@layer components {
+  [data-component="rail-item"] {
+    --rail-tag: transparent;
+    --rail-marker: var(--color-fg);
+
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 44px;
+    border: 0;
+    background: none;
+    cursor: default;
+  }
+
+  [data-component="rail-item"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 4px;
+    height: 0;
+    border-radius: 0 4px 4px 0;
+    background: var(--rail-marker);
+    transition: height var(--duration) var(--ease);
+  }
+
+  [data-component="rail-item"]:hover::before {
+    height: 12px;
+  }
+
+  [data-component="rail-item"][data-active]::before {
+    height: 28px;
+  }
+
+  [data-component="rail-item"] > [data-component="avatar"] {
+    --avatar-ring: var(--color-deep);
+    border-radius: var(--radius-full);
+    box-shadow: 0 0 0 2px var(--rail-tag);
+    opacity: 0.7;
+    transition: opacity var(--duration) var(--ease);
+  }
+
+  [data-component="rail-item"]:is(:hover, [data-active]) > [data-component="avatar"] {
+    opacity: 1;
+  }
+
+  [data-component="rail-item"]:focus-visible {
+    outline-offset: -2px;
+  }
+
+  [data-component="rail-item"][data-color="red"] {
+    --rail-tag: var(--color-tag-red);
+    --rail-marker: var(--color-tag-red);
+  }
+  [data-component="rail-item"][data-color="orange"] {
+    --rail-tag: var(--color-tag-orange);
+    --rail-marker: var(--color-tag-orange);
+  }
+  [data-component="rail-item"][data-color="yellow"] {
+    --rail-tag: var(--color-tag-yellow);
+    --rail-marker: var(--color-tag-yellow);
+  }
+  [data-component="rail-item"][data-color="green"] {
+    --rail-tag: var(--color-tag-green);
+    --rail-marker: var(--color-tag-green);
+  }
+  [data-component="rail-item"][data-color="blue"] {
+    --rail-tag: var(--color-tag-blue);
+    --rail-marker: var(--color-tag-blue);
+  }
+  [data-component="rail-item"][data-color="purple"] {
+    --rail-tag: var(--color-tag-purple);
+    --rail-marker: var(--color-tag-purple);
+  }
+  [data-component="rail-item"][data-color="pink"] {
+    --rail-tag: var(--color-tag-pink);
+    --rail-marker: var(--color-tag-pink);
+  }
+}

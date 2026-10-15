@@ -1,0 +1,4298 @@
+{
+  "captured": "2026-10-13",
+  "interactions": [
+    {
+      "request": {
+        "host": "apis.roblox.com",
+        "method": "GET",
+        "path": "/explore-api/v1/get-sorts",
+        "query": {
+          "country": "all",
+          "device": "computer",
+          "sessionId": "*"
+        }
+      },
+      "response": {
+        "body": {
+          "header": {
+            "layoutData": {},
+            "sorts": null
+          },
+          "nextSortsPageToken": "eyJzdGFydCI6NiwiY291bnQiOjYsInNlc3Npb25faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDAiLCJkZXZpY2UiOiJjb21wdXRlciIsImNvdW50cnkiOiJhbGwiLCJwYWdlX2NvbmZpZ19uYW1lIjoid2l0aF9hbHBoYV9sb2NhdGlvbl9maWx0ZXJfYWxsIn0=",
+          "sorts": [
+            {
+              "contentType": "Filters",
+              "filters": [
+                {
+                  "defaultOptionId": "computer",
+                  "filterDisplayName": "Device",
+                  "filterId": "device_filter_v1",
+                  "filterLayoutData": {},
+                  "filterOptions": [
+                    {
+                      "optionDisplayName": "All Devices",
+                      "optionId": "all"
+                    },
+                    {
+                      "optionDisplayName": "Entry-level Phone",
+                      "optionId": "low_end_phone"
+                    },
+                    {
+                      "optionDisplayName": "Standard Phone",
+                      "optionId": "high_end_phone"
+                    },
+                    {
+                      "optionDisplayName": "Entry-level Tablet",
+                      "optionId": "low_end_tablet"
+                    },
+                    {
+                      "optionDisplayName": "Standard Tablet",
+                      "optionId": "high_end_tablet"
+                    },
+                    {
+                      "optionContextTag": "My device",
+                      "optionDisplayName": "Computer",
+                      "optionId": "computer"
+                    },
+                    {
+                      "optionDisplayName": "Console",
+                      "optionId": "console"
+                    },
+                    {
+                      "optionDisplayName": "VR",
+                      "optionId": "vr"
+                    }
+                  ],
+                  "filterType": "device",
+                  "inactiveOptionIds": [
+                    "all"
+                  ],
+                  "selectedOptionId": "computer"
+                },
+                {
+                  "defaultOptionId": "us",
+                  "filterDisplayName": "Location",
+                  "filterId": "country_filter_v3",
+                  "filterLayoutData": {},
+                  "filterOptions": [
+                    {
+                      "optionDisplayName": "All Locations",
+                      "optionId": "all"
+                    },
+                    {
+                      "optionContextTag": "My location",
+                      "optionDisplayName": "United States",
+                      "optionId": "us"
+                    },
+                    {
+                      "optionDisplayName": "Afghanistan",
+                      "optionId": "af"
+                    },
+                    {
+                      "optionDisplayName": "Aland Islands",
+                      "optionId": "ax"
+                    },
+                    {
+                      "optionDisplayName": "Albania",
+                      "optionId": "al"
+                    },
+                    {
+                      "optionDisplayName": "Algeria",
+                      "optionId": "dz"
+                    },
+                    {
+                      "optionDisplayName": "American Samoa",
+                      "optionId": "as"
+                    },
+                    {
+                      "optionDisplayName": "Andorra",
+                      "optionId": "ad"
+                    },
+                    {
+                      "optionDisplayName": "Angola",
+                      "optionId": "ao"
+                    },
+                    {
+                      "optionDisplayName": "Anguilla",
+                      "optionId": "ai"
+                    },
+                    {
+                      "optionDisplayName": "Antarctica",
+                      "optionId": "aq"
+                    },
+                    {
+                      "optionDisplayName": "Antigua and Barbuda",
+                      "optionId": "ag"
+                    }
+                  ],
+                  "filterType": "country",
+                  "inactiveOptionIds": [
+                    "all"
+                  ],
+                  "selectedOptionId": "all"
+                }
+              ],
+              "gameSetTargetId": 693,
+              "gameSetTypeId": 23,
+              "id": "filters_v5",
+              "primarySortId": 23,
+              "secondarySortId": 693,
+              "sortDisplayName": "",
+              "sortId": "filters_v5",
+              "topicLayoutData": {},
+              "treatmentType": "Pills"
+            },
+            {
+              "appliedFilters": "device=computer,age=all,country=all",
+              "contentType": "Games",
+              "gameSetTargetId": 691,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Huss Valley",
+                  "nativeAdData": "",
+                  "playerCount": 70311,
+                  "rootPlaceId": 107535308163741,
+                  "totalDownVotes": 18031,
+                  "totalUpVotes": 136469,
+                  "universeId": 10764627709
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃] Adopt Me!",
+                  "nativeAdData": "",
+                  "playerCount": 216628,
+                  "rootPlaceId": 920587237,
+                  "totalDownVotes": 1513845,
+                  "totalUpVotes": 9556177,
+                  "universeId": 383310974
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "99 Nights in the Forest 🔦",
+                  "nativeAdData": "",
+                  "playerCount": 117546,
+                  "rootPlaceId": 79546208627805,
+                  "totalDownVotes": 574282,
+                  "totalUpVotes": 5463202,
+                  "universeId": 7326934954
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🎃 Dandy's World [ALPHA]",
+                  "nativeAdData": "",
+                  "playerCount": 80672,
+                  "rootPlaceId": 16116270224,
+                  "totalDownVotes": 244335,
+                  "totalUpVotes": 1738416,
+                  "universeId": 5569032992
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Strategy",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Vanguards: 2nd Anniversary",
+                  "nativeAdData": "",
+                  "playerCount": 66069,
+                  "rootPlaceId": 16146832113,
+                  "totalDownVotes": 87803,
+                  "totalUpVotes": 2590599,
+                  "universeId": 5578556129
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Break and Steal an Egg",
+                  "nativeAdData": "",
+                  "playerCount": 104268,
+                  "rootPlaceId": 114326934417838,
+                  "totalDownVotes": 5388,
+                  "totalUpVotes": 235710,
+                  "universeId": 10765288803
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Shooter",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[NEW MAP] BloxStrike",
+                  "nativeAdData": "",
+                  "playerCount": 4969,
+                  "rootPlaceId": 114234929420007,
+                  "totalDownVotes": 35134,
+                  "totalUpVotes": 626178,
+                  "universeId": 7633926880
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Anime Zero [Void Arbiter]  🌌💫",
+                  "nativeAdData": "",
+                  "playerCount": 34540,
+                  "rootPlaceId": 114574503491412,
+                  "totalDownVotes": 2444,
+                  "totalUpVotes": 97219,
+                  "universeId": 10512942223
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[Update] Ragdoll Engine 🩸⚙️",
+                  "nativeAdData": "",
+                  "playerCount": 13818,
+                  "rootPlaceId": 112332082095944,
+                  "totalDownVotes": 1057,
+                  "totalUpVotes": 17395,
+                  "universeId": 10767907509
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Adventure",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[4 PLAYER RALLY] WRONG WAY! ",
+                  "nativeAdData": "",
+                  "playerCount": 6316,
+                  "rootPlaceId": 121671165541545,
+                  "totalDownVotes": 300,
+                  "totalUpVotes": 3088,
+                  "universeId": 10768866246
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Strategy",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🌙 NIGHT 1] Tower Defense Simulator",
+                  "nativeAdData": "",
+                  "playerCount": 11293,
+                  "rootPlaceId": 3260590327,
+                  "totalDownVotes": 129156,
+                  "totalUpVotes": 2080542,
+                  "universeId": 1176784616
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "⚡ELECTRICITY🔥Bricklayer",
+                  "nativeAdData": "",
+                  "playerCount": 2671,
+                  "rootPlaceId": 100877684758792,
+                  "totalDownVotes": 1842,
+                  "totalUpVotes": 4580,
+                  "universeId": 10768468695
+                }
+              ],
+              "id": "Top_Trending_V6",
+              "primarySortId": 23,
+              "secondarySortId": 691,
+              "sortDisplayName": "Top Trending",
+              "sortId": "top-trending",
+              "topicLayoutData": {
+                "infoText": "Top experiences with the largest relative increase in daily active users over the past week.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "appliedFilters": "device=computer,age=all,country=all",
+              "contentType": "Games",
+              "gameSetTargetId": 692,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[Update] Ragdoll Engine 🩸⚙️",
+                  "nativeAdData": "",
+                  "playerCount": 13925,
+                  "rootPlaceId": 112332082095944,
+                  "totalDownVotes": 1061,
+                  "totalUpVotes": 17446,
+                  "universeId": 10767907509
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Adventure",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[4 PLAYER RALLY] WRONG WAY! ",
+                  "nativeAdData": "",
+                  "playerCount": 6316,
+                  "rootPlaceId": 121671165541545,
+                  "totalDownVotes": 300,
+                  "totalUpVotes": 3088,
+                  "universeId": 10768866246
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "⚡ELECTRICITY🔥Bricklayer",
+                  "nativeAdData": "",
+                  "playerCount": 2671,
+                  "rootPlaceId": 100877684758792,
+                  "totalDownVotes": 1842,
+                  "totalUpVotes": 4580,
+                  "universeId": 10768468695
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Party & Casual",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎨] Hide In Pixels",
+                  "nativeAdData": "",
+                  "playerCount": 12366,
+                  "rootPlaceId": 97572766830918,
+                  "totalDownVotes": 1659,
+                  "totalUpVotes": 2369,
+                  "universeId": 10768026334
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Sell Fries! [Anomaly] 🍟",
+                  "nativeAdData": "",
+                  "playerCount": 15621,
+                  "rootPlaceId": 94891079210424,
+                  "totalDownVotes": 801,
+                  "totalUpVotes": 3405,
+                  "universeId": 10767380385
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Huss Valley",
+                  "nativeAdData": "",
+                  "playerCount": 70311,
+                  "rootPlaceId": 107535308163741,
+                  "totalDownVotes": 18031,
+                  "totalUpVotes": 136469,
+                  "universeId": 10764627709
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Evolve a Cell",
+                  "nativeAdData": "",
+                  "playerCount": 5195,
+                  "rootPlaceId": 75545101555306,
+                  "totalDownVotes": 1484,
+                  "totalUpVotes": 4053,
+                  "universeId": 10768084263
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Shooter",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃] PORTALS",
+                  "nativeAdData": "",
+                  "playerCount": 4519,
+                  "rootPlaceId": 121600338636415,
+                  "totalDownVotes": 1224,
+                  "totalUpVotes": 5575,
+                  "universeId": 10766588474
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Kukirin Life [Testing]",
+                  "nativeAdData": "",
+                  "playerCount": 5071,
+                  "rootPlaceId": 122840796290491,
+                  "totalDownVotes": 628,
+                  "totalUpVotes": 4101,
+                  "universeId": 10767138232
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "IT WANTS IN [HORROR]",
+                  "nativeAdData": "",
+                  "playerCount": 4345,
+                  "rootPlaceId": 104376435116540,
+                  "totalDownVotes": 453,
+                  "totalUpVotes": 1270,
+                  "universeId": 10768910559
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Entertainment",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[UPD] Makeup Frenzy! 💄",
+                  "nativeAdData": "",
+                  "playerCount": 5046,
+                  "rootPlaceId": 121479292450778,
+                  "totalDownVotes": 593,
+                  "totalUpVotes": 4468,
+                  "universeId": 10769396182
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Shooter",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "✈️ Zombie Air Force",
+                  "nativeAdData": "",
+                  "playerCount": 4344,
+                  "rootPlaceId": 73810139314608,
+                  "totalDownVotes": 794,
+                  "totalUpVotes": 6132,
+                  "universeId": 10767826343
+                }
+              ],
+              "id": "Up_And_Coming_V6",
+              "primarySortId": 23,
+              "secondarySortId": 692,
+              "sortDisplayName": "Up-and-Coming",
+              "sortId": "up-and-coming",
+              "topicLayoutData": {
+                "infoText": "Top experiences published within the last 28 days sorted by user growth.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "contentType": "Games",
+              "gameSetTargetId": 671,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Steal An Egg",
+                  "nativeAdData": "",
+                  "playerCount": 926497,
+                  "rootPlaceId": 107778070777162,
+                  "totalDownVotes": 300858,
+                  "totalUpVotes": 3468576,
+                  "universeId": 10563114921
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Brookhaven 🏡RP",
+                  "nativeAdData": "",
+                  "playerCount": 240178,
+                  "rootPlaceId": 4924922222,
+                  "totalDownVotes": 1419553,
+                  "totalUpVotes": 8638162,
+                  "universeId": 1686885941
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃] Adopt Me!",
+                  "nativeAdData": "",
+                  "playerCount": 216628,
+                  "rootPlaceId": 920587237,
+                  "totalDownVotes": 1513845,
+                  "totalUpVotes": 9556177,
+                  "universeId": 383310974
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Murder Mystery 2",
+                  "nativeAdData": "",
+                  "playerCount": 135149,
+                  "rootPlaceId": 142823291,
+                  "totalDownVotes": 1087228,
+                  "totalUpVotes": 10761389,
+                  "universeId": 66654135
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Blox Fruits",
+                  "nativeAdData": "",
+                  "playerCount": 124114,
+                  "rootPlaceId": 2753915549,
+                  "totalDownVotes": 1066638,
+                  "totalUpVotes": 12761975,
+                  "universeId": 994732206
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "99 Nights in the Forest 🔦",
+                  "nativeAdData": "",
+                  "playerCount": 117546,
+                  "rootPlaceId": 79546208627805,
+                  "totalDownVotes": 574282,
+                  "totalUpVotes": 5463202,
+                  "universeId": 7326934954
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Break and Steal an Egg",
+                  "nativeAdData": "",
+                  "playerCount": 104268,
+                  "rootPlaceId": 114326934417838,
+                  "totalDownVotes": 5392,
+                  "totalUpVotes": 235798,
+                  "universeId": 10765288803
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[SKY ASSASSIN] Jujutsu Shenanigans",
+                  "nativeAdData": "",
+                  "playerCount": 84416,
+                  "rootPlaceId": 9391468976,
+                  "totalDownVotes": 424010,
+                  "totalUpVotes": 2644153,
+                  "universeId": 3508322461
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[💀] Steal a Brainrot",
+                  "nativeAdData": "",
+                  "playerCount": 84204,
+                  "rootPlaceId": 109983668079237,
+                  "totalDownVotes": 2695634,
+                  "totalUpVotes": 15457898,
+                  "universeId": 7709344486
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🎃 Dandy's World [ALPHA]",
+                  "nativeAdData": "",
+                  "playerCount": 80536,
+                  "rootPlaceId": 16116270224,
+                  "totalDownVotes": 244335,
+                  "totalUpVotes": 1738416,
+                  "universeId": 5569032992
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Shooter",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "RIVALS",
+                  "nativeAdData": "",
+                  "playerCount": 74493,
+                  "rootPlaceId": 17625359962,
+                  "totalDownVotes": 727471,
+                  "totalUpVotes": 10765441,
+                  "universeId": 6035872082
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Huss Valley",
+                  "nativeAdData": "",
+                  "playerCount": 70311,
+                  "rootPlaceId": 107535308163741,
+                  "totalDownVotes": 18031,
+                  "totalUpVotes": 136469,
+                  "universeId": 10764627709
+                }
+              ],
+              "id": "CCU_Based_V1",
+              "primarySortId": 23,
+              "secondarySortId": 671,
+              "sortDisplayName": "Top Playing Now",
+              "sortId": "top-playing-now",
+              "subtitle": "Results for all devices and locations",
+              "topicLayoutData": {
+                "infoText": "Top experiences sorted by the number of concurrent users.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "appliedFilters": "device=computer,age=all,country=all",
+              "contentType": "Games",
+              "gameSetTargetId": 222,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Collect All Pets!",
+                  "nativeAdData": "",
+                  "playerCount": 2755,
+                  "rootPlaceId": 8884433153,
+                  "totalDownVotes": 9926,
+                  "totalUpVotes": 126571,
+                  "universeId": 3359505957
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Social",
+                  "isSponsored": false,
+                  "minimumAge": 16,
+                  "name": "Hutan [Voice Chat]",
+                  "nativeAdData": "",
+                  "playerCount": 1633,
+                  "rootPlaceId": 17577256698,
+                  "totalDownVotes": 4226,
+                  "totalUpVotes": 41647,
+                  "universeId": 6017624138
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Social",
+                  "isSponsored": false,
+                  "minimumAge": 16,
+                  "name": "Midnight Plaza [BETA]",
+                  "nativeAdData": "",
+                  "playerCount": 1426,
+                  "rootPlaceId": 84206486243665,
+                  "totalDownVotes": 343,
+                  "totalUpVotes": 7393,
+                  "universeId": 9840483947
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[DEATH'S TRIAL] Bewitched",
+                  "nativeAdData": "",
+                  "playerCount": 1041,
+                  "rootPlaceId": 14449145868,
+                  "totalDownVotes": 1019,
+                  "totalUpVotes": 9611,
+                  "universeId": 4991126644
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Adventure",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[4 PLAYER RALLY] WRONG WAY! ",
+                  "nativeAdData": "",
+                  "playerCount": 6316,
+                  "rootPlaceId": 121671165541545,
+                  "totalDownVotes": 300,
+                  "totalUpVotes": 3088,
+                  "universeId": 10768866246
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "3008 [2.75]",
+                  "nativeAdData": "",
+                  "playerCount": 9963,
+                  "rootPlaceId": 2768379856,
+                  "totalDownVotes": 180692,
+                  "totalUpVotes": 2006691,
+                  "universeId": 1000233041
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[F2P & BOSS CARDS] Ryujin",
+                  "nativeAdData": "",
+                  "playerCount": 3709,
+                  "rootPlaceId": 18852831741,
+                  "totalDownVotes": 3043,
+                  "totalUpVotes": 50726,
+                  "universeId": 6385532960
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Street Life Remastered 🔥",
+                  "nativeAdData": "",
+                  "playerCount": 2272,
+                  "rootPlaceId": 71600459831333,
+                  "totalDownVotes": 25235,
+                  "totalUpVotes": 169183,
+                  "universeId": 6726637224
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Obby & Platformer",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Carry the Glass Together! [2 Player Obby]",
+                  "nativeAdData": "",
+                  "playerCount": 4782,
+                  "rootPlaceId": 81734857983173,
+                  "totalDownVotes": 3139,
+                  "totalUpVotes": 24799,
+                  "universeId": 10415694629
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Strategy",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[RANKED] 💥 BUCKSHOT",
+                  "nativeAdData": "",
+                  "playerCount": 3374,
+                  "rootPlaceId": 16154918775,
+                  "totalDownVotes": 25436,
+                  "totalUpVotes": 700593,
+                  "universeId": 5580972377
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "(🐍MINI UPDT👑) THA BRONX 3",
+                  "nativeAdData": "",
+                  "playerCount": 8758,
+                  "rootPlaceId": 128899661081075,
+                  "totalDownVotes": 993,
+                  "totalUpVotes": 11456,
+                  "universeId": 10737656087
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "San Aurie",
+                  "nativeAdData": "",
+                  "playerCount": 1486,
+                  "rootPlaceId": 104841616983113,
+                  "totalDownVotes": 6550,
+                  "totalUpVotes": 39895,
+                  "universeId": 6619936488
+                }
+              ],
+              "id": "Fun_With_Friends_V4",
+              "primarySortId": 23,
+              "secondarySortId": 222,
+              "sortDisplayName": "Fun with Friends",
+              "sortId": "fun-with-friends",
+              "topicLayoutData": {
+                "infoText": "Experiences with at least 5000 users daily, sorted by the proportion of time spent as groups of friends. These experiences have at least 5,000 daily users, are within the top 10% of daily active users, or are among the top 30 most played experiences. The order of these experiences is subject to the device and location filters applied to this page.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "appliedFilters": "device=computer,age=all,country=all",
+              "contentType": "Games",
+              "gameSetTargetId": 237,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[PATH 2 & MOBILE] Dragon Generations",
+                  "nativeAdData": "",
+                  "playerCount": 4984,
+                  "rootPlaceId": 4195834406,
+                  "totalDownVotes": 21534,
+                  "totalUpVotes": 156902,
+                  "universeId": 1374118848
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Sports & Racing",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[⚙️QOL] Azure Latch",
+                  "nativeAdData": "",
+                  "playerCount": 7583,
+                  "rootPlaceId": 94647229517154,
+                  "totalDownVotes": 53870,
+                  "totalUpVotes": 1616256,
+                  "universeId": 6945584306
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🎃 Dandy's World [ALPHA]",
+                  "nativeAdData": "",
+                  "playerCount": 80536,
+                  "rootPlaceId": 16116270224,
+                  "totalDownVotes": 244335,
+                  "totalUpVotes": 1738416,
+                  "universeId": 5569032992
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Sports & Racing",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[ 🎃 ] La Cueva Zua Zua: LPMX",
+                  "nativeAdData": "",
+                  "playerCount": 1361,
+                  "rootPlaceId": 77447333835994,
+                  "totalDownVotes": 154,
+                  "totalUpVotes": 758,
+                  "universeId": 10577445660
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🗺️NEW MAP] Fallen Survival🏹",
+                  "nativeAdData": "",
+                  "playerCount": 1086,
+                  "rootPlaceId": 10228136016,
+                  "totalDownVotes": 8209,
+                  "totalUpVotes": 47017,
+                  "universeId": 3747388906
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Fisch 🐟 [SAVE NATE]",
+                  "nativeAdData": "",
+                  "playerCount": 57567,
+                  "rootPlaceId": 16732694052,
+                  "totalDownVotes": 309691,
+                  "totalUpVotes": 3052109,
+                  "universeId": 5750914919
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Sports & Racing",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "RF Fan Leagues",
+                  "nativeAdData": "",
+                  "playerCount": 78,
+                  "rootPlaceId": 70539431141054,
+                  "totalDownVotes": 619,
+                  "totalUpVotes": 4088,
+                  "universeId": 8824087733
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🐉UPD] Heavyweight Fishing",
+                  "nativeAdData": "",
+                  "playerCount": 11043,
+                  "rootPlaceId": 98502499119821,
+                  "totalDownVotes": 3317,
+                  "totalUpVotes": 82654,
+                  "universeId": 8342498724
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "(ANNIVERSARY) Outcome Memories v0.2",
+                  "nativeAdData": "",
+                  "playerCount": 7497,
+                  "rootPlaceId": 14608970270,
+                  "totalDownVotes": 41116,
+                  "totalUpVotes": 305698,
+                  "universeId": 5039839070
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[DEATH'S TRIAL] Bewitched",
+                  "nativeAdData": "",
+                  "playerCount": 1045,
+                  "rootPlaceId": 14449145868,
+                  "totalDownVotes": 1019,
+                  "totalUpVotes": 9611,
+                  "universeId": 4991126644
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎉] Bloodlines",
+                  "nativeAdData": "",
+                  "playerCount": 2062,
+                  "rootPlaceId": 5571328985,
+                  "totalDownVotes": 10045,
+                  "totalUpVotes": 45059,
+                  "universeId": 1946714362
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Strategy",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🏆UPD+X2💰] Cameraman Tower Defense",
+                  "nativeAdData": "",
+                  "playerCount": 7504,
+                  "rootPlaceId": 132929771812494,
+                  "totalDownVotes": 659,
+                  "totalUpVotes": 63500,
+                  "universeId": 10762636904
+                }
+              ],
+              "id": "Top_Revisited_Existing_Users_V4",
+              "primarySortId": 23,
+              "secondarySortId": 237,
+              "sortDisplayName": "Top Revisited",
+              "sortId": "top-revisited",
+              "topicLayoutData": {
+                "infoText": "Experiences sorted by the proportion of users who come back after a week. These experiences have at least 5,000 daily users, are within the top 10% of daily active users, or are among the top 30 most played experiences. The order of these experiences is subject to the device and location filters applied to this page.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            }
+          ]
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "apis.roblox.com",
+        "method": "GET",
+        "path": "/explore-api/v1/get-sorts",
+        "query": {
+          "country": "all",
+          "device": "computer",
+          "sessionId": "*",
+          "sortsPageToken": "eyJzdGFydCI6NiwiY291bnQiOjYsInNlc3Npb25faWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDAiLCJkZXZpY2UiOiJjb21wdXRlciIsImNvdW50cnkiOiJhbGwiLCJwYWdlX2NvbmZpZ19uYW1lIjoid2l0aF9hbHBoYV9sb2NhdGlvbl9maWx0ZXJfYWxsIn0="
+        }
+      },
+      "response": {
+        "body": {
+          "header": {
+            "layoutData": {},
+            "sorts": null
+          },
+          "nextSortsPageToken": "eyJzdGFydCI6MTIsImNvdW50Ijo2LCJzZXNzaW9uX2lkIjoiMDAwMDAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDAwIiwiZGV2aWNlIjoiY29tcHV0ZXIiLCJjb3VudHJ5IjoiYWxsIiwicGFnZV9jb25maWdfbmFtZSI6IndpdGhfYWxwaGFfbG9jYXRpb25fZmlsdGVyX2FsbCJ9",
+          "sorts": [
+            {
+              "appliedFilters": "device=computer,age=all,country=all",
+              "contentType": "Games",
+              "gameSetTargetId": 241,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Steal An Egg",
+                  "nativeAdData": "",
+                  "playerCount": 926497,
+                  "rootPlaceId": 107778070777162,
+                  "totalDownVotes": 300858,
+                  "totalUpVotes": 3468576,
+                  "universeId": 10563114921
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Blox Fruits",
+                  "nativeAdData": "",
+                  "playerCount": 124114,
+                  "rootPlaceId": 2753915549,
+                  "totalDownVotes": 1066638,
+                  "totalUpVotes": 12761975,
+                  "universeId": 994732206
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Shooter",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "RIVALS",
+                  "nativeAdData": "",
+                  "playerCount": 74493,
+                  "rootPlaceId": 17625359962,
+                  "totalDownVotes": 727470,
+                  "totalUpVotes": 10765420,
+                  "universeId": 6035872082
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃] Adopt Me!",
+                  "nativeAdData": "",
+                  "playerCount": 216628,
+                  "rootPlaceId": 920587237,
+                  "totalDownVotes": 1513845,
+                  "totalUpVotes": 9556177,
+                  "universeId": 383310974
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🎃 Dandy's World [ALPHA]",
+                  "nativeAdData": "",
+                  "playerCount": 80536,
+                  "rootPlaceId": 16116270224,
+                  "totalDownVotes": 244335,
+                  "totalUpVotes": 1738416,
+                  "universeId": 5569032992
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Blade Ball",
+                  "nativeAdData": "",
+                  "playerCount": 12449,
+                  "rootPlaceId": 13772394625,
+                  "totalDownVotes": 592320,
+                  "totalUpVotes": 8464983,
+                  "universeId": 4777817887
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Slayers 2",
+                  "nativeAdData": "",
+                  "playerCount": 41454,
+                  "rootPlaceId": 16205713724,
+                  "totalDownVotes": 21759,
+                  "totalUpVotes": 933546,
+                  "universeId": 5595353122
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 16,
+                  "name": "(学乱) Gakuran",
+                  "nativeAdData": "",
+                  "playerCount": 9254,
+                  "rootPlaceId": 128736949265057,
+                  "totalDownVotes": 63682,
+                  "totalUpVotes": 500938,
+                  "universeId": 9199655655
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Strategy",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🌙 NIGHT 1] Tower Defense Simulator",
+                  "nativeAdData": "",
+                  "playerCount": 11293,
+                  "rootPlaceId": 3260590327,
+                  "totalDownVotes": 129156,
+                  "totalUpVotes": 2080542,
+                  "universeId": 1176784616
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Fisch 🐟 [SAVE NATE]",
+                  "nativeAdData": "",
+                  "playerCount": 57567,
+                  "rootPlaceId": 16732694052,
+                  "totalDownVotes": 309690,
+                  "totalUpVotes": 3052100,
+                  "universeId": 5750914919
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[SKY ASSASSIN] Jujutsu Shenanigans",
+                  "nativeAdData": "",
+                  "playerCount": 84416,
+                  "rootPlaceId": 9391468976,
+                  "totalDownVotes": 424016,
+                  "totalUpVotes": 2644157,
+                  "universeId": 3508322461
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🔥 [BLOOD MOON] Pet Simulator 99! 👻",
+                  "nativeAdData": "",
+                  "playerCount": 48052,
+                  "rootPlaceId": 8737899170,
+                  "totalDownVotes": 170622,
+                  "totalUpVotes": 3070883,
+                  "universeId": 3317771874
+                }
+              ],
+              "id": "Top_Earning_L7RS_V4",
+              "nextPageToken": "eyJzdGFydCI6MTAwLCJjb3VudCI6MTAwLCJzb3J0X3Rva2VuIjo1MzY0MzQ5NDI5OTAxNjgyMzY0fQ==",
+              "primarySortId": 23,
+              "secondarySortId": 241,
+              "sortDisplayName": "Top Earning",
+              "sortId": "top-earning",
+              "topicLayoutData": {
+                "infoText": "Experiences sorted by total robux spent in the last 7 days. These experiences have at least 5,000 daily users, are within the top 10% of daily active users, or are among the top 30 most played experiences. The order of these experiences is subject to the device and location filters applied to this page.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "contentType": "Games",
+              "gameSetTargetId": 669,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎉] Bloodlines",
+                  "nativeAdData": "",
+                  "playerCount": 2062,
+                  "rootPlaceId": 5571328985,
+                  "totalDownVotes": 10045,
+                  "totalUpVotes": 45059,
+                  "universeId": 1946714362
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Deepwoken",
+                  "nativeAdData": "",
+                  "playerCount": 2914,
+                  "rootPlaceId": 4111023553,
+                  "totalDownVotes": 65712,
+                  "totalUpVotes": 413141,
+                  "universeId": 1359573625
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🗺️NEW MAP] Fallen Survival🏹",
+                  "nativeAdData": "",
+                  "playerCount": 1066,
+                  "rootPlaceId": 10228136016,
+                  "totalDownVotes": 8209,
+                  "totalUpVotes": 47017,
+                  "universeId": 3747388906
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[CONSOLE!] Project Flight | Alpha",
+                  "nativeAdData": "",
+                  "playerCount": 394,
+                  "rootPlaceId": 6349094071,
+                  "totalDownVotes": 13016,
+                  "totalUpVotes": 148197,
+                  "universeId": 2350840700
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "(EARLY BETA) Wheelie Road 🔥",
+                  "nativeAdData": "",
+                  "playerCount": 15,
+                  "rootPlaceId": 80623972812214,
+                  "totalDownVotes": 223,
+                  "totalUpVotes": 4683,
+                  "universeId": 10766694698
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[⚙️Auto P3.1] Regrowth Incremental | ALPHA",
+                  "nativeAdData": "",
+                  "playerCount": 536,
+                  "rootPlaceId": 89087404341836,
+                  "totalDownVotes": 190,
+                  "totalUpVotes": 5457,
+                  "universeId": 10425789398
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "(NO HANDERS | EARLY TESTING🔥) Project Wheelie ",
+                  "nativeAdData": "",
+                  "playerCount": 37,
+                  "rootPlaceId": 98884195482448,
+                  "totalDownVotes": 1457,
+                  "totalUpVotes": 18081,
+                  "universeId": 10582993047
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃] Rogue Lineage",
+                  "nativeAdData": "",
+                  "playerCount": 1210,
+                  "rootPlaceId": 3016661674,
+                  "totalDownVotes": 23300,
+                  "totalUpVotes": 118609,
+                  "universeId": 1087859240
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "VOXEL DESTRUCT 2 EARLY ACCESS",
+                  "nativeAdData": "",
+                  "playerCount": 377,
+                  "rootPlaceId": 17070462969,
+                  "totalDownVotes": 800,
+                  "totalUpVotes": 28472,
+                  "universeId": 5851294352
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "⚠️ Landing Experiments: Plane Crash Sandbox",
+                  "nativeAdData": "",
+                  "playerCount": 87,
+                  "rootPlaceId": 97886399571757,
+                  "totalDownVotes": 1102,
+                  "totalUpVotes": 3427,
+                  "universeId": 9549894418
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Edenville [👻 HALLOWEEN]",
+                  "nativeAdData": "",
+                  "playerCount": 80,
+                  "rootPlaceId": 115903978623312,
+                  "totalDownVotes": 655,
+                  "totalUpVotes": 2798,
+                  "universeId": 9320646231
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Shooter",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🎃 Call of Mini™ Zombies 2 [BETA]",
+                  "nativeAdData": "",
+                  "playerCount": 397,
+                  "rootPlaceId": 15899178400,
+                  "totalDownVotes": 1677,
+                  "totalUpVotes": 23061,
+                  "universeId": 5497606909
+                }
+              ],
+              "id": "Top_Paid_V5",
+              "primarySortId": 23,
+              "secondarySortId": 669,
+              "sortDisplayName": "Top Paid Access",
+              "sortId": "top-paid-access",
+              "subtitle": "Results for all devices and locations",
+              "topicLayoutData": {
+                "infoText": "Paid access experiences sorted by daily revenue.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "contentType": "Games",
+              "gameSetTargetId": 670,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Chicken Farm 🐣",
+                  "nativeAdData": "",
+                  "playerCount": 2290,
+                  "rootPlaceId": 137233438285284,
+                  "totalDownVotes": 12139,
+                  "totalUpVotes": 1151144,
+                  "universeId": 10209534490
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Sports & Racing",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[😈JOHNNY🐎] Basketball: Zero",
+                  "nativeAdData": "",
+                  "playerCount": 6264,
+                  "rootPlaceId": 130739873848552,
+                  "totalDownVotes": 124812,
+                  "totalUpVotes": 7135652,
+                  "universeId": 7028566528
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎉UPD 8] Anime Dice",
+                  "nativeAdData": "",
+                  "playerCount": 50990,
+                  "rootPlaceId": 113290951185459,
+                  "totalDownVotes": 4853,
+                  "totalUpVotes": 625034,
+                  "universeId": 10708913337
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "FLASHPOINT⚡",
+                  "nativeAdData": "",
+                  "playerCount": 1007,
+                  "rootPlaceId": 13796645198,
+                  "totalDownVotes": 27157,
+                  "totalUpVotes": 1662927,
+                  "universeId": 4785982047
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Missiles vs Cities",
+                  "nativeAdData": "",
+                  "playerCount": 523,
+                  "rootPlaceId": 112641748896693,
+                  "totalDownVotes": 11484,
+                  "totalUpVotes": 873224,
+                  "universeId": 10249209189
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Jule's RNG",
+                  "nativeAdData": "",
+                  "playerCount": 209,
+                  "rootPlaceId": 16883974868,
+                  "totalDownVotes": 14434,
+                  "totalUpVotes": 989331,
+                  "universeId": 5800312217
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🌙] Container RNG📦",
+                  "nativeAdData": "",
+                  "playerCount": 237,
+                  "rootPlaceId": 79657240466394,
+                  "totalDownVotes": 17644,
+                  "totalUpVotes": 1073685,
+                  "universeId": 7703544118
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Strategy",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🧪TRAITS] Garden Tower Defense 🌻",
+                  "nativeAdData": "",
+                  "playerCount": 3230,
+                  "rootPlaceId": 108533757090220,
+                  "totalDownVotes": 25911,
+                  "totalUpVotes": 1429066,
+                  "universeId": 7703614594
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[NOW!] Anime Final Quest",
+                  "nativeAdData": "",
+                  "playerCount": 482,
+                  "rootPlaceId": 100744519298647,
+                  "totalDownVotes": 12066,
+                  "totalUpVotes": 807667,
+                  "universeId": 7798947148
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Break your Bones ☠️",
+                  "nativeAdData": "",
+                  "playerCount": 272,
+                  "rootPlaceId": 123821081589134,
+                  "totalDownVotes": 14395,
+                  "totalUpVotes": 930710,
+                  "universeId": 7848646653
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🐒 +1 Speed Monkey Escape",
+                  "nativeAdData": "",
+                  "playerCount": 4273,
+                  "rootPlaceId": 114697347887839,
+                  "totalDownVotes": 45033,
+                  "totalUpVotes": 2022491,
+                  "universeId": 10144280947
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🏢] Catch And Tame!",
+                  "nativeAdData": "",
+                  "playerCount": 2012,
+                  "rootPlaceId": 96645548064314,
+                  "totalDownVotes": 24756,
+                  "totalUpVotes": 1232898,
+                  "universeId": 9091133975
+                }
+              ],
+              "id": "Top_Rated_V5",
+              "primarySortId": 23,
+              "secondarySortId": 670,
+              "sortDisplayName": "Top Rated",
+              "sortId": "top-rated",
+              "subtitle": "Results for all devices and locations",
+              "topicLayoutData": {
+                "infoText": "Experiences with at least 5000 users daily, that have both a high number and proportion of likes.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "appliedFilters": "device=computer,age=all,country=all",
+              "contentType": "Games",
+              "gameSetTargetId": 223,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Steal An Egg",
+                  "nativeAdData": "",
+                  "playerCount": 926497,
+                  "rootPlaceId": 107778070777162,
+                  "totalDownVotes": 300858,
+                  "totalUpVotes": 3468576,
+                  "universeId": 10563114921
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Shooter",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "RIVALS",
+                  "nativeAdData": "",
+                  "playerCount": 74493,
+                  "rootPlaceId": 17625359962,
+                  "totalDownVotes": 727470,
+                  "totalUpVotes": 10765420,
+                  "universeId": 6035872082
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[SKY ASSASSIN] Jujutsu Shenanigans",
+                  "nativeAdData": "",
+                  "playerCount": 84416,
+                  "rootPlaceId": 9391468976,
+                  "totalDownVotes": 424016,
+                  "totalUpVotes": 2644157,
+                  "universeId": 3508322461
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Murder Mystery 2",
+                  "nativeAdData": "",
+                  "playerCount": 135149,
+                  "rootPlaceId": 142823291,
+                  "totalDownVotes": 1087228,
+                  "totalUpVotes": 10761389,
+                  "universeId": 66654135
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Huss Valley",
+                  "nativeAdData": "",
+                  "playerCount": 70311,
+                  "rootPlaceId": 107535308163741,
+                  "totalDownVotes": 18026,
+                  "totalUpVotes": 136430,
+                  "universeId": 10764627709
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "RPG",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Blox Fruits",
+                  "nativeAdData": "",
+                  "playerCount": 125350,
+                  "rootPlaceId": 2753915549,
+                  "totalDownVotes": 1066638,
+                  "totalUpVotes": 12761975,
+                  "universeId": 994732206
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Shopping",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Catalog Avatar Creator",
+                  "nativeAdData": "",
+                  "playerCount": 54628,
+                  "rootPlaceId": 7041939546,
+                  "totalDownVotes": 204093,
+                  "totalUpVotes": 3037334,
+                  "universeId": 2711375305
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃] Adopt Me!",
+                  "nativeAdData": "",
+                  "playerCount": 215984,
+                  "rootPlaceId": 920587237,
+                  "totalDownVotes": 1513845,
+                  "totalUpVotes": 9556177,
+                  "universeId": 383310974
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Brookhaven 🏡RP",
+                  "nativeAdData": "",
+                  "playerCount": 240178,
+                  "rootPlaceId": 4924922222,
+                  "totalDownVotes": 1419553,
+                  "totalUpVotes": 8638162,
+                  "universeId": 1686885941
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Survival",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "99 Nights in the Forest 🔦",
+                  "nativeAdData": "",
+                  "playerCount": 117546,
+                  "rootPlaceId": 79546208627805,
+                  "totalDownVotes": 574284,
+                  "totalUpVotes": 5463216,
+                  "universeId": 7326934954
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃EVENT] Ride A Pet",
+                  "nativeAdData": "",
+                  "playerCount": 62086,
+                  "rootPlaceId": 124216119978534,
+                  "totalDownVotes": 15844,
+                  "totalUpVotes": 433499,
+                  "universeId": 10035204815
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Mild",
+                  "contentMaturity": "mild",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "The Strongest Battlegrounds",
+                  "nativeAdData": "",
+                  "playerCount": 37240,
+                  "rootPlaceId": 10449761463,
+                  "totalDownVotes": 1032211,
+                  "totalUpVotes": 5323872,
+                  "universeId": 3808081382
+                }
+              ],
+              "id": "Most_engaging_V4",
+              "primarySortId": 23,
+              "secondarySortId": 223,
+              "sortDisplayName": "Most Popular",
+              "sortId": "most-popular",
+              "topicLayoutData": {
+                "infoText": "Top experiences sorted by daily users. These experiences have at least 5,000 daily users, are within the top 10% of daily active users, or are among the top 30 most played experiences. The order of these experiences is subject to the device and location filters applied to this page.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "contentType": "Songs",
+              "gameSetTargetId": 672,
+              "gameSetTypeId": 23,
+              "id": "Top_Songs_V1",
+              "primarySortId": 23,
+              "secondarySortId": 672,
+              "songs": [
+                {
+                  "album": "HOUSE DELUXE",
+                  "albumArtAssetId": 135071056560603,
+                  "artist": "Ilan Moshe Abou",
+                  "assetId": 1839331423,
+                  "duration": 60,
+                  "isPrivate": false,
+                  "title": "House Fashion"
+                },
+                {
+                  "album": "AFRICA GEOPOLITICS",
+                  "albumArtAssetId": 122530606466105,
+                  "artist": "Dominique Gabriel Depret",
+                  "assetId": 1837229579,
+                  "duration": 140,
+                  "isPrivate": false,
+                  "title": "Sapology"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 123192449334546,
+                  "artist": "SN 01",
+                  "assetId": 104923679695107,
+                  "duration": 127,
+                  "isPrivate": false,
+                  "title": "DEMON VELOCITY (BRAZILIAN PHONK)"
+                },
+                {
+                  "album": "UPTOWN FUNK",
+                  "albumArtAssetId": 117369869734525,
+                  "artist": "Hard",
+                  "assetId": 1837863782,
+                  "duration": 128,
+                  "isPrivate": false,
+                  "title": "Get The Groove On - NoBrassSynth"
+                },
+                {
+                  "album": "Zombie Aristocrats: Dead Glamour (Dark Cabaret & Gothic Orchestra)",
+                  "albumArtAssetId": 70861402128672,
+                  "artist": "Horrarchive",
+                  "assetId": 130935065570387,
+                  "duration": 159,
+                  "isPrivate": false,
+                  "title": "Ghostly Masquerade Ball (Halloween Ambient)"
+                },
+                {
+                  "album": "Heroes United",
+                  "albumArtAssetId": 95085759107936,
+                  "artist": "Annihilation",
+                  "assetId": 9043171221,
+                  "duration": 115,
+                  "isPrivate": false,
+                  "title": "Battle Divine"
+                },
+                {
+                  "album": "Hawaii / West Indies (Brr 35)",
+                  "albumArtAssetId": 137325059079157,
+                  "artist": "Bruce Campbell",
+                  "assetId": 1836356833,
+                  "duration": 154,
+                  "isPrivate": false,
+                  "title": "Jamaica Boy"
+                },
+                {
+                  "album": "Relax & Study with me (Halloween Edition)",
+                  "albumArtAssetId": 117106393348792,
+                  "artist": "NojikoFM",
+                  "assetId": 111430133985404,
+                  "duration": 101,
+                  "isPrivate": false,
+                  "title": "Halloween Chill"
+                },
+                {
+                  "album": "The Ghost in Love | Halloween 2025 Special (Spooky & Enchanting Waltz – Free Use Soundtrack)",
+                  "albumArtAssetId": 117965528079580,
+                  "artist": "Original Tales Echoes",
+                  "assetId": 112933959709239,
+                  "duration": 107,
+                  "isPrivate": false,
+                  "title": "Pumpkin Moon Waltz (Second Dance)"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 81728747295239,
+                  "artist": "Lofi Grand Piano",
+                  "assetId": 136080582445735,
+                  "duration": 266,
+                  "isPrivate": false,
+                  "title": "Upscale Cafe"
+                },
+                {
+                  "album": "Defstrumentals",
+                  "albumArtAssetId": 136529767963560,
+                  "artist": "J-Toth from Hoth",
+                  "assetId": 112745007453006,
+                  "duration": 132,
+                  "isPrivate": false,
+                  "title": "People Will Talk (inst.)"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 124087708135904,
+                  "artist": "Lofi Grand Piano",
+                  "assetId": 87598320980096,
+                  "duration": 266,
+                  "isPrivate": false,
+                  "title": "Afternoon Pool"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 124796133274025,
+                  "artist": "Lofi Grand Piano",
+                  "assetId": 125388177133273,
+                  "duration": 270,
+                  "isPrivate": false,
+                  "title": "Cyberpunk Rain"
+                },
+                {
+                  "album": "Playtime Nursery Rhymes for Children",
+                  "albumArtAssetId": 131491527168328,
+                  "artist": "SUN BIBOO",
+                  "assetId": 84887686675265,
+                  "duration": 96,
+                  "isPrivate": false,
+                  "title": "ABC Song"
+                },
+                {
+                  "album": "ACTION FUN ROCK",
+                  "albumArtAssetId": 132933773971465,
+                  "artist": "B Kully",
+                  "assetId": 1842949232,
+                  "duration": 132,
+                  "isPrivate": false,
+                  "title": "High Octane"
+                },
+                {
+                  "album": "Alternate Dimension",
+                  "albumArtAssetId": 74153074895882,
+                  "artist": "Lemoncake",
+                  "assetId": 9044884468,
+                  "duration": 147,
+                  "isPrivate": false,
+                  "title": "Abandoned Post"
+                },
+                {
+                  "album": "Electronic ADHD Focus Music for Deep Work",
+                  "albumArtAssetId": 120018954478816,
+                  "artist": "Nervea Flow",
+                  "assetId": 132088045871893,
+                  "duration": 255,
+                  "isPrivate": false,
+                  "title": "ADHD Flow State"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 136315264665319,
+                  "artist": "Death by a Thousand Cuts",
+                  "assetId": 123860751448356,
+                  "duration": 149,
+                  "isPrivate": false,
+                  "title": "Initiation Into Riders of the Afterlife"
+                },
+                {
+                  "album": "Halloween Horror Music: Cartoon Creeps Party",
+                  "albumArtAssetId": 120936674965225,
+                  "artist": "Horror Sound Ritual",
+                  "assetId": 82827561062880,
+                  "duration": 151,
+                  "isPrivate": false,
+                  "title": "Spooky Shadows Dancing"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 101609801452687,
+                  "artist": "Frutiger Pulse",
+                  "assetId": 73264412632500,
+                  "duration": 143,
+                  "isPrivate": false,
+                  "title": "3026"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 102278192146944,
+                  "artist": "Goat Mom Music",
+                  "assetId": 74477391193983,
+                  "duration": 193,
+                  "isPrivate": false,
+                  "title": "Smashing Windshields (Midnight Motorist)"
+                },
+                {
+                  "album": "The Soundtrack Of Frutiger Aero 2",
+                  "albumArtAssetId": 70936359358078,
+                  "artist": "temcandoanything",
+                  "assetId": 75514216793186,
+                  "duration": 133,
+                  "isPrivate": false,
+                  "title": "Wired Or Wireless"
+                },
+                {
+                  "album": "Solo Depression Guitar Volume 1",
+                  "albumArtAssetId": 119262546863966,
+                  "artist": "Tommy Spooky and the Creepy Cats",
+                  "assetId": 119869321896015,
+                  "duration": 224,
+                  "isPrivate": false,
+                  "title": "Angry Defeat"
+                },
+                {
+                  "album": "Heavyweight Funk: The Get Down!",
+                  "artist": "Bibliotheque",
+                  "assetId": 9045365206,
+                  "duration": 239,
+                  "isPrivate": false,
+                  "title": "Feel The Funk (Underscore)"
+                },
+                {
+                  "album": "The Soundtrack Of Frutiger Aero 2",
+                  "albumArtAssetId": 70936359358078,
+                  "artist": "temcandoanything",
+                  "assetId": 78750951244228,
+                  "duration": 128,
+                  "isPrivate": false,
+                  "title": "Photo Gallery"
+                },
+                {
+                  "album": "UK BRASS",
+                  "albumArtAssetId": 126499975631085,
+                  "artist": "Georges Bizet",
+                  "assetId": 1846746355,
+                  "duration": 232,
+                  "isPrivate": false,
+                  "title": "March Of The Toreadors A"
+                },
+                {
+                  "album": "World Of Comedy 3",
+                  "albumArtAssetId": 139437319445218,
+                  "artist": "Patrick Chartol",
+                  "assetId": 88528550268488,
+                  "duration": 65,
+                  "isPrivate": false,
+                  "title": "Goofy Comedy"
+                },
+                {
+                  "album": "The Four Seasons",
+                  "albumArtAssetId": 82522720975329,
+                  "artist": "Public Domain",
+                  "assetId": 1848052238,
+                  "duration": 301,
+                  "isPrivate": false,
+                  "title": "Four Seasons No.3-the Autumn, The @ Allegro"
+                },
+                {
+                  "album": "Jazz Echoes: 30 Instrumental Tracks",
+                  "albumArtAssetId": 78000940650428,
+                  "artist": "Pedro Henrique Sales Pontes",
+                  "assetId": 77856000285582,
+                  "duration": 130,
+                  "isPrivate": false,
+                  "title": "Piano at Dawn"
+                },
+                {
+                  "album": "Halloween Spooky Fun for Kids",
+                  "albumArtAssetId": 78303052774366,
+                  "artist": "Holiday Kidz",
+                  "assetId": 132339469996629,
+                  "duration": 113,
+                  "isPrivate": false,
+                  "title": "Halloween skeleton dance"
+                },
+                {
+                  "album": "The Soundtrack Of Frutiger Aero 2",
+                  "albumArtAssetId": 70936359358078,
+                  "artist": "temcandoanything",
+                  "assetId": 114609192456425,
+                  "duration": 141,
+                  "isPrivate": false,
+                  "title": "Pink And Glitter"
+                },
+                {
+                  "album": "Deep Sleep Frequency",
+                  "albumArtAssetId": 135330207013601,
+                  "artist": "Sleepy Waves",
+                  "assetId": 91012227186070,
+                  "duration": 140,
+                  "isPrivate": false,
+                  "title": "sleep well"
+                },
+                {
+                  "album": "CRIME SCENE - ACTION, RACE & CHASE",
+                  "albumArtAssetId": 98725645667222,
+                  "artist": "Mac Prindy",
+                  "assetId": 1847681727,
+                  "duration": 122,
+                  "isPrivate": false,
+                  "title": "Motivating Forces A"
+                },
+                {
+                  "album": "SHINY AND HAPPY",
+                  "albumArtAssetId": 122469290876789,
+                  "artist": "Jose Andre Louis Robert Le Gall",
+                  "assetId": 1839605617,
+                  "duration": 112,
+                  "isPrivate": false,
+                  "title": "Shiny And Happy Acoustic"
+                },
+                {
+                  "album": "Beds: Light & Playful",
+                  "artist": "The Box",
+                  "assetId": 9046511900,
+                  "duration": 111,
+                  "isPrivate": false,
+                  "title": "A Happy Rendezvous Underscore C"
+                },
+                {
+                  "album": "Bloodlines",
+                  "albumArtAssetId": 122150554050553,
+                  "artist": "Angry Fi5h",
+                  "assetId": 135550430945498,
+                  "duration": 300,
+                  "isPrivate": false,
+                  "title": "Game"
+                },
+                {
+                  "album": "Synthwave Metal",
+                  "albumArtAssetId": 135019206514549,
+                  "artist": "Cezame Metal Factory",
+                  "assetId": 9038253818,
+                  "duration": 141,
+                  "isPrivate": false,
+                  "title": "Post Digital Era"
+                },
+                {
+                  "album": "Atmospheric Cyberpunk Synthwave",
+                  "albumArtAssetId": 82790496101006,
+                  "artist": "Love Sleep Repeat",
+                  "assetId": 113553880123227,
+                  "duration": 351,
+                  "isPrivate": false,
+                  "title": "Electric Shadows Over Concrete Horizon"
+                },
+                {
+                  "album": "Sad cinematic instrumental music",
+                  "albumArtAssetId": 116491779131683,
+                  "artist": "Modern Cinematic Instrumental Music",
+                  "assetId": 72323560393228,
+                  "duration": 185,
+                  "isPrivate": false,
+                  "title": "Broken Piano Theme"
+                },
+                {
+                  "album": "Beds: Light & Playful",
+                  "artist": "The Box",
+                  "assetId": 9046512235,
+                  "duration": 101,
+                  "isPrivate": false,
+                  "title": "Playground Stories Underscore B"
+                },
+                {
+                  "album": "Gaming & Relaxing: Chill Vibes Only",
+                  "albumArtAssetId": 102820527498672,
+                  "artist": "Deep Rest Music Project",
+                  "assetId": 105207989327304,
+                  "duration": 227,
+                  "isPrivate": false,
+                  "title": "AFK Ambient Drift"
+                },
+                {
+                  "album": "GYM MUSIC (ALBUM 2)",
+                  "albumArtAssetId": 133196391671015,
+                  "artist": "GEEK GAMEMUSIC",
+                  "assetId": 90167880863182,
+                  "duration": 95,
+                  "isPrivate": false,
+                  "title": "Electronic Fitness Motivation"
+                },
+                {
+                  "album": "Mellow Jazzy Journeys",
+                  "albumArtAssetId": 77200117622393,
+                  "artist": "Robincrews",
+                  "assetId": 115732712799984,
+                  "duration": 144,
+                  "isPrivate": false,
+                  "title": "Calm Jazz Atmosphere"
+                },
+                {
+                  "album": "Relaxing Jazz for Reading – Soft Reading Hours",
+                  "albumArtAssetId": 93902131386840,
+                  "artist": "Morning Velvet Jazz",
+                  "assetId": 96921642177697,
+                  "duration": 178,
+                  "isPrivate": false,
+                  "title": "Gentle Turning Pages"
+                },
+                {
+                  "album": "Relaxing Jazz for Reading – Soft Reading Hours",
+                  "albumArtAssetId": 93902131386840,
+                  "artist": "Morning Velvet Jazz",
+                  "assetId": 120213012782188,
+                  "duration": 143,
+                  "isPrivate": false,
+                  "title": "Amber Jazz"
+                },
+                {
+                  "album": "Relaxing Jazz for Reading – Soft Reading Hours",
+                  "albumArtAssetId": 93902131386840,
+                  "artist": "Morning Velvet Jazz",
+                  "assetId": 77640457696009,
+                  "duration": 193,
+                  "isPrivate": false,
+                  "title": "Coffee Page Mood"
+                },
+                {
+                  "album": "Soft Breath of Calm (ambient piano, whisper guitar, relaxation sounds, stress relief, quiet meditation, soft instrumental, peaceful mood, gentle music)",
+                  "albumArtAssetId": 103988635700922,
+                  "artist": "Jagleb",
+                  "assetId": 138992141339152,
+                  "duration": 227,
+                  "isPrivate": false,
+                  "title": "Velvet evening melodies"
+                },
+                {
+                  "album": "Horror Tools: Risers, Drones, Noises and Clocks",
+                  "albumArtAssetId": 129630607549396,
+                  "artist": "Epic Score",
+                  "assetId": 9043366741,
+                  "duration": 38,
+                  "isPrivate": false,
+                  "title": "TICK TOCK 09 100BPM"
+                },
+                {
+                  "album": "Gothic Instrumental Horror Ambience",
+                  "albumArtAssetId": 136824343564011,
+                  "artist": "Whisper of Horror Ambient and Dark Soundscape",
+                  "assetId": 139743346356072,
+                  "duration": 218,
+                  "isPrivate": false,
+                  "title": "Forgotten Crypt Ambient"
+                },
+                {
+                  "album": "FAMILY LIFE",
+                  "albumArtAssetId": 79434337080543,
+                  "artist": "Patrick Fradji Maarek",
+                  "assetId": 1839578771,
+                  "duration": 64,
+                  "isPrivate": false,
+                  "title": "Charming View Ukulele"
+                },
+                {
+                  "album": "Project: Celestial Syntax (Y2K Breakbeat & Space Ambient Mix)",
+                  "albumArtAssetId": 117869622931856,
+                  "artist": "QTB RaDiO",
+                  "assetId": 85922328966318,
+                  "duration": 203,
+                  "isPrivate": false,
+                  "title": "Galactic Market"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 119492718271797,
+                  "artist": "Vasilis Milios",
+                  "assetId": 132723791442159,
+                  "duration": 354,
+                  "isPrivate": false,
+                  "title": "Neon Drifter | Dark Synthwave Retrowave Cinematic"
+                },
+                {
+                  "album": "80's Retro Synths Vol. 3: Electric Dreams",
+                  "albumArtAssetId": 127591131542153,
+                  "artist": "Kingdom 2",
+                  "assetId": 9042769642,
+                  "duration": 194,
+                  "isPrivate": false,
+                  "title": "Free Fall"
+                },
+                {
+                  "album": "NEON STRIKE: The Synthwave Chronicles",
+                  "albumArtAssetId": 120638486956424,
+                  "artist": "久遠光",
+                  "assetId": 81537392856710,
+                  "duration": 330,
+                  "isPrivate": false,
+                  "title": "Silent Infiltration"
+                },
+                {
+                  "album": "Synthwave Way | Episode 1 | 2-Hour Mix | 2026-06-07",
+                  "albumArtAssetId": 89121081290873,
+                  "artist": "Synthwave Way",
+                  "assetId": 95792678396827,
+                  "duration": 344,
+                  "isPrivate": false,
+                  "title": "Synthwave Way 1-28"
+                },
+                {
+                  "album": "Synthwave for Coding",
+                  "albumArtAssetId": 101921026180031,
+                  "artist": "Kai Morrow",
+                  "assetId": 109619724747243,
+                  "duration": 344,
+                  "isPrivate": false,
+                  "title": "Debug Mode"
+                },
+                {
+                  "album": "Orbital Drift — Live From Low Earth Orbit Vol. 1",
+                  "albumArtAssetId": 85722962849967,
+                  "artist": "LiveDNB24/7 Atmosphere",
+                  "assetId": 71954180365964,
+                  "duration": 297,
+                  "isPrivate": false,
+                  "title": "Lunar Echo (Atmospheric DnB Deep Focus Session)"
+                },
+                {
+                  "album": "Coastal Cafe Lofi Beats",
+                  "albumArtAssetId": 118506339091073,
+                  "artist": "LOFI Blissful Tide",
+                  "assetId": 124810148910283,
+                  "duration": 156,
+                  "isPrivate": false,
+                  "title": "Soft Horizon Melodies"
+                },
+                {
+                  "album": "Synthwave Metal",
+                  "albumArtAssetId": 135019206514549,
+                  "artist": "Cezame Metal Factory",
+                  "assetId": 9038253134,
+                  "duration": 159,
+                  "isPrivate": false,
+                  "title": "Cyborg Metal Flesh"
+                },
+                {
+                  "album": "Slow Relaxing Soul Jazz Lofi",
+                  "albumArtAssetId": 139436221400358,
+                  "artist": "Love Sleep Repeat",
+                  "assetId": 114777613084076,
+                  "duration": 144,
+                  "isPrivate": false,
+                  "title": "Endless Summer Drive With Vintage Soul Jazz Warmth"
+                },
+                {
+                  "album": "CLASSIC EASY LISTENING 2",
+                  "albumArtAssetId": 104155120848496,
+                  "artist": "Gerhard Narholz",
+                  "assetId": 1845767674,
+                  "duration": 160,
+                  "isPrivate": false,
+                  "title": "Rhine River Boat"
+                },
+                {
+                  "album": "Neon Dreams – 80s Synthwave Night Drive Music",
+                  "albumArtAssetId": 104337192014994,
+                  "artist": "Arcade Pulse",
+                  "assetId": 133998356068434,
+                  "duration": 345,
+                  "isPrivate": false,
+                  "title": "Hologram Dreams – Chill 80s Retrowave Vibes"
+                },
+                {
+                  "album": "Slow Relaxing Soul Jazz Lofi",
+                  "albumArtAssetId": 139436221400358,
+                  "artist": "Love Sleep Repeat",
+                  "assetId": 92318282774939,
+                  "duration": 142,
+                  "isPrivate": false,
+                  "title": "Sunset Road Trip Jazz Vibes (Soft Analog Sound)"
+                },
+                {
+                  "album": "Chillwave / Synthwave / Downtempo / Electronica",
+                  "albumArtAssetId": 102386813125558,
+                  "artist": "Sereon·Vale",
+                  "assetId": 84619425563142,
+                  "duration": 220,
+                  "isPrivate": false,
+                  "title": "Sunlit Flow"
+                },
+                {
+                  "album": "Alien Invasion",
+                  "albumArtAssetId": 75702148825754,
+                  "artist": "MrSpaceBox",
+                  "assetId": 132952035129361,
+                  "duration": 148,
+                  "isPrivate": false,
+                  "title": "Area 51"
+                },
+                {
+                  "album": "Arcane Kingdoms, Vol. 1",
+                  "albumArtAssetId": 139036212987980,
+                  "artist": "Dragonspire",
+                  "assetId": 139926392438684,
+                  "duration": 185,
+                  "isPrivate": false,
+                  "title": "The Celestial Spellbook (Arcane Ambient Music)"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 87690830070270,
+                  "artist": "juanjo_sound",
+                  "assetId": 70701621541001,
+                  "duration": 127,
+                  "isPrivate": false,
+                  "title": "frutiger aero dreams"
+                },
+                {
+                  "album": "A Touch Of Jazz 2",
+                  "albumArtAssetId": 102910988768698,
+                  "artist": "John Douglas Horler",
+                  "assetId": 1840907056,
+                  "duration": 131,
+                  "isPrivate": false,
+                  "title": "Bossa Lounge"
+                },
+                {
+                  "album": "80's Retro Synths Vol. 3: Electric Dreams",
+                  "albumArtAssetId": 127591131542153,
+                  "artist": "Kingdom 2",
+                  "assetId": 9042769182,
+                  "duration": 159,
+                  "isPrivate": false,
+                  "title": "Beneath The Stars"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 129311180253682,
+                  "artist": "CensorWorldRecord",
+                  "assetId": 120807241118295,
+                  "duration": 196,
+                  "isPrivate": false,
+                  "title": "Love Me (chill phonk)"
+                },
+                {
+                  "album": "FAMILY LIFE",
+                  "albumArtAssetId": 79434337080543,
+                  "artist": "Patrick Fradji Maarek",
+                  "assetId": 1839580471,
+                  "duration": 65,
+                  "isPrivate": false,
+                  "title": "Happy Forever Ukulele"
+                },
+                {
+                  "album": "FORSAKEN UST COLLECTION (VOL 1)",
+                  "albumArtAssetId": 78406102972704,
+                  "artist": "ImperfectNORE",
+                  "assetId": 130944271775816,
+                  "duration": 90,
+                  "isPrivate": false,
+                  "title": "WAR"
+                },
+                {
+                  "album": "FORSAKEN UST COLLECTION (VOL 1)",
+                  "albumArtAssetId": 78406102972704,
+                  "artist": "ImperfectNORE",
+                  "assetId": 111640226505488,
+                  "duration": 93,
+                  "isPrivate": false,
+                  "title": "DEMOLITION"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 79138460660514,
+                  "artist": "Angry Fi5h",
+                  "assetId": 76372384887877,
+                  "duration": 265,
+                  "isPrivate": false,
+                  "title": "Time to Fight"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 110220182211140,
+                  "artist": "BinauralBloom",
+                  "assetId": 79920097435036,
+                  "duration": 190,
+                  "isPrivate": false,
+                  "title": "Bird sounds"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 85215246445642,
+                  "artist": "Human Sound Recorder",
+                  "assetId": 93132518920784,
+                  "duration": 72,
+                  "isPrivate": false,
+                  "title": "Frying Halloumi Cheese (Sound)"
+                },
+                {
+                  "album": "Anime Music for Drawing Your Fantasy",
+                  "albumArtAssetId": 131096992189198,
+                  "artist": "Neo MUSIC FOR DRAWING Lab",
+                  "assetId": 133141854343837,
+                  "duration": 210,
+                  "isPrivate": false,
+                  "title": "Battle in the Crystal City"
+                },
+                {
+                  "album": "HOLLYWOOD III",
+                  "albumArtAssetId": 81617436936613,
+                  "artist": "Ŝamanoŝtono",
+                  "assetId": 119225873715280,
+                  "duration": 226,
+                  "isPrivate": false,
+                  "title": "Full Moon Decadence"
+                },
+                {
+                  "album": "Relaxing Forest Villa Ambient Music With Grand Piano And Cozy Cat for Chill | Relax | Study",
+                  "albumArtAssetId": 134075399143015,
+                  "artist": "Cat arch music",
+                  "assetId": 125032085440264,
+                  "duration": 152,
+                  "isPrivate": false,
+                  "title": "Quiet Interlude"
+                },
+                {
+                  "album": "MOZART",
+                  "albumArtAssetId": 83644888132023,
+                  "artist": "Wolfgang Amadeus Mozart",
+                  "assetId": 1848061039,
+                  "duration": 474,
+                  "isPrivate": false,
+                  "title": "Piano Concerto No.17 In G-major Kv 453 @ - Allegretto"
+                },
+                {
+                  "album": "Halloween Spooky Fun for Kids",
+                  "albumArtAssetId": 78303052774366,
+                  "artist": "Holiday Kidz",
+                  "assetId": 101206861008794,
+                  "duration": 240,
+                  "isPrivate": false,
+                  "title": "Spooky cartoon music, Pt. 3"
+                },
+                {
+                  "album": "Solo Depression Guitar Volume 1",
+                  "albumArtAssetId": 119262546863966,
+                  "artist": "Tommy Spooky and the Creepy Cats",
+                  "assetId": 100661648780434,
+                  "duration": 126,
+                  "isPrivate": false,
+                  "title": "Null Ending"
+                },
+                {
+                  "album": "Violet Conclave Below the Nameless Chasm",
+                  "albumArtAssetId": 86449861037879,
+                  "artist": "Velastris",
+                  "assetId": 79577053160133,
+                  "duration": 61,
+                  "isPrivate": false,
+                  "title": "Black Fire Swears the Final Oath"
+                },
+                {
+                  "album": "FREDERIC CHOPIN",
+                  "albumArtAssetId": 128049165336263,
+                  "artist": "Frederic Francois Chopin",
+                  "assetId": 1848067628,
+                  "duration": 176,
+                  "isPrivate": false,
+                  "title": "Preludes Op.28 @ Prelude In A-flat Major"
+                },
+                {
+                  "album": "ELECTRO CHILL",
+                  "albumArtAssetId": 131805367011327,
+                  "artist": "Kosinus",
+                  "assetId": 1839824117,
+                  "duration": 124,
+                  "isPrivate": false,
+                  "title": "Ambient Electronica"
+                },
+                {
+                  "album": "Zombie Apocalypse: I’m Not Human",
+                  "albumArtAssetId": 106642767738273,
+                  "artist": "Horror Sound Ritual",
+                  "assetId": 75564750831205,
+                  "duration": 204,
+                  "isPrivate": false,
+                  "title": "Zombie Survival Instinct"
+                },
+                {
+                  "album": "CINEMATIC APOCALYPSE VOL. 1",
+                  "albumArtAssetId": 91354258415937,
+                  "artist": "Citokid",
+                  "assetId": 1848195383,
+                  "duration": 134,
+                  "isPrivate": false,
+                  "title": "Victorious C"
+                },
+                {
+                  "album": "Aesthetic Melancholy: Focus, Chill Lofi for Deep Work & Study",
+                  "albumArtAssetId": 118575918622465,
+                  "artist": "GØDA",
+                  "assetId": 119543588185580,
+                  "duration": 108,
+                  "isPrivate": false,
+                  "title": "aesthetic lofi sad girl boy pov"
+                },
+                {
+                  "album": "Basement",
+                  "albumArtAssetId": 117775844246418,
+                  "artist": "Memes in meme",
+                  "assetId": 80586845389169,
+                  "duration": 144,
+                  "isPrivate": false,
+                  "title": "Horror Chase"
+                },
+                {
+                  "album": "FORSAKEN UST COLLECTION (VOL 1)",
+                  "albumArtAssetId": 78406102972704,
+                  "artist": "ImperfectNORE",
+                  "assetId": 127097493971664,
+                  "duration": 91,
+                  "isPrivate": false,
+                  "title": "REMORSE"
+                },
+                {
+                  "album": "The Soundtrack Of Frutiger Aero 2",
+                  "albumArtAssetId": 70936359358078,
+                  "artist": "temcandoanything",
+                  "assetId": 90950107415316,
+                  "duration": 103,
+                  "isPrivate": false,
+                  "title": "frutiger aero"
+                },
+                {
+                  "album": "Deep Sleep Insomnia Relief — White Noise, Baby Sleep & Meditation Music",
+                  "albumArtAssetId": 103574287532106,
+                  "artist": "REM Masters",
+                  "assetId": 115073505322736,
+                  "duration": 65,
+                  "isPrivate": false,
+                  "title": "Deep Sleep Relief Now"
+                },
+                {
+                  "album": "RISE AGAIN (Emotional Pop Workout)",
+                  "albumArtAssetId": 97774963965026,
+                  "artist": "Bora Music",
+                  "assetId": 128814463919812,
+                  "duration": 109,
+                  "isPrivate": false,
+                  "title": "Push Through Fire"
+                },
+                {
+                  "album": "EDM Lockdown",
+                  "albumArtAssetId": 109906575158083,
+                  "artist": "Invasion From Mars",
+                  "assetId": 9038355786,
+                  "duration": 156,
+                  "isPrivate": false,
+                  "title": "Spring Break Lockdown"
+                },
+                {
+                  "album": "READY UP",
+                  "albumArtAssetId": 117285500985520,
+                  "artist": "Full Moon Wolf",
+                  "assetId": 139230581066093,
+                  "duration": 177,
+                  "isPrivate": false,
+                  "title": "Neon Drift"
+                },
+                {
+                  "album": "Romantic Sax Jazz",
+                  "albumArtAssetId": 79540795339507,
+                  "artist": "Light Classical",
+                  "assetId": 115426384599645,
+                  "duration": 218,
+                  "isPrivate": false,
+                  "title": "Velvet Afterglow"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 137278486070110,
+                  "artist": "Balloonbear",
+                  "assetId": 75045545163954,
+                  "duration": 102,
+                  "isPrivate": false,
+                  "title": "Hope"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 72496543835177,
+                  "artist": "Sweet Orange Music",
+                  "assetId": 113451413768654,
+                  "duration": 88,
+                  "isPrivate": false,
+                  "title": "Brewek Pokemon"
+                },
+                {
+                  "album": "Pokemon Lofi : 4",
+                  "albumArtAssetId": 126143656553116,
+                  "artist": "Kiramusic",
+                  "assetId": 103515659875579,
+                  "duration": 91,
+                  "isPrivate": false,
+                  "title": "oldale town ~ pokemon lofi"
+                },
+                {
+                  "album": "",
+                  "albumArtAssetId": 89884165823594,
+                  "artist": "Bracklidocks",
+                  "assetId": 137433793364371,
+                  "duration": 133,
+                  "isPrivate": false,
+                  "title": "river"
+                }
+              ],
+              "sortDisplayName": "Music Top 100",
+              "sortId": "music-top-100",
+              "subtitle": "Results for all devices and locations",
+              "topicLayoutData": {
+                "infoText": "Most popular music on Roblox in the past 7 days."
+              },
+              "treatmentType": "SongCarousel"
+            },
+            {
+              "contentType": "Games",
+              "gameSetTargetId": 668,
+              "gameSetTypeId": 23,
+              "games": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Roleplay & Avatar Sim",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Sprunki RP 3D [VERITY]",
+                  "nativeAdData": "",
+                  "playerCount": 235,
+                  "rootPlaceId": 139708186687323,
+                  "totalDownVotes": 4841,
+                  "totalUpVotes": 20359,
+                  "universeId": 6919822640
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Entertainment",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🎃 Free Boombox/Radio 🎃",
+                  "nativeAdData": "",
+                  "playerCount": 18,
+                  "rootPlaceId": 5484617659,
+                  "totalDownVotes": 1163,
+                  "totalUpVotes": 4328,
+                  "universeId": 1917762467
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Social",
+                  "isSponsored": false,
+                  "minimumAge": 16,
+                  "name": "Ro-vibes 🔊",
+                  "nativeAdData": "",
+                  "playerCount": 349,
+                  "rootPlaceId": 121692407072104,
+                  "totalDownVotes": 607,
+                  "totalUpVotes": 6858,
+                  "universeId": 6808306281
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Party & Casual",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "100 Players Musical Chairs",
+                  "nativeAdData": "",
+                  "playerCount": 375,
+                  "rootPlaceId": 135619589726492,
+                  "totalDownVotes": 45838,
+                  "totalUpVotes": 266120,
+                  "universeId": 7307246329
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Chipeo's Choir 2.0",
+                  "nativeAdData": "",
+                  "playerCount": 285,
+                  "rootPlaceId": 122627508602297,
+                  "totalDownVotes": 557,
+                  "totalUpVotes": 4122,
+                  "universeId": 7430288939
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Simulation",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "🎤 My Singing Brainrot",
+                  "nativeAdData": "",
+                  "playerCount": 83,
+                  "rootPlaceId": 89343390950953,
+                  "totalDownVotes": 20344,
+                  "totalUpVotes": 590342,
+                  "universeId": 7893515528
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Social",
+                  "isSponsored": false,
+                  "minimumAge": 16,
+                  "name": "The Corner 🔊",
+                  "nativeAdData": "",
+                  "playerCount": 1062,
+                  "rootPlaceId": 17255098561,
+                  "totalDownVotes": 4314,
+                  "totalUpVotes": 34388,
+                  "universeId": 5903289376
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Action",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎵] Project : RUSHER",
+                  "nativeAdData": "",
+                  "playerCount": 169,
+                  "rootPlaceId": 106809703371658,
+                  "totalDownVotes": 9557,
+                  "totalUpVotes": 129512,
+                  "universeId": 6596003198
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                  "contentMaturity": "moderate",
+                  "genreL1": "Social",
+                  "isSponsored": false,
+                  "minimumAge": 16,
+                  "name": "[RELAPSE] Are you lonely?",
+                  "nativeAdData": "",
+                  "playerCount": 908,
+                  "rootPlaceId": 18649596490,
+                  "totalDownVotes": 6481,
+                  "totalUpVotes": 183634,
+                  "universeId": 6318887244
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Entertainment",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🌊] EPIC: The Musical [OPEN TECH]",
+                  "nativeAdData": "",
+                  "playerCount": 66,
+                  "rootPlaceId": 123000804394748,
+                  "totalDownVotes": 500,
+                  "totalUpVotes": 11421,
+                  "universeId": 8019620353
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Social",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "vivid memory - cozy house [showcase/RP]",
+                  "nativeAdData": "",
+                  "playerCount": 115,
+                  "rootPlaceId": 125479550217058,
+                  "totalDownVotes": 633,
+                  "totalUpVotes": 18739,
+                  "universeId": 7113599041
+                },
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "contentMaturity": "minimal",
+                  "genreL1": "Entertainment",
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎙️] RAP ZONE",
+                  "nativeAdData": "",
+                  "playerCount": 68,
+                  "rootPlaceId": 109015216331498,
+                  "totalDownVotes": 476,
+                  "totalUpVotes": 2612,
+                  "universeId": 6569399468
+                }
+              ],
+              "id": "Trending_Music_Experiences_V4",
+              "primarySortId": 23,
+              "secondarySortId": 668,
+              "sortDisplayName": "Trending Music Experiences",
+              "sortId": "trending-music-experiences",
+              "subtitle": "Results for all devices and locations",
+              "topicLayoutData": {
+                "infoText": "Music experiences with at least 2500 users daily that have the biggest relative increase in time spent over the last 2 weeks.",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "Carousel"
+            }
+          ]
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "apis.roblox.com",
+        "method": "GET",
+        "path": "/explore-api/v1/get-sort-content",
+        "query": {
+          "country": "all",
+          "device": "computer",
+          "sessionId": "*",
+          "sortId": "top-trending"
+        }
+      },
+      "response": {
+        "body": {
+          "appliedFilters": "device=computer,age=all,country=all",
+          "contentType": "Games",
+          "gameSetTargetId": 691,
+          "gameSetTypeId": 23,
+          "games": [
+            {
+              "ageRecommendationDisplayName": "Maturity: Mild",
+              "contentMaturity": "mild",
+              "genreL1": "Action",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Huss Valley",
+              "nativeAdData": "",
+              "playerCount": 70311,
+              "rootPlaceId": 107535308163741,
+              "totalDownVotes": 18031,
+              "totalUpVotes": 136469,
+              "universeId": 10764627709
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Minimal",
+              "contentMaturity": "minimal",
+              "genreL1": "Roleplay & Avatar Sim",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "[🎃] Adopt Me!",
+              "nativeAdData": "",
+              "playerCount": 215984,
+              "rootPlaceId": 920587237,
+              "totalDownVotes": 1513845,
+              "totalUpVotes": 9556177,
+              "universeId": 383310974
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Minimal",
+              "contentMaturity": "minimal",
+              "genreL1": "Survival",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "99 Nights in the Forest 🔦",
+              "nativeAdData": "",
+              "playerCount": 117546,
+              "rootPlaceId": 79546208627805,
+              "totalDownVotes": 574282,
+              "totalUpVotes": 5463202,
+              "universeId": 7326934954
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Mild",
+              "contentMaturity": "mild",
+              "genreL1": "Survival",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "🎃 Dandy's World [ALPHA]",
+              "nativeAdData": "",
+              "playerCount": 80536,
+              "rootPlaceId": 16116270224,
+              "totalDownVotes": 244335,
+              "totalUpVotes": 1738416,
+              "universeId": 5569032992
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Minimal",
+              "contentMaturity": "minimal",
+              "genreL1": "Strategy",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Vanguards: 2nd Anniversary",
+              "nativeAdData": "",
+              "playerCount": 66069,
+              "rootPlaceId": 16146832113,
+              "totalDownVotes": 87803,
+              "totalUpVotes": 2590599,
+              "universeId": 5578556129
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Minimal",
+              "contentMaturity": "minimal",
+              "genreL1": "Simulation",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Break and Steal an Egg",
+              "nativeAdData": "",
+              "playerCount": 102801,
+              "rootPlaceId": 114326934417838,
+              "totalDownVotes": 5388,
+              "totalUpVotes": 235710,
+              "universeId": 10765288803
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Mild",
+              "contentMaturity": "mild",
+              "genreL1": "Shooter",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "[NEW MAP] BloxStrike",
+              "nativeAdData": "",
+              "playerCount": 4969,
+              "rootPlaceId": 114234929420007,
+              "totalDownVotes": 35134,
+              "totalUpVotes": 626178,
+              "universeId": 7633926880
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Mild",
+              "contentMaturity": "mild",
+              "genreL1": "RPG",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Anime Zero [Void Arbiter]  🌌💫",
+              "nativeAdData": "",
+              "playerCount": 34540,
+              "rootPlaceId": 114574503491412,
+              "totalDownVotes": 2444,
+              "totalUpVotes": 97219,
+              "universeId": 10512942223
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Mild",
+              "contentMaturity": "mild",
+              "genreL1": "Simulation",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "[Update] Ragdoll Engine 🩸⚙️",
+              "nativeAdData": "",
+              "playerCount": 13818,
+              "rootPlaceId": 112332082095944,
+              "totalDownVotes": 1057,
+              "totalUpVotes": 17395,
+              "universeId": 10767907509
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Minimal",
+              "contentMaturity": "minimal",
+              "genreL1": "Adventure",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "[4 PLAYER RALLY] WRONG WAY! ",
+              "nativeAdData": "",
+              "playerCount": 6316,
+              "rootPlaceId": 121671165541545,
+              "totalDownVotes": 300,
+              "totalUpVotes": 3088,
+              "universeId": 10768866246
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Minimal",
+              "contentMaturity": "minimal",
+              "genreL1": "Strategy",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "[🌙 NIGHT 1] Tower Defense Simulator",
+              "nativeAdData": "",
+              "playerCount": 11293,
+              "rootPlaceId": 3260590327,
+              "totalDownVotes": 129156,
+              "totalUpVotes": 2080542,
+              "universeId": 1176784616
+            },
+            {
+              "ageRecommendationDisplayName": "Maturity: Minimal",
+              "contentMaturity": "minimal",
+              "genreL1": "Simulation",
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "⚡ELECTRICITY🔥Bricklayer",
+              "nativeAdData": "",
+              "playerCount": 2671,
+              "rootPlaceId": 100877684758792,
+              "totalDownVotes": 1845,
+              "totalUpVotes": 4584,
+              "universeId": 10768468695
+            }
+          ],
+          "primarySortId": 23,
+          "secondarySortId": 691,
+          "sortDisplayName": "Top Trending",
+          "sortId": "top-trending",
+          "topicLayoutData": {
+            "infoText": "Top experiences with the largest relative increase in daily active users over the past week.",
+            "playButtonStyle": "Disabled"
+          },
+          "treatmentType": "Carousel"
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "absent_headers": [
+          "x-csrf-token"
+        ],
+        "host": "apis.roblox.com",
+        "method": "POST",
+        "path": "/discovery-api/omni-recommendation"
+      },
+      "response": {
+        "body": {
+          "contentMetadata": {
+            "CatalogAsset": {},
+            "CatalogBundle": {},
+            "Game": {
+              "10040396587": {
+                "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "robloxmaxxing [🔊]",
+                "playerCount": 60,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 82139066520713,
+                "totalDownVotes": 781,
+                "totalUpVotes": 1316,
+                "under13": false,
+                "under9": false,
+                "universeId": 10040396587
+              },
+              "10109877123": {
+                "ageRecommendationDisplayName": "Maturity: Minimal",
+                "contentMaturity": "minimal",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "101286773992005",
+                      "wideImageListId": "86f709e6-3946-47b9-bd0d-3c12d1c6fc9c",
+                      "wideVideoAssetId": "102643310235585"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "[🧬] Drop a Fruit",
+                "playerCount": 2633,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 82132121666307,
+                "totalDownVotes": 595,
+                "totalUpVotes": 4805,
+                "under13": false,
+                "under9": false,
+                "universeId": 10109877123
+              },
+              "10488424652": {
+                "ageRecommendationDisplayName": "Maturity: Minimal • Ages 16+",
+                "contentMaturity": "minimal",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "81435343448238",
+                      "wideImageListId": "bd5e92b8-2ce4-4982-85eb-1032661ce21a"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "المدرسه التحديث القديم | OG-School",
+                "playerCount": 209,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 109657898913779,
+                "totalDownVotes": 333,
+                "totalUpVotes": 1192,
+                "under13": false,
+                "under9": false,
+                "universeId": 10488424652
+              },
+              "10765826902": {
+                "ageRecommendationDisplayName": "Maturity: Mild • Ages 16+",
+                "contentMaturity": "mild",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "Chomped",
+                "playerCount": 2,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 73080084964809,
+                "totalDownVotes": 2,
+                "totalUpVotes": 16,
+                "under13": false,
+                "under9": false,
+                "universeId": 10765826902
+              },
+              "10769200150": {
+                "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "CCS-open-beta",
+                "playerCount": 0,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 114609405901291,
+                "totalDownVotes": 0,
+                "totalUpVotes": 0,
+                "under13": false,
+                "under9": false,
+                "universeId": 10769200150
+              },
+              "1898467356": {
+                "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "baseplate game",
+                "playerCount": 1,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 5424130515,
+                "totalDownVotes": 8,
+                "totalUpVotes": 86,
+                "under13": false,
+                "under9": false,
+                "universeId": 1898467356
+              },
+              "2650087335": {
+                "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "6929048991",
+                      "wideImageListId": "63722f22-6511-4774-8d43-74850ec63b10"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "Base Plate",
+                "playerCount": 5,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 6929018183,
+                "totalDownVotes": 241,
+                "totalUpVotes": 859,
+                "under13": false,
+                "under9": false,
+                "universeId": 2650087335
+              },
+              "2711375305": {
+                "ageRecommendationDisplayName": "Maturity: Minimal",
+                "contentMaturity": "minimal",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "131281775904834",
+                      "wideImageListId": "53616eb7-a8aa-4ab5-a438-25da54400719",
+                      "wideVideoAssetId": "72816971021020"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "Catalog Avatar Creator",
+                "playerCount": 54628,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 7041939546,
+                "totalDownVotes": 204093,
+                "totalUpVotes": 3037320,
+                "under13": false,
+                "under9": false,
+                "universeId": 2711375305
+              },
+              "3021395192": {
+                "ageRecommendationDisplayName": "Maturity: Moderate",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000008": {
+                    "footer": {
+                      "text": {
+                        "textLiteral": "Military action"
+                      },
+                      "type": "TextLabel"
+                    },
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "13453141330",
+                      "wideImageListId": "0",
+                      "wideVideoAssetId": "123662428100997"
+                    },
+                    "title": "RIOTFALL"
+                  }
+                },
+                "minimumAge": 0,
+                "name": "RIOTFALL [FPS]",
+                "playerCount": 1859,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 7796842481,
+                "totalDownVotes": 16240,
+                "totalUpVotes": 82619,
+                "under13": false,
+                "under9": false,
+                "universeId": 3021395192
+              },
+              "3634139746": {
+                "ageRecommendationDisplayName": "Maturity: Moderate",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "Hood Customs",
+                "playerCount": 716,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 9825515356,
+                "totalDownVotes": 20045,
+                "totalUpVotes": 50662,
+                "under13": false,
+                "under9": false,
+                "universeId": 3634139746
+              },
+              "3913007563": {
+                "ageRecommendationDisplayName": "Maturity: Mild",
+                "contentMaturity": "mild",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "77054149134910",
+                      "wideImageListId": "786d83ca-7689-491a-a034-c7823c248250"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "The Battle Bricks",
+                "playerCount": 1683,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 10834586502,
+                "totalDownVotes": 33513,
+                "totalUpVotes": 183997,
+                "under13": false,
+                "under9": false,
+                "universeId": 3913007563
+              },
+              "4386009795": {
+                "ageRecommendationDisplayName": "Maturity: Mild",
+                "contentMaturity": "mild",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "[FREE] Depot",
+                "playerCount": 15,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 12474992964,
+                "totalDownVotes": 110,
+                "totalUpVotes": 468,
+                "under13": false,
+                "under9": false,
+                "universeId": 4386009795
+              },
+              "4408288935": {
+                "ageRecommendationDisplayName": "Maturity: Moderate",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000008": {
+                    "footer": {
+                      "text": {
+                        "textLiteral": "Discover the Ice Age"
+                      },
+                      "type": "TextLabel"
+                    },
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "124178181520332",
+                      "wideImageListId": "0",
+                      "wideVideoAssetId": "135467676704881"
+                    },
+                    "title": "Ecos: La Brea"
+                  }
+                },
+                "minimumAge": 0,
+                "name": "Ecos: La Brea",
+                "playerCount": 2348,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 12550651382,
+                "totalDownVotes": 6970,
+                "totalUpVotes": 76550,
+                "under13": false,
+                "under9": false,
+                "universeId": 4408288935
+              },
+              "4879029375": {
+                "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "16031085940",
+                      "wideImageListId": "16286de9-e028-445d-8ae8-161d36405378"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "Post Rolimon Trade Ads While AFK",
+                "playerCount": 99,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 14090982817,
+                "totalDownVotes": 157,
+                "totalUpVotes": 4863,
+                "under13": false,
+                "under9": false,
+                "universeId": 4879029375
+              },
+              "571251690": {
+                "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "12669729373",
+                      "wideImageListId": "4913878c-8805-40a5-b0dc-5d1937b96071"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "🎃 Keystone",
+                "playerCount": 1621,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 292628125,
+                "totalDownVotes": 11355,
+                "totalUpVotes": 54508,
+                "under13": false,
+                "under9": false,
+                "universeId": 571251690
+              },
+              "5803093656": {
+                "ageRecommendationDisplayName": "Maturity: Mild",
+                "contentMaturity": "mild",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000008": {
+                    "footer": {
+                      "text": {
+                        "textLiteral": "Immersive RPG action"
+                      },
+                      "type": "TextLabel"
+                    },
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "101226365085541",
+                      "wideImageListId": "0"
+                    },
+                    "title": "Blue Heater 2"
+                  }
+                },
+                "minimumAge": 0,
+                "name": "Blue Heater 2 [FISH FUNLAND🎣]",
+                "playerCount": 872,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 16893821047,
+                "totalDownVotes": 9107,
+                "totalUpVotes": 551595,
+                "under13": false,
+                "under9": false,
+                "universeId": 5803093656
+              },
+              "5829613337": {
+                "ageRecommendationDisplayName": "Maturity: Mild",
+                "contentMaturity": "mild",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "something evil will happen",
+                "playerCount": 2375,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 16991287194,
+                "totalDownVotes": 28811,
+                "totalUpVotes": 361636,
+                "under13": false,
+                "under9": false,
+                "universeId": 5829613337
+              },
+              "5974222136": {
+                "ageRecommendationDisplayName": "Maturity: Minimal • Ages 16+",
+                "contentMaturity": "minimal",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "103267082425808",
+                      "wideImageListId": "4595308e-d7b3-4034-a32b-86adff9793cb"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "Virtual Football ",
+                "playerCount": 18,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 17456274286,
+                "totalDownVotes": 142,
+                "totalUpVotes": 993,
+                "under13": false,
+                "under9": false,
+                "universeId": 5974222136
+              },
+              "6287509105": {
+                "ageRecommendationDisplayName": "Maturity: Mild",
+                "contentMaturity": "mild",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "Use Your Gear",
+                "playerCount": 10,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 18557326348,
+                "totalDownVotes": 308,
+                "totalUpVotes": 2812,
+                "under13": false,
+                "under9": false,
+                "universeId": 6287509105
+              },
+              "66654135": {
+                "ageRecommendationDisplayName": "Maturity: Moderate",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000000": {
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "3778412981",
+                      "wideImageListId": "79a3d5cc-450d-4c27-9f98-0b292d345379"
+                    }
+                  }
+                },
+                "minimumAge": 0,
+                "name": "Murder Mystery 2",
+                "playerCount": 136756,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 142823291,
+                "totalDownVotes": 1087228,
+                "totalUpVotes": 10761389,
+                "under13": false,
+                "under9": false,
+                "universeId": 66654135
+              },
+              "8226497": {
+                "ageRecommendationDisplayName": "Maturity: Mild • Ages 16+",
+                "contentMaturity": "mild",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "Fencing",
+                "playerCount": 4,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 12109643,
+                "totalDownVotes": 11652,
+                "totalUpVotes": 35028,
+                "under13": false,
+                "under9": false,
+                "universeId": 8226497
+              },
+              "8324127114": {
+                "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                "contentMaturity": "moderate",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "A Social baseplate 💬 ",
+                "playerCount": 64,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 107040115024757,
+                "totalDownVotes": 647,
+                "totalUpVotes": 1674,
+                "under13": false,
+                "under9": false,
+                "universeId": 8324127114
+              },
+              "9187064435": {
+                "ageRecommendationDisplayName": "Maturity: Mild",
+                "contentMaturity": "mild",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {
+                  "100000008": {
+                    "footer": {
+                      "text": {
+                        "textLiteral": "Survive the corrupted Emotion Prison"
+                      },
+                      "type": "TextLabel"
+                    },
+                    "primaryMediaAsset": {
+                      "wideImageAssetId": "76545220049712",
+                      "wideImageListId": "0",
+                      "wideVideoAssetId": "120205056467493"
+                    },
+                    "title": "EMOTIA Escape"
+                  }
+                },
+                "minimumAge": 0,
+                "name": "✨️EMOTIA Escape [New Aura]",
+                "playerCount": 1003,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 136309958558481,
+                "totalDownVotes": 2570,
+                "totalUpVotes": 40966,
+                "under13": false,
+                "under9": false,
+                "universeId": 9187064435
+              },
+              "9271746647": {
+                "ageRecommendationDisplayName": "Maturity: Minimal",
+                "contentMaturity": "minimal",
+                "description": null,
+                "friendVisits": null,
+                "layoutDataBySort": {},
+                "minimumAge": 0,
+                "name": "[UP] Just a baseplate.",
+                "playerCount": 133,
+                "primaryMediaAsset": {},
+                "rootPlaceId": 123974602339071,
+                "totalDownVotes": 788,
+                "totalUpVotes": 3348,
+                "under13": false,
+                "under9": false,
+                "universeId": 9271746647
+              }
+            },
+            "GameCoPlay": {},
+            "RecommendedFriend": {}
+          },
+          "globalLayoutData": {},
+          "isPartialFeed": false,
+          "isSessionExpired": false,
+          "nextPageToken": "",
+          "pageType": "Home",
+          "requestId": "6a62a5ef-29f5-4bee-9883-fa6e105ecc5a",
+          "sorts": [
+            {
+              "analyticsData": {},
+              "nextPageTokenForTopic": null,
+              "numberOfRows": 1,
+              "recommendationList": [],
+              "subId": "",
+              "topic": "Friends",
+              "topicId": 600000000,
+              "topicLayoutData": {},
+              "treatmentType": "FriendCarousel"
+            },
+            {
+              "analyticsData": {},
+              "nextPageTokenForTopic": null,
+              "numberOfRows": 2,
+              "recommendationList": [
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 2711375305,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 2650087335,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 66654135,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 3634139746,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 6287509105,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 4386009795,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 4879029375,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 3913007563,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 571251690,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 5974222136,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 10488424652,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0",
+                    "sourceSortId": "100000000"
+                  },
+                  "contentId": 10109877123,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                }
+              ],
+              "subId": "",
+              "topic": "Recommended For You",
+              "topicId": 100000000,
+              "topicLayoutData": {
+                "componentType": "GridTile",
+                "enableExplicitFeedback": "true",
+                "enableReportAd": "true",
+                "enableSponsoredFeedback": "true",
+                "isSponsoredFooterAllowed": "true",
+                "isSponsoredRatingFooterAllowed": "true",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "SortlessGrid"
+            },
+            {
+              "analyticsData": {},
+              "nextPageTokenForTopic": null,
+              "numberOfRows": 1,
+              "recommendationList": [
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 10765826902,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 1898467356,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 8226497,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 10040396587,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 8324127114,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 9271746647,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 10769200150,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 5829613337,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                }
+              ],
+              "subId": "",
+              "topic": "Continue",
+              "topicId": 100000003,
+              "topicLayoutData": {},
+              "treatmentType": "Carousel"
+            },
+            {
+              "analyticsData": {},
+              "nextPageTokenForTopic": null,
+              "numberOfRows": 1,
+              "recommendationList": [
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 3021395192,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 5803093656,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 4408288935,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                },
+                {
+                  "analyticsData": {
+                    "newGameEnum": "0"
+                  },
+                  "contentId": 9187064435,
+                  "contentMetadata": {},
+                  "contentStringId": "",
+                  "contentType": "Game"
+                }
+              ],
+              "subId": "2814014611454558754_a27190f0-30da-4bd1-96e2-5fcf47e25484",
+              "subtitle": "Curated games shaping what’s next for Roblox",
+              "topic": "Standout Games",
+              "topicId": 100000008,
+              "topicLayoutData": {
+                "CampaignKey": "Experiment_SortPosition_Worldwide",
+                "componentType": "EventTile",
+                "hideSeeAll": "true",
+                "linkPath": ""
+              },
+              "treatmentType": "Carousel"
+            },
+            {
+              "analyticsData": {},
+              "nextPageTokenForTopic": null,
+              "numberOfRows": -1,
+              "recommendationList": null,
+              "subId": "",
+              "topic": "Recommended For You",
+              "topicId": 100000000,
+              "topicLayoutData": {
+                "componentType": "GridTile",
+                "enableExplicitFeedback": "true",
+                "enableReportAd": "true",
+                "enableSponsoredFeedback": "true",
+                "isSponsoredFooterAllowed": "true",
+                "isSponsoredRatingFooterAllowed": "true",
+                "playButtonStyle": "Disabled"
+              },
+              "treatmentType": "SortlessGrid"
+            }
+          ],
+          "sortsRefreshInterval": 10800
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v2/users/156/favorite/games",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "body": {
+          "data": [
+            {
+              "created": "2026-09-14T16:37:54.49Z",
+              "creator": {
+                "id": 4111519,
+                "name": "Roblox Presents",
+                "type": "Group"
+              },
+              "description": "Go back through 20 years of Roblox and experience where it all began, one era at a time. Some games will feel instantly familiar. Others may surprise you. And there's always more to the story.\n\nSubscribe to Roblox Plus to get early access to the hub and up to three additional exclusive items during the event. Early access runs from 9 AM to 2 PM PDT.\n\n💠 Discover iconic games throughout Roblox history.\n💠 Complete event quests to unlock rare and exclusive rewards.\n💠 Interact with creators you know and love.\n💠 Experience nostalgia in whole new ways.\n💠 Stay tuned for more surprises as The Hunt: Roblox 20 unfolds.\n \nIt’s all happening right here from September 17-28.",
+              "id": 10766456501,
+              "name": "The Hunt: Roblox 20",
+              "placeVisits": 254637034,
+              "price": null,
+              "rootPlace": {
+                "id": 74205509034203,
+                "type": "Place"
+              },
+              "updated": "2026-09-17T16:01:21.363Z"
+            },
+            {
+              "created": "2013-11-01T09:54:15.373Z",
+              "creator": {
+                "id": 390939,
+                "name": "Tokaisho",
+                "type": "User"
+              },
+              "description": "Welcome to the oasis, sanctuary amongst never-ending desert. Are you new to ROBLOX? Here are a great selection of my classic games you can try, some as early as 2008 where many others, like you, began their journey.\r\n\r\nThe journey starts in the great desert, where you stumble upon this oasis. The destinations are, Pinewood Computer Core, Mega Miners, The Space Shuttle Advantage and ROBLOX Laundromat.",
+              "id": 31532538,
+              "name": "The Oasis",
+              "placeVisits": 361890,
+              "price": null,
+              "rootPlace": {
+                "id": 5140373,
+                "type": "Place"
+              },
+              "updated": "2019-04-03T13:02:33.427Z"
+            },
+            {
+              "created": "2013-10-31T22:50:22.207Z",
+              "creator": {
+                "id": 581011,
+                "name": "Kaixeleron",
+                "type": "User"
+              },
+              "description": "Latest update: Internal changes",
+              "id": 479437,
+              "name": "Roblox Tutorial (Legacy)",
+              "placeVisits": 347426,
+              "price": null,
+              "rootPlace": {
+                "id": 3004201,
+                "type": "Place"
+              },
+              "updated": "2019-04-03T01:23:05.35Z"
+            },
+            {
+              "created": "2013-10-31T23:03:05.097Z",
+              "creator": {
+                "id": 34300,
+                "name": "BrianReddus",
+                "type": "User"
+              },
+              "description": "This has not been updated since 2010.",
+              "id": 1430801,
+              "name": "Briguy's ROBLOX Tutorial (Legacy)",
+              "placeVisits": 115598,
+              "price": null,
+              "rootPlace": {
+                "id": 1599495,
+                "type": "Place"
+              },
+              "updated": "2025-08-30T17:24:50.223Z"
+            },
+            {
+              "created": "2013-10-31T22:58:29.02Z",
+              "creator": {
+                "id": 847130,
+                "name": "l3otnet",
+                "type": "User"
+              },
+              "description": "For Spanish people that don't understand english at all, Here is a tutorial for them./Para la gente que habla español y no entiende ingles del todo bien, aqui hay un tutorial para ellos.\r\n\r\nCompleted!/Completo!, perfecto para la gente que habla español (español sur america/south america spanish)\r\nExamples: Chile, Argentina, Venezuela, Mexico Etc.\r\n\r\nAhora con un minijuego al final! Destruye El Castillo!/Now with a minigame at the end! Destroy The Castle!\r\n\r\nPROBABLY GOING TO UPDATE/PROBABLEMENTE ACTUALIZARE ESTO.",
+              "id": 1081610,
+              "name": "ROBLOX Spanish Tutorial/Tutorial ROBLOX Español",
+              "placeVisits": 279163,
+              "price": null,
+              "rootPlace": {
+                "id": 3589278,
+                "type": "Place"
+              },
+              "updated": "2019-04-03T01:17:32.737Z"
+            },
+            {
+              "created": "2013-10-31T22:59:13.603Z",
+              "creator": {
+                "id": 505113,
+                "name": "Tutorials",
+                "type": "User"
+              },
+              "description": "Welcome to Roblox!",
+              "id": 1138081,
+              "name": "New Place",
+              "placeVisits": 201330,
+              "price": null,
+              "rootPlace": {
+                "id": 2373367,
+                "type": "Place"
+              },
+              "updated": "2019-09-28T04:34:52.4Z"
+            },
+            {
+              "created": "2013-10-31T22:06:25.573Z",
+              "creator": {
+                "id": 243732,
+                "name": "zerox56",
+                "type": "User"
+              },
+              "description": "It's done. check it out.Does it go slow? log out of this place. wait refresh sometimes. if there are no servers. you can press play agian. still slow? pm me.have problems and it is not in my place or wanne know something. pm me. i accept all friend requests",
+              "id": 120362,
+              "name": "Tutorial for all people NEW DESING",
+              "placeVisits": 156640,
+              "price": null,
+              "rootPlace": {
+                "id": 502311,
+                "type": "Place"
+              },
+              "updated": "2019-04-03T00:56:59Z"
+            },
+            {
+              "created": "2013-10-31T22:51:26.467Z",
+              "creator": {
+                "id": 143684,
+                "name": "felron",
+                "type": "User"
+              },
+              "description": "Now that I am done this game has been updated and fixed. Please can you people not send me stuff to add and stuff put them in the comments.",
+              "id": 559668,
+              "name": "*Tutorial*",
+              "placeVisits": 19726,
+              "price": null,
+              "rootPlace": {
+                "id": 2490349,
+                "type": "Place"
+              },
+              "updated": "2019-04-02T23:21:22.06Z"
+            },
+            {
+              "created": "2013-10-31T22:07:29.383Z",
+              "creator": {
+                "id": 9201,
+                "name": "Anaminus",
+                "type": "User"
+              },
+              "description": "Create and run scripts in-game with your friends! Type \"help/\" to for help. Free to take for your own place.",
+              "id": 173259,
+              "name": "Script Builder",
+              "placeVisits": 2101843,
+              "price": null,
+              "rootPlace": {
+                "id": 113456,
+                "type": "Place"
+              },
+              "updated": "2019-04-01T21:43:21.58Z"
+            },
+            {
+              "created": "2013-10-31T22:07:06.997Z",
+              "creator": {
+                "id": 7936,
+                "name": "miked",
+                "type": "User"
+              },
+              "description": "[ Content Deleted ]",
+              "id": 154611,
+              "name": "✪Ultimate Paintball",
+              "placeVisits": 4764367,
+              "price": null,
+              "rootPlace": {
+                "id": 47828,
+                "type": "Place"
+              },
+              "updated": "2019-04-01T21:42:14.493Z"
+            },
+            {
+              "created": "2013-10-31T22:06:17.98Z",
+              "creator": {
+                "id": 238063,
+                "name": "cay386",
+                "type": "User"
+              },
+              "description": "",
+              "id": 114146,
+              "name": "N/A",
+              "placeVisits": 28534,
+              "price": null,
+              "rootPlace": {
+                "id": 561099,
+                "type": "Place"
+              },
+              "updated": "2019-04-03T00:56:51.053Z"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v2/users/1000001/favorite/games",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "body": {
+          "data": [],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "followings.roblox.com",
+        "method": "GET",
+        "path": "/v2/users/1000001/universes"
+      },
+      "response": {
+        "body": {
+          "followedSources": {},
+          "followerId": 1000001,
+          "followerType": "User",
+          "sourceType": "Universe"
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "note": "Charts sorts (2 pages) and top-trending, the Home feed (omni-recommendation), favorites of builderman (156) and the test account, followed experiences. Trimmed to 12 games per sort/topic.",
+  "source": "live"
+}

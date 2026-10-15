@@ -1,0 +1,41 @@
+# The tracker documents my-private-servers but leaves out the fields the site reads (server id,
+# active, renewal, expiry, experience name). This adds them.
+swagger: "2.0"
+host: games.roblox.com
+info: { title: "games (response schemas)", version: undocumented }
+paths:
+  /v1/private-servers/my-private-servers:
+    get:
+      # Captured 2026-10-14 live (fixture: settings.json). The site's private server list
+      # ("Servers" on www.roblox.com/my/account#!/subscriptions). Tab 0 is servers you own, tab 1
+      # servers others invited you to.
+      x-captured: "2026-10-14, www.roblox.com/my/account#!/subscriptions"
+      x-rust-name: get_my_private_servers
+      summary: Private servers the signed-in account owns (tab 0) or can join (tab 1).
+      parameters:
+        - { in: query, name: privateServersTab, required: false, type: integer, format: int32 }
+        - { in: query, name: itemsPerPage, required: false, type: integer, format: int32 }
+        - { in: query, name: cursor, required: false, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/MyPrivateServers" } }
+definitions:
+  MyPrivateServers:
+    type: object
+    properties:
+      nextPageCursor: { type: string }
+      data: { type: array, items: { $ref: "#/definitions/MyPrivateServer" } }
+  MyPrivateServer:
+    type: object
+    properties:
+      privateServerId: { type: integer, format: int64 }
+      name: { type: string }
+      active: { type: boolean }
+      universeId: { type: integer, format: int64 }
+      universeName: { type: string }
+      placeId: { type: integer, format: int64 }
+      ownerId: { type: integer, format: int64 }
+      ownerName: { type: string }
+      # Robux a month; null for free servers.
+      priceInRobux: { type: integer, format: int64 }
+      willRenew: { type: boolean }
+      expirationDate: { type: string }

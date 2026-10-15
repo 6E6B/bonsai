@@ -1,0 +1,46 @@
+@layer components {
+  [data-component="page"] {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding: 16px 20px 32px;
+  }
+
+  [data-component="page"][data-width="narrow"] {
+    max-width: 880px;
+  }
+
+  [data-component="page"][data-width="full"] {
+    flex: 1;
+    max-width: none;
+    min-height: 0;
+    padding: 0;
+  }
+
+  /* Split screens (Messages, Trades, Chat, Settings): each pane scrolls on its own and has the
+   * same insets as a page, so titles stay put when switching between split and plain screens. */
+  [data-component="split"] {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  [data-component="pane"] {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 16px 20px 32px;
+    overflow-y: auto;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  [data-component="pane"][data-side] {
+    flex: none;
+    border-right: 1px solid var(--color-line);
+  }
+}

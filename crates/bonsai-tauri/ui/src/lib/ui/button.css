@@ -1,0 +1,102 @@
+/*
+ * Button. Each variant only sets the --button-* variables; size sets height, padding and font
+ * size. A button is a fill with an elevation shadow under it. Primary is a neutral contrast
+ * fill with a sheen that lights it from above, as in the OpenCode console; danger is a
+ * secondary button with danger text, never a saturated fill.
+ * Hover and press lay a translucent overlay on top, so every variant gets them for free.
+ */
+@layer components {
+  [data-component="button"] {
+    --button-bg: var(--color-control);
+    --button-fg: var(--color-fg);
+    --button-sheen: none;
+    --button-shadow: var(--shadow-control);
+    --button-hover: var(--color-hover);
+    --button-pressed: var(--color-active);
+    --button-text-shadow: none;
+    --button-height: var(--control-md);
+    --button-px: 10px;
+
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: var(--button-height);
+    padding: 0 var(--button-px);
+    border: 0;
+    border-radius: var(--radius-md);
+    background-color: var(--button-bg);
+    background-image: var(--button-sheen);
+    box-shadow: var(--button-shadow);
+    color: var(--button-fg);
+    font-size: var(--text-base);
+    font-weight: 530;
+    text-shadow: var(--button-text-shadow);
+    white-space: nowrap;
+    user-select: none;
+    cursor: default;
+    transition:
+      background-color var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease),
+      color var(--duration) var(--ease);
+  }
+
+  [data-component="button"]:hover:not(:disabled) {
+    background-image: linear-gradient(var(--button-hover), var(--button-hover)), var(--button-sheen);
+  }
+
+  [data-component="button"]:active:not(:disabled) {
+    background-image: linear-gradient(var(--button-pressed), var(--button-pressed)), var(--button-sheen);
+  }
+
+  [data-component="button"]:disabled {
+    opacity: 0.5;
+  }
+
+  /* ── Variants ── */
+  [data-component="button"][data-variant="primary"] {
+    --button-bg: var(--color-contrast);
+    --button-fg: var(--color-on-accent);
+    --button-sheen: var(--sheen);
+    --button-shadow: var(--shadow-fill);
+    --button-hover: var(--color-hover-on-fill);
+    --button-pressed: var(--color-pressed-on-fill);
+    --button-text-shadow: var(--text-shadow-fill);
+  }
+
+  [data-component="button"][data-variant="danger"] {
+    --button-fg: var(--color-danger);
+  }
+
+  [data-component="button"][data-variant="ghost"] {
+    --button-bg: transparent;
+    --button-sheen: none;
+    --button-shadow: none;
+  }
+
+  /* ── Sizes ── */
+  [data-component="button"][data-size="sm"] {
+    --button-height: var(--control-sm);
+    --button-px: 8px;
+    gap: 4px;
+    font-size: var(--text-sm);
+  }
+
+  [data-component="button"][data-size="lg"] {
+    --button-height: var(--control-lg);
+    --button-px: 12px;
+  }
+
+  [data-component="button"][data-icon-only] {
+    width: var(--button-height);
+    padding: 0;
+  }
+}
+
+/* Toggle buttons (toggle-button.tsx) reuse the button styles; pressed lights the icon. */
+@layer components {
+  [data-component="button"][data-pressed] [data-component="icon"] {
+    color: var(--color-accent);
+  }
+}

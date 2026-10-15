@@ -1,0 +1,4 @@
+[install]
+# Only install package versions that have been public for at least 14 days.
+minimumReleaseAge = 1209600
+exact = false

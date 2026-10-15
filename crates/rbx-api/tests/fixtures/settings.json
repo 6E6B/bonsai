@@ -1,0 +1,250 @@
+{
+  "captured": "2026-10-14",
+  "source": "synthetic",
+  "note": "Account info, privacy and private server list. Response shapes observed live on 2026-10-14 (user-settings-api, accountsettings, accountinformation, users, premiumfeatures, games my-private-servers and vip-servers); every value here is made up. Writes are not sent live because they would change the test account; their request shapes come from the site's UserSettings bundle and the tracker swagger.",
+  "interactions": [
+    {
+      "request": { "method": "GET", "host": "apis.roblox.com", "path": "/user-settings-api/v1/user-settings/settings-and-options" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {
+          "whoCanChatWithMeInApp": { "currentValue": "Friends", "options": [] },
+          "whoCanChatWithMeInExperiences": {
+            "currentValue": "AllUsers",
+            "options": [
+              { "option": { "optionValue": "AllUsers" } },
+              { "option": { "optionValue": "NoOne" }, "requirement": "SelfUpdateSetting" }
+            ]
+          },
+          "whoCanJoinMeInExperiences": {
+            "currentValue": "NoOne",
+            "options": [
+              { "option": { "optionValue": "All" }, "requirement": "Inherited" },
+              { "option": { "optionValue": "Friends" }, "requirement": "SelfUpdateSetting" },
+              { "option": { "optionValue": "NoOne" } }
+            ]
+          },
+          "whoCanSeeMyInventory": {
+            "currentValue": "NoOne",
+            "options": [
+              { "option": { "optionValue": "AllUsers" }, "requirement": "SelfUpdateSetting" },
+              { "option": { "optionValue": "FriendsFollowingAndFollowers" }, "requirement": "SelfUpdateSetting" },
+              { "option": { "optionValue": "FriendsAndFollowing" }, "requirement": "SelfUpdateSetting" },
+              { "option": { "optionValue": "Friends" }, "requirement": "SelfUpdateSetting" },
+              { "option": { "optionValue": "NoOne" } }
+            ]
+          },
+          "whoCanTradeWithMe": {
+            "currentValue": "NoOne",
+            "options": [
+              { "option": { "optionValue": "AllUsers" }, "requirement": "Inherited" },
+              { "option": { "optionValue": "NoOne" } }
+            ]
+          },
+          "whoCanSeeMyOnlineStatus": {
+            "currentValue": "Friends",
+            "options": [
+              { "option": { "optionValue": "AllUsers" }, "requirement": "SelfUpdateSetting" },
+              { "option": { "optionValue": "Friends" } },
+              { "option": { "optionValue": "NoOne" }, "requirement": "SelfUpdateSetting" }
+            ]
+          },
+          "doNotDisturbTimeWindow": {
+            "currentValue": { "startTimeMinutes": 1320, "endTimeMinutes": 420 },
+            "options": [{ "option": { "optionType": "DoNotDisturbTimeWindow" }, "requirement": "SelfUpdateSetting" }]
+          },
+          "dailyScreenTimeLimit": {
+            "options": [{ "option": { "optionType": "Integer" }, "requirement": "SelfUpdateSetting" }]
+          },
+          "someFutureSetting": { "currentValue": "Whatever", "options": [], "newField": 1 }
+        }
+      }
+    },
+    {
+      "request": { "method": "POST", "host": "apis.roblox.com", "path": "/user-settings-api/v1/user-settings" },
+      "response": { "status": 200, "headers": { "content-type": "application/json" }, "body": {} }
+    },
+    {
+      "request": { "method": "GET", "host": "accountsettings.roblox.com", "path": "/v1/email" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": { "emailAddress": "t*****@example.com", "verified": true, "canBypassPasswordForEmailUpdate": false }
+      }
+    },
+    {
+      "request": { "method": "GET", "host": "accountinformation.roblox.com", "path": "/v1/phone" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {
+          "countryCode": null,
+          "prefix": null,
+          "phone": null,
+          "isVerified": false,
+          "verificationCodeLength": 6,
+          "canBypassPasswordForPhoneUpdate": true
+        }
+      }
+    },
+    {
+      "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/birthdate" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": { "birthMonth": 1, "birthDay": 2, "birthYear": 2000 }
+      }
+    },
+    {
+      "request": { "method": "GET", "host": "premiumfeatures.roblox.com", "path": "/v1/users/1000001/validate-membership" },
+      "response": { "status": 200, "headers": { "content-type": "application/json" }, "body": false }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/private-servers/my-private-servers",
+        "query": { "privateServersTab": "0" }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {
+          "nextPageCursor": null,
+          "previousPageCursor": null,
+          "data": [
+            {
+              "active": true,
+              "universeId": 383310974,
+              "placeId": 920587237,
+              "name": "Test server",
+              "ownerId": 1000001,
+              "ownerName": "TestUser",
+              "priceInRobux": null,
+              "privateServerId": 5000001,
+              "expirationDate": "2026-11-12T00:00:00Z",
+              "willRenew": true,
+              "universeName": "Adopt Me!",
+              "purchaseScheduleId": null,
+              "totalDiscountAmountInRobux": null,
+              "metadata": { "privateServerSubscriptionTags": [] }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/private-servers/my-private-servers",
+        "query": { "privateServersTab": "1" }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {
+          "nextPageCursor": null,
+          "previousPageCursor": null,
+          "data": [
+            {
+              "active": true,
+              "universeId": 13058,
+              "placeId": 1818,
+              "name": "Friends only",
+              "ownerId": 156,
+              "ownerName": "builderman",
+              "priceInRobux": 100,
+              "privateServerId": 6000001,
+              "expirationDate": null,
+              "willRenew": null,
+              "universeName": "Classic: Crossroads",
+              "purchaseScheduleId": null,
+              "totalDiscountAmountInRobux": null,
+              "metadata": { "privateServerSubscriptionTags": [] }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": { "method": "GET", "host": "games.roblox.com", "path": "/v1/vip-servers/5000001" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {
+          "id": 5000001,
+          "name": "Test server",
+          "game": { "id": 383310974, "name": "Adopt Me!", "rootPlace": { "id": 920587237, "name": "Adopt Me!" } },
+          "joinCode": null,
+          "active": true,
+          "subscription": {
+            "active": true,
+            "expired": false,
+            "expirationDate": "2026-11-12T00:00:00Z",
+            "price": 0,
+            "canRenew": true,
+            "hasInsufficientFunds": false,
+            "hasRecurringProfile": true,
+            "hasPriceChanged": false
+          },
+          "permissions": {
+            "clanAllowed": false,
+            "enemyClanId": null,
+            "friendsAllowed": false,
+            "users": [{ "id": 156, "name": "builderman", "displayName": "builderman" }]
+          },
+          "link": "https://www.roblox.com/share?code=redacted&type=Server"
+        }
+      }
+    },
+    {
+      "request": { "method": "PATCH", "host": "games.roblox.com", "path": "/v1/vip-servers/5000001/permissions" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": { "clanAllowed": false, "enemyClanId": null, "friendsAllowed": false, "users": [] }
+      }
+    },
+    {
+      "request": { "method": "PATCH", "host": "games.roblox.com", "path": "/v1/vip-servers/5000001/permissions" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {
+          "clanAllowed": false,
+          "enemyClanId": null,
+          "friendsAllowed": false,
+          "users": [{ "id": 1, "name": "Roblox", "displayName": "Roblox" }]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/1000001/display-names/validate",
+        "query": { "displayName": "Good Name" }
+      },
+      "response": { "status": 200, "headers": { "content-type": "application/json" }, "body": {} }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/1000001/display-names/validate",
+        "query": { "displayName": "A display name that is far too long" }
+      },
+      "response": {
+        "status": 400,
+        "headers": { "content-type": "application/json" },
+        "body": { "errors": [{ "code": 2, "message": "Display name is too long" }] }
+      }
+    },
+    {
+      "request": { "method": "PATCH", "host": "users.roblox.com", "path": "/v1/users/1000001/display-names" },
+      "response": { "status": 200, "headers": { "content-type": "application/json" }, "body": {} }
+    }
+  ]
+}

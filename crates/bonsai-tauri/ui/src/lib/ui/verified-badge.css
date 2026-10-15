@@ -1,0 +1,11 @@
+@layer components {
+  /* The asset carries its own blue (#0066ff); --color-verified is a lighter shade for text. */
+  [data-component="verified-badge"] {
+    display: inline-block;
+    flex-shrink: 0;
+    width: var(--badge-size);
+    height: var(--badge-size);
+    vertical-align: -0.15em;
+    background: url("./assets/verified-badge.svg") center / contain no-repeat;
+  }
+}

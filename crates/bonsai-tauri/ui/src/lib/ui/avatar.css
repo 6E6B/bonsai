@@ -1,0 +1,111 @@
+/* Avatar. The frame clips the picture; the presence dot and count sit outside the clip, ringed
+ * with the canvas color so they read on any picture. */
+@layer components {
+  [data-component="avatar"] {
+    --avatar-size: 28px;
+    --avatar-dot: 9px;
+    --avatar-ring: var(--color-canvas);
+
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+  }
+
+  [data-component="avatar"][data-size="xs"] {
+    --avatar-size: 16px;
+    --avatar-dot: 6px;
+  }
+
+  [data-component="avatar"][data-size="sm"] {
+    --avatar-size: 20px;
+    --avatar-dot: 7px;
+  }
+
+  [data-component="avatar"][data-size="lg"] {
+    --avatar-size: 40px;
+    --avatar-dot: 11px;
+  }
+
+  [data-component="avatar"][data-size="xl"] {
+    --avatar-size: 88px;
+    --avatar-dot: 18px;
+  }
+
+  [data-component="avatar"] [data-slot="frame"] {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-full);
+    background: var(--color-control);
+    box-shadow: var(--shadow-media);
+    color: var(--color-fg-muted);
+    font-size: calc(var(--avatar-size) * 0.4);
+    font-weight: 500;
+    user-select: none;
+  }
+
+  [data-component="avatar"] [data-slot="frame"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: var(--sheen-soft);
+    pointer-events: none;
+  }
+
+  [data-component="avatar"] [data-slot="image"] {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  [data-component="avatar"] [data-slot="presence"] {
+    --presence: var(--color-presence-offline);
+
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: var(--avatar-dot);
+    height: var(--avatar-dot);
+    border-radius: var(--radius-full);
+    background: var(--presence);
+    box-shadow: 0 0 0 2px var(--avatar-ring);
+  }
+
+  [data-component="avatar"] [data-slot="presence"][data-presence="online"] {
+    --presence: var(--color-presence-online);
+  }
+
+  [data-component="avatar"] [data-slot="presence"][data-presence="game"] {
+    --presence: var(--color-presence-game);
+  }
+
+  [data-component="avatar"] [data-slot="presence"][data-presence="studio"] {
+    --presence: var(--color-presence-studio);
+  }
+
+  [data-component="avatar"] [data-slot="count"] {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: var(--radius-full);
+    background: var(--color-danger);
+    box-shadow: 0 0 0 2px var(--avatar-ring);
+    color: var(--color-on-accent);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+  }
+}

@@ -1,0 +1,73 @@
+/* Layout inside a Card: avatar and text as one button, a hover tint, and a trailing action.
+ * The Card supplies the surface, radius and shadow. */
+@layer components {
+  /* Let the card shrink in a grid track so long names ellipsize. */
+  [data-component="card"]:has(> [data-component="person-card"]) {
+    min-width: 0;
+  }
+
+  [data-component="person-card"] {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    border-radius: inherit;
+  }
+
+  [data-component="person-card"]:has([data-slot="main"]:hover) {
+    background-image: linear-gradient(var(--color-hover), var(--color-hover));
+  }
+
+  [data-component="person-card"] [data-slot="main"] {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: inherit;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: default;
+  }
+
+  [data-component="person-card"] [data-slot="main"]:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
+
+  [data-component="person-card"] [data-component="avatar"] {
+    --avatar-ring: var(--color-surface);
+  }
+
+  [data-component="person-card"] [data-slot="text"] {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  [data-component="person-card"] [data-slot="title"],
+  [data-component="person-card"] [data-slot="subtitle"] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-component="person-card"] [data-slot="title"] {
+    font-weight: 500;
+  }
+
+  [data-component="person-card"] [data-slot="subtitle"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  [data-component="person-card"] [data-slot="action"] {
+    display: inline-flex;
+    flex-shrink: 0;
+    padding-right: 8px;
+  }
+}

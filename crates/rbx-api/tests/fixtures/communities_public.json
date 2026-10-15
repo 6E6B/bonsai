@@ -1,0 +1,2319 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Signed out: BIG Games Pets (3959677) details, roles, the biggest role's first 100 members, a search for \"BIG Games\", its public experiences, its store (30 newest items), allies, enemies and past names. Members and the owner are scrubbed. A creator's name in a game description was replaced by hand.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/3959677"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "communityTier": {
+            "capabilities": {
+              "isEligibleForUnrestrictedMessages": false
+            },
+            "currentTier": 3,
+            "groupId": 3959677,
+            "lastEvaluatedTime": "2026-08-20T00:20:21.612Z",
+            "previousTier": null,
+            "requirements": [
+              {
+                "key": 1,
+                "satisfied": true
+              },
+              {
+                "key": 2,
+                "satisfied": true
+              },
+              {
+                "key": 3,
+                "satisfied": true
+              },
+              {
+                "key": 4,
+                "satisfied": true
+              },
+              {
+                "key": 5,
+                "satisfied": true
+              }
+            ],
+            "tierUpdatedTime": null
+          },
+          "description": "Meow 🐾\n\nExperience Studio!",
+          "hasSocialModules": true,
+          "hasVerifiedBadge": true,
+          "id": 3959677,
+          "isBuildersClubOnly": false,
+          "memberCount": 29172390,
+          "name": "BIG Games Pets",
+          "owner": {
+            "displayName": "user1",
+            "hasVerifiedBadge": true,
+            "userId": 9000000002,
+            "username": "user2"
+          },
+          "publicEntryAllowed": true,
+          "shout": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/3959677/roles",
+        "query": {
+          "includePrivate": "false"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "groupId": 3959677,
+          "roles": [
+            {
+              "color": 0,
+              "id": 26903489,
+              "memberCount": 0,
+              "name": "Guest",
+              "rank": 0
+            },
+            {
+              "color": 0,
+              "id": 12884901889,
+              "isBase": true,
+              "memberCount": 29172390,
+              "name": "Member",
+              "rank": 1
+            },
+            {
+              "color": 0,
+              "id": 26903488,
+              "memberCount": 30252505,
+              "name": "Fan",
+              "rank": 1
+            },
+            {
+              "color": 0,
+              "id": 141052368,
+              "memberCount": 0,
+              "name": "Roblox QA",
+              "rank": 90
+            },
+            {
+              "color": 0,
+              "id": 68528166,
+              "memberCount": 38,
+              "name": "Tester",
+              "rank": 20
+            },
+            {
+              "color": 0,
+              "id": 84449563,
+              "memberCount": 9,
+              "name": "Developer",
+              "rank": 100
+            },
+            {
+              "color": 0,
+              "id": 98198322,
+              "memberCount": 1,
+              "name": "Manager",
+              "rank": 200
+            },
+            {
+              "color": 0,
+              "id": 26903486,
+              "memberCount": 1,
+              "name": "Owner",
+              "rank": 255
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/3959677/roles/26903488/users",
+        "query": {
+          "limit": "100",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "displayName": "user3",
+              "hasVerifiedBadge": false,
+              "userId": 9000000004,
+              "username": "user4"
+            },
+            {
+              "displayName": "user5",
+              "hasVerifiedBadge": false,
+              "userId": 9000000006,
+              "username": "user6"
+            },
+            {
+              "displayName": "user7",
+              "hasVerifiedBadge": false,
+              "userId": 9000000008,
+              "username": "user8"
+            },
+            {
+              "displayName": "user9",
+              "hasVerifiedBadge": false,
+              "userId": 9000000010,
+              "username": "user9"
+            },
+            {
+              "displayName": "user10",
+              "hasVerifiedBadge": false,
+              "userId": 9000000012,
+              "username": "user11"
+            },
+            {
+              "displayName": "user12",
+              "hasVerifiedBadge": false,
+              "userId": 9000000014,
+              "username": "user13"
+            },
+            {
+              "displayName": "user14",
+              "hasVerifiedBadge": false,
+              "userId": 9000000016,
+              "username": "user15"
+            },
+            {
+              "displayName": "user16",
+              "hasVerifiedBadge": false,
+              "userId": 9000000018,
+              "username": "user16"
+            },
+            {
+              "displayName": "user17",
+              "hasVerifiedBadge": false,
+              "userId": 9000000020,
+              "username": "user18"
+            },
+            {
+              "displayName": "user19",
+              "hasVerifiedBadge": false,
+              "userId": 9000000022,
+              "username": "user20"
+            },
+            {
+              "displayName": "user21",
+              "hasVerifiedBadge": false,
+              "userId": 9000000024,
+              "username": "user22"
+            },
+            {
+              "displayName": "user23",
+              "hasVerifiedBadge": false,
+              "userId": 9000000026,
+              "username": "user23"
+            },
+            {
+              "displayName": "user24",
+              "hasVerifiedBadge": false,
+              "userId": 9000000028,
+              "username": "user25"
+            },
+            {
+              "displayName": "user26",
+              "hasVerifiedBadge": false,
+              "userId": 9000000030,
+              "username": "user27"
+            },
+            {
+              "displayName": "user28",
+              "hasVerifiedBadge": false,
+              "userId": 9000000032,
+              "username": "user29"
+            },
+            {
+              "displayName": "user30",
+              "hasVerifiedBadge": false,
+              "userId": 9000000034,
+              "username": "user31"
+            },
+            {
+              "displayName": "user32",
+              "hasVerifiedBadge": false,
+              "userId": 9000000036,
+              "username": "user33"
+            },
+            {
+              "displayName": "user34",
+              "hasVerifiedBadge": false,
+              "userId": 9000000038,
+              "username": "user34"
+            },
+            {
+              "displayName": "user35",
+              "hasVerifiedBadge": false,
+              "userId": 9000000040,
+              "username": "user36"
+            },
+            {
+              "displayName": "user37",
+              "hasVerifiedBadge": false,
+              "userId": 9000000042,
+              "username": "user38"
+            },
+            {
+              "displayName": "user39",
+              "hasVerifiedBadge": false,
+              "userId": 9000000044,
+              "username": "user40"
+            },
+            {
+              "displayName": "user41",
+              "hasVerifiedBadge": false,
+              "userId": 9000000046,
+              "username": "user41"
+            },
+            {
+              "displayName": "user42",
+              "hasVerifiedBadge": false,
+              "userId": 9000000048,
+              "username": "user43"
+            },
+            {
+              "displayName": "user44",
+              "hasVerifiedBadge": false,
+              "userId": 9000000050,
+              "username": "user45"
+            },
+            {
+              "displayName": "user46",
+              "hasVerifiedBadge": false,
+              "userId": 9000000052,
+              "username": "user47"
+            },
+            {
+              "displayName": "user48",
+              "hasVerifiedBadge": false,
+              "userId": 9000000054,
+              "username": "user49"
+            },
+            {
+              "displayName": "user50",
+              "hasVerifiedBadge": false,
+              "userId": 9000000056,
+              "username": "user50"
+            },
+            {
+              "displayName": "user51",
+              "hasVerifiedBadge": false,
+              "userId": 9000000058,
+              "username": "user51"
+            },
+            {
+              "displayName": "user52",
+              "hasVerifiedBadge": false,
+              "userId": 9000000060,
+              "username": "user52"
+            },
+            {
+              "displayName": "user53",
+              "hasVerifiedBadge": false,
+              "userId": 9000000062,
+              "username": "user53"
+            },
+            {
+              "displayName": "user54",
+              "hasVerifiedBadge": false,
+              "userId": 9000000064,
+              "username": "user54"
+            },
+            {
+              "displayName": "user55",
+              "hasVerifiedBadge": false,
+              "userId": 9000000066,
+              "username": "user55"
+            },
+            {
+              "displayName": "user56",
+              "hasVerifiedBadge": false,
+              "userId": 9000000068,
+              "username": "user57"
+            },
+            {
+              "displayName": "user58",
+              "hasVerifiedBadge": false,
+              "userId": 9000000070,
+              "username": "user59"
+            },
+            {
+              "displayName": "user60",
+              "hasVerifiedBadge": false,
+              "userId": 9000000072,
+              "username": "user60"
+            },
+            {
+              "displayName": "user61",
+              "hasVerifiedBadge": false,
+              "userId": 9000000074,
+              "username": "user61"
+            },
+            {
+              "displayName": "user62",
+              "hasVerifiedBadge": false,
+              "userId": 9000000076,
+              "username": "user62"
+            },
+            {
+              "displayName": "user63",
+              "hasVerifiedBadge": false,
+              "userId": 9000000078,
+              "username": "user63"
+            },
+            {
+              "displayName": "user64",
+              "hasVerifiedBadge": false,
+              "userId": 9000000080,
+              "username": "user65"
+            },
+            {
+              "displayName": "user66",
+              "hasVerifiedBadge": false,
+              "userId": 9000000082,
+              "username": "user66"
+            },
+            {
+              "displayName": "user67",
+              "hasVerifiedBadge": false,
+              "userId": 9000000084,
+              "username": "user68"
+            },
+            {
+              "displayName": "user69",
+              "hasVerifiedBadge": false,
+              "userId": 9000000086,
+              "username": "user70"
+            },
+            {
+              "displayName": "user71",
+              "hasVerifiedBadge": false,
+              "userId": 9000000088,
+              "username": "user71"
+            },
+            {
+              "displayName": "user72",
+              "hasVerifiedBadge": false,
+              "userId": 9000000090,
+              "username": "user73"
+            },
+            {
+              "displayName": "user74",
+              "hasVerifiedBadge": false,
+              "userId": 9000000092,
+              "username": "user75"
+            },
+            {
+              "displayName": "user76",
+              "hasVerifiedBadge": false,
+              "userId": 9000000094,
+              "username": "user77"
+            },
+            {
+              "displayName": "user78",
+              "hasVerifiedBadge": false,
+              "userId": 9000000096,
+              "username": "user79"
+            },
+            {
+              "displayName": "user80",
+              "hasVerifiedBadge": false,
+              "userId": 9000000098,
+              "username": "user81"
+            },
+            {
+              "displayName": "user82",
+              "hasVerifiedBadge": false,
+              "userId": 9000000100,
+              "username": "user82"
+            },
+            {
+              "displayName": "user83",
+              "hasVerifiedBadge": false,
+              "userId": 9000000102,
+              "username": "user83"
+            },
+            {
+              "displayName": "user84",
+              "hasVerifiedBadge": false,
+              "userId": 9000000104,
+              "username": "user85"
+            },
+            {
+              "displayName": "user86",
+              "hasVerifiedBadge": false,
+              "userId": 9000000106,
+              "username": "user87"
+            },
+            {
+              "displayName": "user88",
+              "hasVerifiedBadge": false,
+              "userId": 9000000108,
+              "username": "user89"
+            },
+            {
+              "displayName": "user90",
+              "hasVerifiedBadge": false,
+              "userId": 9000000110,
+              "username": "user90"
+            },
+            {
+              "displayName": "user91",
+              "hasVerifiedBadge": false,
+              "userId": 9000000112,
+              "username": "user91"
+            },
+            {
+              "displayName": "user92",
+              "hasVerifiedBadge": false,
+              "userId": 9000000114,
+              "username": "user92"
+            },
+            {
+              "displayName": "user93",
+              "hasVerifiedBadge": false,
+              "userId": 9000000116,
+              "username": "user93"
+            },
+            {
+              "displayName": "user94",
+              "hasVerifiedBadge": false,
+              "userId": 9000000118,
+              "username": "user94"
+            },
+            {
+              "displayName": "user95",
+              "hasVerifiedBadge": false,
+              "userId": 9000000120,
+              "username": "user96"
+            },
+            {
+              "displayName": "user97",
+              "hasVerifiedBadge": false,
+              "userId": 9000000122,
+              "username": "user98"
+            },
+            {
+              "displayName": "user99",
+              "hasVerifiedBadge": false,
+              "userId": 9000000124,
+              "username": "user100"
+            },
+            {
+              "displayName": "user101",
+              "hasVerifiedBadge": false,
+              "userId": 9000000126,
+              "username": "user102"
+            },
+            {
+              "displayName": "user103",
+              "hasVerifiedBadge": false,
+              "userId": 9000000128,
+              "username": "user103"
+            },
+            {
+              "displayName": "user104",
+              "hasVerifiedBadge": false,
+              "userId": 9000000130,
+              "username": "user105"
+            },
+            {
+              "displayName": "user106",
+              "hasVerifiedBadge": false,
+              "userId": 9000000132,
+              "username": "user106"
+            },
+            {
+              "displayName": "user107",
+              "hasVerifiedBadge": false,
+              "userId": 9000000134,
+              "username": "user107"
+            },
+            {
+              "displayName": "user108",
+              "hasVerifiedBadge": false,
+              "userId": 9000000136,
+              "username": "user108"
+            },
+            {
+              "displayName": "user109",
+              "hasVerifiedBadge": false,
+              "userId": 9000000138,
+              "username": "user109"
+            },
+            {
+              "displayName": "user110",
+              "hasVerifiedBadge": false,
+              "userId": 9000000140,
+              "username": "user111"
+            },
+            {
+              "displayName": "user112",
+              "hasVerifiedBadge": false,
+              "userId": 9000000142,
+              "username": "user113"
+            },
+            {
+              "displayName": "user114",
+              "hasVerifiedBadge": false,
+              "userId": 9000000144,
+              "username": "user114"
+            },
+            {
+              "displayName": "user115",
+              "hasVerifiedBadge": false,
+              "userId": 9000000146,
+              "username": "user115"
+            },
+            {
+              "displayName": "user116",
+              "hasVerifiedBadge": false,
+              "userId": 9000000148,
+              "username": "user117"
+            },
+            {
+              "displayName": "user118",
+              "hasVerifiedBadge": false,
+              "userId": 9000000150,
+              "username": "user119"
+            },
+            {
+              "displayName": "user120",
+              "hasVerifiedBadge": false,
+              "userId": 9000000152,
+              "username": "user120"
+            },
+            {
+              "displayName": "user121",
+              "hasVerifiedBadge": false,
+              "userId": 9000000154,
+              "username": "user121"
+            },
+            {
+              "displayName": "user122",
+              "hasVerifiedBadge": false,
+              "userId": 9000000156,
+              "username": "user122"
+            },
+            {
+              "displayName": "user123",
+              "hasVerifiedBadge": false,
+              "userId": 9000000158,
+              "username": "user124"
+            },
+            {
+              "displayName": "user125",
+              "hasVerifiedBadge": false,
+              "userId": 9000000160,
+              "username": "user126"
+            },
+            {
+              "displayName": "user127",
+              "hasVerifiedBadge": false,
+              "userId": 9000000162,
+              "username": "user128"
+            },
+            {
+              "displayName": "user129",
+              "hasVerifiedBadge": false,
+              "userId": 9000000164,
+              "username": "user130"
+            },
+            {
+              "displayName": "user131",
+              "hasVerifiedBadge": false,
+              "userId": 9000000166,
+              "username": "user132"
+            },
+            {
+              "displayName": "user133",
+              "hasVerifiedBadge": false,
+              "userId": 9000000168,
+              "username": "user134"
+            },
+            {
+              "displayName": "user135",
+              "hasVerifiedBadge": false,
+              "userId": 9000000170,
+              "username": "user135"
+            },
+            {
+              "displayName": "user136",
+              "hasVerifiedBadge": false,
+              "userId": 9000000172,
+              "username": "user137"
+            },
+            {
+              "displayName": "user138",
+              "hasVerifiedBadge": false,
+              "userId": 9000000174,
+              "username": "user139"
+            },
+            {
+              "displayName": "user140",
+              "hasVerifiedBadge": false,
+              "userId": 9000000176,
+              "username": "user141"
+            },
+            {
+              "displayName": "user142",
+              "hasVerifiedBadge": false,
+              "userId": 9000000178,
+              "username": "user142"
+            },
+            {
+              "displayName": "user143",
+              "hasVerifiedBadge": false,
+              "userId": 9000000180,
+              "username": "user143"
+            },
+            {
+              "displayName": "user144",
+              "hasVerifiedBadge": false,
+              "userId": 9000000182,
+              "username": "user145"
+            },
+            {
+              "displayName": "user146",
+              "hasVerifiedBadge": false,
+              "userId": 9000000184,
+              "username": "user147"
+            },
+            {
+              "displayName": "user148",
+              "hasVerifiedBadge": false,
+              "userId": 9000000186,
+              "username": "user149"
+            },
+            {
+              "displayName": "user150",
+              "hasVerifiedBadge": false,
+              "userId": 9000000188,
+              "username": "user151"
+            },
+            {
+              "displayName": "user152",
+              "hasVerifiedBadge": false,
+              "userId": 9000000190,
+              "username": "user152"
+            },
+            {
+              "displayName": "user153",
+              "hasVerifiedBadge": false,
+              "userId": 9000000192,
+              "username": "user154"
+            },
+            {
+              "displayName": "user155",
+              "hasVerifiedBadge": false,
+              "userId": 9000000194,
+              "username": "user155"
+            },
+            {
+              "displayName": "user156",
+              "hasVerifiedBadge": false,
+              "userId": 9000000196,
+              "username": "user157"
+            },
+            {
+              "displayName": "user158",
+              "hasVerifiedBadge": false,
+              "userId": 9000000198,
+              "username": "user159"
+            },
+            {
+              "displayName": "user160",
+              "hasVerifiedBadge": false,
+              "userId": 9000000200,
+              "username": "user160"
+            },
+            {
+              "displayName": "user161",
+              "hasVerifiedBadge": false,
+              "userId": 9000000202,
+              "username": "user162"
+            }
+          ],
+          "nextPageCursor": "eyJrZXkiOiJpZF8yendBQUFhRTJ2MkRHenlHV1F3cUFCMjJEIiwic29ydE9yZGVyIjoiRGVzYyIsInBhZ2luZ0RpcmVjdGlvbiI6IkZvcndhcmQiLCJwYWdlTnVtYmVyIjoxLCJkaXNjcmltaW5hdG9yIjoiZ3JvdXBJZDozOTU5Njc3cm9sZVNldElkOjI2OTAzNDg4IiwiY291bnQiOjEwMH0KODQzNDFmY2Q5NTEyMjlkYjUwYmUzZjUzZWQ5NzcyMzU5OTU1Mzc2MDAzMDM5OTlhOWJhZjlmZGIxMzZhNzgzNA==",
+          "previousPageCursor": "eyJrZXkiOiI5MjIzMzcyMDM2ODU0Nzc1ODA3Iiwic29ydE9yZGVyIjoiQXNjIiwicGFnaW5nRGlyZWN0aW9uIjoiQmFja3dhcmQiLCJwYWdlTnVtYmVyIjoxLCJkaXNjcmltaW5hdG9yIjoiZ3JvdXBJZDozOTU5Njc3cm9sZVNldElkOjI2OTAzNDg4IiwiY291bnQiOjEwMH0KOWM5ZmUxMTc2NTY3YjgzMTkyYTVhYjQ0NDNlYTI0NWVhZWVlNjBjMzllNDZlZWFjN2U4YWVjODg1MTIyNGVkMw=="
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/search",
+        "query": {
+          "keyword": "BIG Games",
+          "limit": "25",
+          "prioritizeExactMatch": "true"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "created": "2014-09-21T15:43:36.153Z",
+              "description": "(for good gamer's)",
+              "hasVerifiedBadge": false,
+              "id": 1181406,
+              "memberCount": 51045,
+              "name": "big games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2016-12-06T03:34:25.387Z"
+            },
+            {
+              "created": "2018-03-14T02:05:43.33Z",
+              "description": "Meow 🐾\n\nExperience Studio!",
+              "hasVerifiedBadge": true,
+              "id": 3959677,
+              "memberCount": 29172392,
+              "name": "BIG Games Pets",
+              "previousName": "BIG Games Simulators",
+              "publicEntryAllowed": true,
+              "updated": "2025-12-10T21:29:24.378Z"
+            },
+            {
+              "created": "2017-09-06T03:43:45.143Z",
+              "description": "Welcome to Nosniy Games! We're a development studio dedicated to creating enjoyable content for everyone! Join our community to receive exclusive perks and stay informed on our latest game updates!\n\n🏆 2020 Mobile Game of the Year - Super Golf!\n🏆 RIA25 Best Shooter Experience - RIVALS\n🏆 RIA26 Best Shooter Experience - RIVALS\n🏆 RIA26 Best Studio - Nosniy Games",
+              "hasVerifiedBadge": true,
+              "id": 3461453,
+              "memberCount": 57356632,
+              "name": "Nosniy Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-09-15T23:15:48.181Z"
+            },
+            {
+              "created": "2021-09-07T17:54:56.187Z",
+              "description": "Join the group to get boosts in all games!\n\nWelcome to the (lol games..) Group!\nlol",
+              "hasVerifiedBadge": true,
+              "id": 12208023,
+              "memberCount": 34684083,
+              "name": "lol games..",
+              "previousName": "lol obbys.",
+              "publicEntryAllowed": true,
+              "updated": "2025-03-16T14:39:09.907Z"
+            },
+            {
+              "created": "2015-11-23T19:50:54.18Z",
+              "description": "We make games! 🍊 \n\nThanks for playing.\n\nExperience Studio!",
+              "hasVerifiedBadge": true,
+              "id": 2703304,
+              "memberCount": 11263620,
+              "name": "BIG Games™",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2025-12-10T21:29:02.983Z"
+            },
+            {
+              "created": "2011-05-20T01:38:32.96Z",
+              "description": "Welcome to Uplift Games, the studio behind Adopt Me!",
+              "hasVerifiedBadge": true,
+              "id": 295182,
+              "memberCount": 14865275,
+              "name": "Uplift Games",
+              "previousName": "DreamCraft",
+              "publicEntryAllowed": true,
+              "updated": "2024-05-17T14:38:03.977Z"
+            },
+            {
+              "created": "2023-10-10T01:41:09.513Z",
+              "description": "Check out forums, we read all posts",
+              "hasVerifiedBadge": true,
+              "id": 33230480,
+              "memberCount": 15499997,
+              "name": "L0L GAMES",
+              "previousName": "CG makes",
+              "publicEntryAllowed": true,
+              "updated": "2026-03-01T04:31:11.212Z"
+            },
+            {
+              "created": "2026-01-02T04:38:07.985Z",
+              "description": "👋 Welcome To Sleepy Towers Games 😴",
+              "hasVerifiedBadge": false,
+              "id": 825879459,
+              "memberCount": 12760774,
+              "name": "Sleepy Towers Games",
+              "previousName": "Low Retention Games",
+              "publicEntryAllowed": true,
+              "updated": "2026-09-13T04:03:18.72Z"
+            },
+            {
+              "created": "2025-11-27T22:47:33.476Z",
+              "description": "⭐ Follow Avtixe and inversepart\nSubsidiary of BlockTurns ",
+              "hasVerifiedBadge": false,
+              "id": 317000329,
+              "memberCount": 11072758,
+              "name": "Swing Games!",
+              "previousName": "Bart Games!",
+              "publicEntryAllowed": true,
+              "updated": "2026-04-21T14:44:09.498Z"
+            },
+            {
+              "created": "2020-04-20T04:53:08.113Z",
+              "description": "A group of 3 friends from New Zealand who develop games: ForyxeV, Viridial, and Cracky4\n\nOur most popular games are 99 Nights in the forest and Mall tycoon\n\nWe are currently at war with Bee Swarm Simulator Club",
+              "hasVerifiedBadge": true,
+              "id": 6042520,
+              "memberCount": 12528377,
+              "name": "Grandma's Favourite Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-02-19T23:10:00.577Z"
+            },
+            {
+              "created": "2025-03-03T17:40:31.34Z",
+              "description": "Welcome to 0 CCU Tower Games!\n\nWe create casual Roblox games built for simple and entertaining gameplay.\n\nJoin the group for new releases, game updates, and community rewards.",
+              "hasVerifiedBadge": false,
+              "id": 35700490,
+              "memberCount": 11630763,
+              "name": "0 CCU Tower Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-07-22T21:34:34.843Z"
+            },
+            {
+              "created": "2025-05-27T16:34:41.24Z",
+              "description": "Welcome to RevNation Games!🎉",
+              "hasVerifiedBadge": true,
+              "id": 36035295,
+              "memberCount": 9052623,
+              "name": "RevNation Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-01-26T14:12:34.014Z"
+            },
+            {
+              "created": "2021-02-08T01:21:23.913Z",
+              "description": "",
+              "hasVerifiedBadge": false,
+              "id": 9512031,
+              "memberCount": 10781713,
+              "name": "Awesome Fun Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2025-10-09T10:42:39.306Z"
+            },
+            {
+              "created": "2023-03-04T16:35:03.983Z",
+              "description": "",
+              "hasVerifiedBadge": false,
+              "id": 17140361,
+              "memberCount": 10073278,
+              "name": "⨯ Small World Games",
+              "previousName": "Anime Boys Developers",
+              "publicEntryAllowed": true,
+              "updated": "2025-08-04T06:46:47.432Z"
+            },
+            {
+              "created": "2025-12-29T20:59:40.055Z",
+              "description": "⚡ Feel free to share your suggestions in the forums!",
+              "hasVerifiedBadge": true,
+              "id": 340538789,
+              "memberCount": 9462056,
+              "name": "Speedy Fun Games",
+              "previousName": "Ultra Lucky Games",
+              "publicEntryAllowed": true,
+              "updated": "2026-01-29T15:42:50.511Z"
+            },
+            {
+              "created": "2022-03-29T21:19:58.19Z",
+              "description": "Thank you for playing Race Clicker!\n- Click to go faster ⚡\n- More wins give more speed 🏆",
+              "hasVerifiedBadge": false,
+              "id": 14461694,
+              "memberCount": 7669126,
+              "name": "48h Games",
+              "previousName": "Escape Us Official",
+              "publicEntryAllowed": true,
+              "updated": "2022-11-19T15:03:02.553Z"
+            },
+            {
+              "created": "2026-02-17T03:42:09.519Z",
+              "description": "Welcome to Epic Troll Games!",
+              "hasVerifiedBadge": true,
+              "id": 691351292,
+              "memberCount": 7929217,
+              "name": "Epic Math Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-04-07T01:25:08.261Z"
+            },
+            {
+              "created": "2017-05-09T04:06:27.47Z",
+              "description": "Play SKYWARS! Available on all devices (PC, Mac, iOS, Android, Amazon Devices, PlayStation and Xbox)\nhttps://www.roblox.com/games/855499080/SKYWARS",
+              "hasVerifiedBadge": true,
+              "id": 3233280,
+              "memberCount": 7253033,
+              "name": "16bitplay Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2025-09-27T22:49:02.085Z"
+            },
+            {
+              "created": "2019-05-11T03:00:02.95Z",
+              "description": "The creative studio behind Tower Defense Simulator and Alter Ego! \n\nFollow us for news on our upcoming games!",
+              "hasVerifiedBadge": false,
+              "id": 4914494,
+              "memberCount": 6047759,
+              "name": "Paradoxum Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-02-11T23:15:17.617Z"
+            },
+            {
+              "created": "2024-08-13T13:06:16.323Z",
+              "description": "REVOL GAMES™",
+              "hasVerifiedBadge": true,
+              "id": 34789496,
+              "memberCount": 5977014,
+              "name": "REVOL GAMES",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2024-08-13T13:06:16.36Z"
+            },
+            {
+              "created": "2025-11-10T20:06:43.265Z",
+              "description": "Check out our games below! 🚲",
+              "hasVerifiedBadge": true,
+              "id": 139587623,
+              "memberCount": 6358459,
+              "name": "Fun Speed Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-01-03T19:13:14.831Z"
+            },
+            {
+              "created": "2023-05-05T21:15:36.32Z",
+              "description": "✅ Indie game studio and hit games since 2024.",
+              "hasVerifiedBadge": true,
+              "id": 32350554,
+              "memberCount": 5527562,
+              "name": "TPC Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-06-03T12:13:17.784Z"
+            },
+            {
+              "created": "2025-09-14T04:12:30.023Z",
+              "description": "🥳Join the group to get benefits in all games :D",
+              "hasVerifiedBadge": true,
+              "id": 681519151,
+              "memberCount": 5555694,
+              "name": "Franck's Games",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2026-08-22T16:15:37.523Z"
+            },
+            {
+              "created": "2019-06-14T09:03:25.36Z",
+              "description": "This is where we try out cool ideas! 🔧✨\n\nExperience Studio!",
+              "hasVerifiedBadge": false,
+              "id": 4981455,
+              "memberCount": 2727192,
+              "name": "BIG Games Experimental",
+              "previousName": "",
+              "publicEntryAllowed": true,
+              "updated": "2024-12-05T19:31:17.187Z"
+            },
+            {
+              "created": "2021-11-25T03:44:22.917Z",
+              "description": "Creating games for everyone.",
+              "hasVerifiedBadge": true,
+              "id": 13031751,
+              "memberCount": 5206418,
+              "name": "Jule Games",
+              "previousName": "Meta Games.",
+              "publicEntryAllowed": true,
+              "updated": "2026-04-12T21:28:04.794Z"
+            }
+          ],
+          "keyword": "BIG Games",
+          "nextPageCursor": "eyJzdGFydEluZGV4IjoyNSwiZGlzY3JpbWluYXRvciI6ImtleXdvcmQ6QklHIEdhbWVzIiwiY291bnQiOjI1fQpjYzIwODVkZjVmN2E4ZGI4MmVlNDNhZmE5MWVjYjFhMDE2NjYzZmJlNmFhODAwNTZmNmI4ZWFjNDkzOWMyNjc3",
+          "previousPageCursor": null,
+          "totalResults": 1000
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v2/groups/3959677/gamesV2",
+        "query": {
+          "accessFilter": "2",
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "created": "2018-04-10T03:24:15.983Z",
+              "creator": {
+                "id": 3959677,
+                "type": "Group"
+              },
+              "description": "The original Pet Simulator!\r\n\r\n🏆 2-time 2018 Award Winner 🏆",
+              "id": 619296292,
+              "name": "Pet Simulator!",
+              "placeVisits": 1152744476,
+              "rootPlace": {
+                "id": 1599679393,
+                "type": "Place"
+              },
+              "updated": "2022-05-02T01:58:07.393Z"
+            },
+            {
+              "created": "2019-02-04T02:19:46.937Z",
+              "creator": {
+                "id": 3959677,
+                "type": "Group"
+              },
+              "description": "Pet Simulator 2 has been discontinued.",
+              "id": 1020741365,
+              "name": "Pet Simulator 2!",
+              "placeVisits": 102494373,
+              "rootPlace": {
+                "id": 2818280787,
+                "type": "Place"
+              },
+              "updated": "2022-05-02T02:04:46.437Z"
+            },
+            {
+              "created": "2021-01-17T04:55:30.327Z",
+              "creator": {
+                "id": 3959677,
+                "type": "Group"
+              },
+              "description": "💰 Earn coins!\n🥚 Open eggs!\n😺 Collect pets!\n✨ Enchant and upgrade!\n🗺️ Unlock worlds!\n✔️ Trade pets!\nCurrently 1,000+ pets to collect! 🐾\n\n\n🧡 Made by user2",
+              "id": 2316994223,
+              "name": "Pet Simulator X! 🐾",
+              "placeVisits": 8992984856,
+              "rootPlace": {
+                "id": 6284583030,
+                "type": "Place"
+              },
+              "updated": "2025-08-15T01:30:27.463Z"
+            },
+            {
+              "created": "2022-02-05T01:30:02.37Z",
+              "creator": {
+                "id": 3959677,
+                "type": "Group"
+              },
+              "description": "Create an army of the coolest pets! They will help you get RICH!\n\n✨ Currently 3,000+ pets to collect! 🐾\n\n🧡 Thanks for playing!",
+              "id": 3317771874,
+              "name": "🔥 [BLOOD MOON] Pet Simulator 99! 👻",
+              "placeVisits": 2667313721,
+              "rootPlace": {
+                "id": 8737899170,
+                "type": "Place"
+              },
+              "updated": "2026-10-10T15:58:47.657Z"
+            },
+            {
+              "created": "2024-08-11T07:06:12.607Z",
+              "creator": {
+                "id": 3959677,
+                "type": "Group"
+              },
+              "description": "👆 Tap for Pets! 🍀 Get Lucky! ✨ Buy Upgrades!\n\nToday is your lucky day?",
+              "id": 6401952734,
+              "name": "Pets RNG! ✨",
+              "placeVisits": 911929315,
+              "rootPlace": {
+                "id": 18901165922,
+                "type": "Place"
+              },
+              "updated": "2026-05-16T03:56:55.847Z"
+            },
+            {
+              "created": "2025-06-17T19:06:23.36Z",
+              "creator": {
+                "id": 3959677,
+                "type": "Group"
+              },
+              "description": "💸 COLLECT pets and earn money!\n😈 STEAL pets from others!\n🛡️ PROTECT your pets (slap people!)\n✨ Get HUGE Pets! 😻\n\n\n🧡 Thanks for playing!",
+              "id": 7937194831,
+              "name": "Steal a Pet 😹",
+              "placeVisits": 32487088,
+              "rootPlace": {
+                "id": 74866348003583,
+                "type": "Place"
+              },
+              "updated": "2025-07-02T18:59:55.49Z"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": "eyJrZXkiOiI2MTkyOTYyOTIiLCJzb3J0T3JkZXIiOiJEZXNjIiwicGFnaW5nRGlyZWN0aW9uIjoiQmFja3dhcmQiLCJwYWdlTnVtYmVyIjoxLCJkaXNjcmltaW5hdG9yIjoiZ3JvdXBJZDozOTU5Njc3YWNjZXNzRmlsdGVyOjIiLCJjb3VudCI6NTB9CjYxNTZlNzZhMjdlZmE1MjUyYWU5ZWNlYTBmMTk5YzdhZjcxMTQxZTFhYTM2ZWVmNmFjNTE5MDVlNzQ4YjM3NDU="
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "catalog.roblox.com",
+        "path": "/v2/search/items/details",
+        "query": {
+          "CreatorTargetId": "3959677",
+          "CreatorType": "2",
+          "SortType": "3",
+          "limit": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "assetType": 11,
+              "bundledItems": [],
+              "collectibleItemId": "2209c73c-d5e3-42f1-bd4b-123e75e8d794",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Shirt",
+              "favoriteCount": 134,
+              "hasResellers": false,
+              "id": 77859894379489,
+              "itemCreatedUtc": "2025-01-10T20:18:04.853Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 45,
+              "lowestResalePrice": 0,
+              "name": "Pet Games Shirt",
+              "offSaleDeadline": null,
+              "price": 45,
+              "productId": 7967790750740017,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "2a2rf9qyeTd8W5iegK2Prc",
+                  "taxonomyName": "Classic Shirts"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 12,
+              "bundledItems": [],
+              "collectibleItemId": "12769db0-50b2-483c-8e63-2476f5204d8e",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Pants",
+              "favoriteCount": 81,
+              "hasResellers": false,
+              "id": 129023964409575,
+              "itemCreatedUtc": "2025-01-10T20:18:30.047Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 45,
+              "lowestResalePrice": 0,
+              "name": "Pet Games Pants",
+              "offSaleDeadline": null,
+              "price": 45,
+              "productId": 4745568117191330,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "49cFNAJWuwiJJVUSADG6DR",
+                  "taxonomyName": "Classic Pants"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "b3772abe-802a-478d-9643-7e36a6972015",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Rawr >:3\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 142,
+              "hasResellers": false,
+              "id": 14629902462,
+              "itemCreatedUtc": "2023-08-31T00:02:20.937Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Dino Bear Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 1165182890673074,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "20418ac6-a3f5-4897-89a6-430ca6a81eb1",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "So kawaii\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 238,
+              "hasResellers": false,
+              "id": 14629891936,
+              "itemCreatedUtc": "2023-08-31T00:00:42.603Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Strawberry Cow Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 1282674664798777,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "58249db4-eecf-4174-b183-b0f7477dee64",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "HOT DOG!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 243,
+              "hasResellers": false,
+              "id": 14629899909,
+              "itemCreatedUtc": "2023-08-31T00:01:54.033Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Hot Dog Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 4099440828684633,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "d233481a-6717-4d5d-8bb6-2fe4373f3e05",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "The four-legged fire alarm\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 146,
+              "hasResellers": false,
+              "id": 14629910771,
+              "itemCreatedUtc": "2023-08-31T00:03:31.283Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Inferno Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 8160045325046060,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "c2186dcd-31c6-46c0-b83f-af05da9e0f5b",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "He's a Golden Receiver\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 111,
+              "hasResellers": false,
+              "id": 14629907328,
+              "itemCreatedUtc": "2023-08-31T00:03:03.67Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Basketball Dog Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 1318608424157983,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "575f602c-39cd-49bd-8fa1-86f3fea867a5",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Fiesta time!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 116,
+              "hasResellers": false,
+              "id": 13713136985,
+              "itemCreatedUtc": "2023-06-10T19:30:50.653Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Piñata Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 1306171682264334,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "d116b421-8a9f-4aed-82dc-df94ea0580cd",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "A fruity feline\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 178,
+              "hasResellers": false,
+              "id": 13713098603,
+              "itemCreatedUtc": "2023-06-10T19:26:51.74Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Pineapple Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 3614285129724125,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "833abea7-8efe-44e3-8f64-c5f8f5dca0db",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Bundle of electricity!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 227,
+              "hasResellers": false,
+              "id": 14629916461,
+              "itemCreatedUtc": "2023-08-31T00:04:22.697Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Storm Dragon Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 6030433162679241,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "9852717c-cc71-4ba5-8279-072a611c7171",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "So kawaii!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 259,
+              "hasResellers": false,
+              "id": 14629896608,
+              "itemCreatedUtc": "2023-08-31T00:01:20.53Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Kawaii Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 8887724488862942,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "acbb05f3-8c94-4697-bb72-7ff8532ca0af",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "😱\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 917,
+              "hasResellers": false,
+              "id": 13712733927,
+              "itemCreatedUtc": "2023-06-10T18:49:00.51Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Nightmare Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 1220960238372900,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "3aa2a654-74b8-437d-a94b-6e04b9a3db6d",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Don't eat :(\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 374,
+              "hasResellers": false,
+              "id": 13714932780,
+              "itemCreatedUtc": "2023-06-10T23:14:15.947Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Bread Shiba Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 5596207223410877,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "98bea8a8-985e-4c05-a7ca-41e9c9983adf",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Stealth cuddles\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 154,
+              "hasResellers": false,
+              "id": 13713051488,
+              "itemCreatedUtc": "2023-06-10T19:21:54.56Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Ninja Axolotl Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 8900531671078733,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "9674dcc1-0b12-4014-a8fc-78cd4683a912",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "beep beep\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 643,
+              "hasResellers": false,
+              "id": 12243798731,
+              "itemCreatedUtc": "2023-01-22T23:25:47.663Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Meebo Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 8639842218548083,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "fca4718e-2671-478b-8f21-edf5c81879c7",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "loves to eat COINS!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 1832,
+              "hasResellers": false,
+              "id": 12243334212,
+              "itemCreatedUtc": "2023-01-22T22:25:49.313Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Chest Mimic Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 3318289660267086,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "16439404-2be4-4a7d-8836-c264d461b3c8",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Just don't pop it\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 2601,
+              "hasResellers": false,
+              "id": 12243165965,
+              "itemCreatedUtc": "2023-01-22T22:04:55.69Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Balloon Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 729827973483160,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "c6ef4f63-17ea-4b81-b649-fbe6dc4a0cd2",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Made of gold!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 434,
+              "hasResellers": false,
+              "id": 12243112361,
+              "itemCreatedUtc": "2023-01-22T21:58:43.493Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Samurai Dragon Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 7186245048042844,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "2a9cc631-70e6-4f08-985e-d577cc2e8159",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "/ᐠ. ｡.ᐟ\\ᵐᵉᵒʷˎˊ˗\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 2102,
+              "hasResellers": false,
+              "id": 12243773512,
+              "itemCreatedUtc": "2023-01-22T23:22:13.423Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 463675454452335,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "069d8526-1d77-4d4a-9f79-14092ac5c7b9",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "So chill. But electronic.\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 817,
+              "hasResellers": false,
+              "id": 12243274893,
+              "itemCreatedUtc": "2023-01-22T22:18:34.947Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Cyborg Capybara Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 7055370076616191,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "41bb3788-1918-4187-8ecf-bb56bcac29b8",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "To accompany you on your adventures!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 1664,
+              "hasResellers": false,
+              "id": 12243668741,
+              "itemCreatedUtc": "2023-01-22T23:08:13.153Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Dominus Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 6725124216837473,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "d9ac7a64-af0b-4a2e-9590-3faaa32b5c30",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "^._.^\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 1443,
+              "hasResellers": false,
+              "id": 12242987700,
+              "itemCreatedUtc": "2023-01-22T21:44:31.27Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Doodle Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 8833353700664097,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "0ff8d5d2-6408-4e67-b570-b278a4193ab8",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "noooo don't eat him D:\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 3243,
+              "hasResellers": false,
+              "id": 12243325671,
+              "itemCreatedUtc": "2023-01-22T22:24:50.367Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Hippomelon Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 6105996554747103,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "7d58c8c0-d968-4551-a28b-36e1d4d5231e",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "honk\n\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 786,
+              "hasResellers": false,
+              "id": 12243827959,
+              "itemCreatedUtc": "2023-01-22T23:29:42.407Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Clown Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 2308897754119469,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "209db34d-2184-4032-8f63-fc2c92f4126d",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "give me money right meow!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 936,
+              "hasResellers": false,
+              "id": 12243848928,
+              "itemCreatedUtc": "2023-01-22T23:32:31.84Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Rich Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 2852870223008071,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "a93491e4-a43e-4d2a-917b-44c2176d04d2",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "BIG Games pet!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 2476,
+              "hasResellers": false,
+              "id": 12243757410,
+              "itemCreatedUtc": "2023-01-22T23:20:11.95Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "BIG Maskot Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 8161360113915112,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "c14cd960-cc6a-40dc-9dc5-67e649a4f6c5",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "so lucky!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 1726,
+              "hasResellers": false,
+              "id": 12243726632,
+              "itemCreatedUtc": "2023-01-22T23:16:01.563Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Lucki Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 6906969951582148,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "3e9b7765-f8c8-4bf1-b6b7-111eccddc4bb",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Just don't pop it\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 1392,
+              "hasResellers": false,
+              "id": 12243188602,
+              "itemCreatedUtc": "2023-01-22T22:07:37.697Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Balloon Dragon Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 835617873679120,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "22e9353a-5663-4f6c-887a-a28c3d634566",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "Glowing bright!\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 1207,
+              "hasResellers": false,
+              "id": 12242981256,
+              "itemCreatedUtc": "2023-01-22T21:43:40.57Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Sapphire Phoenix Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 7646558472631657,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 44,
+              "bundledItems": [],
+              "collectibleItemId": "8417a13b-0ac6-43c6-9ea6-f2ad65876180",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "BIG Games Pets",
+              "creatorTargetId": 3959677,
+              "creatorType": "Group",
+              "description": "yee yee cat\n\n🐾 More Pet Simulator pets: https://www.roblox.com/catalog?Category=1&CreatorName=BIG%20Games%20Pets&CreatorType=Group",
+              "favoriteCount": 1094,
+              "hasResellers": false,
+              "id": 10851135327,
+              "itemCreatedUtc": "2022-09-08T01:57:26.75Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 99,
+              "lowestResalePrice": 0,
+              "name": "Cowboy Cat Shoulder Pet!",
+              "offSaleDeadline": null,
+              "price": 99,
+              "productId": 3830054983740125,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "8i1sggNTrxoN799hpRrR1S",
+                  "taxonomyName": "Shoulder Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            }
+          ],
+          "keyword": null,
+          "nextPageCursor": "2_1_b6743c56f886cff3c86c67aa38363e7f",
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/3959677/relationships/Allies",
+        "query": {
+          "MaxRows": "100",
+          "StartRowIndex": "0"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "groupId": 3959677,
+          "nextRowIndex": 100,
+          "relatedGroups": [
+            {
+              "description": "Super fun! 😄🎆\n\nExperience Studio!",
+              "hasSocialModules": true,
+              "hasVerifiedBadge": false,
+              "id": 10026748,
+              "isBuildersClubOnly": false,
+              "memberCount": 2903253,
+              "name": "BIG Games Super Fun",
+              "owner": {
+                "displayName": "user1",
+                "hasVerifiedBadge": true,
+                "userId": 9000000002,
+                "username": "user2"
+              },
+              "publicEntryAllowed": true,
+              "shout": null
+            },
+            {
+              "description": "Staff @ BIG Games 😎",
+              "hasSocialModules": true,
+              "hasVerifiedBadge": false,
+              "id": 5060810,
+              "isBuildersClubOnly": false,
+              "memberCount": 40,
+              "name": "BIG Games Staff",
+              "owner": {
+                "displayName": "user1",
+                "hasVerifiedBadge": true,
+                "userId": 9000000002,
+                "username": "user2"
+              },
+              "publicEntryAllowed": false,
+              "shout": null
+            },
+            {
+              "description": "This is where we try out cool ideas! 🔧✨\n\nExperience Studio!",
+              "hasSocialModules": true,
+              "hasVerifiedBadge": false,
+              "id": 4981455,
+              "isBuildersClubOnly": false,
+              "memberCount": 2727192,
+              "name": "BIG Games Experimental",
+              "owner": {
+                "displayName": "user1",
+                "hasVerifiedBadge": true,
+                "userId": 9000000002,
+                "username": "user2"
+              },
+              "publicEntryAllowed": true,
+              "shout": null
+            },
+            {
+              "description": "We make games! 🍊 \n\nThanks for playing.\n\nExperience Studio!",
+              "hasSocialModules": true,
+              "hasVerifiedBadge": true,
+              "id": 2703304,
+              "isBuildersClubOnly": false,
+              "memberCount": 11263620,
+              "name": "BIG Games™",
+              "owner": {
+                "displayName": "user1",
+                "hasVerifiedBadge": true,
+                "userId": 9000000002,
+                "username": "user2"
+              },
+              "publicEntryAllowed": true,
+              "shout": null
+            }
+          ],
+          "relationshipType": "Allies",
+          "totalGroupCount": 4
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/3959677/relationships/Enemies",
+        "query": {
+          "MaxRows": "100",
+          "StartRowIndex": "0"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "groupId": 3959677,
+          "nextRowIndex": null,
+          "relatedGroups": [],
+          "relationshipType": "Enemies",
+          "totalGroupCount": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/3959677/name-history",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "created": "2022-05-28T02:26:10.27Z",
+              "name": "BIG Games Simulators"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    }
+  ]
+}

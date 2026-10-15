@@ -1,0 +1,95 @@
+@layer components {
+  [data-component="text-field"] {
+    --input-height: var(--control-md);
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  [data-component="text-field"][data-size="sm"] {
+    --input-height: var(--control-sm);
+  }
+
+  [data-component="text-field"][data-size="lg"] {
+    --input-height: var(--control-lg);
+  }
+
+  [data-component="text-field"] [data-slot="control"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    height: var(--input-height);
+    padding: 0 8px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-field);
+    background-image: var(--sheen-field);
+    box-shadow: var(--shadow-field);
+    color: var(--color-fg-faint);
+    outline: 1px solid transparent;
+    outline-offset: 0;
+    transition:
+      outline-color var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease);
+  }
+
+  [data-component="text-field"][data-size="lg"] [data-slot="control"] {
+    padding: 0 10px;
+  }
+
+  [data-component="text-field"] [data-slot="control"] [data-component="icon"] {
+    flex-shrink: 0;
+  }
+
+  [data-component="text-field"] [data-slot="input"] {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-fg);
+    font: inherit;
+    outline: none;
+  }
+
+  [data-component="text-field"][data-multiline] [data-slot="control"] {
+    height: auto;
+    min-height: var(--input-height);
+    align-items: flex-start;
+    padding-block: 5px;
+  }
+
+  [data-component="text-field"][data-multiline] [data-slot="input"] {
+    height: auto;
+    max-height: 7.5em;
+    resize: none;
+    line-height: 1.5;
+  }
+
+  [data-component="text-field"] [data-slot="input"]::placeholder {
+    color: var(--color-fg-faint);
+  }
+
+  [data-component="text-field"]:not([data-disabled], [data-invalid]) [data-slot="control"]:hover:not(:focus-within) {
+    background-image: linear-gradient(var(--color-hover), var(--color-hover)), var(--sheen-field);
+  }
+
+  [data-component="text-field"] [data-slot="control"]:focus-within {
+    outline-color: var(--color-focus);
+  }
+
+  [data-component="text-field"][data-invalid] [data-slot="control"] {
+    outline-color: var(--color-danger);
+  }
+
+  [data-component="text-field"] [data-slot="input"][data-readonly] {
+    color: var(--color-fg-muted);
+  }
+
+  [data-component="text-field"][data-disabled] [data-slot="control"] {
+    opacity: 0.5;
+  }
+}

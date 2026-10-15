@@ -1,0 +1,179 @@
+# Community forums: they replaced the group wall (`/v1/groups/{groupId}/wall/posts` answers
+# NotFound since 2025; checked 2026-10-13). The tracker has no forums endpoints.
+# Request shapes and the response fields we read come from the site's GroupForums bundle
+# (www.roblox.com/communities/{id}#!/forums, 2026-10-13). Every call needs a signed-in account
+# (anonymous answers 401 "Authentication token is missing"); responses in the fixture are
+# synthetic until a test account with forums is available (BLOCKERS #9).
+swagger: "2.0"
+host: groups.roblox.com
+info: { title: "groups (undocumented)", version: undocumented }
+paths:
+  /v1/groups/{groupId}/forums:
+    get:
+      # Captured 2026-10-13, GroupForums bundle (getForumCategoriesEndpoint). Forums tab.
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
+      x-rust-name: get_forum_categories
+      summary: A community's forum categories (archived ones with archived=true).
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: query, name: archived, required: false, type: boolean }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ForumCategories" } }
+  /v1/groups/{groupId}/forums/{categoryId}/posts:
+    get:
+      # Captured 2026-10-13, GroupForums bundle (getForumPostsEndpoint, 10 per page). Category view.
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
+      x-rust-name: get_forum_posts
+      summary: Posts in a forum category, newest activity first.
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: path, name: categoryId, required: true, type: string }
+        - { in: query, name: includeCommentCount, required: false, type: boolean }
+        - { in: query, name: limit, required: false, type: integer, format: int32 }
+        - { in: query, name: cursor, required: false, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ForumPostsPage" } }
+    post:
+      # Captured 2026-10-13, GroupForums bundle ("Create post"): body {title, content}.
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
+      x-rust-name: post_forum_post
+      summary: Start a post in a category (user action only).
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: path, name: categoryId, required: true, type: string }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ForumNewPost" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ForumPost" } }
+  /v1/groups/{groupId}/forums/{categoryId}/posts/pinned:
+    get:
+      # Captured 2026-10-13, GroupForums bundle (getForumPinnedPostsEndpoint).
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
+      x-rust-name: get_forum_pinned_posts
+      summary: Pinned posts of a category.
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: path, name: categoryId, required: true, type: string }
+        - { in: query, name: includeCommentCount, required: false, type: boolean }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ForumPostsPage" } }
+  /v1/groups/{groupId}/forums/{categoryId}/posts/{postId}:
+    delete:
+      # Captured 2026-10-13, GroupForums bundle (deleteForumPostEndpoint). Post menu "Delete".
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
+      x-rust-name: delete_forum_post
+      summary: Delete a post (its author or a moderator).
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: path, name: categoryId, required: true, type: string }
+        - { in: path, name: postId, required: true, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+  /v1/groups/{groupId}/forums/{categoryId}/posts/{postId}/comments:
+    get:
+      # Captured 2026-10-13, GroupForums bundle (getForumCommentsEndpoint, 10 per page). Post view.
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
+      x-rust-name: get_forum_comments
+      summary: Comments on a post, oldest first. The first one is the post's own text.
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: path, name: categoryId, required: true, type: string }
+        - { in: path, name: postId, required: true, type: string }
+        - { in: query, name: limit, required: false, type: integer, format: int32 }
+        - { in: query, name: cursor, required: false, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ForumCommentsPage" } }
+    post:
+      # Captured 2026-10-13, GroupForums bundle ("Reply"): body {repliesToPostCommentId, content}.
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
+      x-rust-name: post_forum_comment
+      summary: Reply to a post (user action only).
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: path, name: categoryId, required: true, type: string }
+        - { in: path, name: postId, required: true, type: string }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ForumNewComment" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ForumComment" } }
+  /v1/groups/{groupId}/forums/{categoryId}/posts/{postId}/comments/{commentId}:
+    delete:
+      # Captured 2026-10-13, GroupForums bundle (forumCommentEndpoint). Comment menu "Delete".
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
+      x-rust-name: delete_forum_comment
+      summary: Delete a comment (its author or a moderator).
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: path, name: categoryId, required: true, type: string }
+        - { in: path, name: postId, required: true, type: string }
+        - { in: path, name: commentId, required: true, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+definitions:
+  Empty:
+    type: object
+  ForumCategories:
+    type: object
+    properties:
+      data: { type: array, items: { $ref: "#/definitions/ForumCategory" } }
+  ForumCategory:
+    type: object
+    properties:
+      id: { type: string }
+      shortId: { type: string }
+      name: { type: string }
+      description: { type: string }
+      rank: { type: integer, format: int32 }
+      isArchived: { type: boolean }
+      isRestricted: { type: boolean }
+  ForumPostsPage:
+    type: object
+    properties:
+      data: { type: array, items: { $ref: "#/definitions/ForumPost" } }
+      nextPageCursor: { type: string }
+  ForumPost:
+    type: object
+    properties:
+      id: { type: string }
+      categoryId: { type: string }
+      name: { type: string, description: "The post's title." }
+      createdBy: { type: integer, format: int64 }
+      createdAt: { type: string }
+      updatedAt: { type: string }
+      isPinned: { type: boolean }
+      isLocked: { type: boolean }
+      isUnread: { type: boolean }
+      commentCount: { type: integer, format: int32 }
+      firstComment: { $ref: "#/definitions/ForumComment" }
+  ForumCommentsPage:
+    type: object
+    properties:
+      data: { type: array, items: { $ref: "#/definitions/ForumComment" } }
+      nextPageCursor: { type: string }
+  ForumComment:
+    type: object
+    properties:
+      id: { type: string }
+      parentId: { type: string }
+      createdBy: { type: integer, format: int64 }
+      createdAt: { type: string }
+      content: { $ref: "#/definitions/ForumContent" }
+      creatorInfo: { $ref: "#/definitions/ForumCreator" }
+  ForumContent:
+    type: object
+    properties:
+      plainText: { type: string }
+  ForumCreator:
+    type: object
+    properties:
+      displayName: { type: string }
+      hasVerifiedBadge: { type: boolean }
+      groupRoleName: { type: string }
+  ForumNewPost:
+    type: object
+    properties:
+      title: { type: string }
+      content: { type: string }
+  ForumNewComment:
+    type: object
+    properties:
+      repliesToPostCommentId: { type: string }
+      content: { type: string }

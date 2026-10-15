@@ -1,0 +1,31 @@
+@layer components {
+  [data-component="search-button"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: var(--control-md);
+    padding: 0 6px 0 10px;
+    border: 0;
+    border-radius: var(--radius-md);
+    /* Sits on the dark chrome, so it uses the page color, not the lighter field fill. */
+    background-color: var(--color-canvas);
+    background-image: var(--sheen-field);
+    box-shadow: var(--shadow-field);
+    color: var(--color-fg-faint);
+    text-align: left;
+    cursor: text;
+  }
+
+  [data-component="search-button"]:hover {
+    background-image: linear-gradient(var(--color-hover), var(--color-hover)), var(--sheen-field);
+    color: var(--color-fg-muted);
+  }
+
+  [data-component="search-button"] [data-slot="placeholder"] {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

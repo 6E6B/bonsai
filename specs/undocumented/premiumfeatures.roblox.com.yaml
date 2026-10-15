@@ -1,0 +1,16 @@
+# The tracker documents validate-membership with no response body; it is a bare boolean.
+swagger: "2.0"
+host: premiumfeatures.roblox.com
+info: { title: "premiumfeatures (response schemas)", version: undocumented }
+paths:
+  /v1/users/{userId}/validate-membership:
+    get:
+      # Captured 2026-10-14 live (fixture: settings.json). The Premium badge on
+      # www.roblox.com/my/account#!/billing.
+      x-captured: "2026-10-14, www.roblox.com/my/account#!/billing"
+      x-rust-name: get_has_premium
+      summary: Whether the user has Premium. The body is a bare boolean.
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { type: boolean } }

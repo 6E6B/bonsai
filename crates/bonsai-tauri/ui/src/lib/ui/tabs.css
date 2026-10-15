@@ -1,0 +1,88 @@
+/* Sub-tabs: a row of text triggers with an underline under the selected one. The underline is
+ * drawn by the trigger itself: Kobalte's measured indicator loses its size when the tabs mount
+ * hidden or before fonts load, and then vanishes or sits off center. */
+@layer components {
+  [data-component="tabs"] {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  [data-component="tabs"] > [data-slot="list"] {
+    position: relative;
+    display: flex;
+    gap: 16px;
+    /* Room for the focus ring, which overflow would clip; labels still start on the edge. */
+    margin-inline: -2px;
+    padding-inline: 2px;
+    /* A shadow, not a border, so the underline (inside the trigger) can cover it. */
+    box-shadow: inset 0 -1px var(--color-line);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"] {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    height: var(--control-lg);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-fg-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: default;
+    transition: color var(--duration) var(--ease);
+  }
+
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"]:hover:not([data-disabled]) {
+    color: var(--color-fg);
+  }
+
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"][data-selected] {
+    color: var(--color-fg);
+  }
+
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"][data-disabled] {
+    opacity: 0.5;
+  }
+
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"]:focus-visible {
+    border-radius: var(--radius-xs);
+    outline-offset: 0;
+  }
+
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"] > [data-slot="count"] {
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    line-height: 16px;
+    text-align: center;
+  }
+
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"]::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transition: transform var(--duration) var(--ease);
+  }
+
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"][data-selected]::after {
+    transform: scaleX(1);
+  }
+
+  [data-component="tabs"] > [data-slot="panel"] {
+    padding-top: 12px;
+    outline: none;
+  }
+}

@@ -1,0 +1,3665 @@
+{
+  "captured": "2026-10-13",
+  "interactions": [
+    {
+      "request": {
+        "host": "apis.roblox.com",
+        "method": "GET",
+        "path": "/universes/v1/places/920587237/universe"
+      },
+      "response": {
+        "body": {
+          "universeId": 383310974
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v1/games",
+        "query": {
+          "universeIds": "383310974"
+        }
+      },
+      "response": {
+        "body": {
+          "data": [
+            {
+              "allowedGearCategories": [],
+              "allowedGearGenres": [
+                "RPG"
+              ],
+              "canonicalUrlPath": "/games/920587237/Adopt-Me",
+              "copyingAllowed": false,
+              "createVipServersAllowed": false,
+              "created": "2017-07-14T19:26:21.347Z",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 295182,
+                "isRNVAccount": false,
+                "name": "Uplift Games",
+                "type": "Group"
+              },
+              "description": "Adopt and raise 🐶🦄👶, trade and collect legendary pets, build your dream home, and roleplay with friends!\n \t\n🚪 Halloween: Hauntlet Returns! 🚪\n📺 Escape Hauntlet and adopt Bolt, the host!\n🎁 Poltergeist Box: Bubblegum, Boba, Caramel!\n👻 Halloween Sticker Pack for your Journal!\n\nBe FIRST 🏆 To experience new updates by pressing 🔔NOTIFY.\n\nMeet the founders!\nNewFissy - Tech Director\nBethink - Creative Director\n\nFind out more about Uplift Games, our policies and creative attributions:\nhttps://devforum.roblox.com/t/credits/71812",
+              "favoritedCount": 29747867,
+              "genre": "RPG",
+              "genre_l1": "Roleplay & Avatar Sim",
+              "genre_l2": "Pet Care",
+              "id": 383310974,
+              "isAllGenre": false,
+              "isContentRestricted": false,
+              "isFavoritedByUser": false,
+              "isGenreEnforced": true,
+              "maxPlayers": 35,
+              "name": "[🎃] Adopt Me!",
+              "playing": 219039,
+              "price": null,
+              "rootPlaceId": 920587237,
+              "sourceDescription": null,
+              "sourceName": null,
+              "studioAccessToApisAllowed": false,
+              "universeAvatarType": "MorphToR15",
+              "untranslated_genre_l1": "roleplay_and_avatar_sim",
+              "updated": "2026-10-10T17:00:05.187Z",
+              "visits": 45050923349
+            }
+          ]
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v1/games/votes",
+        "query": {
+          "universeIds": "383310974"
+        }
+      },
+      "response": {
+        "body": {
+          "data": [
+            {
+              "downVotes": 1513842,
+              "id": 383310974,
+              "upVotes": 9556144
+            }
+          ]
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v2/games/383310974/media"
+      },
+      "response": {
+        "body": {
+          "data": [
+            {
+              "altText": "",
+              "approved": true,
+              "assetType": "GamePreviewVideo",
+              "assetTypeId": 86,
+              "imageId": 121137059857925,
+              "videoHash": null,
+              "videoId": "105164576911755",
+              "videoTitle": null
+            },
+            {
+              "altText": "",
+              "approved": true,
+              "assetType": "Image",
+              "assetTypeId": 1,
+              "imageId": 121137059857925,
+              "videoHash": null,
+              "videoTitle": null
+            },
+            {
+              "altText": "",
+              "approved": true,
+              "assetType": "Image",
+              "assetTypeId": 1,
+              "imageId": 87733783441530,
+              "videoHash": null,
+              "videoTitle": null
+            },
+            {
+              "altText": "",
+              "approved": true,
+              "assetType": "Image",
+              "assetTypeId": 1,
+              "imageId": 98732815508759,
+              "videoHash": null,
+              "videoTitle": null
+            },
+            {
+              "altText": "",
+              "approved": true,
+              "assetType": "Image",
+              "assetTypeId": 1,
+              "imageId": 87178109920113,
+              "videoHash": null,
+              "videoTitle": null
+            },
+            {
+              "altText": "",
+              "approved": true,
+              "assetType": "Image",
+              "assetTypeId": 1,
+              "imageId": 121916082023339,
+              "videoHash": null,
+              "videoTitle": null
+            },
+            {
+              "altText": "",
+              "approved": true,
+              "assetType": "Image",
+              "assetTypeId": 1,
+              "imageId": 76332585365418,
+              "videoHash": null,
+              "videoTitle": null
+            }
+          ]
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v1/games/920587237/servers/0",
+        "query": {
+          "excludeFullGames": "false",
+          "limit": "100",
+          "sortOrder": "2"
+        }
+      },
+      "response": {
+        "body": {
+          "data": [
+            {
+              "fps": 55.246346,
+              "id": "628007ca-805c-40f4-b222-ad1b96b9fe0d",
+              "maxPlayers": 35,
+              "ping": 42,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.976452,
+              "id": "53578b37-5083-4b9b-a559-ae36e99f3d8f",
+              "maxPlayers": 35,
+              "ping": 3,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 56.491241,
+              "id": "002433ea-d875-4b94-8ac5-03b5222f4ee7",
+              "maxPlayers": 35,
+              "ping": 31,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 50.215439,
+              "id": "815bf0aa-05a5-4df6-8ea6-f455bc10a84e",
+              "maxPlayers": 35,
+              "ping": 55,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 39.224487,
+              "id": "86879ba6-6747-42ef-9f7f-fd639af2f68e",
+              "maxPlayers": 35,
+              "ping": 42,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 44.838326,
+              "id": "963b44fa-09b9-4ff0-b4ac-00bcc6c96b14",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 54.895557,
+              "id": "2bbfda7b-f2f4-4b97-8dd5-00eb1d9846c1",
+              "maxPlayers": 35,
+              "ping": 58,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.937523,
+              "id": "cd1cb9ed-da04-4f3b-b0d7-8113e5453afd",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.948177,
+              "id": "f9c4ffd3-3f33-4e76-9839-32173bd66dff",
+              "maxPlayers": 35,
+              "ping": 79,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 54.406132,
+              "id": "8f725b18-a6e1-4c33-bc76-d0a85dbfb22e",
+              "maxPlayers": 35,
+              "ping": 10,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 60.096317,
+              "id": "cbf8b354-b472-48e9-9b09-a87be0e90690",
+              "maxPlayers": 35,
+              "ping": 1,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 58.918507,
+              "id": "ae8c5783-9cbf-40bd-bd59-58426ddfb514",
+              "maxPlayers": 35,
+              "ping": 38,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 54.994133,
+              "id": "5a580ecd-9a53-4b05-a752-ee0d61e630bc",
+              "maxPlayers": 35,
+              "ping": 125,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 52.985561,
+              "id": "1e08de7c-7bb8-4fd2-a462-00cf2fa04d1e",
+              "maxPlayers": 35,
+              "ping": 43,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.972313,
+              "id": "e1274f8a-86d4-4433-bd59-d8bd9af32ba5",
+              "maxPlayers": 35,
+              "ping": 16,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 25.1926,
+              "id": "185a3bc2-8437-42c1-b9f2-5941e91166b9",
+              "maxPlayers": 35,
+              "ping": 91,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 60.035263,
+              "id": "5546a379-962d-4584-b882-feca4df74eae",
+              "maxPlayers": 35,
+              "ping": 25,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.977978,
+              "id": "89ca71b7-e79b-47f7-adf0-ec0f4a076a23",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.989815,
+              "id": "fba6d79f-f3c8-4181-942a-fda6db2642a2",
+              "maxPlayers": 35,
+              "ping": 8,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.222687,
+              "id": "cccf38c0-a8e2-425c-9084-0544f83fb8f9",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 52.178421,
+              "id": "a8cb9e30-00ce-4dd8-855e-5d9fd3a1cac7",
+              "maxPlayers": 35,
+              "ping": 19,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.943382,
+              "id": "46860335-eb70-4b38-8e6b-8b59734c7cee",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 58.897511,
+              "id": "2509810f-9e18-4f40-9fcc-a6012d18ff19",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.984421,
+              "id": "ad70fd92-bf87-4b14-a295-b8ef5c01d08b",
+              "maxPlayers": 35,
+              "ping": 201,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 48.885494,
+              "id": "3d23c76d-b263-43a2-bab6-11d80bab93bf",
+              "maxPlayers": 35,
+              "ping": 20,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 59.952724,
+              "id": "ca3f2dec-7ee3-41c6-9bc9-f895289ca677",
+              "maxPlayers": 35,
+              "ping": 32,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 60.019112,
+              "id": "b46368ab-bbef-4bc8-8f7a-662c1b578a4d",
+              "maxPlayers": 35,
+              "ping": 9,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 50.570671,
+              "id": "5e97bb26-b885-4d01-a4f0-e03a21144375",
+              "maxPlayers": 35,
+              "ping": 27,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 60.022282,
+              "id": "b56e750d-451a-4e7d-9009-39d17f64eee2",
+              "maxPlayers": 35,
+              "ping": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 59.922482,
+              "id": "a98727db-b85a-4bea-956e-08bfd9f5fd62",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 57.302292,
+              "id": "fb234487-66bf-4dba-b4ca-0d33cb7d18ff",
+              "maxPlayers": 35,
+              "ping": 42,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 50.609264,
+              "id": "812f8691-ee7c-4b66-89cf-8b18b1caa82c",
+              "maxPlayers": 35,
+              "ping": 41,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 54.277298,
+              "id": "2a40068f-084b-489a-9670-401dbdbb5fa6",
+              "maxPlayers": 35,
+              "ping": 37,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 58.930679,
+              "id": "406eb912-bf40-47d9-bddf-7f8fc5b8de9a",
+              "maxPlayers": 35,
+              "ping": 23,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 59.982052,
+              "id": "e34ea13c-8185-4e06-ae4e-5705a7feb8e5",
+              "maxPlayers": 35,
+              "ping": 7,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 59.837276,
+              "id": "2c64edc5-6d76-41ac-9e88-f1a1c2a7f976",
+              "maxPlayers": 35,
+              "ping": 20,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 59.975025,
+              "id": "a6c3403a-bd07-4ccb-acf9-a49ca1debd52",
+              "maxPlayers": 35,
+              "ping": 5,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 15.072729,
+              "id": "c6d0fe95-a715-44f1-a174-5879c933dbfa",
+              "maxPlayers": 35,
+              "ping": 43,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 53.575981,
+              "id": "1e528ddf-81bf-41da-b7bb-737233bc639f",
+              "maxPlayers": 35,
+              "ping": 5,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 34
+            },
+            {
+              "fps": 47.731979,
+              "id": "813a7c6d-6531-4c11-9a99-009661670fe3",
+              "maxPlayers": 35,
+              "ping": 24,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 59.980499,
+              "id": "c9aa082d-7693-4602-9561-cc7b34598f6e",
+              "maxPlayers": 35,
+              "ping": 25,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 59.722534,
+              "id": "39b6d6bb-6750-4ad4-9eb6-0efba2a397dc",
+              "maxPlayers": 35,
+              "ping": 3,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 58.706367,
+              "id": "7dbd18ed-f135-4ca9-89e7-fa29958b08de",
+              "maxPlayers": 35,
+              "ping": 8,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 59.976723,
+              "id": "4350b22e-7139-4023-86b2-e54a24210a5b",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 57.965717,
+              "id": "a94cd405-6afc-47f1-813b-4c63903aa5ec",
+              "maxPlayers": 35,
+              "ping": 23,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 59.996517,
+              "id": "66495862-b219-41f0-82c8-281cc67407c0",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 59.978008,
+              "id": "751b7ce2-d2cd-4c31-9aae-81c6e000e9a2",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 58.109634,
+              "id": "6eca3f96-3a53-4940-901d-02e0cbe48818",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 60.121914,
+              "id": "71883f2f-294a-406b-965a-85c0080c9693",
+              "maxPlayers": 35,
+              "ping": 93,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 33
+            },
+            {
+              "fps": 54.562965,
+              "id": "42f45481-5faa-4e1b-af29-bddaa7481c16",
+              "maxPlayers": 35,
+              "ping": 40,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 32
+            },
+            {
+              "fps": 55.368805,
+              "id": "3ce5998b-b09d-4e19-8b01-22a413ee3b91",
+              "maxPlayers": 35,
+              "ping": 8,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 32
+            },
+            {
+              "fps": 59.869148,
+              "id": "f2607b85-4f4a-458e-91df-9f3e51582d31",
+              "maxPlayers": 35,
+              "ping": 7,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 32
+            },
+            {
+              "fps": 59.990292,
+              "id": "c14ced7a-73c7-4dca-9081-aff51ac32e2e",
+              "maxPlayers": 35,
+              "ping": 212,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 32
+            },
+            {
+              "fps": 59.966579,
+              "id": "1642cbcb-3938-470e-a5d6-31b5cfa1c175",
+              "maxPlayers": 35,
+              "ping": 30,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 32
+            },
+            {
+              "fps": 60.006474,
+              "id": "1707848a-5063-439a-b0aa-160f11418123",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 32
+            },
+            {
+              "fps": 59.937538,
+              "id": "d65620a4-1291-4bdb-83b2-19ece5ab9e59",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 32
+            },
+            {
+              "fps": 59.95414,
+              "id": "6d4c2824-8080-4e15-bcf3-784b3da51d38",
+              "maxPlayers": 35,
+              "ping": 100,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 26.90299,
+              "id": "9df1c13e-ed29-4651-951d-a626d69394bc",
+              "maxPlayers": 35,
+              "ping": 46,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 58.599663,
+              "id": "7054125a-e980-442c-9bae-da72c87ed222",
+              "maxPlayers": 35,
+              "ping": 83,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 31.551491,
+              "id": "1b733af7-ad53-42a6-b06d-7abd12e9c751",
+              "maxPlayers": 35,
+              "ping": 1,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 58.584969,
+              "id": "ae02923e-3bfb-4b20-96a1-75850752cbce",
+              "maxPlayers": 35,
+              "ping": 16,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 48.362583,
+              "id": "a023876f-c2bc-45e8-a0b2-2ec975b3b6ed",
+              "maxPlayers": 35,
+              "ping": 38,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 54.818066,
+              "id": "e92f2263-ac55-4a7e-8b56-e978ee9121ae",
+              "maxPlayers": 35,
+              "ping": 46,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 45.454395,
+              "id": "ba85f031-870b-4a9b-959c-92a7c2d333db",
+              "maxPlayers": 35,
+              "ping": 16,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 28.246824,
+              "id": "eb8c293c-83e5-4b8a-854a-821086866f72",
+              "maxPlayers": 35,
+              "ping": 30,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 44.132679,
+              "id": "2057b673-4f8d-4ad9-89c8-9763dab2ce37",
+              "maxPlayers": 35,
+              "ping": 29,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 55.68734,
+              "id": "973fd2c5-a741-4c91-8c29-3466a81ffa8b",
+              "maxPlayers": 35,
+              "ping": 58,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 31
+            },
+            {
+              "fps": 59.980526,
+              "id": "f87b7bd6-5402-4ab3-9a9d-67eff80115c1",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 30
+            },
+            {
+              "fps": 44.461929,
+              "id": "d8f8d0cb-cf56-4c30-8308-eaf9c5eaf4fe",
+              "maxPlayers": 35,
+              "ping": 14,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 30
+            },
+            {
+              "fps": 59.931118,
+              "id": "c3d62f2b-b82a-43a5-8aad-ce43ee1399c8",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 30
+            },
+            {
+              "fps": 59.979885,
+              "id": "ed53d335-b8bd-4077-aaf8-e02656783f5d",
+              "maxPlayers": 35,
+              "ping": 10,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 30
+            },
+            {
+              "fps": 58.388538,
+              "id": "345a4cd0-cd0f-4fa3-b448-30f2706f7b81",
+              "maxPlayers": 35,
+              "ping": 230,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 30
+            },
+            {
+              "fps": 41.459705,
+              "id": "bb153ffb-6b48-4e28-ae34-24931d9a298e",
+              "maxPlayers": 35,
+              "ping": 24,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 54.015114,
+              "id": "9f8e8e10-60fb-4c7a-92ed-22d9a0cfdbd0",
+              "maxPlayers": 35,
+              "ping": 14,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 53.601173,
+              "id": "595f3164-5b48-408e-927f-b003ec83e22b",
+              "maxPlayers": 35,
+              "ping": 14,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 55.420246,
+              "id": "dd7882e4-0ec1-4196-868e-4dd528143b19",
+              "maxPlayers": 35,
+              "ping": 7,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 53.358009,
+              "id": "6b258f8f-195b-4793-85d4-51baab29a126",
+              "maxPlayers": 35,
+              "ping": 38,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 46.554436,
+              "id": "8792f5a3-a88d-4ff3-a8e1-0f5a4e0bda02",
+              "maxPlayers": 35,
+              "ping": 14,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 55.995621,
+              "id": "5206d295-4292-4e12-8437-defcd5913f2f",
+              "maxPlayers": 35,
+              "ping": 19,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 54.994919,
+              "id": "48791bb1-692b-4f18-8184-e0118a7122d9",
+              "maxPlayers": 35,
+              "ping": 34,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 52.005924,
+              "id": "2d3931f1-ce88-40c9-8a12-da824387be58",
+              "maxPlayers": 35,
+              "ping": 10,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 49.969494,
+              "id": "2f952053-5d1d-414f-88d1-dd807c3157a7",
+              "maxPlayers": 35,
+              "ping": 56,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 59.945232,
+              "id": "f8700dd9-0e22-4c3f-9420-1da54dd52240",
+              "maxPlayers": 35,
+              "ping": 10,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 10.417453,
+              "id": "b8c80066-ae91-4b88-84c5-5e88bb2bcd42",
+              "maxPlayers": 35,
+              "ping": 75,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 13.026467,
+              "id": "654f5161-8203-4624-801d-b18165b45504",
+              "maxPlayers": 35,
+              "ping": 26,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 32.98954,
+              "id": "af3f2995-44d4-4ea2-8398-23c2b12ccfd3",
+              "maxPlayers": 35,
+              "ping": 65,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 60.08445,
+              "id": "e783e2d5-3629-4f94-a0bb-facbd763a6fc",
+              "maxPlayers": 35,
+              "ping": 33,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 29.527786,
+              "id": "f8ba163e-aebd-42dc-a51e-c09ec5cc6155",
+              "maxPlayers": 35,
+              "ping": 15,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 29
+            },
+            {
+              "fps": 60.048359,
+              "id": "27f12c31-abe5-42cc-b93c-6a3e8dd6ef93",
+              "maxPlayers": 35,
+              "ping": 19,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 51.541519,
+              "id": "2c8f736b-aa70-4346-97ce-e113c253b59a",
+              "maxPlayers": 35,
+              "ping": 18,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 47.063789,
+              "id": "a34c395c-c9ef-46f8-8333-02d8ea62054a",
+              "maxPlayers": 35,
+              "ping": 34,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 50.577877,
+              "id": "0791b239-f0e9-4975-91cd-2b4a3a0cbe93",
+              "maxPlayers": 35,
+              "ping": 69,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 59.995964,
+              "id": "66a74f76-7e66-4502-bf14-4110b6c20669",
+              "maxPlayers": 35,
+              "ping": 83,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 59.984455,
+              "id": "a56f9baf-da50-401e-82d3-6d23234d5262",
+              "maxPlayers": 35,
+              "ping": 67,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 59.95015,
+              "id": "605e018d-dbbb-4359-a291-39dcf9bb23f5",
+              "maxPlayers": 35,
+              "ping": 11,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 59.94978,
+              "id": "bd59a27c-0c2c-4b9e-8add-e5e81f1be28f",
+              "maxPlayers": 35,
+              "ping": 94,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 54.855167,
+              "id": "f42650bd-8e2f-46c4-9942-26cf6fbc68f3",
+              "maxPlayers": 35,
+              "ping": 21,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 55.68074,
+              "id": "98e270e1-1477-416c-b347-90db9c2ad2c3",
+              "maxPlayers": 35,
+              "ping": 20,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 52.564629,
+              "id": "e062eb35-0f60-41ac-b152-472436957edf",
+              "maxPlayers": 35,
+              "ping": 1,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            },
+            {
+              "fps": 54.713394,
+              "id": "27e759ef-37d1-48a4-a57e-8a87acf095b2",
+              "maxPlayers": 35,
+              "ping": 12,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 28
+            }
+          ],
+          "nextPageCursor": "eyJzdGFydEluZGV4IjoxMDAsImRpc2NyaW1pbmF0b3IiOiJwbGFjZUlkOjkyMDU4NzIzN3NlcnZlclR5cGU6MCIsImNvdW50IjoxMDB9Cjk5MzU3NjlkZjlkYTBlNDBhNGJhN2E4N2Y5NzRkOWY3ZmMwNmQ3ZDM1YWJlM2I2M2MxMGEwZjcwNDNlOGQ0YWI=",
+          "previousPageCursor": null
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v1/games/383310974/votes/user"
+      },
+      "response": {
+        "body": {
+          "canVote": false,
+          "reasonForNotVoteable": "PlayGame",
+          "userVote": null
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v1/games/383310974/favorites"
+      },
+      "response": {
+        "body": {
+          "isFavorited": false
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "followings.roblox.com",
+        "method": "GET",
+        "path": "/v1/users/1000001/universes/383310974/status"
+      },
+      "response": {
+        "body": {
+          "CanFollow": true,
+          "FollowingCountByType": 0,
+          "FollowingLimitByType": 200,
+          "IsFollowing": false,
+          "UniverseId": 383310974,
+          "UserId": 1000001
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "absent_headers": [
+          "x-csrf-token"
+        ],
+        "host": "apis.roblox.com",
+        "method": "POST",
+        "path": "/experience-guidelines-api/experience-guidelines/get-age-recommendation"
+      },
+      "response": {
+        "body": {
+          "ageRecommendationDetails": {
+            "descriptorUsages": [
+              {
+                "contains": true,
+                "descriptor": {
+                  "complianceApiSupported": false,
+                  "displayName": "Suitable for everyone",
+                  "iconUrl": "",
+                  "name": "all-ages-suitable-for-everyone"
+                },
+                "descriptorDimensionUsages": [],
+                "followsComplianceApi": false,
+                "name": "all-ages-suitable-for-everyone"
+              }
+            ],
+            "summary": {
+              "ageRecommendation": {
+                "contentMaturity": "minimal",
+                "displayName": "Minimal",
+                "displayNameWithHeaderShort": "Maturity: Minimal",
+                "minimumAge": 0,
+                "minimumAgeDisplay": ""
+              }
+            }
+          },
+          "contentLanguage": "en_us",
+          "headerDisplayName": "Content Maturity",
+          "headerDisplayNameShort": "Maturity"
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "apis.roblox.com",
+        "method": "GET",
+        "path": "/game-passes/v1/universes/383310974/game-passes",
+        "query": {
+          "pageSize": "50",
+          "passView": "Full"
+        }
+      },
+      "response": {
+        "body": {
+          "gamePasses": [
+            {
+              "created": "2026-09-23T00:38:18.942Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks 25% bonus Candy for the entire Halloween 2026 event!",
+              "displayIconImageAssetId": 108180168739547,
+              "displayName": "1.25x Candy Multiplier",
+              "id": 1991372518,
+              "isForSale": true,
+              "isOwned": false,
+              "name": "1.25x Candy Multiplier",
+              "price": 50,
+              "priceDiscountDetails": [],
+              "productId": 3714256301,
+              "updated": "2026-10-03T16:13:22.906Z",
+              "userBasePriceInRobux": 50
+            },
+            {
+              "created": "2017-09-24T01:33:02.703Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "VIP Benefits:\n+ VIP Room Access\n+ Exclusive Limo\n+ Exclusive House\n+ Golden Bone\n+ VIP Chat Tag\n+ 100 Adopt Me Cash",
+              "displayIconImageAssetId": 10390496928,
+              "displayName": "VIP",
+              "id": 3196348,
+              "isForSale": true,
+              "isOwned": false,
+              "name": "VIP",
+              "price": 480,
+              "priceDiscountDetails": [],
+              "productId": 101545651,
+              "updated": "2026-09-13T03:14:16.16Z",
+              "userBasePriceInRobux": 480
+            },
+            {
+              "created": "2018-10-24T14:49:22.537Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Move your home to any glowing space near the Nursery",
+              "displayIconImageAssetId": 2765394044,
+              "displayName": "Premium Plots",
+              "id": 5300198,
+              "isForSale": true,
+              "isOwned": false,
+              "name": "Premium Plots",
+              "price": 285,
+              "priceDiscountDetails": [],
+              "productId": 411693369,
+              "updated": "2026-09-13T03:14:16.16Z",
+              "userBasePriceInRobux": 285
+            },
+            {
+              "created": "2019-03-12T06:33:06.657Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "+ Millionaire Mansion\n+ Luxury Car",
+              "displayIconImageAssetId": 2962063999,
+              "displayName": "Millionaire Pack",
+              "id": 6040696,
+              "isForSale": true,
+              "isOwned": false,
+              "name": "Millionaire Pack",
+              "price": 795,
+              "priceDiscountDetails": [],
+              "productId": 493352784,
+              "updated": "2026-09-13T03:14:16.16Z",
+              "userBasePriceInRobux": 795
+            },
+            {
+              "created": "2025-11-13T18:36:05.695Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks an additional Pet Pen Slot!",
+              "displayIconImageAssetId": 71687757839047,
+              "displayName": "+1 Pet Pen Slot",
+              "id": 1585546290,
+              "isForSale": true,
+              "isOwned": false,
+              "name": "+1 Pet Pen Slot",
+              "price": 295,
+              "priceDiscountDetails": [],
+              "productId": 3460907301,
+              "updated": "2026-09-13T03:14:16.16Z",
+              "userBasePriceInRobux": 295
+            },
+            {
+              "created": "2023-06-13T14:40:32.773Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "",
+              "displayIconImageAssetId": 14773869653,
+              "displayName": "Cozy Home Lure",
+              "id": 189425850,
+              "isForSale": true,
+              "isOwned": false,
+              "name": "Cozy Home Lure",
+              "price": 765,
+              "priceDiscountDetails": [],
+              "productId": 1643376843,
+              "updated": "2026-09-13T03:14:16.16Z",
+              "userBasePriceInRobux": 765
+            },
+            {
+              "created": "2024-10-24T21:05:55.104Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks the Schoolhouse and Hospital homes!",
+              "displayIconImageAssetId": 81374240941516,
+              "displayName": "School and Hospital Homes",
+              "id": 951065968,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "School and Hospital Homes",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 2654465158,
+              "updated": "2026-08-07T23:16:46.65Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2024-10-24T21:05:32.07Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks the Soccer Stadium house!",
+              "displayIconImageAssetId": 122707672829288,
+              "displayName": "Soccer Stadium",
+              "id": 951395729,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Soccer Stadium",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 2654465088,
+              "updated": "2026-08-07T23:19:44.639Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2024-10-24T21:04:58.982Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks the Fossil Isle Returns Bundle!",
+              "displayIconImageAssetId": 72860092098862,
+              "displayName": "Fossil Isle Returns Bundle",
+              "id": 951441773,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Fossil Isle Returns Bundle",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 2654465119,
+              "updated": "2026-08-07T23:20:09.819Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-09-06T19:15:37.263Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Sell Hotdogs to your friends!\n\nIf you want to buy this again, you must repurchase IN-GAME (you can't do that here)",
+              "displayIconImageAssetId": 3823142535,
+              "displayName": "Hotdog Stand",
+              "id": 7124470,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Hotdog Stand",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 724328621,
+              "updated": "2026-08-05T00:25:14.822Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-08-08T16:24:45.277Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Gives you the Modern Mansion house",
+              "displayIconImageAssetId": 3624588032,
+              "displayName": "Modern Mansion",
+              "id": 6965379,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Modern Mansion",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 659211064,
+              "updated": "2026-08-05T00:23:41.035Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-07-26T00:53:52.013Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Sell Lemonade to your friends!\n\nIf you want to buy this again, you must repurchase IN-GAME (you can't do that here)",
+              "displayIconImageAssetId": 3539642973,
+              "displayName": "Lemonade Stand",
+              "id": 6858591,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Lemonade Stand",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 632082265,
+              "updated": "2026-08-05T00:22:39.032Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-06-10T12:36:53.147Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks a LEGENDARY flying Pet Griffin!\n\nIf you want to buy this again, you must repurchase IN-GAME (you can't do that here)",
+              "displayIconImageAssetId": 6997770602,
+              "displayName": "Pet Griffin",
+              "id": 6558813,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Pet Griffin",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 562279571,
+              "updated": "2026-08-05T00:19:41.511Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-06-10T12:36:37.047Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks an Ultra Rare Pet Horse!\n\nIf you want to buy this again, you must repurchase IN-GAME (you can't do that here)",
+              "displayIconImageAssetId": 6997771670,
+              "displayName": "Pet Horse",
+              "id": 6558811,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Pet Horse",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 562279453,
+              "updated": "2026-08-05T00:19:41.512Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-05-17T02:13:17.933Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks Celebrity Mansion and SUV!",
+              "displayIconImageAssetId": 3188122162,
+              "displayName": "Celebrity Mansion",
+              "id": 6408694,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Celebrity Mansion",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 538991263,
+              "updated": "2026-08-05T00:18:13.676Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-04-03T15:14:34.647Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks the Mermaid Mansion house!",
+              "displayIconImageAssetId": 3039106506,
+              "displayName": "Mermaid Mansion",
+              "id": 6164327,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Mermaid Mansion",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 505336948,
+              "updated": "2026-08-05T00:15:50.73Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-02-16T05:45:12.5Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks 3 Legendary Royal Carriages.\n\nIncludes the Princess Carriage, the Prince Carriage, and the Golden Royal Carriage.\n\nIf you want to buy this again, you must repurchase IN-GAME (you can't do that here)",
+              "displayIconImageAssetId": 2862193334,
+              "displayName": "Royal Carriages",
+              "id": 5904007,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Royal Carriages",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 472125497,
+              "updated": "2026-08-05T00:13:17.46Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-02-12T16:49:48.987Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Zoom around your friends with the Heart Hoverboard!\n\nIf you want to buy this again, you must repurchase IN-GAME (you can't do that here)",
+              "displayIconImageAssetId": 2851304112,
+              "displayName": "Heart Hoverboard",
+              "id": 5885873,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Heart Hoverboard",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 469821339,
+              "updated": "2026-08-05T00:13:06.622Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-01-25T15:02:04.21Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Unlocks 3 Legendary Supercars If you want to buy this again, you must repurchase IN-GAME (you can't do that here)",
+              "displayIconImageAssetId": 2783096256,
+              "displayName": "Supercar Pack",
+              "id": 5785139,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Supercar Pack",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 457914382,
+              "updated": "2026-08-05T00:12:05.823Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2019-01-10T00:24:51.673Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Use any premium face in Dress Up",
+              "displayIconImageAssetId": 4954220373,
+              "displayName": "Premium Faces",
+              "id": 5704158,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Premium Faces",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 447661708,
+              "updated": "2026-08-05T00:11:17.625Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2018-10-10T01:07:35.623Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Blast unlimited candy at your friends! (Usable past Halloween)",
+              "displayIconImageAssetId": 2473155771,
+              "displayName": "Candy Cannon",
+              "id": 5246776,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Candy Cannon",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 403894202,
+              "updated": "2026-08-05T00:06:51.564Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2018-07-12T04:06:08.42Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Play custom music at home using a Radio. Allows you to search for your favorite songs in the Roblox Catalog.",
+              "displayIconImageAssetId": 2765395546,
+              "displayName": "DJ",
+              "id": 4796463,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "DJ",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 316261682,
+              "updated": "2026-08-05T00:02:30.252Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2018-07-10T07:05:43.063Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Starter Pack rewards:\n+ Family Home!\n+ 200 Bucks!\n+ Multi-Bike!\n\nOnly 99 R$! (items worth 560 R$)",
+              "displayIconImageAssetId": 6997773218,
+              "displayName": "Starter Pack",
+              "id": 4785795,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Starter Pack",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 314265716,
+              "updated": "2026-08-05T00:02:24.103Z",
+              "userBasePriceInRobux": 0
+            },
+            {
+              "created": "2018-01-08T00:00:57.98Z",
+              "creator": {
+                "creatorId": 295182,
+                "creatorType": "Group",
+                "deprecatedId": 16808947,
+                "name": "Uplift Games"
+              },
+              "displayDescription": "Fly into the skies with your very own Glider!\n\nIf you want to buy this again, you must repurchase IN-GAME (you can't do that here)",
+              "displayIconImageAssetId": 2765390194,
+              "displayName": "Glider",
+              "id": 3745845,
+              "isForSale": false,
+              "isOwned": false,
+              "name": "Glider",
+              "price": null,
+              "priceDiscountDetails": [],
+              "productId": 132055279,
+              "updated": "2026-08-04T23:52:14.223Z",
+              "userBasePriceInRobux": 0
+            }
+          ],
+          "nextPageToken": ""
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "badges.roblox.com",
+        "method": "GET",
+        "path": "/v1/universes/383310974/badges",
+        "query": {
+          "limit": "100"
+        }
+      },
+      "response": {
+        "body": {
+          "data": [
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2018-10-17T12:43:51.29+00:00",
+              "description": "You managed to conquer the hardest obby in all of Adopt Me, very well done!",
+              "displayDescription": "You managed to conquer the hardest obby in all of Adopt Me, very well done!",
+              "displayIconImageId": 2494940857,
+              "displayName": "Tiny Isles",
+              "enabled": true,
+              "iconImageId": 2494940857,
+              "id": 2124439922,
+              "name": "Tiny Isles",
+              "statistics": {
+                "awardedCount": 1558774,
+                "pastDayAwardedCount": 123,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2018-10-17T12:43:51.29+00:00"
+            },
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2018-10-17T12:44:38.777+00:00",
+              "description": "That was a really scary map... how did you make it through? Very impressive!",
+              "displayDescription": "That was a really scary map... how did you make it through? Very impressive!",
+              "displayIconImageId": 2494942837,
+              "displayName": "Ancient Ruins",
+              "enabled": true,
+              "iconImageId": 2494942837,
+              "id": 2124439923,
+              "name": "Ancient Ruins",
+              "statistics": {
+                "awardedCount": 13310906,
+                "pastDayAwardedCount": 877,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2018-10-17T12:44:38.777+00:00"
+            },
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2018-10-17T12:45:17.757+00:00",
+              "description": "You worked your way around the coast, past the lighthouse and to the finish line! Well done!",
+              "displayDescription": "You worked your way around the coast, past the lighthouse and to the finish line! Well done!",
+              "displayIconImageId": 2494943991,
+              "displayName": "Coastal Climb",
+              "enabled": true,
+              "iconImageId": 2494943991,
+              "id": 2124439924,
+              "name": "Coastal Climb",
+              "statistics": {
+                "awardedCount": 12316482,
+                "pastDayAwardedCount": 443,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2018-10-17T12:45:17.757+00:00"
+            },
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2018-10-17T12:45:55.303+00:00",
+              "description": "That was a very VERY cold obstacle, I hope you didn't catch any chills!",
+              "displayDescription": "That was a very VERY cold obstacle, I hope you didn't catch any chills!",
+              "displayIconImageId": 2494945125,
+              "displayName": "Lonely Peak",
+              "enabled": true,
+              "iconImageId": 2494945125,
+              "id": 2124439925,
+              "name": "Lonely Peak",
+              "statistics": {
+                "awardedCount": 22702256,
+                "pastDayAwardedCount": 1099,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2018-10-17T12:45:55.303+00:00"
+            },
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2018-10-17T12:47:03.267+00:00",
+              "description": "You were extremely tiny there! You managed to complete the obstacle despite being so small, well done!",
+              "displayDescription": "You were extremely tiny there! You managed to complete the obstacle despite being so small, well done!",
+              "displayIconImageId": 2494947372,
+              "displayName": "Miniworld",
+              "enabled": true,
+              "iconImageId": 2494947372,
+              "id": 2124439926,
+              "name": "Miniworld",
+              "statistics": {
+                "awardedCount": 9099991,
+                "pastDayAwardedCount": 934,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2022-01-06T18:31:58.257+00:00"
+            },
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2018-10-17T12:47:37.9+00:00",
+              "description": "You challenged the pyramid and you lived to tell the tale, you're very talented at obstacle courses!",
+              "displayDescription": "You challenged the pyramid and you lived to tell the tale, you're very talented at obstacle courses!",
+              "displayIconImageId": 2494948572,
+              "displayName": "Pyramid",
+              "enabled": true,
+              "iconImageId": 2494948572,
+              "id": 2124439927,
+              "name": "Pyramid",
+              "statistics": {
+                "awardedCount": 2075369,
+                "pastDayAwardedCount": 210,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2018-10-17T12:47:37.9+00:00"
+            },
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2018-10-17T12:48:48.247+00:00",
+              "description": "Wow you avoided becoming as rekt as that ship was! Your skills are far beyond average!",
+              "displayDescription": "Wow you avoided becoming as rekt as that ship was! Your skills are far beyond average!",
+              "displayIconImageId": 2494950718,
+              "displayName": "Shipwreck Bay",
+              "enabled": true,
+              "iconImageId": 2494950718,
+              "id": 2124439928,
+              "name": "Shipwreck Bay",
+              "statistics": {
+                "awardedCount": 3449817,
+                "pastDayAwardedCount": 308,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2018-10-17T12:48:59.873+00:00"
+            },
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2026-09-01T17:54:36.334+00:00",
+              "description": "Awarded for hatching a Throwback Egg during Roblox's 20th anniversary event!",
+              "displayDescription": "Awarded for hatching a Throwback Egg during Roblox's 20th anniversary event!",
+              "displayIconImageId": 140043394436934,
+              "displayName": "Roblox 20 Throwback Quest",
+              "enabled": true,
+              "iconImageId": 140043394436934,
+              "id": 3720272393025103,
+              "name": "Roblox 20 Throwback Quest",
+              "statistics": {
+                "awardedCount": 6538796,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2026-09-17T16:00:06.101+00:00"
+            },
+            {
+              "awardingUniverse": {
+                "id": 383310974,
+                "name": "[🎃] Adopt Me!",
+                "rootPlaceId": 920587237
+              },
+              "created": "2026-09-01T17:54:43.624+00:00",
+              "description": null,
+              "displayDescription": null,
+              "displayIconImageId": 132733818157502,
+              "displayName": "Roblox 20 Eggburt's Quest",
+              "enabled": true,
+              "iconImageId": 132733818157502,
+              "id": 2344531550519489,
+              "name": "Roblox 20 Eggburt's Quest",
+              "statistics": {
+                "awardedCount": 681075,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2026-09-22T03:11:34.784+00:00"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "badges.roblox.com",
+        "method": "GET",
+        "path": "/v1/users/1000001/badges/awarded-dates",
+        "query": {
+          "badgeIds": "2344531550519489"
+        }
+      },
+      "response": {
+        "body": {
+          "data": []
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "apis.roblox.com",
+        "method": "GET",
+        "path": "/virtual-events/v1/universes/383310974/virtual-events",
+        "query": {
+          "fromUtc": "*",
+          "limit": "25"
+        }
+      },
+      "response": {
+        "body": {
+          "data": [
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-08-25T13:59:17.159+00:00",
+              "description": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displayDescription": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displaySubtitle": "Freebies & Chaos!",
+              "displayTitle": "ADOPT ME ADMIN ABUSE!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-09-12T16:30:53.368+00:00",
+                "startUtc": "2026-09-12T16:00:53.368+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "4252614802729468572",
+              "placeId": 920587237,
+              "subtitle": "Freebies & Chaos!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 89197145868428,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME ADMIN ABUSE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-05T07:23:23.216+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-02T14:04:11.527+00:00",
+              "description": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displayDescription": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displaySubtitle": "2X Bucks & XP! ",
+              "displayTitle": "ADOPT ME 2D TUESDAY!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-09-16T00:00:22.731+00:00",
+                "startUtc": "2026-09-15T23:00:22.731+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "6728044819031130762",
+              "placeId": 920587237,
+              "subtitle": "2X Bucks & XP! ",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 131079208711154,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME 2D TUESDAY!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-10T14:40:42.896+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-08-25T14:01:01.272+00:00",
+              "description": "Adopt Me's latest update!",
+              "displayDescription": "Adopt Me's latest update!",
+              "displaySubtitle": "Don't miss out!",
+              "displayTitle": "ADOPT ME NEW UPDATE!",
+              "eventCategories": [
+                {
+                  "category": "newContent",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-09-18T14:45:53.368+00:00",
+                "startUtc": "2026-09-11T15:05:53.368+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "7961204576177226381",
+              "placeId": 920587237,
+              "subtitle": "Don't miss out!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 83549462525758,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME NEW UPDATE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-04T12:00:38.538+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-05T07:23:21.234+00:00",
+              "description": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displayDescription": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displaySubtitle": "Freebies & Chaos!",
+              "displayTitle": "ADOPT ME ADMIN ABUSE!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-09-19T16:30:41.238+00:00",
+                "startUtc": "2026-09-19T16:00:41.238+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "1733601998135231128",
+              "placeId": 920587237,
+              "subtitle": "Freebies & Chaos!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 84746908185932,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME ADMIN ABUSE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-10T14:42:47.647+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-10T14:40:38.907+00:00",
+              "description": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displayDescription": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displaySubtitle": "2X Bucks & XP! ",
+              "displayTitle": "ADOPT ME 2D TUESDAY!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-09-23T00:00:47.584+00:00",
+                "startUtc": "2026-09-22T23:00:47.584+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "3200856746243523141",
+              "placeId": 920587237,
+              "subtitle": "2X Bucks & XP! ",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 120292355679090,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME 2D TUESDAY!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-16T02:19:57.13+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-04T12:00:36.406+00:00",
+              "description": "Adopt Me's latest update!",
+              "displayDescription": "Adopt Me's latest update!",
+              "displaySubtitle": "Don't miss out!",
+              "displayTitle": "ADOPT ME NEW UPDATE!",
+              "eventCategories": [
+                {
+                  "category": "newContent",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-09-25T14:45:59.755+00:00",
+                "startUtc": "2026-09-18T15:05:59.755+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "1308410275585720901",
+              "placeId": 920587237,
+              "subtitle": "Don't miss out!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 134432696554595,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME NEW UPDATE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-10T14:41:45.225+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-10T14:43:09.878+00:00",
+              "description": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displayDescription": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displaySubtitle": "Freebies & Chaos!",
+              "displayTitle": "ADOPT ME ADMIN ABUSE!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-09-26T16:30:47.584+00:00",
+                "startUtc": "2026-09-26T16:00:47.584+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "2067526202381435440",
+              "placeId": 920587237,
+              "subtitle": "Freebies & Chaos!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 137376241351504,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME ADMIN ABUSE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-19T23:33:28.567+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-16T02:19:54.774+00:00",
+              "description": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displayDescription": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displaySubtitle": "2X Bucks & XP! ",
+              "displayTitle": "ADOPT ME 2D TUESDAY!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-09-30T00:00:17.942+00:00",
+                "startUtc": "2026-09-29T23:00:17.942+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "7375271283996623427",
+              "placeId": 920587237,
+              "subtitle": "2X Bucks & XP! ",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 88698959137473,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME 2D TUESDAY!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-23T09:54:20.293+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-10T14:41:46.731+00:00",
+              "description": "Adopt Me's latest update!",
+              "displayDescription": "Adopt Me's latest update!",
+              "displaySubtitle": "Don't miss out!",
+              "displayTitle": "ADOPT ME NEW UPDATE!",
+              "eventCategories": [
+                {
+                  "category": "newContent",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-10-02T14:45:47.584+00:00",
+                "startUtc": "2026-09-25T15:05:47.584+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "3966321898094199395",
+              "placeId": 920587237,
+              "subtitle": "Don't miss out!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 99341060853316,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME NEW UPDATE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-18T15:21:04.187+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-19T23:33:26.239+00:00",
+              "description": "It's the launch of Adopt Me's HUGE Halloween event!\n\nDon't miss the first minigame! Collect Candy Corn to spend on brand new EVENT EXCLUSIVE pets!",
+              "displayDescription": "It's the launch of Adopt Me's HUGE Halloween event!\n\nDon't miss the first minigame! Collect Candy Corn to spend on brand new EVENT EXCLUSIVE pets!",
+              "displaySubtitle": "Live Admin Abuse & Event!",
+              "displayTitle": "ADOPT ME HALLOWEEN!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-10-03T16:30:37.239+00:00",
+                "startUtc": "2026-10-03T16:00:37.239+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "3225303757168443955",
+              "placeId": 920587237,
+              "subtitle": "Live Admin Abuse & Event!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 71805054457587,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME HALLOWEEN!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-30T18:14:45.626+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-23T09:54:17.086+00:00",
+              "description": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displayDescription": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displaySubtitle": "2X Bucks & XP! ",
+              "displayTitle": "ADOPT ME 2D TUESDAY!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-10-07T00:00:38.912+00:00",
+                "startUtc": "2026-10-06T23:00:38.912+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "2174821636858053221",
+              "placeId": 920587237,
+              "subtitle": "2X Bucks & XP! ",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 78225006355720,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME 2D TUESDAY!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-09-29T09:27:12.745+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-23T21:21:11.705+00:00",
+              "description": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displayDescription": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displaySubtitle": "Freebies & Chaos!",
+              "displayTitle": "ADOPT ME ADMIN ABUSE!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-10-10T16:30:18.968+00:00",
+                "startUtc": "2026-10-10T16:00:18.968+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "467897683407929991",
+              "placeId": 920587237,
+              "subtitle": "Freebies & Chaos!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 126087454638018,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME ADMIN ABUSE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-10-03T16:40:10.183+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-09-29T09:27:10.454+00:00",
+              "description": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displayDescription": "This calendar event marks your last chance for this day (it'll be back next week if you miss it!)\n\n12:00am Pacific (5pm South Korea, 5pm Eastern Australia)\n8:00am Pacific (4pm UK, 5pm Central Europe)\n4:00pm Pacific (8pm Eastern USA)\n\nIt will show up for everyone logged in at that time, but once you get your box it won't show up again until the next week so you can pick the time that suits you!\n\nAll players get a FREE temporary 2D Kitty that gives 2X Bucks and XP!\n\nComplete 20 Needs on the 2D Kitty to get a free 2D Box. Opening it gives a chance at a variety of rewards, including a 2D Kitty that's yours to keep!",
+              "displaySubtitle": "2X Bucks & XP! ",
+              "displayTitle": "ADOPT ME 2D TUESDAY!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-10-14T00:00:35.564+00:00",
+                "startUtc": "2026-10-13T23:00:35.564+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "8203642938119553696",
+              "placeId": 920587237,
+              "subtitle": "2X Bucks & XP! ",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 94601230185398,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME 2D TUESDAY!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-10-06T19:46:19.639+00:00",
+              "userRsvpStatus": "notGoing"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-10-03T16:41:11.046+00:00",
+              "description": "Adopt Me's latest update!",
+              "displayDescription": "Adopt Me's latest update!",
+              "displaySubtitle": "Halloween Week 2!",
+              "displayTitle": "ADOPT ME NEW UPDATE!",
+              "eventCategories": [
+                {
+                  "category": "newContent",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-10-16T14:45:41.432+00:00",
+                "startUtc": "2026-10-09T15:05:41.432+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "4417357815232987749",
+              "placeId": 920587237,
+              "subtitle": "Halloween Week 2!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 125171279687050,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME NEW UPDATE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-10-03T16:41:11.154+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-10-03T16:43:43.883+00:00",
+              "description": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displayDescription": "Enjoy Adopt Me's huge weekly party with your favorite Admins!",
+              "displaySubtitle": "Freebies & Chaos!",
+              "displayTitle": "ADOPT ME ADMIN ABUSE!",
+              "eventCategories": [
+                {
+                  "category": "festival",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-10-17T16:30:41.432+00:00",
+                "startUtc": "2026-10-17T16:00:41.432+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "754412067989095063",
+              "placeId": 920587237,
+              "subtitle": "Freebies & Chaos!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 73399265123927,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME ADMIN ABUSE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-10-10T16:55:05.152+00:00",
+              "userRsvpStatus": "none"
+            },
+            {
+              "allThumbnailsCreated": false,
+              "createdUtc": "2026-10-03T16:44:31.07+00:00",
+              "description": "Adopt Me's latest update!",
+              "displayDescription": "Adopt Me's latest update!",
+              "displaySubtitle": "Halloween Week 3!",
+              "displayTitle": "ADOPT ME NEW UPDATE!",
+              "eventCategories": [
+                {
+                  "category": "newContent",
+                  "rank": 0
+                }
+              ],
+              "eventStatus": "active",
+              "eventTime": {
+                "endUtc": "2026-10-23T14:45:41.432+00:00",
+                "startUtc": "2026-10-16T15:05:41.432+00:00"
+              },
+              "eventVisibility": "public",
+              "featuringStatus": "disabled",
+              "host": {
+                "hasVerifiedBadge": true,
+                "hostId": 295182,
+                "hostName": "Uplift Games",
+                "hostType": "group"
+              },
+              "id": "7167544946751308427",
+              "placeId": 920587237,
+              "subtitle": "Halloween Week 3!",
+              "tagline": "",
+              "thumbnails": [
+                {
+                  "mediaId": 139344016797905,
+                  "rank": 0
+                }
+              ],
+              "title": "ADOPT ME NEW UPDATE!",
+              "universeId": 383310974,
+              "updatedUtc": "2026-10-09T15:12:27.548+00:00",
+              "userRsvpStatus": "notGoing"
+            }
+          ],
+          "nextPageCursor": "",
+          "previousPageCursor": ""
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v1/games/recommendations/game/383310974",
+        "query": {
+          "IsTruncatedResultsEnabled": "false",
+          "MaxRows": "12",
+          "PaginationKey": ""
+        }
+      },
+      "response": {
+        "body": {
+          "games": [
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/1537690962/Bee-Swarm-Simulator",
+              "creatorHasVerifiedBadge": true,
+              "creatorId": 1912490,
+              "creatorName": "Onett",
+              "creatorType": "User",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_1537690962_438a",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Bee Swarm Simulator",
+              "nativeAdData": "",
+              "placeId": 1537690962,
+              "playerCount": 25132,
+              "price": null,
+              "totalDownVotes": 139942,
+              "totalUpVotes": 3037079,
+              "universeId": 601130232
+            },
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/2753915549/Blox-Fruits",
+              "creatorHasVerifiedBadge": true,
+              "creatorId": 4372130,
+              "creatorName": "Gamer Robot Inc",
+              "creatorType": "Group",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_2753915549_6db2",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Blox Fruits",
+              "nativeAdData": "",
+              "placeId": 2753915549,
+              "playerCount": 122965,
+              "price": null,
+              "totalDownVotes": 1066638,
+              "totalUpVotes": 12761961,
+              "universeId": 994732206
+            },
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/735030788/Royale-High",
+              "creatorHasVerifiedBadge": false,
+              "creatorId": 29622,
+              "creatorName": "callmehbob",
+              "creatorType": "User",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_735030788_a303",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Royale🎃High",
+              "nativeAdData": "",
+              "placeId": 735030788,
+              "playerCount": 8926,
+              "price": null,
+              "totalDownVotes": 535059,
+              "totalUpVotes": 3265519,
+              "universeId": 321778215
+            },
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/15101393044/Dress-To-Impress",
+              "creatorHasVerifiedBadge": true,
+              "creatorId": 17264167,
+              "creatorName": "Dress To Impress Group",
+              "creatorType": "Group",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_15101393044_e376",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Dress To Impress ⭐",
+              "nativeAdData": "",
+              "placeId": 15101393044,
+              "playerCount": 34019,
+              "price": null,
+              "totalDownVotes": 419722,
+              "totalUpVotes": 4028197,
+              "universeId": 5203828273
+            },
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/1962086868/Tower-of-Hell",
+              "creatorHasVerifiedBadge": false,
+              "creatorId": 4217910,
+              "creatorName": "YXceptional Studios",
+              "creatorType": "Group",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_1962086868_1f89",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Tower of Hell",
+              "nativeAdData": "",
+              "placeId": 1962086868,
+              "playerCount": 11806,
+              "price": null,
+              "totalDownVotes": 1567077,
+              "totalUpVotes": 4371412,
+              "universeId": 703124385
+            },
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/606849621/Jailbreak",
+              "creatorHasVerifiedBadge": true,
+              "creatorId": 3059674,
+              "creatorName": "Badimo",
+              "creatorType": "Group",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_606849621_e7cf",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Jailbreak",
+              "nativeAdData": "",
+              "placeId": 606849621,
+              "playerCount": 5613,
+              "price": null,
+              "totalDownVotes": 811938,
+              "totalUpVotes": 5806011,
+              "universeId": 245662005
+            },
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/8737899170/Pet-Simulator-99",
+              "creatorHasVerifiedBadge": true,
+              "creatorId": 3959677,
+              "creatorName": "BIG Games Pets",
+              "creatorType": "Group",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_8737899170_9650",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "🔥 [BLOOD MOON] Pet Simulator 99! 👻",
+              "nativeAdData": "",
+              "placeId": 8737899170,
+              "playerCount": 47773,
+              "price": null,
+              "totalDownVotes": 170622,
+              "totalUpVotes": 3070883,
+              "universeId": 3317771874
+            },
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/185655149/Welcome-to-Bloxburg",
+              "creatorHasVerifiedBadge": true,
+              "creatorId": 8505490,
+              "creatorName": "Bloxburg Development",
+              "creatorType": "Group",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_185655149_5c97",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "[🎃] Welcome to Bloxburg ",
+              "nativeAdData": "",
+              "placeId": 185655149,
+              "playerCount": 22942,
+              "price": null,
+              "totalDownVotes": 733853,
+              "totalUpVotes": 5641293,
+              "universeId": 88070565
+            },
+            {
+              "ageRecommendationDisplayName": "",
+              "analyticsIdentifier": null,
+              "canonicalUrlPath": "/games/893973440/Flee-the-Facility",
+              "creatorHasVerifiedBadge": true,
+              "creatorId": 3182154,
+              "creatorName": "A.W. Apps",
+              "creatorType": "Group",
+              "gameDescription": "",
+              "genre": "",
+              "imageToken": "T_893973440_9ee7",
+              "isShowSponsoredLabel": false,
+              "isSponsored": false,
+              "minimumAge": 0,
+              "name": "Flee the Facility",
+              "nativeAdData": "",
+              "placeId": 893973440,
+              "playerCount": 18034,
+              "price": null,
+              "totalDownVotes": 240881,
+              "totalUpVotes": 2806389,
+              "universeId": 372226183
+            }
+          ],
+          "nextPaginationKey": "startRowIndex_20,version_"
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v1/games/920587237/private-servers",
+        "query": {
+          "limit": "25"
+        }
+      },
+      "response": {
+        "body": {
+          "data": [],
+          "gameJoinRestricted": false,
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "games.roblox.com",
+        "method": "GET",
+        "path": "/v1/private-servers/enabled-in-universe/383310974"
+      },
+      "response": {
+        "body": {
+          "privateServersEnabled": true
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "host": "www.roblox.com",
+        "method": "GET",
+        "path": "/games/920587237"
+      },
+      "response": {
+        "body": "<div id=\"game-detail-meta-data\" data-private-server-price=\"0\" data-can-create-server=\"True\" data-private-server-limit=\"1\" data-private-server-product-id=\"87378186\" data-private-server-link-code=\"\"></div>",
+        "headers": {
+          "content-type": "text/html; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "absent_headers": [
+          "x-csrf-token"
+        ],
+        "host": "games.roblox.com",
+        "method": "POST",
+        "path": "/v1/games/383310974/favorites"
+      },
+      "response": {
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "XSRF token invalid"
+            }
+          ]
+        },
+        "headers": {
+          "content-type": "application/json",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "status": 403
+      }
+    },
+    {
+      "request": {
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "host": "games.roblox.com",
+        "method": "POST",
+        "path": "/v1/games/383310974/favorites"
+      },
+      "response": {
+        "body": {},
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "host": "games.roblox.com",
+        "method": "POST",
+        "path": "/v1/games/383310974/favorites"
+      },
+      "response": {
+        "body": {},
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "host": "followings.roblox.com",
+        "method": "POST",
+        "path": "/v1/users/1000001/universes/383310974"
+      },
+      "response": {
+        "body": {
+          "universeId": 383310974,
+          "userId": 1000001
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "host": "followings.roblox.com",
+        "method": "DELETE",
+        "path": "/v1/users/1000001/universes/383310974"
+      },
+      "response": {
+        "body": {
+          "universeId": 383310974,
+          "userId": 1000001
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "host": "apis.roblox.com",
+        "method": "POST",
+        "path": "/virtual-events/v1/virtual-events/8203642938119553696/rsvps"
+      },
+      "response": {
+        "body": {
+          "rsvpStatus": "going",
+          "shouldSeeNotificationsUpsellModal": true,
+          "userId": 1000001
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    {
+      "request": {
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "host": "apis.roblox.com",
+        "method": "POST",
+        "path": "/virtual-events/v1/virtual-events/8203642938119553696/rsvps"
+      },
+      "response": {
+        "body": {
+          "rsvpStatus": "notGoing",
+          "shouldSeeNotificationsUpsellModal": false,
+          "userId": 1000001
+        },
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "note": "Adopt Me (universe 383310974, place 920587237): page data, store, badges, events, private servers; favorite, notify and event RSVP on then off. The game page HTML is trimmed to its private-server data attributes.",
+  "source": "live"
+}

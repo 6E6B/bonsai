@@ -1,0 +1,23 @@
+@layer components {
+  [data-component="kbd"] {
+    display: inline-flex;
+    flex-shrink: 0;
+    gap: 2px;
+  }
+
+  [data-component="kbd"] [data-slot="key"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-control);
+    background-image: var(--sheen-soft);
+    box-shadow: var(--shadow-key);
+    color: var(--color-fg-muted);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+  }
+}

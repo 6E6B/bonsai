@@ -1,0 +1,36 @@
+/* Title bar window buttons. Wide, square-cornered hit targets like native controls; close turns
+ * danger on hover. */
+@layer components {
+  [data-component="window-controls"] {
+    display: flex;
+    align-self: stretch;
+  }
+
+  [data-component="window-controls"] [data-slot="button"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    border: 0;
+    background: none;
+    color: var(--color-fg-muted);
+    cursor: default;
+    transition:
+      background-color var(--duration) var(--ease),
+      color var(--duration) var(--ease);
+  }
+
+  [data-component="window-controls"] [data-slot="button"]:hover {
+    background: var(--color-hover);
+    color: var(--color-fg);
+  }
+
+  [data-component="window-controls"] [data-slot="button"][data-close]:hover {
+    background: var(--color-danger);
+    color: var(--color-on-accent);
+  }
+
+  [data-component="window-controls"] [data-slot="button"]:focus-visible {
+    outline-offset: -2px;
+  }
+}

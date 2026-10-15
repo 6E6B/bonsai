@@ -1,0 +1,414 @@
+{
+  "captured": "2026-10-13",
+  "source": "synthetic",
+  "note": "Hand-written from the tracker's trades v1/v2, inventory and catalog favorites schemas: no test account has trades or limiteds, and live trade writes would involve real people. Two inbound trades, one trade's details, rules, eligibility, tradable items, accept, a decline that fails, send, counter, item ownership, favorite on and off, and deleting an inventory item.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "trades.roblox.com",
+        "path": "/v1/trades/Inbound",
+        "query": {
+          "limit": "25",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": 7001,
+              "user": {
+                "id": 2000001,
+                "name": "user1",
+                "displayName": "User One"
+              },
+              "created": "2026-10-13T08:00:00.123Z",
+              "expiration": "2026-10-17T08:00:00.123Z",
+              "isActive": true,
+              "status": "Open"
+            },
+            {
+              "id": 7002,
+              "user": {
+                "id": 2000002,
+                "name": "user2",
+                "displayName": "User Two"
+              },
+              "created": "2026-10-12T08:00:00Z",
+              "expiration": "2026-10-16T08:00:00Z",
+              "isActive": true,
+              "status": "Open"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "trades.roblox.com",
+        "path": "/v2/trades/7001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "tradeId": 7001,
+          "status": "Open",
+          "participantAOffer": {
+            "user": {
+              "id": 2000001,
+              "name": "user1",
+              "displayName": "User One"
+            },
+            "robux": 500,
+            "items": [
+              {
+                "collectibleItemInstanceId": "aaaaaaaa-0000-0000-0000-000000000001",
+                "itemTarget": {
+                  "itemType": "Asset",
+                  "targetId": "1365767"
+                },
+                "itemName": "Valkyrie Helm",
+                "serialNumber": null,
+                "recentAveragePrice": 256923,
+                "originalPrice": null,
+                "assetStock": null,
+                "isOnHold": false
+              }
+            ]
+          },
+          "participantBOffer": {
+            "user": {
+              "id": 1000001,
+              "name": "TestUser",
+              "displayName": "Test User"
+            },
+            "robux": 0,
+            "items": [
+              {
+                "collectibleItemInstanceId": "bbbbbbbb-0000-0000-0000-000000000001",
+                "itemTarget": {
+                  "itemType": "Asset",
+                  "targetId": "1029025"
+                },
+                "itemName": "The Classic ROBLOX Fedora",
+                "serialNumber": 812,
+                "recentAveragePrice": 406464,
+                "originalPrice": null,
+                "assetStock": null,
+                "isOnHold": false
+              },
+              {
+                "collectibleItemInstanceId": "bbbbbbbb-0000-0000-0000-000000000002",
+                "itemTarget": {
+                  "itemType": "Asset",
+                  "targetId": "1028606"
+                },
+                "itemName": "Red Baseball Cap",
+                "serialNumber": null,
+                "recentAveragePrice": 1309,
+                "originalPrice": null,
+                "assetStock": null,
+                "isOnHold": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "trades.roblox.com",
+        "path": "/v1/trades/metadata"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "maxItemsPerSide": 4,
+          "minValueRatio": 0.5,
+          "tradeSystemMaxRobuxPercent": 0.5,
+          "tradeSystemRobuxFee": 0.3
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "trades.roblox.com",
+        "path": "/v2/users/me/can-trade"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "userId": 1000001,
+          "canTrade": true,
+          "tradeEligibility": "Eligible",
+          "currencyTransferEligibility": {
+            "canSend": true,
+            "canRequest": true
+          },
+          "freeTradesAllowance": {
+            "limit": 10,
+            "remaining": 9,
+            "window": "week"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "trades.roblox.com",
+        "path": "/v2/users/2000003/can-trade-with"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "userId": 1000001,
+          "targetUserId": 2000003,
+          "canTrade": false,
+          "mutualTradeEligibility": "TargetUserIneligible"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "trades.roblox.com",
+        "path": "/v2/users/1000001/tradableItems",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "userId": 1000001,
+          "nextPageCursor": null,
+          "items": [
+            {
+              "collectibleItemId": "c0ffee00-0000-0000-0000-000000000001",
+              "itemTarget": {
+                "itemType": "Asset",
+                "targetId": "1029025"
+              },
+              "itemName": "The Classic ROBLOX Fedora",
+              "recentAveragePrice": 406464,
+              "originalPrice": null,
+              "assetStock": null,
+              "instances": [
+                {
+                  "collectibleItemInstanceId": "bbbbbbbb-0000-0000-0000-000000000001",
+                  "serialNumber": 812,
+                  "isOnHold": false
+                },
+                {
+                  "collectibleItemInstanceId": "bbbbbbbb-0000-0000-0000-000000000003",
+                  "serialNumber": null,
+                  "isOnHold": true
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "trades.roblox.com",
+        "path": "/v1/trades/7001/accept",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "trades.roblox.com",
+        "path": "/v1/trades/1/count"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "trades.roblox.com",
+        "path": "/v1/trades/7002/decline",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 2,
+              "message": "The trade is inactive."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "trades.roblox.com",
+        "path": "/v2/trades/send",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "tradeId": 7003
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "trades.roblox.com",
+        "path": "/v2/trades/7002/counter",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "tradeId": 7004
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v1/users/1000001/items/0/1365767/is-owned"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": true
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "catalog.roblox.com",
+        "path": "/v1/favorites/users/1000001/assets/1365767/favorite"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": null
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "catalog.roblox.com",
+        "path": "/v1/favorites/users/1000001/assets/1365767/favorite",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "catalog.roblox.com",
+        "path": "/v1/favorites/users/1000001/assets/1365767/favorite",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "inventory.roblox.com",
+        "path": "/v2/inventory/asset/1028606",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    }
+  ]
+}

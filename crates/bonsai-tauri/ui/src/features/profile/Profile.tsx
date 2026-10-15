@@ -1,0 +1,688 @@
+import { useParams, useSearchParams } from "@solidjs/router"
+import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js"
+import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
+import { run } from "~/lib/commands/registry"
+import { ago, compact, date, percent } from "~/lib/format"
+import {
+  type Connection,
+  commands,
+  type GameCard,
+  type GroupCard,
+  type ItemCard,
+  type List,
+  type OutfitView,
+  type ProfileView,
+  type TraderView,
+  type UserBadge,
+} from "~/lib/ipc/bindings"
+import { Description } from "~/lib/linked-text"
+import { emptyList, ListState } from "~/lib/list-state"
+import { userMenu } from "~/lib/menus"
+import { shell, useLive } from "~/lib/store"
+import { setTabTitle } from "~/lib/tabs"
+import { thumbUrl } from "~/lib/thumb"
+import { GameTile, ItemTile, PlayingRow, tileGrid } from "~/lib/tiles"
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Clamp,
+  ContextMenu,
+  Fact,
+  FactGroup,
+  Facts,
+  Icon,
+  IconButton,
+  ListItem,
+  Menu,
+  Page,
+  Robux,
+  SegmentedControl,
+  Skeleton,
+  TabPanel,
+  Tabs,
+  TextField,
+  TextLink,
+  Thumbnail,
+  Tooltip,
+  VerifiedBadge,
+  VirtualGrid,
+} from "~/lib/ui"
+import { VALUES_SOURCE } from "~/lib/values"
+import { Outfits } from "./Outfits"
+import { TradingCard } from "./Trading"
+
+const allSections = [
+  { value: "about", label: "About" },
+  { value: "outfits", label: "Outfits" },
+  { value: "connections", label: "Connections" },
+  { value: "creations", label: "Creations" },
+  { value: "favorites", label: "Favorites" },
+  { value: "followed", label: "Followed" },
+  { value: "badges", label: "Badges" },
+  { value: "communities", label: "Communities" },
+  { value: "items", label: "Collectibles" },
+]
+
+/** A list that has finished loading with nothing in it. Errors keep their tab so they show. */
+const isEmpty = (l: { loading: boolean; error: string | null; items: unknown[] }) =>
+  !l.loading && !l.error && l.items.length === 0
+
+const ms = (iso: string) => {
+  const t = Date.parse(iso)
+  return Number.isNaN(t) ? undefined : t
+}
+
+/** A user: picture, names, presence and counts beside one or two actions, then sub-tabs.
+ * Everything else (trade, follow, decline, copy) is in the More menu. Your own accounts'
+ * profiles hide the friend actions. */
+export default function Profile() {
+  const params = useParams()
+  const userId = () => Number(params.id)
+  const view = useLive(
+    userId,
+    (id) => commands.profile(id),
+    (): ProfileView => ({
+      loading: true,
+      error: null,
+      user: null,
+      presence: "offline",
+      place: null,
+      placeId: null,
+      universeId: null,
+      relation: null,
+      mine: false,
+      pastNames: [],
+      lastOnline: null,
+      lastOnlineBy: null,
+      lastLocation: null,
+      unfriendedAt: null,
+      mutualFriends: null,
+      mutualMore: false,
+      visits: null,
+      favoritesReceived: null,
+      nickname: null,
+      note: null,
+    }),
+  )
+  const creations = useLive(userId, commands.profileCreations, emptyList<GameCard>)
+  const favorites = useLive(userId, commands.profileFavorites, emptyList<GameCard>)
+  const followed = useLive(userId, commands.profileFollowedGames, emptyList<GameCard>)
+  const outfits = useLive(userId, commands.profileOutfits, emptyList<OutfitView>)
+  const badges = useLive(userId, commands.profileBadges, emptyList<UserBadge>)
+  const groups = useLive(userId, commands.profileGroups, emptyList<GroupCard>)
+  const collectibles = useLive(userId, commands.profileCollectibles, emptyList<ItemCard>)
+  const trading = useLive(
+    userId,
+    commands.profileTrading,
+    (): TraderView => ({ enabled: false, loading: true, error: null, stats: null }),
+  )
+  /** Their limiteds' worth for the header, when Rolimons has one. */
+  const worth = () => {
+    const s = trading.stats
+    return s?.tracked && s.value ? s.value : null
+  }
+  const [search] = useSearchParams()
+  const [section, setSection] = createSignal("about")
+  const [people, setPeople] = createSignal<PeopleList>("friends")
+  // `user.friends` and friends link here with `?tab=connections&list=followers`.
+  createEffect(
+    on([() => search.tab, () => search.list], ([tab, list]) => {
+      if (typeof tab === "string" && allSections.some((t) => t.value === tab)) setSection(tab)
+      if (typeof list === "string" && isPeopleList(list)) setPeople(list)
+    }),
+  )
+  const sections = createMemo(() => {
+    const hidden = new Set<string>()
+    if (isEmpty(creations)) hidden.add("creations")
+    if (isEmpty(favorites)) hidden.add("favorites")
+    if (isEmpty(followed)) hidden.add("followed")
+    if (isEmpty(badges)) hidden.add("badges")
+    if (isEmpty(groups)) hidden.add("communities")
+    if (isEmpty(collectibles)) hidden.add("items")
+    return allSections.filter((t) => !hidden.has(t.value))
+  })
+  createEffect(() => {
+    if (!sections().some((t) => t.value === section())) setSection("about")
+  })
+  useSubTabs(sections, section, setSection)
+  useCommandContext(() => `user:${userId()}`)
+  createEffect(() => {
+    const u = view.user
+    if (u) setTabTitle(`/users/${params.id}`, u.displayName || u.name)
+  })
+
+  const id = () => String(userId())
+  const rel = () => view.relation
+  /** How they relate to the active account, e.g. "Friends · Following". */
+  const relationText = () => {
+    const r = rel()
+    if (!r) return ""
+    const parts: string[] = []
+    if (r.friend === "friends") parts.push("Friends")
+    else if (r.friend === "sent") parts.push("Request sent")
+    else if (r.friend === "received") parts.push("Request received")
+    if (r.following) parts.push("Following")
+    if (r.followedBy) parts.push("Follows you")
+    if (r.blocked) parts.push("Blocked")
+    return parts.join(" · ") || "None"
+  }
+  return (
+    <Page>
+      <Show
+        when={view.user}
+        fallback={
+          <Show when={view.error} fallback={<Skeleton class="h-24 w-full rounded-md" />}>
+            {(e) => <span class="text-fg-muted">{e()}</span>}
+          </Show>
+        }
+      >
+        {(u) => (
+          <header class="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div class="flex min-w-0 flex-1 items-center gap-4">
+              <Avatar
+                size="xl"
+                name={u().displayName}
+                presence={view.presence}
+                src={thumbUrl("headshot", userId(), true)}
+              />
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <h1 class="flex items-center gap-2 truncate text-2xl font-medium">
+                  <span class={u().verified ? "truncate text-verified" : "truncate"}>{u().displayName}</span>
+                  <Show when={u().verified}>
+                    <VerifiedBadge size={18} />
+                  </Show>
+                  <Show when={u().banned}>
+                    <Badge variant="danger">Banned</Badge>
+                  </Show>
+                </h1>
+                <span class="truncate text-fg-muted">
+                  @{u().name}
+                  <Show when={view.nickname}>
+                    {(n) => (
+                      <Tooltip content="Your nickname for them" class="ml-2">
+                        <Badge>{n()}</Badge>
+                      </Tooltip>
+                    )}
+                  </Show>
+                </span>
+                <span class="mt-1 flex flex-wrap gap-x-4 text-sm text-fg-muted">
+                  <CountLink n={u().friends} label="friends" command="user.friends" id={id()} />
+                  <CountLink n={u().followers} label="followers" command="user.followers" id={id()} />
+                  <CountLink n={u().following} label="following" command="user.following" id={id()} />
+                  <Show when={worth()}>
+                    {(v) => (
+                      <Tooltip content={`Value of their limiteds (${VALUES_SOURCE})`} class="inline-flex items-center">
+                        <Robux class="font-medium text-fg" amount={v()} compact />
+                        <span class="ml-1">value</span>
+                      </Tooltip>
+                    )}
+                  </Show>
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <Show
+                when={!view.mine}
+                fallback={
+                  <Button icon="avatar" onClick={() => run("nav.avatar")}>
+                    Edit avatar
+                  </Button>
+                }
+              >
+                <FriendButton status={rel()?.friend ?? "none"} id={id()} />
+                <Tooltip content="Message">
+                  <IconButton
+                    variant="secondary"
+                    icon="chat"
+                    label="Message"
+                    onClick={() => run("user.message", id())}
+                  />
+                </Tooltip>
+              </Show>
+              <Menu
+                icon="more"
+                label="More"
+                items={userMenu(userId(), {
+                  friend: rel()?.friend === "friends",
+                  blocked: rel()?.blocked,
+                  inGame: view.presence === "game",
+                  placeId: view.placeId,
+                  following: view.mine ? undefined : (rel()?.following ?? false),
+                  requested: rel()?.friend === "received",
+                })}
+              />
+            </div>
+          </header>
+        )}
+      </Show>
+
+      <Show when={view.presence === "game" && view.placeId}>
+        {(placeId) => (
+          <Card class="p-1">
+            <PlayingRow
+              userId={userId()}
+              placeId={placeId()}
+              universeId={view.universeId}
+              name={view.place ?? "In a game"}
+              noJoin={view.mine}
+              class="rounded-sm"
+            />
+          </Card>
+        )}
+      </Show>
+
+      <Tabs aria-label="Profile sections" items={sections()} value={section()} onChange={setSection}>
+        <TabPanel value="about">
+          <div class="@container">
+            <div class="grid grid-cols-1 gap-4 @2xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
+              <div class="flex min-w-0 flex-col gap-4">
+                <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
+                  <h3 class="text-sm font-medium text-fg-muted">Bio</h3>
+                  <Show
+                    when={view.user?.description.trim()}
+                    fallback={<span class="text-fg-muted">{view.user ? "No bio." : ""}</span>}
+                  >
+                    {(d) => (
+                      <Clamp lines={8}>
+                        <Description text={d()} tags />
+                      </Clamp>
+                    )}
+                  </Show>
+                </Card>
+                <Show when={view.note}>
+                  {(n) => (
+                    <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
+                      <h3 class="flex items-center justify-between text-sm font-medium text-fg-muted">
+                        Your note
+                        <Tooltip content="Edit note">
+                          <IconButton size="sm" icon="edit" label="Edit note" onClick={() => run("user.note", id())} />
+                        </Tooltip>
+                      </h3>
+                      <p class="whitespace-pre-line break-words">{n()}</p>
+                    </Card>
+                  )}
+                </Show>
+                <TradingCard view={trading} enabled={shell.itemValues} />
+              </div>
+              <Facts class="h-fit">
+                <FactGroup>
+                  <Show when={view.user && ms(view.user.created)}>
+                    {(t) => <Fact label="Joined">{date(t())}</Fact>}
+                  </Show>
+                  <Fact label="User ID">
+                    <span class="flex items-center gap-1">
+                      {params.id}
+                      <Tooltip content="Copy ID">
+                        <IconButton
+                          size="sm"
+                          icon="copy"
+                          label="Copy ID"
+                          onClick={() => run("entity.copy_id", `user:${id()}`)}
+                        />
+                      </Tooltip>
+                    </span>
+                  </Fact>
+                  <Show when={!view.mine}>
+                    <LastOnline view={view} />
+                  </Show>
+                  <Show when={relationText()}>{(t) => <Fact label="Relation">{t()}</Fact>}</Show>
+                  <Show when={view.visits !== null}>
+                    <Fact label="Place visits">{compact(view.visits ?? 0)}</Fact>
+                  </Show>
+                  <Show when={view.favoritesReceived !== null}>
+                    <Fact label="Favorites received">{compact(view.favoritesReceived ?? 0)}</Fact>
+                  </Show>
+                  <Show when={view.unfriendedAt}>{(t) => <Fact label="Unfriended you">{date(t())}</Fact>}</Show>
+                  <Show when={view.pastNames.length > 0}>
+                    <Fact label="Past names">
+                      <For each={view.pastNames}>{(n) => <Badge>{n}</Badge>}</For>
+                    </Fact>
+                  </Show>
+                </FactGroup>
+              </Facts>
+            </div>
+          </div>
+        </TabPanel>
+        <TabPanel value="outfits">
+          <Outfits userId={userId()} mine={view.mine} outfits={outfits} />
+        </TabPanel>
+        <TabPanel value="connections">
+          <Connections userId={userId()} list={people()} onList={setPeople} mine={view.mine} />
+        </TabPanel>
+        <TabPanel value="creations">
+          <Creations list={creations} />
+        </TabPanel>
+        <TabPanel value="favorites">
+          <Favorites list={favorites} />
+        </TabPanel>
+        <TabPanel value="followed">
+          <Followed list={followed} />
+        </TabPanel>
+        <TabPanel value="badges">
+          <Badges list={badges} />
+        </TabPanel>
+        <TabPanel value="communities">
+          <Groups list={groups} />
+        </TabPanel>
+        <TabPanel value="items" class="flex flex-col gap-3">
+          <div class="flex justify-end">
+            <Button icon="inventory" onClick={() => run("inventory.view", id())}>
+              Full inventory
+            </Button>
+          </div>
+          <Collectibles list={collectibles} />
+        </TabPanel>
+      </Tabs>
+    </Page>
+  )
+}
+
+/** Add friend, or what happens next with a request. Decline lives in the More menu. */
+function FriendButton(props: { status: string; id: string }) {
+  return (
+    <Show
+      when={props.status !== "none"}
+      fallback={
+        <Button variant="primary" icon="user-plus" onClick={() => run("user.add_friend", props.id)}>
+          Add friend
+        </Button>
+      }
+    >
+      <Show when={props.status === "received"}>
+        <Button variant="primary" icon="user-plus" onClick={() => run("user.accept_friend", props.id)}>
+          Accept request
+        </Button>
+      </Show>
+      <Show when={props.status === "sent"}>
+        <Button disabled>Request sent</Button>
+      </Show>
+    </Show>
+  )
+}
+
+/** When they were last online. Roblox doesn't say, so this is the newer of what the app saw
+ * and, with values on, what Rolimons saw (marked with its icon). */
+function LastOnline(props: { view: ProfileView }) {
+  const by = () => (props.view.lastOnlineBy === "rolimons" ? VALUES_SOURCE : "this app")
+  const where = () => (props.view.lastLocation ? ` (${props.view.lastLocation})` : "")
+  return (
+    <Show when={props.view.presence === "offline"} fallback={<Fact label="Last online">Now</Fact>}>
+      <Show when={props.view.lastOnline}>
+        {(t) => (
+          <Fact label="Last online">
+            <Tooltip content={`Seen by ${by()} on ${date(t())}${where()}`} class="inline-flex items-center gap-1">
+              <Show when={props.view.lastOnlineBy === "rolimons"}>
+                <Icon name="rolimons" size={12} class="text-fg-faint" aria-label={VALUES_SOURCE} />
+              </Show>
+              {ago(t())}
+            </Tooltip>
+          </Fact>
+        )}
+      </Show>
+    </Show>
+  )
+}
+
+/** A header count that opens that list in Connections. A dash, not a link, when Roblox didn't
+ * send it. */
+function CountLink(props: { n: number | null; label: string; command: string; id: string }) {
+  return (
+    <span>
+      <Show when={props.n !== null} fallback={<Count n={null} />}>
+        <TextLink onClick={() => run(props.command, props.id)}>
+          <Count n={props.n} />
+        </TextLink>
+      </Show>{" "}
+      {props.label}
+    </span>
+  )
+}
+
+/** A count, compacted, or a dash when Roblox didn't send it. */
+function Count(props: { n: number | null }) {
+  return <span class="font-medium text-fg tabular-nums">{props.n === null ? "–" : compact(props.n)}</span>
+}
+
+function Creations(props: { list: List<GameCard> }) {
+  const list = props.list
+  return (
+    <ListState list={list} icon="game" empty="No experiences">
+      <div class={tileGrid}>
+        <For each={list.items}>{(g) => <GameTile game={g} />}</For>
+      </div>
+    </ListState>
+  )
+}
+
+function Favorites(props: { list: List<GameCard> }) {
+  const list = props.list
+  return (
+    <ListState list={list} icon="star" empty="No favorites" more="favorites">
+      <div class={tileGrid}>
+        <For each={list.items}>{(g) => <GameTile game={g} />}</For>
+      </div>
+    </ListState>
+  )
+}
+
+function Followed(props: { list: List<GameCard> }) {
+  const list = props.list
+  return (
+    <ListState list={list} icon="bell" empty="Not following any experiences">
+      <div class={tileGrid}>
+        <For each={list.items}>{(g) => <GameTile game={g} />}</For>
+      </div>
+    </ListState>
+  )
+}
+
+function Badges(props: { list: List<UserBadge> }) {
+  const list = props.list
+  return (
+    <ListState list={list} icon="badge" empty="No badges" more="badges">
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-3">
+        <For each={list.items}>
+          {(b) => (
+            <button
+              type="button"
+              class="flex flex-col items-center gap-1 text-center"
+              title={`${b.description}\n${percent(b.winRate ?? 0)} have it`}
+              onClick={() => b.placeId && run("game.open", String(b.placeId))}
+            >
+              <Thumbnail class="w-16" alt={b.name} src={thumbUrl("badge_icon", b.id)} fallback="badge" />
+              <span class="line-clamp-2 text-sm">{b.name}</span>
+            </button>
+          )}
+        </For>
+      </div>
+    </ListState>
+  )
+}
+
+function Groups(props: { list: List<GroupCard> }) {
+  const list = props.list
+  return (
+    <ListState list={list} icon="communities" empty="Not in any communities">
+      <div class="flex flex-col">
+        <For each={list.items}>
+          {(c) => (
+            <ListItem
+              leading={<Thumbnail class="w-10" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}
+              title={
+                <Show when={c.verified} fallback={c.name}>
+                  <span class="text-verified">{c.name}</span> <VerifiedBadge />
+                </Show>
+              }
+              subtitle={`${compact(c.members)} members · ${c.role}`}
+              meta={
+                <Show when={c.primary}>
+                  <Badge variant="accent">Primary</Badge>
+                </Show>
+              }
+              onClick={() => run("group.open", String(c.id))}
+            />
+          )}
+        </For>
+      </div>
+    </ListState>
+  )
+}
+
+function Collectibles(props: { list: List<ItemCard> }) {
+  const list = props.list
+  return (
+    <ListState list={list} icon="inventory" empty="No collectibles">
+      <div class={tileGrid}>
+        <For each={list.items}>{(i) => <ItemTile item={i} showSerial showRap />}</For>
+      </div>
+    </ListState>
+  )
+}
+
+const peopleLists = [
+  { value: "friends", label: "Friends" },
+  { value: "followers", label: "Followers" },
+  { value: "following", label: "Following" },
+] as const
+type PeopleList = (typeof peopleLists)[number]["value"]
+const isPeopleList = (v: string): v is PeopleList => peopleLists.some((l) => l.value === v)
+
+const emptyText: Record<PeopleList, string> = {
+  friends: "No friends",
+  followers: "No followers",
+  following: "Not following anyone",
+}
+
+/** Their friends, followers or following, J / K / Enter to move and open. Friends are
+ * searched on Roblox (so it finds people on pages not loaded yet) and list mutual friends
+ * first; followers and following can only be filtered by what has loaded. */
+function Connections(props: { userId: number; list: PeopleList; onList: (l: PeopleList) => void; mine: boolean }) {
+  const [query, setQuery] = createSignal("")
+  const [searched, setSearched] = createSignal("")
+  const [mutualOnly, setMutualOnly] = createSignal("all")
+  const [cursor, setCursor] = createSignal(0)
+  const friends = () => props.list === "friends"
+  // Search Roblox once typing pauses, not on every key.
+  createEffect(() => {
+    const q = query().trim()
+    const t = setTimeout(() => setSearched(friends() ? q : ""), 300)
+    onCleanup(() => clearTimeout(t))
+  })
+  createEffect(on([() => props.userId, () => props.list], () => setCursor(0), { defer: true }))
+  const list = useLive(
+    () => `${props.userId}\n${props.list}\n${searched()}`,
+    (key) => {
+      const [id, which, q] = key.split("\n")
+      return commands.profilePeople(Number(id), which, q)
+    },
+    emptyList<Connection>,
+  )
+  const shown = createMemo(() => {
+    let rows = list.items
+    if (friends() && mutualOnly() === "mutual") rows = rows.filter((p) => p.friend)
+    const q = query().trim().toLowerCase()
+    // Friends are already searched on Roblox; this only filters the other lists.
+    if (q && !friends()) rows = rows.filter((p) => `${p.name} ${p.displayName}`.toLowerCase().includes(q))
+    return rows
+  })
+  useListCursor({
+    count: () => shown().length,
+    index: cursor,
+    setIndex: setCursor,
+    onOpen: (i) => {
+      const p = shown()[i]
+      if (p) void run("user.open", String(p.id))
+    },
+  })
+  const more = () => (friends() && searched() ? `friends:${searched()}` : props.list)
+  // On their friends list your friends are mutual; elsewhere they are just your friends.
+  const tag = () => (friends() ? "Mutual" : "Friend")
+
+  return (
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <SegmentedControl
+          size="sm"
+          aria-label="List"
+          options={[...peopleLists]}
+          value={props.list}
+          onChange={(v) => isPeopleList(v) && props.onList(v)}
+        />
+        <TextField
+          class="min-w-48 flex-1"
+          icon="search"
+          aria-label={friends() ? "Search friends" : "Filter loaded"}
+          placeholder={friends() ? "Search friends" : "Filter loaded"}
+          value={query()}
+          onChange={setQuery}
+        />
+        <Show when={friends() && !props.mine}>
+          <SegmentedControl
+            size="sm"
+            aria-label="Show"
+            options={[
+              { value: "all", label: "Everyone" },
+              { value: "mutual", label: "Mutual" },
+            ]}
+            value={mutualOnly()}
+            onChange={setMutualOnly}
+          />
+        </Show>
+      </div>
+      <ListState
+        list={{ ...list, items: shown() }}
+        icon="friends"
+        empty={query().trim() || mutualOnly() === "mutual" ? "No one matches" : emptyText[props.list]}
+        more={more()}
+        autoMore
+      >
+        <div data-cursor-list>
+          <VirtualGrid items={shown()} estimateRowHeight={44} gap={0}>
+            {(p, i) => (
+              <ContextMenu items={userMenu(p.id, { friend: p.friend, following: p.following ?? undefined })}>
+                <ListItem
+                  data-index={i}
+                  selected={i === cursor()}
+                  leading={
+                    <Avatar name={p.displayName || p.name} presence={p.presence} src={thumbUrl("headshot", p.id)} />
+                  }
+                  title={
+                    <Show when={p.verified} fallback={p.displayName || p.name || `User ${p.id}`}>
+                      <span class="text-verified">{p.displayName || p.name}</span> <VerifiedBadge />
+                    </Show>
+                  }
+                  subtitle={p.name ? `@${p.name}` : undefined}
+                  meta={
+                    <Show when={p.friend && !props.mine}>
+                      <Badge variant="accent">{tag()}</Badge>
+                    </Show>
+                  }
+                  actions={
+                    <Show when={p.following !== null}>
+                      <Button
+                        size="sm"
+                        variant={p.following ? "ghost" : "secondary"}
+                        onClick={(e: MouseEvent) => {
+                          e.stopPropagation()
+                          void run(p.following ? "user.unfollow" : "user.follow", String(p.id))
+                        }}
+                      >
+                        {p.following ? "Following" : "Follow"}
+                      </Button>
+                    </Show>
+                  }
+                  onClick={() => {
+                    setCursor(i)
+                    void run("user.open", String(p.id))
+                  }}
+                />
+              </ContextMenu>
+            )}
+          </VirtualGrid>
+        </div>
+      </ListState>
+    </div>
+  )
+}

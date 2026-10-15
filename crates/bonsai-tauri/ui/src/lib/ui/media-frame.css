@@ -1,0 +1,85 @@
+@layer components {
+  [data-component="media-frame"] {
+    position: relative;
+  }
+
+  [data-component="media-frame"] [data-slot="count"],
+  [data-component="media-frame"] [data-slot="caption"] {
+    position: absolute;
+    bottom: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: calc(100% - 16px);
+    height: 20px;
+    padding: 0 6px;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-media-chip);
+    color: var(--color-on-media);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  [data-component="media-frame"] [data-slot="count"] {
+    right: 8px;
+  }
+
+  [data-component="media-frame"] [data-slot="caption"] {
+    left: 8px;
+    max-width: calc(100% - 80px);
+  }
+
+  [data-component="media-frame"] [data-slot="prev"],
+  [data-component="media-frame"] [data-slot="next"] {
+    position: absolute;
+    top: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--color-media-chip);
+    color: var(--color-on-media);
+    opacity: 0;
+    transform: translateY(-50%);
+    cursor: default;
+    transition: opacity var(--duration) var(--ease);
+  }
+
+  [data-component="media-frame"] [data-slot="prev"] {
+    left: 8px;
+  }
+
+  [data-component="media-frame"] [data-slot="next"] {
+    right: 8px;
+  }
+
+  [data-component="media-frame"]:hover [data-slot="prev"],
+  [data-component="media-frame"]:hover [data-slot="next"],
+  [data-component="media-frame"] [data-slot="prev"]:focus-visible,
+  [data-component="media-frame"] [data-slot="next"]:focus-visible {
+    opacity: 1;
+  }
+
+  [data-component="media-frame"] [data-slot="prev"]:hover,
+  [data-component="media-frame"] [data-slot="next"]:hover {
+    background-image: linear-gradient(var(--color-hover-on-fill), var(--color-hover-on-fill));
+  }
+}
+
+@layer components {
+  [data-component="media-frame"] [data-slot="caption"] [data-component="icon"] {
+    flex-shrink: 0;
+  }
+
+  [data-component="media-frame"] [data-slot="caption-text"] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

@@ -1,0 +1,40 @@
+/* Mention. A tinted pill that sits in a line of text: the headshot rides on the text's baseline
+ * and the pill adds no line height, so mentions don't push lines apart. */
+@layer components {
+  [data-component="mention"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    vertical-align: bottom;
+    max-width: 100%;
+    margin: 0 1px;
+    padding: 0 5px 0 2px;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font: inherit;
+    font-weight: 500;
+    line-height: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  [data-component="mention"][data-verified] {
+    color: var(--color-verified);
+  }
+
+  [data-component="mention"][data-pending] {
+    padding: 0 5px;
+    cursor: default;
+  }
+
+  [data-component="mention"]:not([data-pending]):hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  [data-component="mention"] [data-component="avatar"] {
+    --avatar-size: 14px;
+  }
+}

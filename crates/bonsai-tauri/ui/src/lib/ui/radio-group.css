@@ -1,0 +1,70 @@
+@layer components {
+  [data-component="radio-group"] {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  [data-component="radio-group"] [data-slot="items"] {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  [data-component="radio-group"][data-orientation="horizontal"] [data-slot="items"] {
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  [data-component="radio-group"] [data-slot="item"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  [data-component="radio-group"] [data-slot="item"][data-disabled] {
+    opacity: 0.5;
+  }
+
+  [data-component="radio-group"] [data-slot="circle"] {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-field);
+    background-image: var(--sheen-soft);
+    box-shadow: var(--shadow-field);
+    transition:
+      background-color var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease);
+  }
+
+  [data-component="radio-group"]
+    [data-slot="item"]:hover:not([data-disabled])
+    [data-slot="circle"]:not([data-checked]) {
+    background-image: linear-gradient(var(--color-hover), var(--color-hover)), var(--sheen-soft);
+  }
+
+  [data-component="radio-group"] [data-slot="circle"][data-checked] {
+    background-color: var(--color-accent);
+    background-image: var(--sheen-track-on);
+  }
+
+  [data-component="radio-group"] [data-slot="input"]:focus-visible + [data-slot="circle"] {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+
+  [data-component="radio-group"] [data-slot="dot"] {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: var(--color-knob);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--color-knob-edge) 50%, transparent),
+      var(--shadow-knob);
+  }
+}

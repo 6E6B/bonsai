@@ -1,0 +1,25 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Cookie validation call used by cookie-paste sign-in.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/authenticated"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "displayName": "TestUser",
+          "id": 1000001,
+          "name": "TestUser"
+        }
+      }
+    }
+  ]
+}

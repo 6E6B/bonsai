@@ -1,0 +1,119 @@
+# catalog.roblox.com endpoints the Marketplace uses that are missing from the tracker's /docs.
+# Only the fields we use.
+swagger: "2.0"
+host: catalog.roblox.com
+info: { title: "catalog (undocumented)", version: undocumented }
+paths:
+  /v1/search/navigation-menu-items:
+    get:
+      # Captured 2026-10-13 with a live request, signed out (fixture: market.json).
+      # Used by www.roblox.com/catalog for the category list on the left.
+      x-captured: "2026-10-13, www.roblox.com/catalog"
+      x-rust-name: get_navigation_menu_items
+      summary: Marketplace categories and their subcategories, with the taxonomy id search takes.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/NavigationMenu" } }
+  /v1/catalog/items/{itemId}/details:
+    get:
+      # Captured 2026-10-13 with a live request, signed out (fixture: market.json).
+      # Used by the item page www.roblox.com/catalog/{id} and www.roblox.com/bundles/{id}.
+      x-captured: "2026-10-13, www.roblox.com/catalog/1365767"
+      x-rust-name: get_item_details
+      summary: One asset or bundle with price, resale and collectible details.
+      parameters:
+        - { in: path, name: itemId, required: true, type: integer, format: int64 }
+        - { in: query, name: itemType, required: true, type: string, description: "Asset or Bundle" }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ItemDetails" } }
+  /v2/recommendations/assets:
+    get:
+      # Captured 2026-10-13 with a live request, signed out (fixture: market.json).
+      # Used by the "Recommended" row on an asset's item page.
+      x-captured: "2026-10-13, www.roblox.com/catalog/1365767"
+      x-rust-name: get_asset_recommendations
+      summary: Asset ids similar to an asset.
+      parameters:
+        - { in: query, name: assetTypeId, required: true, type: integer, format: int32 }
+        - { in: query, name: contextAssetId, required: true, type: integer, format: int64 }
+        - { in: query, name: numItems, required: false, type: integer, format: int32 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/AssetRecommendations" } }
+definitions:
+  NavigationMenu:
+    type: object
+    properties:
+      categories: { type: array, items: { $ref: "#/definitions/MenuCategory" } }
+  MenuCategory:
+    type: object
+    properties:
+      category: { type: string }
+      taxonomy: { type: string }
+      categoryId: { type: integer, format: int32 }
+      name: { type: string }
+      orderIndex: { type: integer, format: int32 }
+      isSearchable: { type: boolean }
+      assetTypeIds: { type: array, items: { type: integer, format: int32 } }
+      bundleTypeIds: { type: array, items: { type: integer, format: int32 } }
+      subcategories: { type: array, items: { $ref: "#/definitions/MenuSubcategory" } }
+  MenuSubcategory:
+    type: object
+    properties:
+      subcategory: { type: string }
+      taxonomy: { type: string }
+      subcategoryId: { type: integer, format: int32 }
+      name: { type: string }
+      shortName: { type: string }
+      assetTypeIds: { type: array, items: { type: integer, format: int32 } }
+      bundleTypeIds: { type: array, items: { type: integer, format: int32 } }
+  ItemDetails:
+    type: object
+    properties:
+      id: { type: integer, format: int64 }
+      itemType: { type: string, description: "Asset or Bundle" }
+      assetType: { type: integer, format: int32 }
+      bundleType: { type: integer, format: int32 }
+      name: { type: string }
+      description: { type: string }
+      itemCreatedUtc: { type: string }
+      itemUpdatedUtc: { type: string }
+      genres: { type: array, items: { type: string } }
+      renderProperties: { type: array, items: { type: string } }
+      supportsHeadShapes: { type: boolean }
+      creatorType: { type: string, description: "User or Group" }
+      creatorTargetId: { type: integer, format: int64 }
+      creatorName: { type: string }
+      creatorHasVerifiedBadge: { type: boolean }
+      price: { type: integer, format: int64 }
+      lowestPrice: { type: integer, format: int64 }
+      lowestResalePrice: { type: integer, format: int64 }
+      priceStatus: { type: string, description: "Free, Off Sale, ... when there is no price to show" }
+      favoriteCount: { type: integer, format: int64 }
+      collectibleItemId: { type: string }
+      totalQuantity: { type: integer, format: int64 }
+      unitsAvailableForConsumption: { type: integer, format: int64 }
+      hasResellers: { type: boolean }
+      isOffSale: { type: boolean }
+      isPurchasable: { type: boolean }
+      owned: { type: boolean }
+      offSaleDeadline: { type: string }
+      saleLocationType: { type: string }
+      itemRestrictions: { type: array, items: { type: string }, description: "Limited, LimitedUnique, Collectible, Live, ..." }
+      taxonomy: { type: array, items: { $ref: "#/definitions/ItemTaxonomy" } }
+      bundledItems: { type: array, items: { $ref: "#/definitions/BundledItem" } }
+  ItemTaxonomy:
+    type: object
+    properties:
+      taxonomyId: { type: string }
+      taxonomyName: { type: string }
+  BundledItem:
+    type: object
+    properties:
+      id: { type: integer, format: int64 }
+      name: { type: string }
+      type: { type: string, description: "Asset or UserOutfit" }
+      assetType: { type: integer, format: int32 }
+      supportsHeadShapes: { type: boolean }
+  AssetRecommendations:
+    type: object
+    properties:
+      data: { type: array, items: { type: integer, format: int64 } }

@@ -1,0 +1,206 @@
+/*
+ * Design tokens. This file is the whole look of the app: change a value here and every
+ * component and every Tailwind utility that uses it follows.
+ *
+ * Each token is a Tailwind theme variable, so `--color-fg-muted` is also `text-fg-muted`,
+ * `bg-fg-muted`, `border-fg-muted`; `--radius-md` is `rounded-md`; `--shadow-popover` is
+ * `shadow-popover`. Component CSS reads the same variables with `var(...)`.
+ *
+ * --sheen-* gradients live in the :root block below; they are not Tailwind utilities.
+ *
+ * Dark is the default. The light block further down overrides the same names. To add a
+ * theme, copy that block with a new `[data-theme="..."]` selector.
+ */
+
+@theme static {
+  /* Drop Tailwind's default palette so only our colors exist. */
+  --color-*: initial;
+
+  /* ── Surfaces ──
+   * Near-flat: chrome sits only a shade below the page and borders separate the regions.
+   * Lightness is saved for things that sit on top: cards, then popovers. Big steps between
+   * chrome and page make the page read as a lit hole in a dark frame. */
+  --color-deep: #121212; /* window chrome: sidebar, title bar */
+  --color-canvas: #1a1a1a; /* page background */
+  --color-surface: #222222; /* cards and panels on the page */
+  --color-raised: #282828; /* popovers, dialogs, toasts */
+  --color-hover: #ffffff0f; /* overlay for hover, layered over any fill */
+  --color-active: #ffffff1a; /* overlay for pressed or selected */
+  --color-field: #ffffff0d; /* text inputs, select triggers, checkbox and radio; translucent so it sits a step above any surface */
+  --color-control: #ffffff0f; /* secondary buttons, badges, keys; translucent so it fits any surface */
+  --color-control-hover: #ffffff17;
+
+  /* ── Text ── */
+  --color-fg: #fafafa;
+  --color-fg-muted: #aeaeae;
+  --color-fg-faint: #808080;
+
+  /* ── Lines ── */
+  --color-line: #ffffff1a;
+  --color-line-strong: #ffffff33;
+
+  /* ── Accent and state ── */
+  --color-accent: #3d7dff;
+  --color-accent-hover: #5a91ff;
+  --color-accent-soft: #3d7dff29;
+  --color-verified: #4d94ff; /* verified names; lighter than the badge blue in assets/verified-badge.svg for legibility on dark */
+  --color-on-accent: #ffffff; /* text on accent, danger and success fills */
+  --color-contrast: #5c5c5c; /* primary button fill: neutral, lit by --sheen */
+  --color-focus: #5a91ff;
+  --color-success: #3fbf7f;
+  --color-success-soft: #3fbf7f24;
+  --color-warning: #e8a23a;
+  --color-warning-soft: #e8a23a24;
+  --color-danger: #ef5a5a;
+  --color-danger-hover: #f37373;
+  --color-danger-soft: #ef5a5a24;
+  --color-scrim: #00000099; /* behind dialogs */
+  --color-media-chip: #000000a6; /* controls and badges laid over images; same in both themes */
+  --color-on-media: #ffffff;
+  --shadow-on-media: drop-shadow(0 1px 1px #000000b3); /* bare marks on images, as a filter */
+
+  /* ── Presence ── Dots on avatars. Roblox's own meanings: blue online, green in game. */
+  --color-presence-online: var(--color-accent);
+  --color-presence-game: var(--color-success);
+  --color-presence-studio: var(--color-warning);
+  --color-presence-offline: var(--color-fg-faint);
+
+  /* ── Account color tags ── The user picks one per account; shown on the account rail. */
+  --color-tag-red: #ef5a5a;
+  --color-tag-orange: #ef8a3a;
+  --color-tag-yellow: #e8c53a;
+  --color-tag-green: #3fbf7f;
+  --color-tag-blue: #3d7dff;
+  --color-tag-purple: #9b6bff;
+  --color-tag-pink: #ef6bb4;
+
+  --color-track: #5c5c5c; /* switch track when off */
+  --color-knob: #f2f2f2; /* switch thumb, radio dot */
+  --color-knob-edge: #ffffff;
+  --color-hover-on-fill: #ffffff1f; /* overlays on contrast and accent fills */
+  --color-pressed-on-fill: #ffffff3d;
+
+  /* ── Shadows ──
+   * Elevations from the OpenCode console. Each is a drop shadow, a ring and, in dark, a line
+   * of light along the top edge. OpenCode draws the ring and line at 0.5px; we draw them at
+   * 1px with half the alpha, because WebKitGTK at 1x scale snaps 0.5px edges to whole pixels
+   * but not the rounded corners, which then look cut off. */
+  --shadow-control: 0 1px 2px #00000066, 0 0 0 1px #ffffff1a, 0 -1px 0 #ffffff0d;
+  --shadow-fill: 0 1px 2px #00000066, 0 0 0 1px #ffffff33, 0 -1px 0 #ffffff26;
+  --shadow-field: 0 1px 2px #00000066, 0 0 0 1px #ffffff21, 0 -1px 0 #ffffff0d;
+  /* Thumbnails and avatars. Keep the blur small: grids paint dozens of these while scrolling. */
+  --shadow-media: 0 1px 2px #00000066, 0 0 0 1px #ffffff14, 0 -1px 0 #ffffff0d;
+  --shadow-well: inset 0 -1px 0 #ffffff0d, inset 0 0 0 1px #ffffff14;
+  --shadow-well-on: inset 0 -1px 0 #ffffff0d, inset 0 0 0 1px #ffffff14;
+  --shadow-knob: 0 0.5px 0.5px #00000066;
+  --shadow-key: inset 0 -1px 0 #00000059, 0 0 0 1px #ffffff14, 0 1px 1px #00000066;
+  --shadow-raised: 0 2px 4px #0000004d, 0 1px 2px #0000004d, 0 0 0 1px #ffffff14, 0 -1px 0 #ffffff08;
+  --shadow-popover: 0 8px 16px #0000004d, 0 4px 8px #0000004d, 0 0 0 1px #ffffff14, 0 -1px 0 #ffffff08;
+  --shadow-dialog: 0 16px 32px #0000004d, 0 8px 16px #0000004d, 0 0 0 1px #ffffff14, 0 -1px 0 #ffffff08;
+  --text-shadow-fill: 0 0.5px 0.5px #0000004d; /* text on contrast fills */
+
+  /* ── Type ── */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrainsMono Nerd Font Mono", ui-monospace, monospace;
+
+  --text-xs: 11px;
+  --text-xs--line-height: 16px;
+  --text-sm: 12px;
+  --text-sm--line-height: 16px;
+  --text-base: 13px;
+  --text-base--line-height: 20px;
+  --text-lg: 15px;
+  --text-lg--line-height: 22px;
+  --text-xl: 18px;
+  --text-xl--line-height: 24px;
+  --text-2xl: 22px;
+  --text-2xl--line-height: 28px;
+
+  /* ── Shape ── */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+}
+
+@layer theme {
+  :root {
+    color-scheme: dark;
+
+    /* Heights shared by buttons, inputs and selects. Change these to make the app denser. */
+    --control-sm: 24px;
+    --control-md: 28px;
+    --control-lg: 32px;
+
+    --duration: 120ms;
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Sheens: gradients laid over a fill to light it from above. Same in both themes. */
+    --sheen: linear-gradient(180deg, #ffffff33 0%, #ffffff00 100%); /* primary button */
+    --sheen-soft: linear-gradient(180deg, #ffffff0f 0%, #ffffff00 100%); /* checkbox, radio, keys */
+    --sheen-field: linear-gradient(180deg, #ffffff05 0%, #ffffff00 100%); /* inputs, select triggers */
+    --sheen-track: linear-gradient(180deg, #ffffff00 0%, #ffffff33 100%); /* switch track, off */
+    --sheen-track-on: linear-gradient(180deg, #ffffff00 0%, #ffffff1a 100%); /* accent fills */
+    --sheen-knob: linear-gradient(180deg, #ffffff 0%, #ffffff00 100%);
+  }
+
+  /* Compact density (Settings → Appearance): shorter buttons, inputs and selects. */
+  :root[data-density="compact"] {
+    --control-sm: 20px;
+    --control-md: 24px;
+    --control-lg: 28px;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+
+    --color-deep: #fafafa;
+    --color-canvas: #ffffff;
+    --color-surface: #fafafa;
+    --color-raised: #ffffff;
+    --color-hover: #0000000a;
+    --color-active: #00000014;
+    --color-field: #ffffff;
+    --color-control: #ffffff;
+    --color-control-hover: #f2f2f2;
+
+    --color-fg: #161616;
+    --color-fg-muted: #5c5c5c;
+    --color-fg-faint: #808080;
+
+    --color-line: #0000001a;
+    --color-line-strong: #00000033;
+
+    --color-accent: #2563eb;
+    --color-accent-hover: #1d4fd8;
+    --color-accent-soft: #2563eb1f;
+    --color-on-accent: #ffffff;
+    --color-contrast: #242424;
+    --color-focus: #2563eb;
+    --color-success: #16803c;
+    --color-success-soft: #16803c1a;
+    --color-warning: #b25e09;
+    --color-warning-soft: #b25e091a;
+    --color-danger: #d92d2d;
+    --color-danger-hover: #c22424;
+    --color-danger-soft: #d92d2d1a;
+    --color-scrim: #00000066;
+
+    --color-track: #dbdbdb;
+    --color-knob: #f2f2f2;
+    --color-hover-on-fill: #0000003d;
+    --color-pressed-on-fill: #00000066;
+
+    --shadow-control: 0 1px 1.5px #0000001a, 0 0 0 1px #00000012;
+    --shadow-fill: 0 1px 1.5px #00000033, 0 0 0 1px #3a3a3a80, inset 0 1px 2px #ffffff24, inset 0 -1px 2px #0000000f;
+    --shadow-field: 0 1px 1.5px #0000001a, 0 0 0 1px #00000012;
+    --shadow-media: 0 1px 1.5px #0000001a, 0 0 0 1px #00000012;
+    --shadow-well: inset 0 1px 1px #00000014, inset 0 0.5px 0.5px #00000014, inset 0 0 0 1px #0000000d;
+    --shadow-well-on: inset 0 2px 2px #0000001a, inset 0 1px 1px #0000001a, inset 0 0 0 1px #0000001a;
+    --shadow-key: inset 0 -1px 0 #0000001a, 0 0 0 1px #00000014, 0 1px 1px #0000001a;
+    --shadow-raised: 0 2px 4px #0000000a, 0 1px 2px -1px #00000014, 0 0 0 1px #00000010;
+    --shadow-popover: 0 8px 16px #0000000a, 0 4px 8px #00000014, 0 0 0 1px #00000010;
+    --shadow-dialog: 0 16px 32px #0000000a, 0 8px 16px #00000014, 0 0 0 1px #00000010;
+  }
+}

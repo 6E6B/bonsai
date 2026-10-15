@@ -1,0 +1,55 @@
+/* Segmented control: a well with the options inside; the selected one is a raised chip. */
+@layer components {
+  [data-component="segmented-control"] {
+    --segment-height: var(--control-md);
+    --segment-pad: 8px;
+
+    display: inline-flex;
+    flex-shrink: 0;
+    /* Hug the options even in a stretching flex column. */
+    align-self: flex-start;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--radius-md);
+    background: var(--color-field);
+    box-shadow: var(--shadow-well);
+  }
+
+  [data-component="segmented-control"][data-size="sm"] {
+    --segment-height: var(--control-sm);
+    --segment-pad: 6px;
+    font-size: var(--text-sm);
+  }
+
+  [data-component="segmented-control"] [data-slot="item"] {
+    display: inline-flex;
+    align-items: center;
+    height: calc(var(--segment-height) - 4px);
+    padding: 0 var(--segment-pad);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--color-fg-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: default;
+    transition:
+      background-color var(--duration) var(--ease),
+      color var(--duration) var(--ease);
+  }
+
+  [data-component="segmented-control"] [data-slot="item"]:hover:not([data-pressed], [data-disabled]) {
+    color: var(--color-fg);
+  }
+
+  [data-component="segmented-control"] [data-slot="item"][data-pressed] {
+    background-color: var(--color-control-hover);
+    background-image: var(--sheen-soft);
+    box-shadow: var(--shadow-control);
+    color: var(--color-fg);
+  }
+
+  [data-component="segmented-control"] [data-slot="item"][data-disabled] {
+    opacity: 0.5;
+  }
+}

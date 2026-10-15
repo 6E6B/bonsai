@@ -1,0 +1,119 @@
+{
+  "captured": "2026-10-15",
+  "source": "live",
+  "note": "Rolimons player stats (third party, opt-in) for builderman, Roblox and an unscanned id.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "api.rolimons.com",
+        "path": "/players/v1/playerinfo/156"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "last_location": "Website",
+          "last_online": 1790808901,
+          "last_scan": 1792024959,
+          "name": "builderman",
+          "premium": true,
+          "privacy_enabled": false,
+          "rank": 182,
+          "rap": 13937401,
+          "rolibadges": {
+            "own_10_items": 1567519389,
+            "own_10_pct_of_1_item": 1606870309,
+            "own_1_rare": 1567519389,
+            "own_1_stf": 1567519389,
+            "own_3_rares": 1569124430,
+            "value_100k": 1567519389,
+            "value_10m": 1676921863,
+            "value_1m": 1567519389,
+            "value_20m": 1771716660,
+            "value_500k": 1567519389,
+            "value_5m": 1595736341
+          },
+          "stats_updated": 1792024959,
+          "success": true,
+          "terminated": false,
+          "value": 20888416
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "api.rolimons.com",
+        "path": "/players/v1/playerinfo/1"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "last_location": "Website",
+          "last_online": 1681767572,
+          "last_scan": 1792026564,
+          "name": "Roblox",
+          "premium": true,
+          "privacy_enabled": false,
+          "rank": 1,
+          "rap": 405285457,
+          "rolibadges": {
+            "own_1000_items": 1567442178,
+            "own_100_items": 1567442178,
+            "own_10_items": 1567442178,
+            "own_10_pct_of_1_item": 1569096988,
+            "own_10_rares": 1593814038,
+            "own_15_noob": 1593814038,
+            "own_1_big_dominus": 1593814038,
+            "own_1_dominus": 1567442178,
+            "own_1_immortal_sword": 1593814038,
+            "own_1_kotn_item": 1593814038,
+            "own_1_rare": 1567442178,
+            "own_1_stf": 1567442178,
+            "own_1_valued_federation_item": 1593814038,
+            "own_25_pct_of_1_item": 1569096988,
+            "own_3_rares": 1569096988,
+            "own_50_pct_of_1_item": 1569197988,
+            "own_5_noob": 1569096988,
+            "own_all_asset_types": 1567442178,
+            "own_epic_katana_set": 1593814038,
+            "value_100k": 1567442178,
+            "value_10m": 1567442178,
+            "value_1m": 1567442178,
+            "value_20m": 1567442178,
+            "value_500k": 1567442178,
+            "value_5m": 1567442178
+          },
+          "stats_updated": 1792026564,
+          "success": true,
+          "terminated": false,
+          "value": 1325608245
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "api.rolimons.com",
+        "path": "/players/v1/playerinfo/5000000123"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "code": 3,
+          "message": "Player not found",
+          "success": false
+        }
+      }
+    }
+  ]
+}

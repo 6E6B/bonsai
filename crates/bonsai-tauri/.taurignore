@@ -1,0 +1,4 @@
+# The Rust watcher in `tauri dev` skips these. Vite handles ui/ changes itself, and the app
+# rewrites ui/src/lib/ipc/bindings.ts on startup, which would otherwise restart it in a loop.
+ui/
+gen/

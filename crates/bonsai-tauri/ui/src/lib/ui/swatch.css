@@ -1,0 +1,37 @@
+@layer components {
+  [data-component="swatch"] {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--swatch-color, transparent);
+    cursor: pointer;
+    transition: transform var(--duration) var(--ease);
+  }
+
+  [data-component="swatch"]:hover {
+    transform: scale(1.1);
+  }
+
+  [data-component="swatch"][data-selected] {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+
+  [data-component="swatch"]:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+
+  [data-component="swatch"][data-display] {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-xs);
+    cursor: inherit;
+  }
+
+  [data-component="swatch"][data-display]:hover {
+    transform: none;
+  }
+}

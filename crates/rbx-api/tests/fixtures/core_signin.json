@@ -1,0 +1,169 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Cookie validation, then the account refresh: me, Robux, unread counts, friends, headshot.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/authenticated"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "displayName": "TestUser",
+          "id": 1000001,
+          "name": "TestUser"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/authenticated"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "displayName": "TestUser",
+          "id": 1000001,
+          "name": "TestUser"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "economy.roblox.com",
+        "path": "/v1/user/currency"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "robux": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages/unread/count"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/user/friend-requests/count"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "trades.roblox.com",
+        "path": "/v1/trades/1/count"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "count": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "notifications.roblox.com",
+        "path": "/v2/stream-notifications/unread-count"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "statusMessage": null,
+          "unreadNotifications": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/1000001/friends"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "thumbnails.roblox.com",
+        "path": "/v1/batch",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "errorCode": 0,
+              "errorMessage": "",
+              "imageUrl": "https://tr.rbxcdn.com/30DAY-AvatarHeadshot-redacted/150/150/AvatarHeadshot/Webp/noFilter",
+              "requestId": "AvatarHeadShot:1000001:150x150",
+              "state": "Completed",
+              "targetId": 1000001,
+              "version": "TN3"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

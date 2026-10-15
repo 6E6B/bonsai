@@ -1,0 +1,53 @@
+//! Generated Roblox API modules, one per host and version.
+//!
+//! Do not edit. Run `cargo xtask codegen`.
+
+pub mod accountinformation;
+pub mod accountsettings;
+pub mod adconfiguration;
+pub mod ads;
+pub mod api_rolimons_com;
+pub mod apis;
+pub mod assetdelivery;
+pub mod assetgame;
+pub mod auth;
+pub mod avatar;
+pub mod badges;
+pub mod billing;
+pub mod catalog;
+pub mod chat;
+pub mod clientsettings;
+pub mod clientsettingscdn;
+pub mod contacts;
+pub mod contentstore;
+pub mod develop;
+pub mod economy;
+pub mod economycreatorstats;
+pub mod engagementpayouts;
+pub mod followings;
+pub mod friends;
+pub mod gameinternationalization;
+pub mod gamejoin;
+pub mod gamepersistence;
+pub mod games;
+pub mod groups;
+pub mod groupsmoderation;
+pub mod inventory;
+pub mod itemconfiguration;
+pub mod locale;
+pub mod localizationtables;
+pub mod metrics;
+pub mod notifications;
+pub mod premiumfeatures;
+pub mod presence;
+pub mod privatemessages;
+pub mod publish;
+pub mod realtime_signalr;
+pub mod thumbnails;
+pub mod thumbnailsresizer;
+pub mod trades;
+pub mod translationroles;
+pub mod twostepverification;
+pub mod users;
+pub mod voice;
+pub mod www;

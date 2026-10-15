@@ -1,0 +1,54 @@
+@layer components {
+  [data-component="text-link"] {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-accent);
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+  }
+
+  [data-component="text-link"][data-tone="name"] {
+    color: var(--color-fg);
+  }
+
+  [data-component="text-link"][data-tone="muted"] {
+    color: var(--color-fg-muted);
+  }
+
+  [data-component="text-link"][data-tone="verified"] {
+    color: var(--color-verified);
+  }
+
+  [data-component="text-link"][data-tone="danger"] {
+    color: var(--color-danger);
+  }
+
+  [data-component="text-link"][data-tone="inherit"] {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  [data-component="text-link"]:hover {
+    color: var(--color-fg);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* A verified name stays blue on hover, like the badge beside it. */
+  [data-component="text-link"][data-tone="verified"]:hover {
+    color: var(--color-verified);
+  }
+
+  [data-component="text-link"][data-tone="inherit"]:hover {
+    color: inherit;
+    text-decoration-thickness: 2px;
+  }
+
+  [data-component="text-link"][data-tone="danger"]:hover {
+    color: var(--color-danger-hover);
+  }
+}

@@ -1,0 +1,509 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Private messages: inbox, sent, detail, news, mark unread/read, archive, archive tab, unarchive; the notification stream and clear-unread; chat conversations (none), unread counts and settings.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages",
+        "query": {
+          "messageTab": "Inbox",
+          "pageNumber": "0",
+          "pageSize": "20"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "collection": [
+            {
+              "body": "<span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Hello, and welcome to Roblox—a platform for people all over the world to connect, share experiences, and express themselves in immersive digital environments, all made by users just like you.</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Before you jump in and start exploring, here are a few tips:</span></font></span>\r<br />\r<br /><p align=\"justify\" style=\"margin: 0px;\"><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">A safe, kind, and positive community is our top priority. To ensure you have the best possible experience, configure your </span></font></span><a href=\"https://www.roblox.com/my/account#!/security\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>security and privacy settings </strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">and be sure to review our </span></font></span><a href=\"https://en.help.roblox.com/hc/en-us/articles/203313410\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>rules and account safety tips</strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">.</span></font></span></p>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">There are endless ways to </span></font></span><a href=\"https://en.help.roblox.com/hc/en-us/articles/203313600\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>customize your avatar </strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">with accessories, faces, emotes, and more. After you’ve set up your avatar, check out some of the </span></font></span><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong><a href=\"https://www.roblox.com/charts#/sortName/Most_engaging_V4?country=all&amp;device=computer\">most popular experiences</a>&#160;<a href=\"https://www.roblox.com/games/?SortFilter=1&amp;TimeFilter=0&amp;GenreFilter=1#/sortName/PopularInCountry\"></a></strong></span></font></span><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">from the community!</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Roblox is even better with friends. You can chat with them or invite them into your sessions at any time, even if they’re accessing Roblox on a different device than yours.&#160;</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">That’s all there is to it. Enjoy!</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Sincerely,</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Builderman, CEO of Roblox</span></font></span>",
+              "created": "2026-09-27T04:05:27.092Z",
+              "id": 1383100930419480,
+              "isRead": false,
+              "isReportAbuseDisplayed": false,
+              "isSystemMessage": true,
+              "recipient": {
+                "displayName": "TestUser",
+                "hasVerifiedBadge": false,
+                "id": 1000001,
+                "name": "TestUser"
+              },
+              "sender": {
+                "displayName": "Roblox",
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox"
+              },
+              "subject": "Welcome to Roblox!",
+              "updated": "2026-09-27T04:05:27.092Z"
+            }
+          ],
+          "pageNumber": 0,
+          "totalCollectionSize": 1,
+          "totalPages": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages",
+        "query": {
+          "messageTab": "Sent",
+          "pageNumber": "0",
+          "pageSize": "20"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "collection": [],
+          "pageNumber": 0,
+          "totalCollectionSize": 0,
+          "totalPages": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages/1383100930419480"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "body": "<span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Hello, and welcome to Roblox—a platform for people all over the world to connect, share experiences, and express themselves in immersive digital environments, all made by users just like you.</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Before you jump in and start exploring, here are a few tips:</span></font></span>\r<br />\r<br /><p align=\"justify\" style=\"margin: 0px;\"><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">A safe, kind, and positive community is our top priority. To ensure you have the best possible experience, configure your </span></font></span><a href=\"https://www.roblox.com/my/account#!/security\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>security and privacy settings </strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">and be sure to review our </span></font></span><a href=\"https://en.help.roblox.com/hc/en-us/articles/203313410\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>rules and account safety tips</strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">.</span></font></span></p>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">There are endless ways to </span></font></span><a href=\"https://en.help.roblox.com/hc/en-us/articles/203313600\"><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong>customize your avatar </strong></span></font></span></a><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">with accessories, faces, emotes, and more. After you’ve set up your avatar, check out some of the </span></font></span><span style=\"color:#1155cc\"><font size=\"2\"><span style=\"font-family: Arial\"><strong><a href=\"https://www.roblox.com/charts#/sortName/Most_engaging_V4?country=all&amp;device=computer\">most popular experiences</a>&#160;<a href=\"https://www.roblox.com/games/?SortFilter=1&amp;TimeFilter=0&amp;GenreFilter=1#/sortName/PopularInCountry\"></a></strong></span></font></span><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">from the community!</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Roblox is even better with friends. You can chat with them or invite them into your sessions at any time, even if they’re accessing Roblox on a different device than yours.&#160;</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">That’s all there is to it. Enjoy!</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Sincerely,</span></font></span>\r<br />\r<br /><span style=\"color:#000000\"><font size=\"2\"><span style=\"font-family: Arial\">Builderman, CEO of Roblox</span></font></span>",
+          "created": "2026-09-27T04:05:27.092Z",
+          "id": 1383100930419480,
+          "isRead": false,
+          "isReportAbuseDisplayed": false,
+          "isSystemMessage": true,
+          "recipient": {
+            "displayName": "TestUser",
+            "hasVerifiedBadge": false,
+            "id": 1000001,
+            "name": "TestUser"
+          },
+          "sender": {
+            "displayName": "Roblox",
+            "hasVerifiedBadge": true,
+            "id": 1,
+            "name": "Roblox"
+          },
+          "subject": "Welcome to Roblox!",
+          "updated": "2026-09-27T04:05:27.092Z"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/announcements"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "collection": [],
+          "totalCollectionSize": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages/mark-unread",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "XSRF token invalid"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages/mark-unread",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "failedMessages": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages/mark-read",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "failedMessages": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages/mark-unread",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "failedMessages": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages/archive",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "failedMessages": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages",
+        "query": {
+          "messageTab": "Archive",
+          "pageNumber": "0",
+          "pageSize": "20"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "collection": [],
+          "pageNumber": 0,
+          "totalCollectionSize": 0,
+          "totalPages": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "privatemessages.roblox.com",
+        "path": "/v1/messages/unarchive",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "failedMessages": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "notifications.roblox.com",
+        "path": "/v2/stream-notifications/get-recent",
+        "query": {
+          "maxRows": "20",
+          "startIndex": "0"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": [
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "UserLocationUpdate",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "RevokeAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "ignoreButton",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "default",
+                            "path": "roblox://navigation/external_web_link?domain=zendesk&locale=en&articleId=21767603654932"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Learn more"
+                        },
+                        "visualItemName": "learn_more",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/external_web_link?domain=zendesk&locale=en&articleId=21767603654932"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "UserLocationUpdatedefaultBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Please refer to our help center article to learn more."
+                        },
+                        "title": {
+                          "styledElements": [
+                            {
+                              "length": 36,
+                              "offset": 0,
+                              "styledElementType": "highlight"
+                            }
+                          ],
+                          "text": "Roblox updated your account location"
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "roblox",
+                        "idType": "icon",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-09-29T06:49:51.653Z",
+            "id": "395d3176-30e3-488e-9dba-eace40e57f65",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "13d"
+          }
+        ]
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "notifications.roblox.com",
+        "path": "/v2/stream-notifications/clear-unread",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "statusMessage": "Success"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-user-conversations",
+        "query": {
+          "include_user_data": "true",
+          "pageSize": "20"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "conversations": [],
+          "next_cursor": ""
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-conversation-metadata"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "global_unread_count": 0,
+          "global_unread_message_count": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/metadata"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "cachedDataFromLocalStorageExpirationMS": 30000,
+          "chatDataFromLocalStorageExpirationSeconds": 30,
+          "isAliasChatForClientSideEnabled": true,
+          "isChatDataFromLocalStorageEnabled": false,
+          "isChatEnabled": true,
+          "isChatEnabledByGlobalRules": "enabled",
+          "isChatEnabledByPrivacySetting": "enabled",
+          "isChatUserMessagesEnabled": true,
+          "isChatVisible": true,
+          "isGroupChatEnabledByPrivacySetting": "enabled",
+          "isInvalidMessageTypeFallbackEnabled": false,
+          "isPlayTogetherForGameCardsEnabled": true,
+          "isRespectingMessageTypeEnabled": true,
+          "isRoactChatEnabled": false,
+          "isTrustedCommsWebEnabled": true,
+          "isUsingCacheToLoadFriendsInfoEnabled": false,
+          "isWebChatRegionalityEnabled": false,
+          "isWebChatSettingsMigrationEnabled": true,
+          "languageForPrivacySettingUnavailable": "Chat is currently unavailable",
+          "maxConversationTitleLength": 150,
+          "numberOfMembersForPartyChrome": 6,
+          "partyChromeDisplayTimeStampInterval": 300000,
+          "relativeValueToRecordUiPerformance": 0.0,
+          "senderTypesForUnknownMessageTypeError": [
+            "User"
+          ],
+          "shouldRespectConversationHasUnreadMessageToMarkAsRead": true,
+          "signalRDisconnectionResponseInMilliseconds": 3000,
+          "typingInChatForReceiverExpirationMs": 8000,
+          "typingInChatFromSenderThrottleMs": 5000,
+          "validMessageTypesWhiteList": [
+            "PlainText",
+            "Link"
+          ],
+          "webChatEventSampleRate": 100
+        }
+      }
+    }
+  ]
+}

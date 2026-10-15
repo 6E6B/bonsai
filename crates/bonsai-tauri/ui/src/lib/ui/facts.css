@@ -1,0 +1,58 @@
+/* A raised panel of label/value rows in titled groups. */
+@layer components {
+  [data-component="facts"] {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+    font-size: var(--text-sm);
+  }
+
+  [data-component="facts"] [data-slot="group"] {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+
+  [data-component="facts"] [data-slot="group"] + [data-slot="group"] {
+    border-top: 1px solid var(--color-line);
+  }
+
+  [data-component="facts"] [data-slot="group-title"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  [data-component="facts"] [data-slot="rows"] {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  [data-component="facts"] [data-slot="fact"] {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  [data-component="facts"] [data-slot="label"] {
+    flex-shrink: 0;
+    color: var(--color-fg-muted);
+  }
+
+  [data-component="facts"] [data-slot="value"] {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 0;
+    color: var(--color-fg);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+}

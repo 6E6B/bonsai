@@ -1,0 +1,17 @@
+@layer components {
+  [data-component="divider"] {
+    flex-shrink: 0;
+    border: 0;
+    background: var(--color-line);
+  }
+
+  [data-component="divider"][data-orientation="horizontal"] {
+    width: 100%;
+    height: 1px;
+  }
+
+  [data-component="divider"][data-orientation="vertical"] {
+    align-self: stretch;
+    width: 1px;
+  }
+}

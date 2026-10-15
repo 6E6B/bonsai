@@ -1,0 +1,9 @@
+{
+  "captured": "2026-10-12",
+  "source": "synthetic",
+  "note": "Expired cookie: the body Roblox returns on 401.",
+  "interactions": [
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/authenticated" },
+      "response": { "status": 401, "body": { "errors": [ { "code": 0, "message": "Authorization has been denied for this request." } ] } } }
+  ]
+}

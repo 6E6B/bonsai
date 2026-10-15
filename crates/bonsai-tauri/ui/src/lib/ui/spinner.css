@@ -1,0 +1,22 @@
+@layer components {
+  [data-component="spinner"] {
+    --spinner-size: 16px;
+
+    display: inline-block;
+    flex-shrink: 0;
+    width: var(--spinner-size);
+    height: var(--spinner-size);
+    border: 2px solid var(--color-line-strong);
+    border-top-color: currentColor;
+    border-radius: var(--radius-full);
+    animation: ui-spin 0.7s linear infinite;
+  }
+
+  [data-component="spinner"][data-size="sm"] {
+    --spinner-size: 12px;
+  }
+
+  [data-component="spinner"][data-size="lg"] {
+    --spinner-size: 24px;
+  }
+}

@@ -1,0 +1,72 @@
+@layer components {
+  [data-component="badge"] {
+    --badge-bg: var(--color-control);
+    --badge-fg: var(--color-fg-muted);
+
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: var(--radius-sm);
+    background: var(--badge-bg);
+    color: var(--badge-fg);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  [data-component="badge"][data-variant="accent"] {
+    --badge-bg: var(--color-accent-soft);
+    --badge-fg: var(--color-accent);
+  }
+
+  [data-component="badge"][data-variant="success"] {
+    --badge-bg: var(--color-success-soft);
+    --badge-fg: var(--color-success);
+  }
+
+  [data-component="badge"][data-variant="warning"] {
+    --badge-bg: var(--color-warning-soft);
+    --badge-fg: var(--color-warning);
+  }
+
+  [data-component="badge"][data-variant="danger"] {
+    --badge-bg: var(--color-danger-soft);
+    --badge-fg: var(--color-danger);
+  }
+
+  [data-component="badge"][data-variant="red"] {
+    --badge-bg: color-mix(in srgb, var(--color-tag-red) 16%, transparent);
+    --badge-fg: var(--color-tag-red);
+  }
+
+  [data-component="badge"][data-variant="orange"] {
+    --badge-bg: color-mix(in srgb, var(--color-tag-orange) 16%, transparent);
+    --badge-fg: var(--color-tag-orange);
+  }
+
+  [data-component="badge"][data-variant="yellow"] {
+    --badge-bg: color-mix(in srgb, var(--color-tag-yellow) 16%, transparent);
+    --badge-fg: var(--color-tag-yellow);
+  }
+
+  [data-component="badge"][data-variant="green"] {
+    --badge-bg: color-mix(in srgb, var(--color-tag-green) 16%, transparent);
+    --badge-fg: var(--color-tag-green);
+  }
+
+  [data-component="badge"][data-variant="blue"] {
+    --badge-bg: color-mix(in srgb, var(--color-tag-blue) 16%, transparent);
+    --badge-fg: var(--color-tag-blue);
+  }
+
+  [data-component="badge"][data-variant="purple"] {
+    --badge-bg: color-mix(in srgb, var(--color-tag-purple) 16%, transparent);
+    --badge-fg: var(--color-tag-purple);
+  }
+
+  [data-component="badge"][data-variant="pink"] {
+    --badge-bg: color-mix(in srgb, var(--color-tag-pink) 16%, transparent);
+    --badge-fg: var(--color-tag-pink);
+  }
+}

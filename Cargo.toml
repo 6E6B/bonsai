@@ -1,0 +1,69 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+default-members = ["crates/rbx-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.90"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+dbg_macro = "deny"
+todo = "warn"
+
+[workspace.dependencies]
+rbx-api = { path = "crates/rbx-api" }
+rbx-core = { path = "crates/rbx-core" }
+
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "json", "form", "multipart", "http2", "charset", "gzip", "brotli"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+tokio = { version = "1.53", features = ["rt-multi-thread", "sync", "time", "macros"] }
+futures = "0.3"
+tokio-tungstenite = { version = "0.30", default-features = false, features = ["connect", "__rustls-tls"] }
+rustls-platform-verifier = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_norway = "0.9"
+thiserror = "2"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+parking_lot = "0.12"
+crossbeam-channel = "0.5"
+fastrand = "2"
+base64 = "0.22"
+url = "2"
+heck = "0.5"
+time = { version = "0.3", features = ["formatting", "parsing", "local-offset", "macros"] }
+keyring = "4"
+rusqlite = { version = "0.40", features = ["bundled"] }
+nucleo-matcher = "0.3"
+directories = "6"
+sha2 = "0.11"
+open = "5"
+tauri = { version = "2.12", features = [] }
+tauri-build = { version = "2.5", features = [] }
+# Copy link, Copy ID, CSV exports. Written from Rust, so the webview gets no clipboard permission.
+tauri-plugin-clipboard-manager = "=2.4.0"
+tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
+specta = { version = "=2.0.0-rc.25", features = ["derive"] }
+specta-typescript = "0.0.12"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+wiremock = "0.6"
+tempfile = "3"
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+opt-level = 2
+debug = false
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = "debuginfo"

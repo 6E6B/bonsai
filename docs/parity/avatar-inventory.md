@@ -1,0 +1,70 @@
+# Avatar Editor & Inventory
+
+## Avatar Editor
+- [ ] **Viewport & Preview**:
+  - [x] 2D full-body rendered preview
+  - [ ] 3D interactive preview (orbit, zoom, pan)
+  - [x] Redraw avatar thumbnail trigger
+  - [x] R6 vs R15 rig switch (with accessory compatibility check) — `avatar.rig`; switching to R6 names worn items that only show on R15, and the Wearing list dims them
+- [x] **Body Colors & Skin Tones**:
+  - [x] Standard palette selector — Body tab; basic palette first, then the full one (`avatar.color`)
+  - [x] Advanced per-limb color selector (Head, Torso, Left Arm, Right Arm, Left Leg, Right Leg) — pick parts, then a color (`avatar.color left_arm,right_arm:<id>`)
+- [x] **Scales & Proportions**: ranges and steps from the avatar rules (`avatar.scale <name> <value>`)
+  - [x] Height slider
+  - [x] Width slider
+  - [x] Head scale slider
+  - [x] Proportion slider
+  - [x] Body type slider
+- [x] **Clothing & Layered Clothing**:
+  - [x] Classic Shirts, Classic T-Shirts, Classic Pants
+  - [x] 3D Layered Clothing: Tops, Outerwear, Bottoms, Shoes
+  - [x] Layered clothing layering order adjustment (change which layer sits on top) — up/down on worn layered items (`avatar.layer`); Wearing lists them outermost first
+- [x] **Accessories**:
+  - [x] Categories: Head, Face, Neck, Shoulder, Front, Back, Waist, Gear
+  - [x] Accessory limit validation (up to 10 accessories simultaneously)
+  - [x] Wear and remove items with immediate preview
+- [x] **Body & Heads**:
+  - [x] Hair accessories
+  - [x] Classic Heads & Dynamic Heads
+  - [x] Classic Faces & Animated Faces
+  - [x] Left/Right Arms, Left/Right Legs, Torso bundles
+- [ ] **Animations & Emotes**:
+  - [x] Animation packs: Idle, Walk, Run, Jump, Fall, Climb, Swim
+  - [ ] Emote assignment hotbar (slots 1 through 8) — equipped emotes are listed; equip/unequip endpoints are not in the tracker or `specs/undocumented/`, need a capture
+  - [ ] Emote animation playback preview
+- [x] **Outfits ("Costumes")**:
+  - [x] List saved outfits with rendered preview thumbnails
+  - [x] Create new outfit from current appearance
+  - [x] Update existing outfit with current look
+  - [x] Rename outfit
+  - [x] Delete outfit with confirmation
+- [ ] **General**:
+  - [x] Recent items tab (recently worn or acquired) — Recent tab; click wears the item or outfit again
+  - [ ] Reset avatar to default appearance button — no reset endpoint in the tracker; need a capture of what the site sends
+
+## Inventory
+- [ ] **Category Navigation**:
+  - [x] Collectibles / Limiteds (RAP, value, serial number, original price)
+  - [x] Accessories (Head, Face, Neck, Shoulder, Front, Back, Waist, Gear)
+  - [x] Clothing (Classic Shirts, Classic Pants, Classic T-Shirts, Tops, Outerwear, Bottoms, Shoes)
+  - [x] Body Parts (Hair, Faces, Heads, Packages)
+  - [x] Animations & Emotes
+  - [ ] Game Passes (across all experiences)
+  - [ ] Badges
+  - [ ] Places / Experiences owned
+  - [ ] Development Assets (Audio, Decals, Meshes, Models, Plugins, Videos)
+- [ ] **Item Card Details**:
+  - [ ] Asset thumbnail, name, creator name, verified badge
+  - [x] Stacked item count badge (e.g. `x4` copies owned)
+  - [x] Limited / Limited U serial number badge (`#12` of 500)
+  - [x] Copy Asset ID button
+- [ ] **Inspection & Actions**:
+  - [ ] Quick inspection drawer (description, creator, asset ID, resale price)
+  - [ ] Direct Wear / Remove button on compatible inventory items
+  - [x] Delete asset from inventory (for free items, badges, or decals where supported)
+- [ ] **Search & Filtering**:
+  - [x] Search within inventory by item name
+  - [x] Sort order: Recently Acquired, Oldest, Price Low to High, Price High to Low — price sorts use the loaded items (RAP for collectibles)
+- [x] **Other Users' Inventories**:
+  - [x] Inspect other users' public inventories
+  - [x] Privacy-aware error state (handles "Inventory is hidden / private")

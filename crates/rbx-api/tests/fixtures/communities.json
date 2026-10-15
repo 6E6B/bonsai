@@ -1,0 +1,1067 @@
+{
+  "captured": "2026-10-13",
+  "source": "synthetic",
+  "note": "Hand-written from the tracker's groups v1 and economy schemas and the forums spec (specs/undocumented/groups.roblox.com.yaml): no test account administers a community, and live writes would act on real people. Test Community (7001) seen by an Admin: details with a shout, your membership and permissions, roles, members, your communities, join requests, audit log, settings, funds, payouts, social links, forums (categories, posts, pinned posts, comments), then each write once (payouts and affiliates included).",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": 7001,
+          "name": "Test Community",
+          "description": "We build things. Play https://www.roblox.com/games/1818",
+          "owner": {
+            "userId": 2000004,
+            "username": "user4",
+            "displayName": "User Four",
+            "hasVerifiedBadge": false,
+            "buildersClubMembershipType": 0
+          },
+          "memberCount": 4,
+          "isBuildersClubOnly": false,
+          "publicEntryAllowed": false,
+          "hasVerifiedBadge": false,
+          "shout": {
+            "body": "Event Friday at 6!",
+            "poster": {
+              "userId": 2000001,
+              "username": "user1",
+              "displayName": "User One",
+              "hasVerifiedBadge": false,
+              "buildersClubMembershipType": 0
+            },
+            "created": "2026-10-10T18:00:00.000Z",
+            "updated": "2026-10-12T18:00:00.000Z"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/membership",
+        "query": {
+          "includeNotificationPreferences": "false"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "groupId": 7001,
+          "isPrimary": false,
+          "isPendingJoin": false,
+          "isOwner": false,
+          "canConfigure": true,
+          "canViewMemberList": true,
+          "areGroupFundsVisible": false,
+          "areGroupGamesVisible": true,
+          "userRole": {
+            "user": {
+              "userId": 1000001,
+              "username": "TestUser",
+              "displayName": "Test User",
+              "hasVerifiedBadge": false,
+              "buildersClubMembershipType": 0
+            },
+            "role": {
+              "id": 71,
+              "name": "Admin",
+              "rank": 254,
+              "memberCount": 1
+            }
+          },
+          "permissions": {
+            "groupPostsPermissions": {
+              "viewStatus": true,
+              "postToStatus": true
+            },
+            "groupMembershipPermissions": {
+              "changeRank": true,
+              "inviteMembers": true,
+              "removeMembers": true,
+              "banMembers": false
+            },
+            "groupManagementPermissions": {
+              "manageRelationships": false,
+              "manageClan": false,
+              "viewAuditLogs": true
+            },
+            "groupEconomyPermissions": {
+              "spendGroupFunds": false,
+              "viewGroupPayouts": true
+            },
+            "groupForumsPermissions": {
+              "viewForums": true,
+              "createPosts": true,
+              "createComments": true,
+              "removePosts": true,
+              "removeComments": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/roles",
+        "query": {
+          "includePrivate": "false"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "groupId": 7001,
+          "roles": [
+            {
+              "id": 69,
+              "name": "Guest",
+              "rank": 0,
+              "memberCount": 0
+            },
+            {
+              "id": 70,
+              "name": "Member",
+              "rank": 1,
+              "memberCount": 2
+            },
+            {
+              "id": 71,
+              "name": "Admin",
+              "rank": 254,
+              "memberCount": 1
+            },
+            {
+              "id": 72,
+              "name": "Owner",
+              "rank": 255,
+              "memberCount": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/roles/70/users",
+        "query": {
+          "limit": "100",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "userId": 2000001,
+              "username": "user1",
+              "displayName": "User One",
+              "hasVerifiedBadge": false,
+              "buildersClubMembershipType": 0
+            },
+            {
+              "userId": 2000002,
+              "username": "user2",
+              "displayName": "User Two",
+              "hasVerifiedBadge": false,
+              "buildersClubMembershipType": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/users/1000001/groups/roles"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "group": {
+                "id": 7001,
+                "name": "Test Community",
+                "memberCount": 4,
+                "hasVerifiedBadge": false
+              },
+              "role": {
+                "id": 71,
+                "name": "Admin",
+                "rank": 254,
+                "memberCount": 1
+              },
+              "isPrimaryGroup": false
+            },
+            {
+              "group": {
+                "id": 7002,
+                "name": "Other Community",
+                "memberCount": 900,
+                "hasVerifiedBadge": true
+              },
+              "role": {
+                "id": 80,
+                "name": "Member",
+                "rank": 1,
+                "memberCount": 899
+              },
+              "isPrimaryGroup": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/user/groups/pending"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": 7003,
+              "name": "Closed Club",
+              "memberCount": 12,
+              "publicEntryAllowed": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/join-requests",
+        "query": {
+          "limit": "100",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "requester": {
+                "userId": 2000003,
+                "username": "user3",
+                "displayName": "User Three",
+                "hasVerifiedBadge": false,
+                "buildersClubMembershipType": 0
+              },
+              "created": "2026-10-13T08:00:00.000Z"
+            },
+            {
+              "requester": {
+                "userId": 2000002,
+                "username": "user2",
+                "displayName": "User Two",
+                "hasVerifiedBadge": false,
+                "buildersClubMembershipType": 0
+              },
+              "created": "2026-10-12T08:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/audit-log",
+        "query": {
+          "limit": "50",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "actor": {
+                "user": {
+                  "userId": 2000004,
+                  "username": "user4",
+                  "displayName": "User Four",
+                  "hasVerifiedBadge": false,
+                  "buildersClubMembershipType": 0
+                },
+                "role": {
+                  "id": 72,
+                  "name": "Owner",
+                  "rank": 255,
+                  "memberCount": 1
+                }
+              },
+              "actionType": "ChangeRank",
+              "description": {
+                "TargetId": 2000001,
+                "TargetName": "user1",
+                "OldRoleSetId": 70,
+                "NewRoleSetId": 71,
+                "OldRoleSetName": "Member",
+                "NewRoleSetName": "Admin"
+              },
+              "created": "2026-10-11T08:00:00.000Z"
+            },
+            {
+              "actor": {
+                "user": {
+                  "userId": 2000001,
+                  "username": "user1",
+                  "displayName": "User One",
+                  "hasVerifiedBadge": false,
+                  "buildersClubMembershipType": 0
+                },
+                "role": {
+                  "id": 71,
+                  "name": "Admin",
+                  "rank": 254,
+                  "memberCount": 1
+                }
+              },
+              "actionType": "PostStatus",
+              "description": {
+                "Text": "Event Friday at 6!"
+              },
+              "created": "2026-10-12T18:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/settings"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "isApprovalRequired": true,
+          "isBuildersClubRequired": false,
+          "areEnemiesAllowed": false,
+          "areGroupFundsVisible": false,
+          "areGroupGamesVisible": true,
+          "isGroupNameChangeEnabled": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "economy.roblox.com",
+        "path": "/v1/groups/7001/currency"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "robux": 12345
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/payouts"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "user": {
+                "userId": 2000004,
+                "username": "user4",
+                "displayName": "User Four",
+                "hasVerifiedBadge": false,
+                "buildersClubMembershipType": 0
+              },
+              "percentage": 60
+            },
+            {
+              "user": {
+                "userId": 2000001,
+                "username": "user1",
+                "displayName": "User One",
+                "hasVerifiedBadge": false,
+                "buildersClubMembershipType": 0
+              },
+              "percentage": 10
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/social-links"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": 1,
+              "type": "Discord",
+              "url": "https://discord.gg/example",
+              "title": "Our Discord"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/forums"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": "cat-2",
+              "shortId": "b",
+              "name": "Off topic",
+              "description": "Anything",
+              "rank": null,
+              "isArchived": false
+            },
+            {
+              "id": "cat-1",
+              "shortId": "a",
+              "name": "General",
+              "description": "Talk here",
+              "rank": 0,
+              "isArchived": false
+            },
+            {
+              "id": "cat-9",
+              "shortId": "z",
+              "name": "Old",
+              "rank": 2,
+              "isArchived": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/forums/cat-1/posts",
+        "query": {
+          "includeCommentCount": "true",
+          "limit": "20"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": "post-2",
+              "categoryId": "cat-1",
+              "name": "Trading tips",
+              "createdBy": 2000001,
+              "createdAt": "2026-10-12T10:00:00.000Z",
+              "isPinned": false,
+              "isLocked": false,
+              "isUnread": true,
+              "commentCount": 3,
+              "firstComment": {
+                "id": "c-2",
+                "createdBy": 2000001,
+                "createdAt": "2026-10-12T10:00:00.000Z",
+                "content": {
+                  "plainText": "Share yours."
+                },
+                "creatorInfo": {
+                  "displayName": "User One",
+                  "hasVerifiedBadge": false,
+                  "groupRoleName": "Member"
+                }
+              }
+            },
+            {
+              "id": "post-1",
+              "categoryId": "cat-1",
+              "name": "Welcome",
+              "createdBy": 2000004,
+              "createdAt": "2026-10-01T10:00:00.000Z",
+              "isPinned": true,
+              "isLocked": true,
+              "isUnread": false,
+              "commentCount": 1,
+              "firstComment": {
+                "id": "c-1",
+                "createdBy": 2000004,
+                "createdAt": "2026-10-01T10:00:00.000Z",
+                "content": {
+                  "plainText": "Read the rules."
+                },
+                "creatorInfo": {
+                  "displayName": "User Four",
+                  "hasVerifiedBadge": false,
+                  "groupRoleName": "Member"
+                }
+              }
+            }
+          ],
+          "nextPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/forums/cat-1/posts/pinned",
+        "query": {
+          "includeCommentCount": "true"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": "post-1",
+              "categoryId": "cat-1",
+              "name": "Welcome",
+              "createdBy": 2000004,
+              "createdAt": "2026-10-01T10:00:00.000Z",
+              "isPinned": true,
+              "isLocked": true,
+              "isUnread": false,
+              "commentCount": 1,
+              "firstComment": {
+                "id": "c-1",
+                "createdBy": 2000004,
+                "createdAt": "2026-10-01T10:00:00.000Z",
+                "content": {
+                  "plainText": "Read the rules."
+                },
+                "creatorInfo": {
+                  "displayName": "User Four",
+                  "hasVerifiedBadge": false,
+                  "groupRoleName": "Member"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/forums/cat-1/posts/post-2/comments",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": "c-2",
+              "createdBy": 2000001,
+              "createdAt": "2026-10-12T10:00:00.000Z",
+              "content": {
+                "plainText": "Share yours."
+              },
+              "creatorInfo": {
+                "displayName": "User One",
+                "hasVerifiedBadge": false,
+                "groupRoleName": "Member"
+              }
+            },
+            {
+              "id": "c-3",
+              "createdBy": 2000002,
+              "createdAt": "2026-10-12T11:00:00.000Z",
+              "content": {
+                "plainText": "Never trade first."
+              },
+              "creatorInfo": {
+                "displayName": "User Two",
+                "hasVerifiedBadge": false,
+                "groupRoleName": "Member"
+              },
+              "parentId": "c-2"
+            },
+            {
+              "id": "c-4",
+              "createdBy": 1000001,
+              "createdAt": "2026-10-12T12:00:00.000Z",
+              "content": {
+                "plainText": "Check values."
+              },
+              "creatorInfo": {
+                "displayName": "Test User",
+                "hasVerifiedBadge": false,
+                "groupRoleName": "Member"
+              },
+              "parentId": "c-2"
+            }
+          ],
+          "nextPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "body": "New shout",
+          "poster": {
+            "userId": 1000001,
+            "username": "TestUser",
+            "displayName": "Test User",
+            "hasVerifiedBadge": false,
+            "buildersClubMembershipType": 0
+          },
+          "updated": "2026-10-13T12:00:00.000Z"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/join-requests/users/2000003",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/join-requests",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/users/2000001",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/users/2000002",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/user/groups/primary",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/settings",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/forums/cat-1/posts",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": "post-3",
+          "categoryId": "cat-1",
+          "name": "New post",
+          "createdBy": 2000001,
+          "createdAt": "2026-10-12T10:00:00.000Z",
+          "isPinned": false,
+          "isLocked": false,
+          "isUnread": true,
+          "commentCount": 3,
+          "firstComment": {
+            "id": "c-2",
+            "createdBy": 2000001,
+            "createdAt": "2026-10-12T10:00:00.000Z",
+            "content": {
+              "plainText": "Share yours."
+            },
+            "creatorInfo": {
+              "displayName": "User One",
+              "hasVerifiedBadge": false,
+              "groupRoleName": "Member"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/forums/cat-1/posts/post-2/comments",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": "c-5",
+          "createdBy": 1000001,
+          "createdAt": "2026-10-13T12:00:00.000Z",
+          "content": {
+            "plainText": "Thanks"
+          },
+          "creatorInfo": {
+            "displayName": "Test User",
+            "hasVerifiedBadge": false,
+            "groupRoleName": "Member"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/forums/cat-1/posts/post-2/comments/c-3",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/forums/cat-1/posts/post-1",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7003/users",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7002/users/1000001",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/payouts",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "NotHeld"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/payouts/recurring",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/relationships/Allies/7004",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/relationships/Allies/7005",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/relationships/Enemies/7006",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "groups.roblox.com",
+        "path": "/v1/groups/7001/relationships/Enemies/7007",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    }
+  ]
+}

@@ -1,0 +1,2194 @@
+{
+  "captured": "2026-10-13",
+  "source": "live; the second following-exists batch is synthetic from the tracker schemas (2026-10-15). 156's avatar, outfits and one outfit's details are the bodies captured for avatar.json (2026-10-14).",
+  "note": "Profile of builderman (156) and Roblox (1) as the test account. Then what 156 wears, their outfits and one outfit's contents, and which of a page of people the test account follows.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/156"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "created": "2006-03-08T17:17:52.9Z",
+          "description": "Welcome to Roblox!",
+          "displayName": "builderman",
+          "externalAppDisplayName": null,
+          "hasVerifiedBadge": true,
+          "id": 156,
+          "isBanned": false,
+          "name": "builderman"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/friends/count"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "count": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/followers/count"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "count": 69909096
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/followings/count"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "count": 67853342
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/1000001/friends/statuses",
+        "query": {
+          "userIds": "1"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": 1,
+              "status": "NotFriends"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/user/following-exists",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "XSRF token invalid"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/user/following-exists",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "followings": [
+            {
+              "isFollowed": false,
+              "isFollowing": false,
+              "userId": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/user-blocking-api/v1/users/1/is-blocked"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": false
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/my/friends/requests",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "friendRequest": {
+                "contactName": null,
+                "originSourceType": "InGame",
+                "senderId": 2000001,
+                "senderNickname": "",
+                "sentAt": "2026-09-27T01:06:55.594Z",
+                "sourceUniverseId": 8226497
+              },
+              "id": 2000001,
+              "mutualFriendsList": []
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": "1:639260860155940000"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/friends/find",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "HasMore": null,
+          "NextCursor": null,
+          "PageItems": [],
+          "PreviousCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/followers",
+        "query": {
+          "limit": "100"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": 9000000003
+            },
+            {
+              "id": 9000000004
+            },
+            {
+              "id": 9000000005
+            },
+            {
+              "id": 9000000006
+            },
+            {
+              "id": 9000000007
+            },
+            {
+              "id": 9000000008
+            },
+            {
+              "id": 9000000009
+            },
+            {
+              "id": 9000000010
+            },
+            {
+              "id": 9000000011
+            },
+            {
+              "id": 9000000012
+            },
+            {
+              "id": 9000000013
+            },
+            {
+              "id": 9000000014
+            },
+            {
+              "id": 9000000015
+            },
+            {
+              "id": 9000000016
+            },
+            {
+              "id": 9000000017
+            },
+            {
+              "id": 9000000018
+            },
+            {
+              "id": 9000000019
+            },
+            {
+              "id": 9000000020
+            },
+            {
+              "id": 9000000021
+            },
+            {
+              "id": 9000000022
+            },
+            {
+              "id": 9000000023
+            },
+            {
+              "id": 9000000024
+            },
+            {
+              "id": 9000000025
+            },
+            {
+              "id": 9000000026
+            },
+            {
+              "id": 9000000027
+            },
+            {
+              "id": 9000000028
+            },
+            {
+              "id": 9000000029
+            },
+            {
+              "id": 9000000030
+            },
+            {
+              "id": 9000000031
+            },
+            {
+              "id": 9000000032
+            },
+            {
+              "id": 9000000033
+            },
+            {
+              "id": 9000000034
+            },
+            {
+              "id": 9000000035
+            },
+            {
+              "id": 9000000036
+            },
+            {
+              "id": 9000000037
+            },
+            {
+              "id": 9000000038
+            },
+            {
+              "id": 9000000039
+            },
+            {
+              "id": 9000000040
+            },
+            {
+              "id": 9000000041
+            },
+            {
+              "id": 9000000042
+            },
+            {
+              "id": 9000000043
+            },
+            {
+              "id": 9000000044
+            },
+            {
+              "id": 9000000045
+            },
+            {
+              "id": 9000000046
+            },
+            {
+              "id": 9000000047
+            },
+            {
+              "id": 9000000048
+            },
+            {
+              "id": 9000000049
+            },
+            {
+              "id": 9000000050
+            },
+            {
+              "id": 9000000051
+            },
+            {
+              "id": 9000000052
+            },
+            {
+              "id": 9000000053
+            },
+            {
+              "id": 9000000054
+            },
+            {
+              "id": 9000000055
+            },
+            {
+              "id": 9000000056
+            },
+            {
+              "id": 9000000057
+            },
+            {
+              "id": 9000000058
+            },
+            {
+              "id": 9000000059
+            },
+            {
+              "id": 9000000060
+            },
+            {
+              "id": 9000000061
+            },
+            {
+              "id": 9000000062
+            },
+            {
+              "id": 9000000063
+            },
+            {
+              "id": 9000000064
+            },
+            {
+              "id": 9000000065
+            },
+            {
+              "id": 9000000066
+            },
+            {
+              "id": 9000000067
+            },
+            {
+              "id": 9000000068
+            },
+            {
+              "id": 9000000069
+            },
+            {
+              "id": 9000000070
+            },
+            {
+              "id": 9000000071
+            },
+            {
+              "id": 9000000072
+            },
+            {
+              "id": 9000000073
+            },
+            {
+              "id": 9000000074
+            },
+            {
+              "id": 9000000075
+            },
+            {
+              "id": 9000000076
+            },
+            {
+              "id": 9000000077
+            },
+            {
+              "id": 9000000078
+            },
+            {
+              "id": 9000000079
+            },
+            {
+              "id": 9000000080
+            },
+            {
+              "id": 9000000081
+            },
+            {
+              "id": 9000000082
+            },
+            {
+              "id": 9000000083
+            },
+            {
+              "id": 9000000084
+            },
+            {
+              "id": 9000000085
+            },
+            {
+              "id": 9000000086
+            },
+            {
+              "id": 9000000087
+            },
+            {
+              "id": 9000000088
+            },
+            {
+              "id": 9000000089
+            },
+            {
+              "id": 9000000090
+            },
+            {
+              "id": 9000000091
+            },
+            {
+              "id": 9000000092
+            },
+            {
+              "id": 9000000093
+            },
+            {
+              "id": 9000000094
+            },
+            {
+              "id": 9000000095
+            },
+            {
+              "id": 9000000096
+            },
+            {
+              "id": 9000000097
+            },
+            {
+              "id": 9000000098
+            },
+            {
+              "id": 9000000099
+            },
+            {
+              "id": 9000000100
+            },
+            {
+              "id": 9000000101
+            },
+            {
+              "id": 9000000102
+            }
+          ],
+          "nextPageCursor": "eyJrZXkiOiJpZF8yendBQUFVbWNCLVgtelFQUSIsInNvcnRPcmRlciI6IkFzYyIsInBhZ2luZ0RpcmVjdGlvbiI6IkZvcndhcmQiLCJwYWdlTnVtYmVyIjoxLCJkaXNjcmltaW5hdG9yIjoidGFyZ2V0VXNlcklkOjE1NiIsImNvdW50IjoxMDB9Cjk3MGI4YTUxNDIwMmQ1YzRlMWRlZDdkYjJmYTk3MTc5NTcyMjQxZmYzMzZkNTRlNzQ3Yjc1ZTY4ODMxOWM2NjI=",
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/followings",
+        "query": {
+          "limit": "100"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": 9000000103
+            },
+            {
+              "id": 9000000003
+            },
+            {
+              "id": 9000000104
+            },
+            {
+              "id": 9000000007
+            },
+            {
+              "id": 9000000004
+            },
+            {
+              "id": 9000000005
+            },
+            {
+              "id": 9000000008
+            },
+            {
+              "id": 9000000006
+            },
+            {
+              "id": 9000000009
+            },
+            {
+              "id": 9000000105
+            },
+            {
+              "id": 9000000010
+            },
+            {
+              "id": 9000000106
+            },
+            {
+              "id": 9000000011
+            },
+            {
+              "id": 9000000107
+            },
+            {
+              "id": 9000000012
+            },
+            {
+              "id": 9000000108
+            },
+            {
+              "id": 9000000109
+            },
+            {
+              "id": 9000000013
+            },
+            {
+              "id": 9000000110
+            },
+            {
+              "id": 9000000014
+            },
+            {
+              "id": 9000000015
+            },
+            {
+              "id": 9000000111
+            },
+            {
+              "id": 9000000112
+            },
+            {
+              "id": 9000000113
+            },
+            {
+              "id": 9000000017
+            },
+            {
+              "id": 9000000016
+            },
+            {
+              "id": 9000000018
+            },
+            {
+              "id": 9000000019
+            },
+            {
+              "id": 9000000020
+            },
+            {
+              "id": 9000000021
+            },
+            {
+              "id": 9000000023
+            },
+            {
+              "id": 9000000024
+            },
+            {
+              "id": 9000000022
+            },
+            {
+              "id": 9000000114
+            },
+            {
+              "id": 9000000025
+            },
+            {
+              "id": 9000000026
+            },
+            {
+              "id": 9000000115
+            },
+            {
+              "id": 9000000116
+            },
+            {
+              "id": 9000000027
+            },
+            {
+              "id": 9000000117
+            },
+            {
+              "id": 9000000118
+            },
+            {
+              "id": 9000000028
+            },
+            {
+              "id": 9000000029
+            },
+            {
+              "id": 9000000031
+            },
+            {
+              "id": 9000000030
+            },
+            {
+              "id": 9000000119
+            },
+            {
+              "id": 9000000032
+            },
+            {
+              "id": 9000000120
+            },
+            {
+              "id": 9000000121
+            },
+            {
+              "id": 9000000033
+            },
+            {
+              "id": 9000000034
+            },
+            {
+              "id": 9000000122
+            },
+            {
+              "id": 9000000035
+            },
+            {
+              "id": 9000000037
+            },
+            {
+              "id": 9000000036
+            },
+            {
+              "id": 9000000123
+            },
+            {
+              "id": 9000000039
+            },
+            {
+              "id": 9000000038
+            },
+            {
+              "id": 9000000124
+            },
+            {
+              "id": 9000000040
+            },
+            {
+              "id": 9000000041
+            },
+            {
+              "id": 9000000125
+            },
+            {
+              "id": 9000000042
+            },
+            {
+              "id": 9000000126
+            },
+            {
+              "id": 9000000127
+            },
+            {
+              "id": 9000000044
+            },
+            {
+              "id": 9000000043
+            },
+            {
+              "id": 9000000128
+            },
+            {
+              "id": 9000000045
+            },
+            {
+              "id": 9000000046
+            },
+            {
+              "id": 9000000047
+            },
+            {
+              "id": 9000000048
+            },
+            {
+              "id": 9000000129
+            },
+            {
+              "id": 9000000049
+            },
+            {
+              "id": 9000000130
+            },
+            {
+              "id": 9000000050
+            },
+            {
+              "id": 9000000131
+            },
+            {
+              "id": 9000000051
+            },
+            {
+              "id": 9000000132
+            },
+            {
+              "id": 9000000133
+            },
+            {
+              "id": 9000000052
+            },
+            {
+              "id": 9000000134
+            },
+            {
+              "id": 9000000053
+            },
+            {
+              "id": 9000000054
+            },
+            {
+              "id": 9000000055
+            },
+            {
+              "id": 9000000056
+            },
+            {
+              "id": 9000000135
+            },
+            {
+              "id": 9000000058
+            },
+            {
+              "id": 9000000059
+            },
+            {
+              "id": 9000000057
+            },
+            {
+              "id": 9000000136
+            },
+            {
+              "id": 9000000060
+            },
+            {
+              "id": 9000000137
+            },
+            {
+              "id": 9000000062
+            },
+            {
+              "id": 9000000061
+            },
+            {
+              "id": 9000000063
+            },
+            {
+              "id": 9000000064
+            },
+            {
+              "id": 9000000138
+            },
+            {
+              "id": 9000000066
+            },
+            {
+              "id": 9000000065
+            }
+          ],
+          "nextPageCursor": "eyJrZXkiOiJpZF8yendBQUFVbWNCLVhnelFMLSIsInNvcnRPcmRlciI6IkFzYyIsInBhZ2luZ0RpcmVjdGlvbiI6IkZvcndhcmQiLCJwYWdlTnVtYmVyIjoxLCJkaXNjcmltaW5hdG9yIjoidGFyZ2V0VXNlcklkOjE1NiIsImNvdW50IjoxMDB9CjUxMjcxZTBiMWRiNjJhMjcwM2YzYWE3Y2U0MDU4ZTE0ZDIzM2ZlNWYxODdhYjI2NjVlZjgxMWIzMzRmNzljYzc=",
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/156/username-history",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "groups.roblox.com",
+        "path": "/v1/users/1/groups/roles"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "group": {
+                "description": "[ Content Deleted ]",
+                "hasSocialModules": true,
+                "hasVerifiedBadge": false,
+                "id": 127081,
+                "isBuildersClubOnly": false,
+                "memberCount": 3741770,
+                "name": "Roblox Wiki",
+                "owner": {
+                  "displayName": "user1",
+                  "hasVerifiedBadge": false,
+                  "userId": 9000000140,
+                  "username": "user1"
+                },
+                "publicEntryAllowed": true,
+                "shout": null
+              },
+              "role": {
+                "color": 0,
+                "id": 676373,
+                "name": "Wiki System Operator",
+                "rank": 254
+              }
+            },
+            {
+              "group": {
+                "description": "",
+                "hasSocialModules": true,
+                "hasVerifiedBadge": true,
+                "id": 4111519,
+                "isBuildersClubOnly": false,
+                "memberCount": 122,
+                "name": "Roblox Presents",
+                "owner": {
+                  "displayName": "user2",
+                  "hasVerifiedBadge": true,
+                  "userId": 9000000142,
+                  "username": "user2"
+                },
+                "publicEntryAllowed": false,
+                "shout": null
+              },
+              "role": {
+                "color": 0,
+                "id": 106072807,
+                "name": "Roblox",
+                "rank": 100
+              }
+            },
+            {
+              "group": {
+                "description": "",
+                "hasSocialModules": true,
+                "hasVerifiedBadge": false,
+                "id": 7384468,
+                "isBuildersClubOnly": false,
+                "memberCount": 997,
+                "name": "Roblox Arena Events",
+                "owner": {
+                  "displayName": "user3",
+                  "hasVerifiedBadge": false,
+                  "userId": 9000000144,
+                  "username": "user3"
+                },
+                "publicEntryAllowed": false,
+                "shout": null
+              },
+              "role": {
+                "color": 0,
+                "id": 46417776,
+                "name": "Member",
+                "rank": 1
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "badges.roblox.com",
+        "path": "/v1/users/156/badges",
+        "query": {
+          "limit": "100",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-04-01T01:44:51.32Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "This badge is awarded to people who visit Spleef!",
+              "displayDescription": "This badge is awarded to people who visit Spleef!",
+              "displayIconImageId": 797317099,
+              "displayName": "Welcome to Spleef!",
+              "enabled": true,
+              "iconImageId": 797317099,
+              "id": 76285821,
+              "name": "Welcome to Spleef!",
+              "statistics": {
+                "awardedCount": 736724,
+                "pastDayAwardedCount": 19,
+                "winRatePercentage": 1.0
+              },
+              "updated": "2017-05-13T17:26:57.573Z"
+            },
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-04-01T01:52:45.447Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Why am I holding a hammer? Meet me to find out :D",
+              "displayDescription": "Why am I holding a hammer? Meet me to find out :D",
+              "displayIconImageId": 797336393,
+              "displayName": "OMG ITS CLONETROOPER1019! (You Met the Creator!)",
+              "enabled": true,
+              "iconImageId": 797336393,
+              "id": 76286530,
+              "name": "OMG ITS CLONETROOPER1019! (You Met the Creator!)",
+              "statistics": {
+                "awardedCount": 4882,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2017-05-13T17:32:23.79Z"
+            },
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-04-01T01:49:04.02Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Be alive in the map \"Apparently 2 houses sitting in the middle of the grass\" to see a house fall in the lava.",
+              "displayDescription": "Be alive in the map \"Apparently 2 houses sitting in the middle of the grass\" to see a house fall in the lava.",
+              "displayIconImageId": 797331020,
+              "displayName": "House Tipper",
+              "enabled": true,
+              "iconImageId": 797331020,
+              "id": 76286206,
+              "name": "House Tipper",
+              "statistics": {
+                "awardedCount": 36649,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2017-05-13T17:30:56.103Z"
+            },
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-05-28T20:27:28.06Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Congratulations! Youre smarter than the average rock :D (Read the \"How to Play\" document in the game to the 5th page to recieve this badge)",
+              "displayDescription": "Congratulations! Youre smarter than the average rock :D (Read the \"How to Play\" document in the game to the 5th page to recieve this badge)",
+              "displayIconImageId": 797342085,
+              "displayName": "Diploma of Unstupidity.",
+              "enabled": true,
+              "iconImageId": 797342085,
+              "id": 82012770,
+              "name": "Diploma of Unstupidity.",
+              "statistics": {
+                "awardedCount": 341148,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2017-05-13T17:33:56.043Z"
+            },
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-04-01T01:45:29.007Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Be the last one standing after a round.",
+              "displayDescription": "Be the last one standing after a round.",
+              "displayIconImageId": 76285858,
+              "displayName": "Winner!",
+              "enabled": true,
+              "iconImageId": 76285858,
+              "id": 76285879,
+              "name": "Winner!",
+              "statistics": {
+                "awardedCount": 243191,
+                "pastDayAwardedCount": 1,
+                "winRatePercentage": 0.143
+              },
+              "updated": "2013-06-12T23:29:20.22Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-05-22T19:33:15.677Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "",
+              "displayDescription": "",
+              "displayIconImageId": 52331688,
+              "displayName": "lol",
+              "enabled": false,
+              "iconImageId": 52331688,
+              "id": 52331725,
+              "name": "lol",
+              "statistics": {
+                "awardedCount": 213625,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.347Z"
+            },
+            {
+              "awarder": {
+                "id": 14769582,
+                "type": "Place"
+              },
+              "created": "2012-06-13T23:57:50.47Z",
+              "creator": {
+                "id": 2467279,
+                "name": "Xysanth",
+                "type": "User"
+              },
+              "description": "Reward for finding 5 coins",
+              "displayDescription": "Reward for finding 5 coins",
+              "displayIconImageId": 4617007756,
+              "displayName": "You found 5 coins",
+              "enabled": true,
+              "iconImageId": 4617007756,
+              "id": 83516904,
+              "name": "You found 5 coins",
+              "statistics": {
+                "awardedCount": 165798,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2020-01-20T21:42:03.603Z"
+            },
+            {
+              "awarder": {
+                "id": 46686996,
+                "type": "Place"
+              },
+              "created": "2012-07-08T12:13:37.087Z",
+              "creator": {
+                "id": 7259154,
+                "name": "Resyncable",
+                "type": "User"
+              },
+              "description": "This is a legacy badge and is no longer obtainable.",
+              "displayDescription": "This is a legacy badge and is no longer obtainable.",
+              "displayIconImageId": 86027718,
+              "displayName": "Silver Tester",
+              "enabled": true,
+              "iconImageId": 86027718,
+              "id": 86027793,
+              "name": "Silver Tester",
+              "statistics": {
+                "awardedCount": 4143,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-05-16T17:34:51.933Z"
+            },
+            {
+              "awarder": {
+                "id": 46686996,
+                "type": "Place"
+              },
+              "created": "2012-08-01T23:21:51.403Z",
+              "creator": {
+                "id": 7259154,
+                "name": "Resyncable",
+                "type": "User"
+              },
+              "description": "A very hard badge to get",
+              "displayDescription": "A very hard badge to get",
+              "displayIconImageId": 88668790,
+              "displayName": "Find the magic ",
+              "enabled": true,
+              "iconImageId": 88668790,
+              "id": 88668858,
+              "name": "Find the magic ",
+              "statistics": {
+                "awardedCount": 8,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-05-16T17:34:51.947Z"
+            },
+            {
+              "awarder": {
+                "id": 21936257,
+                "type": "Place"
+              },
+              "created": "2012-08-02T04:32:47.17Z",
+              "creator": {
+                "id": 5377304,
+                "name": "Kenetec",
+                "type": "User"
+              },
+              "description": "All the cool Roblox mods have this badge.",
+              "displayDescription": "All the cool Roblox mods have this badge.",
+              "displayIconImageId": 88693807,
+              "displayName": "The Mark of Coolbob44",
+              "enabled": true,
+              "iconImageId": 88693807,
+              "id": 88693822,
+              "name": "The Mark of Coolbob44",
+              "statistics": {
+                "awardedCount": 27,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2015-12-08T18:33:45.407Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-10T04:58:12.243Z",
+              "creator": {
+                "id": 912348,
+                "name": "mygame43",
+                "type": "User"
+              },
+              "description": "Thanks for coming! :D",
+              "displayDescription": "Thanks for coming! :D",
+              "displayIconImageId": 74401815,
+              "displayName": "Temple Run Visitor",
+              "enabled": true,
+              "iconImageId": 74401815,
+              "id": 74402011,
+              "name": "Temple Run Visitor",
+              "statistics": {
+                "awardedCount": 1269074,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:22.003Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-10T02:08:45.187Z",
+              "creator": {
+                "id": 912348,
+                "name": "mygame43",
+                "type": "User"
+              },
+              "description": "My favorite players! :D",
+              "displayDescription": "My favorite players! :D",
+              "displayIconImageId": 74386912,
+              "displayName": "Temple run VIP",
+              "enabled": true,
+              "iconImageId": 74386912,
+              "id": 74386997,
+              "name": "Temple run VIP",
+              "statistics": {
+                "awardedCount": 11654,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:21.973Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-10T02:07:36.283Z",
+              "creator": {
+                "id": 912348,
+                "name": "mygame43",
+                "type": "User"
+              },
+              "description": "Good job! You beat roblox Temple Run!",
+              "displayDescription": "Good job! You beat roblox Temple Run!",
+              "displayIconImageId": 74386800,
+              "displayName": "TEMPLE RUN WINNER!!!",
+              "enabled": true,
+              "iconImageId": 74386800,
+              "id": 74386865,
+              "name": "TEMPLE RUN WINNER!!!",
+              "statistics": {
+                "awardedCount": 52232,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:21.943Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-12T02:36:09.077Z",
+              "creator": {
+                "id": 912348,
+                "name": "mygame43",
+                "type": "User"
+              },
+              "description": "Find me.",
+              "displayDescription": "Find me.",
+              "displayIconImageId": 74622322,
+              "displayName": "The Tree With No Leaves",
+              "enabled": true,
+              "iconImageId": 74622322,
+              "id": 74622344,
+              "name": "The Tree With No Leaves",
+              "statistics": {
+                "awardedCount": 15298,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:22.02Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-10T02:05:56.427Z",
+              "creator": {
+                "id": 912348,
+                "name": "mygame43",
+                "type": "User"
+              },
+              "description": "Make it half way to winners in Temple Run",
+              "displayDescription": "Make it half way to winners in Temple Run",
+              "displayIconImageId": 74386598,
+              "displayName": "Half way there!",
+              "enabled": true,
+              "iconImageId": 74386598,
+              "id": 74386665,
+              "name": "Half way there!",
+              "statistics": {
+                "awardedCount": 392182,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:21.943Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2012-03-19T23:18:45.02Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Get killed by a Teddy Bear.",
+              "displayDescription": "Get killed by a Teddy Bear.",
+              "displayIconImageId": 75280394,
+              "displayName": "THAT TEDDY BEAR IS A SPY.",
+              "enabled": false,
+              "iconImageId": 75280394,
+              "id": 75280449,
+              "name": "THAT TEDDY BEAR IS A SPY.",
+              "statistics": {
+                "awardedCount": 3597,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-04-23T20:52:03.107Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "KOOL KILLER may get shot at the end of the game but he will never die out thanks to this egg. (Rarest egg)\r\nOnly Available in April",
+              "displayDescription": "KOOL KILLER may get shot at the end of the game but he will never die out thanks to this egg. (Rarest egg)\r\nOnly Available in April",
+              "displayIconImageId": 50544026,
+              "displayName": "The Faberge Egg of KOOL KILLERS Million Ghosts",
+              "enabled": false,
+              "iconImageId": 50544026,
+              "id": 50544229,
+              "name": "The Faberge Egg of KOOL KILLERS Million Ghosts",
+              "statistics": {
+                "awardedCount": 2507,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.347Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-11-20T17:09:13.18Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Smash a Wall as KOOL KILLER\r\n\r\n(Only certain walls can be smashed. They usually have cracks in them)",
+              "displayDescription": "Smash a Wall as KOOL KILLER\r\n\r\n(Only certain walls can be smashed. They usually have cracks in them)",
+              "displayIconImageId": 66103699,
+              "displayName": "WallSmasher",
+              "enabled": false,
+              "iconImageId": 66103699,
+              "id": 66103718,
+              "name": "WallSmasher",
+              "statistics": {
+                "awardedCount": 1772,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-06-22T18:08:42.467Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "This egg is made out of string. But what is the string made out of....",
+              "displayDescription": "This egg is made out of string. But what is the string made out of....",
+              "displayIconImageId": 54504913,
+              "displayName": "The Spaggled Egg of Bloody Thread",
+              "enabled": false,
+              "iconImageId": 54504913,
+              "id": 54505018,
+              "name": "The Spaggled Egg of Bloody Thread",
+              "statistics": {
+                "awardedCount": 3893,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-01-16T03:32:43.053Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "That just happened.",
+              "displayDescription": "That just happened.",
+              "displayIconImageId": 44218818,
+              "displayName": "HAX!!!!!!",
+              "enabled": false,
+              "iconImageId": 44218818,
+              "id": 44218865,
+              "name": "HAX!!!!!!",
+              "statistics": {
+                "awardedCount": 2419,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.347Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2012-04-23T21:21:33.54Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Purchase the extremely expensive sniper in the shop.",
+              "displayDescription": "Purchase the extremely expensive sniper in the shop.",
+              "displayIconImageId": 78341109,
+              "displayName": "The Sniper.",
+              "enabled": false,
+              "iconImageId": 78341109,
+              "id": 78341161,
+              "name": "The Sniper.",
+              "statistics": {
+                "awardedCount": 449,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-06-22T13:36:14.44Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "The grin of his face.... It looks so.... Familiar.",
+              "displayDescription": "The grin of his face.... It looks so.... Familiar.",
+              "displayIconImageId": 54485555,
+              "displayName": "The Evil egg of Epicness",
+              "enabled": false,
+              "iconImageId": 54485555,
+              "id": 54485571,
+              "name": "The Evil egg of Epicness",
+              "statistics": {
+                "awardedCount": 9181,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-06-22T18:16:14.47Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Is it true that KOOL KILLER went to the moon? No one will know because if you ask him he will kill you before you finish asking >:)",
+              "displayDescription": "Is it true that KOOL KILLER went to the moon? No one will know because if you ask him he will kill you before you finish asking >:)",
+              "displayIconImageId": 54505651,
+              "displayName": "Cracked Egg of The Red Moon.",
+              "enabled": false,
+              "iconImageId": 54505651,
+              "id": 54505744,
+              "name": "Cracked Egg of The Red Moon.",
+              "statistics": {
+                "awardedCount": 1548,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-06-22T18:09:49.8Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "Likely on a roof. Who knows.",
+              "displayDescription": "Likely on a roof. Who knows.",
+              "displayIconImageId": 54505088,
+              "displayName": "The Concrete Egg of Rooftop Murder",
+              "enabled": false,
+              "iconImageId": 54505088,
+              "id": 54505119,
+              "name": "The Concrete Egg of Rooftop Murder",
+              "statistics": {
+                "awardedCount": 6095,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-05-22T19:31:53.303Z",
+              "creator": {
+                "id": 2032622,
+                "name": "Maximum_ADHD",
+                "type": "User"
+              },
+              "description": "o.o\r\n\r\nMeanie D:",
+              "displayDescription": "o.o\r\n\r\nMeanie D:",
+              "displayIconImageId": 52331523,
+              "displayName": "You Killed the Creator. ",
+              "enabled": false,
+              "iconImageId": 52331523,
+              "id": 52331578,
+              "name": "You Killed the Creator. ",
+              "statistics": {
+                "awardedCount": 130,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.347Z"
+            },
+            {
+              "awarder": {
+                "id": 29894806,
+                "type": "Place"
+              },
+              "created": "2012-07-26T14:57:45.127Z",
+              "creator": {
+                "id": 8849253,
+                "name": "flamingiceriver",
+                "type": "User"
+              },
+              "description": "You played Ro-Halo during it alpha stage. Long before we finish the game.",
+              "displayDescription": "You played Ro-Halo during it alpha stage. Long before we finish the game.",
+              "displayIconImageId": 87970348,
+              "displayName": "Alpha Tester",
+              "enabled": false,
+              "iconImageId": 87970348,
+              "id": 87970555,
+              "name": "Alpha Tester",
+              "statistics": {
+                "awardedCount": 115,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-22T21:11:21.11Z"
+            },
+            {
+              "awarder": {
+                "id": 76530952,
+                "type": "Place"
+              },
+              "created": "2012-04-05T21:27:33.733Z",
+              "creator": {
+                "id": 21557,
+                "name": "Games",
+                "type": "User"
+              },
+              "description": "This the last one. It is only collectible when you have all the others. Frustrating, isn't it? I blame Sorcus.",
+              "displayDescription": "This the last one. It is only collectible when you have all the others. Frustrating, isn't it? I blame Sorcus.",
+              "displayIconImageId": 76680089,
+              "displayName": "The Last Egg",
+              "enabled": true,
+              "iconImageId": 76680089,
+              "id": 76680134,
+              "name": "The Last Egg",
+              "statistics": {
+                "awardedCount": 469866,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2012-11-02T00:08:50.313Z"
+            },
+            {
+              "awarder": {
+                "id": 47324,
+                "type": "Place"
+              },
+              "created": "2009-08-14T01:30:49.803Z",
+              "creator": {
+                "id": 261,
+                "name": "Shedletsky",
+                "type": "User"
+              },
+              "description": "I know what you're thinking. \"Why 97?! What is Telamon's deal? That makes no sense.\" To these people, I say: \"YOU MAKE NO SENSE\". 97 is an elite number of kills. If you get that many, you rock.",
+              "displayDescription": "I know what you're thinking. \"Why 97?! What is Telamon's deal? That makes no sense.\" To these people, I say: \"YOU MAKE NO SENSE\". 97 is an elite number of kills. If you get that many, you rock.",
+              "displayIconImageId": 14468802,
+              "displayName": "97 Kills at Sword Fight on the Heights ",
+              "enabled": true,
+              "iconImageId": 14468802,
+              "id": 14468882,
+              "name": "97 Kills at Sword Fight on the Heights ",
+              "statistics": {
+                "awardedCount": 75418,
+                "pastDayAwardedCount": 8,
+                "winRatePercentage": 0.002
+              },
+              "updated": "2010-07-01T17:47:35.577Z"
+            },
+            {
+              "awarder": {
+                "id": 47324,
+                "type": "Place"
+              },
+              "created": "2009-08-14T01:29:01.753Z",
+              "creator": {
+                "id": 261,
+                "name": "Shedletsky",
+                "type": "User"
+              },
+              "description": "Score 20 kills at Sword Fight on the Heights to win this badge. If you can do this you probably know enough about sword fighting to not stick yourself.",
+              "displayDescription": "Score 20 kills at Sword Fight on the Heights to win this badge. If you can do this you probably know enough about sword fighting to not stick yourself.",
+              "displayIconImageId": 14468743,
+              "displayName": "20 Kills at Sword Fight on the Heights  ",
+              "enabled": true,
+              "iconImageId": 14468743,
+              "id": 14468788,
+              "name": "20 Kills at Sword Fight on the Heights  ",
+              "statistics": {
+                "awardedCount": 593094,
+                "pastDayAwardedCount": 31,
+                "winRatePercentage": 0.009
+              },
+              "updated": "2010-07-01T17:47:35.577Z"
+            },
+            {
+              "awarder": {
+                "id": 47324,
+                "type": "Place"
+              },
+              "created": "2009-08-14T01:38:21.333Z",
+              "creator": {
+                "id": 261,
+                "name": "Shedletsky",
+                "type": "User"
+              },
+              "description": "Masters in the art of swordplay win this badge by achieving a score of 20:0. Anyone who has this badge is very dangerous.",
+              "displayDescription": "Masters in the art of swordplay win this badge by achieving a score of 20:0. Anyone who has this badge is very dangerous.",
+              "displayIconImageId": 14469172,
+              "displayName": "Blademaster",
+              "enabled": true,
+              "iconImageId": 14469172,
+              "id": 14469303,
+              "name": "Blademaster",
+              "statistics": {
+                "awardedCount": 74643,
+                "pastDayAwardedCount": 18,
+                "winRatePercentage": 0.005
+              },
+              "updated": "2010-07-01T17:47:35.577Z"
+            },
+            {
+              "awarder": {
+                "id": 47324,
+                "type": "Place"
+              },
+              "created": "2009-08-14T01:27:38.913Z",
+              "creator": {
+                "id": 261,
+                "name": "Shedletsky",
+                "type": "User"
+              },
+              "description": "Score 5 kills at Sword Fight on the Heights to win this badge. If you can't do this, maybe you would rather play \"Tea Party on the Heights\" or \"Sword Dancing at Fat Camp With Starwars Kid\".",
+              "displayDescription": "Score 5 kills at Sword Fight on the Heights to win this badge. If you can't do this, maybe you would rather play \"Tea Party on the Heights\" or \"Sword Dancing at Fat Camp With Starwars Kid\".",
+              "displayIconImageId": 14468617,
+              "displayName": "5 Kills at Sword Fight on the Heights",
+              "enabled": true,
+              "iconImageId": 14468617,
+              "id": 14468729,
+              "name": "5 Kills at Sword Fight on the Heights",
+              "statistics": {
+                "awardedCount": 4171264,
+                "pastDayAwardedCount": 370,
+                "winRatePercentage": 0.111
+              },
+              "updated": "2010-07-01T17:47:35.577Z"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v2/users/1/games",
+        "query": {
+          "limit": "50"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "created": "2013-10-31T22:09:58.407Z",
+              "creator": {
+                "id": 1,
+                "type": "User"
+              },
+              "description": "Experience Chaos Canyon - Escape from Desolation Valley, explore the ruins on the cliffs, walk on the Sky Bridge and hold the Battle Cube from invaders! This map features models created by the community, including: PilotLuke, tingc222, and Yahoo.\n\nChaos Canyon is a classic Brick Battle game, and was one of Roblox's first \"official arena maps\". In pure Roblox fashion, the places could be edited by anyone. (This game will be available to tinker with after The Hunt: Roblox 20).\n\n\"One thing we at Roblox have been thinking hard about is how to make sure users can find fun maps on Roblox when they want to play a quick game. In the past this has not been a problem since we didn’t have all that many users... Recently, the number of users who are proficient builders has exploded... If you go to the “Browse Places” tab, you’ll now get exactly 100 pages of places (as of this writing). That’s 1000 places.\" ~ Shedletsky, December 11th, 2006, The Roblox Blog\n\n4eb4-808f-5bf5d4cb7759",
+              "id": 295594,
+              "name": "Chaos Canyon",
+              "placeVisits": 12079743,
+              "rootPlace": {
+                "id": 14403,
+                "type": "Place"
+              },
+              "updated": "2026-09-21T19:26:08.627Z"
+            },
+            {
+              "created": "2013-10-31T22:08:58.91Z",
+              "creator": {
+                "id": 1,
+                "type": "User"
+              },
+              "description": "This map goes back to the basics: Rockets, jetboots, and blowing up bridges. Out-maneuver your foes using your jetboots, cut off their escape by nuking the bridges, and rain doom down upon them using a rapid-fire rocket launcher. But don't fall in the lava - ouch!\n\nRocket Arena is a unique Brick Battle game as it focuses on some people's favorite brick battle weapon: The Rocket Launcher.\n\n\"I am working on a set of additional badges for a future release. New badges fall into one of two catagories: they are either entirely unlike any existing badge, or they are “higher level” versions of existing badges. One “higher level” badge I am thinking of making is a more difficult to get version of the Bloxxer badge. At the moment, 64 Robloxians have bloxxers. Using my January 8 post as a reference point, one can say that about 1.3 users earn Bloxxers every day on Roblox. Roughly 2% of all Robloxians have Bloxxers.\" ~ Shedletsky, Bloxxers Who Roxor, Roblox Blog, January 23rd, 2007\n",
+              "id": 246424,
+              "name": "Rocket Arena",
+              "placeVisits": 16535522,
+              "rootPlace": {
+                "id": 25415,
+                "type": "Place"
+              },
+              "updated": "2026-09-19T17:39:06.813Z"
+            },
+            {
+              "created": "2013-10-31T22:02:54.103Z",
+              "creator": {
+                "id": 1,
+                "type": "User"
+              },
+              "description": "The classic Roblox level is back! Crossroads is Roblox's very first multiplayer game. It is a classic brick battle game with a destructible environment. All great warriors find themselves here.\n\n\"I joined the Roblox team just as they were rolling out the first multiplayer Roblox level - a very early version of Crossroads. This version featured a castle made by Erik and a white house and playground constructed by Builderman. There were two weapons: the slingshot and the rocket launcher. I remember the first time we noticed a user, “dergenx”, actually playing our game, everyone on the team got on and played with him for an hour. It was very exciting. Since the original Crossroads was published, it has been added onto many times as we push the state of the art forward.\" ~ Shedletsky, December 11th, 2006 \"Now We are 10,000\" - Celebrating the 10,000th Roblox user.",
+              "id": 13058,
+              "name": "Crossroads",
+              "placeVisits": 39641163,
+              "rootPlace": {
+                "id": 1818,
+                "type": "Place"
+              },
+              "updated": "2026-09-17T19:58:32.32Z"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/user-blocking-api/v1/users/get-blocked-users",
+        "query": {
+          "count": "49"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": {
+            "blockedUserIds": [],
+            "blockedUsers": [],
+            "cursor": null
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "users.roblox.com",
+        "path": "/v1/usernames/users"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "requestedUsername": "builderman",
+              "hasVerifiedBadge": true,
+              "id": 156,
+              "name": "builderman",
+              "displayName": "builderman"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v1/users/156/avatar"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "scales": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "bodyColors": {
+            "headColorId": 226,
+            "torsoColorId": 1017,
+            "rightArmColorId": 26,
+            "leftArmColorId": 26,
+            "rightLegColorId": 26,
+            "leftLegColorId": 26
+          },
+          "assets": [
+            {
+              "id": 1080951,
+              "name": "Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883359816
+            },
+            {
+              "id": 1142116,
+              "name": "bm-mo2.jpg",
+              "assetType": {
+                "id": 2,
+                "name": "TShirt"
+              },
+              "currentVersionId": 142362
+            }
+          ],
+          "defaultShirtApplied": false,
+          "defaultPantsApplied": false,
+          "emotes": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/users/156/outfits",
+        "query": {
+          "outfitType": "Avatar",
+          "isEditable": "true"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "id": 6505210781156933,
+              "name": "2007",
+              "isEditable": true,
+              "outfitType": "Avatar"
+            },
+            {
+              "id": 5069603964005866,
+              "name": "Early 2011",
+              "isEditable": true,
+              "outfitType": "Avatar"
+            },
+            {
+              "id": 5469077800453775,
+              "name": "2023-2026",
+              "isEditable": true,
+              "outfitType": "Avatar"
+            },
+            {
+              "id": 24477597,
+              "name": "2015",
+              "isEditable": true,
+              "outfitType": "Avatar"
+            },
+            {
+              "id": 24477562,
+              "name": "2011",
+              "isEditable": true,
+              "outfitType": "Avatar"
+            }
+          ],
+          "paginationToken": ""
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v1/outfits/24477597/details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": 24477597,
+          "universeId": 0,
+          "name": "2015",
+          "assets": [
+            {
+              "id": 119735386706067,
+              "name": "Mr. Chuckles - Head",
+              "assetType": {
+                "id": 79,
+                "name": "DynamicHead"
+              },
+              "currentVersionId": 17699434760835,
+              "supportsHeadShapes": true
+            },
+            {
+              "id": 73094282779994,
+              "name": "Mr. Chuckles - Mood",
+              "assetType": {
+                "id": 78,
+                "name": "MoodAnimation"
+              },
+              "currentVersionId": 2120416406346
+            },
+            {
+              "id": 27112025,
+              "name": "Roblox 2.0 Torso",
+              "assetType": {
+                "id": 27,
+                "name": "Torso"
+              },
+              "currentVersionId": 11201616558
+            },
+            {
+              "id": 27112052,
+              "name": "Roblox 2.0 Left Arm",
+              "assetType": {
+                "id": 29,
+                "name": "LeftArm"
+              },
+              "currentVersionId": 11201616588
+            },
+            {
+              "id": 27112039,
+              "name": "Roblox 2.0 Right Arm",
+              "assetType": {
+                "id": 28,
+                "name": "RightArm"
+              },
+              "currentVersionId": 11201616570
+            },
+            {
+              "id": 27112056,
+              "name": "Roblox 2.0 Left Leg",
+              "assetType": {
+                "id": 30,
+                "name": "LeftLeg"
+              },
+              "currentVersionId": 4414048454802
+            },
+            {
+              "id": 27112068,
+              "name": "Roblox 2.0 Right Leg",
+              "assetType": {
+                "id": 31,
+                "name": "RightLeg"
+              },
+              "currentVersionId": 67685323292678
+            },
+            {
+              "id": 13343843,
+              "name": "ROBLOX R&R&R Hoodie by 1blox",
+              "assetType": {
+                "id": 11,
+                "name": "Shirt"
+              },
+              "currentVersionId": 34200596
+            },
+            {
+              "id": 129458426,
+              "name": "Jeans",
+              "assetType": {
+                "id": 12,
+                "name": "Pants"
+              },
+              "currentVersionId": 304919540
+            },
+            {
+              "id": 11844853,
+              "name": "Turbo Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883360292
+            }
+          ],
+          "bodyColors": {
+            "headColorId": 1030,
+            "torsoColorId": 1003,
+            "rightArmColorId": 1030,
+            "leftArmColorId": 1030,
+            "rightLegColorId": 1030,
+            "leftLegColorId": 1030
+          },
+          "scale": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "outfitType": "Avatar",
+          "isEditable": true,
+          "moderationStatus": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/user/following-exists",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "followings": [
+            {
+              "isFollowed": false,
+              "isFollowing": true,
+              "userId": 156
+            },
+            {
+              "isFollowed": true,
+              "isFollowing": false,
+              "userId": 2000001
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

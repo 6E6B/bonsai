@@ -1,0 +1,885 @@
+# apis.roblox.com is not in the tracker. Only endpoints we use, with the fields we use.
+swagger: "2.0"
+host: apis.roblox.com
+info: { title: "apis (undocumented)", version: undocumented }
+paths:
+  /universes/v1/places/{placeId}/universe:
+    get:
+      # Captured 2026-10-12 with a live request (fixture: place_universe.json).
+      # Used by www.roblox.com/games/{placeId} to find the experience of a place; no sign-in needed.
+      x-captured: "2026-10-12, experience page on www.roblox.com/games/1818"
+      x-rust-name: get_place_universe
+      summary: The universe (experience) a place belongs to.
+      parameters:
+        - { in: path, name: placeId, required: true, type: integer, format: int64 }
+      responses:
+        "200":
+          description: OK
+          schema: { $ref: "#/definitions/PlaceUniverse" }
+  /explore-api/v1/get-sorts:
+    get:
+      # Captured 2026-10-12 with a live request (fixture: explore_sorts.json).
+      # Used by www.roblox.com/charts and the Home page to list game sorts. Works signed out;
+      # signed in it is personalized.
+      x-captured: "2026-10-12, www.roblox.com/charts"
+      x-rust-name: get_explore_sorts
+      summary: Game sorts (Top Trending, Up-and-Coming, ...) with their first games.
+      parameters:
+        - { in: query, name: sessionId, required: true, type: string, description: "Random UUID per app session." }
+        - { in: query, name: device, required: false, type: string, description: "computer, phone, tablet, console, vr" }
+        - { in: query, name: country, required: false, type: string, description: "Two-letter code or all" }
+        - { in: query, name: sortsPageToken, required: false, type: string }
+      responses:
+        "200":
+          description: OK
+          schema: { $ref: "#/definitions/ExploreSorts" }
+  /search-api/omni-search:
+    get:
+      # Captured 2026-10-12 with a live request (fixture: omni_search.json).
+      # Used by the search box on www.roblox.com (www.roblox.com/discover?Keyword=...).
+      x-captured: "2026-10-12, www.roblox.com/discover?Keyword=adopt"
+      x-rust-name: get_omni_search
+      summary: Search games by keyword.
+      parameters:
+        - { in: query, name: searchQuery, required: true, type: string }
+        - { in: query, name: sessionId, required: true, type: string, description: "Random UUID per app session." }
+        - { in: query, name: pageType, required: false, type: string, description: "all or games" }
+        - { in: query, name: pageToken, required: false, type: string }
+      responses:
+        "200":
+          description: OK
+          schema: { $ref: "#/definitions/OmniSearch" }
+  /user-blocking-api/v1/users/get-blocked-users:
+    get:
+      # Captured 2026-10-12 live (fixture: blocking.json). www.roblox.com/my/account#!/privacy
+      # "Blocked users". Needs the RBXEventTrackerV2 cookie (Client::browser_tracker).
+      x-captured: "2026-10-12, www.roblox.com/my/account#!/privacy"
+      x-rust-name: get_blocked_users
+      summary: Users the signed-in account has blocked.
+      parameters:
+        - { in: query, name: cursor, required: false, type: string }
+        - { in: query, name: count, required: true, type: integer, format: int32, description: "1 to 49" }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/BlockedUsersResponse" } }
+  /user-blocking-api/v1/users/{userId}/is-blocked:
+    get:
+      # Captured 2026-10-12 live (fixture: blocking.json). Profile page menu.
+      x-captured: "2026-10-12, www.roblox.com/users/{id}/profile"
+      x-rust-name: get_is_blocked
+      summary: Whether the signed-in account blocked this user. The body is a bare boolean.
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { type: boolean } }
+  /user-blocking-api/v1/users/{userId}/block-user:
+    post:
+      # Captured 2026-10-12 live (fixture: blocking.json). Profile page menu "Block".
+      x-captured: "2026-10-12, www.roblox.com/users/{id}/profile"
+      x-rust-name: post_block_user
+      summary: Block a user. The body is a bare string like "Successfully blocked user ...".
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { type: string } }
+  /user-blocking-api/v1/users/{userId}/unblock-user:
+    post:
+      # Captured 2026-10-12 live (fixture: blocking.json). Privacy settings "Unblock".
+      x-captured: "2026-10-12, www.roblox.com/my/account#!/privacy"
+      x-rust-name: post_unblock_user
+      summary: Unblock a user. The body is a bare string like "Successfully unblocked user ...".
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { type: string } }
+  /game-passes/v1/universes/{universeId}/game-passes:
+    get:
+      # Captured 2026-10-12 live (fixture: experience.json). Store tab on www.roblox.com/games/{id}.
+      # Replaces games.roblox.com/v1/games/{universeId}/game-passes (removed 2025-08-31, now 404).
+      x-captured: "2026-10-12, www.roblox.com/games/920587237 Store tab"
+      x-rust-name: get_universe_game_passes
+      summary: Passes sold in an experience. passView=Full adds price, isOwned and creator.
+      parameters:
+        - { in: path, name: universeId, required: true, type: integer, format: int64 }
+        - { in: query, name: passView, required: false, type: string, description: "Full" }
+        - { in: query, name: pageSize, required: false, type: integer, format: int32 }
+        - { in: query, name: pageToken, required: false, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/GamePassesPage" } }
+  /game-passes/v1/users/{userId}/game-passes:
+    get:
+      # Captured 2026-10-14 live (fixture: inventory_passes.json), signed out; shape and params
+      # read from the site's inventory bundle (inventoryService.getGamePasses). The next page
+      # starts after the last gamePassId (exclusiveStartId); an empty page is the end.
+      x-captured: "2026-10-14, www.roblox.com/users/{id}/inventory Passes"
+      x-rust-name: get_user_game_passes
+      summary: Passes a user owns, newest first.
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+        - { in: query, name: count, required: false, type: integer, format: int32 }
+        - { in: query, name: exclusiveStartId, required: false, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/UserGamePassesPage" } }
+  /experience-guidelines-api/experience-guidelines/get-age-recommendation:
+    post:
+      # Captured 2026-10-12 live (fixture: experience.json). Maturity label on the experience page.
+      x-captured: "2026-10-12, www.roblox.com/games/920587237"
+      x-rust-name: post_age_recommendation
+      summary: Content maturity label and descriptors for an experience.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/AgeRecommendationRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/AgeRecommendationResponse" } }
+  /virtual-events/v1/universes/{universeId}/virtual-events:
+    get:
+      # Captured 2026-10-12 live (fixture: experience.json). Events on the experience page.
+      # Without fromUtc the list starts at the oldest event.
+      x-captured: "2026-10-12, www.roblox.com/games/920587237 Events"
+      x-rust-name: get_universe_events
+      summary: Events in an experience.
+      parameters:
+        - { in: path, name: universeId, required: true, type: integer, format: int64 }
+        - { in: query, name: fromUtc, required: false, type: string, description: "ISO date-time" }
+        - { in: query, name: limit, required: false, type: integer, format: int32 }
+        - { in: query, name: cursor, required: false, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/EventsPage" } }
+  /virtual-events/v1/virtual-events/{eventId}/rsvps:
+    post:
+      # Captured 2026-10-12 live (fixture: experience.json). Event "Notify me" / "Going".
+      # notGoing undoes it.
+      x-captured: "2026-10-12, www.roblox.com/events/{id}"
+      x-rust-name: post_event_rsvp
+      summary: RSVP to an event.
+      parameters:
+        - { in: path, name: eventId, required: true, type: string }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/RsvpRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/RsvpResponse" } }
+  /explore-api/v1/get-sort-content:
+    get:
+      # Captured 2026-10-12 live (fixture: discover.json). "See all" on www.roblox.com/charts.
+      # Returns up to 100 games; no paging.
+      x-captured: "2026-10-12, www.roblox.com/charts/top-trending"
+      x-rust-name: get_explore_sort_content
+      summary: All games in one chart sort.
+      parameters:
+        - { in: query, name: sessionId, required: true, type: string }
+        - { in: query, name: sortId, required: true, type: string }
+        - { in: query, name: device, required: false, type: string }
+        - { in: query, name: country, required: false, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ExploreSort" } }
+  /discovery-api/omni-recommendation:
+    post:
+      # Captured 2026-10-12 live (fixture: discover.json). The signed-in Home page feed on
+      # www.roblox.com/home: topics like Recommended For You, Continue, Today's Picks.
+      x-captured: "2026-10-12, www.roblox.com/home"
+      x-rust-name: post_omni_recommendation
+      summary: Home page topics and their games.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/OmniRecommendationRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/OmniRecommendation" } }
+  /platform-chat-api/v1/get-user-conversations:
+    get:
+      # Captured 2026-10-13 live (fixture: chat_live.json).
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: get_chat_conversations
+      summary: Your chat conversations, newest first.
+      parameters:
+        - { in: query, name: include_user_data, required: false, type: boolean }
+        - { in: query, name: cursor, required: false, type: string }
+        - { in: query, name: pageSize, required: false, type: integer, format: int32 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatConversationsPage" } }
+  /platform-chat-api/v1/get-conversation-messages:
+    get:
+      # Request shape from the site's chat bundle 2026-10-13; response synthetic (fixture: chat.json), see DECISIONS #42.
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: get_chat_messages
+      summary: Messages in a conversation, newest first.
+      parameters:
+        - { in: query, name: conversation_id, required: true, type: string }
+        - { in: query, name: cursor, required: false, type: string }
+        - { in: query, name: pageSize, required: false, type: integer, format: int32 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatMessagesPage" } }
+  /platform-chat-api/v1/get-conversation-metadata:
+    get:
+      # Captured 2026-10-13 live (fixture: chat_live.json).
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: get_chat_unread
+      summary: Unread chat counts.
+      parameters:
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatUnread" } }
+  /platform-chat-api/v1/metadata:
+    get:
+      # Captured 2026-10-13 live (fixture: chat_live.json).
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: get_chat_settings
+      summary: Whether chat is on for you, and its limits.
+      parameters:
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatSettings" } }
+  /platform-chat-api/v1/send-messages:
+    post:
+      # Request shape from the site's chat bundle 2026-10-13; response synthetic (fixture: chat.json), see DECISIONS #42.
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: post_chat_send
+      summary: Send messages to a conversation.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ChatSendRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatSendResponse" } }
+  /platform-chat-api/v1/update-typing-status:
+    post:
+      # Request shape from the site's chat bundle 2026-10-13; response synthetic (fixture: chat.json), see DECISIONS #42.
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: post_chat_typing
+      summary: Tell the others you are typing.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ChatConversationRef" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatStatus" } }
+  /platform-chat-api/v1/mark-conversations:
+    post:
+      # Request shape from the site's chat bundle 2026-10-13; response synthetic (fixture: chat.json), see DECISIONS #42.
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: post_chat_mark_read
+      summary: Mark conversations read.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ChatMarkRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatStatus" } }
+  /platform-chat-api/v1/create-conversations:
+    post:
+      # Request shape from the site's chat bundle 2026-10-13; response synthetic (fixture: chat.json), see DECISIONS #42.
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: post_chat_create
+      summary: Start a one-to-one or group conversation.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ChatCreateRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatConversations" } }
+  /platform-chat-api/v1/update-conversations:
+    post:
+      # Request shape from the site's chat bundle 2026-10-13; response synthetic (fixture: chat.json), see DECISIONS #42.
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: post_chat_update
+      summary: Rename group conversations.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ChatUpdateRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatConversations" } }
+  /platform-chat-api/v1/add-users:
+    post:
+      # Request shape from the site's chat bundle 2026-10-13; response synthetic (fixture: chat.json), see DECISIONS #42.
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: post_chat_add_users
+      summary: Add people to a group conversation.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ChatUsersRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatStatus" } }
+  /platform-chat-api/v1/remove-users:
+    post:
+      # Request shape from the site's chat bundle 2026-10-13; response synthetic (fixture: chat.json), see DECISIONS #42.
+      x-captured: "2026-10-13, chat panel on www.roblox.com (ReactChat bundle)"
+      x-rust-name: post_chat_remove_users
+      summary: Remove people from a group conversation (yourself to leave).
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ChatUsersRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChatStatus" } }
+  /marketplace-sales/v1/item/{collectibleItemId}/resellers:
+    get:
+      # Captured 2026-10-13 live, signed out (fixture: market.json). "Resellers" on the item page
+      # of a limited or resellable collectible (www.roblox.com/catalog/{id}).
+      x-captured: "2026-10-13, www.roblox.com/catalog/1365767"
+      x-rust-name: get_item_resellers
+      summary: Resale listings of a collectible item, cheapest first.
+      parameters:
+        - { in: path, name: collectibleItemId, required: true, type: string }
+        - { in: query, name: limit, required: false, type: integer, format: int32 }
+        - { in: query, name: cursor, required: false, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ResellersPage" } }
+  /marketplace-sales/v1/item/{collectibleItemId}/resale-data:
+    get:
+      # Captured 2026-10-13 live, signed out (fixture: market.json). Price chart on the item
+      # page of a limited. Replaces economy.roblox.com/v1/assets/{id}/resale-data, whose data
+      # stopped in 2025-01.
+      x-captured: "2026-10-13, www.roblox.com/catalog/1365767"
+      x-rust-name: get_item_resale_data
+      summary: Daily average resale price and volume, newest first, plus recent average price.
+      parameters:
+        - { in: path, name: collectibleItemId, required: true, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ResaleData" } }
+  /marketplace-items/v1/items/details:
+    post:
+      # Captured 2026-10-14 live, signed out (fixture: purchases.json). The item page
+      # (www.roblox.com/catalog/{id}) asks for this before it buys: it has the product id, the
+      # seller and the cheapest resale listing. Request shape from the ItemDetails bundle
+      # (`collectibleItemDetails`, body `{itemIds}`).
+      x-captured: "2026-10-14, www.roblox.com/catalog/1365767"
+      x-rust-name: post_collectible_item_details
+      summary: Sale details of collectible items by collectible item id.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/CollectibleItemIds" } }
+      responses:
+        "200": { description: OK, schema: { type: array, items: { $ref: "#/definitions/CollectibleItemDetails" } } }
+  /marketplace-sales/v1/item/{collectibleItemId}/purchase-item:
+    post:
+      # Shape read 2026-10-14 from the site's ItemPurchase bundle (`purchase-item`), which the
+      # Buy button on www.roblox.com/catalog/{id} and /bundles/{id} calls for a copy sold by the
+      # creator. Fixture is synthetic (purchases.json): recording would spend Robux.
+      x-captured: "2026-10-14, www.roblox.com/catalog/{id} Buy (ItemPurchase bundle)"
+      x-rust-name: post_purchase_item
+      summary: Buy a catalog item or bundle from its creator.
+      parameters:
+        - { in: path, name: collectibleItemId, required: true, type: string }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/CollectiblePurchaseRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/CollectiblePurchaseResult" } }
+  /marketplace-sales/v1/item/{collectibleItemId}/purchase-resale:
+    post:
+      # Shape read 2026-10-14 from the site's ItemPurchase bundle (`purchase-resale`), called
+      # when the request carries a collectibleItemInstanceId: a reseller's copy on
+      # www.roblox.com/catalog/{id}. Fixture is synthetic (purchases.json).
+      x-captured: "2026-10-14, www.roblox.com/catalog/{id} Resellers Buy (ItemPurchase bundle)"
+      x-rust-name: post_purchase_resale
+      summary: Buy one reseller's copy of a limited or collectible.
+      parameters:
+        - { in: path, name: collectibleItemId, required: true, type: string }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/CollectiblePurchaseRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/CollectiblePurchaseResult" } }
+  /game-passes/v1/game-passes/{productId}/purchase:
+    post:
+      # Shape read 2026-10-14 from the site's ItemPurchase bundle (`game-passes/.../purchase`,
+      # body `{expectedPrice, idempotencyKey}`). The path takes the pass's productId, not its id:
+      # the signed-in pass page www.roblox.com/game-pass/1991372518 has
+      # data-product-id="3714256301", the productId the Store tab lists for it.
+      # Fixture is synthetic (purchases.json).
+      x-captured: "2026-10-14, www.roblox.com/game-pass/{id} Buy (ItemPurchase bundle)"
+      x-rust-name: post_purchase_game_pass
+      summary: Buy a game pass.
+      parameters:
+        - { in: path, name: productId, required: true, type: integer, format: int64 }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/GamePassPurchaseRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/GamePassPurchaseResult" } }
+  /user-settings-api/v1/user-settings/settings-and-options:
+    get:
+      # Captured 2026-10-14 live (fixture: settings.json). www.roblox.com/my/account#!/privacy:
+      # every privacy setting with its current value and the options this account may pick.
+      x-captured: "2026-10-14, www.roblox.com/my/account#!/privacy"
+      x-rust-name: get_user_settings_and_options
+      summary: Privacy and safety settings, each with its value and allowed options.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/UserSettingsAndOptions" } }
+  /user-settings-api/v1/user-settings:
+    post:
+      # Request shape from the site's UserSettings bundle 2026-10-14 (updateUserSettingValue posts
+      # { <setting>: <value> }); response synthetic (fixture: settings.json). Not sent live: it
+      # would change the test account's settings.
+      x-captured: "2026-10-14, www.roblox.com/my/account#!/privacy"
+      x-rust-name: post_user_settings
+      summary: Change one privacy setting (user action only).
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/UserSettingsUpdate" } }
+      responses:
+        "200": { description: OK, schema: { type: object } }
+  /auth-token-service/v1/login/create:
+    post:
+      # Captured 2026-10-14 live (fixture: quick_sign_in.json). www.roblox.com/login "Quick
+      # Log In" (CrossDeviceLoginDisplayCode.js). Works signed out, no CSRF token needed.
+      x-captured: "2026-10-14, www.roblox.com/login, Quick Log In"
+      x-rust-name: post_quick_login_create
+      summary: Start a quick sign-in. Returns a code to approve on a signed-in device.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/QuickLoginCode" } }
+  /auth-token-service/v1/login/status:
+    post:
+      # Captured 2026-10-14 live (fixture: quick_sign_in.json). Same page; the site polls it
+      # every 5 seconds. Needs a CSRF token. A wrong key answers 403 with the bare string
+      # "CodeNotFound". Status values from CrossDeviceLoginDisplayCode.js: Created, UserLinked
+      # (accountName is set), Validated (sign in now), Cancelled. Created and Cancelled seen live.
+      x-captured: "2026-10-14, www.roblox.com/login, Quick Log In"
+      x-rust-name: post_quick_login_status
+      summary: Where a quick sign-in code is.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/QuickLoginKey" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/QuickLoginStatus" } }
+  /auth-token-service/v1/login/cancel:
+    post:
+      # Captured 2026-10-14 live (fixture: quick_sign_in.json). Sent by the site when the code
+      # dialog closes. Answers {}.
+      x-captured: "2026-10-14, www.roblox.com/login, Quick Log In"
+      x-rust-name: post_quick_login_cancel
+      summary: Cancel a quick sign-in code.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/QuickLoginCancel" } }
+      responses:
+        "200": { description: OK, schema: { type: object } }
+definitions:
+  QuickLoginCode:
+    type: object
+    properties:
+      code: { type: string }
+      status: { type: string }
+      # Secret: only sent back to Roblox. Used as the password for /v2/login (ctype AuthToken).
+      privateKey: { type: string }
+      # UTC without a zone suffix, e.g. 2026-10-14T21:29:41.2595379
+      expirationTime: { type: string }
+  QuickLoginKey:
+    type: object
+    properties:
+      code: { type: string }
+      privateKey: { type: string }
+  QuickLoginStatus:
+    type: object
+    properties:
+      status: { type: string }
+      accountName: { type: string }
+      expirationTime: { type: string }
+  QuickLoginCancel:
+    type: object
+    properties:
+      code: { type: string }
+  UserSettingsAndOptions:
+    type: object
+    additionalProperties: { $ref: "#/definitions/UserSettingAndOptions" }
+  UserSettingAndOptions:
+    type: object
+    properties:
+      # A string for most settings; an object or missing for a few (time windows, limits).
+      currentValue: {}
+      options: { type: array, items: { $ref: "#/definitions/UserSettingOption" } }
+  UserSettingOption:
+    type: object
+    properties:
+      option: { $ref: "#/definitions/UserSettingOptionValue" }
+      # Missing when the option is already allowed; "SelfUpdateSetting" when the account can
+      # pick it; other values ("Inherited", parental consent) mean it can't pick it here.
+      requirement: { type: string }
+  UserSettingOptionValue:
+    type: object
+    properties:
+      optionValue: { type: string }
+      optionType: { type: string }
+  UserSettingsUpdate:
+    type: object
+    additionalProperties: { type: string }
+  PlaceUniverse:
+    type: object
+    properties:
+      universeId: { type: integer, format: int64 }
+  ExploreSorts:
+    type: object
+    properties:
+      sorts: { type: array, items: { $ref: "#/definitions/ExploreSort" } }
+      nextSortsPageToken: { type: string }
+  ExploreSort:
+    type: object
+    properties:
+      contentType: { type: string, description: "Games, Filters, ..." }
+      sortId: { type: string }
+      sortDisplayName: { type: string }
+      subtitle: { type: string }
+      treatmentType: { type: string }
+      games: { type: array, items: { $ref: "#/definitions/GameCard" } }
+      filters: { type: array, items: { $ref: "#/definitions/ExploreFilter" } }
+      topicLayoutData: { $ref: "#/definitions/TopicLayoutData" }
+  GameCard:
+    type: object
+    properties:
+      universeId: { type: integer, format: int64 }
+      rootPlaceId: { type: integer, format: int64 }
+      name: { type: string }
+      playerCount: { type: integer, format: int64 }
+      totalUpVotes: { type: integer, format: int64 }
+      totalDownVotes: { type: integer, format: int64 }
+      isSponsored: { type: boolean }
+      genreL1: { type: string }
+      creatorName: { type: string }
+      creatorId: { type: integer, format: int64 }
+      creatorHasVerifiedBadge: { type: boolean }
+      contentType: { type: string }
+  OmniSearch:
+    type: object
+    properties:
+      searchResults: { type: array, items: { $ref: "#/definitions/OmniGroup" } }
+      nextPageToken: { type: string }
+  OmniGroup:
+    type: object
+    properties:
+      contentGroupType: { type: string, description: "Game, ..." }
+      contents: { type: array, items: { $ref: "#/definitions/GameCard" } }
+  BlockedUsersResponse:
+    type: object
+    properties:
+      data: { $ref: "#/definitions/BlockedUsers" }
+      error: { type: string }
+  BlockedUsers:
+    type: object
+    properties:
+      blockedUserIds: { type: array, items: { type: integer, format: int64 } }
+      cursor: { type: string }
+  GamePassesPage:
+    type: object
+    properties:
+      gamePasses: { type: array, items: { $ref: "#/definitions/GamePass" } }
+      nextPageToken: { type: string }
+  GamePass:
+    type: object
+    properties:
+      id: { type: integer, format: int64 }
+      productId: { type: integer, format: int64 }
+      name: { type: string }
+      displayName: { type: string }
+      displayDescription: { type: string }
+      isForSale: { type: boolean }
+      price: { type: integer, format: int64 }
+      isOwned: { type: boolean }
+      displayIconImageAssetId: { type: integer, format: int64 }
+      created: { type: string }
+      updated: { type: string }
+      creator: { $ref: "#/definitions/GamePassCreator" }
+  UserGamePassesPage:
+    type: object
+    properties:
+      gamePasses: { type: array, items: { $ref: "#/definitions/UserGamePass" } }
+  UserGamePass:
+    type: object
+    properties:
+      gamePassId: { type: integer, format: int64 }
+      iconAssetId: { type: integer, format: int64 }
+      name: { type: string }
+      description: { type: string }
+      isForSale: { type: boolean }
+      price: { type: integer, format: int64 }
+      creator: { $ref: "#/definitions/GamePassCreator" }
+  GamePassCreator:
+    type: object
+    properties:
+      creatorType: { type: string }
+      creatorId: { type: integer, format: int64 }
+      name: { type: string }
+  AgeRecommendationRequest:
+    type: object
+    properties:
+      universeId: { type: string }
+  AgeRecommendationResponse:
+    type: object
+    properties:
+      ageRecommendationDetails: { $ref: "#/definitions/AgeRecommendationDetails" }
+  AgeRecommendationDetails:
+    type: object
+    properties:
+      summary: { $ref: "#/definitions/AgeRecommendationSummary" }
+      descriptorUsages: { type: array, items: { $ref: "#/definitions/DescriptorUsage" } }
+  AgeRecommendationSummary:
+    type: object
+    properties:
+      ageRecommendation: { $ref: "#/definitions/AgeRecommendation" }
+  AgeRecommendation:
+    type: object
+    properties:
+      displayName: { type: string }
+      minimumAge: { type: integer, format: int32 }
+      minimumAgeDisplay: { type: string }
+      contentMaturity: { type: string }
+  DescriptorUsage:
+    type: object
+    properties:
+      name: { type: string }
+      descriptor: { $ref: "#/definitions/Descriptor" }
+  Descriptor:
+    type: object
+    properties:
+      name: { type: string }
+      displayName: { type: string }
+  EventsPage:
+    type: object
+    properties:
+      data: { type: array, items: { $ref: "#/definitions/VirtualEvent" } }
+      nextPageCursor: { type: string }
+  VirtualEvent:
+    type: object
+    properties:
+      id: { type: string }
+      displayTitle: { type: string }
+      displaySubtitle: { type: string }
+      displayDescription: { type: string }
+      eventTime: { $ref: "#/definitions/EventTime" }
+      host: { $ref: "#/definitions/EventHost" }
+      universeId: { type: integer, format: int64 }
+      placeId: { type: integer, format: int64 }
+      eventStatus: { type: string }
+      userRsvpStatus: { type: string, description: "none, going, maybeGoing, notGoing" }
+      thumbnails: { type: array, items: { $ref: "#/definitions/EventThumbnail" } }
+  EventTime:
+    type: object
+    properties:
+      startUtc: { type: string }
+      endUtc: { type: string }
+  EventHost:
+    type: object
+    properties:
+      hostName: { type: string }
+      hostType: { type: string }
+      hostId: { type: integer, format: int64 }
+      hasVerifiedBadge: { type: boolean }
+  EventThumbnail:
+    type: object
+    properties:
+      mediaId: { type: integer, format: int64 }
+      rank: { type: integer, format: int32 }
+  RsvpRequest:
+    type: object
+    properties:
+      rsvpStatus: { type: string, description: "going or notGoing" }
+  RsvpResponse:
+    type: object
+    properties:
+      rsvpStatus: { type: string }
+  ExploreFilter:
+    type: object
+    properties:
+      filterType: { type: string, description: "device, country" }
+      filterDisplayName: { type: string }
+      selectedOptionId: { type: string }
+      filterOptions: { type: array, items: { $ref: "#/definitions/ExploreFilterOption" } }
+  ExploreFilterOption:
+    type: object
+    properties:
+      optionId: { type: string }
+      optionDisplayName: { type: string }
+  TopicLayoutData:
+    type: object
+    properties:
+      infoText: { type: string }
+  OmniRecommendationRequest:
+    type: object
+    properties:
+      pageType: { type: string, description: "Home" }
+      sessionId: { type: string }
+  OmniRecommendation:
+    type: object
+    properties:
+      sorts: { type: array, items: { $ref: "#/definitions/OmniTopic" } }
+      contentMetadata: { $ref: "#/definitions/OmniMetadata" }
+  OmniTopic:
+    type: object
+    properties:
+      topic: { type: string }
+      topicId: { type: integer, format: int64 }
+      treatmentType: { type: string }
+      recommendationList: { type: array, items: { $ref: "#/definitions/OmniItem" } }
+  OmniItem:
+    type: object
+    properties:
+      contentType: { type: string, description: "Game, ..." }
+      contentId: { type: integer, format: int64 }
+  OmniMetadata:
+    type: object
+    properties:
+      Game: { type: object, additionalProperties: { $ref: "#/definitions/GameCard" } }
+  ChatUser:
+    type: object
+    properties:
+      id: { type: integer, format: int64 }
+      name: { type: string }
+      display_name: { type: string }
+      combined_name: { type: string }
+  ChatMessage:
+    type: object
+    properties:
+      id: { type: string }
+      content: { type: string }
+      sender_user_id: { type: integer, format: int64 }
+      created_at: { type: string }
+      type: { type: string, description: "user, system, ..." }
+      status: { type: string, description: "success, moderated, ..." }
+      moderation_type: { type: string }
+  ChatConversation:
+    type: object
+    properties:
+      id: { type: string }
+      type: { type: string, description: "one_to_one, group" }
+      name: { type: string }
+      source: { type: string }
+      status: { type: string }
+      created_by: { type: integer, format: int64 }
+      participant_user_ids: { type: array, items: { type: integer, format: int64 } }
+      user_data: { type: object, additionalProperties: { $ref: "#/definitions/ChatUser" } }
+      messages: { type: array, items: { $ref: "#/definitions/ChatMessage" } }
+      unread_message_count: { type: integer, format: int32 }
+      updated_at: { type: string }
+      created_at: { type: string }
+  ChatConversationsPage:
+    type: object
+    properties:
+      conversations: { type: array, items: { $ref: "#/definitions/ChatConversation" } }
+      next_cursor: { type: string }
+  ChatConversations:
+    type: object
+    properties:
+      conversations: { type: array, items: { $ref: "#/definitions/ChatConversation" } }
+  ChatMessagesPage:
+    type: object
+    properties:
+      messages: { type: array, items: { $ref: "#/definitions/ChatMessage" } }
+      next_cursor: { type: string }
+  ChatUnread:
+    type: object
+    properties:
+      global_unread_message_count: { type: integer, format: int64 }
+      global_unread_count: { type: integer, format: int64 }
+  ChatSettings:
+    type: object
+    properties:
+      isChatEnabled: { type: boolean }
+      isChatEnabledByPrivacySetting: { type: string }
+      isGroupChatEnabledByPrivacySetting: { type: string }
+      languageForPrivacySettingUnavailable: { type: string }
+      maxConversationTitleLength: { type: integer, format: int32 }
+  ChatOutgoing:
+    type: object
+    properties:
+      content: { type: string }
+  ChatSendRequest:
+    type: object
+    properties:
+      conversation_id: { type: string }
+      messages: { type: array, items: { $ref: "#/definitions/ChatOutgoing" } }
+  ChatSendResponse:
+    type: object
+    properties:
+      messages: { type: array, items: { $ref: "#/definitions/ChatMessage" } }
+  ChatConversationRef:
+    type: object
+    properties:
+      conversation_id: { type: string }
+  ChatMarkRequest:
+    type: object
+    properties:
+      conversation_ids: { type: array, items: { type: string } }
+  ChatNewConversation:
+    type: object
+    properties:
+      type: { type: string, description: "one_to_one, group" }
+      name: { type: string }
+      participant_user_ids: { type: array, items: { type: integer, format: int64 } }
+  ChatCreateRequest:
+    type: object
+    properties:
+      conversations: { type: array, items: { $ref: "#/definitions/ChatNewConversation" } }
+      include_user_data: { type: boolean }
+  ChatRename:
+    type: object
+    properties:
+      id: { type: string }
+      name: { type: string }
+  ChatUpdateRequest:
+    type: object
+    properties:
+      conversations: { type: array, items: { $ref: "#/definitions/ChatRename" } }
+  ChatUsersRequest:
+    type: object
+    properties:
+      conversation_id: { type: string }
+      user_ids: { type: array, items: { type: integer, format: int64 } }
+  ChatStatus:
+    type: object
+    properties:
+      status: { type: string }
+  ResellersPage:
+    type: object
+    properties:
+      data: { type: array, items: { $ref: "#/definitions/Reseller" } }
+      nextPageCursor: { type: string }
+  Reseller:
+    type: object
+    properties:
+      collectibleProductId: { type: string }
+      collectibleItemInstanceId: { type: string }
+      price: { type: integer, format: int64 }
+      serialNumber: { type: integer, format: int64 }
+      seller: { $ref: "#/definitions/ResellerSeller" }
+  ResellerSeller:
+    type: object
+    properties:
+      sellerId: { type: integer, format: int64 }
+      sellerType: { type: string }
+      name: { type: string }
+      hasVerifiedBadge: { type: boolean }
+  ResaleData:
+    type: object
+    properties:
+      recentAveragePrice: { type: number, format: double }
+      priceDataPoints: { type: array, items: { $ref: "#/definitions/ResalePoint" } }
+      volumeDataPoints: { type: array, items: { $ref: "#/definitions/ResalePoint" } }
+  ResalePoint:
+    type: object
+    properties:
+      value: { type: number, format: double }
+      date: { type: string }
+  CollectibleItemIds:
+    type: object
+    properties:
+      itemIds: { type: array, items: { type: string } }
+  CollectibleItemDetails:
+    type: object
+    properties:
+      collectibleItemId: { type: string }
+      collectibleProductId: { type: string }
+      itemTargetId: { type: integer, format: int64 }
+      creatorId: { type: integer, format: int64 }
+      creatorType: { type: string, description: "User or Group" }
+      creatorName: { type: string }
+      price: { type: integer, format: int64, description: "null when the creator doesn't sell it" }
+      unitsAvailableForConsumption: { type: integer, format: int64 }
+      saleLocationType: { type: string, description: "ShopOnly, ShopAndAllExperiences, ExperiencesDevApiOnly, ..." }
+      lowestResalePrice: { type: integer, format: int64 }
+      lowestAvailableResaleProductId: { type: string }
+      lowestAvailableResaleItemInstanceId: { type: string }
+  CollectiblePurchaseRequest:
+    type: object
+    properties:
+      collectibleItemId: { type: string }
+      collectibleProductId: { type: string }
+      collectibleItemInstanceId: { type: string, description: "Only for purchase-resale" }
+      expectedCurrency: { type: integer, format: int32, description: "1 is Robux" }
+      expectedPrice: { type: integer, format: int64 }
+      expectedPurchaserId: { type: integer, format: int64 }
+      expectedPurchaserType: { type: string, description: "User" }
+      expectedSellerId: { type: integer, format: int64 }
+      expectedSellerType: { type: string, description: "User or Group" }
+      idempotencyKey: { type: string, description: "A new UUID per purchase attempt" }
+  CollectiblePurchaseResult:
+    type: object
+    properties:
+      purchased: { type: boolean }
+      purchaseResult: { type: string, description: "Flooded, ..." }
+      errorMessage: { type: string, description: "InsufficientBalance, ..." }
+      reason: { type: string, description: "TwoStepVerificationRequired, ..." }
+      pending: { type: boolean, description: "Bought; it reaches the inventory a little later" }
+      failureReason: { type: string, description: "Set when purchases are restricted for a while" }
+      expirationTimeInMinutes: { type: integer, format: int64 }
+  GamePassPurchaseRequest:
+    type: object
+    properties:
+      expectedPrice: { type: integer, format: int64 }
+      idempotencyKey: { type: string, description: "A new UUID per purchase attempt" }
+  GamePassPurchaseResult:
+    type: object
+    properties:
+      purchased: { type: boolean }
+      reason: { type: string, description: "TwoStepVerificationRequired, ..." }
+      failureReason: { type: string, description: "Set when purchases are restricted for a while" }
+      expirationTimeInMinutes: { type: integer, format: int64 }

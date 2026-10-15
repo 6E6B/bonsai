@@ -1,0 +1,5638 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Signed out: marketplace categories, a search (Roblox's items, most favorited), Valkyrie Helm (1365767) and Silly Fun (bundle 299652) item pages with recommendations, resellers, resale history and owners, and builderman's (156) public inventory. Resale history trimmed to 60 days by hand.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "catalog.roblox.com",
+        "path": "/v1/search/navigation-menu-items"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "allCategories": 1,
+          "categories": [
+            {
+              "assetTypeIds": [
+                11,
+                2,
+                12,
+                17,
+                18,
+                19,
+                8,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                61,
+                64,
+                65,
+                68,
+                67,
+                66,
+                69,
+                72,
+                51
+              ],
+              "bundleTypeIds": [
+                1,
+                2,
+                3,
+                4
+              ],
+              "category": "All",
+              "categoryId": 1,
+              "isSearchable": true,
+              "name": "All",
+              "orderIndex": 1,
+              "subcategories": [],
+              "taxonomy": "tZsUsd2BqGViQrJ9Vs3Wah"
+            },
+            {
+              "assetTypeIds": [
+                41,
+                17,
+                18
+              ],
+              "bundleTypeIds": [
+                4,
+                1
+              ],
+              "category": "Body",
+              "categoryId": 18,
+              "isSearchable": true,
+              "name": "Body",
+              "orderIndex": 2,
+              "subcategories": [
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [
+                    1
+                  ],
+                  "name": "Full Bodies",
+                  "shortName": null,
+                  "subcategory": "BodyPartsBundles",
+                  "subcategoryId": 37,
+                  "taxonomy": "kfHzJwaNYM8s2CWRqYUhRa"
+                },
+                {
+                  "assetTypeIds": [
+                    41
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Hair",
+                  "shortName": null,
+                  "subcategory": "HairAccessories",
+                  "subcategoryId": 20,
+                  "taxonomy": "d6a7M7r9MMrpf7z7VxW9ZS"
+                },
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [
+                    4
+                  ],
+                  "name": "Heads",
+                  "shortName": null,
+                  "subcategory": "DynamicHeads",
+                  "subcategoryId": 66,
+                  "taxonomy": "s5NLP7BS9PRLKvUVca4XKg"
+                }
+              ],
+              "taxonomy": "mwkR3QvDBVzYk4o9RAVVa2"
+            },
+            {
+              "assetTypeIds": [
+                11,
+                2,
+                12,
+                64,
+                65,
+                68,
+                67,
+                66,
+                69,
+                72
+              ],
+              "bundleTypeIds": [
+                3
+              ],
+              "category": "Clothing",
+              "categoryId": 3,
+              "isSearchable": true,
+              "name": "Clothing",
+              "orderIndex": 3,
+              "subcategories": [
+                {
+                  "assetTypeIds": [
+                    65
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Shirts",
+                  "shortName": null,
+                  "subcategory": "ShirtAccessories",
+                  "subcategoryId": 59,
+                  "taxonomy": "pJ71PxerdfEuarTNRtSZYs"
+                },
+                {
+                  "assetTypeIds": [
+                    64
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "T-Shirts",
+                  "shortName": null,
+                  "subcategory": "TShirtAccessories",
+                  "subcategoryId": 58,
+                  "taxonomy": "fLRqNzGqjX7MzcqeMro9hc"
+                },
+                {
+                  "assetTypeIds": [
+                    68
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Sweaters",
+                  "shortName": null,
+                  "subcategory": "SweaterAccessories",
+                  "subcategoryId": 62,
+                  "taxonomy": "31M6WgEMmyq9TTfk3pUUpZ"
+                },
+                {
+                  "assetTypeIds": [
+                    67
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Jackets",
+                  "shortName": null,
+                  "subcategory": "JacketAccessories",
+                  "subcategoryId": 61,
+                  "taxonomy": "kPZpEVNdProGcqMbj1jDKJ"
+                },
+                {
+                  "assetTypeIds": [
+                    66
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Pants",
+                  "shortName": null,
+                  "subcategory": "PantsAccessories",
+                  "subcategoryId": 60,
+                  "taxonomy": "1MvRtnnsy2FJWmkErSBxBa"
+                },
+                {
+                  "assetTypeIds": [
+                    72
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Dresses & Skirts",
+                  "shortName": null,
+                  "subcategory": "DressSkirtAccessories",
+                  "subcategoryId": 65,
+                  "taxonomy": "oSSCBSqkQPZu6HataAUAxB"
+                },
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [],
+                  "name": "Bodysuits",
+                  "shortName": null,
+                  "subcategory": null,
+                  "subcategoryId": null,
+                  "taxonomy": "u5jaNLyf2ZhvR95GS37ui5"
+                },
+                {
+                  "assetTypeIds": [
+                    69
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Shorts",
+                  "shortName": null,
+                  "subcategory": "ShortsAccessories",
+                  "subcategoryId": 63,
+                  "taxonomy": "etAPg889P243JyjdbZCXhw"
+                },
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [
+                    3
+                  ],
+                  "name": "Shoes",
+                  "shortName": null,
+                  "subcategory": "ShoesBundles",
+                  "subcategoryId": 64,
+                  "taxonomy": "uLRgNoJ1awZkhpVw9WyvKo"
+                },
+                {
+                  "assetTypeIds": [
+                    11
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Classic Shirts",
+                  "shortName": null,
+                  "subcategory": "ClassicShirts",
+                  "subcategoryId": 56,
+                  "taxonomy": "2a2rf9qyeTd8W5iegK2Prc"
+                },
+                {
+                  "assetTypeIds": [
+                    2
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Classic T-Shirts",
+                  "shortName": null,
+                  "subcategory": "ClassicTShirts",
+                  "subcategoryId": 55,
+                  "taxonomy": "43H35nJKHzCQM63q3wPaJG"
+                },
+                {
+                  "assetTypeIds": [
+                    12
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Classic Pants",
+                  "shortName": null,
+                  "subcategory": "ClassicPants",
+                  "subcategoryId": 57,
+                  "taxonomy": "49cFNAJWuwiJJVUSADG6DR"
+                }
+              ],
+              "taxonomy": "5G3bZScC9Hxp2D2EUtGSNm"
+            },
+            {
+              "assetTypeIds": [
+                8,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                19
+              ],
+              "bundleTypeIds": [],
+              "category": "Accessories",
+              "categoryId": 11,
+              "isSearchable": true,
+              "name": "Accessories",
+              "orderIndex": 4,
+              "subcategories": [
+                {
+                  "assetTypeIds": [
+                    8
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Head",
+                  "shortName": null,
+                  "subcategory": "HeadAccessories",
+                  "subcategoryId": 54,
+                  "taxonomy": "thukPQUFe5EHxRrtsgq43u"
+                },
+                {
+                  "assetTypeIds": [
+                    42
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Face",
+                  "shortName": null,
+                  "subcategory": "FaceAccessories",
+                  "subcategoryId": 21,
+                  "taxonomy": "b5rkQhGSfwhfTK177y6ERa"
+                },
+                {
+                  "assetTypeIds": [
+                    43
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Neck Accessory",
+                  "shortName": null,
+                  "subcategory": "NeckAccessories",
+                  "subcategoryId": 22,
+                  "taxonomy": "tvckLAbtDAGwF9Y2sph2Ce"
+                },
+                {
+                  "assetTypeIds": [
+                    44
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Shoulder Accessory",
+                  "shortName": null,
+                  "subcategory": "ShoulderAccessories",
+                  "subcategoryId": 23,
+                  "taxonomy": "8i1sggNTrxoN799hpRrR1S"
+                },
+                {
+                  "assetTypeIds": [
+                    45
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Front Accessory",
+                  "shortName": null,
+                  "subcategory": "FrontAccessories",
+                  "subcategoryId": 24,
+                  "taxonomy": "kj535RzJxHTCnXPBLo5KaE"
+                },
+                {
+                  "assetTypeIds": [
+                    46
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Back Accessory",
+                  "shortName": null,
+                  "subcategory": "BackAccessories",
+                  "subcategoryId": 25,
+                  "taxonomy": "7yGywzp5JeDsNjhXWJqSw3"
+                },
+                {
+                  "assetTypeIds": [
+                    47
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Waist Accessory",
+                  "shortName": null,
+                  "subcategory": "WaistAccessories",
+                  "subcategoryId": 26,
+                  "taxonomy": "6jYQPDtkVwQZcKtvVpyYAN"
+                },
+                {
+                  "assetTypeIds": [
+                    19
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Gear",
+                  "shortName": null,
+                  "subcategory": "Gear",
+                  "subcategoryId": 5,
+                  "taxonomy": "gUtxkR951g3VPgRkb5ay8u"
+                }
+              ],
+              "taxonomy": "wNYJso48d1XnhMyFWT3oX3"
+            },
+            {
+              "assetTypeIds": [],
+              "bundleTypeIds": [],
+              "category": null,
+              "categoryId": null,
+              "isSearchable": true,
+              "name": "Backgrounds",
+              "orderIndex": 5,
+              "subcategories": [],
+              "taxonomy": "ijFKKMZq6jV4gkJQC4v7L1"
+            },
+            {
+              "assetTypeIds": [
+                61
+              ],
+              "bundleTypeIds": [
+                2
+              ],
+              "category": "AvatarAnimations",
+              "categoryId": 12,
+              "isSearchable": true,
+              "name": "Animations",
+              "orderIndex": 6,
+              "subcategories": [
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [
+                    2
+                  ],
+                  "name": "Bundles",
+                  "shortName": null,
+                  "subcategory": "AnimationBundles",
+                  "subcategoryId": 38,
+                  "taxonomy": "whf6kUVBwk2xdwKUmRYN6G"
+                },
+                {
+                  "assetTypeIds": [
+                    61
+                  ],
+                  "bundleTypeIds": [],
+                  "name": "Emotes",
+                  "shortName": null,
+                  "subcategory": "EmoteAnimations",
+                  "subcategoryId": 39,
+                  "taxonomy": "ioNxAT977DFP2hMnAJbsbF"
+                }
+              ],
+              "taxonomy": "9fPpW3SJ6UkieQU5jJ4dgP"
+            },
+            {
+              "assetTypeIds": [],
+              "bundleTypeIds": [],
+              "category": null,
+              "categoryId": null,
+              "isSearchable": true,
+              "name": "Makeup",
+              "orderIndex": 7,
+              "subcategories": [
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [],
+                  "name": "Eyes",
+                  "shortName": null,
+                  "subcategory": null,
+                  "subcategoryId": null,
+                  "taxonomy": "1e7vNivWk2To6BdYJt5RGF"
+                },
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [],
+                  "name": "Lips",
+                  "shortName": null,
+                  "subcategory": null,
+                  "subcategoryId": null,
+                  "taxonomy": "c3PEmGVddwsc6bKqtuR7rC"
+                },
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [],
+                  "name": "Face",
+                  "shortName": null,
+                  "subcategory": null,
+                  "subcategoryId": null,
+                  "taxonomy": "tm9VSS61JdHJGtKvbjKa4D"
+                },
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [],
+                  "name": "Eyelashes",
+                  "shortName": null,
+                  "subcategory": null,
+                  "subcategoryId": null,
+                  "taxonomy": "4zqsNnG4Tp7xZThAEpv2dN"
+                },
+                {
+                  "assetTypeIds": [],
+                  "bundleTypeIds": [],
+                  "name": "Eyebrows",
+                  "shortName": null,
+                  "subcategory": null,
+                  "subcategoryId": null,
+                  "taxonomy": "1cMbsG373EMD4ncRqGhtyZ"
+                }
+              ],
+              "taxonomy": "dBM565GC3YYTdi9UKvr87Z"
+            }
+          ],
+          "categoriesWithCreator": [
+            1,
+            3,
+            13
+          ],
+          "creatorFilters": [
+            {
+              "isSelected": false,
+              "name": "All Creators",
+              "userId": 9000000001
+            }
+          ],
+          "customRobuxFilter": 3,
+          "defaultCategory": 1,
+          "defaultCategoryIdForRecommendedSearch": 1,
+          "defaultCreator": 0,
+          "defaultCurrency": 0,
+          "defaultGearSubcategory": 5,
+          "defaultSortAggregation": 5,
+          "defaultSortType": 0,
+          "freeFilter": 5,
+          "gearSubcategory": 5,
+          "genres": [
+            {
+              "genre": 13,
+              "isSelected": false,
+              "name": "Building"
+            },
+            {
+              "genre": 5,
+              "isSelected": false,
+              "name": "Horror"
+            },
+            {
+              "genre": 1,
+              "isSelected": false,
+              "name": "Town and City"
+            },
+            {
+              "genre": 11,
+              "isSelected": false,
+              "name": "Military"
+            },
+            {
+              "genre": 9,
+              "isSelected": false,
+              "name": "Comedy"
+            },
+            {
+              "genre": 2,
+              "isSelected": false,
+              "name": "Medieval"
+            },
+            {
+              "genre": 7,
+              "isSelected": false,
+              "name": "Adventure"
+            },
+            {
+              "genre": 3,
+              "isSelected": false,
+              "name": "Sci-Fi"
+            },
+            {
+              "genre": 6,
+              "isSelected": false,
+              "name": "Naval"
+            },
+            {
+              "genre": 14,
+              "isSelected": false,
+              "name": "FPS"
+            },
+            {
+              "genre": 15,
+              "isSelected": false,
+              "name": "RPG"
+            },
+            {
+              "genre": 8,
+              "isSelected": false,
+              "name": "Sports"
+            },
+            {
+              "genre": 4,
+              "isSelected": false,
+              "name": "Fighting"
+            },
+            {
+              "genre": 10,
+              "isSelected": false,
+              "name": "Western"
+            }
+          ],
+          "isGenreAllowed": false,
+          "priceFilters": [
+            {
+              "currencyType": 0,
+              "excludePriceSorts": false,
+              "name": "Any Price"
+            },
+            {
+              "currencyType": 3,
+              "excludePriceSorts": false,
+              "name": "R$?"
+            }
+          ],
+          "robloxUserId": 1,
+          "robloxUserName": "Roblox",
+          "robuxFilter": 1,
+          "salesTypeFilters": [
+            {
+              "filter": 1,
+              "name": "All"
+            },
+            {
+              "filter": 2,
+              "name": "Limited"
+            },
+            {
+              "filter": 4,
+              "name": "Timed Options"
+            }
+          ],
+          "sortMenu": {
+            "sortAggregations": [
+              {
+                "hasSubMenu": false,
+                "isPriceRelated": false,
+                "isSelected": false,
+                "name": "All Time",
+                "sortAggregation": 5
+              },
+              {
+                "hasSubMenu": false,
+                "isPriceRelated": false,
+                "isSelected": false,
+                "name": "Past Week",
+                "sortAggregation": 3
+              },
+              {
+                "hasSubMenu": false,
+                "isPriceRelated": false,
+                "isSelected": false,
+                "name": "Past Day",
+                "sortAggregation": 1
+              }
+            ],
+            "sortOptions": [
+              {
+                "hasSubMenu": false,
+                "isPriceRelated": false,
+                "isSelected": false,
+                "name": "Relevance",
+                "sortOrder": 2,
+                "sortType": 0
+              },
+              {
+                "hasSubMenu": true,
+                "isPriceRelated": false,
+                "isSelected": false,
+                "name": "Most Favorited",
+                "sortOrder": 2,
+                "sortType": 1
+              },
+              {
+                "hasSubMenu": true,
+                "isPriceRelated": false,
+                "isSelected": false,
+                "name": "Bestselling",
+                "sortOrder": 2,
+                "sortType": 2
+              },
+              {
+                "hasSubMenu": false,
+                "isPriceRelated": false,
+                "isSelected": false,
+                "name": "Recently Published",
+                "sortOrder": 2,
+                "sortType": 3
+              },
+              {
+                "hasSubMenu": false,
+                "isPriceRelated": true,
+                "isSelected": false,
+                "name": "Price (High to Low)",
+                "sortOrder": 2,
+                "sortType": 5
+              },
+              {
+                "hasSubMenu": false,
+                "isPriceRelated": true,
+                "isSelected": false,
+                "name": "Price (Low to High)",
+                "sortOrder": 1,
+                "sortType": 4
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "catalog.roblox.com",
+        "path": "/v2/search/items/details",
+        "query": {
+          "CreatorName": "Roblox",
+          "SalesTypeFilter": "1",
+          "SortAggregation": "5",
+          "SortType": "1",
+          "Taxonomy": "tZsUsd2BqGViQrJ9Vs3Wah",
+          "limit": "60"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 27,
+                  "id": 86499666,
+                  "name": "Woman Torso",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 86499698,
+                  "name": "Woman Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 29,
+                  "id": 86499716,
+                  "name": "Woman Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 86499753,
+                  "name": "Woman Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 86499793,
+                  "name": "Woman Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 41,
+                  "id": 62724852,
+                  "name": "Chestnut Bun",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131929497,
+                  "name": "Woman",
+                  "type": "UserOutfit"
+                },
+                {
+                  "id": 11166516435,
+                  "name": "Woman Face",
+                  "type": "UserOutfit"
+                },
+                {
+                  "assetType": 78,
+                  "id": 10725638029,
+                  "name": "Woman Face - Mood",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 79,
+                  "id": 10725626210,
+                  "name": "Woman Face - Head",
+                  "supportsHeadShapes": true,
+                  "type": "Asset"
+                }
+              ],
+              "collectibleItemId": "3126a07f-ccb1-4bc1-b156-3c367feda255",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "The next generation of ROBLOX.",
+              "favoriteCount": 10248544,
+              "hasResellers": false,
+              "id": 239,
+              "isRecolorable": true,
+              "itemCreatedUtc": "2018-08-14T22:51:36.063Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Woman",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 8306895235339644,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 61,
+              "bundledItems": [],
+              "collectibleItemId": "1b27f888-f2d1-4501-b622-6463ae5bbd98",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Over there!",
+              "favoriteCount": 9210989,
+              "hasResellers": false,
+              "id": 3576823880,
+              "itemCreatedUtc": "2019-08-01T20:49:01.51Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Point2",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 1923365895848976,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "ioNxAT977DFP2hMnAJbsbF",
+                  "taxonomyName": "Emotes"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 61,
+              "bundledItems": [],
+              "collectibleItemId": "776ea7c5-a60d-4f57-a8c5-d1febe112b08",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "I was about to ask you the same question...",
+              "favoriteCount": 8899639,
+              "hasResellers": false,
+              "id": 3576968026,
+              "itemCreatedUtc": "2019-08-01T21:21:36.41Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Shrug",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 3244674105559547,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "ioNxAT977DFP2hMnAJbsbF",
+                  "taxonomyName": "Emotes"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 61,
+              "bundledItems": [],
+              "collectibleItemId": "0728469f-dd2b-4c70-9b7c-16bdb27e2542",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Hi!",
+              "favoriteCount": 6390106,
+              "hasResellers": false,
+              "id": 3576686446,
+              "itemCreatedUtc": "2019-08-01T20:18:57.957Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Hello",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 3810981425488446,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "ioNxAT977DFP2hMnAJbsbF",
+                  "taxonomyName": "Emotes"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 41,
+                  "id": 62234425,
+                  "name": "Brown Hair",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 27,
+                  "id": 86500008,
+                  "name": "Man Torso",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 86500036,
+                  "name": "Man Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 29,
+                  "id": 86500054,
+                  "name": "Man Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 86500064,
+                  "name": "Man Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 86500078,
+                  "name": "Man Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131929496,
+                  "name": "Man   ",
+                  "type": "UserOutfit"
+                },
+                {
+                  "id": 11166682528,
+                  "name": "Man Face",
+                  "type": "UserOutfit"
+                },
+                {
+                  "assetType": 79,
+                  "id": 10725826963,
+                  "name": "Man Face - Head",
+                  "supportsHeadShapes": true,
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 78,
+                  "id": 10725833199,
+                  "name": "Man Face - Mood",
+                  "type": "Asset"
+                }
+              ],
+              "collectibleItemId": "d10170ae-1340-44fc-9067-02b54ddb4922",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "The next generation of ROBLOX.",
+              "favoriteCount": 6035589,
+              "hasResellers": false,
+              "id": 238,
+              "isRecolorable": true,
+              "itemCreatedUtc": "2018-08-14T22:51:36.003Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Man   ",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 5495982967652879,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 11,
+                  "id": 301809996,
+                  "name": "John Shirt",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 12,
+                  "id": 301811279,
+                  "name": "John Pants",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 41,
+                  "id": 301819845,
+                  "name": "John's Hair",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 43,
+                  "id": 301820684,
+                  "name": "John’s Scarf",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 29,
+                  "id": 301824684,
+                  "name": "XBOX_M Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 301825492,
+                  "name": "XBOX_M Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 301825699,
+                  "name": "XBOX_M Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 301825891,
+                  "name": "XBOX_M Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 27,
+                  "id": 301826032,
+                  "name": "XBOX_M Torso",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131830047,
+                  "name": "John",
+                  "type": "UserOutfit"
+                },
+                {
+                  "id": 18087730441,
+                  "name": "Skeptic",
+                  "type": "UserOutfit"
+                },
+                {
+                  "assetType": 78,
+                  "id": 14532855772,
+                  "name": "Skeptic - Mood",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 79,
+                  "id": 14532846222,
+                  "name": "Skeptic - Head",
+                  "supportsHeadShapes": true,
+                  "type": "Asset"
+                }
+              ],
+              "collectibleItemId": "c74870d0-ec79-48f7-8181-95f82be4670b",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "John is one of several exclusive Roblox Avatars available for free! You can change your look at any time by selecting or buying a different avatar.\r\n",
+              "favoriteCount": 5861737,
+              "hasResellers": false,
+              "id": 126,
+              "isRecolorable": true,
+              "itemCreatedUtc": "2018-08-14T04:45:35.38Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "John",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 578089115498361,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 2,
+              "bundledItems": [
+                {
+                  "assetType": 51,
+                  "id": 5319922112,
+                  "name": "Oldschool Idle",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 55,
+                  "id": 5319909330,
+                  "name": "Oldschool Walk",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 53,
+                  "id": 5319900634,
+                  "name": "Oldschool Run",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 52,
+                  "id": 5319917561,
+                  "name": "Oldschool Jump",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 50,
+                  "id": 5319914476,
+                  "name": "Oldschool Fall",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 48,
+                  "id": 5319931619,
+                  "name": "Oldschool Climb",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 54,
+                  "id": 5319927054,
+                  "name": "Oldschool Swim",
+                  "type": "Asset"
+                },
+                {
+                  "id": 3095466070,
+                  "name": "Oldschool Animation Pack",
+                  "type": "UserOutfit"
+                }
+              ],
+              "collectibleItemId": "b7bb88e6-e187-4681-bb2f-0237f318f1e0",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Party like its 2006. Relive the glorious old days with this retro style animation pack.",
+              "favoriteCount": 5566484,
+              "hasResellers": false,
+              "id": 667,
+              "itemCreatedUtc": "2020-07-10T00:07:08.607Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 300,
+              "lowestResalePrice": 0,
+              "name": "Oldschool Animation Pack",
+              "offSaleDeadline": null,
+              "price": 300,
+              "productId": 2376205517933152,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "whf6kUVBwk2xdwKUmRYN6G",
+                  "taxonomyName": "Animation Bundle"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 61,
+              "bundledItems": [],
+              "collectibleItemId": "eb777273-05cc-40fd-8ff5-56d69e4b186a",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "WooooooOOOOOOooooooOOOOOO",
+              "favoriteCount": 4638500,
+              "hasResellers": false,
+              "id": 3360686498,
+              "itemCreatedUtc": "2019-06-24T20:04:44.433Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Stadium",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 3021813100624496,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "ioNxAT977DFP2hMnAJbsbF",
+                  "taxonomyName": "Emotes"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 29,
+                  "id": 376530220,
+                  "name": "ROBLOX Boy Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 376531012,
+                  "name": "ROBLOX Boy Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 376531300,
+                  "name": "ROBLOX Boy Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 376531703,
+                  "name": "ROBLOX Boy Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 27,
+                  "id": 376532000,
+                  "name": "ROBLOX Boy Torso",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131830044,
+                  "name": "ROBLOX Boy",
+                  "type": "UserOutfit"
+                }
+              ],
+              "collectibleItemId": "5c0d675f-e6ae-42ab-9c8f-370b89d74baa",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "A free package awarded to new users on sign up.",
+              "favoriteCount": 3953959,
+              "hasResellers": false,
+              "id": 109,
+              "isRecolorable": true,
+              "itemCreatedUtc": "2018-08-14T04:45:34.217Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "ROBLOX Boy",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 8431448082754471,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 2,
+              "bundledItems": [
+                {
+                  "assetType": 51,
+                  "id": 619511648,
+                  "name": "Stylish Idle",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 55,
+                  "id": 619512767,
+                  "name": "Stylish Walk",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 53,
+                  "id": 619512153,
+                  "name": "Stylish Run",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 52,
+                  "id": 619511974,
+                  "name": "Stylish Jump",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 50,
+                  "id": 619511417,
+                  "name": "Stylish Fall",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 48,
+                  "id": 619509955,
+                  "name": "Stylish Climb",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 54,
+                  "id": 619512450,
+                  "name": "Stylish Swim",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131830036,
+                  "name": "Stylish Animation Pack",
+                  "type": "UserOutfit"
+                }
+              ],
+              "collectibleItemId": "d8517bb3-eff1-466f-be38-2dbc43a86b9f",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "This animation pack only works with R15 avatars. Stylish, yet practical.",
+              "favoriteCount": 3597506,
+              "hasResellers": false,
+              "id": 83,
+              "itemCreatedUtc": "2018-08-14T04:45:32.56Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 300,
+              "lowestResalePrice": 0,
+              "name": "Stylish Animation Pack",
+              "offSaleDeadline": null,
+              "price": 300,
+              "productId": 7065144520947721,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "whf6kUVBwk2xdwKUmRYN6G",
+                  "taxonomyName": "Animation Bundle"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 29,
+                  "id": 139607570,
+                  "name": "Korblox Deathspeaker Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 139607625,
+                  "name": "Korblox Deathspeaker Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 139607673,
+                  "name": "Korblox Deathspeaker Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 139607718,
+                  "name": "Korblox Deathspeaker Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 27,
+                  "id": 139607770,
+                  "name": "Korblox Deathspeaker Torso",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 8,
+                  "id": 139610147,
+                  "name": "Korblox Deathspeaker Hood",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131929437,
+                  "name": "Korblox Deathspeaker",
+                  "type": "UserOutfit"
+                }
+              ],
+              "collectibleItemId": "27734c91-60e2-4640-bb79-4e43768f86ee",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "His tribe is widely considered the best and strongest of the twelve Korblox tribes.  No one dares challenge his authority. ",
+              "favoriteCount": 3381860,
+              "hasResellers": false,
+              "id": 192,
+              "isRecolorable": true,
+              "itemCreatedUtc": "2018-08-14T22:51:32.123Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 17000,
+              "lowestResalePrice": 0,
+              "name": "Korblox Deathspeaker",
+              "offSaleDeadline": null,
+              "price": 17000,
+              "productId": 4220707046826442,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 29,
+                  "id": 134082453,
+                  "name": "Headless Horseman Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 134082473,
+                  "name": "Headless Horseman Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 134082507,
+                  "name": "Headless Horseman Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 134082533,
+                  "name": "Headless Horseman Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 27,
+                  "id": 134082557,
+                  "name": "Headless Horseman Torso",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 19,
+                  "id": 131592085,
+                  "name": "Headless Horseman's New Head",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131929448,
+                  "name": "Headless Horseman",
+                  "type": "UserOutfit"
+                },
+                {
+                  "assetType": 79,
+                  "id": 15093053680,
+                  "name": "Headless Head",
+                  "supportsHeadShapes": false,
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 78,
+                  "id": 11573370910,
+                  "name": "Anime - Mood",
+                  "type": "Asset"
+                },
+                {
+                  "id": 23452365716,
+                  "name": "Headless Horseman Head",
+                  "type": "UserOutfit"
+                }
+              ],
+              "collectibleItemId": "7c246452-87ed-431f-9702-11e1c89d8141",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "\"No, you must believe me. It was a horseman, a dead one. Headless.\"",
+              "favoriteCount": 3181058,
+              "hasResellers": false,
+              "id": 201,
+              "isRecolorable": false,
+              "itemCreatedUtc": "2018-08-14T22:51:32.803Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 31000,
+              "lowestResalePrice": 0,
+              "name": "Headless Horseman",
+              "offSaleDeadline": null,
+              "price": 31000,
+              "productId": 6066550076074413,
+              "saleLocationType": "ShopOnly",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 11,
+              "bundledItems": [],
+              "collectibleItemId": "c3d6ac49-886d-4fcb-9309-220717cbd15f",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Shirt",
+              "favoriteCount": 3047905,
+              "hasResellers": false,
+              "id": 144076358,
+              "itemCreatedUtc": "2014-01-27T23:19:33.113Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Blue and Black Motorcycle Shirt",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 4433400043327174,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "2a2rf9qyeTd8W5iegK2Prc",
+                  "taxonomyName": "Classic Shirts"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 2,
+              "bundledItems": [
+                {
+                  "assetType": 51,
+                  "id": 973771666,
+                  "name": "Toy Idle",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 55,
+                  "id": 973767371,
+                  "name": "Toy Walk ",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 53,
+                  "id": 973766674,
+                  "name": "Toy Run",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 52,
+                  "id": 973770652,
+                  "name": "Toy Jump",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 50,
+                  "id": 973768058,
+                  "name": "Toy Fall",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 48,
+                  "id": 973773170,
+                  "name": "Toy Climb",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 54,
+                  "id": 973772659,
+                  "name": "Toy Swim",
+                  "type": "Asset"
+                },
+                {
+                  "id": 132923209,
+                  "name": "Toy Animation Pack",
+                  "type": "UserOutfit"
+                }
+              ],
+              "collectibleItemId": "61efeb0f-1719-408d-826e-45cffaaba740",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "This animation pack only works with R15 avatars. It feels fantastic to be made of plastic.",
+              "favoriteCount": 2989604,
+              "hasResellers": false,
+              "id": 43,
+              "itemCreatedUtc": "2018-08-14T04:45:29.707Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 300,
+              "lowestResalePrice": 0,
+              "name": "Toy Animation Pack",
+              "offSaleDeadline": null,
+              "price": 300,
+              "productId": 8219948665726147,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "whf6kUVBwk2xdwKUmRYN6G",
+                  "taxonomyName": "Animation Bundle"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 12,
+              "bundledItems": [],
+              "collectibleItemId": "13491353-7d52-4007-83dc-6088260b5913",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Pants",
+              "favoriteCount": 2758246,
+              "hasResellers": false,
+              "id": 144076760,
+              "itemCreatedUtc": "2014-01-27T23:22:31.827Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Dark Green Jeans",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 3221938607342906,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "49cFNAJWuwiJJVUSADG6DR",
+                  "taxonomyName": "Classic Pants"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 41,
+              "bundledItems": [],
+              "collectibleItemId": "1690445b-fe59-4ee2-ab84-9080ae5f749a",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Rock your red locks!",
+              "favoriteCount": 2758288,
+              "hasResellers": false,
+              "id": 2956239660,
+              "itemCreatedUtc": "2019-03-13T18:27:20.387Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Belle Of Belfast Long Red Hair",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 7797597963809607,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "d6a7M7r9MMrpf7z7VxW9ZS",
+                  "taxonomyName": "Hair"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 41,
+              "bundledItems": [],
+              "collectibleItemId": "be6a562f-7dbf-4581-b90f-c0e4d5298028",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Yeah buddy!  Pal hair for the win.",
+              "favoriteCount": 2660129,
+              "hasResellers": false,
+              "id": 63690008,
+              "itemCreatedUtc": "2011-10-14T18:01:31.177Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Pal Hair",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 5020167754645659,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "d6a7M7r9MMrpf7z7VxW9ZS",
+                  "taxonomyName": "Hair"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 11,
+              "bundledItems": [],
+              "collectibleItemId": "1ebc6e1a-2c4f-4d4d-954f-9038efa4cd82",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Stay stylish in the latest ROBLOX jacket.",
+              "favoriteCount": 2566522,
+              "hasResellers": false,
+              "id": 607785314,
+              "itemCreatedUtc": "2017-01-10T18:22:59.57Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "ROBLOX Jacket",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 7280961476653142,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "2a2rf9qyeTd8W5iegK2Prc",
+                  "taxonomyName": "Classic Shirts"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 29,
+                  "id": 4381815211,
+                  "name": "Junkbot - Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 4381817635,
+                  "name": "Junkbot - Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 4381819685,
+                  "name": "Junkbot - Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 4381821661,
+                  "name": "Junkbot - Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 27,
+                  "id": 4381823417,
+                  "name": "Junkbot - Torso",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 8,
+                  "id": 4381828509,
+                  "name": "Junkbot - Hat",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 46,
+                  "id": 4381832739,
+                  "name": "Junkbot - Battery",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 48,
+                  "id": 2510230574,
+                  "name": "Rthro Climb",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 51,
+                  "id": 2510235063,
+                  "name": "Rthro Idle",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 50,
+                  "id": 2510233257,
+                  "name": "Rthro Fall",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 52,
+                  "id": 2510236649,
+                  "name": "Rthro Jump",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 53,
+                  "id": 2510238627,
+                  "name": "Rthro Run",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 54,
+                  "id": 2510240941,
+                  "name": "Rthro Swim",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 55,
+                  "id": 2510242378,
+                  "name": "Rthro Walk",
+                  "type": "Asset"
+                },
+                {
+                  "id": 1704895554,
+                  "name": "Junkbot",
+                  "type": "UserOutfit"
+                },
+                {
+                  "assetType": 79,
+                  "id": 12724232885,
+                  "name": "Junkbot - Head",
+                  "supportsHeadShapes": false,
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 78,
+                  "id": 10647852134,
+                  "name": "DefaultFallBackMood",
+                  "type": "Asset"
+                },
+                {
+                  "id": 23452511817,
+                  "name": "Junkbot Head",
+                  "type": "UserOutfit"
+                }
+              ],
+              "collectibleItemId": "d2ac612f-1eab-4615-a82e-e12a3d4214fb",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "You never wondered what happened to those toy robots you threw away years ago until they came back to life.",
+              "favoriteCount": 2552018,
+              "hasResellers": false,
+              "id": 589,
+              "isRecolorable": false,
+              "itemCreatedUtc": "2019-11-12T22:23:47.95Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Junkbot",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 1337567586546295,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 27,
+                  "id": 27112025,
+                  "name": "Roblox 2.0 Torso",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 27112039,
+                  "name": "Roblox 2.0 Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 29,
+                  "id": 27112052,
+                  "name": "Roblox 2.0 Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 27112056,
+                  "name": "Roblox 2.0 Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 27112068,
+                  "name": "Roblox 2.0 Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131929576,
+                  "name": "Robloxian 2.0",
+                  "type": "UserOutfit"
+                }
+              ],
+              "collectibleItemId": "dc3ca07d-e426-46da-a6bf-5727c671ecd4",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "The first official ROBLOX body package. You get a cool new set of arms, leg, and a torso - all for one money!!!",
+              "favoriteCount": 2471113,
+              "hasResellers": false,
+              "id": 311,
+              "isRecolorable": true,
+              "itemCreatedUtc": "2018-08-14T22:51:41.157Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 175,
+              "lowestResalePrice": 0,
+              "name": "Robloxian 2.0",
+              "offSaleDeadline": null,
+              "price": 175,
+              "productId": 7116786445525439,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 41,
+              "bundledItems": [],
+              "collectibleItemId": "a16b6e4b-c88a-402b-b3ce-59b69c911af0",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "I like you best because you're true blue.",
+              "favoriteCount": 2461712,
+              "hasResellers": false,
+              "id": 451221329,
+              "itemCreatedUtc": "2016-07-08T19:28:18.45Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "True Blue Hair",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 4060072626785800,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "d6a7M7r9MMrpf7z7VxW9ZS",
+                  "taxonomyName": "Hair"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "bundleType": 1,
+              "bundledItems": [
+                {
+                  "assetType": 11,
+                  "id": 301810204,
+                  "name": "Oakley Shirt",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 12,
+                  "id": 301811432,
+                  "name": "Oakley Pants",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 41,
+                  "id": 301819935,
+                  "name": "Oakley's Hair",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 42,
+                  "id": 301820724,
+                  "name": "Oakley's Glasses",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 29,
+                  "id": 301824684,
+                  "name": "XBOX_M Left Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 28,
+                  "id": 301825492,
+                  "name": "XBOX_M Right Arm",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 30,
+                  "id": 301825699,
+                  "name": "XBOX_M Left Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 31,
+                  "id": 301825891,
+                  "name": "XBOX_M Right Leg",
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 27,
+                  "id": 301826032,
+                  "name": "XBOX_M Torso",
+                  "type": "Asset"
+                },
+                {
+                  "id": 131830046,
+                  "name": "Oakley",
+                  "type": "UserOutfit"
+                },
+                {
+                  "id": 18087730441,
+                  "name": "Skeptic",
+                  "type": "UserOutfit"
+                },
+                {
+                  "assetType": 79,
+                  "id": 14532846222,
+                  "name": "Skeptic - Head",
+                  "supportsHeadShapes": true,
+                  "type": "Asset"
+                },
+                {
+                  "assetType": 78,
+                  "id": 14532855772,
+                  "name": "Skeptic - Mood",
+                  "type": "Asset"
+                }
+              ],
+              "collectibleItemId": "d5452bcb-51f7-4f32-9c73-8725b3cf14d9",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Oakley is one of several Roblox Avatars available for free! You can change your look at any time by selecting or buying a different avatar.\r\n",
+              "favoriteCount": 2372098,
+              "hasResellers": false,
+              "id": 125,
+              "isRecolorable": true,
+              "itemCreatedUtc": "2018-08-14T04:45:35.317Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Bundle",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Oakley",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 4455537312265391,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "kfHzJwaNYM8s2CWRqYUhRa",
+                  "taxonomyName": "Characters"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 41,
+              "bundledItems": [],
+              "collectibleItemId": "3cf11ae8-79ef-4cbd-aac8-7ef442a5b2e8",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "She doesn't need a reason to love the Halloween season.",
+              "favoriteCount": 2354785,
+              "hasResellers": false,
+              "id": 1103003368,
+              "itemCreatedUtc": "2017-10-13T00:18:02.593Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Orange Beanie with Black Hair",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 3744598675575633,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "d6a7M7r9MMrpf7z7VxW9ZS",
+                  "taxonomyName": "Hair"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 12,
+              "bundledItems": [],
+              "collectibleItemId": "1b082933-e3a7-405f-90ed-2ccf34c50690",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Roblox",
+              "creatorTargetId": 1,
+              "creatorType": "User",
+              "description": "Designed and provided to the community by missmudman the creator of MMM Designs. Enjoy her original clothing with unique style and be sure to check out other items made by missmudman in the catalog.",
+              "favoriteCount": 2323949,
+              "hasResellers": false,
+              "id": 398634487,
+              "itemCreatedUtc": "2016-04-14T23:16:01.037Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Beautiful You Jeans",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 6141372483381085,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "49cFNAJWuwiJJVUSADG6DR",
+                  "taxonomyName": "Classic Pants"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            }
+          ],
+          "keyword": null,
+          "nextPageCursor": "2_1_dd1428ceb8dfa99741e6ec54f478d12d",
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "catalog.roblox.com",
+        "path": "/v1/catalog/items/1365767/details",
+        "query": {
+          "itemType": "Asset"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "assetType": 8,
+          "collectibleItemId": "0d1d5570-68e5-49d8-8c9e-fdb777863bd0",
+          "creatorHasVerifiedBadge": true,
+          "creatorName": "Roblox",
+          "creatorTargetId": 1,
+          "creatorType": "User",
+          "description": "This splendid helm is a replica of ones worn by the valkyries, a group of minor deities who serve Odin in Norse mythology. Led by Freya, they uphold justice and righteousness.",
+          "expectedSellerId": 1,
+          "favoriteCount": 666574,
+          "genres": [
+            "Medieval",
+            "Fighting"
+          ],
+          "hasResellers": true,
+          "id": 1365767,
+          "isOffSale": true,
+          "isPurchasable": true,
+          "itemCreatedUtc": "2008-01-26T06:12:24.623Z",
+          "itemRestrictions": [
+            "Limited"
+          ],
+          "itemStatus": [],
+          "itemType": "Asset",
+          "lowestPrice": 279900,
+          "lowestResalePrice": 279900,
+          "name": "Valkyrie Helm",
+          "offSaleDeadline": null,
+          "owned": false,
+          "price": 0,
+          "productId": 6488782941041074,
+          "renderProperties": [],
+          "saleLocationType": "ShopOnly",
+          "taxonomy": [
+            {
+              "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+              "taxonomyName": "Head Accessories"
+            }
+          ],
+          "totalQuantity": 12523,
+          "unitsAvailableForConsumption": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "economy.roblox.com",
+        "path": "/v2/assets/1365767/details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "AssetId": 1365767,
+          "AssetTypeId": 8,
+          "Created": "2008-01-26T06:12:24.623Z",
+          "Updated": "2016-11-16T20:10:05.697Z",
+          "Sales": 12523
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "catalog.roblox.com",
+        "path": "/v1/topic/get-topics",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "XSRF token invalid"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "catalog.roblox.com",
+        "path": "/v1/topic/get-topics",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "topics": [
+            {
+              "displayName": "color",
+              "originalTopicName": ""
+            },
+            {
+              "displayName": "armor",
+              "originalTopicName": ""
+            },
+            {
+              "displayName": "fighting",
+              "originalTopicName": ""
+            },
+            {
+              "displayName": "helmet",
+              "originalTopicName": ""
+            },
+            {
+              "displayName": "metal",
+              "originalTopicName": ""
+            },
+            {
+              "displayName": "steven",
+              "originalTopicName": "steven"
+            }
+          ],
+          "queries": null,
+          "error": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "catalog.roblox.com",
+        "path": "/v1/catalog/items/299652/details",
+        "query": {
+          "itemType": "Bundle"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "bundleType": 4,
+          "bundledItems": [
+            {
+              "assetType": 79,
+              "id": 15938951781,
+              "name": "Silly Fun - Head",
+              "supportsHeadShapes": true,
+              "type": "Asset"
+            },
+            {
+              "assetType": 78,
+              "id": 15938951885,
+              "name": "Silly Fun - Mood",
+              "type": "Asset"
+            },
+            {
+              "id": 25696513671,
+              "name": "Silly Fun",
+              "type": "UserOutfit"
+            }
+          ],
+          "collectibleItemId": "c04aa0b7-af31-4805-afa5-773274f31add",
+          "creatorHasVerifiedBadge": true,
+          "creatorName": "Roblox",
+          "creatorTargetId": 1,
+          "creatorType": "User",
+          "description": "Super Silly Fun Face?",
+          "expectedSellerId": 1,
+          "favoriteCount": 144900,
+          "hasResellers": false,
+          "id": 299652,
+          "isPurchasable": true,
+          "isRecolorable": false,
+          "itemCreatedUtc": "2024-01-10T19:26:40.68Z",
+          "itemRestrictions": [
+            "Live"
+          ],
+          "itemStatus": [],
+          "itemType": "Bundle",
+          "lowestPrice": 0,
+          "lowestResalePrice": 0,
+          "name": "Silly Fun",
+          "offSaleDeadline": null,
+          "owned": false,
+          "price": 0,
+          "priceStatus": "Free",
+          "productId": 8689265699312976,
+          "renderProperties": [],
+          "saleLocationType": "ShopAndAllExperiences",
+          "taxonomy": [
+            {
+              "taxonomyId": "s5NLP7BS9PRLKvUVca4XKg",
+              "taxonomyName": "Heads"
+            }
+          ],
+          "totalQuantity": 0,
+          "unitsAvailableForConsumption": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "catalog.roblox.com",
+        "path": "/v1/topic/get-topics",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "topics": [
+            {
+              "displayName": "steven",
+              "originalTopicName": "steven"
+            }
+          ],
+          "queries": null,
+          "error": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "catalog.roblox.com",
+        "path": "/v2/recommendations/assets",
+        "query": {
+          "assetTypeId": "8",
+          "contextAssetId": "1365767",
+          "numItems": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            16595564026,
+            105268898990071,
+            92733410260261,
+            114535434198145,
+            18419951631,
+            127562682799529,
+            128356961777011,
+            75992910653222,
+            114491571252088,
+            140127383196216,
+            13184975791,
+            108631194846883,
+            126068949088219,
+            83960657335506,
+            13571181027,
+            18450928334,
+            132497593666994,
+            125892049886895,
+            115221246586019,
+            108150266584506,
+            17627081584,
+            107269542719875,
+            16292136577,
+            70778765668873,
+            17225320544,
+            102797305676607,
+            124896181209570,
+            10527433092,
+            80729225440249,
+            140718144511195
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "catalog.roblox.com",
+        "path": "/v1/catalog/items/details",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "ea38268f-6f2a-41af-b562-899bbd6da8df",
+              "creatorHasVerifiedBadge": false,
+              "creatorName": "Olix's Corner Shop 2.0",
+              "creatorTargetId": 3839858,
+              "creatorType": "Group",
+              "description": "Embrace the Blueberry...",
+              "favoriteCount": 40297,
+              "hasResellers": false,
+              "id": 16595564026,
+              "itemCreatedUtc": "2024-03-02T17:14:12.26Z",
+              "itemRestrictions": [
+                "Collectible"
+              ],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 0,
+              "lowestResalePrice": 0,
+              "name": "Winning Blueberry Head",
+              "offSaleDeadline": null,
+              "price": 0,
+              "priceStatus": "Free",
+              "productId": 4583977553012266,
+              "quantityLimitPerUser": 1,
+              "saleLocationType": "ExperiencesDevApiOnly",
+              "taxonomy": [
+                {
+                  "taxonomyId": "pdftcazVqwGjmgpC29ELFY",
+                  "taxonomyName": "Full Masks"
+                }
+              ],
+              "totalQuantity": 99999,
+              "unitsAvailableForConsumption": 22923
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "fcaf5040-f6fb-429f-8571-df0d49244205",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Pity",
+              "creatorTargetId": 4689199,
+              "creatorType": "Group",
+              "description": "grunge distressed cap\n\nGroup Store: https://www.roblox.com/communities/4689199/Pity#!/store\n\nMatching Shirt: https://www.roblox.com/catalog/128255069146815/cute-emo-grunge-nerd-cat\n\nOther versions\nPanda version: https://www.roblox.com/catalog/95476111403947/grunge-distressed-panda-cap\nDog version: https://www.roblox.com/catalog/127688392964983/grunge-distressed-dog-cap",
+              "favoriteCount": 122867,
+              "hasResellers": false,
+              "id": 105268898990071,
+              "itemCreatedUtc": "2025-08-18T02:36:07.083Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 95,
+              "lowestResalePrice": 0,
+              "name": "grunge distressed cat cap",
+              "offSaleDeadline": null,
+              "price": 95,
+              "productId": 25220968034860,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+                  "taxonomyName": "Head Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "c7db3153-663a-4b32-8185-4ad5a2b918ba",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Nosniy Games",
+              "creatorTargetId": 3461453,
+              "creatorType": "Group",
+              "description": "Arena Top: https://www.roblox.com/catalog/137296265324812/Arena-Top\nArena Bottom: https://www.roblox.com/catalog/129512336852435/Arena-Bottom",
+              "favoriteCount": 4085,
+              "hasResellers": false,
+              "id": 92733410260261,
+              "itemCreatedUtc": "2026-03-09T04:32:21.693Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 90,
+              "lowestResalePrice": 0,
+              "name": "Arena Man Head",
+              "offSaleDeadline": null,
+              "price": 90,
+              "productId": 8527464358449471,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "pdftcazVqwGjmgpC29ELFY",
+                  "taxonomyName": "Full Masks"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "d5c8d218-79df-4b01-8d5a-3b5a1aaf1f7e",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Coast UGC",
+              "creatorTargetId": 17022012,
+              "creatorType": "Group",
+              "description": "🛍 SHOP \"COAST UGC\" STREETWEAR: www.roblox.com/catalog?Category=1&CreatorName=Coast%20UGC&CreatorType=Group&salesTypeFilter=1&SortType=2&SortAggregation=1\n\n🍭 MATCH WITH: www.roblox.com/catalog?Keyword=Hamster&taxonomy=tZsUsd2BqGViQrJ9Vs3Wah&CreatorName=ALL+IN+UGC&salesTypeFilter=1\n\n🧢 RECOLORS & MORE FITS: www.roblox.com/catalog?Keyword=Propeller&taxonomy=tZsUsd2BqGViQrJ9Vs3Wah&CreatorName=Coast+UGC&salesTypeFilter=1\n\n💎 JOIN GROUP for new weekly items!\n\ntags: y2k 2000s gyaru preppy grunge softie pastel kawaii emo cyber goth trendy streetwear soft sporty comfy aesthetic skater skatercore indie cottagecore vintage thrift da hood casual hip hop fairy garden dark academia light academia kawaiicore school bear retro 90’s everyday dress animal cute cutesy dolly decora doll realism realistic perky camisole hot trendy comfy angelic knit socks sweater fluffy formal bow baby angel thigh boots sleeve cat tan skateboard christmas new year nostalgia fashion lo-fi kidcore revival skate deco",
+              "favoriteCount": 89080,
+              "hasResellers": false,
+              "id": 114535434198145,
+              "itemCreatedUtc": "2024-09-26T16:54:53.57Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 95,
+              "lowestResalePrice": 0,
+              "name": "Propeller Hat Twisted Preppy Propeler Cap Kidcore",
+              "offSaleDeadline": null,
+              "price": 95,
+              "productId": 3730284921777139,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+                  "taxonomyName": "Head Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "8b4faeff-a0be-47e7-9934-06ca33893181",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Khoi UGC",
+              "creatorTargetId": 7314014,
+              "creatorType": "Group",
+              "description": "Check out Khoi UGC for more! 🌈 More colors: https://www.roblox.com/catalog?Keyword=iconic&Category=1&CreatorName=Khoi%20UGC&CreatorType=Group&salesTypeFilter=1",
+              "favoriteCount": 79192,
+              "hasResellers": false,
+              "id": 18419951631,
+              "itemCreatedUtc": "2024-07-10T05:02:50.56Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 95,
+              "lowestResalePrice": 0,
+              "name": "Silver Star Iconic Sigil Crown",
+              "offSaleDeadline": null,
+              "price": 95,
+              "productId": 2939208283511191,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+                  "taxonomyName": "Head Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "b9c08d57-c558-4442-939e-753c5955dd01",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "CARTOONY SHOP",
+              "creatorTargetId": 35995238,
+              "creatorType": "Group",
+              "description": "More UGC here 🎨 https://www.roblox.com/communities/35995238/CARTOONY-SHOP#!/store\n\nBy NightModels",
+              "favoriteCount": 3822,
+              "hasResellers": false,
+              "id": 127562682799529,
+              "itemCreatedUtc": "2026-02-01T16:14:05.73Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 90,
+              "lowestResalePrice": 0,
+              "name": "Galaxy Demon Hood",
+              "offSaleDeadline": null,
+              "price": 90,
+              "productId": 5978589980782912,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "pdftcazVqwGjmgpC29ELFY",
+                  "taxonomyName": "Full Masks"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "3c84e88e-5620-498c-9c99-94b5ad1aa8ca",
+              "creatorHasVerifiedBadge": false,
+              "creatorName": "archiest",
+              "creatorTargetId": 12996757,
+              "creatorType": "Group",
+              "description": "make sure to favorite (⭐)\nmore ugc: https://www.roblox.com/communities/12996757/archiest#!/about\n\nshirt: https://www.roblox.com/catalog/134710013403997/nerd-panda-hoodie\n\n\n\nVintage 2000s Grunge Distressed Thrift Vintage hat cap patchwork Archive Anime Girl Panda Fluffy Hat Beanie",
+              "favoriteCount": 34536,
+              "hasResellers": false,
+              "id": 128356961777011,
+              "itemCreatedUtc": "2025-12-15T18:17:40.77Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 95,
+              "lowestResalePrice": 0,
+              "name": "fluffy panda hat",
+              "offSaleDeadline": null,
+              "price": 95,
+              "productId": 8203728739224112,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+                  "taxonomyName": "Head Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "4ea71bce-d386-4aab-8f20-55e71e50ec02",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "user1",
+              "creatorTargetId": 9000000002,
+              "creatorType": "User",
+              "description": "Check out my store for more animated accessories.",
+              "favoriteCount": 24159,
+              "hasResellers": false,
+              "id": 75992910653222,
+              "itemCreatedUtc": "2026-03-03T19:41:03.84Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 95,
+              "lowestResalePrice": 0,
+              "name": "[ANIMATED] Divine Halo",
+              "offSaleDeadline": null,
+              "price": 95,
+              "productId": 6272459429291540,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+                  "taxonomyName": "Head Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "9beeb5d7-a254-4b6b-a002-fd35d073f661",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Spooki's Boutique",
+              "creatorTargetId": 17182571,
+              "creatorType": "Group",
+              "description": "made by nellie! :D\n\n⋆˚✿˖° Join us here!\nhttps://www.roblox.com/groups/17182571/Spookis-Boutique#!/about",
+              "favoriteCount": 27068,
+              "hasResellers": false,
+              "id": 114491571252088,
+              "itemCreatedUtc": "2025-06-10T10:18:35.92Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 90,
+              "lowestResalePrice": 0,
+              "name": "Cute Anime Heart Eyes",
+              "offSaleDeadline": null,
+              "price": 90,
+              "productId": 8881669220837593,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "pdftcazVqwGjmgpC29ELFY",
+                  "taxonomyName": "Full Masks"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "8cf2d742-67cd-4be3-aefd-8752a31eb89d",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "Divine Messenger",
+              "creatorTargetId": 33018615,
+              "creatorType": "Group",
+              "description": "As dark as they come...\n\nWANT MORE?\n\nBLACK: https://www.roblox.com/catalog/17269521066/Matte-Steel-Horns\nICE: https://www.roblox.com/catalog/17269527612/Icebound-Horns\nRED: https://www.roblox.com/catalog/17269523871/Crimson-Steel-Horns\nRED V2: https://www.roblox.com/catalog/17405364945/Ruby-Metal-Horns\nBLUE: https://www.roblox.com/catalog/17353552677/Azurebound-Horns\nPINK: https://www.roblox.com/catalog/17353586175/Hot-Pink-Horns\nPURPLE: https://www.roblox.com/catalog/17375559298/Violetbound-Horns\nGREEN: https://www.roblox.com/catalog/17353467777/Greenbound-Horns\nPASTEL PINK: https://www.roblox.com/catalog/17438895033/Pastel-Pink-Horns-of-Light",
+              "favoriteCount": 70203,
+              "hasResellers": false,
+              "id": 140127383196216,
+              "itemCreatedUtc": "2024-10-26T18:40:26.39Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 95,
+              "lowestResalePrice": 0,
+              "name": "[⏳] Black Steel Horns Of Conquest",
+              "offSaleDeadline": null,
+              "price": 95,
+              "productId": 8032273943303669,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+                  "taxonomyName": "Head Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "0ea55f80-df65-47af-8bea-ac07dfad182b",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "yord.",
+              "creatorTargetId": 11912633,
+              "creatorType": "Group",
+              "description": "Thanks for shopping yord! Join for more items like this! \n\nMore Colors: \nhttps://www.roblox.com/catalog?Keyword=flame&Category=11&Subcategory=54&CreatorName=yord.&salesTypeFilter=1",
+              "favoriteCount": 246637,
+              "hasResellers": false,
+              "id": 13184975791,
+              "itemCreatedUtc": "2023-04-19T17:11:21.997Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 95,
+              "lowestResalePrice": 0,
+              "name": "Grey Flame Shades Raised",
+              "offSaleDeadline": null,
+              "price": 95,
+              "productId": 3231150153324949,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+                  "taxonomyName": "Head Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            },
+            {
+              "assetType": 8,
+              "bundledItems": [],
+              "collectibleItemId": "8bc52f75-522a-4083-9f45-81e7a600074e",
+              "creatorHasVerifiedBadge": true,
+              "creatorName": "texturized",
+              "creatorTargetId": 33948493,
+              "creatorType": "Group",
+              "description": "silly billy spinning hat\n\n🔗 More UGC: https://www.roblox.com/catalog?Category=1&CreatorName=texturized&CreatorType=Group&salesTypeFilter=1&IncludeNotForSale\n\nJoin Group For More: https://www.roblox.com/communities/33948493/texturized#!/about",
+              "favoriteCount": 15954,
+              "hasResellers": false,
+              "id": 108631194846883,
+              "itemCreatedUtc": "2025-04-28T03:54:01.997Z",
+              "itemRestrictions": [],
+              "itemStatus": [],
+              "itemType": "Asset",
+              "lowestPrice": 95,
+              "lowestResalePrice": 0,
+              "name": "Propeller Hat",
+              "offSaleDeadline": null,
+              "price": 95,
+              "productId": 7016609847792879,
+              "saleLocationType": "ShopAndAllExperiences",
+              "taxonomy": [
+                {
+                  "taxonomyId": "thukPQUFe5EHxRrtsgq43u",
+                  "taxonomyName": "Head Accessories"
+                }
+              ],
+              "totalQuantity": 0,
+              "unitsAvailableForConsumption": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/marketplace-sales/v1/item/0d1d5570-68e5-49d8-8c9e-fdb777863bd0/resellers",
+        "query": {
+          "limit": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "collectibleItemInstanceId": "3c662a1f-409b-40a9-a3d8-787ebabc8e0d",
+              "collectibleProductId": "b7ae0bff-18ca-4970-82a5-e739fbaf1296",
+              "errorMessage": null,
+              "price": 279900,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user4",
+                "sellerId": 9000000005,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "12b65594-835c-4230-b899-6d6ac0e0817b",
+              "collectibleProductId": "1d7c5296-f4a3-43f9-8d55-cd1a4365b03e",
+              "errorMessage": null,
+              "price": 280000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user5",
+                "sellerId": 9000000006,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "1cfde7f0-a7fe-4972-8679-140968776630",
+              "collectibleProductId": "54250bf9-d24e-4069-bfa4-db1a19eb9c51",
+              "errorMessage": null,
+              "price": 284975,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user6",
+                "sellerId": 9000000007,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "a4b05a72-e200-4f5d-90b2-0b8964b52ca3",
+              "collectibleProductId": "58406b0f-5480-402b-bd83-10a90df5e077",
+              "errorMessage": null,
+              "price": 284977,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user7",
+                "sellerId": 9000000008,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "3f088210-b77b-4eb5-b021-071a770f3c86",
+              "collectibleProductId": "3a72afe2-9a37-4796-9aec-b8bd2991e108",
+              "errorMessage": null,
+              "price": 284978,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user8",
+                "sellerId": 9000000009,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "62de22c4-0375-4cb3-9edc-ec212f8cda52",
+              "collectibleProductId": "b2998413-2d41-4de8-8b1e-6003e5e650f4",
+              "errorMessage": null,
+              "price": 285000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user9",
+                "sellerId": 9000000010,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "ab2b9d38-aea2-448f-9144-c7dca351c628",
+              "collectibleProductId": "ebe99f26-7b48-43c9-9682-7311632dca51",
+              "errorMessage": null,
+              "price": 289999,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user10",
+                "sellerId": 9000000011,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "31748483-161c-4b5c-9004-53cc9a3d098d",
+              "collectibleProductId": "35f02d6d-6e6b-4108-96bf-0a5febe95e02",
+              "errorMessage": null,
+              "price": 290543,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user11",
+                "sellerId": 9000000012,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "677cbc7e-aeb4-4879-aed9-5696a6aa3244",
+              "collectibleProductId": "372ae259-75a8-4b74-8fd7-caec2c17cd83",
+              "errorMessage": null,
+              "price": 299999,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user12",
+                "sellerId": 9000000013,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "9afd2af8-f787-41c9-bfbd-f382ae2cb91a",
+              "collectibleProductId": "2f58470a-78c1-46f6-95e8-73155181f416",
+              "errorMessage": null,
+              "price": 310000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user13",
+                "sellerId": 9000000014,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "33ad3b6e-f87b-4711-963d-70704c9b4f8c",
+              "collectibleProductId": "8075b90a-e0e9-410b-bf01-543b87c48130",
+              "errorMessage": null,
+              "price": 320000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user14",
+                "sellerId": 9000000015,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "9a4c3d21-62bf-40f9-a674-213e7e51eb15",
+              "collectibleProductId": "106aff08-f960-449c-8827-e8f0850dc22f",
+              "errorMessage": null,
+              "price": 332000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user15",
+                "sellerId": 9000000016,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "53e311bf-fab9-416c-9081-b259c2059bc9",
+              "collectibleProductId": "95cbff8a-47e8-4ae6-aa87-3a8762013436",
+              "errorMessage": null,
+              "price": 333333,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user16",
+                "sellerId": 9000000017,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "5f3fd89c-7d85-4844-afc4-76d2a85fcbc5",
+              "collectibleProductId": "3dceac87-c99c-4c77-a3d7-590c946cbcef",
+              "errorMessage": null,
+              "price": 345000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user17",
+                "sellerId": 9000000018,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "d41ebbec-2e1b-4465-ba92-2c08bc3c3304",
+              "collectibleProductId": "4d28c8a1-2c62-48f1-9490-e0b6b2bc4155",
+              "errorMessage": null,
+              "price": 350000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user18",
+                "sellerId": 9000000019,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "561a93a9-cbd6-4b04-99ab-c541ba9e17af",
+              "collectibleProductId": "22aba449-9855-4392-afa6-8cdb5550ec77",
+              "errorMessage": null,
+              "price": 360000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user19",
+                "sellerId": 9000000020,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "a900b926-d8d0-49c3-8ef1-22ff8adccd89",
+              "collectibleProductId": "d9156191-41ad-453e-b731-5cfd3d752b11",
+              "errorMessage": null,
+              "price": 375000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user20",
+                "sellerId": 9000000021,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "9feaa949-f93e-4864-a31f-6fc44643272f",
+              "collectibleProductId": "0656b6dc-9bdb-401f-9ecd-d1a8fec604ad",
+              "errorMessage": null,
+              "price": 377788,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user21",
+                "sellerId": 9000000022,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "1a38a32d-962a-4679-afe7-d34d0ed9728f",
+              "collectibleProductId": "d59143ff-f022-468f-9d8a-d1f4dcadd806",
+              "errorMessage": null,
+              "price": 399999,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user22",
+                "sellerId": 9000000023,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "4eac6fcd-c30f-4605-975f-0ddac866016e",
+              "collectibleProductId": "a4058e14-0218-4905-8fa4-6ffcbde620b0",
+              "errorMessage": null,
+              "price": 400000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user23",
+                "sellerId": 9000000024,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "c83b754d-acfc-4972-9b5f-3c3eb0aec536",
+              "collectibleProductId": "e2bac12b-a62d-49dd-8902-429f3a7b8ced",
+              "errorMessage": null,
+              "price": 400000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user24",
+                "sellerId": 9000000025,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "56a82aa4-74c1-418d-a2f1-edb915a0f3f7",
+              "collectibleProductId": "efcb386a-2209-48fb-8881-203ea92fe171",
+              "errorMessage": null,
+              "price": 400000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user25",
+                "sellerId": 9000000026,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "647f0e91-bdba-45b2-88ef-5599614e3c8c",
+              "collectibleProductId": "e35b04de-bc1c-4281-aef4-3ed1c43b8c3a",
+              "errorMessage": null,
+              "price": 429000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user26",
+                "sellerId": 9000000027,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "9c10c8cb-4c32-43c7-9543-0a560fac99a9",
+              "collectibleProductId": "7f6d2b5d-cc5c-4cea-b674-84aa876dbe4b",
+              "errorMessage": null,
+              "price": 444444,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user27",
+                "sellerId": 9000000028,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "fb5e06d5-7b6a-4e32-a913-8f45c352bb66",
+              "collectibleProductId": "5a2555f7-a12b-49a3-bfac-1d98d7e54c7a",
+              "errorMessage": null,
+              "price": 450000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user28",
+                "sellerId": 9000000029,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "7339f342-16e1-4aa5-9baf-9af5a31fd0c4",
+              "collectibleProductId": "5dd4bc9b-ac37-4d95-aab3-a4e9bc0b6bb9",
+              "errorMessage": null,
+              "price": 499998,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user29",
+                "sellerId": 9000000030,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "c0601477-d317-469c-9945-5257b71cc98a",
+              "collectibleProductId": "08bb96e2-e9a3-4116-9268-c077b402565a",
+              "errorMessage": null,
+              "price": 500000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user30",
+                "sellerId": 9000000031,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "b77f4b84-6db3-441a-9aca-6fe08a851812",
+              "collectibleProductId": "1679ce3f-3ec7-47af-b111-1b1de02700dd",
+              "errorMessage": null,
+              "price": 500000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user31",
+                "sellerId": 9000000032,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "649b3036-abc5-4e86-bbe6-7cd9aaab62aa",
+              "collectibleProductId": "d5dc8ae5-2aae-49de-b4cc-419341eccdd0",
+              "errorMessage": null,
+              "price": 500000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user32",
+                "sellerId": 9000000033,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "20bad59e-9d45-4a41-a8db-c743be9a526e",
+              "collectibleProductId": "6fe0587b-e998-45c3-b2b9-adb37d4b991d",
+              "errorMessage": null,
+              "price": 550000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user33",
+                "sellerId": 9000000034,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            }
+          ],
+          "nextPageCursor": "id_2zgAIZHDEEG_gWHvpmEXDsrmts31LmR0",
+          "previousPageCursor": "id_2zgAERVzEELeuC_8YyklwgqXnOfuvEpY"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/marketplace-sales/v1/item/0d1d5570-68e5-49d8-8c9e-fdb777863bd0/resale-data"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "priceDataPoints": [
+            {
+              "date": "2026-10-12T00:00:00Z",
+              "value": 259333
+            },
+            {
+              "date": "2026-10-11T00:00:00Z",
+              "value": 257376
+            },
+            {
+              "date": "2026-10-10T00:00:00Z",
+              "value": 256000
+            },
+            {
+              "date": "2026-10-09T00:00:00Z",
+              "value": 257848
+            },
+            {
+              "date": "2026-10-08T00:00:00Z",
+              "value": 253499
+            },
+            {
+              "date": "2026-10-07T00:00:00Z",
+              "value": 251666
+            },
+            {
+              "date": "2026-10-05T00:00:00Z",
+              "value": 254780
+            },
+            {
+              "date": "2026-10-04T00:00:00Z",
+              "value": 261500
+            },
+            {
+              "date": "2026-10-03T00:00:00Z",
+              "value": 260995
+            },
+            {
+              "date": "2026-10-02T00:00:00Z",
+              "value": 260899
+            },
+            {
+              "date": "2026-10-01T00:00:00Z",
+              "value": 267933
+            },
+            {
+              "date": "2026-09-30T00:00:00Z",
+              "value": 256300
+            },
+            {
+              "date": "2026-09-29T00:00:00Z",
+              "value": 248374
+            },
+            {
+              "date": "2026-09-28T00:00:00Z",
+              "value": 232500
+            },
+            {
+              "date": "2026-09-27T00:00:00Z",
+              "value": 248000
+            },
+            {
+              "date": "2026-09-26T00:00:00Z",
+              "value": 249999
+            },
+            {
+              "date": "2026-09-25T00:00:00Z",
+              "value": 235000
+            },
+            {
+              "date": "2026-09-24T00:00:00Z",
+              "value": 232500
+            },
+            {
+              "date": "2026-09-23T00:00:00Z",
+              "value": 233142
+            },
+            {
+              "date": "2026-09-22T00:00:00Z",
+              "value": 237500
+            },
+            {
+              "date": "2026-09-21T00:00:00Z",
+              "value": 230000
+            },
+            {
+              "date": "2026-09-20T00:00:00Z",
+              "value": 249992
+            },
+            {
+              "date": "2026-09-19T00:00:00Z",
+              "value": 246524
+            },
+            {
+              "date": "2026-09-18T00:00:00Z",
+              "value": 243000
+            },
+            {
+              "date": "2026-09-17T00:00:00Z",
+              "value": 236250
+            },
+            {
+              "date": "2026-09-15T00:00:00Z",
+              "value": 248996
+            },
+            {
+              "date": "2026-09-14T00:00:00Z",
+              "value": 248630
+            },
+            {
+              "date": "2026-09-13T00:00:00Z",
+              "value": 235000
+            },
+            {
+              "date": "2026-09-12T00:00:00Z",
+              "value": 235000
+            },
+            {
+              "date": "2026-09-11T00:00:00Z",
+              "value": 230000
+            },
+            {
+              "date": "2026-09-10T00:00:00Z",
+              "value": 229232
+            },
+            {
+              "date": "2026-09-08T00:00:00Z",
+              "value": 238997
+            },
+            {
+              "date": "2026-09-07T00:00:00Z",
+              "value": 238994
+            },
+            {
+              "date": "2026-09-06T00:00:00Z",
+              "value": 236250
+            },
+            {
+              "date": "2026-09-05T00:00:00Z",
+              "value": 238500
+            },
+            {
+              "date": "2026-09-04T00:00:00Z",
+              "value": 237583
+            },
+            {
+              "date": "2026-09-03T00:00:00Z",
+              "value": 243557
+            },
+            {
+              "date": "2026-09-02T00:00:00Z",
+              "value": 253496
+            },
+            {
+              "date": "2026-09-01T00:00:00Z",
+              "value": 252499
+            },
+            {
+              "date": "2026-08-31T00:00:00Z",
+              "value": 253666
+            },
+            {
+              "date": "2026-08-30T00:00:00Z",
+              "value": 249373
+            },
+            {
+              "date": "2026-08-29T00:00:00Z",
+              "value": 258969
+            },
+            {
+              "date": "2026-08-28T00:00:00Z",
+              "value": 250000
+            },
+            {
+              "date": "2026-08-27T00:00:00Z",
+              "value": 259895
+            },
+            {
+              "date": "2026-08-25T00:00:00Z",
+              "value": 252800
+            },
+            {
+              "date": "2026-08-24T00:00:00Z",
+              "value": 240996
+            },
+            {
+              "date": "2026-08-23T00:00:00Z",
+              "value": 239499
+            },
+            {
+              "date": "2026-08-22T00:00:00Z",
+              "value": 247000
+            },
+            {
+              "date": "2026-08-21T00:00:00Z",
+              "value": 241833
+            },
+            {
+              "date": "2026-08-20T00:00:00Z",
+              "value": 254374
+            },
+            {
+              "date": "2026-08-19T00:00:00Z",
+              "value": 250000
+            },
+            {
+              "date": "2026-08-18T00:00:00Z",
+              "value": 244000
+            },
+            {
+              "date": "2026-08-16T00:00:00Z",
+              "value": 245474
+            },
+            {
+              "date": "2026-08-15T00:00:00Z",
+              "value": 238999
+            },
+            {
+              "date": "2026-08-14T00:00:00Z",
+              "value": 241949
+            },
+            {
+              "date": "2026-08-13T00:00:00Z",
+              "value": 226500
+            },
+            {
+              "date": "2026-08-12T00:00:00Z",
+              "value": 246500
+            },
+            {
+              "date": "2026-08-11T00:00:00Z",
+              "value": 233000
+            },
+            {
+              "date": "2026-08-10T00:00:00Z",
+              "value": 234300
+            },
+            {
+              "date": "2026-08-09T00:00:00Z",
+              "value": 239827
+            }
+          ],
+          "recentAveragePrice": 256923.0,
+          "volumeDataPoints": [
+            {
+              "date": "2026-10-12T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-10-11T00:00:00Z",
+              "value": 5
+            },
+            {
+              "date": "2026-10-10T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-10-09T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-10-08T00:00:00Z",
+              "value": 5
+            },
+            {
+              "date": "2026-10-07T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-10-05T00:00:00Z",
+              "value": 5
+            },
+            {
+              "date": "2026-10-04T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-10-03T00:00:00Z",
+              "value": 5
+            },
+            {
+              "date": "2026-10-02T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-10-01T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-09-30T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-09-29T00:00:00Z",
+              "value": 4
+            },
+            {
+              "date": "2026-09-28T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-27T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-09-26T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-09-25T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-09-24T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-23T00:00:00Z",
+              "value": 7
+            },
+            {
+              "date": "2026-09-22T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-21T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-09-20T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-19T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-09-18T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-17T00:00:00Z",
+              "value": 4
+            },
+            {
+              "date": "2026-09-15T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-09-14T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-09-13T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-09-12T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-11T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-09-10T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-09-08T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-09-07T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-06T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-05T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-09-04T00:00:00Z",
+              "value": 4
+            },
+            {
+              "date": "2026-09-03T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-09-02T00:00:00Z",
+              "value": 4
+            },
+            {
+              "date": "2026-09-01T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-08-31T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-08-30T00:00:00Z",
+              "value": 4
+            },
+            {
+              "date": "2026-08-29T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-08-28T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-08-27T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-08-25T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-08-24T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-08-23T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-08-22T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-08-21T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-08-20T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-08-19T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-08-18T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-08-16T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-08-15T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-08-14T00:00:00Z",
+              "value": 1
+            },
+            {
+              "date": "2026-08-13T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-08-12T00:00:00Z",
+              "value": 2
+            },
+            {
+              "date": "2026-08-11T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-08-10T00:00:00Z",
+              "value": 3
+            },
+            {
+              "date": "2026-08-09T00:00:00Z",
+              "value": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v2/assets/1365767/owners",
+        "query": {
+          "limit": "100",
+          "sortOrder": "Asc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "collectibleItemInstanceId": "947e06a8-80f7-490a-a3aa-62334b8821ec",
+              "created": "2008-01-26T06:12:24.64Z",
+              "id": 823398,
+              "owner": null,
+              "serialNumber": 0,
+              "updated": "2008-01-26T06:12:24.64Z"
+            },
+            {
+              "collectibleItemInstanceId": "fdeafc34-f54d-489d-a566-297226c3d49d",
+              "created": "2008-01-26T06:13:03.937Z",
+              "id": 823399,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2008-01-26T06:13:03.937Z"
+            },
+            {
+              "collectibleItemInstanceId": "22991753-764e-4113-9667-e904c0621c1f",
+              "created": "2008-01-29T00:54:26.983Z",
+              "id": 840102,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2008-01-29T00:54:26.983Z"
+            },
+            {
+              "collectibleItemInstanceId": "46dc9483-588d-406b-abba-7887111db363",
+              "created": "2008-01-29T01:35:58.11Z",
+              "id": 840429,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2018-01-22T02:20:38.337Z"
+            },
+            {
+              "collectibleItemInstanceId": "589bdca4-7b09-47ae-b4b8-225891f86678",
+              "created": "2008-01-29T15:19:25.827Z",
+              "id": 842334,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2008-01-29T15:19:25.827Z"
+            },
+            {
+              "collectibleItemInstanceId": "c0ff83b4-0dcc-4aab-b501-e9892642fbaf",
+              "created": "2008-01-29T16:15:58.547Z",
+              "id": 842516,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2022-07-03T03:28:49.677Z"
+            },
+            {
+              "collectibleItemInstanceId": "a76bb00c-99d6-4da5-8b75-1e6b6d74f673",
+              "created": "2008-01-29T20:38:51.923Z",
+              "id": 843277,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2017-09-29T07:26:47.09Z"
+            },
+            {
+              "collectibleItemInstanceId": "6ca7b876-7e50-4cb0-9c10-3537d805429e",
+              "created": "2008-01-29T23:16:00.25Z",
+              "id": 844264,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2026-09-08T21:58:48.855Z"
+            },
+            {
+              "collectibleItemInstanceId": "6a34f9cc-dae8-4a25-bc70-8ea073488f4a",
+              "created": "2008-01-29T23:43:02.267Z",
+              "id": 844411,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2021-07-12T21:54:39.103Z"
+            },
+            {
+              "collectibleItemInstanceId": "253396a4-c53f-45a4-9bd7-c358d1009c80",
+              "created": "2008-01-30T03:53:47.703Z",
+              "id": 846191,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2008-01-30T03:53:47.703Z"
+            },
+            {
+              "collectibleItemInstanceId": "779517c6-14f6-4616-aa63-484d977bc948",
+              "created": "2008-01-30T04:11:46.593Z",
+              "id": 846270,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2008-01-30T04:11:46.593Z"
+            },
+            {
+              "collectibleItemInstanceId": "a178b396-7d10-4919-8a0c-ce3d461066ef",
+              "created": "2008-01-30T12:34:18.047Z",
+              "id": 846602,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2008-01-30T12:34:18.047Z"
+            },
+            {
+              "collectibleItemInstanceId": "e0b04007-4d6c-4bb5-ae88-9a22a1a97e7e",
+              "created": "2008-01-30T18:15:38.72Z",
+              "id": 847504,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2014-04-20T15:39:49.42Z"
+            },
+            {
+              "collectibleItemInstanceId": "6f0381ce-e6d3-45f1-beef-4edbf95b5950",
+              "created": "2008-01-30T23:15:34.377Z",
+              "id": 849271,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2022-09-13T02:52:24.9Z"
+            },
+            {
+              "collectibleItemInstanceId": "92024141-c08b-483b-8cde-50dd5433d11c",
+              "created": "2008-01-31T17:03:48.673Z",
+              "id": 852799,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2008-01-31T17:03:48.673Z"
+            },
+            {
+              "collectibleItemInstanceId": "40a8e387-b1f6-4677-84f7-c033bb866368",
+              "created": "2008-02-01T18:49:20.827Z",
+              "id": 860621,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2021-04-07T16:26:17.24Z"
+            },
+            {
+              "collectibleItemInstanceId": "a71670d1-966f-4186-baf5-7dad909507e1",
+              "created": "2008-02-04T01:02:13.28Z",
+              "id": 880476,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2015-08-19T03:24:45.993Z"
+            },
+            {
+              "collectibleItemInstanceId": "2bed94f1-2a4b-445d-80f4-63f3e44861af",
+              "created": "2008-02-04T23:57:37.203Z",
+              "id": 884710,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2016-10-08T03:55:30.58Z"
+            },
+            {
+              "collectibleItemInstanceId": "907b0766-8e15-4a3e-83df-1c04acebfce5",
+              "created": "2008-02-09T19:55:04.76Z",
+              "id": 914371,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2021-10-03T04:02:07.83Z"
+            },
+            {
+              "collectibleItemInstanceId": "8312d90e-10bd-4959-8710-25d0321ea880",
+              "created": "2008-02-15T16:48:28.247Z",
+              "id": 949423,
+              "owner": null,
+              "serialNumber": null,
+              "updated": "2018-10-01T14:01:22.577Z"
+            }
+          ],
+          "nextPageCursor": "5807997_1_4cc56d3c93293544abf11e54ecfae8e3",
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v1/users/156/categories"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "categories": [
+            {
+              "categoryType": "Decal",
+              "displayName": "Decals",
+              "items": [
+                {
+                  "categoryType": "Decal",
+                  "displayName": "Decals",
+                  "filter": null,
+                  "id": 13,
+                  "name": "Decals",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Decals"
+            },
+            {
+              "categoryType": "Model",
+              "displayName": "Models & Packages",
+              "items": [
+                {
+                  "categoryType": "Model",
+                  "displayName": "Models & Packages",
+                  "filter": null,
+                  "id": 10,
+                  "name": "Models & Packages",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Models"
+            },
+            {
+              "categoryType": "Plugin",
+              "displayName": "Plugins",
+              "items": [
+                {
+                  "categoryType": "Plugin",
+                  "displayName": "Plugins",
+                  "filter": null,
+                  "id": 38,
+                  "name": "Plugins",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Plugins"
+            },
+            {
+              "categoryType": "Animation",
+              "displayName": "Animations",
+              "items": [
+                {
+                  "categoryType": "Animation",
+                  "displayName": "Animations",
+                  "filter": null,
+                  "id": 24,
+                  "name": "Animations",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Animations"
+            },
+            {
+              "categoryType": "Audio",
+              "displayName": "Audio",
+              "items": [
+                {
+                  "categoryType": "Audio",
+                  "displayName": "Audio",
+                  "filter": null,
+                  "id": 3,
+                  "name": "Audio",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Audio"
+            },
+            {
+              "categoryType": "MeshPart",
+              "displayName": "Meshes",
+              "items": [
+                {
+                  "categoryType": "MeshPart",
+                  "displayName": "Meshes",
+                  "filter": null,
+                  "id": 40,
+                  "name": "Meshes",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "MeshParts"
+            },
+            {
+              "categoryType": "DynamicHead",
+              "displayName": "Heads",
+              "items": [
+                {
+                  "categoryType": "DynamicHead",
+                  "displayName": "Heads",
+                  "filter": null,
+                  "id": 4,
+                  "name": "Heads",
+                  "type": "Bundle"
+                }
+              ],
+              "name": "Dynamic Heads"
+            },
+            {
+              "categoryType": "Video",
+              "displayName": "Video",
+              "items": [
+                {
+                  "categoryType": "Video",
+                  "displayName": "Video",
+                  "filter": null,
+                  "id": 62,
+                  "name": "Video",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Video"
+            },
+            {
+              "categoryType": "Bundle",
+              "displayName": "Bundles",
+              "items": [
+                {
+                  "categoryType": "BodyParts",
+                  "displayName": "Body Parts",
+                  "filter": null,
+                  "id": 1,
+                  "name": "Body Parts",
+                  "type": "Bundle"
+                }
+              ],
+              "name": "Bundles"
+            },
+            {
+              "categoryType": "Accessories",
+              "displayName": "Accessories",
+              "items": [
+                {
+                  "categoryType": "Hat",
+                  "displayName": "Head",
+                  "filter": null,
+                  "id": 8,
+                  "name": "Head",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "FaceAccessory",
+                  "displayName": "Face",
+                  "filter": null,
+                  "id": 42,
+                  "name": "Face",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "NeckAccessory",
+                  "displayName": "Neck",
+                  "filter": null,
+                  "id": 43,
+                  "name": "Neck",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "ShoulderAccessory",
+                  "displayName": "Shoulder",
+                  "filter": null,
+                  "id": 44,
+                  "name": "Shoulder",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "FrontAccessory",
+                  "displayName": "Front",
+                  "filter": null,
+                  "id": 45,
+                  "name": "Front",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "BackAccessory",
+                  "displayName": "Back",
+                  "filter": null,
+                  "id": 46,
+                  "name": "Back",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "WaistAccessory",
+                  "displayName": "Waist",
+                  "filter": null,
+                  "id": 47,
+                  "name": "Waist",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "Gear",
+                  "displayName": "Gear",
+                  "filter": null,
+                  "id": 19,
+                  "name": "Gear",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Accessories"
+            },
+            {
+              "categoryType": "ClassicClothing",
+              "displayName": "Classic Clothing",
+              "items": [
+                {
+                  "categoryType": "TShirt",
+                  "displayName": "Classic T-shirts",
+                  "filter": null,
+                  "id": 2,
+                  "name": "Classic T-shirts",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "Shirt",
+                  "displayName": "Classic Shirts",
+                  "filter": null,
+                  "id": 11,
+                  "name": "Classic Shirts",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "Pants",
+                  "displayName": "Classic Pants",
+                  "filter": null,
+                  "id": 12,
+                  "name": "Classic Pants",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Classic Clothing"
+            },
+            {
+              "categoryType": "HairAccessory",
+              "displayName": "Hair",
+              "items": [
+                {
+                  "categoryType": "HairAccessory",
+                  "displayName": "Hair",
+                  "filter": null,
+                  "id": 41,
+                  "name": "Hair",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Hair Accessories"
+            },
+            {
+              "categoryType": "Tops",
+              "displayName": "Tops",
+              "items": [
+                {
+                  "categoryType": "TShirtAccessory",
+                  "displayName": "T-shirts",
+                  "filter": null,
+                  "id": 64,
+                  "name": "T-shirts",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "ShirtAccessory",
+                  "displayName": "Shirts",
+                  "filter": null,
+                  "id": 65,
+                  "name": "Shirts",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "SweaterAccessory",
+                  "displayName": "Sweaters",
+                  "filter": null,
+                  "id": 68,
+                  "name": "Sweaters",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "JacketAccessory",
+                  "displayName": "Jackets",
+                  "filter": null,
+                  "id": 67,
+                  "name": "Jackets",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Tops"
+            },
+            {
+              "categoryType": "Bottoms",
+              "displayName": "Bottoms",
+              "items": [
+                {
+                  "categoryType": "PantsAccessory",
+                  "displayName": "Pants",
+                  "filter": null,
+                  "id": 66,
+                  "name": "Pants",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "ShortsAccessory",
+                  "displayName": "Shorts",
+                  "filter": null,
+                  "id": 69,
+                  "name": "Shorts",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "SkirtsAccessory",
+                  "displayName": "Skirts",
+                  "filter": null,
+                  "id": 72,
+                  "name": "Skirts",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Bottoms"
+            },
+            {
+              "categoryType": "Shoes",
+              "displayName": "Shoes",
+              "items": [
+                {
+                  "categoryType": "LeftShoeAccessory",
+                  "displayName": "Left Shoe",
+                  "filter": null,
+                  "id": 70,
+                  "name": "Left Shoe",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "RightShoeAccessory",
+                  "displayName": "Right Shoe",
+                  "filter": null,
+                  "id": 71,
+                  "name": "Right Shoe",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Shoes"
+            },
+            {
+              "categoryType": "EmoteAnimation",
+              "displayName": "Emotes",
+              "items": [
+                {
+                  "categoryType": "EmoteAnimation",
+                  "displayName": "Emotes",
+                  "filter": null,
+                  "id": 61,
+                  "name": "Emotes",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Emote Animations"
+            },
+            {
+              "categoryType": "AvatarBackground",
+              "displayName": "Backgrounds",
+              "items": [
+                {
+                  "categoryType": "AvatarBackground",
+                  "displayName": "Backgrounds",
+                  "filter": null,
+                  "id": 92,
+                  "name": "Backgrounds",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Backgrounds"
+            },
+            {
+              "categoryType": "Makeup",
+              "displayName": "Makeup",
+              "items": [
+                {
+                  "categoryType": "EyesMakeup",
+                  "displayName": "Eyes",
+                  "filter": null,
+                  "id": 90,
+                  "name": "Eyes",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "LipsMakeup",
+                  "displayName": "Lips",
+                  "filter": null,
+                  "id": 89,
+                  "name": "Lips",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "FaceMakeup",
+                  "displayName": "Faces",
+                  "filter": null,
+                  "id": 88,
+                  "name": "Faces",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "EyelashesMakeup",
+                  "displayName": "Eyelash Accessory",
+                  "filter": null,
+                  "id": 77,
+                  "name": "Eyelash Accessory",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "EyebrowsMakeup",
+                  "displayName": "Eyebrow Accessory",
+                  "filter": null,
+                  "id": 76,
+                  "name": "Eyebrow Accessory",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Makeup"
+            },
+            {
+              "categoryType": "Place",
+              "displayName": "Places",
+              "items": [
+                {
+                  "categoryType": "Place",
+                  "displayName": "Places",
+                  "filter": null,
+                  "id": 9,
+                  "name": "Places",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Places"
+            },
+            {
+              "categoryType": "Badge",
+              "displayName": "Badges",
+              "items": [
+                {
+                  "categoryType": "Badge",
+                  "displayName": "Badges",
+                  "filter": null,
+                  "id": 21,
+                  "name": "Badges",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Badges"
+            },
+            {
+              "categoryType": "GamePass",
+              "displayName": "Passes",
+              "items": [
+                {
+                  "categoryType": "GamePass",
+                  "displayName": "Passes",
+                  "filter": null,
+                  "id": 34,
+                  "name": "Passes",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Game Passes"
+            },
+            {
+              "categoryType": "AvatarAnimations",
+              "displayName": "Avatar Animations",
+              "items": [
+                {
+                  "categoryType": "AvatarAnimations",
+                  "displayName": "Run",
+                  "filter": null,
+                  "id": 53,
+                  "name": "Run",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "AvatarAnimations",
+                  "displayName": "Walk",
+                  "filter": null,
+                  "id": 55,
+                  "name": "Walk",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "AvatarAnimations",
+                  "displayName": "Fall",
+                  "filter": null,
+                  "id": 50,
+                  "name": "Fall",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "AvatarAnimations",
+                  "displayName": "Jump",
+                  "filter": null,
+                  "id": 52,
+                  "name": "Jump",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "AvatarAnimations",
+                  "displayName": "Idle",
+                  "filter": null,
+                  "id": 51,
+                  "name": "Idle",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "AvatarAnimations",
+                  "displayName": "Swim",
+                  "filter": null,
+                  "id": 54,
+                  "name": "Swim",
+                  "type": "AssetType"
+                },
+                {
+                  "categoryType": "AvatarAnimations",
+                  "displayName": "Climb",
+                  "filter": null,
+                  "id": 48,
+                  "name": "Climb",
+                  "type": "AssetType"
+                }
+              ],
+              "name": "Avatar Animations"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v1/users/156/can-view-inventory"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "canView": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v1/users/156/assets/collectibles",
+        "query": {
+          "limit": "100",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "assetId": 136613436441070,
+              "assetStock": 1129269,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Roblox Innovation Awards 24 Sparkle Buddy",
+              "originalPrice": 0,
+              "recentAveragePrice": 249,
+              "serialNumber": null,
+              "userAssetId": 237243880907
+            },
+            {
+              "assetId": 123375593579461,
+              "assetStock": 1116368,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Roblox Innovation Awards 24 Ribbon Wings",
+              "originalPrice": 0,
+              "recentAveragePrice": 264,
+              "serialNumber": null,
+              "userAssetId": 237243603879
+            },
+            {
+              "assetId": 17408283,
+              "assetStock": 924489,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Outrageous Builders Club Hard Hat",
+              "originalPrice": 0,
+              "recentAveragePrice": 931,
+              "serialNumber": null,
+              "userAssetId": 2911101758
+            },
+            {
+              "assetId": 12313531,
+              "assetStock": 604,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "W's Top Hat",
+              "originalPrice": 4500,
+              "recentAveragePrice": 134755,
+              "serialNumber": null,
+              "userAssetId": 1584499534
+            },
+            {
+              "assetId": 110892321,
+              "assetStock": 380,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "London BLOXcon Black Fedora",
+              "originalPrice": 0,
+              "recentAveragePrice": 17545,
+              "serialNumber": null,
+              "userAssetId": 1465564001
+            },
+            {
+              "assetId": 101191388,
+              "assetStock": 451,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Dual Illumina",
+              "originalPrice": 0,
+              "recentAveragePrice": 745521,
+              "serialNumber": null,
+              "userAssetId": 1167613583
+            },
+            {
+              "assetId": 76692407,
+              "assetStock": 451675,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "The Last Egg of 2012",
+              "originalPrice": 0,
+              "recentAveragePrice": 356,
+              "serialNumber": null,
+              "userAssetId": 1013118002
+            },
+            {
+              "assetId": 11844853,
+              "assetStock": 1001977,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Turbo Builders Club Hard Hat",
+              "originalPrice": 0,
+              "recentAveragePrice": 933,
+              "serialNumber": null,
+              "userAssetId": 542539481
+            },
+            {
+              "assetId": 42211680,
+              "assetStock": 247,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Red Domino Crown",
+              "originalPrice": 0,
+              "recentAveragePrice": 2653087,
+              "serialNumber": null,
+              "userAssetId": 440540585
+            },
+            {
+              "assetId": 16437015,
+              "assetStock": 16259,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Happy Jack-o'-Lantern",
+              "originalPrice": 25,
+              "recentAveragePrice": 3848,
+              "serialNumber": null,
+              "userAssetId": 393801698
+            },
+            {
+              "assetId": 25930613,
+              "assetStock": 936,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Sophisticated Spectacles",
+              "originalPrice": 50,
+              "recentAveragePrice": 8461,
+              "serialNumber": 466,
+              "userAssetId": 257569098
+            },
+            {
+              "assetId": 25556219,
+              "assetStock": 915,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Freckled Cheeks",
+              "originalPrice": 9,
+              "recentAveragePrice": 75554,
+              "serialNumber": 117,
+              "userAssetId": 252481660
+            },
+            {
+              "assetId": 21024661,
+              "assetStock": 468,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Optimist",
+              "originalPrice": 100,
+              "recentAveragePrice": 94325,
+              "serialNumber": 451,
+              "userAssetId": 179273988
+            },
+            {
+              "assetId": 19027209,
+              "assetStock": 648594,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Perfectly Legitimate Business Hat",
+              "originalPrice": 0,
+              "recentAveragePrice": 4713,
+              "serialNumber": null,
+              "userAssetId": 143617360
+            },
+            {
+              "assetId": 17527923,
+              "assetStock": 4663,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Pumpkin Bucket",
+              "originalPrice": 15,
+              "recentAveragePrice": 13925,
+              "serialNumber": 1593,
+              "userAssetId": 93149184
+            },
+            {
+              "assetId": 13334984,
+              "assetStock": 110204,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Summertime 2009 R&R&R",
+              "originalPrice": 0,
+              "recentAveragePrice": 1626,
+              "serialNumber": null,
+              "userAssetId": 51712925
+            },
+            {
+              "assetId": 7319168,
+              "assetStock": 8400,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "The Moon",
+              "originalPrice": 0,
+              "recentAveragePrice": 1736,
+              "serialNumber": null,
+              "userAssetId": 48982785
+            },
+            {
+              "assetId": 1029025,
+              "assetStock": 10647,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "The Classic ROBLOX Fedora",
+              "originalPrice": 900,
+              "recentAveragePrice": 406464,
+              "serialNumber": null,
+              "userAssetId": 47261660
+            },
+            {
+              "assetId": 1080949,
+              "assetStock": 56574,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Bunny Ears",
+              "originalPrice": 2424,
+              "recentAveragePrice": 18642,
+              "serialNumber": null,
+              "userAssetId": 47260447
+            },
+            {
+              "assetId": 10860580,
+              "assetStock": 3573,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "The Viridium Skull",
+              "originalPrice": 240,
+              "recentAveragePrice": 1736,
+              "serialNumber": null,
+              "userAssetId": 47260190
+            },
+            {
+              "assetId": 12313606,
+              "assetStock": 1344,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Green Martian Space Helmet",
+              "originalPrice": 170,
+              "recentAveragePrice": 4214,
+              "serialNumber": null,
+              "userAssetId": 47259791
+            },
+            {
+              "assetId": 1028720,
+              "assetStock": 5473,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Classic ROBLOX Viking Helm",
+              "originalPrice": 125,
+              "recentAveragePrice": 5496,
+              "serialNumber": null,
+              "userAssetId": 47259670
+            },
+            {
+              "assetId": 2264398,
+              "assetStock": 1056,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "The Crown of Warlords",
+              "originalPrice": 0,
+              "recentAveragePrice": 92725,
+              "serialNumber": null,
+              "userAssetId": 47256926
+            },
+            {
+              "assetId": 9465511,
+              "assetStock": 213,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Red Crown of Ozymandias",
+              "originalPrice": 0,
+              "recentAveragePrice": 294666,
+              "serialNumber": null,
+              "userAssetId": 47256902
+            },
+            {
+              "assetId": 11999235,
+              "assetStock": 25330,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Spec Alpha Biograft Energy Sword",
+              "originalPrice": 0,
+              "recentAveragePrice": 6378,
+              "serialNumber": null,
+              "userAssetId": 42636672
+            },
+            {
+              "assetId": 6548058,
+              "assetStock": 7509,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Thought Fortress",
+              "originalPrice": 0,
+              "recentAveragePrice": 5918,
+              "serialNumber": null,
+              "userAssetId": 27491519
+            },
+            {
+              "assetId": 1098273,
+              "assetStock": 2531,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Vegetable Hat",
+              "originalPrice": 0,
+              "recentAveragePrice": 20714,
+              "serialNumber": null,
+              "userAssetId": 26369562
+            },
+            {
+              "assetId": 1309918,
+              "assetStock": 40949,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Blue Winter Cap",
+              "originalPrice": 0,
+              "recentAveragePrice": 1538,
+              "serialNumber": null,
+              "userAssetId": 20993680
+            },
+            {
+              "assetId": 6552812,
+              "assetStock": 6073,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Golden Top Hat of Bling Bling",
+              "originalPrice": 0,
+              "recentAveragePrice": 16723,
+              "serialNumber": null,
+              "userAssetId": 19315057
+            },
+            {
+              "assetId": 6551281,
+              "assetStock": 6665,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Helm of the Flashing Bolt",
+              "originalPrice": 0,
+              "recentAveragePrice": 14429,
+              "serialNumber": null,
+              "userAssetId": 19299383
+            },
+            {
+              "assetId": 6379764,
+              "assetStock": 115179,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Racing Helmet",
+              "originalPrice": 0,
+              "recentAveragePrice": 513,
+              "serialNumber": null,
+              "userAssetId": 18518008
+            },
+            {
+              "assetId": 5832475,
+              "assetStock": 15829,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Cool Snowman Head",
+              "originalPrice": 0,
+              "recentAveragePrice": 1225,
+              "serialNumber": null,
+              "userAssetId": 18322085
+            },
+            {
+              "assetId": 1098277,
+              "assetStock": 9665,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Santa Hat",
+              "originalPrice": 25,
+              "recentAveragePrice": 1923,
+              "serialNumber": null,
+              "userAssetId": 17876849
+            },
+            {
+              "assetId": 1533893,
+              "assetStock": 15228,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Bluesteel Egg of Genius",
+              "originalPrice": 0,
+              "recentAveragePrice": 1905,
+              "serialNumber": null,
+              "userAssetId": 16602388
+            },
+            {
+              "assetId": 5786047,
+              "assetStock": 16576,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Gold Tetramino of Mastery",
+              "originalPrice": 0,
+              "recentAveragePrice": 1806,
+              "serialNumber": null,
+              "userAssetId": 16602387
+            },
+            {
+              "assetId": 5786026,
+              "assetStock": 16238,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Silver Tetramino of Accomplishment",
+              "originalPrice": 0,
+              "recentAveragePrice": 1197,
+              "serialNumber": null,
+              "userAssetId": 16602386
+            },
+            {
+              "assetId": 5785985,
+              "assetStock": 18608,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Rusty Tetramino of Competence",
+              "originalPrice": 0,
+              "recentAveragePrice": 1389,
+              "serialNumber": null,
+              "userAssetId": 16602385
+            },
+            {
+              "assetId": 1049198,
+              "assetStock": 10015,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "ROBLOX Classic: Wizard's Hat",
+              "originalPrice": 50,
+              "recentAveragePrice": 6490,
+              "serialNumber": null,
+              "userAssetId": 13176084
+            },
+            {
+              "assetId": 1158416,
+              "assetStock": 34,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "Eerie Pumpkin Head",
+              "originalPrice": 0,
+              "recentAveragePrice": 2275664,
+              "serialNumber": null,
+              "userAssetId": 13176071
+            },
+            {
+              "assetId": 4765718,
+              "assetStock": 40761,
+              "buildersClubMembershipType": "None",
+              "isOnHold": false,
+              "name": "The Riddling Skull",
+              "originalPrice": 0,
+              "recentAveragePrice": 10644,
+              "serialNumber": null,
+              "userAssetId": 13083884
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v2/users/156/inventory/8",
+        "query": {
+          "limit": "100",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "assetId": 82762961686618,
+              "assetName": "Sakura Antlers",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2026-07-31T17:40:50.856Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2026-07-31T17:40:50.856Z",
+              "userAssetId": 1300537251543013
+            },
+            {
+              "assetId": 85595358191154,
+              "assetName": "Opened Blossoming Gift of New Beginnings",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2026-07-31T17:40:50.856Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2026-07-31T17:40:50.856Z",
+              "userAssetId": 1267539728621429
+            },
+            {
+              "assetId": 84285572503442,
+              "assetName": "Inventor Hat",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2025-09-10T22:02:47.504Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2025-09-10T22:02:47.504Z",
+              "userAssetId": 403036470316
+            },
+            {
+              "assetId": 18536336525,
+              "assetName": "Space Cowboy Hat",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2024-08-12T17:55:55.493Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2024-08-12T17:55:55.493Z",
+              "userAssetId": 236392394499
+            },
+            {
+              "assetId": 607700713,
+              "assetName": "Roblox Logo Visor",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2023-04-17T22:35:45.063Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2023-04-17T22:35:45.063Z",
+              "userAssetId": 173408560812
+            },
+            {
+              "assetId": 102611803,
+              "assetName": "Verified, Bonafide, Plaidafied",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2022-05-18T00:16:11.66Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2022-05-18T00:16:11.66Z",
+              "userAssetId": 155863432842
+            },
+            {
+              "assetId": 5731052645,
+              "assetName": "Adurite Crown of O’s",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2021-05-12T00:38:23.513Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2021-05-12T00:38:23.513Z",
+              "userAssetId": 111768657829
+            },
+            {
+              "assetId": 5731051458,
+              "assetName": "Bombastic Crown of O’s",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2021-05-11T04:54:09.863Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2021-05-11T04:54:09.863Z",
+              "userAssetId": 111678831021
+            },
+            {
+              "assetId": 5731050224,
+              "assetName": "Gold Crown of O’s",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2021-05-10T04:00:38.56Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2021-05-10T04:00:38.56Z",
+              "userAssetId": 111560518007
+            },
+            {
+              "assetId": 17407999,
+              "assetName": "Eyes of the Everworld",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2015-09-24T16:40:59.677Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2015-09-24T16:40:59.677Z",
+              "userAssetId": 2911101761
+            },
+            {
+              "assetId": 17408283,
+              "assetName": "Outrageous Builders Club Hard Hat",
+              "collectibleItemId": "29976547-c856-4d73-b97f-684b396f186f",
+              "collectibleItemInstanceId": "83747360-ef3a-4bf3-8630-fde251871be2",
+              "created": "2015-09-24T16:40:59.66Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2015-09-24T16:40:59.66Z",
+              "userAssetId": 2911101758
+            },
+            {
+              "assetId": 17408016,
+              "assetName": "Hood of the International Order of Buildmasters",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2015-09-24T16:40:59.66Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2015-09-24T16:40:59.66Z",
+              "userAssetId": 2911101759
+            },
+            {
+              "assetId": 17408011,
+              "assetName": "Outrageous Aetherspectacles",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2015-09-24T16:40:59.66Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2015-09-24T16:40:59.66Z",
+              "userAssetId": 2911101760
+            },
+            {
+              "assetId": 190245427,
+              "assetName": "Next Level Blue Headphones",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2014-12-10T01:25:11.273Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2014-12-10T01:25:11.273Z",
+              "userAssetId": 2224826910
+            },
+            {
+              "assetId": 190076296,
+              "assetName": "Opened Gift of Friends and Followers",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2014-12-09T21:59:47.933Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2014-12-09T21:59:47.933Z",
+              "userAssetId": 2224338289
+            },
+            {
+              "assetId": 190006041,
+              "assetName": "Opened Restricted Gift of Short Supply",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2014-12-09T01:30:22.89Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2014-12-09T01:30:22.89Z",
+              "userAssetId": 2223162112
+            },
+            {
+              "assetId": 189911645,
+              "assetName": "Opened The Next Level Gift",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2014-12-05T01:45:55.803Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2014-12-05T01:45:55.803Z",
+              "userAssetId": 2214115458
+            },
+            {
+              "assetId": 138405185,
+              "assetName": "Eventful ROBLOX Top Hat",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-12-14T00:21:06.273Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-12-14T00:21:06.273Z",
+              "userAssetId": 1621147197
+            },
+            {
+              "assetId": 137729943,
+              "assetName": "Opened Gift of Approval",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-12-12T00:46:16.13Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-12-12T00:46:16.13Z",
+              "userAssetId": 1619033555
+            },
+            {
+              "assetId": 137616173,
+              "assetName": "Opened Eventful Gift",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-12-09T22:17:57.213Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-12-09T22:17:57.213Z",
+              "userAssetId": 1614947345
+            },
+            {
+              "assetId": 12313531,
+              "assetName": "W's Top Hat",
+              "collectibleItemId": "6316ed9b-e184-4112-a6ce-0aa7c5032b64",
+              "collectibleItemInstanceId": "06231c85-96b7-48a2-b376-b4b660180485",
+              "created": "2013-11-15T23:41:15.947Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-12-21T18:41:10.37Z",
+              "userAssetId": 1584499534
+            },
+            {
+              "assetId": 130106685,
+              "assetName": "Virtual BLOXcon Cap",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-09-19T22:19:30.293Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-09-19T22:19:30.293Z",
+              "userAssetId": 1125899907590260
+            },
+            {
+              "assetId": 110892406,
+              "assetName": "New York BLOXcon White Fedora",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-08-16T17:40:02.533Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-08-16T17:40:02.533Z",
+              "userAssetId": 1484661600
+            },
+            {
+              "assetId": 110892385,
+              "assetName": "New York BLOXcon Black Fedora",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-08-16T17:33:03.513Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-08-16T17:33:03.513Z",
+              "userAssetId": 1484652544
+            },
+            {
+              "assetId": 110892352,
+              "assetName": "London BLOXcon White Fedora",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-08-02T21:34:09.603Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-08-02T21:34:09.603Z",
+              "userAssetId": 1465564281
+            },
+            {
+              "assetId": 110892321,
+              "assetName": "London BLOXcon Black Fedora",
+              "collectibleItemId": "6a6e0c75-48c5-4082-8eef-58a00cf702a1",
+              "collectibleItemInstanceId": "e08820b0-3f96-48d7-9216-5167acb6183c",
+              "created": "2013-08-02T21:34:00.76Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-08-02T21:34:00.76Z",
+              "userAssetId": 1465564001
+            },
+            {
+              "assetId": 124909182,
+              "assetName": "The Londoner Bowler",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-08-02T21:33:23.43Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-08-02T21:33:23.43Z",
+              "userAssetId": 1125899907590282
+            },
+            {
+              "assetId": 122329611,
+              "assetName": "Chicago News Man Fedora",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-07-20T00:15:23.983Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-07-20T00:15:23.983Z",
+              "userAssetId": 1125899907590302
+            },
+            {
+              "assetId": 115991807,
+              "assetName": "ROBLOX Black Pinstripe Fedora",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2013-07-20T00:09:59.7Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2013-07-20T00:09:59.7Z",
+              "userAssetId": 1444176826
+            },
+            {
+              "assetId": 100981923,
+              "assetName": "Candy Cane Antlers",
+              "collectibleItemId": null,
+              "collectibleItemInstanceId": null,
+              "created": "2012-12-20T22:31:05.45Z",
+              "owner": {
+                "buildersClubMembershipType": "None",
+                "userId": 156,
+                "username": "builderman"
+              },
+              "serialNumber": null,
+              "updated": "2012-12-20T22:31:05.45Z",
+              "userAssetId": 1165983759
+            }
+          ],
+          "nextPageCursor": "47258537_1_c768b75f74bde668c443c9d950c9c30c",
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "catalog.roblox.com",
+        "path": "/v1/users/156/bundles/1",
+        "query": {
+          "cursor": "",
+          "limit": "100",
+          "sortOrder": "2"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 208,
+              "name": "ROBLOX Staff of Olden Times"
+            },
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 211,
+              "name": "NYC Mural Artist"
+            },
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 212,
+              "name": "The Londoner"
+            },
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 214,
+              "name": "Chicago News Man"
+            },
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 295,
+              "name": "Skeleton  "
+            },
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 296,
+              "name": "Bro"
+            },
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 304,
+              "name": "CoolKid McAwesome"
+            },
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 308,
+              "name": "Action Figure"
+            },
+            {
+              "bundleType": "BodyParts",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "id": 311,
+              "name": "Robloxian 2.0"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    }
+  ]
+}

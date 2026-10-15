@@ -1,0 +1,63 @@
+@layer components {
+  [data-component="section-header"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: var(--control-md);
+  }
+
+  [data-component="section-header"] [data-slot="title"] {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+
+  [data-component="section-header"][data-size="page"] [data-slot="title"] {
+    font-size: var(--text-xl);
+  }
+
+  [data-component="section-header"][data-size="group"] {
+    min-height: 24px;
+  }
+
+  [data-component="section-header"][data-size="group"] [data-slot="title"] {
+    gap: 4px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  [data-component="section-header"][data-size="group"] [data-slot="meta"]::before {
+    content: "· ";
+  }
+
+  [data-component="section-header"] [data-slot="meta"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-component="section-header"] [data-slot="actions"] {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* A ghost button has no visible edge, so its text or icon is what lines up. Pull the last one
+   * out by its padding so it sits on the same right edge as the content below. */
+  [data-component="section-header"] [data-slot="actions"] > [data-component="button"][data-variant="ghost"]:last-child {
+    margin-inline-end: calc(-1 * var(--button-px));
+  }
+
+  [data-component="section-header"]
+    [data-slot="actions"]
+    > [data-component="button"][data-variant="ghost"][data-icon-only]:last-child {
+    margin-inline-end: calc((var(--button-height) - 16px) / -2);
+  }
+}

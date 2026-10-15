@@ -1,0 +1,26 @@
+# Legacy game launch route. Never called by the app over HTTP: the URL is embedded in the
+# roblox-player: launch URI and the Roblox player requests it itself.
+swagger: "2.0"
+host: assetgame.roblox.com
+info: { title: "assetgame (undocumented)", version: undocumented }
+paths:
+  /game/PlaceLauncher.ashx:
+    get:
+      # Captured 2026-10-12 from the placelauncherurl of a Play button launch URI on
+      # www.roblox.com/games/{placeId} (and documented by the Roblox client's TeleportImpl).
+      x-captured: "2026-10-12, launch URI from the Play button on www.roblox.com/games/{placeId}"
+      x-rust-name: place_launcher
+      summary: Join script request used by the player. request is RequestGame, RequestGameJob, RequestFollowUser or RequestPrivateGame.
+      parameters:
+        - { in: query, name: request, type: string, required: true, enum: [RequestGame, RequestGameJob, RequestFollowUser, RequestPrivateGame] }
+        - { in: query, name: browserTrackerId, type: integer, format: int64 }
+        - { in: query, name: placeId, type: integer, format: int64 }
+        - { in: query, name: gameId, type: string, description: "Server job id, for RequestGameJob" }
+        - { in: query, name: userId, type: integer, format: int64, description: "User to follow, for RequestFollowUser" }
+        - { in: query, name: accessCode, type: string, description: "Private server access code, for RequestPrivateGame" }
+        - { in: query, name: linkCode, type: string, description: "Private server link code, for RequestPrivateGame" }
+        - { in: query, name: isPlayTogetherGame, type: boolean }
+        - { in: query, name: joinAttemptId, type: string }
+        - { in: query, name: joinAttemptOrigin, type: string }
+      responses:
+        "200": { description: OK }

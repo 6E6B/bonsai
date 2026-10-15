@@ -1,0 +1,68 @@
+# Item values and trader stats from Rolimons (https://www.rolimons.com), a third-party site.
+# Opt-in only (Settings → Item values); the app works without it and always names the source.
+# The transport never sends the Roblox cookie, tracker or CSRF token to this host.
+swagger: "2.0"
+host: api.rolimons.com
+info: { title: "Rolimons item values (third party)", version: undocumented }
+paths:
+  /items/v2/itemdetails:
+    get:
+      # Captured 2026-10-13 live (fixture: values.json). Public API documented at
+      # https://www.rolimons.com/api. Rate limited by Rolimons; we fetch it at most every 10 min.
+      x-captured: "2026-10-13, https://api.rolimons.com/items/v2/itemdetails"
+      x-rust-name: get_item_values
+      summary: Every tracked limited, by asset id.
+      # Field map checked 2026-10-14 against all 2,573 items: every row has 11 fields,
+      # default_value always equals value (or RAP when value is -1), limited_version is 1 or 2.
+      # The ETag changes about every 30 s, so conditional requests would never get a 304.
+      description: >-
+        Each value is [name, acronym, rap, value, default_value, demand, trend, projected, hyped,
+        rare, limited_version, ...]; -1 means none. Acronym is "" when there is none.
+        default_value is value when set, else RAP. Demand 0-4 (terrible, low, normal, high,
+        amazing), trend 0-4 (lowering, unstable, stable, raising, fluctuating), projected,
+        hyped and rare are 1 when set. limited_version is 1 (Limited 1.0) or 2 (Limited 2.0).
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ItemValues" } }
+  /players/v1/playerinfo/{playerId}:
+    get:
+      # Captured 2026-10-14 live (fixture: player_values.json). The stats rolimons.com/player/<id>
+      # shows; public API documented at https://www.rolimons.com/api.
+      x-captured: "2026-10-14, https://www.rolimons.com/player/156"
+      x-rust-name: get_player_info
+      summary: A player's inventory value, RAP, rank and Rolimons badges.
+      # 404 with {"success": false, "code": 3, "message": "Player not found"} for a user Rolimons
+      # never scanned, code 1 "Invalid player id" for an id that can't exist.
+      description: >-
+        Times are unix seconds. rank is null for a player without value. last_online and
+        last_location are when and where Rolimons last saw them, not Roblox's own record.
+        rolibadges maps a badge key (value_1m, own_1_dominus, ...) to when it was earned.
+      parameters:
+        - { in: path, name: playerId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/PlayerInfo" } }
+definitions:
+  ItemValues:
+    type: object
+    properties:
+      success: { type: boolean }
+      item_count: { type: integer, format: int64 }
+      items:
+        type: object
+        additionalProperties: { type: array, items: {} }
+  PlayerInfo:
+    type: object
+    properties:
+      success: { type: boolean }
+      name: { type: string }
+      value: { type: integer, format: int64 }
+      rap: { type: integer, format: int64 }
+      rank: { type: integer, format: int64 }
+      premium: { type: boolean }
+      privacy_enabled: { type: boolean }
+      terminated: { type: boolean }
+      stats_updated: { type: integer, format: int64 }
+      last_online: { type: integer, format: int64 }
+      last_location: { type: string }
+      rolibadges:
+        type: object
+        additionalProperties: { type: integer, format: int64 }

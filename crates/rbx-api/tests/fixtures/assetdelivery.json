@@ -1,0 +1,73 @@
+{
+  "captured": "2026-10-14",
+  "source": "Written from the tracker's assetdelivery v2 schema (AssetResponseItemV2) and the XML model format a classic shirt asset serves. Ids and CDN paths are made up; not a live capture.",
+  "note": "Look up a shirt, fetch its model from the CDN, then look up the template image it points at.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "assetdelivery.roblox.com",
+        "path": "/v2/assetId/1000011"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "locations": [
+            {
+              "assetFormat": "source",
+              "location": "https://sc0.rbxcdn.com/shirt-model-redacted"
+            }
+          ],
+          "requestId": "request-redacted",
+          "IsHashDynamic": false,
+          "IsCopyrightProtected": false,
+          "isArchived": false,
+          "assetTypeId": 11
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "sc0.rbxcdn.com",
+        "path": "/shirt-model-redacted"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/octet-stream"
+        },
+        "body": "<roblox xmlns:xmime=\"http://www.w3.org/2005/05/xmlmime\" version=\"4\"><External>null</External><External>nil</External><Item class=\"Shirt\" referent=\"RBX0\"><Properties><Content name=\"ShirtTemplate\"><url>http://www.roblox.com/asset/?id=1000012</url></Content><string name=\"Name\">Shirt</string></Properties></Item></roblox>"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "assetdelivery.roblox.com",
+        "path": "/v2/assetId/1000012"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "locations": [
+            {
+              "assetFormat": "source",
+              "location": "https://sc0.rbxcdn.com/shirt-image-redacted"
+            }
+          ],
+          "requestId": "request-redacted",
+          "IsHashDynamic": false,
+          "IsCopyrightProtected": false,
+          "isArchived": false,
+          "assetTypeId": 1
+        }
+      }
+    }
+  ]
+}

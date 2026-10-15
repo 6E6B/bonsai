@@ -1,0 +1,18 @@
+{
+  "captured": "2026-10-12",
+  "source": "synthetic",
+  "note": "A write answered with a two-step challenge (header shape as sent by Roblox; metadata is base64 JSON). Then the retry carrying the solved challenge headers.",
+  "interactions": [
+    { "request": { "method": "POST", "host": "auth.roblox.com", "path": "/v1/authentication-ticket", "absent_headers": ["rblx-challenge-id"] },
+      "response": { "status": 403,
+        "headers": {
+          "rblx-challenge-id": "11111111-2222-3333-4444-555555555555",
+          "rblx-challenge-type": "twostepverification",
+          "rblx-challenge-metadata": "eyJ1c2VySWQiOiIxMDAwMDAxIiwiY2hhbGxlbmdlSWQiOiJhYmMiLCJhY3Rpb25UeXBlIjoiR2VuZXJpYyJ9"
+        },
+        "body": { "errors": [ { "code": 0, "message": "Challenge is required to authorize the request" } ] } } },
+    { "request": { "method": "POST", "host": "auth.roblox.com", "path": "/v1/authentication-ticket",
+                   "headers": { "rblx-challenge-id": "11111111-2222-3333-4444-555555555555", "rblx-challenge-type": "twostepverification" } },
+      "response": { "status": 200, "headers": { "rbx-authentication-ticket": "ticket-redacted" }, "body": {} } }
+  ]
+}

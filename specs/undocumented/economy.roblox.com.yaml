@@ -1,0 +1,40 @@
+# Community funds. Missing from the tracker's economy spec; the site's GroupDetails bundle
+# (www.roblox.com/communities/{id}, 2026-10-13) calls it when the viewer may see the funds and
+# reads `robux`. Anonymous calls answer 403 "Insufficient permissions." (checked 2026-10-13).
+swagger: "2.0"
+host: economy.roblox.com
+info: { title: "economy (undocumented)", version: undocumented }
+paths:
+  /v1/groups/{groupId}/currency:
+    get:
+      # Captured 2026-10-13, GroupDetails bundle (getGroupCurrency). Community page funds line.
+      x-captured: "2026-10-13, www.roblox.com/communities/{id}"
+      x-rust-name: get_group_funds
+      summary: A community's Robux, for members who may see the funds.
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/GroupFunds" } }
+  /v2/assets/{assetId}/details:
+    get:
+      # Captured 2026-10-14 with a live request, signed out (fixture: market.json).
+      # Used by item pages to read Created and Updated timestamps for assets.
+      x-captured: "2026-10-14, www.roblox.com/catalog/1365767"
+      x-rust-name: get_asset_economy_details
+      summary: Economy metadata for an asset, including Created and Updated timestamps.
+      parameters:
+        - { in: path, name: assetId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/AssetEconomyDetails" } }
+definitions:
+  GroupFunds:
+    type: object
+    properties:
+      robux: { type: integer, format: int64 }
+  AssetEconomyDetails:
+    type: object
+    properties:
+      AssetId: { type: integer, format: int64 }
+      Created: { type: string }
+      Updated: { type: string }
+      Sales: { type: integer, format: int64 }

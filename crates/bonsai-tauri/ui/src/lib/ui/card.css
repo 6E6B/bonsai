@@ -1,0 +1,8 @@
+/* A raised panel: flat surface fill with the raised elevation. */
+@layer components {
+  [data-component="card"] {
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+  }
+}

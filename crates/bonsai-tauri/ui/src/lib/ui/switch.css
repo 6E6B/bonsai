@@ -1,0 +1,73 @@
+@layer components {
+  [data-component="switch"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  [data-component="switch"][data-layout="row"] {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  [data-component="switch"] [data-slot="track"] {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    width: 24px;
+    height: 16px;
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-track);
+    background-image: var(--sheen-track);
+    box-shadow: var(--shadow-well);
+    transition:
+      background-color var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease);
+  }
+
+  [data-component="switch"]:hover:not([data-disabled]) [data-slot="track"] {
+    background-image: linear-gradient(var(--color-hover), var(--color-hover)), var(--sheen-track);
+  }
+
+  [data-component="switch"] [data-slot="track"][data-checked] {
+    background-color: var(--color-accent);
+    background-image: var(--sheen-track-on);
+    box-shadow: var(--shadow-well-on);
+  }
+
+  [data-component="switch"]:hover:not([data-disabled]) [data-slot="track"][data-checked] {
+    background-image: linear-gradient(var(--color-hover-on-fill), var(--color-hover-on-fill)), var(--sheen-track-on);
+  }
+
+  [data-component="switch"] [data-slot="thumb"] {
+    width: 12px;
+    height: 12px;
+    border: 1px solid color-mix(in srgb, var(--color-knob-edge) 50%, transparent);
+    border-radius: var(--radius-xs);
+    background-color: var(--color-knob);
+    background-image: var(--sheen-knob);
+    box-shadow: var(--shadow-knob);
+    transition: transform var(--duration) var(--ease);
+  }
+
+  [data-component="switch"] [data-slot="thumb"][data-checked] {
+    transform: translateX(8px);
+  }
+
+  [data-component="switch"] [data-slot="input"]:focus-visible + [data-slot="track"] {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+
+  [data-component="switch"] [data-slot="text"] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  [data-component="switch"][data-disabled] {
+    opacity: 0.5;
+  }
+}

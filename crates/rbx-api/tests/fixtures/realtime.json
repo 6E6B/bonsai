@@ -1,0 +1,14 @@
+{
+  "note": "Realtime hub frames. Handshake ack, subscriptionStatus and ping captured live 2026-10-13 (ConnectionId scrubbed); the four notification invocations are synthetic, shaped after the site's ReactChat and realtime bundles.",
+  "host": "realtime-signalr.roblox.com",
+  "path": "/userhub",
+  "frames": [
+    "{}\u001e",
+    "{\"type\": 1, \"target\": \"subscriptionStatus\", \"arguments\": [\"Subscribed\", \"{\\\"MillisecondsBeforeHandlingReconnect\\\": 0, \\\"SequenceNumber\\\": 0, \\\"NamespaceSequenceNumbers\\\": {\\\"AvatarOutfitOwnershipNotifications\\\": 5, \\\"MessageNotification\\\": 1, \\\"FriendshipNotifications\\\": 1, \\\"NotificationStream\\\": 2, \\\"GameFavoriteNotifications\\\": 6, \\\"RealtimeMetrics\\\": 0}, \\\"ConnectionId\\\": \\\"connection-redacted\\\"}\"]}\u001e",
+    "{\"type\": 6}\u001e",
+    "{\"type\": 1, \"target\": \"notification\", \"arguments\": [\"ChatNotifications\", \"{\\\"Type\\\": \\\"NewMessage\\\", \\\"ConversationId\\\": \\\"conv-1\\\", \\\"SenderUserId\\\": 2000001}\", 1]}\u001e",
+    "{\"type\": 1, \"target\": \"notification\", \"arguments\": [\"ChatNotifications\", \"{\\\"Type\\\": \\\"ParticipantTyping\\\", \\\"ConversationId\\\": \\\"conv-1\\\", \\\"UserId\\\": 2000001, \\\"IsTyping\\\": true}\", 2]}\u001e",
+    "{\"type\": 1, \"target\": \"notification\", \"arguments\": [\"NotificationStream\", \"{\\\"Type\\\": \\\"NewNotification\\\"}\", 3]}\u001e{\"type\": 1, \"target\": \"notification\", \"arguments\": [\"FriendshipNotifications\", \"{\\\"Type\\\": \\\"FriendshipRequested\\\", \\\"EventArgs\\\": {\\\"UserId1\\\": 2000001, \\\"UserId2\\\": 1000001}}\", 4]}\u001e",
+    "{\"type\": 7}\u001e"
+  ]
+}

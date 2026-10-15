@@ -1,0 +1,173 @@
+import { describe, expect, it } from "vitest"
+import type { CommandInfo } from "~/lib/ipc/bindings"
+import {
+  argEntries,
+  entityActions,
+  hasActions,
+  type PaletteEntry,
+  paletteEntries,
+  paletteSections,
+  parseScope,
+  remoteEntries,
+  remoteQuery,
+} from "./palette"
+
+const cmd = (id: string, arg: CommandInfo["arg"]): CommandInfo => ({
+  id,
+  title: id,
+  keywords: [],
+  arg,
+  shortcuts: [],
+})
+
+const people = [
+  { id: 1, name: "builderman", displayName: "Builder", inGame: true },
+  { id: 2, name: "stickmasterluke", displayName: "Luke" },
+]
+
+describe("paletteEntries", () => {
+  it("lists plain commands, one row per fixed choice, and asking rows for typed args", () => {
+    const rows = paletteEntries([cmd("nav.home", "none"), cmd("view.theme", "theme"), cmd("user.open", "user")], [])
+    expect(rows.map((r) => [r.key, r.arg, r.ask ?? null])).toEqual([
+      ["nav.home", null, null],
+      ["view.theme:system", "system", null],
+      ["view.theme:light", "light", null],
+      ["view.theme:dark", "dark", null],
+      ["user.open", null, "user"],
+    ])
+  })
+
+  it("lists accounts for account arguments", () => {
+    const rows = paletteEntries(
+      [cmd("account.remove", "account")],
+      [{ id: 7, name: "alt", displayName: "Alt", label: "Trading" }],
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0].title).toBe("account.remove: Trading")
+    expect(rows[0].arg).toBe("7")
+  })
+
+  it("lists open tabs for tab arguments", () => {
+    const rows = paletteEntries([cmd("tab.switch", "tab")], [], [{ key: "t3", title: "Jailbreak" }])
+    expect(rows.map((r) => [r.title, r.arg])).toEqual([["tab.switch: Jailbreak", "t3"]])
+  })
+
+  it("keeps the bare settings command next to its sections", () => {
+    const rows = paletteEntries([cmd("nav.settings", "settingsSection")], [])
+    expect(rows[0].arg).toBeNull()
+    expect(rows.some((r) => r.arg === "privacy")).toBe(true)
+  })
+})
+
+describe("argEntries", () => {
+  const ask = (a: CommandInfo["arg"]) => paletteEntries([cmd("x", a)], [])[0]
+
+  it("suggests friends, then Roblox people, then the typed text for user arguments", () => {
+    const rows = argEntries(ask("user"), "luk", people, [user(2, "Luke"), user(9, "Luke Two")])
+    expect(rows.map((r) => r.arg)).toEqual(["2", "9", "luk"])
+    expect(rows.every((r) => r.id === "x")).toBe(true)
+  })
+
+  it("only suggests friends in a game for joins, as user targets", () => {
+    const rows = argEntries(ask("gameOrFriend"), "b", people)
+    expect(rows.map((r) => r.arg)).toEqual(["user:1", "b"])
+  })
+
+  it("offers nothing for an empty query", () => {
+    expect(argEntries(ask("text"), "  ", people)).toEqual([])
+  })
+})
+
+describe("remote search", () => {
+  it("searches any query of three letters, and ids and links at any length", () => {
+    expect(remoteQuery("all", "adopt me")).toBe("adopt me")
+    expect(remoteQuery("all", "ad")).toBe("")
+    expect(remoteQuery("all", "1")).toBe("1")
+    expect(remoteQuery("people", " bob ")).toBe("@bob")
+    expect(remoteQuery("experiences", "adopt")).toBe("g:adopt")
+    expect(remoteQuery("commands", "adopt")).toBe("")
+  })
+
+  it("splits a typed prefix off as a scope", () => {
+    expect(parseScope("@ builderman")).toEqual({ scope: "people", text: "builderman" })
+    expect(parseScope("g:adopt")).toEqual({ scope: "experiences", text: "adopt" })
+    expect(parseScope(">theme")).toEqual({ scope: "commands", text: "theme" })
+    expect(parseScope("adopt")).toBeNull()
+  })
+
+  it("turns results into rows that run their command, with a picture", () => {
+    const rows = remoteEntries([
+      {
+        group: "Experiences",
+        title: "Adopt Me!",
+        subtitle: "1K playing",
+        command: "game.open",
+        arg: "920587237",
+        kind: "experience",
+        id: 920587237,
+        universeId: 383310974,
+      },
+    ])
+    expect(rows[0]).toMatchObject({
+      title: "Adopt Me!",
+      subtitle: "1K playing",
+      group: "Experiences",
+      id: "game.open",
+      arg: "920587237",
+      thumb: { kind: "game_icon", id: 383310974 },
+      entity: { kind: "experience", id: 920587237 },
+    })
+  })
+})
+
+const user = (id: number, title: string): PaletteEntry => ({
+  ...remoteEntries([
+    { group: "People", title, subtitle: "", command: "user.open", arg: String(id), kind: "user", id, universeId: null },
+  ])[0],
+})
+
+describe("paletteSections", () => {
+  const commands = paletteEntries([cmd("Go to Friends", "none"), cmd("Zoom in", "none")], [])
+  const input = {
+    scope: "all" as const,
+    commands,
+    friends: people,
+    remote: [user(2, "Luke"), user(9, "Luke Two")],
+  }
+
+  it("shows only commands for an empty query", () => {
+    const s = paletteSections({ ...input, text: "" })
+    expect(s.map((x) => x.title)).toEqual(["Commands"])
+  })
+
+  it("puts title matches first, then friends, then Roblox results without repeating friends", () => {
+    const s = paletteSections({ ...input, text: "lu" })
+    expect(s.map((x) => x.title)).toEqual(["Friends", "People"])
+    expect(s[1].rows.map((r) => r.entity?.id)).toEqual([9])
+    const f = paletteSections({ ...input, text: "friends" })
+    expect(f[0].title).toBe("Commands")
+  })
+
+  it("shows one kind of result in a scope", () => {
+    const s = paletteSections({ ...input, scope: "people", text: "zoom" })
+    expect(s.map((x) => x.title)).toEqual(["People"])
+  })
+})
+
+describe("entityActions", () => {
+  const title = (id: string) => `T ${id}`
+
+  it("lists user actions, joining only friends in a game", () => {
+    const ids = entityActions({ kind: "user", id: 5 }, title).map((a) => a.id)
+    expect(ids[0]).toBe("user.open")
+    expect(ids).toContain("trade.new")
+    expect(ids).not.toContain("game.join")
+    const join = entityActions({ kind: "user", id: 5, inGame: true }, title).find((a) => a.id === "game.join")
+    expect(join?.arg).toBe("user:5")
+  })
+
+  it("has no action list for items", () => {
+    expect(hasActions(user(1, "x"))).toBe(true)
+    expect(hasActions({ ...user(1, "x"), entity: { kind: "item", id: 1 } })).toBe(false)
+  })
+})

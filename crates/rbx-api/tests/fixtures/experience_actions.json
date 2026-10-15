@@ -1,0 +1,245 @@
+{
+  "captured": "2026-10-12",
+  "source": "synthetic",
+  "note": "Experience actions that can't be recorded live on the test account: voting needs play time, buying and configuring private servers would create one. Shapes from the tracker swagger and a live 403 (\"Play game required\") for voting.",
+  "interactions": [
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "games.roblox.com",
+        "path": "/v1/games/383310974/user-votes"
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "text/plain"
+        },
+        "body": "Play game required"
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "games.roblox.com",
+        "path": "/v1/games/13058/user-votes"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "games.roblox.com",
+        "path": "/v1/games/vip-servers/383310974"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "name": "Test server",
+          "vipServerId": 5000001,
+          "accessCode": "redacted",
+          "maxPlayers": 48,
+          "playing": 0,
+          "owner": {
+            "id": 1000001,
+            "name": "TestUser",
+            "displayName": "Test User",
+            "hasVerifiedBadge": false
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/vip-servers/5000001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": 5000001,
+          "name": "Test server",
+          "game": {
+            "id": 383310974,
+            "name": "Adopt Me!",
+            "rootPlace": {
+              "id": 920587237,
+              "name": "Adopt Me!"
+            }
+          },
+          "joinCode": "redacted",
+          "active": true,
+          "subscription": {
+            "active": true,
+            "expired": false,
+            "expirationDate": "2026-11-12T00:00:00Z",
+            "price": 0,
+            "canRenew": true,
+            "hasInsufficientFunds": false,
+            "hasRecurringProfile": true,
+            "hasPriceChanged": false
+          },
+          "permissions": {
+            "clanAllowed": false,
+            "enemyClanId": null,
+            "friendsAllowed": false,
+            "users": []
+          },
+          "voiceSettings": {
+            "enabled": false
+          },
+          "link": "https://www.roblox.com/share?code=redacted&type=Server"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "games.roblox.com",
+        "path": "/v1/vip-servers/5000001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": 5000001,
+          "name": "Test server",
+          "game": {
+            "id": 383310974,
+            "name": "Adopt Me!",
+            "rootPlace": {
+              "id": 920587237,
+              "name": "Adopt Me!"
+            }
+          },
+          "joinCode": "redacted",
+          "active": true,
+          "subscription": {
+            "active": true,
+            "expired": false,
+            "expirationDate": "2026-11-12T00:00:00Z",
+            "price": 0,
+            "canRenew": true,
+            "hasInsufficientFunds": false,
+            "hasRecurringProfile": true,
+            "hasPriceChanged": false
+          },
+          "permissions": {
+            "clanAllowed": false,
+            "enemyClanId": null,
+            "friendsAllowed": false,
+            "users": []
+          },
+          "voiceSettings": {
+            "enabled": false
+          },
+          "link": "https://www.roblox.com/share?code=redacted&type=Server"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "games.roblox.com",
+        "path": "/v1/vip-servers/5000001/permissions"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "clanAllowed": false,
+          "enemyClanId": null,
+          "friendsAllowed": false,
+          "users": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "games.roblox.com",
+        "path": "/v1/vip-servers/5000001/subscription"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "active": true,
+          "expired": false,
+          "expirationDate": "2026-11-12T00:00:00Z",
+          "price": 0,
+          "canRenew": true,
+          "hasInsufficientFunds": false,
+          "hasRecurringProfile": true,
+          "hasPriceChanged": false
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "games.roblox.com",
+        "path": "/v1/vip-servers/5000001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "id": 5000001,
+          "name": "Test server",
+          "game": {
+            "id": 383310974,
+            "name": "Adopt Me!",
+            "rootPlace": {
+              "id": 920587237,
+              "name": "Adopt Me!"
+            }
+          },
+          "joinCode": "redacted",
+          "active": true,
+          "subscription": {
+            "active": true,
+            "expired": false,
+            "expirationDate": "2026-11-12T00:00:00Z",
+            "price": 0,
+            "canRenew": true,
+            "hasInsufficientFunds": false,
+            "hasRecurringProfile": true,
+            "hasPriceChanged": false
+          },
+          "permissions": {
+            "clanAllowed": false,
+            "enemyClanId": null,
+            "friendsAllowed": false,
+            "users": []
+          },
+          "voiceSettings": {
+            "enabled": false
+          },
+          "link": "https://www.roblox.com/share?code=redacted&type=Server"
+        }
+      }
+    }
+  ]
+}

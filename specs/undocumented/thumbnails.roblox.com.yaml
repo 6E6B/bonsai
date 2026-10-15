@@ -1,0 +1,50 @@
+# The tracker's thumbnails spec has no response schemas. This adds the batch endpoint with the
+# response fields we use.
+swagger: "2.0"
+host: thumbnails.roblox.com
+info: { title: "thumbnails (response schemas)", version: undocumented }
+paths:
+  /v1/batch:
+    post:
+      # Captured 2026-10-12 with a live request (fixture: thumbnails_batch.json).
+      # Called by every page on www.roblox.com that shows avatars, game icons or item images.
+      x-captured: "2026-10-12, avatar headshots and game icons on www.roblox.com/home"
+      x-rust-name: post_batch
+      summary: Thumbnails of mixed types in one request (up to 100).
+      parameters:
+        - in: body
+          name: requests
+          required: true
+          schema:
+            type: array
+            items: { $ref: "#/definitions/BatchRequest" }
+      responses:
+        "200":
+          description: OK
+          schema: { $ref: "#/definitions/BatchResponse" }
+definitions:
+  BatchRequest:
+    type: object
+    properties:
+      requestId: { type: string }
+      targetId: { type: integer, format: int64 }
+      type: { type: string, description: "AvatarHeadShot, Avatar, GameIcon, GameThumbnail, Asset, BundleThumbnail, GroupIcon, BadgeIcon, GamePass, Outfit" }
+      size: { type: string, description: "e.g. 48x48, 150x150, 420x420" }
+      format: { type: string, description: "webp or png" }
+      isCircular: { type: boolean }
+  BatchResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items: { $ref: "#/definitions/BatchItem" }
+  BatchItem:
+    type: object
+    properties:
+      requestId: { type: string }
+      errorCode: { type: integer, format: int32 }
+      errorMessage: { type: string }
+      targetId: { type: integer, format: int64 }
+      state: { type: string, description: "Completed, Pending, Blocked, Error, InReview, TemporarilyUnavailable" }
+      imageUrl: { type: string }
+      version: { type: string }

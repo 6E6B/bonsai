@@ -1,0 +1,396 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Game search for \"adopt me\". Trimmed to 12 results, descriptions cut.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/search-api/omni-search",
+        "query": {
+          "pageType": "games",
+          "searchQuery": "adopt me",
+          "sessionId": "*"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "filteredSearchQuery": null,
+          "nextPageToken": "eyJzdGFydCI6NDAsImNvdW50Ijo0MCwiZW5kT2ZQYWdlIjpmYWxzZX0=",
+          "paginationMethod": "Scroll",
+          "searchResults": [
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/920587237/Adopt-Me",
+                  "contentId": 383310974,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": true,
+                  "creatorId": 295182,
+                  "creatorName": "Uplift Games",
+                  "defaultLayoutData": {},
+                  "description": "Adopt and raise 🐶🦄👶, trade and collect legendary pets, build your dream home, an",
+                  "emphasis": true,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃] Adopt Me!",
+                  "nativeAdData": "",
+                  "playerCount": 238782,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 920587237,
+                  "totalDownVotes": 1513836,
+                  "totalUpVotes": 9556034,
+                  "universeId": 383310974
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/74395953411817/Dreamville-RP",
+                  "contentId": 6521100398,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Dreamville 🏡 RP [Boats! 🚤]",
+                  "nativeAdData": "",
+                  "playerCount": 16460,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 74395953411817,
+                  "totalDownVotes": 14311,
+                  "totalUpVotes": 276728,
+                  "universeId": 6521100398
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/1245865042/Adopt-and-Raise",
+                  "contentId": 506112045,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Adopt and Raise",
+                  "nativeAdData": "",
+                  "playerCount": 46,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 1245865042,
+                  "totalDownVotes": 76770,
+                  "totalUpVotes": 279029,
+                  "universeId": 506112045
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/13967668166/LifeTogether-RP",
+                  "contentId": 4839802560,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "LifeTogether 🏠 RP [NEW HOUSE]",
+                  "nativeAdData": "",
+                  "playerCount": 25292,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 13967668166,
+                  "totalDownVotes": 101062,
+                  "totalUpVotes": 948829,
+                  "universeId": 4839802560
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/113725607254780/My-Pet-City-RP",
+                  "contentId": 6567594977,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": " My Pet City 🏡 RP [NEW]",
+                  "nativeAdData": "",
+                  "playerCount": 8,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 113725607254780,
+                  "totalDownVotes": 215,
+                  "totalUpVotes": 2120,
+                  "universeId": 6567594977
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/16409294749/Adopt-Raise-RP",
+                  "contentId": 5655932476,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Adopt & Raise RP",
+                  "nativeAdData": "",
+                  "playerCount": 20,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 16409294749,
+                  "totalDownVotes": 1377,
+                  "totalUpVotes": 907,
+                  "universeId": 5655932476
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Moderate • Ages 16+",
+                  "canonicalUrlPath": "/games/80779240798828/Steal-An-Adopt-me",
+                  "contentId": 8988423863,
+                  "contentMaturity": "moderate",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 16,
+                  "name": "Steal An Adopt me🐶 ",
+                  "nativeAdData": "",
+                  "playerCount": 0,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 80779240798828,
+                  "totalDownVotes": 8,
+                  "totalUpVotes": 23,
+                  "universeId": 8988423863
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/4924922222/Brookhaven-RP",
+                  "contentId": 1686885941,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "Brookhaven 🏡RP",
+                  "nativeAdData": "",
+                  "playerCount": 292665,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 4924922222,
+                  "totalDownVotes": 1419543,
+                  "totalUpVotes": 8638052,
+                  "universeId": 1686885941
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/5407396567/MOM-LIFE-Seaboard-City-RP",
+                  "contentId": 1892760830,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "👶MOM LIFE!❤️Seaboard City RP🌴",
+                  "nativeAdData": "",
+                  "playerCount": 369,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 5407396567,
+                  "totalDownVotes": 46084,
+                  "totalUpVotes": 160822,
+                  "universeId": 1892760830
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/5969012769/Parenthood-Beta",
+                  "contentId": 2149444938,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "[🎃] Parenthood 👶 Beta",
+                  "nativeAdData": "",
+                  "playerCount": 274,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 5969012769,
+                  "totalDownVotes": 14371,
+                  "totalUpVotes": 72802,
+                  "universeId": 2149444938
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/8114519431/Adopt-a-baby",
+                  "contentId": 3122413316,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "👨‍👩‍👦 Adopt a baby 👨‍👩‍👦",
+                  "nativeAdData": "",
+                  "playerCount": 21,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 8114519431,
+                  "totalDownVotes": 2639,
+                  "totalUpVotes": 1410,
+                  "universeId": 3122413316
+                }
+              ],
+              "topicId": "Invalid"
+            },
+            {
+              "contentGroupType": "Game",
+              "contents": [
+                {
+                  "ageRecommendationDisplayName": "Maturity: Minimal",
+                  "canonicalUrlPath": "/games/15626686115/HUGE-UPDATE-DAYCARE-PARTY",
+                  "contentId": 5396208334,
+                  "contentMaturity": "minimal",
+                  "contentType": "Game",
+                  "creatorHasVerifiedBadge": false,
+                  "creatorId": 0,
+                  "creatorName": "",
+                  "defaultLayoutData": {},
+                  "description": "",
+                  "emphasis": false,
+                  "isSponsored": false,
+                  "minimumAge": 0,
+                  "name": "❤️HUGE UPDATE📱DAYCARE PARTY🎈",
+                  "nativeAdData": "",
+                  "playerCount": 430,
+                  "primaryWideVideoAssetId": null,
+                  "rootPlaceId": 15626686115,
+                  "totalDownVotes": 2201,
+                  "totalUpVotes": 4835,
+                  "universeId": 5396208334
+                }
+              ],
+              "topicId": "Invalid"
+            }
+          ],
+          "sorts": [
+            {
+              "feedItemKey": null,
+              "topicId": "Invalid",
+              "topicLayoutData": {
+                "componentType": "GridTile",
+                "containedTile": false,
+                "enableCollectionGrid": true,
+                "enableCollectionLayout": false,
+                "minNumOfRows": 0,
+                "numOfRows": -1
+              },
+              "treatmentType": null
+            }
+          ],
+          "vertical": "Game"
+        }
+      }
+    }
+  ]
+}

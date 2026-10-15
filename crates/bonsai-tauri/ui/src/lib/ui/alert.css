@@ -1,0 +1,64 @@
+@layer components {
+  [data-component="alert"] {
+    --alert-tone: var(--color-accent);
+    --alert-bg: var(--color-accent-soft);
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    background: var(--alert-bg);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    color: var(--color-fg);
+  }
+
+  [data-component="alert"][data-variant="success"] {
+    --alert-tone: var(--color-success);
+    --alert-bg: var(--color-success-soft);
+  }
+
+  [data-component="alert"][data-variant="warning"] {
+    --alert-tone: var(--color-warning);
+    --alert-bg: var(--color-warning-soft);
+  }
+
+  [data-component="alert"][data-variant="danger"] {
+    --alert-tone: var(--color-danger);
+    --alert-bg: var(--color-danger-soft);
+  }
+
+  [data-component="alert"] [data-slot="icon"] {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-self: flex-start;
+    align-items: center;
+    height: var(--text-base--line-height);
+    color: var(--alert-tone);
+  }
+
+  [data-component="alert"] [data-slot="body"] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  [data-component="alert"] [data-slot="title"] {
+    margin: 0;
+    font-size: var(--text-base);
+    font-weight: 500;
+    color: var(--alert-tone);
+  }
+
+  [data-component="alert"] [data-slot="description"] {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  [data-component="alert"] [data-slot="actions"] {
+    display: flex;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+}

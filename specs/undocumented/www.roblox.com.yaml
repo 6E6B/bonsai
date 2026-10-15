@@ -1,0 +1,70 @@
+# Pages on www.roblox.com. The app builds links to them for "Open on website" and "Copy link".
+# Kept here so no URL is hardcoded outside specs. It fetches one: /games/{placeId}, only to
+# read the private server price and product id from data attributes (captured 2026-10-12 on
+# www.roblox.com/games/4924922222: data-private-server-price, data-private-server-product-id,
+# data-can-create-server, data-private-server-limit). No JSON endpoint returns the price to
+# non-owners (develop.roblox.com has it for owners only).
+swagger: "2.0"
+host: www.roblox.com
+info: { title: "www (website pages)", version: undocumented }
+paths:
+  /games/{placeId}:
+    get: { x-rust-name: page_game, x-captured: "2026-10-12, experience page", summary: Experience page, parameters: [{ in: path, name: placeId, type: integer, format: int64, required: true }], responses: { "200": { description: OK } } }
+  /users/{userId}/profile:
+    get: { x-rust-name: page_profile, x-captured: "2026-10-12, profile page", summary: Profile page, parameters: [{ in: path, name: userId, type: integer, format: int64, required: true }], responses: { "200": { description: OK } } }
+  /catalog/{assetId}:
+    get: { x-rust-name: page_item, x-captured: "2026-10-12, marketplace item page", summary: Marketplace item page, parameters: [{ in: path, name: assetId, type: integer, format: int64, required: true }], responses: { "200": { description: OK } } }
+  /bundles/{bundleId}:
+    get: { x-rust-name: page_bundle, x-captured: "2026-10-12, marketplace bundle page", summary: Bundle page, parameters: [{ in: path, name: bundleId, type: integer, format: int64, required: true }], responses: { "200": { description: OK } } }
+  /communities/{groupId}:
+    get: { x-rust-name: page_community, x-captured: "2026-10-12, community page", summary: Community page, parameters: [{ in: path, name: groupId, type: integer, format: int64, required: true }], responses: { "200": { description: OK } } }
+  /badges/{badgeId}:
+    get: { x-rust-name: page_badge, x-captured: "2026-10-12, badge page", summary: Badge page, parameters: [{ in: path, name: badgeId, type: integer, format: int64, required: true }], responses: { "200": { description: OK } } }
+  /game-pass/{passId}:
+    get: { x-rust-name: page_game_pass, x-captured: "2026-10-12, game pass page", summary: Game pass page, parameters: [{ in: path, name: passId, type: integer, format: int64, required: true }], responses: { "200": { description: OK } } }
+  /login:
+    get: { x-rust-name: page_login, x-captured: "2026-10-14, sign-in page; loaded in the app's sign-in window", summary: Sign-in page, responses: { "200": { description: OK } } }
+  /home:
+    get: { x-rust-name: page_home, x-captured: "2026-10-12", summary: Home, responses: { "200": { description: OK } } }
+  /charts:
+    get: { x-rust-name: page_charts, x-captured: "2026-10-12", summary: Charts and discover, responses: { "200": { description: OK } } }
+  /my/avatar:
+    get: { x-rust-name: page_avatar, x-captured: "2026-10-12", summary: Avatar editor, responses: { "200": { description: OK } } }
+  /catalog:
+    get: { x-rust-name: page_marketplace, x-captured: "2026-10-12", summary: Marketplace, responses: { "200": { description: OK } } }
+  /users/{userId}/inventory:
+    get: { x-rust-name: page_inventory, x-captured: "2026-10-12", summary: Inventory page, parameters: [{ in: path, name: userId, type: integer, format: int64, required: true }], responses: { "200": { description: OK } } }
+  /trades:
+    get: { x-rust-name: page_trades, x-captured: "2026-10-12", summary: Trades, responses: { "200": { description: OK } } }
+  /my/messages:
+    get: { x-rust-name: page_messages, x-captured: "2026-10-12", summary: Private messages, responses: { "200": { description: OK } } }
+  /communities:
+    get: { x-rust-name: page_communities, x-captured: "2026-10-12", summary: Communities, responses: { "200": { description: OK } } }
+  /transactions:
+    get: { x-rust-name: page_transactions, x-captured: "2026-10-12", summary: Transactions, responses: { "200": { description: OK } } }
+  /users/friends:
+    get: { x-rust-name: page_friends, x-captured: "2026-10-12", summary: Friends, requests, followers and following, responses: { "200": { description: OK } } }
+  /report-abuse/:
+    get: { x-rust-name: page_report_abuse, x-captured: "2026-10-12, profile menu Report", summary: "Report form; the app only opens it, it never submits reports", parameters: [{ in: query, name: targetId, type: integer, format: int64, required: true }, { in: query, name: submitterId, type: integer, format: int64, required: false }, { in: query, name: abuseVector, type: string, required: true, description: "user, place, asset, group" }], responses: { "200": { description: OK } } }
+  /my/account:
+    get: { x-rust-name: page_settings, x-captured: "2026-10-12", summary: Account settings, responses: { "200": { description: OK } } }
+  /upgrades/robux:
+    get: { x-rust-name: page_buy_robux, x-captured: "2026-10-12", summary: Official Robux purchase page (the app never buys Robux), responses: { "200": { description: OK } } }
+  /share:
+    get:
+      x-rust-name: page_share_link
+      x-captured: "2026-10-12, private server and experience share links"
+      summary: Share link (private servers use type=Server)
+      parameters:
+        - { in: query, name: code, type: string, required: true }
+        - { in: query, name: type, type: string, required: true }
+      responses: { "200": { description: OK } }
+  /games/start:
+    get:
+      x-rust-name: page_games_start
+      x-captured: "2026-10-12, deep link landing used by invite links"
+      summary: Website launch landing for a place, optionally a specific server
+      parameters:
+        - { in: query, name: placeId, type: integer, format: int64, required: true }
+        - { in: query, name: gameInstanceId, type: string }
+      responses: { "200": { description: OK } }

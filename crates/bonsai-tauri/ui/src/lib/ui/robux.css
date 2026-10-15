@@ -1,0 +1,18 @@
+@layer components {
+  [data-component="robux"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  [data-component="robux"] [data-slot="mark"] {
+    flex-shrink: 0;
+    width: 13px;
+    height: 14px;
+    background-color: currentColor;
+    opacity: 0.8;
+    mask: url("./assets/robux.png") center / contain no-repeat;
+  }
+}

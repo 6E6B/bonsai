@@ -1,0 +1,13 @@
+{
+  "captured": "2026-10-12",
+  "source": "synthetic",
+  "note": "Two 429s (one with Retry-After, one without) and then success. Shape of a real 429 body from users.roblox.com.",
+  "interactions": [
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/1" },
+      "response": { "status": 429, "headers": { "retry-after": "0" }, "body": { "errors": [ { "code": 0, "message": "Too many requests" } ] } } },
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/1" },
+      "response": { "status": 429, "body": { "errors": [ { "code": 0, "message": "Too many requests" } ] } } },
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/1" },
+      "response": { "status": 200, "body": { "id": 1, "name": "Roblox", "displayName": "Roblox", "hasVerifiedBadge": true, "isBanned": false, "created": "2006-02-27T21:06:40.3Z" } } }
+  ]
+}

@@ -1,0 +1,349 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Public servers of Adopt Me (920587237), two cursor pages of 10.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/games/920587237/servers/0",
+        "query": {
+          "limit": "10"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "fps": 40.209061,
+              "id": "b30315fc-f4e4-4be9-bf33-4e5d2a7d858a",
+              "maxPlayers": 35,
+              "ping": 23,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 53.175213,
+              "id": "1ac9fc1a-e48e-49a6-b63d-4f24c646c372",
+              "maxPlayers": 35,
+              "ping": 29,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 44.877075,
+              "id": "f42650bd-8e2f-46c4-9942-26cf6fbc68f3",
+              "maxPlayers": 35,
+              "ping": 85,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 43.638165,
+              "id": "280988de-09ed-4dfb-ae8f-5b8de15a08fc",
+              "maxPlayers": 35,
+              "ping": 49,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 52.539928,
+              "id": "ae8c5783-9cbf-40bd-bd59-58426ddfb514",
+              "maxPlayers": 35,
+              "ping": 38,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 52.197369,
+              "id": "eed177e8-7289-472f-b72a-273241937db7",
+              "maxPlayers": 35,
+              "ping": 49,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.989807,
+              "id": "283cbdb2-fb99-4b81-8338-76610e86a4cd",
+              "maxPlayers": 35,
+              "ping": 115,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.946358,
+              "id": "d5665479-b8e7-4430-ab13-19da1ca5c6eb",
+              "maxPlayers": 35,
+              "ping": 23,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.951675,
+              "id": "5546a379-962d-4584-b882-feca4df74eae",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 48.955059,
+              "id": "34aa3f01-03b1-4aa4-9ef6-b33385488387",
+              "maxPlayers": 35,
+              "ping": 17,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            }
+          ],
+          "nextPageCursor": "eyJzdGFydEluZGV4IjoxMCwiZGlzY3JpbWluYXRvciI6InBsYWNlSWQ6OTIwNTg3MjM3c2VydmVyVHlwZTowIiwiY291bnQiOjEwfQo3Mjc1YmMzYmExZjZmNDcyZmJkZTQwZjA1NzU4NzcxYjQxNWE2YTIxYTA3OWExZmFmNzA3YzhkN2M5NGZiOTVl",
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/games/920587237/servers/0",
+        "query": {
+          "cursor": "eyJzdGFydEluZGV4IjoxMCwiZGlzY3JpbWluYXRvciI6InBsYWNlSWQ6OTIwNTg3MjM3c2VydmVyVHlwZTowIiwiY291bnQiOjEwfQo3Mjc1YmMzYmExZjZmNDcyZmJkZTQwZjA1NzU4NzcxYjQxNWE2YTIxYTA3OWExZmFmNzA3YzhkN2M5NGZiOTVl",
+          "limit": "10"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "fps": 59.951675,
+              "id": "5546a379-962d-4584-b882-feca4df74eae",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 48.955059,
+              "id": "34aa3f01-03b1-4aa4-9ef6-b33385488387",
+              "maxPlayers": 35,
+              "ping": 17,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 33.599731,
+              "id": "6d26ebff-efb5-46b8-98f4-2f3dae9d5bc7",
+              "maxPlayers": 35,
+              "ping": 30,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 52.917389,
+              "id": "688cdf6f-f2e2-4b51-941b-79447470c267",
+              "maxPlayers": 35,
+              "ping": 20,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 52.917568,
+              "id": "95854adc-3943-4ccb-aa55-b72dc1e8bb84",
+              "maxPlayers": 35,
+              "ping": 20,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.963692,
+              "id": "f8700dd9-0e22-4c3f-9420-1da54dd52240",
+              "maxPlayers": 35,
+              "ping": 7,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 59.204762,
+              "id": "46860335-eb70-4b38-8e6b-8b59734c7cee",
+              "maxPlayers": 35,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 51.967648,
+              "id": "47ad57e2-7beb-43e5-8fbd-8ce1121882cf",
+              "maxPlayers": 35,
+              "ping": 101,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 57.124481,
+              "id": "32c7f9c6-bb05-4805-9db0-5023ef113b7b",
+              "maxPlayers": 35,
+              "ping": 16,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            },
+            {
+              "fps": 51.409634,
+              "id": "a9a256b1-1960-49dc-9f80-5f968c3095e8",
+              "maxPlayers": 35,
+              "ping": 14,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 35
+            }
+          ],
+          "nextPageCursor": "eyJzdGFydEluZGV4IjoyMCwiZGlzY3JpbWluYXRvciI6InBsYWNlSWQ6OTIwNTg3MjM3c2VydmVyVHlwZTowIiwiY291bnQiOjEwfQozMTlmOGJlNWM2NjQ4NTg1ZDE4MjViMjk1YzMxOWQ4ZjhkNTI0N2Q1NTNjNDJhYWMyNWYzZGUxNTU4ZmZmZTY1",
+          "previousPageCursor": "eyJzdGFydEluZGV4IjowLCJkaXNjcmltaW5hdG9yIjoicGxhY2VJZDo5MjA1ODcyMzdzZXJ2ZXJUeXBlOjAiLCJjb3VudCI6MTB9CmRiOGVkM2UxNzQzNDEwYjg5ZTgzNmNkMzhiMTFkZDUxZjJkYmQzYmMxNjczNWZhYTFhZmYxMTEwNjliOGE2ZGQ="
+        }
+      }
+    }
+  ]
+}

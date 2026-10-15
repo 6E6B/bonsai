@@ -1,0 +1,94 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Block then unblock builderman.",
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/user-blocking-api/v1/users/156/block-user",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "XSRF token invalid"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/user-blocking-api/v1/users/156/block-user",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": "Successfully blocked user for blocker userId 1000001 and blockee userId 156"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/user-blocking-api/v1/users/156/is-blocked"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": true
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/user-blocking-api/v1/users/156/unblock-user",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": "Successfully unblocked user for blocker userId 1000001 and blockee userId 156"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/user-blocking-api/v1/users/156/is-blocked"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+# Friend request actions the site uses that the tracker no longer lists.
+# Each is a user click only; Baseplate never sends friend requests on its own (AGENTS.md).
+swagger: "2.0"
+host: friends.roblox.com
+info: { title: "friends (undocumented)", version: undocumented }
+paths:
+  /v1/users/{targetUserId}/request-friendship:
+    post:
+      # Captured 2026-10-12. Profile page "Add Connection" on www.roblox.com/users/{id}/profile.
+      # Verified live against an invalid user (400 code 1); fixture friends_actions.json is synthetic.
+      x-captured: "2026-10-12, www.roblox.com/users/{id}/profile"
+      x-rust-name: post_request_friendship
+      summary: Send a friend request (user action only).
+      parameters:
+        - { in: path, name: targetUserId, required: true, type: integer, format: int64 }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/FriendshipRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/FriendshipResult" } }
+  /v1/users/{requesterUserId}/accept-friend-request:
+    post:
+      # Captured 2026-10-12. www.roblox.com/users/friends#!/friend-requests "Accept".
+      # Verified live with no pending request (400 code 10).
+      x-captured: "2026-10-12, www.roblox.com/users/friends#!/friend-requests"
+      x-rust-name: post_accept_friend_request
+      summary: Accept a friend request.
+      parameters:
+        - { in: path, name: requesterUserId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+  /v1/users/{requesterUserId}/decline-friend-request:
+    post:
+      # Captured 2026-10-12. Same page, "Ignore". Verified live with no pending request (400 code 10).
+      x-captured: "2026-10-12, www.roblox.com/users/friends#!/friend-requests"
+      x-rust-name: post_decline_friend_request
+      summary: Decline a friend request.
+      parameters:
+        - { in: path, name: requesterUserId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+  /v1/user/friend-requests/decline-all:
+    post:
+      # Captured 2026-10-12. Same page, "Ignore All". Not called live (it would clear real requests).
+      x-captured: "2026-10-12, www.roblox.com/users/friends#!/friend-requests"
+      x-rust-name: post_decline_all_friend_requests
+      summary: Decline every pending friend request.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+  /v1/users/{targetUserId}/unfriend:
+    post:
+      # Captured 2026-10-12. Profile "Remove Connection". Verified live on a non-friend (200 {}).
+      x-captured: "2026-10-12, www.roblox.com/users/{id}/profile"
+      x-rust-name: post_unfriend
+      summary: Remove a friend.
+      parameters:
+        - { in: path, name: targetUserId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+definitions:
+  Empty:
+    type: object
+  FriendshipRequest:
+    type: object
+    properties:
+      friendshipOriginSourceType: { type: string, description: "UserProfile, PlayerSearch, ..." }
+  FriendshipResult:
+    type: object
+    properties:
+      success: { type: boolean }
+      isCaptchaRequired: { type: boolean }

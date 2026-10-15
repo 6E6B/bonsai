@@ -1,0 +1,91 @@
+{
+  "captured": "2026-10-14",
+  "source": "live",
+  "note": "Quick sign-in signed out: create needs no CSRF token, status does. Cancel, then status says Cancelled. Code, key and expiry times scrubbed (expiry moved to 2099 so tests never see an expired code).",
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/create",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "code": "ABC123",
+          "status": "Created",
+          "privateKey": "00000000-0000-4000-8000-000000000001",
+          "expirationTime": "2099-01-01T00:00:00.0000000",
+          "imagePath": "/v1/login/qr-code-image?key=00000000-0000-4000-8000-000000000001&code=ABC123"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "Created",
+          "accountName": null,
+          "accountPictureUrl": null,
+          "expirationTime": "2099-01-01T00:00:00.0000000"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/cancel",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "Cancelled",
+          "accountName": null,
+          "accountPictureUrl": null,
+          "expirationTime": "2099-01-01T00:00:00.0000000"
+        }
+      }
+    }
+  ]
+}

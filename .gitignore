@@ -1,0 +1,6 @@
+target/
+*.db
+/fixtures-raw/
+node_modules/
+dist/
+cookie.txt

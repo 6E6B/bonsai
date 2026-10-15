@@ -1,0 +1,725 @@
+{
+  "captured": "2026-10-13",
+  "source": "synthetic",
+  "note": "Hand-written from the platform-chat-api spec (DECISIONS #42): the test account has no conversations and live sends would message real people. Two conversations (one-to-one with an unread experience link, a group), chat settings, one thread, mark read, send, the refetch after sending, start a chat, rename, add and remove people, typing status, and the unread count.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-user-conversations",
+        "query": {
+          "include_user_data": "true",
+          "pageSize": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "conversations": [
+            {
+              "id": "conv-1",
+              "type": "one_to_one",
+              "name": "",
+              "source": "friends",
+              "status": "active",
+              "created_by": 2000001,
+              "participant_user_ids": [
+                1000001,
+                2000001
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                }
+              },
+              "messages": [
+                {
+                  "id": "m3",
+                  "content": "join me https://www.roblox.com/games/1818/Crossroads",
+                  "sender_user_id": 2000001,
+                  "created_at": "2026-10-13T10:05:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 2,
+              "updated_at": "2026-10-13T10:05:00.000Z",
+              "created_at": "2026-10-01T09:00:00.000Z"
+            },
+            {
+              "id": "conv-2",
+              "type": "group",
+              "name": "Squad",
+              "source": "friends",
+              "status": "active",
+              "created_by": 1000001,
+              "participant_user_ids": [
+                1000001,
+                2000001,
+                2000002
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                },
+                "2000002": {
+                  "id": 2000002,
+                  "name": "user2",
+                  "display_name": "User Two",
+                  "combined_name": "User Two"
+                }
+              },
+              "messages": [
+                {
+                  "id": "g1",
+                  "content": "gg",
+                  "sender_user_id": 2000002,
+                  "created_at": "2026-10-12T20:00:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 0,
+              "updated_at": "2026-10-12T20:00:00.000Z",
+              "created_at": "2026-09-01T09:00:00.000Z"
+            }
+          ],
+          "next_cursor": ""
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/metadata"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "isChatEnabled": true,
+          "isChatEnabledByPrivacySetting": "enabled",
+          "isGroupChatEnabledByPrivacySetting": "enabled",
+          "maxConversationTitleLength": 150
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-conversation-messages",
+        "query": {
+          "conversation_id": "conv-1",
+          "pageSize": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "messages": [
+            {
+              "id": "m3",
+              "content": "join me https://www.roblox.com/games/1818/Crossroads",
+              "sender_user_id": 2000001,
+              "created_at": "2026-10-13T10:05:00.000Z",
+              "type": "user",
+              "status": "success"
+            },
+            {
+              "id": "m2",
+              "content": "you on?",
+              "sender_user_id": 2000001,
+              "created_at": "2026-10-13T10:04:30.000Z",
+              "type": "user",
+              "status": "success"
+            },
+            {
+              "id": "m1",
+              "content": "",
+              "sender_user_id": 1000001,
+              "created_at": "2026-10-13T10:00:00.000Z",
+              "type": "user",
+              "status": "moderated",
+              "moderation_type": "filtered"
+            }
+          ],
+          "next_cursor": ""
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/mark-conversations",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "success"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-conversation-metadata"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "global_unread_count": 0,
+          "global_unread_message_count": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/send-messages",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "messages": [
+            {
+              "id": "m4",
+              "content": "on my way",
+              "sender_user_id": 1000001,
+              "created_at": "2026-10-13T10:06:00.000Z",
+              "type": "user",
+              "status": "success"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-conversation-messages",
+        "query": {
+          "conversation_id": "conv-1",
+          "pageSize": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "messages": [
+            {
+              "id": "m4",
+              "content": "on my way",
+              "sender_user_id": 1000001,
+              "created_at": "2026-10-13T10:06:00.000Z",
+              "type": "user",
+              "status": "success"
+            },
+            {
+              "id": "m3",
+              "content": "join me https://www.roblox.com/games/1818/Crossroads",
+              "sender_user_id": 2000001,
+              "created_at": "2026-10-13T10:05:00.000Z",
+              "type": "user",
+              "status": "success"
+            },
+            {
+              "id": "m2",
+              "content": "you on?",
+              "sender_user_id": 2000001,
+              "created_at": "2026-10-13T10:04:30.000Z",
+              "type": "user",
+              "status": "success"
+            },
+            {
+              "id": "m1",
+              "content": "",
+              "sender_user_id": 1000001,
+              "created_at": "2026-10-13T10:00:00.000Z",
+              "type": "user",
+              "status": "moderated",
+              "moderation_type": "filtered"
+            }
+          ],
+          "next_cursor": ""
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-user-conversations",
+        "query": {
+          "include_user_data": "true",
+          "pageSize": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "conversations": [
+            {
+              "id": "conv-1",
+              "type": "one_to_one",
+              "name": "",
+              "source": "friends",
+              "status": "active",
+              "created_by": 2000001,
+              "participant_user_ids": [
+                1000001,
+                2000001
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                }
+              },
+              "messages": [
+                {
+                  "id": "m4",
+                  "content": "on my way",
+                  "sender_user_id": 1000001,
+                  "created_at": "2026-10-13T10:06:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 0,
+              "updated_at": "2026-10-13T10:06:00.000Z",
+              "created_at": "2026-10-01T09:00:00.000Z"
+            },
+            {
+              "id": "conv-2",
+              "type": "group",
+              "name": "Squad",
+              "source": "friends",
+              "status": "active",
+              "created_by": 1000001,
+              "participant_user_ids": [
+                1000001,
+                2000001,
+                2000002
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                },
+                "2000002": {
+                  "id": 2000002,
+                  "name": "user2",
+                  "display_name": "User Two",
+                  "combined_name": "User Two"
+                }
+              },
+              "messages": [
+                {
+                  "id": "g1",
+                  "content": "gg",
+                  "sender_user_id": 2000002,
+                  "created_at": "2026-10-12T20:00:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 0,
+              "updated_at": "2026-10-12T20:00:00.000Z",
+              "created_at": "2026-09-01T09:00:00.000Z"
+            }
+          ],
+          "next_cursor": ""
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/create-conversations",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "conversations": [
+            {
+              "id": "conv-3",
+              "type": "one_to_one",
+              "participant_user_ids": [
+                1000001,
+                2000002
+              ],
+              "user_data": {
+                "2000002": {
+                  "id": 2000002,
+                  "name": "user2",
+                  "display_name": "User Two",
+                  "combined_name": "User Two"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/update-conversations",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "conversations": [
+            {
+              "id": "conv-2",
+              "type": "group",
+              "name": "Squad 2",
+              "source": "friends",
+              "status": "active",
+              "created_by": 1000001,
+              "participant_user_ids": [
+                1000001,
+                2000001,
+                2000002
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                },
+                "2000002": {
+                  "id": 2000002,
+                  "name": "user2",
+                  "display_name": "User Two",
+                  "combined_name": "User Two"
+                }
+              },
+              "messages": [
+                {
+                  "id": "g1",
+                  "content": "gg",
+                  "sender_user_id": 2000002,
+                  "created_at": "2026-10-12T20:00:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 0,
+              "updated_at": "2026-10-12T20:00:00.000Z",
+              "created_at": "2026-09-01T09:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/add-users",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "success"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/remove-users",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "success"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/update-typing-status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "success"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-user-conversations",
+        "query": {
+          "include_user_data": "true",
+          "pageSize": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "conversations": [
+            {
+              "id": "conv-1",
+              "type": "one_to_one",
+              "name": "",
+              "source": "friends",
+              "status": "active",
+              "created_by": 2000001,
+              "participant_user_ids": [
+                1000001,
+                2000001
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                }
+              },
+              "messages": [
+                {
+                  "id": "m3",
+                  "content": "join me https://www.roblox.com/games/1818/Crossroads",
+                  "sender_user_id": 2000001,
+                  "created_at": "2026-10-13T10:05:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 2,
+              "updated_at": "2026-10-13T10:05:00.000Z",
+              "created_at": "2026-10-01T09:00:00.000Z"
+            },
+            {
+              "id": "conv-2",
+              "type": "group",
+              "name": "Squad",
+              "source": "friends",
+              "status": "active",
+              "created_by": 1000001,
+              "participant_user_ids": [
+                1000001,
+                2000001,
+                2000002
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                },
+                "2000002": {
+                  "id": 2000002,
+                  "name": "user2",
+                  "display_name": "User Two",
+                  "combined_name": "User Two"
+                }
+              },
+              "messages": [
+                {
+                  "id": "g1",
+                  "content": "gg",
+                  "sender_user_id": 2000002,
+                  "created_at": "2026-10-12T20:00:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 0,
+              "updated_at": "2026-10-12T20:00:00.000Z",
+              "created_at": "2026-09-01T09:00:00.000Z"
+            }
+          ],
+          "next_cursor": ""
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/platform-chat-api/v1/get-user-conversations",
+        "query": {
+          "include_user_data": "true",
+          "pageSize": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "conversations": [
+            {
+              "id": "conv-1",
+              "type": "one_to_one",
+              "name": "",
+              "source": "friends",
+              "status": "active",
+              "created_by": 2000001,
+              "participant_user_ids": [
+                1000001,
+                2000001
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                }
+              },
+              "messages": [
+                {
+                  "id": "m3",
+                  "content": "join me https://www.roblox.com/games/1818/Crossroads",
+                  "sender_user_id": 2000001,
+                  "created_at": "2026-10-13T10:05:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 2,
+              "updated_at": "2026-10-13T10:05:00.000Z",
+              "created_at": "2026-10-01T09:00:00.000Z"
+            },
+            {
+              "id": "conv-2",
+              "type": "group",
+              "name": "Squad",
+              "source": "friends",
+              "status": "active",
+              "created_by": 1000001,
+              "participant_user_ids": [
+                1000001,
+                2000001,
+                2000002
+              ],
+              "user_data": {
+                "2000001": {
+                  "id": 2000001,
+                  "name": "user1",
+                  "display_name": "User One",
+                  "combined_name": "User One"
+                },
+                "2000002": {
+                  "id": 2000002,
+                  "name": "user2",
+                  "display_name": "User Two",
+                  "combined_name": "User Two"
+                }
+              },
+              "messages": [
+                {
+                  "id": "g1",
+                  "content": "gg",
+                  "sender_user_id": 2000002,
+                  "created_at": "2026-10-12T20:00:00.000Z",
+                  "type": "user",
+                  "status": "success"
+                }
+              ],
+              "unread_message_count": 0,
+              "updated_at": "2026-10-12T20:00:00.000Z",
+              "created_at": "2026-09-01T09:00:00.000Z"
+            }
+          ],
+          "next_cursor": ""
+        }
+      }
+    }
+  ]
+}

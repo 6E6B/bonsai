@@ -1,0 +1,33 @@
+@layer components {
+  [data-component="collapsible"] > [data-slot="trigger"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--control-sm);
+    padding: 0 4px 0 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--color-fg);
+    font-weight: 500;
+    cursor: default;
+  }
+
+  [data-component="collapsible"] > [data-slot="trigger"]:hover {
+    color: var(--color-fg);
+  }
+
+  [data-component="collapsible"] > [data-slot="trigger"] > [data-slot="chevron"] {
+    color: var(--color-fg-muted);
+    transition: transform var(--duration) var(--ease);
+  }
+
+  [data-component="collapsible"] > [data-slot="trigger"][data-expanded] > [data-slot="chevron"] {
+    transform: rotate(90deg);
+  }
+
+  [data-component="collapsible"] > [data-slot="content"] {
+    padding: 4px 0 0 18px;
+    color: var(--color-fg-muted);
+  }
+}

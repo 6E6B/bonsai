@@ -1,0 +1,15 @@
+{
+  "captured": "2026-10-12",
+  "source": "synthetic",
+  "note": "A GET that fails with 503 twice and then succeeds; a POST that fails with 500 once and must not be retried.",
+  "interactions": [
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/156" },
+      "response": { "status": 503, "body": "Service Unavailable" } },
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/156" },
+      "response": { "status": 502, "body": "Bad Gateway" } },
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/156" },
+      "response": { "status": 200, "body": { "id": 156, "name": "builderman", "displayName": "builderman" } } },
+    { "request": { "method": "POST", "host": "users.roblox.com", "path": "/v1/usernames/users" },
+      "response": { "status": 500, "body": { "errors": [ { "code": 0, "message": "InternalServerError" } ] } } }
+  ]
+}

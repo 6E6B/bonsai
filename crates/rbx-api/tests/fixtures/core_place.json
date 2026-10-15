@@ -1,0 +1,210 @@
+{
+  "captured": "2026-10-13",
+  "source": "live",
+  "note": "Crossroads (place 1818): place to universe, details, votes, public servers.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/games/multiget-place-details",
+        "query": {
+          "placeIds": "1818"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": [
+          {
+            "builder": "Roblox",
+            "builderId": 1,
+            "description": "The classic Roblox level is back! Crossroads is Roblox's very first multiplayer game. It is a classic brick battle game with a destructible environment. All great warriors find themselves here.\n\n\"I joined the Roblox team just as they were rolling out the first multiplayer Roblox level - a very early version of Crossroads. This version featured a castle made by Erik and a white house and playground constructed by Builderman. There were two weapons: the slingshot and the rocket launcher. I remember the first time we noticed a user, “dergenx”, actually playing our game, everyone on the team got on and played with him for an hour. It was very exciting. Since the original Crossroads was published, it has been added onto many times as we push the state of the art forward.\" ~ Shedletsky, December 11th, 2006 \"Now We are 10,000\" - Celebrating the 10,000th Roblox user.",
+            "hasVerifiedBadge": true,
+            "imageToken": "T_1818_5fb1",
+            "isPlayable": true,
+            "name": "user1",
+            "placeId": 1818,
+            "price": 0,
+            "reasonProhibited": "None",
+            "sourceDescription": "The classic Roblox level is back! Crossroads is Roblox's very first multiplayer game. It is a classic brick battle game with a destructible environment. All great warriors find themselves here.\n\n\"I joined the Roblox team just as they were rolling out the first multiplayer Roblox level - a very early version of Crossroads. This version featured a castle made by Erik and a white house and playground constructed by Builderman. There were two weapons: the slingshot and the rocket launcher. I remember the first time we noticed a user, “dergenx”, actually playing our game, everyone on the team got on and played with him for an hour. It was very exciting. Since the original Crossroads was published, it has been added onto many times as we push the state of the art forward.\" ~ Shedletsky, December 11th, 2006 \"Now We are 10,000\" - Celebrating the 10,000th Roblox user.",
+            "sourceName": "Crossroads",
+            "universeId": 13058,
+            "universeRootPlaceId": 1818,
+            "url": "https://www.roblox.com/games/1818/Crossroads"
+          }
+        ]
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/games",
+        "query": {
+          "universeIds": "13058"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "allowedGearCategories": [],
+              "allowedGearGenres": [
+                "Ninja"
+              ],
+              "canonicalUrlPath": "/games/1818/Crossroads",
+              "copyingAllowed": false,
+              "createVipServersAllowed": false,
+              "created": "2007-05-01T01:07:04.78Z",
+              "creator": {
+                "hasVerifiedBadge": true,
+                "id": 1,
+                "isRNVAccount": false,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "description": "The classic Roblox level is back! Crossroads is Roblox's very first multiplayer game. It is a classic brick battle game with a destructible environment. All great warriors find themselves here.\n\n\"I joined the Roblox team just as they were rolling out the first multiplayer Roblox level - a very early version of Crossroads. This version featured a castle made by Erik and a white house and playground constructed by Builderman. There were two weapons: the slingshot and the rocket launcher. I remember the first time we noticed a user, “dergenx”, actually playing our game, everyone on the team got on and played with him for an hour. It was very exciting. Since the original Crossroads was published, it has been added onto many times as we push the state of the art forward.\" ~ Shedletsky, December 11th, 2006 \"Now We are 10,000\" - Celebrating the 10,000th Roblox user.",
+              "favoritedCount": 318315,
+              "genre": "Fighting",
+              "genre_l1": "Action",
+              "genre_l2": "Battlegrounds & Fighting",
+              "id": 13058,
+              "isAllGenre": false,
+              "isContentRestricted": false,
+              "isFavoritedByUser": false,
+              "isGenreEnforced": true,
+              "maxPlayers": 15,
+              "name": "Crossroads",
+              "playing": 22,
+              "price": null,
+              "rootPlaceId": 1818,
+              "sourceDescription": null,
+              "sourceName": null,
+              "studioAccessToApisAllowed": false,
+              "universeAvatarType": "PlayerChoice",
+              "untranslated_genre_l1": "action",
+              "updated": "2026-09-24T22:40:42.987Z",
+              "visits": 39640518
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/games/votes",
+        "query": {
+          "universeIds": "13058"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "downVotes": 10824,
+              "id": 13058,
+              "upVotes": 94472
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "games.roblox.com",
+        "path": "/v1/games/1818/servers/0",
+        "query": {
+          "excludeFullGames": "false",
+          "limit": "100",
+          "sortOrder": "2"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "fps": 59.943512,
+              "id": "6d05d9a1-f6e0-46b2-8ba4-94c7d8b658b1",
+              "maxPlayers": 15,
+              "ping": 18,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 7
+            },
+            {
+              "fps": 59.980434,
+              "id": "7b9b36ef-24db-4810-81d8-d3ce289c00cf",
+              "maxPlayers": 15,
+              "ping": 58,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 7
+            },
+            {
+              "fps": 59.965538,
+              "id": "1a17bf43-2b7e-4fb1-b1c9-d02cd43fdb20",
+              "maxPlayers": 15,
+              "ping": 41,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 5
+            },
+            {
+              "fps": 59.875385,
+              "id": "70fabec5-741a-4500-b40b-2e5d983d50d6",
+              "maxPlayers": 15,
+              "ping": 153,
+              "playerTokens": [
+                "token0",
+                "token1",
+                "token2",
+                "token3",
+                "token4"
+              ],
+              "players": [],
+              "playing": 5
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    }
+  ]
+}

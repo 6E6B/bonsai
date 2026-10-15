@@ -1,0 +1,646 @@
+{
+  "captured": "2026-10-14",
+  "source": "live + synthetic",
+  "note": "marketplace-items/v1/items/details recorded live, signed out (Silly Fun 299652, Valkyrie Helm 1365767, Winning Blueberry Head 16595564026). Resellers copied from market.json (names and ids already scrubbed). Purchase responses are synthetic, with the fields the site's ItemPurchase bundle reads: buying for real would spend Robux on the test account (BLOCKERS.md #5).",
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/marketplace-items/v1/items/details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": [
+          {
+            "collectibleItemId": "0d1d5570-68e5-49d8-8c9e-fdb777863bd0",
+            "name": "Valkyrie Helm",
+            "description": "This splendid helm is a replica of ones worn by the valkyries, a group of minor deities who serve Odin in Norse mythology. Led by Freya, they uphold justice and righteousness.",
+            "collectibleProductId": "cf57c03d-6e57-4662-bfe2-9ed0cdf05510",
+            "itemType": 1,
+            "itemRestrictions": null,
+            "creatorHasVerifiedBadge": true,
+            "creatorType": "User",
+            "itemTargetId": 1365767,
+            "itemTargetType": 1,
+            "creatorId": 1,
+            "creatorName": "Roblox",
+            "price": null,
+            "lowestPrice": 259000,
+            "hasResellers": true,
+            "unitsAvailableForConsumption": 0,
+            "offSaleDeadline": "0001-01-01T00:00:00",
+            "assetStock": 12523,
+            "errorCode": null,
+            "saleLocationType": "ShopOnly",
+            "universeIds": [],
+            "experiences": null,
+            "sales": 12523,
+            "lowestResalePrice": 259000,
+            "quantityLimitPerUser": 0,
+            "lowestAvailableResaleProductId": "60c5b548-e12e-4b6b-9cb6-954666bd103b",
+            "lowestAvailableResaleItemInstanceId": "ebd978ec-69ef-49b6-8b70-194ce5f22802",
+            "resaleRestriction": 1,
+            "productSaleStatus": 0,
+            "productTargetId": 6488782941041074,
+            "scheduledRelease": null,
+            "discountInformation": null
+          },
+          {
+            "collectibleItemId": "c04aa0b7-af31-4805-afa5-773274f31add",
+            "name": "Silly Fun",
+            "description": "Super Silly Fun Face?",
+            "collectibleProductId": "a9d8fd64-463e-4cf8-b0af-2d842a550b11",
+            "itemType": 2,
+            "itemRestrictions": null,
+            "creatorHasVerifiedBadge": true,
+            "creatorType": "User",
+            "itemTargetId": 299652,
+            "itemTargetType": 2,
+            "creatorId": 1,
+            "creatorName": "Roblox",
+            "price": 0,
+            "lowestPrice": 0,
+            "hasResellers": false,
+            "unitsAvailableForConsumption": 0,
+            "offSaleDeadline": "0001-01-01T00:00:00",
+            "assetStock": 0,
+            "errorCode": null,
+            "saleLocationType": "ShopAndAllExperiences",
+            "universeIds": [],
+            "experiences": null,
+            "sales": 0,
+            "lowestResalePrice": 0,
+            "quantityLimitPerUser": 0,
+            "lowestAvailableResaleProductId": null,
+            "lowestAvailableResaleItemInstanceId": null,
+            "resaleRestriction": 2,
+            "productSaleStatus": 3,
+            "productTargetId": 8689265699312976,
+            "scheduledRelease": null,
+            "discountInformation": null
+          },
+          {
+            "collectibleItemId": "ea38268f-6f2a-41af-b562-899bbd6da8df",
+            "name": "Winning Blueberry Head",
+            "description": "Embrace the Blueberry...",
+            "collectibleProductId": "54d42489-d4d9-4b09-ae16-10f38d347093",
+            "itemType": 1,
+            "itemRestrictions": null,
+            "creatorHasVerifiedBadge": false,
+            "creatorType": "Group",
+            "itemTargetId": 16595564026,
+            "itemTargetType": 1,
+            "creatorId": 3839858,
+            "creatorName": "Olix's Corner Shop 2.0",
+            "price": 0,
+            "lowestPrice": 285,
+            "hasResellers": true,
+            "unitsAvailableForConsumption": 22923,
+            "offSaleDeadline": "0001-01-01T00:00:00",
+            "assetStock": 99999,
+            "errorCode": null,
+            "saleLocationType": "ExperiencesDevApiOnly",
+            "universeIds": [
+              5114363215
+            ],
+            "experiences": null,
+            "sales": 77076,
+            "lowestResalePrice": 285,
+            "quantityLimitPerUser": 1,
+            "lowestAvailableResaleProductId": "8bfc4918-6c3c-4a9c-b04e-b5362d517e68",
+            "lowestAvailableResaleItemInstanceId": "5d0d2350-323c-4706-94e7-b4a03edab902",
+            "resaleRestriction": 1,
+            "productSaleStatus": 3,
+            "productTargetId": 4583977553012266,
+            "scheduledRelease": null,
+            "discountInformation": null
+          }
+        ]
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/marketplace-sales/v1/item/c04aa0b7-af31-4805-afa5-773274f31add/purchase-item"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "purchased": true,
+          "purchaseResult": "Purchase transaction success.",
+          "errorMessage": null,
+          "pending": false
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "economy.roblox.com",
+        "path": "/v1/user/currency"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "robux": 90
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/marketplace-sales/v1/item/0d1d5570-68e5-49d8-8c9e-fdb777863bd0/resellers",
+        "query": {
+          "limit": "30"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "collectibleItemInstanceId": "3c662a1f-409b-40a9-a3d8-787ebabc8e0d",
+              "collectibleProductId": "b7ae0bff-18ca-4970-82a5-e739fbaf1296",
+              "errorMessage": null,
+              "price": 279900,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user4",
+                "sellerId": 9000000005,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "12b65594-835c-4230-b899-6d6ac0e0817b",
+              "collectibleProductId": "1d7c5296-f4a3-43f9-8d55-cd1a4365b03e",
+              "errorMessage": null,
+              "price": 280000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user5",
+                "sellerId": 9000000006,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "1cfde7f0-a7fe-4972-8679-140968776630",
+              "collectibleProductId": "54250bf9-d24e-4069-bfa4-db1a19eb9c51",
+              "errorMessage": null,
+              "price": 284975,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user6",
+                "sellerId": 9000000007,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "a4b05a72-e200-4f5d-90b2-0b8964b52ca3",
+              "collectibleProductId": "58406b0f-5480-402b-bd83-10a90df5e077",
+              "errorMessage": null,
+              "price": 284977,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user7",
+                "sellerId": 9000000008,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "3f088210-b77b-4eb5-b021-071a770f3c86",
+              "collectibleProductId": "3a72afe2-9a37-4796-9aec-b8bd2991e108",
+              "errorMessage": null,
+              "price": 284978,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user8",
+                "sellerId": 9000000009,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "62de22c4-0375-4cb3-9edc-ec212f8cda52",
+              "collectibleProductId": "b2998413-2d41-4de8-8b1e-6003e5e650f4",
+              "errorMessage": null,
+              "price": 285000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user9",
+                "sellerId": 9000000010,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "ab2b9d38-aea2-448f-9144-c7dca351c628",
+              "collectibleProductId": "ebe99f26-7b48-43c9-9682-7311632dca51",
+              "errorMessage": null,
+              "price": 289999,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user10",
+                "sellerId": 9000000011,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "31748483-161c-4b5c-9004-53cc9a3d098d",
+              "collectibleProductId": "35f02d6d-6e6b-4108-96bf-0a5febe95e02",
+              "errorMessage": null,
+              "price": 290543,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user11",
+                "sellerId": 9000000012,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "677cbc7e-aeb4-4879-aed9-5696a6aa3244",
+              "collectibleProductId": "372ae259-75a8-4b74-8fd7-caec2c17cd83",
+              "errorMessage": null,
+              "price": 299999,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user12",
+                "sellerId": 9000000013,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "9afd2af8-f787-41c9-bfbd-f382ae2cb91a",
+              "collectibleProductId": "2f58470a-78c1-46f6-95e8-73155181f416",
+              "errorMessage": null,
+              "price": 310000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user13",
+                "sellerId": 9000000014,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "33ad3b6e-f87b-4711-963d-70704c9b4f8c",
+              "collectibleProductId": "8075b90a-e0e9-410b-bf01-543b87c48130",
+              "errorMessage": null,
+              "price": 320000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user14",
+                "sellerId": 9000000015,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "9a4c3d21-62bf-40f9-a674-213e7e51eb15",
+              "collectibleProductId": "106aff08-f960-449c-8827-e8f0850dc22f",
+              "errorMessage": null,
+              "price": 332000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user15",
+                "sellerId": 9000000016,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "53e311bf-fab9-416c-9081-b259c2059bc9",
+              "collectibleProductId": "95cbff8a-47e8-4ae6-aa87-3a8762013436",
+              "errorMessage": null,
+              "price": 333333,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user16",
+                "sellerId": 9000000017,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "5f3fd89c-7d85-4844-afc4-76d2a85fcbc5",
+              "collectibleProductId": "3dceac87-c99c-4c77-a3d7-590c946cbcef",
+              "errorMessage": null,
+              "price": 345000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user17",
+                "sellerId": 9000000018,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "d41ebbec-2e1b-4465-ba92-2c08bc3c3304",
+              "collectibleProductId": "4d28c8a1-2c62-48f1-9490-e0b6b2bc4155",
+              "errorMessage": null,
+              "price": 350000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user18",
+                "sellerId": 9000000019,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "561a93a9-cbd6-4b04-99ab-c541ba9e17af",
+              "collectibleProductId": "22aba449-9855-4392-afa6-8cdb5550ec77",
+              "errorMessage": null,
+              "price": 360000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user19",
+                "sellerId": 9000000020,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "a900b926-d8d0-49c3-8ef1-22ff8adccd89",
+              "collectibleProductId": "d9156191-41ad-453e-b731-5cfd3d752b11",
+              "errorMessage": null,
+              "price": 375000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user20",
+                "sellerId": 9000000021,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "9feaa949-f93e-4864-a31f-6fc44643272f",
+              "collectibleProductId": "0656b6dc-9bdb-401f-9ecd-d1a8fec604ad",
+              "errorMessage": null,
+              "price": 377788,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user21",
+                "sellerId": 9000000022,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "1a38a32d-962a-4679-afe7-d34d0ed9728f",
+              "collectibleProductId": "d59143ff-f022-468f-9d8a-d1f4dcadd806",
+              "errorMessage": null,
+              "price": 399999,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user22",
+                "sellerId": 9000000023,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "4eac6fcd-c30f-4605-975f-0ddac866016e",
+              "collectibleProductId": "a4058e14-0218-4905-8fa4-6ffcbde620b0",
+              "errorMessage": null,
+              "price": 400000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user23",
+                "sellerId": 9000000024,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "c83b754d-acfc-4972-9b5f-3c3eb0aec536",
+              "collectibleProductId": "e2bac12b-a62d-49dd-8902-429f3a7b8ced",
+              "errorMessage": null,
+              "price": 400000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user24",
+                "sellerId": 9000000025,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "56a82aa4-74c1-418d-a2f1-edb915a0f3f7",
+              "collectibleProductId": "efcb386a-2209-48fb-8881-203ea92fe171",
+              "errorMessage": null,
+              "price": 400000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user25",
+                "sellerId": 9000000026,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "647f0e91-bdba-45b2-88ef-5599614e3c8c",
+              "collectibleProductId": "e35b04de-bc1c-4281-aef4-3ed1c43b8c3a",
+              "errorMessage": null,
+              "price": 429000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user26",
+                "sellerId": 9000000027,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "9c10c8cb-4c32-43c7-9543-0a560fac99a9",
+              "collectibleProductId": "7f6d2b5d-cc5c-4cea-b674-84aa876dbe4b",
+              "errorMessage": null,
+              "price": 444444,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user27",
+                "sellerId": 9000000028,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "fb5e06d5-7b6a-4e32-a913-8f45c352bb66",
+              "collectibleProductId": "5a2555f7-a12b-49a3-bfac-1d98d7e54c7a",
+              "errorMessage": null,
+              "price": 450000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user28",
+                "sellerId": 9000000029,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "7339f342-16e1-4aa5-9baf-9af5a31fd0c4",
+              "collectibleProductId": "5dd4bc9b-ac37-4d95-aab3-a4e9bc0b6bb9",
+              "errorMessage": null,
+              "price": 499998,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user29",
+                "sellerId": 9000000030,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "c0601477-d317-469c-9945-5257b71cc98a",
+              "collectibleProductId": "08bb96e2-e9a3-4116-9268-c077b402565a",
+              "errorMessage": null,
+              "price": 500000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user30",
+                "sellerId": 9000000031,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "b77f4b84-6db3-441a-9aca-6fe08a851812",
+              "collectibleProductId": "1679ce3f-3ec7-47af-b111-1b1de02700dd",
+              "errorMessage": null,
+              "price": 500000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user31",
+                "sellerId": 9000000032,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "649b3036-abc5-4e86-bbe6-7cd9aaab62aa",
+              "collectibleProductId": "d5dc8ae5-2aae-49de-b4cc-419341eccdd0",
+              "errorMessage": null,
+              "price": 500000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user32",
+                "sellerId": 9000000033,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            },
+            {
+              "collectibleItemInstanceId": "20bad59e-9d45-4a41-a8db-c743be9a526e",
+              "collectibleProductId": "6fe0587b-e998-45c3-b2b9-adb37d4b991d",
+              "errorMessage": null,
+              "price": 550000,
+              "seller": {
+                "hasVerifiedBadge": false,
+                "name": "user33",
+                "sellerId": 9000000034,
+                "sellerType": "User"
+              },
+              "serialNumber": null
+            }
+          ],
+          "nextPageCursor": "id_2zgAIZHDEEG_gWHvpmEXDsrmts31LmR0",
+          "previousPageCursor": "id_2zgAERVzEELeuC_8YyklwgqXnOfuvEpY"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/marketplace-sales/v1/item/0d1d5570-68e5-49d8-8c9e-fdb777863bd0/purchase-resale"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "purchased": false,
+          "purchaseResult": "Purchase transaction failed.",
+          "errorMessage": "InsufficientBalance",
+          "pending": false
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/game-passes/v1/game-passes/3714256301/purchase"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "purchased": true,
+          "reason": "Success",
+          "productId": 3714256301,
+          "statusCode": 200,
+          "assetId": 1991372518,
+          "transactionVerb": "bought"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "economy.roblox.com",
+        "path": "/v1/user/currency"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "robux": 40
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/game-passes/v1/game-passes/3714256301/purchase"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "purchased": false,
+          "reason": "TwoStepVerificationRequired"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+import { convertFileSrc, isTauri } from "@tauri-apps/api/core"
+
+/** Thumbnail kinds served by the `thumb://` protocol (crates/bonsai-tauri/src/thumb.rs). */
+export type ThumbKind =
+  | "headshot"
+  | "avatar"
+  | "game_icon"
+  | "game_thumbnail"
+  | "asset"
+  | "bundle"
+  | "group_icon"
+  | "badge_icon"
+  | "game_pass"
+  | "outfit"
+
+/** URL for a thumbnail. Use it as an `<img src>`; the webview caches it. Undefined outside the
+ * app (`bun run dev` in a browser), so components show their fallback. */
+export function thumbUrl(kind: ThumbKind, id: number | string, large = false) {
+  if (!isTauri()) return undefined
+  return convertFileSrc(`${kind}.${id}.${large ? "l" : "s"}`, "thumb")
+}

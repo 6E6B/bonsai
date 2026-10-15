@@ -1,0 +1,41 @@
+@layer components {
+  [data-component="pips"] {
+    --pips-fill: var(--color-fg-muted);
+    --pips-height: 12px;
+
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  [data-component="pips"][data-level="low"] {
+    --pips-fill: var(--color-danger);
+  }
+
+  [data-component="pips"][data-level="fair"] {
+    --pips-fill: var(--color-warning);
+  }
+
+  [data-component="pips"][data-level="high"] {
+    --pips-fill: var(--color-success);
+  }
+
+  [data-component="pips"] [data-slot="track"] {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: var(--pips-height);
+  }
+
+  /* Each bar is taller than the last, from a third of the height to all of it. */
+  [data-component="pips"] [data-slot="pip"] {
+    width: 3px;
+    height: calc(var(--pips-height) * (0.34 + 0.66 * var(--pip-step)));
+    border-radius: var(--radius-full);
+    background: var(--pips-empty, var(--color-line-strong));
+  }
+
+  [data-component="pips"] [data-slot="pip"][data-on] {
+    background: var(--pips-fill);
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "captured": "2026-10-12",
+  "source": "synthetic",
+  "note": "Friend and follow actions. Shapes from live 4xx probes and the site; not recorded live because each would change a real account.",
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/request-friendship"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "isCaptchaRequired": false
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/2000001/accept-friend-request"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/2000002/decline-friend-request"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 10,
+              "message": "The friend request does not exist.",
+              "userFacingMessage": "Friend request does not exist"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/user/friend-requests/decline-all"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/156/unfriend"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/1/follow"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true,
+          "isCaptchaRequired": false
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/1/unfollow"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+# The site's realtime hub (SignalR, JSON protocol over a WebSocket). Not in the tracker.
+# Found 2026-10-13 in www.roblox.com/home: Roblox.RealTimeSettings.NotificationsEndpoint.
+# The site connects with skipNegotiation (negotiate answers 404). After the handshake the hub
+# sends `subscriptionStatus`, then `notification(namespace, detailJson, sequence)` invocations
+# (ChatNotifications, FriendshipNotifications, NotificationStream, MessageNotification, ...).
+# Fixture: realtime.json (live handshake and subscription frames, synthetic notifications).
+swagger: "2.0"
+host: realtime-signalr.roblox.com
+info: { title: "realtime-signalr (undocumented)", version: undocumented }
+paths:
+  /userhub:
+    get:
+      x-captured: "2026-10-13, every signed-in page on www.roblox.com"
+      x-rust-name: get_userhub
+      summary: WebSocket upgrade for the realtime hub. Use rbx_api::realtime, not this request directly.
+      responses:
+        "101": { description: Switching protocols }
+definitions: {}

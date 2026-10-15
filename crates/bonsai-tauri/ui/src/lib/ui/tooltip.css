@@ -1,0 +1,24 @@
+@layer components {
+  [data-slot="tooltip-trigger"] {
+    display: inline-flex;
+  }
+
+  [data-component="tooltip"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 320px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--color-raised);
+    box-shadow: var(--shadow-popover);
+    color: var(--color-fg);
+    font-size: var(--text-sm);
+    transform-origin: var(--kb-tooltip-content-transform-origin);
+    animation: ui-fade-in var(--duration) var(--ease);
+  }
+
+  [data-component="tooltip"][data-closed] {
+    animation: ui-fade-out var(--duration) var(--ease);
+  }
+}

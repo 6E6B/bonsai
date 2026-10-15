@@ -1,0 +1,17 @@
+# Endpoints on auth.roblox.com that the tracker's /docs mirror does not list.
+swagger: "2.0"
+host: auth.roblox.com
+info: { title: "auth (undocumented)", version: undocumented }
+paths:
+  /v1/authentication-ticket:
+    post:
+      # Captured 2026-10-12 with a live request (fixture: auth_ticket.json).
+      # Called by every Play / Join button on www.roblox.com/games/* before opening roblox-player:.
+      x-captured: "2026-10-12, Play button on www.roblox.com/games/{placeId}"
+      x-rust-name: post_authentication_ticket
+      summary: Mint a one-shot authentication ticket for the game client. The ticket is returned in the `rbx-authentication-ticket` response header.
+      parameters:
+        - { in: header, name: Referer, type: string, required: true, description: "Must be https://www.roblox.com/" }
+        - { in: header, name: RBXAuthenticationNegotiation, type: string, description: "The site sends 1" }
+      responses:
+        "200": { description: OK }

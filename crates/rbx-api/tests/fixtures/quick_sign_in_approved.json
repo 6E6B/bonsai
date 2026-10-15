@@ -1,0 +1,96 @@
+{
+  "captured": "2026-10-14",
+  "source": "synthetic",
+  "note": "Quick sign-in approved on another device: UserLinked, then Validated, then /v2/login with ctype AuthToken sets the cookie. Statuses and the login body are from the site's CrossDeviceLoginDisplayCode.js and ReactLogin.js; approval can't be recorded without a second device.",
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/create"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "code": "ABC123",
+          "status": "Created",
+          "privateKey": "00000000-0000-4000-8000-000000000001",
+          "expirationTime": "2099-01-01T00:00:00.0000000",
+          "imagePath": "/v1/login/qr-code-image?key=00000000-0000-4000-8000-000000000001&code=ABC123"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "UserLinked",
+          "accountName": "TestUser",
+          "accountPictureUrl": null,
+          "expirationTime": "2099-01-01T00:00:00.0000000"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "Validated",
+          "accountName": "TestUser",
+          "accountPictureUrl": null,
+          "expirationTime": "2099-01-01T00:00:00.0000000"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "auth.roblox.com",
+        "path": "/v2/login",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "set-cookie": ".ROBLOSECURITY=_|WARNING:-DO-NOT-SHARE-THIS.--quick-sign-in-cookie; domain=.roblox.com; path=/; secure; HttpOnly"
+        },
+        "body": {
+          "user": {
+            "id": 1000001,
+            "name": "TestUser",
+            "displayName": "TestUser"
+          },
+          "isBanned": false
+        }
+      }
+    }
+  ]
+}

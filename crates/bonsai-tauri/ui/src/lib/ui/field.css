@@ -1,0 +1,18 @@
+/* Label, description and error text shared by every form control. */
+@layer components {
+  [data-slot="field-label"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  [data-slot="field-description"] {
+    color: var(--color-fg-faint);
+    font-size: var(--text-sm);
+  }
+
+  [data-slot="field-error"] {
+    color: var(--color-danger);
+    font-size: var(--text-sm);
+  }
+}

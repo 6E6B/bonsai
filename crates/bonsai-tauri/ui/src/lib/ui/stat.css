@@ -1,0 +1,20 @@
+@layer components {
+  [data-component="stat"] {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  [data-component="stat"] [data-slot="label"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  [data-component="stat"] [data-slot="value"] {
+    overflow: hidden;
+    color: var(--color-fg);
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
