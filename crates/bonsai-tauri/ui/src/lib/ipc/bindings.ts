@@ -148,6 +148,14 @@ export const commands = {
 	inventoryCategories: (userId: Id) => __TAURI_INVOKE<List<InvCategoryView>>("inventory_categories", { userId }),
 	inventoryItems: (userId: Id, slot: string, oldestFirst: boolean) => __TAURI_INVOKE<Paged<ItemCard>>("inventory_items", { userId, slot, oldestFirst }),
 	inventoryPasses: (userId: Id) => __TAURI_INVOKE<Paged<PassCard>>("inventory_passes", { userId }),
+	/**  Badges in someone's inventory, newest first. */
+	inventoryBadges: (userId: Id) => __TAURI_INVOKE<Paged<UserBadge>>("inventory_badges", { userId }),
+	inventoryPlaces: (userId: Id) => __TAURI_INVOKE<Paged<PlaceCard>>("inventory_places", { userId }),
+	/**
+	 *  An inventory item's details. Assets the catalog doesn't list (decals, audio, models...) fall
+	 *  back to their economy details.
+	 */
+	inventoryInspect: (id: Id, bundle: boolean) => __TAURI_INVOKE<InspectView>("inventory_inspect", { id, bundle }),
 	inventoryTotals: (userId: Id) => __TAURI_INVOKE<InvTotalsView>("inventory_totals", { userId }),
 	/**
 	 *  Status of the values table. Cheap, and asking refetches the table once it is two minutes
@@ -771,6 +779,31 @@ export type Home = {
  */
 export type Id = number;
 
+/**  What the inventory's inspection drawer shows about one item. */
+export type InspectView = {
+	loading: boolean,
+	error: string | null,
+	/**  Empty until loaded. */
+	name: string,
+	description: string,
+	creator: string,
+	creatorId: Id,
+	creatorIsGroup: boolean,
+	creatorVerified: boolean,
+	/**  "Hat", "Decal", "Body bundle"... */
+	typeName: string,
+	/**  "Limited", "Limited U", "Collectible" or nothing. */
+	limited: string | null,
+	/**  "R$ 1,234", "Free" or "Off sale": what a new copy costs. */
+	priceLabel: string,
+	/**  Cheapest copy for sale by another user, for limiteds. */
+	lowestResale: number | null,
+	/**  ISO date it was made; empty when unknown. */
+	created: string,
+	/**  The Marketplace lists it, so its item page has more. */
+	inCatalog: boolean,
+};
+
 export type InvCategoryView = {
 	name: string,
 	/**  `value` is what `inventory_items` takes as `slot`. */
@@ -1133,6 +1166,17 @@ export type Person = {
 	sentAt: string | null,
 	/**  Whether the active account follows them, for followers. `None` when not known yet. */
 	following: boolean | null,
+};
+
+/**  A place someone made, in their inventory. */
+export type PlaceCard = {
+	placeId: Id,
+	/**  0 when unknown. */
+	universeId: Id,
+	name: string,
+	creator: string,
+	/**  Paid access price; `None` when free to play. */
+	price: number | null,
 };
 
 /**  A point on a chart: ms since the epoch, value. */

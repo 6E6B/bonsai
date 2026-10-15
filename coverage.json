@@ -5198,7 +5198,7 @@
       "module": "inventory::v1",
       "path": "/v1/users/{userId}/places/inventory",
       "summary": "Gets Created, MyGames, or OtherGames places inventory for a user",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6958,7 +6958,7 @@
       "module": "apis::undocumented",
       "path": "/game-passes/v1/users/{userId}/game-passes",
       "summary": "Passes a user owns, newest first.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -7742,5 +7742,5 @@
     }
   ],
   "total": 774,
-  "used": 218
+  "used": 220
 }

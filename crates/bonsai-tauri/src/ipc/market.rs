@@ -2,8 +2,8 @@
 //!
 //! Commands about "this item" read it from the argument (`item:<id>`, `bundle:<id>` or a bare
 //! asset id) or else the page context. `list.more` keys here carry what they page:
-//! `catalog:<query id>`, `resellers:<collectible id>`, `owners:<asset id>` and
-//! `inventory:<user>:<slot>:<oldest first>`.
+//! `catalog:<query id>`, `resellers:<collectible id>`, `owners:<asset id>`,
+//! `inventory:<user>:<slot>:<oldest first>`, and `passes:`, `badges:` and `places:<user>`.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::State;
 
-use super::{Id, Invocation, ItemCard, List, count, viewer};
+use super::{Id, Invocation, ItemCard, List, UserBadge, count, viewer};
 
 /// A choice in a picker: value and label.
 #[derive(Clone, Debug, Serialize, Type)]
@@ -704,7 +704,7 @@ pub fn inventory_categories(core: State<'_, Arc<Core>>, user_id: Id) -> List<Inv
 }
 
 /// Why an inventory can't be shown, or `None` when it can (or is still being checked).
-fn private_inventory(core: &Core, viewer: AccountId, user_id: u64) -> Option<List<ItemCard>> {
+fn private_inventory<T>(core: &Core, viewer: AccountId, user_id: u64) -> Option<List<T>> {
     let can = core.can_view_inventory(viewer, user_id);
     match can.data.as_deref() {
         Some(true) => None,
@@ -810,15 +810,7 @@ pub struct PassCard {
 pub fn inventory_passes(core: State<'_, Arc<Core>>, user_id: Id) -> Paged<PassCard> {
     let more_key = format!("passes:{}", user_id.0);
     if let Some(list) = private_inventory(&core, viewer(&core), user_id.0) {
-        return Paged {
-            list: List {
-                loading: list.loading,
-                error: list.error,
-                items: Vec::new(),
-                more: false,
-            },
-            more_key,
-        };
+        return Paged { list, more_key };
     }
     Paged {
         list: List::paged(core.user_passes(user_id.0, false), |p| PassCard {
@@ -831,6 +823,163 @@ pub fn inventory_passes(core: State<'_, Arc<Core>>, user_id: Id) -> Paged<PassCa
             price: p.price.and_then(count),
         }),
         more_key,
+    }
+}
+
+/// Badges in someone's inventory, newest first.
+#[tauri::command]
+#[specta::specta]
+pub fn inventory_badges(core: State<'_, Arc<Core>>, user_id: Id) -> Paged<UserBadge> {
+    let more_key = format!("badges:{}", user_id.0);
+    let a = viewer(&core);
+    if let Some(list) = private_inventory(&core, a, user_id.0) {
+        return Paged { list, more_key };
+    }
+    Paged {
+        list: List::paged(core.user_badges(a, user_id.0, false), |b| UserBadge {
+            id: Id(b.id),
+            name: b.name.clone(),
+            description: b.description.clone(),
+            win_rate: b.win_rate,
+            place_id: Id(b.place_id),
+        }),
+        more_key,
+    }
+}
+
+/// A place someone made, in their inventory.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaceCard {
+    pub place_id: Id,
+    /// 0 when unknown.
+    pub universe_id: Id,
+    pub name: String,
+    pub creator: String,
+    /// Paid access price; `None` when free to play.
+    pub price: Option<u32>,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn inventory_places(core: State<'_, Arc<Core>>, user_id: Id) -> Paged<PlaceCard> {
+    let more_key = format!("places:{}", user_id.0);
+    if let Some(list) = private_inventory(&core, viewer(&core), user_id.0) {
+        return Paged { list, more_key };
+    }
+    Paged {
+        list: List::paged(core.user_places(user_id.0, false), |p| PlaceCard {
+            place_id: Id(p.place_id),
+            universe_id: Id(p.universe_id),
+            name: p.name.clone(),
+            creator: p.creator.clone(),
+            price: p.price.and_then(count),
+        }),
+        more_key,
+    }
+}
+
+/// What the inventory's inspection drawer shows about one item.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct InspectView {
+    pub loading: bool,
+    pub error: Option<String>,
+    /// Empty until loaded.
+    pub name: String,
+    pub description: String,
+    pub creator: String,
+    pub creator_id: Id,
+    pub creator_is_group: bool,
+    pub creator_verified: bool,
+    /// "Hat", "Decal", "Body bundle"...
+    pub type_name: String,
+    /// "Limited", "Limited U", "Collectible" or nothing.
+    pub limited: Option<String>,
+    /// "R$ 1,234", "Free" or "Off sale": what a new copy costs.
+    pub price_label: String,
+    /// Cheapest copy for sale by another user, for limiteds.
+    pub lowest_resale: Option<u32>,
+    /// ISO date it was made; empty when unknown.
+    pub created: String,
+    /// The Marketplace lists it, so its item page has more.
+    pub in_catalog: bool,
+}
+
+impl InspectView {
+    fn waiting(loading: bool, error: Option<String>) -> Self {
+        InspectView {
+            loading,
+            error,
+            name: String::new(),
+            description: String::new(),
+            creator: String::new(),
+            creator_id: Id(0),
+            creator_is_group: false,
+            creator_verified: false,
+            type_name: String::new(),
+            limited: None,
+            price_label: String::new(),
+            lowest_resale: None,
+            created: String::new(),
+            in_catalog: false,
+        }
+    }
+}
+
+/// An inventory item's details. Assets the catalog doesn't list (decals, audio, models...) fall
+/// back to their economy details.
+#[tauri::command]
+#[specta::specta]
+pub fn inventory_inspect(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> InspectView {
+    let r = core.item(item_ref(id, bundle));
+    if let Some(d) = r.data {
+        let c = &d.card;
+        return InspectView {
+            name: c.name.clone(),
+            description: d.description.clone(),
+            creator: c.creator.clone(),
+            creator_id: Id(c.creator_id),
+            creator_is_group: c.creator_is_group,
+            creator_verified: c.creator_verified,
+            type_name: c.type_name().to_owned(),
+            limited: c.limited.label().map(str::to_owned),
+            price_label: match c.price.filter(|_| !c.off_sale) {
+                Some(0) => "Free".to_owned(),
+                Some(p) => rbx_core::fmt::robux(p),
+                None => "Off sale".to_owned(),
+            },
+            lowest_resale: c
+                .lowest_resale
+                .filter(|p| *p > 0 && c.limited.resellable())
+                .and_then(count),
+            created: d.created.clone(),
+            in_catalog: true,
+            ..InspectView::waiting(r.loading, None)
+        };
+    }
+    if bundle || r.error.is_none() {
+        return InspectView::waiting(r.loading || r.error.is_none(), r.error);
+    }
+    let a = core.asset_info(id.0);
+    let Some(x) = a.data else {
+        return InspectView::waiting(a.loading || a.error.is_none(), a.error);
+    };
+    InspectView {
+        name: x.name.clone(),
+        description: x.description.clone(),
+        creator: x.creator.clone(),
+        creator_id: Id(x.creator_id),
+        creator_is_group: x.creator_is_group,
+        creator_verified: x.creator_verified,
+        type_name: rbx_core::market::asset_type_name(x.asset_type).to_owned(),
+        price_label: match x.price {
+            Some(0) => "Free".to_owned(),
+            Some(p) => rbx_core::fmt::robux(p),
+            None => "Off sale".to_owned(),
+        },
+        created: x.created.clone(),
+        ..InspectView::waiting(a.loading, None)
     }
 }
 
@@ -1078,6 +1227,10 @@ fn more(core: &Core, inv: &Invocation, account: Option<AccountId>) -> Option<Res
             .parse()
             .map(|id| drop(core.user_badges(viewer, id, true)))
             .map_err(|_| "Whose badges?".to_owned()),
+        "places" => rest
+            .parse()
+            .map(|id| drop(core.user_places(id, true)))
+            .map_err(|_| "Whose places?".to_owned()),
         "inventory" => (|| {
             let mut parts = rest.splitn(3, ':');
             let user = parts.next().and_then(|u| u.parse().ok());

@@ -1235,13 +1235,20 @@ async fn marketplace_item_page_and_public_inventory() {
             .iter()
             .any(|c| c.slots.contains(&("Head".into(), InvSlot::Asset(8))))
     );
+    let slots: Vec<InvSlot> = inv_cats.iter().flat_map(|c| &c.slots).map(|s| s.1).collect();
     assert!(
-        inv_cats
-            .iter()
-            .flat_map(|c| &c.slots)
-            .all(|s| !matches!(s.1, InvSlot::Asset(21 | 34 | 9))),
+        slots.iter().all(|s| !matches!(s, InvSlot::Asset(21 | 34 | 9))),
         "badges, passes and places are listed elsewhere"
     );
+    for s in [
+        InvSlot::Badges,
+        InvSlot::Passes,
+        InvSlot::Places,
+        InvSlot::Asset(13),
+        InvSlot::Asset(3),
+    ] {
+        assert!(slots.contains(&s), "{s:?} in {slots:?}");
+    }
     assert!(*poll(|| c.can_view_inventory(ME, 156)).await);
     let col = poll(|| c.collectibles(ME, 156)).await;
     assert!(!col.is_empty() && col.iter().any(|i| i.rap.is_some()));
@@ -1268,6 +1275,47 @@ async fn marketplace_item_page_and_public_inventory() {
             .filter(|q| q.url.path().starts_with("/api.rolimons.com"))
             .all(|q| !q.headers.contains_key("cookie"))
     );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn inventory_passes_badges_places_and_asset_info() {
+    let replay = Replay::from_fixture(&replay::load("inventory")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+
+    let passes = poll(|| c.user_passes(156, false)).await;
+    assert!(
+        passes.items.is_empty() && passes.next.is_none(),
+        "builderman owns none"
+    );
+    let badges = poll(|| c.user_badges(ME, 156, false)).await;
+    assert!(!badges.items.is_empty());
+    let places = poll(|| c.user_places(156, false)).await;
+    assert!(places.items.len() > 5, "{}", places.items.len());
+    assert!(places.next.is_none(), "one page of 100");
+    let martian = &places.items[0];
+    assert_eq!((martian.place_id, martian.universe_id), (458_486, 63_778));
+    assert_eq!(martian.name, "Martian Invasion");
+    assert_eq!(
+        (martian.creator.as_str(), martian.creator_is_group),
+        ("builderman", false)
+    );
+    assert!(
+        places
+            .items
+            .iter()
+            .all(|p| p.place_id > 0 && p.price.is_none_or(|x| x > 0))
+    );
+
+    // A decal: not in the catalog, so the drawer reads economy details.
+    let decal = poll(|| c.asset_info(41_372_326)).await;
+    assert_eq!(decal.asset_type, 13);
+    assert_eq!(decal.name, "builderman");
+    assert!(!decal.creator.is_empty() && decal.creator_id > 0 && !decal.creator_is_group);
+    assert_eq!(decal.price, None);
+    assert!(decal.created.starts_with("2010-12-02"));
 }
 
 #[tokio::test(flavor = "multi_thread")]

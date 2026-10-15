@@ -929,6 +929,54 @@ async fn market() {
     );
 }
 
+/// The extra inventory categories rbx-core reads, as the test account (badges need sign-in):
+/// builderman's (156) game passes,
+/// badges and created places (two pages, page-number cursor), and a decal (41372326) the catalog
+/// doesn't list, read from economy details for the inspection drawer.
+#[tokio::test]
+async fn inventory() {
+    let l = live().await;
+    let c = &l.client;
+    let p = apis::undocumented::GetUserGamePassesParams {
+        count: Some(100),
+        exclusive_start_id: None,
+    };
+    apis::undocumented::get_user_game_passes(c, 156, &p)
+        .await
+        .unwrap();
+    let p = badges::v1::GetUsersByUserIdBadgesParams {
+        limit: Some(100),
+        cursor: None,
+        sort_order: Some(badges::v1::GetUniversesByUniverseIdBadgesSortOrder::Desc),
+    };
+    badges::v1::get_users_by_user_id_badges(c, 156, &p).await.unwrap();
+    let mut cursor = 1;
+    for _ in 0..2 {
+        let p = inventory::v1::GetUsersByUserIdPlacesInventoryParams {
+            places_tab: 3,
+            items_per_page: 100,
+            cursor,
+        };
+        let r = inventory::v1::get_users_by_user_id_places_inventory(c, 156, &p)
+            .await
+            .unwrap();
+        assert!(!r.data.unwrap_or_default().is_empty());
+        let Some(next) = r.next_page_cursor.and_then(|n| n.parse().ok()) else {
+            break;
+        };
+        cursor = next;
+    }
+    let d = economy::undocumented::get_asset_economy_details(c, 41_372_326)
+        .await
+        .unwrap();
+    assert_eq!(d.asset_type_id, Some(13));
+    l.save(
+        "inventory",
+        "Signed in as the test account: builderman's (156) game passes, badges and created places (placesTab=3, two \
+         pages), and economy details for decal 41372326, which the catalog doesn't list.",
+    );
+}
+
 /// Rolimons player stats (third party, opt-in), signed out: builderman (156), Roblox (1) with
 /// every badge, and an id Rolimons never scanned (404).
 #[tokio::test]

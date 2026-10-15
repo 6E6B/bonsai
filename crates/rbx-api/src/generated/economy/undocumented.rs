@@ -13,6 +13,24 @@ use crate::rt::{Client, FilePart, Method, Request, Result};
 /// Host for every operation in this module.
 pub const HOST: &str = "economy.roblox.com";
 
+/// `AssetEconomyCreator`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AssetEconomyCreator {
+    #[serde(rename = "CreatorType")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub creator_type: Option<String>,
+    #[serde(rename = "HasVerifiedBadge")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_verified_badge: Option<bool>,
+    #[serde(rename = "Id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+    #[serde(rename = "Name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+}
+
 /// `AssetEconomyDetails`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -20,9 +38,27 @@ pub struct AssetEconomyDetails {
     #[serde(rename = "AssetId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub asset_id: Option<i64>,
+    #[serde(rename = "AssetTypeId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub asset_type_id: Option<i32>,
     #[serde(rename = "Created")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created: Option<String>,
+    #[serde(rename = "Creator")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub creator: Option<AssetEconomyCreator>,
+    #[serde(rename = "Description")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(rename = "IsForSale")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_for_sale: Option<bool>,
+    #[serde(rename = "Name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(rename = "PriceInRobux")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub price_in_robux: Option<i64>,
     #[serde(rename = "Sales")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sales: Option<i64>,

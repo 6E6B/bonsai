@@ -18,7 +18,10 @@ paths:
   /v2/assets/{assetId}/details:
     get:
       # Captured 2026-10-14 with a live request, signed out (fixture: market.json).
-      # Used by item pages to read Created and Updated timestamps for assets.
+      # Used by item pages to read Created and Updated timestamps for assets, and by the
+      # inventory drawer for assets the catalog doesn't know (decals, audio, models...);
+      # Name, Description, AssetTypeId, Creator and price checked live 2026-10-15 on decal
+      # 41372326 (fixture: inventory.json).
       x-captured: "2026-10-14, www.roblox.com/catalog/1365767"
       x-rust-name: get_asset_economy_details
       summary: Economy metadata for an asset, including Created and Updated timestamps.
@@ -35,6 +38,19 @@ definitions:
     type: object
     properties:
       AssetId: { type: integer, format: int64 }
+      Name: { type: string }
+      Description: { type: string }
+      AssetTypeId: { type: integer, format: int32 }
+      Creator: { $ref: "#/definitions/AssetEconomyCreator" }
+      PriceInRobux: { type: integer, format: int64 }
+      IsForSale: { type: boolean }
       Created: { type: string }
       Updated: { type: string }
       Sales: { type: integer, format: int64 }
+  AssetEconomyCreator:
+    type: object
+    properties:
+      Id: { type: integer, format: int64 }
+      Name: { type: string }
+      CreatorType: { type: string }
+      HasVerifiedBadge: { type: boolean }

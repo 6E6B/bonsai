@@ -4,7 +4,19 @@ import { compact, percent } from "~/lib/format"
 import type { GameCard, ValueTag } from "~/lib/ipc/bindings"
 import { gameMenu, itemMenu, itemTarget, joinUser } from "~/lib/menus"
 import { thumbUrl } from "~/lib/thumb"
-import { Badge, Button, ContextMenu, Icon, ListItem, type MenuEntry, Robux, Thumbnail, Tile, Tooltip } from "~/lib/ui"
+import {
+  Badge,
+  Button,
+  ContextMenu,
+  Icon,
+  ListItem,
+  type MenuEntry,
+  Robux,
+  Thumbnail,
+  Tile,
+  Tooltip,
+  VerifiedBadge,
+} from "~/lib/ui"
 import { ValueAmount, ValueMarker } from "~/lib/value-tags"
 
 /** Grid classes for tiles, so every screen's tiles are the same size. `tileGrid` for square
@@ -103,6 +115,8 @@ export interface TileItem {
   rap?: number | null
   /** Rolimons' data, when values are on. */
   values?: ValueTag | null
+  creator?: string
+  creatorVerified?: boolean
 }
 
 const marker = (t: ValueTag | null | undefined) => !!t && (t.projected || !!t.demand || !!t.trend)
@@ -116,6 +130,8 @@ export function ItemTile(props: {
   showSerial?: boolean
   /** Show recent average price instead of the list price. */
   showRap?: boolean
+  /** Show the creator, with a check when verified, after the price. */
+  showCreator?: boolean
   /** Extra rows at the end of the right-click menu. */
   menu?: MenuEntry[]
   /** See `Tile`'s `fixed`. */
@@ -131,6 +147,14 @@ export function ItemTile(props: {
               {(rap) => <Robux amount={rap()} />}
             </Show>
             <Show when={props.item.values?.value}>{(v) => <ValueAmount amount={v()} compact />}</Show>
+            <Show when={props.showCreator && props.item.creator}>
+              <span class="flex min-w-0 items-center gap-1">
+                <span class="truncate">{props.item.creator}</span>
+                <Show when={props.item.creatorVerified}>
+                  <VerifiedBadge size={12} />
+                </Show>
+              </span>
+            </Show>
           </span>
         }
         src={thumbUrl(props.item.bundle ? "bundle" : "asset", props.item.id)}

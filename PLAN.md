@@ -52,6 +52,8 @@ Area: `features/inventory`, `rbx-core/src/inventory.rs`.
 - Wear and remove directly from inventory.
 - Search and filtering. Use the virtual list for anything over about 100 rows.
 
+Status 2026-10-15: built. Places list only what the user made, and the passes fixture is empty (BLOCKERS.md #15).
+
 ### Phase 4: Profiles and friends
 Area: `features/profile`, `features/friends`, `rbx-core/src/people.rs`.
 - Followers list with follow/unfollow toggle, paginated.

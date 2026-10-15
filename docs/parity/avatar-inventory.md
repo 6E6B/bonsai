@@ -43,27 +43,28 @@
   - [ ] Reset avatar to default appearance button — no reset endpoint in the tracker; need a capture of what the site sends
 
 ## Inventory
-- [ ] **Category Navigation**:
+- [x] **Category Navigation**:
   - [x] Collectibles / Limiteds (RAP, value, serial number, original price)
   - [x] Accessories (Head, Face, Neck, Shoulder, Front, Back, Waist, Gear)
   - [x] Clothing (Classic Shirts, Classic Pants, Classic T-Shirts, Tops, Outerwear, Bottoms, Shoes)
   - [x] Body Parts (Hair, Faces, Heads, Packages)
   - [x] Animations & Emotes
-  - [ ] Game Passes (across all experiences)
-  - [ ] Badges
-  - [ ] Places / Experiences owned
-  - [ ] Development Assets (Audio, Decals, Meshes, Models, Plugins, Videos)
-- [ ] **Item Card Details**:
-  - [ ] Asset thumbnail, name, creator name, verified badge
+  - [x] Game Passes (across all experiences) — the replay fixture has none: no public account with passes was found (BLOCKERS.md #15)
+  - [x] Badges — newest first; click opens the experience
+  - [x] Places / Experiences owned — places the user made only; the other place tabs need a capture (BLOCKERS.md #15)
+  - [x] Development Assets (Audio, Decals, Meshes, Models, Plugins, Videos) — from the inventory's own category list
+- [x] **Item Card Details**:
+  - [x] Asset thumbnail, name, creator name, verified badge
   - [x] Stacked item count badge (e.g. `x4` copies owned)
   - [x] Limited / Limited U serial number badge (`#12` of 500)
   - [x] Copy Asset ID button
-- [ ] **Inspection & Actions**:
-  - [ ] Quick inspection drawer (description, creator, asset ID, resale price)
-  - [ ] Direct Wear / Remove button on compatible inventory items
+- [x] **Inspection & Actions**:
+  - [x] Quick inspection drawer (description, creator, asset ID, resale price) — click a tile or `inventory.inspect`; assets the catalog doesn't list (decals, audio, models) come from the economy asset details
+  - [x] Direct Wear / Remove button on compatible inventory items — in the drawer and the tile menu, for the active account's own wearable items; worn tiles have a ring
   - [x] Delete asset from inventory (for free items, badges, or decals where supported)
-- [ ] **Search & Filtering**:
-  - [x] Search within inventory by item name
+- [x] **Search & Filtering**:
+  - [x] Search within inventory by item name, creator or exact ID
+  - [x] Filter: all, limiteds, wearing, more than one copy, for sale (`inventory.filter`)
   - [x] Sort order: Recently Acquired, Oldest, Price Low to High, Price High to Low — price sorts use the loaded items (RAP for collectibles)
 - [x] **Other Users' Inventories**:
   - [x] Inspect other users' public inventories

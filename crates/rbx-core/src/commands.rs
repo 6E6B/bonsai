@@ -302,6 +302,8 @@ commands! {
     ViewInventory => "inventory.view", "Open a user's inventory", ["inventory", "items", "collectibles", "limiteds"], User, [];
     DeleteInventoryItem => "inventory.delete", "Delete an item from your inventory", ["delete", "remove", "inventory"], Text, [];
     SortInventory => "inventory.sort", "Sort the inventory (newest, oldest, price_asc, price_desc, rap, value, demand)", ["inventory", "sort", "order", "price", "rap", "oldest", "newest"], Text, [];
+    FilterInventory => "inventory.filter", "Filter the inventory (all, limited, wearing, copies, for_sale)", ["inventory", "filter", "show only", "limited", "wearing", "duplicates"], Text, [];
+    InspectInventoryItem => "inventory.inspect", "Inspect an inventory item", ["inventory", "inspect", "details", "drawer", "info"], Text, [];
     TradeWith => "trade.new", "Send a trade to", ["trade", "offer", "new trade"], User, [];
     AcceptTrade => "trade.accept", "Accept trade", ["accept", "trade"], Text, [];
     DeclineTrade => "trade.decline", "Decline trade", ["decline", "trade", "cancel"], Text, [];

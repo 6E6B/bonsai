@@ -1,11 +1,11 @@
 //! Inventories: any user's, as the viewing account is allowed to see it. Items by category,
-//! collectibles with RAP, totals (with item values when the user opted in), and deleting
+//! collectibles with RAP, totals (with item values when the user opted in), game passes, places
+//! they made, what the inspection drawer shows for assets the catalog doesn't know, and deleting
 //! items from your own inventory where the site allows it.
 //!
 //! Lists are keyed by the viewing account: whether an inventory is visible depends on who looks.
 
-use rbx_api::generated::apis::undocumented as apis;
-use rbx_api::generated::{catalog, inventory};
+use rbx_api::generated::{apis, catalog, economy, inventory};
 use rbx_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
@@ -32,6 +32,8 @@ pub enum InvSlot {
     Badges,
     /// Game passes ([`Core::user_passes`]).
     Passes,
+    /// Places they made ([`Core::user_places`]).
+    Places,
 }
 
 impl InvSlot {
@@ -43,6 +45,7 @@ impl InvSlot {
             InvSlot::Bundle(t) => format!("b{t}"),
             InvSlot::Badges => "badges".into(),
             InvSlot::Passes => "passes".into(),
+            InvSlot::Places => "places".into(),
         }
     }
     pub fn from_key(k: &str) -> Option<InvSlot> {
@@ -50,6 +53,7 @@ impl InvSlot {
             "collectibles" => return Some(InvSlot::Collectibles),
             "badges" => return Some(InvSlot::Badges),
             "passes" => return Some(InvSlot::Passes),
+            "places" => return Some(InvSlot::Places),
             _ => {}
         }
         let (kind, n) = k.split_at_checked(1)?;
@@ -146,6 +150,43 @@ pub struct OwnedPass {
 
 const PASS_PAGE: i32 = 100;
 
+/// A place someone made, from their inventory's Places category.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct OwnedPlace {
+    pub place_id: u64,
+    pub universe_id: u64,
+    pub name: String,
+    pub creator: String,
+    pub creator_id: u64,
+    pub creator_is_group: bool,
+    /// Paid access price; `None` when free to play.
+    pub price: Option<i64>,
+}
+
+const PLACE_PAGE: i32 = 100;
+/// `placesTab` for the places a user made. The only tab anyone may read: 0 to 2, 4 and 5
+/// answer 403 for other users and are empty for the test account (checked 2026-10-15), so what
+/// they list is unknown.
+const PLACES_CREATED: i32 = 3;
+
+/// What the inspection drawer shows for an asset the catalog doesn't list: decals, audio,
+/// models, meshes, plugins, videos.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct AssetInfo {
+    pub id: u64,
+    pub name: String,
+    pub description: String,
+    pub asset_type: i32,
+    pub creator: String,
+    pub creator_id: u64,
+    pub creator_is_group: bool,
+    pub creator_verified: bool,
+    /// `None` when it isn't for sale.
+    pub price: Option<i64>,
+    pub created: String,
+    pub updated: String,
+}
+
 /// Inventory asset types listed by other APIs, as the site does.
 const PLACE_TYPE: i32 = 9;
 const BADGE_TYPE: i32 = 21;
@@ -171,7 +212,7 @@ impl Core {
                             .filter_map(|i| {
                                 let id = i32::try_from(i.id?).ok()?;
                                 let slot = match i.type_? {
-                                    T::AssetType if id == PLACE_TYPE => return None,
+                                    T::AssetType if id == PLACE_TYPE => InvSlot::Places,
                                     T::AssetType if id == BADGE_TYPE => InvSlot::Badges,
                                     T::AssetType if id == PASS_TYPE => InvSlot::Passes,
                                     T::AssetType => InvSlot::Asset(id),
@@ -259,11 +300,11 @@ impl Core {
             LIST_AGE,
             more,
             move |f, cursor| async move {
-                let p = apis::GetUserGamePassesParams {
+                let p = apis::undocumented::GetUserGamePassesParams {
                     count: Some(PASS_PAGE),
                     exclusive_start_id: cursor.and_then(|c| c.parse().ok()),
                 };
-                let r = apis::get_user_game_passes(&f.client, user_id as i64, &p).await?;
+                let r = apis::undocumented::get_user_game_passes(&f.client, user_id as i64, &p).await?;
                 let raw = r.game_passes.unwrap_or_default();
                 // The site asks for the page after the last id until one comes back empty; a
                 // short page is already the last.
@@ -294,6 +335,70 @@ impl Core {
         )
     }
 
+    /// Places a user made, as their inventory's Places category lists them. Public.
+    pub fn user_places(&self, user_id: u64, more: bool) -> Res<Page<OwnedPlace>> {
+        self.inner.paged(
+            Key::shared("user_places", user_id),
+            LIST_AGE,
+            more,
+            move |f, cursor| async move {
+                // The cursor is a page number, starting at 1.
+                let p = inventory::v1::GetUsersByUserIdPlacesInventoryParams {
+                    places_tab: PLACES_CREATED,
+                    items_per_page: PLACE_PAGE,
+                    cursor: cursor.and_then(|c| c.parse().ok()).unwrap_or(1),
+                };
+                let r = inventory::v1::get_users_by_user_id_places_inventory(&f.client, user_id as i64, &p)
+                    .await?;
+                Ok(Page {
+                    items: r
+                        .data
+                        .unwrap_or_default()
+                        .into_iter()
+                        .filter_map(|x| {
+                            let c = x.creator.unwrap_or_default();
+                            Some(OwnedPlace {
+                                place_id: u64::try_from(x.place_id?).ok()?,
+                                universe_id: x.universe_id.unwrap_or(0).max(0) as u64,
+                                name: x.name.unwrap_or_default(),
+                                creator: c.name.unwrap_or_default(),
+                                creator_id: c.id.unwrap_or(0).max(0) as u64,
+                                creator_is_group: c.type_ == Some(inventory::v1::CreatorModelType::Group),
+                                price: x.price_in_robux.filter(|p| *p > 0),
+                            })
+                        })
+                        .collect(),
+                    next: r.next_page_cursor.filter(|c| !c.is_empty()),
+                })
+            },
+        )
+    }
+
+    /// Name, creator and description of any asset, for ones the catalog doesn't list. Public.
+    pub fn asset_info(&self, asset_id: u64) -> Res<AssetInfo> {
+        self.inner.res(
+            Key::shared("asset_info", asset_id),
+            CATEGORIES_AGE,
+            move |f| async move {
+                let x = economy::undocumented::get_asset_economy_details(&f.client, asset_id as i64).await?;
+                let c = x.creator.unwrap_or_default();
+                Ok(AssetInfo {
+                    id: asset_id,
+                    name: x.name.unwrap_or_default(),
+                    description: x.description.unwrap_or_default(),
+                    asset_type: x.asset_type_id.unwrap_or(0),
+                    creator: c.name.unwrap_or_default(),
+                    creator_id: c.id.unwrap_or(0).max(0) as u64,
+                    creator_is_group: c.creator_type.as_deref() == Some("Group"),
+                    creator_verified: c.has_verified_badge.unwrap_or(false),
+                    price: x.price_in_robux.filter(|_| x.is_for_sale == Some(true)),
+                    created: x.created.unwrap_or_default(),
+                    updated: x.updated.unwrap_or_default(),
+                })
+            },
+        )
+    }
+
     /// Delete an item from the account's own inventory (asks first in the UI).
     pub fn delete_inventory_item(&self, account: AccountId, asset_id: u64) {
         self.inner.mutate(
@@ -319,7 +424,7 @@ async fn inventory_page(
     let uid = user_id as i64;
     match slot {
         // Shown from their own lists.
-        InvSlot::Badges | InvSlot::Passes => Ok(Page::default()),
+        InvSlot::Badges | InvSlot::Passes | InvSlot::Places => Ok(Page::default()),
         InvSlot::Collectibles => {
             let p = inventory::v1::GetUsersByUserIdAssetsCollectiblesParams {
                 limit: Some(100),
@@ -438,6 +543,7 @@ mod tests {
             InvSlot::Bundle(1),
             InvSlot::Badges,
             InvSlot::Passes,
+            InvSlot::Places,
         ] {
             assert_eq!(InvSlot::from_key(&s.key()), Some(s));
         }

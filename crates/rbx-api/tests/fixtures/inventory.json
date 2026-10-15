@@ -1,0 +1,1049 @@
+{
+  "captured": "2026-10-15",
+  "source": "live",
+  "note": "Signed in as the test account: builderman's (156) game passes, badges and created places (placesTab=3, two pages), and economy details for decal 41372326, which the catalog doesn't list.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/game-passes/v1/users/156/game-passes",
+        "query": {
+          "count": "100"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "gamePasses": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "badges.roblox.com",
+        "path": "/v1/users/156/badges",
+        "query": {
+          "limit": "100",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-04-01T01:44:51.32Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "This badge is awarded to people who visit Spleef!",
+              "displayDescription": "This badge is awarded to people who visit Spleef!",
+              "displayIconImageId": 797317099,
+              "displayName": "Welcome to Spleef!",
+              "enabled": true,
+              "iconImageId": 797317099,
+              "id": 76285821,
+              "name": "Welcome to Spleef!",
+              "statistics": {
+                "awardedCount": 736763,
+                "pastDayAwardedCount": 11,
+                "winRatePercentage": 1.0
+              },
+              "updated": "2017-05-13T17:26:57.573Z"
+            },
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-04-01T01:52:45.447Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Why am I holding a hammer? Meet me to find out :D",
+              "displayDescription": "Why am I holding a hammer? Meet me to find out :D",
+              "displayIconImageId": 797336393,
+              "displayName": "OMG ITS CLONETROOPER1019! (You Met the Creator!)",
+              "enabled": true,
+              "iconImageId": 797336393,
+              "id": 76286530,
+              "name": "OMG ITS CLONETROOPER1019! (You Met the Creator!)",
+              "statistics": {
+                "awardedCount": 4882,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2017-05-13T17:32:23.79Z"
+            },
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-04-01T01:49:04.02Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Be alive in the map \"Apparently 2 houses sitting in the middle of the grass\" to see a house fall in the lava.",
+              "displayDescription": "Be alive in the map \"Apparently 2 houses sitting in the middle of the grass\" to see a house fall in the lava.",
+              "displayIconImageId": 797331020,
+              "displayName": "House Tipper",
+              "enabled": true,
+              "iconImageId": 797331020,
+              "id": 76286206,
+              "name": "House Tipper",
+              "statistics": {
+                "awardedCount": 36649,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2017-05-13T17:30:56.103Z"
+            },
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-05-28T20:27:28.06Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Congratulations! Youre smarter than the average rock :D (Read the \"How to Play\" document in the game to the 5th page to recieve this badge)",
+              "displayDescription": "Congratulations! Youre smarter than the average rock :D (Read the \"How to Play\" document in the game to the 5th page to recieve this badge)",
+              "displayIconImageId": 797342085,
+              "displayName": "Diploma of Unstupidity.",
+              "enabled": true,
+              "iconImageId": 797342085,
+              "id": 82012770,
+              "name": "Diploma of Unstupidity.",
+              "statistics": {
+                "awardedCount": 341148,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2017-05-13T17:33:56.043Z"
+            },
+            {
+              "awarder": {
+                "id": 70399968,
+                "type": "Place"
+              },
+              "created": "2012-04-01T01:45:29.007Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Be the last one standing after a round.",
+              "displayDescription": "Be the last one standing after a round.",
+              "displayIconImageId": 76285858,
+              "displayName": "Winner!",
+              "enabled": true,
+              "iconImageId": 76285858,
+              "id": 76285879,
+              "name": "Winner!",
+              "statistics": {
+                "awardedCount": 243195,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.22Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-05-22T19:33:15.677Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "",
+              "displayDescription": "",
+              "displayIconImageId": 52331688,
+              "displayName": "lol",
+              "enabled": false,
+              "iconImageId": 52331688,
+              "id": 52331725,
+              "name": "lol",
+              "statistics": {
+                "awardedCount": 213625,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.347Z"
+            },
+            {
+              "awarder": {
+                "id": 14769582,
+                "type": "Place"
+              },
+              "created": "2012-06-13T23:57:50.47Z",
+              "creator": {
+                "id": 9000000003,
+                "name": "user2",
+                "type": "User"
+              },
+              "description": "Reward for finding 5 coins",
+              "displayDescription": "Reward for finding 5 coins",
+              "displayIconImageId": 4617007756,
+              "displayName": "You found 5 coins",
+              "enabled": true,
+              "iconImageId": 4617007756,
+              "id": 83516904,
+              "name": "You found 5 coins",
+              "statistics": {
+                "awardedCount": 165798,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2020-01-20T21:42:03.603Z"
+            },
+            {
+              "awarder": {
+                "id": 46686996,
+                "type": "Place"
+              },
+              "created": "2012-07-08T12:13:37.087Z",
+              "creator": {
+                "id": 9000000004,
+                "name": "user3",
+                "type": "User"
+              },
+              "description": "This is a legacy badge and is no longer obtainable.",
+              "displayDescription": "This is a legacy badge and is no longer obtainable.",
+              "displayIconImageId": 86027718,
+              "displayName": "Silver Tester",
+              "enabled": true,
+              "iconImageId": 86027718,
+              "id": 86027793,
+              "name": "Silver Tester",
+              "statistics": {
+                "awardedCount": 4143,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-05-16T17:34:51.933Z"
+            },
+            {
+              "awarder": {
+                "id": 46686996,
+                "type": "Place"
+              },
+              "created": "2012-08-01T23:21:51.403Z",
+              "creator": {
+                "id": 9000000004,
+                "name": "user3",
+                "type": "User"
+              },
+              "description": "A very hard badge to get",
+              "displayDescription": "A very hard badge to get",
+              "displayIconImageId": 88668790,
+              "displayName": "Find the magic ",
+              "enabled": true,
+              "iconImageId": 88668790,
+              "id": 88668858,
+              "name": "Find the magic ",
+              "statistics": {
+                "awardedCount": 8,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-05-16T17:34:51.947Z"
+            },
+            {
+              "awarder": {
+                "id": 21936257,
+                "type": "Place"
+              },
+              "created": "2012-08-02T04:32:47.17Z",
+              "creator": {
+                "id": 9000000005,
+                "name": "user4",
+                "type": "User"
+              },
+              "description": "All the cool Roblox mods have this badge.",
+              "displayDescription": "All the cool Roblox mods have this badge.",
+              "displayIconImageId": 88693807,
+              "displayName": "The Mark of Coolbob44",
+              "enabled": true,
+              "iconImageId": 88693807,
+              "id": 88693822,
+              "name": "The Mark of Coolbob44",
+              "statistics": {
+                "awardedCount": 27,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2015-12-08T18:33:45.407Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-10T04:58:12.243Z",
+              "creator": {
+                "id": 9000000006,
+                "name": "user5",
+                "type": "User"
+              },
+              "description": "Thanks for coming! :D",
+              "displayDescription": "Thanks for coming! :D",
+              "displayIconImageId": 74401815,
+              "displayName": "Temple Run Visitor",
+              "enabled": true,
+              "iconImageId": 74401815,
+              "id": 74402011,
+              "name": "Temple Run Visitor",
+              "statistics": {
+                "awardedCount": 1269074,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:22.003Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-10T02:08:45.187Z",
+              "creator": {
+                "id": 9000000006,
+                "name": "user5",
+                "type": "User"
+              },
+              "description": "My favorite players! :D",
+              "displayDescription": "My favorite players! :D",
+              "displayIconImageId": 74386912,
+              "displayName": "Temple run VIP",
+              "enabled": true,
+              "iconImageId": 74386912,
+              "id": 74386997,
+              "name": "Temple run VIP",
+              "statistics": {
+                "awardedCount": 11654,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:21.973Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-10T02:07:36.283Z",
+              "creator": {
+                "id": 9000000006,
+                "name": "user5",
+                "type": "User"
+              },
+              "description": "Good job! You beat roblox Temple Run!",
+              "displayDescription": "Good job! You beat roblox Temple Run!",
+              "displayIconImageId": 74386800,
+              "displayName": "TEMPLE RUN WINNER!!!",
+              "enabled": true,
+              "iconImageId": 74386800,
+              "id": 74386865,
+              "name": "TEMPLE RUN WINNER!!!",
+              "statistics": {
+                "awardedCount": 52232,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:21.943Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-12T02:36:09.077Z",
+              "creator": {
+                "id": 9000000006,
+                "name": "user5",
+                "type": "User"
+              },
+              "description": "Find me.",
+              "displayDescription": "Find me.",
+              "displayIconImageId": 74622322,
+              "displayName": "The Tree With No Leaves",
+              "enabled": true,
+              "iconImageId": 74622322,
+              "id": 74622344,
+              "name": "The Tree With No Leaves",
+              "statistics": {
+                "awardedCount": 15298,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:22.02Z"
+            },
+            {
+              "awarder": {
+                "id": 6068535,
+                "type": "Place"
+              },
+              "created": "2012-03-10T02:05:56.427Z",
+              "creator": {
+                "id": 9000000006,
+                "name": "user5",
+                "type": "User"
+              },
+              "description": "Make it half way to winners in Temple Run",
+              "displayDescription": "Make it half way to winners in Temple Run",
+              "displayIconImageId": 74386598,
+              "displayName": "Half way there!",
+              "enabled": true,
+              "iconImageId": 74386598,
+              "id": 74386665,
+              "name": "Half way there!",
+              "statistics": {
+                "awardedCount": 392182,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-02T16:25:21.943Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2012-03-19T23:18:45.02Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Get killed by a Teddy Bear.",
+              "displayDescription": "Get killed by a Teddy Bear.",
+              "displayIconImageId": 75280394,
+              "displayName": "THAT TEDDY BEAR IS A SPY.",
+              "enabled": false,
+              "iconImageId": 75280394,
+              "id": 75280449,
+              "name": "THAT TEDDY BEAR IS A SPY.",
+              "statistics": {
+                "awardedCount": 3597,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-04-23T20:52:03.107Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "KOOL KILLER may get shot at the end of the game but he will never die out thanks to this egg. (Rarest egg)\r\nOnly Available in April",
+              "displayDescription": "KOOL KILLER may get shot at the end of the game but he will never die out thanks to this egg. (Rarest egg)\r\nOnly Available in April",
+              "displayIconImageId": 50544026,
+              "displayName": "The Faberge Egg of KOOL KILLERS Million Ghosts",
+              "enabled": false,
+              "iconImageId": 50544026,
+              "id": 50544229,
+              "name": "The Faberge Egg of KOOL KILLERS Million Ghosts",
+              "statistics": {
+                "awardedCount": 2507,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.347Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-11-20T17:09:13.18Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Smash a Wall as KOOL KILLER\r\n\r\n(Only certain walls can be smashed. They usually have cracks in them)",
+              "displayDescription": "Smash a Wall as KOOL KILLER\r\n\r\n(Only certain walls can be smashed. They usually have cracks in them)",
+              "displayIconImageId": 66103699,
+              "displayName": "WallSmasher",
+              "enabled": false,
+              "iconImageId": 66103699,
+              "id": 66103718,
+              "name": "WallSmasher",
+              "statistics": {
+                "awardedCount": 1772,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-06-22T18:08:42.467Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "This egg is made out of string. But what is the string made out of....",
+              "displayDescription": "This egg is made out of string. But what is the string made out of....",
+              "displayIconImageId": 54504913,
+              "displayName": "The Spaggled Egg of Bloody Thread",
+              "enabled": false,
+              "iconImageId": 54504913,
+              "id": 54505018,
+              "name": "The Spaggled Egg of Bloody Thread",
+              "statistics": {
+                "awardedCount": 3893,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-01-16T03:32:43.053Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "That just happened.",
+              "displayDescription": "That just happened.",
+              "displayIconImageId": 44218818,
+              "displayName": "HAX!!!!!!",
+              "enabled": false,
+              "iconImageId": 44218818,
+              "id": 44218865,
+              "name": "HAX!!!!!!",
+              "statistics": {
+                "awardedCount": 2419,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.347Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2012-04-23T21:21:33.54Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Purchase the extremely expensive sniper in the shop.",
+              "displayDescription": "Purchase the extremely expensive sniper in the shop.",
+              "displayIconImageId": 78341109,
+              "displayName": "The Sniper.",
+              "enabled": false,
+              "iconImageId": 78341109,
+              "id": 78341161,
+              "name": "The Sniper.",
+              "statistics": {
+                "awardedCount": 449,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-06-22T13:36:14.44Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "The grin of his face.... It looks so.... Familiar.",
+              "displayDescription": "The grin of his face.... It looks so.... Familiar.",
+              "displayIconImageId": 54485555,
+              "displayName": "The Evil egg of Epicness",
+              "enabled": false,
+              "iconImageId": 54485555,
+              "id": 54485571,
+              "name": "The Evil egg of Epicness",
+              "statistics": {
+                "awardedCount": 9181,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-06-22T18:16:14.47Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Is it true that KOOL KILLER went to the moon? No one will know because if you ask him he will kill you before you finish asking >:)",
+              "displayDescription": "Is it true that KOOL KILLER went to the moon? No one will know because if you ask him he will kill you before you finish asking >:)",
+              "displayIconImageId": 54505651,
+              "displayName": "Cracked Egg of The Red Moon.",
+              "enabled": false,
+              "iconImageId": 54505651,
+              "id": 54505744,
+              "name": "Cracked Egg of The Red Moon.",
+              "statistics": {
+                "awardedCount": 1548,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-06-22T18:09:49.8Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "Likely on a roof. Who knows.",
+              "displayDescription": "Likely on a roof. Who knows.",
+              "displayIconImageId": 54505088,
+              "displayName": "The Concrete Egg of Rooftop Murder",
+              "enabled": false,
+              "iconImageId": 54505088,
+              "id": 54505119,
+              "name": "The Concrete Egg of Rooftop Murder",
+              "statistics": {
+                "awardedCount": 6095,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.36Z"
+            },
+            {
+              "awarder": {
+                "id": 7227335,
+                "type": "Place"
+              },
+              "created": "2011-05-22T19:31:53.303Z",
+              "creator": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "description": "o.o\r\n\r\nMeanie D:",
+              "displayDescription": "o.o\r\n\r\nMeanie D:",
+              "displayIconImageId": 52331523,
+              "displayName": "You Killed the Creator. ",
+              "enabled": false,
+              "iconImageId": 52331523,
+              "id": 52331578,
+              "name": "You Killed the Creator. ",
+              "statistics": {
+                "awardedCount": 130,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2013-06-12T23:29:20.347Z"
+            },
+            {
+              "awarder": {
+                "id": 29894806,
+                "type": "Place"
+              },
+              "created": "2012-07-26T14:57:45.127Z",
+              "creator": {
+                "id": 9000000007,
+                "name": "user6",
+                "type": "User"
+              },
+              "description": "You played Ro-Halo during it alpha stage. Long before we finish the game.",
+              "displayDescription": "You played Ro-Halo during it alpha stage. Long before we finish the game.",
+              "displayIconImageId": 87970348,
+              "displayName": "Alpha Tester",
+              "enabled": false,
+              "iconImageId": 87970348,
+              "id": 87970555,
+              "name": "Alpha Tester",
+              "statistics": {
+                "awardedCount": 115,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2016-09-22T21:11:21.11Z"
+            },
+            {
+              "awarder": {
+                "id": 76530952,
+                "type": "Place"
+              },
+              "created": "2012-04-05T21:27:33.733Z",
+              "creator": {
+                "id": 9000000008,
+                "name": "user7",
+                "type": "User"
+              },
+              "description": "This the last one. It is only collectible when you have all the others. Frustrating, isn't it? I blame Sorcus.",
+              "displayDescription": "This the last one. It is only collectible when you have all the others. Frustrating, isn't it? I blame Sorcus.",
+              "displayIconImageId": 76680089,
+              "displayName": "The Last Egg",
+              "enabled": true,
+              "iconImageId": 76680089,
+              "id": 76680134,
+              "name": "The Last Egg",
+              "statistics": {
+                "awardedCount": 469866,
+                "pastDayAwardedCount": 0,
+                "winRatePercentage": 0.0
+              },
+              "updated": "2012-11-02T00:08:50.313Z"
+            },
+            {
+              "awarder": {
+                "id": 47324,
+                "type": "Place"
+              },
+              "created": "2009-08-14T01:30:49.803Z",
+              "creator": {
+                "id": 9000000009,
+                "name": "user8",
+                "type": "User"
+              },
+              "description": "I know what you're thinking. \"Why 97?! What is Telamon's deal? That makes no sense.\" To these people, I say: \"YOU MAKE NO SENSE\". 97 is an elite number of kills. If you get that many, you rock.",
+              "displayDescription": "I know what you're thinking. \"Why 97?! What is Telamon's deal? That makes no sense.\" To these people, I say: \"YOU MAKE NO SENSE\". 97 is an elite number of kills. If you get that many, you rock.",
+              "displayIconImageId": 14468802,
+              "displayName": "97 Kills at Sword Fight on the Heights ",
+              "enabled": true,
+              "iconImageId": 14468802,
+              "id": 14468882,
+              "name": "97 Kills at Sword Fight on the Heights ",
+              "statistics": {
+                "awardedCount": 75439,
+                "pastDayAwardedCount": 6,
+                "winRatePercentage": 0.002
+              },
+              "updated": "2010-07-01T17:47:35.577Z"
+            },
+            {
+              "awarder": {
+                "id": 47324,
+                "type": "Place"
+              },
+              "created": "2009-08-14T01:29:01.753Z",
+              "creator": {
+                "id": 9000000009,
+                "name": "user8",
+                "type": "User"
+              },
+              "description": "Score 20 kills at Sword Fight on the Heights to win this badge. If you can do this you probably know enough about sword fighting to not stick yourself.",
+              "displayDescription": "Score 20 kills at Sword Fight on the Heights to win this badge. If you can do this you probably know enough about sword fighting to not stick yourself.",
+              "displayIconImageId": 14468743,
+              "displayName": "20 Kills at Sword Fight on the Heights  ",
+              "enabled": true,
+              "iconImageId": 14468743,
+              "id": 14468788,
+              "name": "20 Kills at Sword Fight on the Heights  ",
+              "statistics": {
+                "awardedCount": 593182,
+                "pastDayAwardedCount": 27,
+                "winRatePercentage": 0.009
+              },
+              "updated": "2010-07-01T17:47:35.577Z"
+            },
+            {
+              "awarder": {
+                "id": 47324,
+                "type": "Place"
+              },
+              "created": "2009-08-14T01:38:21.333Z",
+              "creator": {
+                "id": 9000000009,
+                "name": "user8",
+                "type": "User"
+              },
+              "description": "Masters in the art of swordplay win this badge by achieving a score of 20:0. Anyone who has this badge is very dangerous.",
+              "displayDescription": "Masters in the art of swordplay win this badge by achieving a score of 20:0. Anyone who has this badge is very dangerous.",
+              "displayIconImageId": 14469172,
+              "displayName": "Blademaster",
+              "enabled": true,
+              "iconImageId": 14469172,
+              "id": 14469303,
+              "name": "Blademaster",
+              "statistics": {
+                "awardedCount": 74671,
+                "pastDayAwardedCount": 13,
+                "winRatePercentage": 0.004
+              },
+              "updated": "2010-07-01T17:47:35.577Z"
+            },
+            {
+              "awarder": {
+                "id": 47324,
+                "type": "Place"
+              },
+              "created": "2009-08-14T01:27:38.913Z",
+              "creator": {
+                "id": 9000000009,
+                "name": "user8",
+                "type": "User"
+              },
+              "description": "Score 5 kills at Sword Fight on the Heights to win this badge. If you can't do this, maybe you would rather play \"Tea Party on the Heights\" or \"Sword Dancing at Fat Camp With Starwars Kid\".",
+              "displayDescription": "Score 5 kills at Sword Fight on the Heights to win this badge. If you can't do this, maybe you would rather play \"Tea Party on the Heights\" or \"Sword Dancing at Fat Camp With Starwars Kid\".",
+              "displayIconImageId": 14468617,
+              "displayName": "5 Kills at Sword Fight on the Heights",
+              "enabled": true,
+              "iconImageId": 14468617,
+              "id": 14468729,
+              "name": "5 Kills at Sword Fight on the Heights",
+              "statistics": {
+                "awardedCount": 4172301,
+                "pastDayAwardedCount": 419,
+                "winRatePercentage": 0.134
+              },
+              "updated": "2010-07-01T17:47:35.577Z"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v1/users/156/places/inventory",
+        "query": {
+          "cursor": "1",
+          "itemsPerPage": "100",
+          "placesTab": "3"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Martian Invasion",
+              "placeId": 458486,
+              "priceInRobux": null,
+              "universeId": 63778
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Builderman's Vacation Sim! Relax to survive!",
+              "placeId": 515406,
+              "priceInRobux": 0,
+              "universeId": 45360
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Emerald Forest",
+              "placeId": 445929,
+              "priceInRobux": null,
+              "universeId": 132734
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Wishing Castle",
+              "placeId": 513688,
+              "priceInRobux": 0,
+              "universeId": 55192
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "King of the Hill v1.5 UPDATED ",
+              "placeId": 438966,
+              "priceInRobux": 0,
+              "universeId": 169589
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Elemental Lake",
+              "placeId": 438293,
+              "priceInRobux": null,
+              "universeId": 173235
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Castle Warfare",
+              "placeId": 434638,
+              "priceInRobux": null,
+              "universeId": 192835
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Four Towers Bridge Battle",
+              "placeId": 432117,
+              "priceInRobux": null,
+              "universeId": 206050
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Roblox HQ 2.0 ",
+              "placeId": 430516,
+              "priceInRobux": null,
+              "universeId": 214619
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "Ninjas vs. Samurai Pagoda Battle",
+              "placeId": 430517,
+              "priceInRobux": null,
+              "universeId": 214609
+            },
+            {
+              "creator": {
+                "id": 156,
+                "name": "builderman",
+                "type": "User"
+              },
+              "name": "ROBLOX World Headquarters",
+              "placeId": 1501,
+              "priceInRobux": null,
+              "universeId": 15642
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "economy.roblox.com",
+        "path": "/v2/assets/41372326/details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "AssetId": 41372326,
+          "AssetTypeId": 13,
+          "CollectibleItemId": null,
+          "CollectibleProductId": null,
+          "CollectiblesItemDetails": null,
+          "ContentRatingTypeId": 0,
+          "Created": "2010-12-02T09:01:40.093Z",
+          "Creator": {
+            "CreatorTargetId": 5900920,
+            "CreatorType": "User",
+            "HasVerifiedBadge": false,
+            "Id": 5900920,
+            "Name": "dakota78889"
+          },
+          "Description": "-",
+          "IconImageAssetId": 0,
+          "IsForSale": false,
+          "IsLimited": false,
+          "IsLimitedUnique": false,
+          "IsNew": false,
+          "IsPublicDomain": true,
+          "MinimumMembershipLevel": 0,
+          "Name": "builderman",
+          "PriceInRobux": null,
+          "PriceInTickets": null,
+          "ProductId": 0,
+          "ProductType": null,
+          "Remaining": null,
+          "SaleAvailabilityLocations": null,
+          "SaleLocation": null,
+          "Sales": 0,
+          "TargetId": 41372326,
+          "TimedOptions": null,
+          "Updated": "2010-12-12T00:17:52.427Z"
+        }
+      }
+    }
+  ]
+}
