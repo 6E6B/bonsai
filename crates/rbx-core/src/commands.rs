@@ -322,6 +322,8 @@ commands! {
     MessageUser => "user.message", "Message (chat)", ["chat", "message", "dm", "pm", "whisper"], User, [];
     NewGroupChat => "chat.new_group", "Start a chat or group chat", ["new chat", "group chat", "compose", "new message"], None, [];
     SendChat => "chat.send", "Send chat message", ["send", "say"], Text, [];
+    ResendChat => "chat.resend", "Send a failed chat message again", ["resend", "retry", "failed", "chat"], Text, [];
+    DiscardChat => "chat.discard", "Discard a failed chat message", ["discard", "delete", "failed", "chat"], Text, [];
     RenameChat => "chat.rename", "Rename this group chat", ["rename", "title", "chat"], Text, [];
     AddToChat => "chat.add_people", "Add people to this chat", ["add", "invite", "chat"], User, [];
     RemoveFromChat => "chat.remove_person", "Remove someone from this chat", ["remove", "kick", "chat"], User, [];
@@ -335,6 +337,7 @@ commands! {
     SelectAllMessages => "message.select_all", "Select all loaded messages, or clear the selection", ["select all", "bulk", "messages"], None, [];
     MarkAllMessagesRead => "message.mark_all_read", "Mark all messages read", ["read all", "messages", "inbox"], None, [];
     FilterNotifications => "notifications.filter", "Show all or only unread notifications (all, unread; no argument toggles)", ["notifications", "unread", "filter", "bell"], Text, [];
+    FilterNotificationCategory => "notifications.category", "Show one notification category (friends, trades, communities, experiences, account, messages, other; no argument shows all)", ["notifications", "category", "filter", "friends", "trades", "security", "robux", "group", "experience"], Text, [];
     ClearNotifications => "notifications.mark_read", "Mark notifications read", ["notifications", "bell", "clear", "read"], None, [];
     GoChat => "nav.chat", "Go to Chat", ["chat", "conversations"], None, [];
     GoNotifications => "nav.notifications", "Go to Notifications", ["notifications", "bell", "alerts"], None, [];

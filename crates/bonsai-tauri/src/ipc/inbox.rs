@@ -103,6 +103,21 @@ pub struct NotificationRow {
     /// A roblox.com page it points to; `entity.open_website` opens it.
     pub link: Option<String>,
     pub user_id: Option<Id>,
+    /// One of [`notification_categories`]' values.
+    pub category: String,
+}
+
+/// The notification categories for the filter, in display order.
+#[tauri::command]
+#[specta::specta]
+pub fn notification_categories() -> Vec<super::market::Choice> {
+    rbx_core::messages::CATEGORIES
+        .iter()
+        .map(|(value, label)| super::market::Choice {
+            value: (*value).to_owned(),
+            label: (*label).to_owned(),
+        })
+        .collect()
 }
 
 #[tauri::command]
@@ -124,6 +139,7 @@ pub fn notifications(core: State<'_, Arc<Core>>) -> Paged<NotificationRow> {
             read: n.read,
             link: n.link.clone(),
             user_id: n.user_id.map(Id),
+            category: n.category.clone(),
         }),
         more_key,
     }
@@ -210,6 +226,12 @@ pub struct ChatLine {
     pub moderated: bool,
     /// Sent from here, not confirmed yet.
     pub pending: bool,
+    /// Roblox hides it from this account.
+    pub hidden: bool,
+    /// A note Roblox shows under the text.
+    pub note: String,
+    /// Sent from here and refused; `chat.resend` or `chat.discard` it.
+    pub failed: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -288,24 +310,25 @@ pub fn chat_view(core: State<'_, Arc<Core>>, conversation: String) -> ChatView {
         more: r.data.as_ref().is_some_and(|p| p.next.is_some()),
         lines: r
             .data
-            .map(|p| {
-                p.items
-                    .iter()
-                    .rev()
-                    .map(|m| ChatLine {
-                        id: m.id.clone(),
-                        sender_id: Id(m.sender),
-                        sender: name_of(m.sender),
-                        mine: m.sender == a.0,
-                        text: m.text.clone(),
-                        created: m.created.clone(),
-                        system: m.system,
-                        moderated: m.moderated,
-                        pending: m.pending,
-                    })
-                    .collect()
+            .map(|p| p.items.iter().rev().cloned().collect::<Vec<_>>())
+            .unwrap_or_default()
+            .into_iter()
+            .chain(core.failed_chat(a, &conversation))
+            .map(|m| ChatLine {
+                id: m.id.clone(),
+                sender_id: Id(m.sender),
+                sender: name_of(m.sender),
+                mine: m.sender == a.0,
+                text: m.text,
+                created: m.created,
+                system: m.system,
+                moderated: m.moderated,
+                pending: m.pending,
+                hidden: m.hidden,
+                note: m.note,
+                failed: m.failed,
             })
-            .unwrap_or_default(),
+            .collect(),
         people: conv
             .as_ref()
             .map(|c| {
@@ -510,6 +533,22 @@ pub(super) fn run(
             let text = arg.ok_or_else(|| "Write something.".to_owned())?;
             core.send_chat(need()?, &chat()?, text);
             Ok(())
+        })(),
+        C::ResendChat => (|| {
+            let id = arg.ok_or_else(|| "Which message?".to_owned())?;
+            if core.resend_chat(need()?, &chat()?, id) {
+                Ok(())
+            } else {
+                Err("No failed message with that id here.".to_owned())
+            }
+        })(),
+        C::DiscardChat => (|| {
+            let id = arg.ok_or_else(|| "Which message?".to_owned())?;
+            if core.discard_chat(need()?, &chat()?, id) {
+                Ok(())
+            } else {
+                Err("No failed message with that id here.".to_owned())
+            }
         })(),
         C::RenameChat => (|| {
             let name = arg.ok_or_else(|| "Give a name.".to_owned())?;

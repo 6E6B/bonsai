@@ -24,6 +24,7 @@ rbx-core = { workspace = true }
 tauri = { workspace = true }
 tauri-specta = { workspace = true }
 tauri-plugin-clipboard-manager = { workspace = true }
+tauri-plugin-notification = { workspace = true }
 specta = { workspace = true }
 specta-typescript = { workspace = true }
 serde = { workspace = true }

@@ -101,8 +101,8 @@ export const games: Game[] = [
 /** Shell state for `bun run dev` in a browser, where there is no backend. */
 export const browserShell: Shell = {
   accounts: [
-    { id: 1, name: "tilework", displayName: "Tilework", label: "Main", color: "blue", session: "ok" },
-    { id: 2, name: "tilework_alt", displayName: "Alt", label: null, color: "green", session: "ok" },
+    { id: 1, name: "tilework", displayName: "Tilework", label: "Main", color: "blue", session: "ok", unread: 3 },
+    { id: 2, name: "tilework_alt", displayName: "Alt", label: null, color: "green", session: "ok", unread: 0 },
   ],
   active: 1,
   offline: false,

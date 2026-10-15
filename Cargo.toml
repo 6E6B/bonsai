@@ -49,6 +49,7 @@ tauri = { version = "2.12", features = [] }
 tauri-build = { version = "2.5", features = [] }
 # Copy link, Copy ID, CSV exports. Written from Rust, so the webview gets no clipboard permission.
 tauri-plugin-clipboard-manager = "=2.4.0"
+tauri-plugin-notification = "=2.5.0"
 tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
 specta = { version = "=2.0.0-rc.25", features = ["derive"] }
 specta-typescript = "0.0.12"

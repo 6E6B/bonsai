@@ -29,11 +29,11 @@ Blocks several later items. Capture from roblox.com devtools, add to `specs/undo
 
 ### Phase 1: Messages and notifications
 Area: `features/messages`, `features/notifications`, `features/chat`, matching `rbx-core` modules.
-- Delete message where allowed.
-- Mark a single notification as read.
 - Notification categories (friend requests, trades, group shouts, experience updates, Robux and security alerts) with filter.
 - Real-time updates for notifications and chat if a push channel exists. Otherwise poll via a core job that only notifies, and record that in the checklist.
 - Verify Enter to send and Shift+Enter for newline in the composer. Fix or tick.
+
+Status 2026-10-15: built, with desktop OS alerts for the kinds turned on in Settings. Message deletion and single-notification mark-read are dropped: no working endpoint (BLOCKERS.md).
 
 ### Phase 2: Auth and account safety
 Area: `app/shell/AddAccount.tsx`, `rbx-core/src/account.rs`, `rbx-api` auth wrappers.
@@ -42,7 +42,6 @@ Area: `app/shell/AddAccount.tsx`, `rbx-core/src/account.rs`, `rbx-api` auth wrap
 - Captcha and challenge modal that surfaces the challenge to the user and resumes the action after they solve it. Never auto-solve.
 - Quick Login: enter a code from another device.
 - Sign out of all other sessions.
-- Per-account unread badges on the account rail.
 - Act-as-alt account picker on join, buy and friend-request actions.
 
 ### Phase 3: Inventory

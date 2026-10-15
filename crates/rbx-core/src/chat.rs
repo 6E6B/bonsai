@@ -105,6 +105,15 @@ pub struct ChatMessage {
     pub moderated: bool,
     /// Sent from here and not confirmed yet.
     pub pending: bool,
+    /// Roblox hides it from this account (the site shows a notice instead of the text).
+    #[serde(default)]
+    pub hidden: bool,
+    /// A note Roblox shows under the text (`content_to_display`).
+    #[serde(default)]
+    pub note: String,
+    /// Sent from here and refused; Resend or Discard it.
+    #[serde(default)]
+    pub failed: bool,
 }
 
 /// What the account may do in chat.
@@ -151,7 +160,18 @@ fn conversation(c: apis::undocumented::ChatConversation) -> Option<Conversation>
 }
 
 fn message(m: apis::undocumented::ChatMessage) -> Option<ChatMessage> {
-    let text = m.content.unwrap_or_default();
+    let hidden = m.visibility.as_deref() == Some("hidden");
+    // Like the site: the content, else its pieces.
+    let text = match m.content.filter(|c| !c.is_empty()) {
+        _ if hidden => String::new(),
+        Some(c) => c,
+        None => m
+            .pieces
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|p| p.content)
+            .collect(),
+    };
     // Roblox sets `moderation_type` on ordinary messages too, so it only means
     // hidden when the content is gone.
     let moderated = m.status.as_deref() == Some("moderated")
@@ -164,6 +184,13 @@ fn message(m: apis::undocumented::ChatMessage) -> Option<ChatMessage> {
         system: m.type_.as_deref() == Some("system"),
         moderated,
         pending: false,
+        hidden,
+        note: if hidden {
+            String::new()
+        } else {
+            m.content_to_display.unwrap_or_default()
+        },
+        failed: false,
     })
 }
 
@@ -310,10 +337,17 @@ impl Core {
             &["chat_messages", "chat_conversations"],
             move |f| async move {
                 let body = apis::undocumented::ChatSendRequest {
-                    conversation_id: Some(conv),
+                    conversation_id: Some(conv.clone()),
                     messages: Some(vec![apis::undocumented::ChatOutgoing { content: Some(text) }]),
                 };
-                let r = apis::undocumented::post_chat_send(&f.client, &body).await?;
+                let r = match apis::undocumented::post_chat_send(&f.client, &body).await {
+                    Ok(r) => r,
+                    Err(e) => {
+                        // Keep it so it can be sent again; the list refetch drops the local copy.
+                        f.inner.keep_failed_chat(account, &conv, local);
+                        return Err(e);
+                    }
+                };
                 if r.messages
                     .unwrap_or_default()
                     .iter()
@@ -326,6 +360,39 @@ impl Core {
                 Ok(())
             },
         );
+    }
+
+    /// Messages sent from here that failed, oldest first.
+    pub fn failed_chat(&self, account: AccountId, conversation: &str) -> Vec<ChatMessage> {
+        self.inner
+            .store
+            .read()
+            .account_data(account)
+            .and_then(|d| d.failed_chat.get(conversation).cloned())
+            .unwrap_or_default()
+    }
+
+    /// Send a failed message again (the Resend button). `false` if there is no such message.
+    pub fn resend_chat(&self, account: AccountId, conversation: &str, id: &str) -> bool {
+        let Some(m) = self.take_failed_chat(account, conversation, id) else {
+            return false;
+        };
+        self.send_chat(account, conversation, &m.text);
+        true
+    }
+
+    /// Drop a failed message without sending it. `false` if there is no such message.
+    pub fn discard_chat(&self, account: AccountId, conversation: &str, id: &str) -> bool {
+        let found = self.take_failed_chat(account, conversation, id).is_some();
+        self.inner.repaint();
+        found
+    }
+
+    fn take_failed_chat(&self, account: AccountId, conversation: &str, id: &str) -> Option<ChatMessage> {
+        let mut s = self.inner.store.write();
+        let list = s.data.get_mut(&account)?.failed_chat.get_mut(conversation)?;
+        let i = list.iter().position(|m| m.id == id)?;
+        Some(list.remove(i))
     }
 
     /// Tell the others you're typing. Called on keystrokes; sent at most every few seconds.
@@ -620,12 +687,16 @@ impl Inner {
                         me.repaint();
                     });
                 } else {
+                    let sender = field("SenderUserId").and_then(|u| u.parse::<u64>().ok());
                     if kind == "newmessage"
-                        && let Some(sender) = field("SenderUserId").and_then(|u| u.parse::<u64>().ok())
-                        && let Some(d) = self.store.write().data.get_mut(&acc)
-                        && let Some(m) = d.typing.get_mut(&conv)
+                        && let Some(sender) = sender
                     {
-                        m.remove(&sender);
+                        if let Some(d) = self.store.write().data.get_mut(&acc)
+                            && let Some(m) = d.typing.get_mut(&conv)
+                        {
+                            m.remove(&sender);
+                        }
+                        self.note_chat(acc, sender);
                     }
                     self.res.invalidate(acc, "chat_conversations");
                     self.res.invalidate(acc, "chat_messages");
@@ -635,6 +706,10 @@ impl Inner {
             "NotificationStream" => {
                 self.res.invalidate(acc, "notifications");
                 self.spawn_unread(acc);
+                if kind == "newnotification" {
+                    let me = self.clone();
+                    self.rt.spawn(async move { me.note_stream(acc).await });
+                }
             }
             "MessageNotification" | "PrivateMessageNotifications" => {
                 self.res.invalidate(acc, "private_messages");
@@ -653,6 +728,21 @@ impl Inner {
             _ => {}
         }
         self.repaint();
+    }
+
+    pub(crate) fn keep_failed_chat(&self, account: AccountId, conversation: &str, mut m: ChatMessage) {
+        m.pending = false;
+        m.failed = true;
+        let mut s = self.store.write();
+        let list = s
+            .data
+            .entry(account)
+            .or_default()
+            .failed_chat
+            .entry(conversation.to_owned())
+            .or_default();
+        list.retain(|x| x.id != m.id);
+        list.push(m);
     }
 
     fn spawn_unread(self: &Arc<Self>, acc: AccountId) {
@@ -771,6 +861,34 @@ mod tests {
         assert_eq!(conv("Squad", 1, &[(2, "Ann"), (3, "Bo")]).title(1), "Squad");
         assert_eq!(conv("", 1, &[(2, "Ann"), (3, "Bo")]).partner(1), None);
         assert_eq!(conv("", 1, &[(9, "")]).others(1), vec![9]);
+    }
+
+    #[test]
+    fn hidden_pieces_and_notes() {
+        let piece = |c: &str| apis::undocumented::ChatMessagePiece {
+            content: Some(c.into()),
+            ..Default::default()
+        };
+        let m = message(apis::undocumented::ChatMessage {
+            id: Some("m".into()),
+            pieces: Some(vec![piece("hi "), piece("there")]),
+            content_to_display: Some("Translated".into()),
+            ..Default::default()
+        })
+        .unwrap();
+        assert_eq!(
+            (m.text.as_str(), m.note.as_str(), m.hidden),
+            ("hi there", "Translated", false)
+        );
+        let h = message(apis::undocumented::ChatMessage {
+            id: Some("m".into()),
+            content: Some("secret".into()),
+            content_to_display: Some("x".into()),
+            visibility: Some("hidden".into()),
+            ..Default::default()
+        })
+        .unwrap();
+        assert!(h.hidden && h.text.is_empty() && h.note.is_empty());
     }
 
     #[test]

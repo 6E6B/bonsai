@@ -1175,7 +1175,8 @@ impl Inner {
             }
         });
         if let Some(n) = notice {
-            self.toast(Some(a), n, false);
+            self.toast(Some(a), n.clone(), false);
+            self.alert(a, "sales", "Sale", n);
         }
     }
 }

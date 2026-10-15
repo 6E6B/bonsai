@@ -63,13 +63,13 @@ export function AccountRail() {
         {(a, i) => (
           <ContextMenu items={menu(a, i())}>
             <RailItem
-              label={a.label ?? a.displayName}
+              label={a.unread > 0 ? `${a.label ?? a.displayName} (${a.unread} unread)` : (a.label ?? a.displayName)}
               shortcut={i() < 9 ? shortcutOf(`account.switch_${i() + 1}`) : undefined}
               active={shell.active === a.id}
               color={a.color}
               onClick={() => run("account.switch", String(a.id))}
             >
-              <Avatar size="lg" name={a.displayName} src={thumbUrl("headshot", a.id)} />
+              <Avatar size="lg" name={a.displayName} src={thumbUrl("headshot", a.id)} count={a.unread} />
             </RailItem>
           </ContextMenu>
         )}

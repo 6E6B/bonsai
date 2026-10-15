@@ -22,7 +22,7 @@
   - [x] Active account highlighted with color indicator
   - [x] 1-click instant account switching (renders from local cache in 1 frame)
   - [x] Keyboard shortcuts for switching (e.g. `Ctrl+1` through `Ctrl+9`, `Ctrl+Tab` to cycle last-used)
-  - [ ] Unread badges per account on rail (messages, trades, friend requests, chat)
+  - [x] Unread badges per account on rail (messages, trades, friend requests, chat)
   - [x] Add Account button (`+`)
 - [x] **Account Customisation & Organisation**:
   - [x] Custom account label (e.g. "Main", "Trader", "Alt")

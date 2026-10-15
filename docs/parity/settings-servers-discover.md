@@ -72,10 +72,10 @@
   - [x] Who can join me in game
   - [x] Who can see my inventory
   - [x] Who can trade with me
-- [ ] **Notifications**:
-  - [ ] In-app notification stream preferences — switches for friend joins, trades, chats, friend requests and experience updates are saved (`app.notify`); nothing reads them yet, as no notification stream exists
-  - [ ] Desktop OS push notification toggles — same saved switches; no OS notification delivery yet
-  - [ ] Activity notifications (trades, friend requests, group shouts, chats)
+- [x] **Notifications**:
+  - [x] Notification preferences — switches for friend joins, trades, chats, friend requests, experience updates and sales (`app.notify`) pick which alerts are raised
+  - [x] Desktop OS push notification toggles — the same switches pick which alerts show while the app is in the background
+  - [x] Activity notifications (trades, friend requests, chats, experience updates; group shouts show in the stream under Communities)
 - [x] **Blocked Users**:
   - [x] Paginated list of blocked accounts with avatar and username
   - [x] Unblock button with confirmation

@@ -1,0 +1,1640 @@
+{
+  "captured": "2026-10-15",
+  "source": "live",
+  "note": "The notification stream (friend, security and location entries).",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "notifications.roblox.com",
+        "path": "/v2/stream-notifications/get-recent",
+        "query": {
+          "maxRows": "20",
+          "startIndex": "0"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": [
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "FriendRequestAccepted",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/chat?userId=1000006&entryPoint=NotificationStream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "chat",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Chat"
+                        },
+                        "visualItemName": "",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000006"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 1 @friend1 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000006",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "u13": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000006"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 1 @friend1 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000006",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-10-08T06:54:00Z",
+            "id": "1dea6949-7788-4926-8cd7-2655d4deacac",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "7d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "FriendRequestAccepted",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/chat?userId=1000003&entryPoint=NotificationStream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "chat",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Chat"
+                        },
+                        "visualItemName": "",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000003"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 2 @friend2 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000003",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "u13": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000003"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 2 @friend2 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000003",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-10-06T05:47:16Z",
+            "id": "700036b3-4c41-480d-b874-5eb83d66e0e5",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "9d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "FriendRequestAccepted",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/chat?userId=1000001&entryPoint=NotificationStream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "chat",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Chat"
+                        },
+                        "visualItemName": "",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000001"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 3 @friend3 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000001",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "u13": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000001"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 3 @friend3 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000001",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-10-04T07:47:47Z",
+            "id": "d4f668f6-3dee-4eae-ad43-91158d4e6ad1",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "11d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {
+                "sender_userid": "1000004"
+              },
+              "currentState": "accepted",
+              "minVersion": "1.0",
+              "notificationType": "TrustedConnectionRequestReceived",
+              "states": {
+                "accepted": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "RevokeAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "ignoreButton",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "",
+                            "nextState": "",
+                            "path": "roblox://navigation/chat?userId=1000004&entryPoint=NotificationStream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Chat"
+                        },
+                        "visualItemName": "chat",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [],
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "TrustedConnectionRequestReceivedacceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 4 @friend4 is now your trusted friend."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000004",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "TrustedConnectionRequestReceiveddefaultIgnoreTrustedConnectionApiAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          },
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "",
+                            "nextState": "",
+                            "path": "TrustedConnectionRequestReceiveddefaultRevokeApiAction"
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Ignore"
+                        },
+                        "visualItemName": "ignore",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "clientTrigger",
+                            "fallbackState": "",
+                            "nextState": "accepted",
+                            "path": "TrustedContactsDoubleOptInModal"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "View"
+                        },
+                        "visualItemName": "view",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [],
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "TrustedConnectionRequestReceiveddefaultBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 4 @friend4 sent you a trusted friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000004",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "web": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "RevokeAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "ignoreButton",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [],
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "TrustedConnectionRequestReceivedwebBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 4 @friend4 sent you a trusted friend request. Visit the Roblox app to add them back."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000004",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "web-tf-supported": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "web-tf-supported",
+                            "nextState": "",
+                            "path": "TrustedConnectionRequestReceivedweb-tf-supportedIgnoreTrustedConnectionApiAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          },
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "",
+                            "nextState": "",
+                            "path": "TrustedConnectionRequestReceivedweb-tf-supportedRevokeApiAction"
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Ignore"
+                        },
+                        "visualItemName": "ignore",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "clientTrigger",
+                            "fallbackState": "",
+                            "nextState": "accepted",
+                            "path": "TrustedFriendsAcceptModal"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "View"
+                        },
+                        "visualItemName": "view",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [],
+                        "clientEventsPayload": {
+                          "sender_userid": "1000004"
+                        },
+                        "eventName": "TrustedConnectionRequestReceivedweb-tf-supportedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 4 @friend4 sent you a trusted friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000004",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-10-01T00:23:35.589Z",
+            "id": "65ba4f88-8f9b-424e-9ac0-be287589843d",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "14d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "FriendRequestAccepted",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/chat?userId=1000005&entryPoint=NotificationStream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "chat",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Chat"
+                        },
+                        "visualItemName": "",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000005"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 5 @friend5 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000005",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "u13": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000005"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 5 @friend5 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000005",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-09-29T07:08:57Z",
+            "id": "37feac4d-5b0e-483b-b2c3-43f4aafb49ae",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "16d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "FriendRequestAccepted",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/chat?userId=1000004&entryPoint=NotificationStream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "chat",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Chat"
+                        },
+                        "visualItemName": "",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000004"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 4 @friend4 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000004",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "u13": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000004"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 4 @friend4 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000004",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-09-28T02:59:30Z",
+            "id": "b1c752c6-40c5-434b-9320-6cfc6d8c2478",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "17d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "FriendRequestAccepted",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/chat?userId=1000002&entryPoint=NotificationStream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "chat",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Chat"
+                        },
+                        "visualItemName": "",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000002"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 6 @friend6 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000002",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                },
+                "u13": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/profile?userId=1000002"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "FriendRequestAcceptedBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Friend 6 @friend6 accepted your friend request."
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "1000002",
+                        "idType": "userThumbnail",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-09-27T06:39:12Z",
+            "id": "1a20e3fd-c929-46ac-a725-87344545d964",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "18d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "SecurityAlert",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "SecurityAlertIgnoreAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "SecurityAlertDismissButton",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/security_alert?payload=REDACTED&username=TestUser&channel=stream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "View Activity"
+                        },
+                        "visualItemName": "SecurityAlertViewButton",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/security_alert?payload=REDACTED&username=TestUser&channel=stream"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "SecurityAlertBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Someone just signed into your Roblox account on a Unknown Computer. If it wasn’t you, tap “View activity” to secure your account."
+                        },
+                        "title": {
+                          "styledElements": [
+                            {
+                              "length": 21,
+                              "offset": 0,
+                              "styledElementType": "highlight"
+                            }
+                          ],
+                          "text": "Roblox Security Alert"
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "roblox",
+                        "idType": "icon",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-09-11T23:16:17.381Z",
+            "id": "ba9049f2-287d-4fab-8e83-7a552a11b0b1",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "33d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "UserLocationUpdate",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "RevokeAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "ignoreButton",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "default",
+                            "path": "roblox://navigation/external_web_link?domain=zendesk&locale=en&articleId=21767603654932"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Learn more"
+                        },
+                        "visualItemName": "learn_more",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/external_web_link?domain=zendesk&locale=en&articleId=21767603654932"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "UserLocationUpdatedefaultBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Please refer to our help center article to learn more."
+                        },
+                        "title": {
+                          "styledElements": [
+                            {
+                              "length": 36,
+                              "offset": 0,
+                              "styledElementType": "highlight"
+                            }
+                          ],
+                          "text": "Roblox updated your account location"
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "roblox",
+                        "idType": "icon",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-09-06T06:50:18.409Z",
+            "id": "19235d2f-29cf-4db0-b7f2-0200508059c0",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "39d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "SecurityAlert",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "SecurityAlertIgnoreAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "SecurityAlertDismissButton",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/security_alert?payload=REDACTED&username=TestUser&channel=stream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "View Activity"
+                        },
+                        "visualItemName": "SecurityAlertViewButton",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/security_alert?payload=REDACTED&username=TestUser&channel=stream"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "SecurityAlertBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Someone just signed into your Roblox account on a Unknown Computer. If it wasn’t you, tap “View activity” to secure your account."
+                        },
+                        "title": {
+                          "styledElements": [
+                            {
+                              "length": 21,
+                              "offset": 0,
+                              "styledElementType": "highlight"
+                            }
+                          ],
+                          "text": "Roblox Security Alert"
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "roblox",
+                        "idType": "icon",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-09-06T01:16:50.388Z",
+            "id": "ba26584c-9841-4b03-bc1d-74765c75c3eb",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "39d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "SecurityAlert",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "SecurityAlertIgnoreAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "SecurityAlertDismissButton",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/security_alert?payload=REDACTED&username=TestUser&channel=stream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "View Activity"
+                        },
+                        "visualItemName": "SecurityAlertViewButton",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/security_alert?payload=REDACTED&username=TestUser&channel=stream"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "SecurityAlertBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Someone just signed into your Roblox account on a Unknown Computer. If it wasn’t you, tap “View activity” to secure your account."
+                        },
+                        "title": {
+                          "styledElements": [
+                            {
+                              "length": 21,
+                              "offset": 0,
+                              "styledElementType": "highlight"
+                            }
+                          ],
+                          "text": "Roblox Security Alert"
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "roblox",
+                        "idType": "icon",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-09-05T23:04:22.832Z",
+            "id": "22eb1ca1-ea92-41ee-a1c3-5fa26bb24a7d",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "39d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "UserLocationUpdate",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "RevokeAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "ignoreButton",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "default",
+                            "path": "roblox://navigation/external_web_link?domain=zendesk&locale=en&articleId=21767603654932"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Learn more"
+                        },
+                        "visualItemName": "learn_more",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/external_web_link?domain=zendesk&locale=en&articleId=21767603654932"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "UserLocationUpdatedefaultBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Please refer to our help center article to learn more."
+                        },
+                        "title": {
+                          "styledElements": [
+                            {
+                              "length": 36,
+                              "offset": 0,
+                              "styledElementType": "highlight"
+                            }
+                          ],
+                          "text": "Roblox updated your account location"
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "roblox",
+                        "idType": "icon",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-08-09T09:44:58.639Z",
+            "id": "2c41d83f-63f8-4136-a157-e3a5caba9a27",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "67d"
+          },
+          {
+            "content": {
+              "bundleKey": "",
+              "clientEventsPayload": {},
+              "currentState": "default",
+              "minVersion": "1.0",
+              "notificationType": "SecurityAlert",
+              "states": {
+                "default": {
+                  "layoutKey": "Default",
+                  "visualItems": {
+                    "button": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "notificationAPI",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "SecurityAlertIgnoreAction"
+                          },
+                          {
+                            "actionType": "dismiss",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": ""
+                          }
+                        ],
+                        "buttonStyle": "Secondary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Dismiss"
+                        },
+                        "visualItemName": "SecurityAlertDismissButton",
+                        "visualItemType": "Button"
+                      },
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/security_alert?payload=REDACTED&username=TestUser&channel=stream"
+                          }
+                        ],
+                        "buttonStyle": "Primary",
+                        "clientEventsPayload": {},
+                        "eventName": "streamVisualItemClicked",
+                        "label": {
+                          "styledElements": [],
+                          "text": "View Activity"
+                        },
+                        "visualItemName": "SecurityAlertViewButton",
+                        "visualItemType": "Button"
+                      }
+                    ],
+                    "metaAction": [],
+                    "textBody": [
+                      {
+                        "actions": [
+                          {
+                            "actionType": "deeplink",
+                            "fallbackState": "default",
+                            "nextState": "",
+                            "path": "roblox://navigation/security_alert?payload=REDACTED&username=TestUser&channel=stream"
+                          }
+                        ],
+                        "clientEventsPayload": {},
+                        "eventName": "SecurityAlertBody",
+                        "label": {
+                          "styledElements": [],
+                          "text": "Someone just signed into your Roblox account on a Android Phone. If it wasn’t you, tap “View activity” to secure your account."
+                        },
+                        "title": {
+                          "styledElements": [
+                            {
+                              "length": 21,
+                              "offset": 0,
+                              "styledElementType": "highlight"
+                            }
+                          ],
+                          "text": "Roblox Security Alert"
+                        },
+                        "visualItemType": "TextBody"
+                      }
+                    ],
+                    "thumbnail": [
+                      {
+                        "id": "roblox",
+                        "idType": "icon",
+                        "visualItemType": "Thumbnail"
+                      }
+                    ]
+                  }
+                }
+              },
+              "timeBeforeRefresh": "60"
+            },
+            "eventCount": 1,
+            "eventDate": "2026-08-08T22:27:08.022Z",
+            "id": "735cb1f1-3228-490b-9ed5-f7bdd4f979cd",
+            "isInteracted": false,
+            "metadataCollection": [
+              1
+            ],
+            "notificationSourceType": "Sendr",
+            "timestamp": "68d"
+          }
+        ]
+      }
+    }
+  ]
+}

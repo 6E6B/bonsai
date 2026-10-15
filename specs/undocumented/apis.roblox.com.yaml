@@ -107,7 +107,7 @@ paths:
         "200": { description: OK, schema: { $ref: "#/definitions/GamePassesPage" } }
   /game-passes/v1/users/{userId}/game-passes:
     get:
-      # Captured 2026-10-14 live (fixture: inventory_passes.json), signed out; shape and params
+      # Captured 2026-10-14 live (fixture: inventory.json), signed out; shape and params
       # read from the site's inventory bundle (inventoryService.getGamePasses). The next page
       # starts after the last gamePassId (exclusiveStartId); an empty page is the end.
       x-captured: "2026-10-14, www.roblox.com/users/{id}/inventory Passes"
@@ -853,6 +853,17 @@ definitions:
       type: { type: string, description: "user, system, ..." }
       status: { type: string, description: "success, moderated, ..." }
       moderation_type: { type: string }
+      # Read from the site's ReactChat bundle 2026-10-15: "hidden" means the site shows a
+      # hidden-message notice instead of the text; pieces are the text when content is absent;
+      # content_to_display is a note the site shows under the text.
+      visibility: { type: string, description: "hidden, ..." }
+      pieces: { type: array, items: { $ref: "#/definitions/ChatMessagePiece" } }
+      content_to_display: { type: string }
+  ChatMessagePiece:
+    type: object
+    properties:
+      id: { type: string }
+      content: { type: string }
   ChatConversation:
     type: object
     properties:

@@ -190,6 +190,8 @@ export const commands = {
 	/**  One message tab: `inbox`, `sent`, `news` or `archive`. */
 	messages: (tab: string) => __TAURI_INVOKE<Paged<MessageRow>>("messages", { tab }),
 	notifications: () => __TAURI_INVOKE<Paged<NotificationRow>>("notifications"),
+	/**  The notification categories for the filter, in display order. */
+	notificationCategories: () => __TAURI_INVOKE<Choice[]>("notification_categories"),
 	/**  Conversations, pinned first, then newest activity. */
 	chatList: () => __TAURI_INVOKE<Paged<ConversationRow>>("chat_list"),
 	chatView: (conversation: string) => __TAURI_INVOKE<ChatView>("chat_view", { conversation }),
@@ -269,6 +271,11 @@ export type Account = {
 	label: string | null,
 	color: Color,
 	session: Session,
+	/**
+	 *  Everything unread for this account (messages, chat, friend requests, trades,
+	 *  notifications), for the rail badge.
+	 */
+	unread: number,
 };
 
 export type AccountInfoView = {
@@ -423,6 +430,12 @@ export type ChatLine = {
 	moderated: boolean,
 	/**  Sent from here, not confirmed yet. */
 	pending: boolean,
+	/**  Roblox hides it from this account. */
+	hidden: boolean,
+	/**  A note Roblox shows under the text. */
+	note: string,
+	/**  Sent from here and refused; `chat.resend` or `chat.discard` it. */
+	failed: boolean,
 };
 
 export type ChatPerson = {
@@ -1035,6 +1048,8 @@ export type NotificationRow = {
 	/**  A roblox.com page it points to; `entity.open_website` opens it. */
 	link: string | null,
 	userId: Id | null,
+	/**  One of [`notification_categories`]' values. */
+	category: string,
 };
 
 export type NotifyView = {

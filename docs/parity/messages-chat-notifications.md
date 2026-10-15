@@ -11,11 +11,11 @@
   - [x] Search messages by sender username or subject text
   - [x] Detail view: Subject, sender avatar, verified badge, timestamp, body text
   - [x] External link warning banner on outbound URLs
-- [ ] **Message Management**:
+- [x] **Message Management**:
   - [x] Bulk selection (multi-select checkboxes, Select All)
   - [x] Archive and unarchive selected messages
   - [x] Mark read, mark unread, mark all read
-  - [ ] Delete message (where allowed)
+  - [-] Delete message — not possible: no endpoint (BLOCKERS.md #16)
   - [x] "Reply in Chat" action (modern alternative to deprecated legacy message compose)
 
 ## Chat
@@ -25,20 +25,22 @@
   - [x] Search conversations by friend or group name
   - [x] Unread message counter badge per conversation
   - [x] Last message preview snippet and relative timestamp
-- [ ] **Chat Timeline & Messages**:
+- [x] **Chat Timeline & Messages**:
   - [x] Chat header: Participant avatars, usernames, live presence status
   - [x] "Join Game" CTA in header when friend is currently playing
   - [x] Day separators ("Today", "Yesterday", full date)
   - [x] Clustered messages by sender with avatar and timestamps
-  - [ ] Message types:
+  - [x] Message types:
     - [x] Plain text messages
     - [x] Experience cards (game icon, title, developer, direct Join button)
     - [x] Moderated / filtered message markers
     - [x] System status notices (e.g. user joined, user left)
+    - [x] Hidden messages and Roblox notes on a message
+    - [x] Failed sends kept with Resend and Discard
   - [x] Real-time features:
     - [x] Typing indicators ("User is typing...", sent at most every 3s)
     - [x] Read receipts (marks conversation read on open)
-- [ ] **Message Composer**:
+- [x] **Message Composer**:
   - [x] Text input (Enter to send, Shift+Enter for newline)
   - [x] Emoji picker
   - [x] Share experience button (embeds game card into chat)
@@ -51,18 +53,19 @@
   - [x] Leave group chat
 
 ## Notifications
-- [ ] **Notification Stream**:
+- [x] **Notification Stream**:
   - [x] Dedicated notifications dropdown and full notifications page
-  - [ ] Real-time stream of site activity (SignalR push updates)
-  - [ ] Notification categories:
-    - [ ] Friend requests and accepted requests
-    - [ ] Trade offers, counter-offers, and completions
-    - [ ] Group shouts and announcements
-    - [ ] Experience updates and event notifications
-    - [ ] Robux transactions and security alerts
-- [ ] **Actions & Navigation**:
+  - [x] Real-time stream of site activity (SignalR push updates)
+  - [x] Notification categories (filter on the Notifications page):
+    - [x] Friend requests and accepted requests
+    - [x] Trade offers, counter-offers, and completions
+    - [x] Group shouts and announcements
+    - [x] Experience updates and event notifications
+    - [x] Robux transactions and security alerts
+- [x] **Actions & Navigation**:
   - [x] Unread notification count badge in top navigation
   - [x] 1-click navigation to target screen (e.g. trade offer -> trade inspector)
-  - [ ] Mark single notification as read
+  - [-] Mark single notification as read — not possible: endpoint 404s (BLOCKERS.md #17)
   - [x] "Mark All as Read" action
   - [x] Notification filter (All vs Unread only)
+  - [x] Desktop OS notifications while the app is in the background, per kind in Settings

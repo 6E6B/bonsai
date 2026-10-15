@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useListCursor } from "~/lib/commands/hooks"
 import { handle, run } from "~/lib/commands/registry"
@@ -7,7 +7,8 @@ import { commands, type NotificationRow, type Paged } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Button, Icon, ListItem, Page, SegmentedControl } from "~/lib/ui"
+import { Avatar, Button, Icon, ListItem, Page, SegmentedControl, Select } from "~/lib/ui"
+import { categoryArg, shownNotifications } from "./filter"
 
 const ms = (iso: string) => {
   const t = Date.parse(iso)
@@ -30,7 +31,19 @@ export default function Notifications() {
       setView(a === "all" || a === "unread" ? a : view() === "all" ? "unread" : "all"),
     ),
   )
-  const shown = createMemo(() => (view() === "unread" ? res.list.items.filter((n) => !n.read) : res.list.items))
+  const [categories] = createResource(() => commands.notificationCategories())
+  const [category, setCategory] = createSignal("")
+  onCleanup(
+    handle("notifications.category", (a) =>
+      setCategory(
+        categoryArg(
+          a,
+          (categories() ?? []).map((c) => c.value),
+        ),
+      ),
+    ),
+  )
+  const shown = createMemo(() => shownNotifications(res.list.items, { view: view(), category: category() }))
   const openAt = (i: number) => {
     const n = shown()[i]
     if (n?.link) void run("entity.open_website", n.link)
@@ -74,6 +87,14 @@ export default function Notifications() {
               { value: "all", label: "All" },
               { value: "unread", label: "Unread" },
             ]}
+          />
+          <Select
+            class="w-44"
+            aria-label="Category"
+            size="sm"
+            value={category()}
+            onChange={(c) => run("notifications.category", c ?? "")}
+            options={[{ value: "", label: "All categories" }, ...(categories() ?? [])]}
           />
           <Button onClick={() => run("notifications.mark_read")} icon="check">
             Mark all read

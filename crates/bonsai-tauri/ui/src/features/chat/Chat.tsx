@@ -366,10 +366,11 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                   const next = view.lines[i() + 1]
                   return !next || next.senderId !== l.senderId || startsDay(at(i()), at(i() + 1))
                 }
-                const places = () => (l.moderated ? [] : experienceLinks(l.text))
-                const hosts = () => (l.moderated ? [] : externalHosts(l.text))
+                const unseen = () => l.moderated || l.hidden
+                const places = () => (unseen() ? [] : experienceLinks(l.text))
+                const hosts = () => (unseen() ? [] : externalHosts(l.text))
                 // A line that is only experience links shows just their cards.
-                const bare = () => !l.moderated && isOnlyExperienceLinks(l.text)
+                const bare = () => !unseen() && isOnlyExperienceLinks(l.text)
                 return (
                   <>
                     <Show when={newDay()}>
@@ -399,14 +400,32 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                                 classList={{
                                   "bg-accent text-on-accent": l.mine,
                                   "bg-surface": !l.mine,
-                                  "opacity-60": l.pending,
-                                  "italic text-fg-muted": l.moderated,
+                                  "opacity-60": l.pending || l.failed,
+                                  "italic text-fg-muted": unseen(),
                                 }}
                               >
-                                <Show when={!l.moderated} fallback="Hidden by Roblox">
+                                <Show
+                                  when={!unseen()}
+                                  fallback={l.hidden ? "This message is not available" : "Hidden by Roblox"}
+                                >
                                   <LinkedText text={l.text} tone={l.mine ? "inherit" : "accent"} />
                                 </Show>
                               </div>
+                            </Show>
+                            <Show when={l.note}>
+                              <span class="text-xs text-fg-muted">{l.note}</span>
+                            </Show>
+                            <Show when={l.failed}>
+                              <span class="flex items-center gap-1 text-xs text-danger">
+                                <Icon name="alert" size={12} />
+                                Not sent
+                                <Button variant="ghost" size="sm" onClick={() => run("chat.resend", l.id)}>
+                                  Resend
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => run("chat.discard", l.id)}>
+                                  Discard
+                                </Button>
+                              </span>
                             </Show>
                             <For each={places()}>{(id) => <ExperienceCard placeId={id} />}</For>
                             <Show when={hosts().length > 0}>

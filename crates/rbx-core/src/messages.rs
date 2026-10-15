@@ -71,6 +71,70 @@ pub struct StreamNotification {
     pub link: Option<String>,
     /// User whose avatar the site shows next to it.
     pub user_id: Option<u64>,
+    /// One of the [`CATEGORIES`] ids.
+    pub category: String,
+}
+
+/// Notification categories for the filter: id and label.
+pub const CATEGORIES: [(&str, &str); 7] = [
+    ("friends", "Friends"),
+    ("trades", "Trades"),
+    ("communities", "Communities"),
+    ("experiences", "Experiences"),
+    ("account", "Robux and security"),
+    ("messages", "Messages"),
+    ("other", "Other"),
+];
+
+/// Which category a stream entry belongs to, from its `notificationSourceType` and, for Sendr
+/// entries, the `content.notificationType` name (`FriendRequestAccepted`, `SecurityAlert`, ...).
+/// Sendr names are not documented, so they are matched by keyword.
+pub fn category(source: &str, kind: &str) -> &'static str {
+    match source {
+        "FriendRequestReceived" | "FriendRequestAccepted" => return "friends",
+        "PartyInviteReceived"
+        | "PartyMemberJoined"
+        | "ChatNewMessage"
+        | "PrivateMessageReceived"
+        | "ConversationUniverseChanged" => return "messages",
+        "UserAddedToPrivateServerWhiteList"
+        | "TeamCreateInvite"
+        | "GameUpdate"
+        | "DeveloperMetricsAvailable"
+        | "ExperienceInvitation" => return "experiences",
+        "GroupJoinRequestAccepted" => return "communities",
+        _ => {}
+    }
+    let k = kind.to_ascii_lowercase();
+    let has = |words: &[&str]| words.iter().any(|w| k.contains(w));
+    if has(&["friend", "connection", "follow"]) {
+        "friends"
+    } else if has(&["trade"]) {
+        "trades"
+    } else if has(&["group", "community", "shout"]) {
+        "communities"
+    } else if has(&[
+        "security",
+        "location",
+        "login",
+        "password",
+        "account",
+        "robux",
+        "transaction",
+        "sale",
+        "purchase",
+        "premium",
+        "stipend",
+        "payout",
+    ]) {
+        "account"
+    } else if has(&["game", "experience", "universe", "place", "event", "badge"]) {
+        "experiences"
+    } else if has(&["chat", "message", "party"]) {
+        "messages"
+    } else {
+        "other"
+    }
 }
 
 impl Core {
@@ -269,7 +333,7 @@ fn message(m: privatemessages::v1::MessageDetailsResponse) -> PrivateMessage {
     }
 }
 
-fn stream_entry(n: notifications::v2::NotificationStreamEntriesModel) -> StreamNotification {
+pub(crate) fn stream_entry(n: notifications::v2::NotificationStreamEntriesModel) -> StreamNotification {
     let content = n.content.unwrap_or_default();
     let state = content["currentState"].as_str().unwrap_or("default").to_string();
     let items = &content["states"][&state]["visualItems"];
@@ -287,8 +351,10 @@ fn stream_entry(n: notifications::v2::NotificationStreamEntriesModel) -> StreamN
         .find(|p| p.starts_with("https://") && crate::links::is_roblox_url(p))
         .map(str::to_string);
     let thumb = &items["thumbnail"][0];
-    let user_id = (thumb["idType"].as_str() == Some("userAvatar")
-        || thumb["idType"].as_str() == Some("user"))
+    let user_id = matches!(
+        thumb["idType"].as_str(),
+        Some("userAvatar" | "user" | "userThumbnail")
+    )
     .then(|| {
         thumb["id"]
             .as_str()
@@ -296,12 +362,18 @@ fn stream_entry(n: notifications::v2::NotificationStreamEntriesModel) -> StreamN
             .or(thumb["id"].as_u64())
     })
     .flatten();
+    let kind = content["notificationType"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
+    let source = n
+        .notification_source_type
+        .and_then(|s| s.name())
+        .unwrap_or_default();
     StreamNotification {
         id: n.id.unwrap_or_default(),
-        kind: content["notificationType"]
-            .as_str()
-            .unwrap_or_default()
-            .to_string(),
+        category: category(source, &kind).to_string(),
+        kind,
         title: text(&body["title"]),
         body: text(&body["label"]),
         when: n.event_date.unwrap_or_default(),
@@ -412,6 +484,24 @@ mod tests {
         assert!(mark_read_target(&[m(false)]));
         assert!(!mark_read_target(&[m(true), m(true)]));
         assert!(!mark_read_target(&[]));
+    }
+
+    #[test]
+    fn notification_categories() {
+        assert_eq!(category("FriendRequestReceived", ""), "friends");
+        assert_eq!(category("GameUpdate", ""), "experiences");
+        assert_eq!(category("GroupJoinRequestAccepted", ""), "communities");
+        assert_eq!(category("PrivateMessageReceived", ""), "messages");
+        assert_eq!(category("Sendr", "FriendRequestAccepted"), "friends");
+        assert_eq!(category("Sendr", "TrustedConnectionRequestReceived"), "friends");
+        assert_eq!(category("Sendr", "SecurityAlert"), "account");
+        assert_eq!(category("Sendr", "UserLocationUpdate"), "account");
+        assert_eq!(category("Sendr", "TradeRequestReceived"), "trades");
+        assert_eq!(category("Sendr", "GroupShout"), "communities");
+        assert_eq!(category("Sendr", "ExperienceEventReminder"), "experiences");
+        assert_eq!(category("Sendr", "Something"), "other");
+        assert_eq!(category("Unknown", ""), "other");
+        assert!(CATEGORIES.iter().any(|(id, _)| *id == category("Sendr", "x")));
     }
 
     #[test]

@@ -768,6 +768,25 @@ async fn messages() {
     );
 }
 
+/// The notification stream's entries, for the category classifier.
+#[tokio::test]
+async fn notification_stream() {
+    let l = live().await;
+    let c = &l.client;
+    l.rec.clear();
+    let p = notifications::v2::GetStreamNotificationsGetRecentParams {
+        start_index: Some(0),
+        max_rows: Some(20),
+    };
+    notifications::v2::get_stream_notifications_get_recent(c, &p)
+        .await
+        .unwrap();
+    l.save(
+        "notifications",
+        "The notification stream (friend, security and location entries).",
+    );
+}
+
 /// A recording client with no cookie, for public data. Needs no RBX_TEST_COOKIE.
 fn anon_live() -> Live {
     let rec = Arc::new(Recorder::default());

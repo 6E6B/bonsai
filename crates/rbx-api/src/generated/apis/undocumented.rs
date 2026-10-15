@@ -111,6 +111,16 @@ pub struct BlockedUsersResponse {
     pub error: Option<String>,
 }
 
+/// `ChatMessagePiece`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ChatMessagePiece {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+}
+
 /// `ChatMessage`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -118,11 +128,15 @@ pub struct ChatMessage {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub content_to_display: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub moderation_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pieces: Option<Vec<ChatMessagePiece>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sender_user_id: Option<i64>,
     /// success, moderated, ...
@@ -132,6 +146,9 @@ pub struct ChatMessage {
     #[serde(rename = "type")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_: Option<String>,
+    /// hidden, ...
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub visibility: Option<String>,
 }
 
 /// `ChatUser`

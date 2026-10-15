@@ -264,6 +264,8 @@ pub struct AccountData {
     pub realtime: bool,
     /// Who is typing, per conversation: user id -> until (unix ms). From realtime.
     pub typing: HashMap<String, HashMap<u64, i64>>,
+    /// Chat messages sent from here that failed, per conversation, until resent or discarded.
+    pub failed_chat: HashMap<String, Vec<crate::chat::ChatMessage>>,
     /// A conversation the UI should open (set after "Chat" on a profile creates one).
     pub chat_focus: Option<String>,
     /// The trade being put together. Not saved.

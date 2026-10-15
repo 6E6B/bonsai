@@ -28,6 +28,7 @@ pub fn run() {
     let handler = builder.invoke_handler();
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_notification::init())
         // Only the app's own window talks to the backend. The sign-in window shows
         // roblox.com and must never reach it (Tauri's ACL already denies remote pages).
         .invoke_handler(move |invoke| {

@@ -122,6 +122,8 @@ pub(crate) struct Inner {
     pub(crate) browser_tracker_id: u64,
     pub(crate) settings: RwLock<Settings>,
     toast_seq: Mutex<u64>,
+    /// Desktop alerts waiting for the shell (see [`crate::alerts`]).
+    pub(crate) alerts: Mutex<crate::alerts::AlertState>,
     search_seq: Mutex<u64>,
     /// The last query sent to remote search, so asking again every frame sends it once.
     search_last: Mutex<String>,
@@ -202,6 +204,7 @@ impl Core {
             browser_tracker_id: 100_000_000_000 + fastrand::u64(0..899_999_999_999),
             settings: RwLock::new(settings),
             toast_seq: Mutex::new(0),
+            alerts: Default::default(),
             search_seq: Mutex::new(0),
             search_last: Mutex::new(String::new()),
             session_id: random_uuid(),
@@ -924,6 +927,7 @@ impl Inner {
         }
         self.store.write().data.entry(id).or_default().unread = unread;
         self.cache.put(Kind::Unread, id, "unread", &unread);
+        self.note_unread(id, unread);
         self.repaint();
         self.refresh_friends(id).await;
     }
@@ -951,6 +955,7 @@ impl Inner {
         let u = self.unread(&c).await;
         self.store.write().data.entry(id).or_default().unread = u;
         self.cache.put(Kind::Unread, id, "unread", &u);
+        self.note_unread(id, u);
         self.repaint();
     }
 
@@ -1034,14 +1039,17 @@ impl Inner {
         let universes: Vec<u64> = all.values().filter_map(|p| p.universe_id).collect();
         let seen: Vec<_> = all.iter().map(|(u, p)| (*u, p.kind)).collect();
         self.note_presence(id, &seen);
-        {
+        let before = {
             let mut s = self.store.write();
             let d = s.data.entry(id).or_default();
-            d.presence.extend(all);
+            let before = d.presence.clone();
+            d.presence.extend(all.clone());
             let snapshot = d.presence.clone();
             drop(s);
             self.cache.put(Kind::Friends, id, "presence", &snapshot);
-        }
+            before
+        };
+        self.note_joins(id, &before, &all);
         self.load_universes(&universes).await;
     }
 
@@ -1587,6 +1595,8 @@ async fn health_loop(inner: Arc<Inner>) {
                     let d = s.data.entry(id).or_default();
                     d.session = SessionState::Ok;
                     d.unread = u;
+                    drop(s);
+                    inner.note_unread(id, u);
                 }
                 Err(e) => inner.note_error(id, &e),
             }

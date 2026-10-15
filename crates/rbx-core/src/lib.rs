@@ -2,6 +2,7 @@
 //! background jobs. The UI talks to [`Core`] and renders [`StoreData`].
 
 pub mod account;
+pub mod alerts;
 pub mod avatar;
 pub mod cache;
 pub mod chat;

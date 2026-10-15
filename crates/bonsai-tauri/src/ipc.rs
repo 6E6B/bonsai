@@ -147,6 +147,9 @@ pub struct Account {
     pub label: Option<String>,
     pub color: Color,
     pub session: Session,
+    /// Everything unread for this account (messages, chat, friend requests, trades,
+    /// notifications), for the rail badge.
+    pub unread: u32,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Type)]
@@ -901,6 +904,10 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                     .data
                     .get(&a.id)
                     .map_or(Session::Unknown, |d| (&d.session).into()),
+                unread: s
+                    .data
+                    .get(&a.id)
+                    .map_or(0, |d| d.unread.total().clamp(0, u32::MAX as i64) as u32),
             })
             .collect(),
         active: s.accounts.active.map(|a| Id(a.0)),
@@ -2594,6 +2601,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             transactions::transaction_accounts,
             inbox::messages,
             inbox::notifications,
+            inbox::notification_categories,
             inbox::chat_list,
             inbox::chat_view,
             inbox::take_chat_focus,

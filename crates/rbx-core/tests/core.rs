@@ -1141,6 +1141,24 @@ async fn private_messages_and_notifications() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn notification_stream_categories() {
+    let replay = Replay::from_fixture(&replay::load("notifications")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let n = poll(|| r.core.notifications(ME, false)).await;
+    let cat = |c: &str| n.items.iter().filter(|x| x.category == c).count();
+    assert!(cat("friends") > 0 && cat("account") > 0);
+    assert_eq!(cat("other"), 0, "every recorded entry has a category");
+    let accepted = n
+        .items
+        .iter()
+        .find(|x| x.kind == "FriendRequestAccepted")
+        .unwrap();
+    assert!(accepted.user_id.is_some() && accepted.body.contains("accepted"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn marketplace_item_page_and_public_inventory() {
     use rbx_core::inventory::InvSlot;
     use rbx_core::market::{CatalogQuery, CatalogSort, ItemKind, ItemRef, Limited};
@@ -1424,6 +1442,28 @@ async fn item_ownership_favorites_wishlist_and_delete() {
     assert_eq!(c.wishlist(ME)[0].price_then, Some(279_900));
     assert!(!c.toggle_wishlist(ME, &card));
     assert!(c.wishlist(ME).is_empty());
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn failed_chat_send_is_kept_for_resend() {
+    let mut f = replay::load("chat");
+    f.interactions
+        .retain(|i| !i.request.path.ends_with("/send-messages"));
+    let replay = Replay::from_fixture(&f).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let _ = poll(|| c.chat_messages(ME, "conv-1", false)).await;
+    c.send_chat(ME, "conv-1", "lost");
+    wait_for(c, "send failed", |s| s.jobs == 0).await;
+    let failed = c.failed_chat(ME, "conv-1");
+    assert_eq!(failed.len(), 1);
+    assert!(failed[0].failed && !failed[0].pending && failed[0].text == "lost");
+    assert!(c.failed_chat(ME, "conv-2").is_empty(), "kept per conversation");
+    assert!(!c.discard_chat(ME, "conv-1", "nope"));
+    assert!(c.discard_chat(ME, "conv-1", &failed[0].id));
+    assert!(c.failed_chat(ME, "conv-1").is_empty());
 }
 
 #[tokio::test(flavor = "multi_thread")]
