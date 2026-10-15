@@ -31,6 +31,7 @@ pub mod template;
 pub mod text;
 pub mod thumbs;
 pub mod trades;
+pub mod transactions;
 pub mod values;
 
 pub use crate::core::{Cmd, Core, CoreConfig, Repaint};

@@ -14,6 +14,7 @@ const ItemPage = lazy(() => import("~/features/marketplace/ItemPage"))
 const Inventory = lazy(() => import("~/features/inventory/Inventory"))
 const Trades = lazy(() => import("~/features/trades/Trades"))
 const Values = lazy(() => import("~/features/values/Values"))
+const Transactions = lazy(() => import("~/features/transactions/Transactions"))
 const Messages = lazy(() => import("~/features/messages/Messages"))
 const Chat = lazy(() => import("~/features/chat/Chat"))
 const Notifications = lazy(() => import("~/features/notifications/Notifications"))
@@ -40,6 +41,7 @@ export function App() {
         <Route path="/inventory/:user?" component={Inventory} />
         <Route path="/trades" component={Trades} />
         <Route path="/values" component={Values} />
+        <Route path="/transactions" component={Transactions} />
         <Route path="/messages" component={Messages} />
         <Route path="/chat" component={Chat} />
         <Route path="/notifications" component={Notifications} />

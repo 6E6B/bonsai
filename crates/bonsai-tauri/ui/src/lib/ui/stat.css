@@ -17,4 +17,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  [data-component="stat"][data-size="lg"] {
+    gap: 2px;
+  }
+
+  [data-component="stat"][data-size="lg"] [data-slot="value"] {
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+    font-weight: 600;
+  }
 }

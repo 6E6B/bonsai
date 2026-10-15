@@ -49,7 +49,10 @@ impl CoreConfig {
             limiter: Arc::new(
                 RateLimiter::default()
                     .with_host("presence.roblox.com", 1.0, 3.0)
-                    .with_host("friends.roblox.com", 2.0, 6.0),
+                    .with_host("friends.roblox.com", 2.0, 6.0)
+                    // Transactions answer 429 after about 8 quick calls; 1.5 s apart still
+                    // tripped it. The sustained limit isn't known.
+                    .with_route("apis.roblox.com", "/transaction-records/", 0.4, 4.0),
             ),
             background: true,
             // What the site uses.
@@ -123,6 +126,8 @@ pub(crate) struct Inner {
     /// Random per run; explore and search APIs want one.
     pub(crate) session_id: String,
     pub(crate) res: crate::res::Resources,
+    /// Transaction ledgers loaded into memory, per account and scope.
+    pub(crate) ledgers: crate::transactions::Ledgers,
     users_pending: Mutex<std::collections::HashSet<u64>>,
     /// Universes asked for and not yet cached, with when they were last asked for. Failed loads
     /// stay here so they are retried after a pause instead of on every frame.
@@ -198,6 +203,7 @@ impl Core {
             search_last: Mutex::new(String::new()),
             session_id: random_uuid(),
             res: Default::default(),
+            ledgers: Default::default(),
             users_pending: Mutex::new(Default::default()),
             universes_pending: Mutex::new(HashMap::new()),
             throttle: Mutex::new(HashMap::new()),
@@ -871,6 +877,7 @@ impl Inner {
         self.clients.write().remove(&id);
         self.cache.forget_account(id);
         self.res.forget_account(id);
+        self.ledgers.forget_account(id);
         {
             let mut s = self.store.write();
             s.accounts.remove(id);
@@ -1477,6 +1484,7 @@ async fn health_loop(inner: Arc<Inner>) {
                 }
                 Err(e) => inner.note_error(id, &e),
             }
+            inner.watch_sales(&c, id).await;
             // The full list now and then, to notice friends who removed you.
             if inner.due(&format!("friends_list:{}", id.0), 600) {
                 inner.refresh_friends(id).await;

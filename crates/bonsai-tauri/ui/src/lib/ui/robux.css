@@ -9,8 +9,9 @@
 
   [data-component="robux"] [data-slot="mark"] {
     flex-shrink: 0;
-    width: 13px;
-    height: 14px;
+    /* Scales with the text, so a large figure gets a large mark. 13 × 14 at the 13px base. */
+    width: 1em;
+    height: 1.08em;
     background-color: currentColor;
     opacity: 0.8;
     mask: url("./assets/robux.png") center / contain no-repeat;

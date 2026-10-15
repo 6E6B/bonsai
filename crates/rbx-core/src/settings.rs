@@ -63,15 +63,18 @@ pub struct NotifyPrefs {
     pub chats: bool,
     pub friend_requests: bool,
     pub experience_updates: bool,
+    /// A new sale of something you sell.
+    pub sales: bool,
 }
 
 impl NotifyPrefs {
-    pub const KINDS: [&'static str; 5] = [
+    pub const KINDS: [&'static str; 6] = [
         "friend_joins",
         "trades",
         "chats",
         "friend_requests",
         "experience_updates",
+        "sales",
     ];
     pub fn get(&self, kind: &str) -> Option<bool> {
         Some(match kind {
@@ -80,6 +83,7 @@ impl NotifyPrefs {
             "chats" => self.chats,
             "friend_requests" => self.friend_requests,
             "experience_updates" => self.experience_updates,
+            "sales" => self.sales,
             _ => return None,
         })
     }
@@ -91,6 +95,7 @@ impl NotifyPrefs {
             "chats" => &mut self.chats,
             "friend_requests" => &mut self.friend_requests,
             "experience_updates" => &mut self.experience_updates,
+            "sales" => &mut self.sales,
             _ => return false,
         };
         *slot = on;
@@ -106,6 +111,7 @@ impl Default for NotifyPrefs {
             chats: true,
             friend_requests: false,
             experience_updates: false,
+            sales: true,
         }
     }
 }

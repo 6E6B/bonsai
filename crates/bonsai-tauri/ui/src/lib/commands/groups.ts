@@ -15,6 +15,7 @@ const groups: [string, string][] = [
   ["market", "Marketplace"],
   ["inventory", "Marketplace"],
   ["trade", "Trades"],
+  ["transactions", "Transactions"],
   ["chat", "Chat and messages"],
   ["message", "Chat and messages"],
   ["notifications", "Chat and messages"],

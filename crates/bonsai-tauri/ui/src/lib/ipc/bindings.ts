@@ -183,6 +183,10 @@ export const commands = {
 	draftSetRobux: (give: boolean, robux: number) => __TAURI_INVOKE<void>("draft_set_robux", { give, robux }),
 	/**  Throws the draft away. A composer step. */
 	discardTradeDraft: () => __TAURI_INVOKE<void>("discard_trade_draft"),
+	transactionsView: (q: TxQuery) => __TAURI_INVOKE<TxView>("transactions_view", { q }),
+	transactionInsights: (q: TxQuery) => __TAURI_INVOKE<TxInsights>("transaction_insights", { q }),
+	/**  Beyond the website: every signed-in account's balance and totals for one period. */
+	transactionAccounts: (period: string) => __TAURI_INVOKE<AccountTotalsView[]>("transaction_accounts", { period }),
 	/**  One message tab: `inbox`, `sent`, `news` or `archive`. */
 	messages: (tab: string) => __TAURI_INVOKE<Paged<MessageRow>>("messages", { tab }),
 	notifications: () => __TAURI_INVOKE<Paged<NotificationRow>>("notifications"),
@@ -280,6 +284,13 @@ export type AccountInfoView = {
 	birthdate: string | null,
 	/**  None until known. */
 	premium: boolean | null,
+};
+
+export type AccountTotalsView = {
+	id: Id,
+	name: string,
+	robux: number | null,
+	totals: TotalsView,
 };
 
 /**  Allied and enemy communities. */
@@ -722,6 +733,14 @@ export type GroupCard = {
 	primary: boolean,
 };
 
+export type GroupView = {
+	id: Id,
+	name: string,
+	amount: number | null,
+	count: number,
+	group: boolean,
+};
+
 /**  What Home shows for the active account (or signed out). */
 export type Home = {
 	loading: boolean,
@@ -852,6 +871,19 @@ export type JoinRequestRow = {
 /**  A shortcut. Key names follow `rbx-core` (`"K"`, `"1"`, `"Slash"`, `"PageDown"`). */
 export type Keys = { kind: "chord"; ctrl: boolean; shift: boolean; alt: boolean; key: string; label: string } | { kind: "sequence"; first: string; second: string; label: string };
 
+export type KindAmount = {
+	key: string,
+	label: string,
+	amount: number | null,
+	/**  Rows in the ledger; `None` for Roblox's totals. */
+	count: number | null,
+};
+
+export type KindOption = {
+	key: string,
+	label: string,
+};
+
 /**  Limited 1.0 (`classic`) or Limited 2.0 (`new`). */
 export type LimitedVersion = "classic" | "new" | "unknown";
 
@@ -929,6 +961,13 @@ export type MessageRow = {
 	system: boolean,
 };
 
+export type MonthView = {
+	/**  `YYYY-MM`. */
+	month: string,
+	incoming: number | null,
+	outgoing: number | null,
+};
+
 export type MyGame = {
 	canVote: boolean,
 	/**  true liked, false disliked. */
@@ -1004,6 +1043,7 @@ export type NotifyView = {
 	chats: boolean,
 	friendRequests: boolean,
 	experienceUpdates: boolean,
+	sales: boolean,
 };
 
 export type OutfitView = {
@@ -1383,6 +1423,16 @@ export type Toast = {
 	retryAfterSecs: number | null,
 };
 
+/**  Robux in and out. Outgoing is negative. */
+export type TotalsView = {
+	loading: boolean,
+	error: string | null,
+	incoming: number | null,
+	outgoing: number | null,
+	pending: number | null,
+	byKind: KindAmount[],
+};
+
 export type TradeItemView = {
 	/**  Names this copy to the trades API and to the draft calls. */
 	instanceId: string,
@@ -1456,6 +1506,78 @@ export type TraderView = {
 	loading: boolean,
 	error: string | null,
 	stats: TraderStats | null,
+};
+
+/**  Beyond the website: the filtered ledger by month, experience, item and buyer. */
+export type TxInsights = {
+	months: MonthView[],
+	experiences: GroupView[],
+	items: GroupView[],
+	buyers: GroupView[],
+};
+
+/**  What the screen shows. Sent as an argument and, as JSON, in the command context. */
+export type TxQuery = {
+	/**  `me` or `group:<id>`. */
+	scope?: string,
+	/**  day, week, month, year, all or custom. */
+	period?: string,
+	/**  Custom range, ms since the epoch; `to` is exclusive. */
+	from?: number | null,
+	to?: number | null,
+	/**  A type key (`sales`); empty for all. */
+	kind?: string,
+	text?: string,
+	minAmount?: number | null,
+	pendingOnly?: boolean,
+	/**  Rows to send. */
+	limit?: number,
+};
+
+export type TxRowView = {
+	id: string,
+	kind: string,
+	kindLabel: string,
+	/**  ms since the epoch. */
+	at: number | null,
+	amount: number | null,
+	pending: boolean,
+	itemId: Id | null,
+	itemName: string,
+	/**  Asset, Bundle, GamePass, DeveloperProduct, ... */
+	itemKind: string,
+	placeId: Id | null,
+	universeId: Id | null,
+	experience: string,
+	agentId: Id | null,
+	agentName: string,
+	agentGroup: boolean,
+};
+
+export type TxView = {
+	signedIn: boolean,
+	scope: string,
+	/**  Robux of the account or the community's funds. */
+	balance: number | null,
+	syncing: boolean,
+	loadingOlder: boolean,
+	/**  Some type isn't read to its first row yet. */
+	hasOlder: boolean,
+	/**  ms since the epoch. */
+	syncedAt: number | null,
+	oldest: number | null,
+	error: string | null,
+	/**  Rows in the whole ledger. */
+	ledgerCount: number,
+	/**  Types in the ledger or that the account has, for the type filter. */
+	kinds: KindOption[],
+	/**  Roblox's totals for day, week, month or year. */
+	roblox: TotalsView | null,
+	/**  Sums over every row that matches. */
+	sums: TotalsView,
+	matched: number,
+	/**  The first `limit` matches, newest first. */
+	rows: TxRowView[],
 };
 
 export type Unread = {

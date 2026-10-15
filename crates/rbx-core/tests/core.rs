@@ -2249,3 +2249,90 @@ async fn rate_limit_emits_countdown_toast() {
     assert!(!t.error);
     assert!(t.retry_after_secs.unwrap() >= 1);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn transactions_ledger_syncs_backfills_and_sums() {
+    use rbx_core::transactions::{Filter, Period, Scope, TxKind, sums};
+    let replay = Replay::from_fixture(&replay::load("transactions_ledger")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let settle = |want: &dyn Fn(&rbx_core::transactions::Ledger) -> bool| {
+        let start = Instant::now();
+        loop {
+            let l = c.ledger(ME, Scope::Me, false);
+            assert!(l.error.is_none(), "error: {:?}", l.error);
+            if !l.syncing && !l.loading_older && want(&l) {
+                return l;
+            }
+            assert!(start.elapsed() < Duration::from_secs(10), "timed out");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    };
+
+    // First sync: one page per type; sales have more.
+    let l = settle(&|l| l.synced_at > 0);
+    let ids: Vec<&str> = l.rows.iter().map(|t| t.id.as_str()).collect();
+    assert_eq!(ids, ["p1", "s-pend", "s-old", "st1"], "newest first across types");
+    assert!(l.has_older() && !l.complete());
+    let p = &l.rows[0];
+    assert_eq!(p.kind, TxKind::Purchase);
+    assert_eq!(p.experience().map(|e| e.universe_id), Some(10_767_201_394));
+    assert!(p.agent.as_ref().is_some_and(|a| a.group));
+    let s = sums(l.rows.iter());
+    assert_eq!((s.incoming, s.outgoing, s.pending), (485, -15, 70));
+
+    // Older history until every type is complete.
+    c.ledger_load_older(ME, Scope::Me).unwrap();
+    let l = settle(&|l| l.complete());
+    assert_eq!(l.rows.last().map(|t| t.id.as_str()), Some("s-oldest"));
+    assert_eq!(
+        c.ledger_load_older(ME, Scope::Me),
+        Err("All history is already here.".into())
+    );
+
+    // A resync stops at known rows, adds the new sale and releases the pending one.
+    let before = l.synced_at;
+    drop(c.ledger(ME, Scope::Me, true));
+    let l = settle(&|l| l.synced_at >= before && l.rows.len() == 6);
+    assert!(l.rows.iter().any(|t| t.id == "s-new" && t.pending));
+    assert!(l.rows.iter().any(|t| t.id == "s-pend" && !t.pending));
+    let sales = Filter {
+        kinds: vec![TxKind::Sale],
+        ..Default::default()
+    };
+    let s = sums(l.rows.iter().filter(|t| sales.matches(t)));
+    assert_eq!((s.count, s.incoming, s.pending), (4, 155, 35));
+    let jul = rbx_core::fmt::parse_iso("2026-08-01T00:00:00Z").unwrap();
+    let sep = rbx_core::fmt::parse_iso("2026-09-01T00:00:00Z").unwrap();
+    let august = Filter {
+        from: Some(jul),
+        to: Some(sep),
+        ..Default::default()
+    };
+    assert_eq!(l.rows.iter().filter(|t| august.matches(t)).count(), 1);
+
+    // Roblox's own totals.
+    let t = poll(|| c.tx_totals(ME, Scope::Me, Period::Month)).await;
+    assert_eq!((t.incoming, t.outgoing, t.pending), (485, -15, 105));
+
+    // A community: its summary, and its ledger with a refused type skipped.
+    let g = Scope::Group(4_000_001);
+    let t = poll(|| c.tx_totals(ME, g, Period::Month)).await;
+    assert_eq!((t.incoming, t.outgoing, t.pending), (700, -100, 300));
+    let start = Instant::now();
+    let l = loop {
+        let l = c.ledger(ME, g, false);
+        if !l.syncing && l.synced_at > 0 {
+            break l;
+        }
+        assert!(start.elapsed() < Duration::from_secs(10), "timed out");
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    };
+    assert!(l.error.is_none(), "error: {:?}", l.error);
+    assert_eq!(l.rows.len(), 2);
+
+    let csv = rbx_core::transactions::csv(l.rows.iter());
+    assert_eq!(csv.lines().count(), 3);
+}

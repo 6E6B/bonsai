@@ -404,6 +404,13 @@ impl Scrubber {
             let kind = first.split('-').nth(1).unwrap_or("Avatar");
             return format!("https://tr.rbxcdn.com/30DAY-{kind}-redacted/{tail}");
         }
+        if let Some(c) = self.cursor(s) {
+            return c;
+        }
+        self.plain_text(s)
+    }
+
+    fn plain_text(&self, s: &str) -> String {
         let mut out = s.to_string();
         for (a, b) in &self.exact {
             out = out.replace(a, b);
@@ -412,6 +419,23 @@ impl Scrubber {
             out = out.replace(&real.to_string(), &fake.to_string());
         }
         out
+    }
+
+    /// Some cursors are base64 text that names the account (`userId:...`). Scrub inside and
+    /// encode again, so the recorded cursor and the request that sends it back still match.
+    fn cursor(&self, s: &str) -> Option<String> {
+        use base64::Engine;
+        use base64::engine::general_purpose::{STANDARD, STANDARD_NO_PAD};
+        if s.len() < 24 || s.contains(|c: char| c.is_whitespace() || c == '-' || c == '_' || c == '.') {
+            return None;
+        }
+        let (bytes, engine) = match STANDARD.decode(s) {
+            Ok(b) => (b, STANDARD),
+            Err(_) => (STANDARD_NO_PAD.decode(s).ok()?, STANDARD_NO_PAD),
+        };
+        let text = String::from_utf8(bytes).ok()?;
+        let scrubbed = self.plain_text(&text);
+        (scrubbed != text).then(|| engine.encode(scrubbed))
     }
 
     pub fn apply(&self, v: &mut Value) {
@@ -443,10 +467,14 @@ impl Scrubber {
                 let group_typed = ["type", "creatorType", "sellerType"]
                     .iter()
                     .any(|k| m.get(*k).and_then(Value::as_str) == Some("Group"));
+                // Transaction agents: `{"id", "type": "User", "name"}`.
+                let user_typed =
+                    m.get("type").and_then(Value::as_str) == Some("User") && m.contains_key("name");
                 let user_like = has_id
                     && !group_like
                     && !group_typed
                     && (bare_user
+                        || user_typed
                         || m.contains_key("displayName")
                         || m.contains_key("username")
                         || m.contains_key("hasVerifiedBadge")
@@ -535,5 +563,32 @@ mod tests {
         assert_eq!(d[3]["creatorName"], "Roblox");
         assert_eq!(d[4]["name"], "Head", "inventory categories aren't users");
         assert_eq!(d[4]["id"], 8);
+    }
+
+    #[test]
+    fn scrubs_transaction_agents_and_cursors_naming_the_account() {
+        use base64::Engine;
+        use base64::engine::general_purpose::STANDARD;
+        let s = Scrubber::new().keep_ids(&[1]).map_id(111, 1_000_001);
+        let cursor = STANDARD.encode("{\"discriminator\":\"userId:111transactionType:Purchase\"}");
+        let mut v = json!({"nextPageCursor": cursor, "data": [
+            {"agent": {"id": 4700575552_i64, "type": "User", "name": "someone"}},
+            {"agent": {"id": 77, "type": "Group", "name": "Some Group"}},
+            {"agent": {"id": 1, "type": "User", "name": "Roblox"}}
+        ]});
+        s.apply(&mut v);
+        let d = &v["data"];
+        assert_ne!(d[0]["agent"]["name"], "someone");
+        assert_ne!(d[0]["agent"]["id"], 4700575552_i64);
+        assert_eq!(d[1]["agent"]["name"], "Some Group");
+        assert_eq!(d[2]["agent"]["name"], "Roblox");
+        let c = v["nextPageCursor"].as_str().unwrap();
+        let text = String::from_utf8(STANDARD.decode(c).unwrap()).unwrap();
+        assert!(text.contains("userId:1000001") && !text.contains("userId:111t"));
+        assert_eq!(
+            s.text(&cursor),
+            c,
+            "the request sending it back scrubs the same way"
+        );
     }
 }

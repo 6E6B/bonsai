@@ -114,7 +114,7 @@ pub fn file_stem(name: &str, id: u64, masked: bool) -> String {
 }
 
 /// `dir/stem.ext`, or `dir/stem 2.ext` and so on when that file exists.
-fn free_path(dir: &Path, stem: &str, ext: &str) -> PathBuf {
+pub(crate) fn free_path(dir: &Path, stem: &str, ext: &str) -> PathBuf {
     let mut p = dir.join(format!("{stem}.{ext}"));
     let mut n = 2;
     while p.exists() {

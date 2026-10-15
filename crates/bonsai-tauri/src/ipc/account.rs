@@ -76,6 +76,7 @@ pub struct NotifyView {
     pub chats: bool,
     pub friend_requests: bool,
     pub experience_updates: bool,
+    pub sales: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -201,6 +202,7 @@ pub fn app_settings(core: State<'_, Arc<Core>>) -> AppSettings {
             chats: s.notify.chats,
             friend_requests: s.notify.friend_requests,
             experience_updates: s.notify.experience_updates,
+            sales: s.notify.sales,
         },
         cache_data: usage.map(|u| u.data as f64),
         cache_images: usage.map(|u| u.images as f64),

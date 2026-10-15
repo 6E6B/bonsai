@@ -457,6 +457,12 @@ function NotificationsSection() {
           checked={app.notify.experienceUpdates}
           onChange={toggle("experience_updates")}
         />
+        <SwitchRow
+          label="Sales"
+          description="When someone buys something you sell. Checked every few minutes."
+          checked={app.notify.sales}
+          onChange={toggle("sales")}
+        />
       </Card>
     </>
   )
@@ -467,7 +473,14 @@ const initialApp = (): AppSettings => ({
   density: "comfortable",
   playerCommand: "",
   formatLocale: "",
-  notify: { friendJoins: true, trades: true, chats: true, friendRequests: false, experienceUpdates: false },
+  notify: {
+    friendJoins: true,
+    trades: true,
+    chats: true,
+    friendRequests: false,
+    experienceUpdates: false,
+    sales: true,
+  },
   cacheData: null,
   cacheImages: null,
 })

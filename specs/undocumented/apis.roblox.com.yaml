@@ -425,7 +425,154 @@ paths:
         - { in: body, name: body, required: true, schema: { $ref: "#/definitions/QuickLoginCancel" } }
       responses:
         "200": { description: OK, schema: { type: object } }
+  /transaction-records/v1/users/{userId}/transaction-totals:
+    get:
+      # Captured 2026-10-15 from the Transactions bundle (www.roblox.com/transactions, Summary)
+      # and checked live (fixture: transactions.json). The site also sends usedTypes, a bitmask
+      # of the types the account has; the answer is the same without it.
+      x-captured: "2026-10-15, www.roblox.com/transactions, Summary"
+      x-rust-name: get_user_transaction_totals
+      summary: Robux in and out per category over the last day, week, month or year.
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+        - { in: query, name: timeFrame, required: true, type: string, description: "Day, Week, Month or Year" }
+        - { in: query, name: transactionType, required: true, type: string, description: "Always summary" }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/TransactionTotals" } }
+  /transaction-records/v1/users/{userId}/transaction-types:
+    get:
+      # Captured 2026-10-15 from the Transactions bundle, checked live (fixture: transactions.json).
+      # The site fills its type dropdown from it.
+      x-captured: "2026-10-15, www.roblox.com/transactions"
+      x-rust-name: get_user_transaction_types
+      summary: Which transaction types the account has, as HasPurchase, HasSale, ... flags.
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/TransactionTypeFlags" } }
+  /transaction-records/v1/users/{userId}/transactions:
+    get:
+      # Captured 2026-10-15 from the Transactions bundle, checked live (fixture: transactions.json).
+      # One type per call, newest first. The cursor is an offset. `id` is 0 on every row;
+      # `idHash` names the row. 429 after about 8 quick calls.
+      x-captured: "2026-10-15, www.roblox.com/transactions, type dropdown"
+      x-rust-name: get_user_transactions
+      summary: One kind of transaction for a user, newest first.
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+        - { in: query, name: transactionType, required: true, type: string, description: "Purchase, Sale, PremiumStipend, GroupPayout, CurrencyPurchase, TradeRobux, ..." }
+        - { in: query, name: limit, required: false, type: integer, format: int32, description: "10, 25, 50 or 100" }
+        - { in: query, name: cursor, required: false, type: string }
+        - { in: query, name: itemPricingType, required: false, type: string, description: "PaidAndLimited or All (purchases)" }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/TransactionsPage" } }
+  /transaction-records/v1/groups/{groupId}/transactions:
+    get:
+      # Captured 2026-10-15 from the Transactions bundle: the same call as for users with
+      # "groups" in the path (communities/configure#!/revenue). Not run live: the test account
+      # can't see any community's funds (fixture: synthetic, transactions_groups.json).
+      x-captured: "2026-10-15, www.roblox.com/communities/configure?id={id}#!/revenue/sales"
+      x-rust-name: get_group_transactions
+      summary: One kind of transaction for a community, newest first.
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: query, name: transactionType, required: true, type: string }
+        - { in: query, name: limit, required: false, type: integer, format: int32 }
+        - { in: query, name: cursor, required: false, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/TransactionsPage" } }
+  /transaction-records/v1/groups/{groupId}/revenue/summary/{timeFrame}:
+    get:
+      # Captured 2026-10-15 from the Transactions bundle (revenueSummary template). Field names
+      # from that template. Not run live (fixture: synthetic, transactions_groups.json).
+      x-captured: "2026-10-15, www.roblox.com/communities/configure?id={id}#!/revenue/summary"
+      x-rust-name: get_group_revenue_summary
+      summary: A community's Robux in per category over the last day, week, month or year.
+      parameters:
+        - { in: path, name: groupId, required: true, type: integer, format: int64 }
+        - { in: path, name: timeFrame, required: true, type: string, description: "Day, Week, Month or Year" }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/GroupRevenueSummary" } }
 definitions:
+  TransactionTotals:
+    type: object
+    properties:
+      salesTotal: { type: integer, format: int64 }
+      purchasesTotal: { type: integer, format: int64 }
+      affiliateSalesTotal: { type: integer, format: int64 }
+      groupPayoutsTotal: { type: integer, format: int64 }
+      currencyPurchasesTotal: { type: integer, format: int64 }
+      premiumStipendsTotal: { type: integer, format: int64 }
+      tradeSystemEarningsTotal: { type: integer, format: int64 }
+      tradeSystemCostsTotal: { type: integer, format: int64 }
+      premiumPayoutsTotal: { type: integer, format: int64 }
+      groupPremiumPayoutsTotal: { type: integer, format: int64 }
+      adSpendTotal: { type: integer, format: int64 }
+      developerExchangeTotal: { type: integer, format: int64 }
+      pendingRobuxTotal: { type: integer, format: int64 }
+      incomingRobuxTotal: { type: integer, format: int64 }
+      outgoingRobuxTotal: { type: integer, format: int64 }
+      individualToGroupTotal: { type: integer, format: int64 }
+      csAdjustmentTotal: { type: integer, format: int64 }
+      creatorRewardsPayoutsTotal: { type: integer, format: int64 }
+      incomingRobuxTransferTotal: { type: integer, format: int64 }
+      outgoingRobuxTransferTotal: { type: integer, format: int64 }
+  TransactionTypeFlags:
+    type: object
+    # HasPurchase, HasSale, HasPremiumStipend, ... Read as a map so new flags don't break us.
+    additionalProperties: { type: boolean }
+  TransactionsPage:
+    type: object
+    properties:
+      previousPageCursor: { type: string }
+      nextPageCursor: { type: string }
+      data: { type: array, items: { $ref: "#/definitions/TransactionRecord" } }
+  TransactionRecord:
+    type: object
+    properties:
+      idHash: { type: string }
+      # A display name ("Currency Purchase"), not the query value.
+      transactionType: { type: string }
+      created: { type: string }
+      isPending: { type: boolean }
+      agent: { $ref: "#/definitions/TransactionAgent" }
+      details: { $ref: "#/definitions/TransactionDetails" }
+      currency: { $ref: "#/definitions/TransactionCurrency" }
+  TransactionAgent:
+    type: object
+    properties:
+      id: { type: integer, format: int64 }
+      # User or Group
+      type: { type: string }
+      name: { type: string }
+  TransactionDetails:
+    type: object
+    properties:
+      id: { type: integer, format: int64 }
+      name: { type: string }
+      # Asset, Bundle, GamePass, DeveloperProduct, PrivateServer, Place, ...
+      type: { type: string }
+      place: { $ref: "#/definitions/TransactionPlace" }
+  TransactionPlace:
+    type: object
+    properties:
+      placeId: { type: integer, format: int64 }
+      universeId: { type: integer, format: int64 }
+      name: { type: string }
+  TransactionCurrency:
+    type: object
+    properties:
+      amount: { type: integer, format: int64 }
+      type: { type: string }
+  GroupRevenueSummary:
+    type: object
+    properties:
+      itemSaleRobux: { type: integer, format: int64 }
+      commissionRobux: { type: integer, format: int64 }
+      groupPayoutRobux: { type: integer, format: int64 }
+      individualToGroupRobux: { type: integer, format: int64 }
+      pendingRobux: { type: integer, format: int64 }
+      creatorRewardsPayoutRobux: { type: integer, format: int64 }
   QuickLoginCode:
     type: object
     properties:

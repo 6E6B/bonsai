@@ -388,6 +388,7 @@ dependencies = [
  "image",
  "rbx-core",
  "serde",
+ "serde_json",
  "specta",
  "specta-typescript",
  "tauri",

@@ -14,6 +14,7 @@ mod signin;
 mod thumb;
 
 pub fn run() {
+    let t0 = std::time::Instant::now(); // PROFILE-TMP
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
@@ -37,10 +38,13 @@ pub fn run() {
             handler(invoke)
         })
         .register_asynchronous_uri_scheme_protocol(thumb::SCHEME, thumb::handle)
+        .on_page_load(move |w, p| eprintln!("PROFILE {:?} page {:?} {}", t0.elapsed(), p.event(), w.label())) // PROFILE-TMP
         .setup(move |app| {
+            eprintln!("PROFILE {:?} setup start", t0.elapsed()); // PROFILE-TMP
             builder.mount_events(app);
             let repaint = notify::spawn(app.handle().clone())?;
             app.manage(Arc::new(Core::start(CoreConfig::standard(), repaint)));
+            eprintln!("PROFILE {:?} setup end", t0.elapsed()); // PROFILE-TMP
             Ok(())
         })
         .run(tauri::generate_context!());

@@ -25,3 +25,7 @@ Features from PLAN.md "Beyond the website" that have shipped, with the command t
 | Leave several communities in one confirmed action | Communities → Your communities → Select | Leave the selected communities |
 | Member list CSV export | Community → Members | Copy loaded members as CSV |
 | Keyboard triage of join requests (a, d, x) and bulk answers | Community → Requests | Accept / Decline selected join requests |
+| Local transaction ledger: All and custom date ranges, search, minimum amount, pending only, CSV save and copy | Transactions | Go to Transactions; Fetch older transaction history; Save the shown transactions as CSV |
+| Every account's balance and period totals side by side | Transactions → All accounts | Go to Transactions |
+| Monthly incoming vs outgoing, spending per experience, top items sold, top buyers | Transactions → Insights | Go to Transactions |
+| Toast on a new sale (watcher only notifies) | Settings → Notifications | Turn a notification kind on or off (`sales`) |

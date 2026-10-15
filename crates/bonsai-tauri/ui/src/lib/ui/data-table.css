@@ -1,6 +1,9 @@
 @layer components {
   [data-component="data-table"] {
     min-width: 0;
+    /* Columns wider than the table get cut off instead of painting over whatever sits beside it.
+     * `clip`, not `hidden`, so the sticky header still sticks to the page. */
+    overflow-x: clip;
     /* Keep the sticky header's z-index local so it can't paint over menus, popovers or the shell. */
     isolation: isolate;
   }

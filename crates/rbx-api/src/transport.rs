@@ -1,5 +1,5 @@
 //! Hand-written HTTP transport: one [`Client`] per account, CSRF retry, challenge errors,
-//! shared per-host rate limits, `Retry-After`, and backoff with jitter.
+//! shared per-host and per-route rate limits, `Retry-After`, and backoff with jitter.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -97,13 +97,17 @@ struct Bucket {
 type BlockHook = Box<dyn Fn(&str, Duration) + Send + Sync>;
 
 /// Per-host token buckets, shared by every account in the process, so five accounts do not
-/// look like five times the traffic from one machine.
+/// look like five times the traffic from one machine. A route (host and path prefix) can have
+/// its own bucket: a 429 there holds only that route, not the whole host.
 pub struct RateLimiter {
     buckets: Mutex<HashMap<String, Bucket>>,
     /// requests per second, per host
     rate: f64,
     burst: f64,
+    /// By bucket key: a host, or a route's `host/prefix`.
     overrides: HashMap<String, (f64, f64)>,
+    /// `(host, path prefix)`, longest prefix first.
+    routes: Vec<(String, String)>,
     on_block: Mutex<Option<BlockHook>>,
 }
 
@@ -113,6 +117,7 @@ impl std::fmt::Debug for RateLimiter {
             .field("rate", &self.rate)
             .field("burst", &self.burst)
             .field("overrides", &self.overrides)
+            .field("routes", &self.routes)
             .finish()
     }
 }
@@ -130,6 +135,7 @@ impl RateLimiter {
             rate: rate_per_sec,
             burst,
             overrides: HashMap::new(),
+            routes: Vec::new(),
             on_block: Mutex::new(None),
         }
     }
@@ -138,6 +144,29 @@ impl RateLimiter {
     pub fn with_host(mut self, host: &str, rate_per_sec: f64, burst: f64) -> Self {
         self.overrides.insert(host.to_string(), (rate_per_sec, burst));
         self
+    }
+
+    /// A bucket for paths under `prefix` on `host`, apart from the rest of the host. Meant for
+    /// endpoints that answer 429 after a few calls: the limiter paces them, and a 429 there is
+    /// not retried by [`Client::send`] (retrying only extends the block).
+    pub fn with_route(mut self, host: &str, prefix: &str, rate_per_sec: f64, burst: f64) -> Self {
+        self.overrides
+            .insert(format!("{host}{prefix}"), (rate_per_sec, burst));
+        self.routes.push((host.to_string(), prefix.to_string()));
+        self.routes.sort_by_key(|r| std::cmp::Reverse(r.1.len()));
+        self
+    }
+
+    /// The bucket a request to `host` and `path` draws from, and whether it is a route's.
+    pub fn bucket(&self, host: &str, path: &str) -> (String, bool) {
+        match self
+            .routes
+            .iter()
+            .find(|(h, p)| h == host && path.starts_with(p.as_str()))
+        {
+            Some((h, p)) => (format!("{h}{p}"), true),
+            None => (host.to_string(), false),
+        }
     }
 
     /// Called whenever a host answers 429 and is blocked for a duration.
@@ -152,7 +181,7 @@ impl RateLimiter {
             .unwrap_or((self.rate, self.burst))
     }
 
-    /// How long to wait before the next request to `host` may go out; takes the token.
+    /// How long to wait before the next request on bucket `host` may go out; takes the token.
     fn reserve(&self, host: &str) -> Duration {
         let (rate, burst) = self.limits(host);
         let now = Instant::now();
@@ -186,7 +215,7 @@ impl RateLimiter {
         }
     }
 
-    /// The server said 429: hold every account's requests to this host.
+    /// The server said 429: hold every account's requests on this bucket.
     pub fn block(&self, host: &str, d: Duration) {
         let remaining = {
             let mut map = self.buckets.lock();
@@ -343,6 +372,8 @@ impl ClientBuilder {
 }
 
 const COOKIE_NAME: &str = ".ROBLOSECURITY";
+/// How long a strict route is held after a 429 without `Retry-After`.
+const STRICT_BLOCK: Duration = Duration::from_secs(10);
 
 impl Client {
     pub fn builder(account: AccountId) -> ClientBuilder {
@@ -376,8 +407,9 @@ impl Client {
         let mut csrf_retried = false;
         let mut n429 = 0;
         let mut n5xx = 0;
+        let (bucket, strict) = self.inner.limiter.bucket(req.host, &req.path);
         loop {
-            self.inner.limiter.acquire(req.host).await;
+            self.inner.limiter.acquire(&bucket).await;
             let roblox = is_roblox_host(req.host);
             let csrf_sent = roblox && req.method != Method::GET && self.inner.csrf.read().is_some();
             let resp = match self.build(&req)?.send().await {
@@ -423,9 +455,15 @@ impl Client {
                 continue;
             }
             if status == 429 {
-                let wait = retry_after(&response.headers).unwrap_or_else(|| self.inner.retry.backoff(n429));
-                self.inner.limiter.block(req.host, wait);
-                if n429 < self.inner.retry.max_429 && wait <= self.inner.retry.max_delay {
+                let wait = retry_after(&response.headers).unwrap_or_else(|| {
+                    if strict {
+                        STRICT_BLOCK
+                    } else {
+                        self.inner.retry.backoff(n429)
+                    }
+                });
+                self.inner.limiter.block(&bucket, wait);
+                if !strict && n429 < self.inner.retry.max_429 && wait <= self.inner.retry.max_delay {
                     n429 += 1;
                     continue;
                 }
@@ -698,5 +736,24 @@ mod tests {
         assert!(l.reserve("b").is_zero());
         l.block("b", Duration::from_secs(5));
         assert!(l.reserve("b") >= Duration::from_secs(4));
+    }
+
+    #[test]
+    fn routes_get_their_own_bucket() {
+        let l = RateLimiter::new(10.0, 10.0)
+            .with_route("api.x", "/slow/", 1.0, 1.0)
+            .with_route("api.x", "/slow/v1/fast/", 10.0, 10.0);
+        assert_eq!(l.bucket("api.x", "/other"), ("api.x".to_string(), false));
+        assert_eq!(l.bucket("api.y", "/slow/a"), ("api.y".to_string(), false));
+        let (slow, strict) = l.bucket("api.x", "/slow/v1/users");
+        assert_eq!((slow.as_str(), strict), ("api.x/slow/", true));
+        assert_eq!(l.bucket("api.x", "/slow/v1/fast/a").0, "api.x/slow/v1/fast/");
+        assert!(l.reserve(&slow).is_zero());
+        assert!(!l.reserve(&slow).is_zero(), "the route's own burst");
+        l.block(&slow, Duration::from_secs(5));
+        assert!(
+            l.reserve("api.x").is_zero(),
+            "a 429 on the route leaves the host alone"
+        );
     }
 }

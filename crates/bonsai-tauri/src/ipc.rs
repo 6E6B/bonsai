@@ -27,6 +27,7 @@ mod discover;
 mod inbox;
 mod market;
 mod trades;
+mod transactions;
 
 /// A Roblox user, game or item id, or a local id. Roblox ids stay far below 2^53, so a
 /// JS number holds them exactly.
@@ -995,6 +996,9 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
         return r;
     }
     if let Some(r) = trades::run(&app, &core, id, &inv, core.acting(picked)) {
+        return r;
+    }
+    if let Some(r) = transactions::run(&app, &core, id, &inv, core.acting(picked)) {
         return r;
     }
     if let Some(r) = inbox::run(&core, id, &inv, core.acting(picked)) {
@@ -2585,6 +2589,9 @@ pub fn builder() -> Builder<tauri::Wry> {
             trades::draft_toggle_item,
             trades::draft_set_robux,
             trades::discard_trade_draft,
+            transactions::transactions_view,
+            transactions::transaction_insights,
+            transactions::transaction_accounts,
             inbox::messages,
             inbox::notifications,
             inbox::chat_list,

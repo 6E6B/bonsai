@@ -766,6 +766,30 @@ pub struct GamePassesPage {
     pub next_page_token: Option<String>,
 }
 
+/// `GroupRevenueSummary`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct GroupRevenueSummary {
+    #[serde(rename = "commissionRobux")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub commission_robux: Option<i64>,
+    #[serde(rename = "creatorRewardsPayoutRobux")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub creator_rewards_payout_robux: Option<i64>,
+    #[serde(rename = "groupPayoutRobux")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_payout_robux: Option<i64>,
+    #[serde(rename = "individualToGroupRobux")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub individual_to_group_robux: Option<i64>,
+    #[serde(rename = "itemSaleRobux")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item_sale_robux: Option<i64>,
+    #[serde(rename = "pendingRobux")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pending_robux: Option<i64>,
+}
+
 /// `OmniGroup`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -1002,6 +1026,165 @@ pub struct RsvpResponse {
     pub rsvp_status: Option<String>,
 }
 
+/// `TransactionAgent`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TransactionAgent {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(rename = "type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_: Option<String>,
+}
+
+/// `TransactionCurrency`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TransactionCurrency {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount: Option<i64>,
+    #[serde(rename = "type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_: Option<String>,
+}
+
+/// `TransactionPlace`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TransactionPlace {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(rename = "placeId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub place_id: Option<i64>,
+    #[serde(rename = "universeId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub universe_id: Option<i64>,
+}
+
+/// `TransactionDetails`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TransactionDetails {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub place: Option<TransactionPlace>,
+    #[serde(rename = "type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_: Option<String>,
+}
+
+/// `TransactionRecord`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TransactionRecord {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub agent: Option<TransactionAgent>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub currency: Option<TransactionCurrency>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub details: Option<TransactionDetails>,
+    #[serde(rename = "idHash")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id_hash: Option<String>,
+    #[serde(rename = "isPending")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_pending: Option<bool>,
+    #[serde(rename = "transactionType")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transaction_type: Option<String>,
+}
+
+/// `TransactionTotals`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TransactionTotals {
+    #[serde(rename = "adSpendTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ad_spend_total: Option<i64>,
+    #[serde(rename = "affiliateSalesTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub affiliate_sales_total: Option<i64>,
+    #[serde(rename = "creatorRewardsPayoutsTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub creator_rewards_payouts_total: Option<i64>,
+    #[serde(rename = "csAdjustmentTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cs_adjustment_total: Option<i64>,
+    #[serde(rename = "currencyPurchasesTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub currency_purchases_total: Option<i64>,
+    #[serde(rename = "developerExchangeTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub developer_exchange_total: Option<i64>,
+    #[serde(rename = "groupPayoutsTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_payouts_total: Option<i64>,
+    #[serde(rename = "groupPremiumPayoutsTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_premium_payouts_total: Option<i64>,
+    #[serde(rename = "incomingRobuxTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub incoming_robux_total: Option<i64>,
+    #[serde(rename = "incomingRobuxTransferTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub incoming_robux_transfer_total: Option<i64>,
+    #[serde(rename = "individualToGroupTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub individual_to_group_total: Option<i64>,
+    #[serde(rename = "outgoingRobuxTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outgoing_robux_total: Option<i64>,
+    #[serde(rename = "outgoingRobuxTransferTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outgoing_robux_transfer_total: Option<i64>,
+    #[serde(rename = "pendingRobuxTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pending_robux_total: Option<i64>,
+    #[serde(rename = "premiumPayoutsTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub premium_payouts_total: Option<i64>,
+    #[serde(rename = "premiumStipendsTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub premium_stipends_total: Option<i64>,
+    #[serde(rename = "purchasesTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub purchases_total: Option<i64>,
+    #[serde(rename = "salesTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sales_total: Option<i64>,
+    #[serde(rename = "tradeSystemCostsTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trade_system_costs_total: Option<i64>,
+    #[serde(rename = "tradeSystemEarningsTotal")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trade_system_earnings_total: Option<i64>,
+}
+
+/// `TransactionTypeFlags`
+pub type TransactionTypeFlags = HashMap<String, bool>;
+
+/// `TransactionsPage`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TransactionsPage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<Vec<TransactionRecord>>,
+    #[serde(rename = "nextPageCursor")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_page_cursor: Option<String>,
+    #[serde(rename = "previousPageCursor")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub previous_page_cursor: Option<String>,
+}
+
 /// `UserGamePass`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -1142,6 +1325,35 @@ pub struct GetOmniSearchParams {
     /// all or games
     pub page_type: Option<String>,
     pub page_token: Option<String>,
+}
+
+/// Query, header and form inputs for [`get_group_transactions`].
+#[derive(Debug, Clone, Default)]
+pub struct GetGroupTransactionsParams {
+    pub transaction_type: String,
+    pub limit: Option<i32>,
+    pub cursor: Option<String>,
+}
+
+/// Query, header and form inputs for [`get_user_transaction_totals`].
+#[derive(Debug, Clone, Default)]
+pub struct GetUserTransactionTotalsParams {
+    /// Day, Week, Month or Year
+    pub time_frame: String,
+    /// Always summary
+    pub transaction_type: String,
+}
+
+/// Query, header and form inputs for [`get_user_transactions`].
+#[derive(Debug, Clone, Default)]
+pub struct GetUserTransactionsParams {
+    /// Purchase, Sale, PremiumStipend, GroupPayout, CurrencyPurchase, TradeRobux, ...
+    pub transaction_type: String,
+    /// 10, 25, 50 or 100
+    pub limit: Option<i32>,
+    pub cursor: Option<String>,
+    /// PaidAndLimited or All (purchases)
+    pub item_pricing_type: Option<String>,
 }
 
 /// Query, header and form inputs for [`get_blocked_users`].
@@ -1899,6 +2111,180 @@ pub fn get_omni_search_request(params: &GetOmniSearchParams) -> Result<Request> 
 /// Undocumented; captured 2026-10-12, www.roblox.com/discover?Keyword=adopt.
 pub async fn get_omni_search(client: &Client, params: &GetOmniSearchParams) -> Result<OmniSearch> {
     client.send(get_omni_search_request(params)?).await?.json()
+}
+
+/// `GET /transaction-records/v1/groups/{groupId}/revenue/summary/{timeFrame}`
+///
+/// A community's Robux in per category over the last day, week, month or year.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/communities/configure?id={id}#!/revenue/summary.
+pub fn get_group_revenue_summary_request(group_id: i64, time_frame: &str) -> Result<Request> {
+    let r = Request::new(
+        Method::GET,
+        HOST,
+        format!(
+            "/transaction-records/v1/groups/{}/revenue/summary/{}",
+            crate::rt::path_value(&group_id),
+            crate::rt::path_value(&time_frame)
+        ),
+    );
+    Ok(r)
+}
+
+/// `GET /transaction-records/v1/groups/{groupId}/revenue/summary/{timeFrame}`
+///
+/// A community's Robux in per category over the last day, week, month or year.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/communities/configure?id={id}#!/revenue/summary.
+pub async fn get_group_revenue_summary(
+    client: &Client,
+    group_id: i64,
+    time_frame: &str,
+) -> Result<GroupRevenueSummary> {
+    client
+        .send(get_group_revenue_summary_request(group_id, time_frame)?)
+        .await?
+        .json()
+}
+
+/// `GET /transaction-records/v1/groups/{groupId}/transactions`
+///
+/// One kind of transaction for a community, newest first.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/communities/configure?id={id}#!/revenue/sales.
+pub fn get_group_transactions_request(group_id: i64, params: &GetGroupTransactionsParams) -> Result<Request> {
+    let mut r = Request::new(
+        Method::GET,
+        HOST,
+        format!(
+            "/transaction-records/v1/groups/{}/transactions",
+            crate::rt::path_value(&group_id)
+        ),
+    );
+    r.query("transactionType", &params.transaction_type);
+    r.query("limit", &params.limit);
+    r.query("cursor", &params.cursor);
+    Ok(r)
+}
+
+/// `GET /transaction-records/v1/groups/{groupId}/transactions`
+///
+/// One kind of transaction for a community, newest first.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/communities/configure?id={id}#!/revenue/sales.
+pub async fn get_group_transactions(
+    client: &Client,
+    group_id: i64,
+    params: &GetGroupTransactionsParams,
+) -> Result<TransactionsPage> {
+    client
+        .send(get_group_transactions_request(group_id, params)?)
+        .await?
+        .json()
+}
+
+/// `GET /transaction-records/v1/users/{userId}/transaction-totals`
+///
+/// Robux in and out per category over the last day, week, month or year.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/transactions, Summary.
+pub fn get_user_transaction_totals_request(
+    user_id: i64,
+    params: &GetUserTransactionTotalsParams,
+) -> Result<Request> {
+    let mut r = Request::new(
+        Method::GET,
+        HOST,
+        format!(
+            "/transaction-records/v1/users/{}/transaction-totals",
+            crate::rt::path_value(&user_id)
+        ),
+    );
+    r.query("timeFrame", &params.time_frame);
+    r.query("transactionType", &params.transaction_type);
+    Ok(r)
+}
+
+/// `GET /transaction-records/v1/users/{userId}/transaction-totals`
+///
+/// Robux in and out per category over the last day, week, month or year.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/transactions, Summary.
+pub async fn get_user_transaction_totals(
+    client: &Client,
+    user_id: i64,
+    params: &GetUserTransactionTotalsParams,
+) -> Result<TransactionTotals> {
+    client
+        .send(get_user_transaction_totals_request(user_id, params)?)
+        .await?
+        .json()
+}
+
+/// `GET /transaction-records/v1/users/{userId}/transaction-types`
+///
+/// Which transaction types the account has, as HasPurchase, HasSale, ... flags.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/transactions.
+pub fn get_user_transaction_types_request(user_id: i64) -> Result<Request> {
+    let r = Request::new(
+        Method::GET,
+        HOST,
+        format!(
+            "/transaction-records/v1/users/{}/transaction-types",
+            crate::rt::path_value(&user_id)
+        ),
+    );
+    Ok(r)
+}
+
+/// `GET /transaction-records/v1/users/{userId}/transaction-types`
+///
+/// Which transaction types the account has, as HasPurchase, HasSale, ... flags.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/transactions.
+pub async fn get_user_transaction_types(client: &Client, user_id: i64) -> Result<TransactionTypeFlags> {
+    client
+        .send(get_user_transaction_types_request(user_id)?)
+        .await?
+        .json()
+}
+
+/// `GET /transaction-records/v1/users/{userId}/transactions`
+///
+/// One kind of transaction for a user, newest first.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/transactions, type dropdown.
+pub fn get_user_transactions_request(user_id: i64, params: &GetUserTransactionsParams) -> Result<Request> {
+    let mut r = Request::new(
+        Method::GET,
+        HOST,
+        format!(
+            "/transaction-records/v1/users/{}/transactions",
+            crate::rt::path_value(&user_id)
+        ),
+    );
+    r.query("transactionType", &params.transaction_type);
+    r.query("limit", &params.limit);
+    r.query("cursor", &params.cursor);
+    r.query("itemPricingType", &params.item_pricing_type);
+    Ok(r)
+}
+
+/// `GET /transaction-records/v1/users/{userId}/transactions`
+///
+/// One kind of transaction for a user, newest first.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/transactions, type dropdown.
+pub async fn get_user_transactions(
+    client: &Client,
+    user_id: i64,
+    params: &GetUserTransactionsParams,
+) -> Result<TransactionsPage> {
+    client
+        .send(get_user_transactions_request(user_id, params)?)
+        .await?
+        .json()
 }
 
 /// `GET /universes/v1/places/{placeId}/universe`

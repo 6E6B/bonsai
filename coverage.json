@@ -7132,6 +7132,56 @@
     },
     {
       "deprecated": false,
+      "function": "get_group_revenue_summary",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/transaction-records/v1/groups/{groupId}/revenue/summary/{timeFrame}",
+      "summary": "A community's Robux in per category over the last day, week, month or year.",
+      "used": false
+    },
+    {
+      "deprecated": false,
+      "function": "get_group_transactions",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/transaction-records/v1/groups/{groupId}/transactions",
+      "summary": "One kind of transaction for a community, newest first.",
+      "used": false
+    },
+    {
+      "deprecated": false,
+      "function": "get_user_transaction_totals",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/transaction-records/v1/users/{userId}/transaction-totals",
+      "summary": "Robux in and out per category over the last day, week, month or year.",
+      "used": false
+    },
+    {
+      "deprecated": false,
+      "function": "get_user_transaction_types",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/transaction-records/v1/users/{userId}/transaction-types",
+      "summary": "Which transaction types the account has, as HasPurchase, HasSale, ... flags.",
+      "used": false
+    },
+    {
+      "deprecated": false,
+      "function": "get_user_transactions",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/transaction-records/v1/users/{userId}/transactions",
+      "summary": "One kind of transaction for a user, newest first.",
+      "used": false
+    },
+    {
+      "deprecated": false,
       "function": "get_place_universe",
       "host": "apis.roblox.com",
       "method": "GET",
@@ -7691,6 +7741,6 @@
       "used": true
     }
   ],
-  "total": 769,
+  "total": 774,
   "used": 218
 }

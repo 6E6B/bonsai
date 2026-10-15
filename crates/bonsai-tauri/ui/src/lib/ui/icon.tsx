@@ -5,6 +5,7 @@ import bellFill from "@phosphor-icons/core/assets/fill/bell-fill.svg?raw"
 import valuesFill from "@phosphor-icons/core/assets/fill/chart-line-up-fill.svg?raw"
 import chatFill from "@phosphor-icons/core/assets/fill/chat-circle-fill.svg?raw"
 import discoverFill from "@phosphor-icons/core/assets/fill/compass-fill.svg?raw"
+import dollarFill from "@phosphor-icons/core/assets/fill/currency-dollar-fill.svg?raw"
 import messagesFill from "@phosphor-icons/core/assets/fill/envelope-simple-fill.svg?raw"
 import settingsFill from "@phosphor-icons/core/assets/fill/gear-six-fill.svg?raw"
 import heartFill from "@phosphor-icons/core/assets/fill/heart-fill.svg?raw"
@@ -38,6 +39,7 @@ import clock from "@phosphor-icons/core/assets/regular/clock.svg?raw"
 import discover from "@phosphor-icons/core/assets/regular/compass.svg?raw"
 import copy from "@phosphor-icons/core/assets/regular/copy.svg?raw"
 import crown from "@phosphor-icons/core/assets/regular/crown.svg?raw"
+import dollar from "@phosphor-icons/core/assets/regular/currency-dollar.svg?raw"
 import value from "@phosphor-icons/core/assets/regular/diamond.svg?raw"
 import more from "@phosphor-icons/core/assets/regular/dots-three.svg?raw"
 import download from "@phosphor-icons/core/assets/regular/download-simple.svg?raw"
@@ -51,7 +53,6 @@ import settings from "@phosphor-icons/core/assets/regular/gear-six.svg?raw"
 import globe from "@phosphor-icons/core/assets/regular/globe.svg?raw"
 import server from "@phosphor-icons/core/assets/regular/hard-drives.svg?raw"
 import heart from "@phosphor-icons/core/assets/regular/heart.svg?raw"
-import robux from "@phosphor-icons/core/assets/regular/hexagon.svg?raw"
 import home from "@phosphor-icons/core/assets/regular/house.svg?raw"
 import info from "@phosphor-icons/core/assets/regular/info.svg?raw"
 import keyboard from "@phosphor-icons/core/assets/regular/keyboard.svg?raw"
@@ -160,7 +161,12 @@ const svgs = {
   refresh,
   external,
   link,
-  robux,
+  dollar,
+  "dollar-fill": dollarFill,
+  transactions: dollar,
+  "transactions-fill": dollarFill,
+  /** Drawn by icon.css from the same mask as `<Robux>`, so the two marks match. */
+  robux: "<svg></svg>",
   keyboard,
   sidebar,
   user,
@@ -231,6 +237,7 @@ export function Icon(props: IconProps) {
   return (
     <svg
       data-component="icon"
+      data-icon={local.name}
       width={local.size ?? 16}
       height={local.size ?? 16}
       viewBox="0 0 256 256"

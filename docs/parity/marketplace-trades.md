@@ -37,19 +37,30 @@
   - [x] Recommended / Similar catalog items carousel
 
 ## Transactions
-- [ ] **Transaction Types**:
-  - [ ] Summary by period (Last 30 Days, 90 Days, 1 Year, All Time)
-  - [ ] Purchases (items bought, seller username, price paid)
-  - [ ] Sales of goods (items sold, buyer username, gross price, marketplace fee deducted, net Robux)
-  - [ ] Premium stipends (monthly recurring Robux grant)
-  - [ ] Group payouts (Robux distributions received from groups)
-  - [ ] Pending Robux escrow (sales currently in holding, release timeline)
-- [ ] **Group Transactions**:
-  - [ ] View transaction ledger for owned groups (funds in, funds out, pending)
-- [ ] **Filters & Export**:
-  - [ ] Date range selection
-  - [ ] Filter by transaction category
-  - [ ] CSV export of transaction ledger
+Source: `apis.roblox.com/transaction-records/v1` (captured 2026-10-15 from the site's Transactions bundle, `specs/undocumented/apis.roblox.com.yaml`). The site offers Day / Week / Month / Year totals; longer and custom ranges come from the local ledger.
+- [x] **Transaction Types**:
+  - [x] Summary by period (Day, Week, Month, Year from Roblox; All synced and custom ranges from the ledger), incoming, outgoing and net
+  - [x] Purchases (item or pass, experience, seller, price paid)
+  - [x] Sales of goods (item, buyer, amount; fee split once a real sale shows whether the amount is net; not run live yet, BLOCKERS.md #14)
+  - [x] Premium stipends (not run live yet, BLOCKERS.md #14)
+  - [x] Group payouts received (not run live yet, BLOCKERS.md #14)
+  - [x] Currency purchases, trade Robux and the other types Roblox lists, shown only when the account has them
+  - [x] Pending Robux: pending total, pending rows marked with when they started (Roblox gives no release date)
+- [x] **Group Transactions**:
+  - [x] Ledger and revenue summary for communities where the account may see funds (not run live yet, BLOCKERS.md #14)
+- [x] **Filters & Export**:
+  - [x] Date range selection
+  - [x] Filter by transaction category
+  - [x] Search by item, experience or person; minimum amount
+  - [x] CSV export of the ledger (save to Downloads, or copy the rows shown)
+
+## Transactions beyond the website
+- [x] Local ledger: synced incrementally, older history on request, works offline
+- [x] All your accounts: balance, pending and period totals per account and summed (Transactions → All accounts)
+- [x] Monthly incoming vs outgoing chart
+- [x] Spending per experience (passes and developer products grouped by experience)
+- [x] Top items sold and top buyers
+- [x] Notification on a new sale: checks the newest sales page every 5 minutes per account and toasts new ones; the first check only fills the ledger (Settings → Notifications → Sales, `app.notify sales`)
 
 ## Trades
 - [x] **Trade Queues**:

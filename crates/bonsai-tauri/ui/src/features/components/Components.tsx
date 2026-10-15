@@ -83,6 +83,7 @@ const icons: IconName[] = [
   "refresh",
   "external",
   "robux",
+  "dollar",
   "search",
   "server",
   "badge",
@@ -573,7 +574,7 @@ export default function Components() {
         <Card class="grid w-full grid-cols-5 gap-4 p-3">
           <Stat label="Playing">1,037</Stat>
           <Stat label="Visits">7.3M</Stat>
-          <Stat label="Balance">
+          <Stat label="Balance" size="lg">
             <Robux amount={12400} />
           </Stat>
           <Stat label="Creator">

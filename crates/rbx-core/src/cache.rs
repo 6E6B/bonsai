@@ -129,6 +129,15 @@ impl Cache {
                  json TEXT NOT NULL,
                  fetched_at INTEGER NOT NULL,
                  PRIMARY KEY (kind, account, id)
+             );
+             CREATE TABLE IF NOT EXISTS ledger (
+                 account INTEGER NOT NULL,
+                 scope TEXT NOT NULL,
+                 kind TEXT NOT NULL,
+                 id TEXT NOT NULL,
+                 at INTEGER NOT NULL,
+                 json TEXT NOT NULL,
+                 PRIMARY KEY (account, scope, kind, id)
              );",
         )?;
         Ok(Cache { db: Mutex::new(db) })
@@ -213,6 +222,50 @@ impl Cache {
             .collect()
     }
 
+    /// Add or replace transaction rows (see `transactions`). Always private to `account`.
+    pub fn ledger_put<'a, T: Serialize + 'a>(
+        &self,
+        account: AccountId,
+        scope: &str,
+        rows: impl IntoIterator<Item = (&'a str, &'a str, i64, &'a T)>,
+    ) {
+        let mut db = self.db.lock();
+        let r = (|| -> rusqlite::Result<()> {
+            let tx = db.transaction()?;
+            {
+                let mut st = tx.prepare(
+                    "INSERT INTO ledger (account, scope, kind, id, at, json) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+                     ON CONFLICT (account, scope, kind, id) DO UPDATE SET at = excluded.at, json = excluded.json",
+                )?;
+                for (kind, id, at, v) in rows {
+                    let Ok(json) = serde_json::to_string(v) else {
+                        continue;
+                    };
+                    st.execute(params![account.0 as i64, scope, kind, id, at, json])?;
+                }
+            }
+            tx.commit()
+        })();
+        if let Err(e) = r {
+            tracing::warn!("ledger write failed: {e}");
+        }
+    }
+
+    /// Every transaction row of one scope, newest first.
+    pub fn ledger_all<T: DeserializeOwned>(&self, account: AccountId, scope: &str) -> Vec<T> {
+        let db = self.db.lock();
+        let Ok(mut st) =
+            db.prepare("SELECT json FROM ledger WHERE account = ?1 AND scope = ?2 ORDER BY at DESC")
+        else {
+            return Vec::new();
+        };
+        let rows = st.query_map(params![account.0 as i64, scope], |r| r.get::<_, String>(0));
+        let Ok(rows) = rows else { return Vec::new() };
+        rows.flatten()
+            .filter_map(|json| serde_json::from_str(&json).ok())
+            .collect()
+    }
+
     /// Bytes the database takes on disk.
     pub fn size_bytes(&self) -> u64 {
         self.db
@@ -237,6 +290,7 @@ impl Cache {
         if let Err(e) = r {
             tracing::warn!("cache clear failed: {e}");
         }
+        let _ = db.execute("DELETE FROM ledger", []);
         let _ = db.execute_batch("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;");
     }
 
@@ -250,6 +304,7 @@ impl Cache {
             "DELETE FROM entities WHERE account = ?1",
             params![account.0 as i64],
         );
+        let _ = db.execute("DELETE FROM ledger WHERE account = ?1", params![account.0 as i64]);
     }
 }
 
@@ -278,5 +333,22 @@ mod tests {
         assert!(c.get::<String>(Kind::User, AccountId(1), "156").is_some());
         let x = c.get::<String>(Kind::User, AccountId(1), "156").unwrap();
         assert!(x.is_fresh(60));
+    }
+
+    #[test]
+    fn ledger_rows_are_private_upserted_and_newest_first() {
+        let c = Cache::in_memory().unwrap();
+        let (a, b) = ("old".to_string(), "new".to_string());
+        c.ledger_put(AccountId(1), "me", [("Sale", "x", 10, &a), ("Sale", "y", 20, &b)]);
+        let changed = "old, released".to_string();
+        c.ledger_put(AccountId(1), "me", [("Sale", "x", 10, &changed)]);
+        assert_eq!(
+            c.ledger_all::<String>(AccountId(1), "me"),
+            vec!["new", "old, released"]
+        );
+        assert!(c.ledger_all::<String>(AccountId(2), "me").is_empty());
+        assert!(c.ledger_all::<String>(AccountId(1), "group:5").is_empty());
+        c.forget_account(AccountId(1));
+        assert!(c.ledger_all::<String>(AccountId(1), "me").is_empty());
     }
 }

@@ -1,0 +1,529 @@
+{
+  "captured": "2026-10-15",
+  "source": "live",
+  "note": "The test account's transaction types, Month totals, two pages of 10 purchases, currency purchases and sales (none). Sellers who are people are scrubbed.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transaction-types"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "HasAdSpend": false,
+          "HasAdsRevsharePayout": false,
+          "HasAffiliatePayout": false,
+          "HasAffiliateSale": false,
+          "HasCSAdjustment": false,
+          "HasCreatorRewardsPayout": false,
+          "HasCurrencyPurchase": true,
+          "HasDevEx": false,
+          "HasEngagementPayout": false,
+          "HasGroupAdsRevsharePayout": false,
+          "HasGroupEngagementPayout": false,
+          "HasGroupPayout": false,
+          "HasGroupSubscriptionsRevsharePayout": false,
+          "HasIndividualToGroup": false,
+          "HasLicensingPayment": false,
+          "HasPendingRobux": false,
+          "HasPremiumStipend": false,
+          "HasPrivateServerEngagementPayout": false,
+          "HasPublishingAdvanceRebates": false,
+          "HasPurchase": true,
+          "HasRobloxSelectTransfer": false,
+          "HasSale": false,
+          "HasSubscriptionReferralPayout": false,
+          "HasSubscriptionsRevsharePayout": false,
+          "HasTradeRobux": false,
+          "HasTransfer": false
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transaction-totals",
+        "query": {
+          "timeFrame": "Month",
+          "transactionType": "summary"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "adSpendTotal": 0,
+          "adsRevsharePayoutsTotal": 0,
+          "affiliatePayoutTotal": 0,
+          "affiliateSalesTotal": 0,
+          "creatorRewardsPayoutsTotal": 0,
+          "csAdjustmentTotal": 0,
+          "currencyPurchasesTotal": 500,
+          "developerExchangeTotal": 0,
+          "groupAdsRevsharePayoutsTotal": 0,
+          "groupPayoutsTotal": 0,
+          "groupPremiumPayoutsTotal": 0,
+          "groupSubscriptionsRevshareOutgoingTotal": 0,
+          "groupSubscriptionsRevshareTotal": 0,
+          "incomingRobuxTotal": 500,
+          "incomingRobuxTransferTotal": 0,
+          "individualToGroupTotal": 0,
+          "licensingPaymentClawbackOutgoingTotal": 0,
+          "licensingPaymentTotal": 0,
+          "outgoingRobuxTotal": -479,
+          "outgoingRobuxTransferTotal": 0,
+          "pendingRobuxTotal": 0,
+          "premiumPayoutsTotal": 0,
+          "premiumStipendsTotal": 0,
+          "privateServerEngagementPayoutsTotal": 0,
+          "publishingAdvanceRebatesTotal": 0,
+          "purchasesTotal": -479,
+          "robloxSelectIncomingTotal": 0,
+          "robloxSelectOutgoingTotal": 0,
+          "salesTotal": 0,
+          "subscriptionReferralPayoutsTotal": 0,
+          "subscriptionsRevshareOutgoingTotal": 0,
+          "subscriptionsRevshareTotal": 0,
+          "tradeSystemCostsTotal": 0,
+          "tradeSystemEarningsTotal": 0
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "10",
+          "transactionType": "Purchase"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "agent": {
+                "id": 34267008,
+                "name": "ogonek 4,294,967,295",
+                "type": "Group"
+              },
+              "created": "2026-10-15T03:16:03.971Z",
+              "currency": {
+                "amount": -1,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 1985535252,
+                "name": "Starter Pack",
+                "place": {
+                  "name": "Chomped!",
+                  "placeId": 73080084964809,
+                  "universeId": 10765826902
+                },
+                "type": "GamePass"
+              },
+              "id": 0,
+              "idHash": "FWD1NeZ9ONUjos9+5SsGUA",
+              "isPending": false,
+              "purchaseToken": "0bc7925c-b31c-43f3-a560-b6fb23d826cd",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 32303102,
+                "name": "Obstacle Labs",
+                "type": "Group"
+              },
+              "created": "2026-10-14T00:26:32.257Z",
+              "currency": {
+                "amount": -15,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 78680820,
+                "name": "Revive",
+                "place": {
+                  "name": "Scooter Duo 🛴 [2 Player Obby]",
+                  "placeId": 121371815815493,
+                  "universeId": 10767201394
+                },
+                "type": "DeveloperProduct"
+              },
+              "id": 0,
+              "idHash": "AJA5ZqkzyhuSr5jLyt7ZWA",
+              "isPending": false,
+              "purchaseToken": "93b06b53-7936-4442-a096-29a49dee0009",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 34936585,
+                "name": "Bolt Design",
+                "type": "Group"
+              },
+              "created": "2026-09-29T07:59:27.516Z",
+              "currency": {
+                "amount": -5,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 139271865499847,
+                "name": "invisible",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "eaU9EJAnkN6lV+49sYtvEQ",
+              "isPending": false,
+              "purchaseToken": "287c0180-8cc4-4ea4-8a31-ab75244f3416",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 416436258,
+                "name": "EX10",
+                "type": "Group"
+              },
+              "created": "2026-09-25T06:52:58.345Z",
+              "currency": {
+                "amount": -5,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 77719309,
+                "name": "Super Lucky Roll",
+                "place": {
+                  "name": "Draw It Better! 🎨",
+                  "placeId": 119168493101362,
+                  "universeId": 10013279162
+                },
+                "type": "DeveloperProduct"
+              },
+              "id": 0,
+              "idHash": "xcMtFtYeuskbfE5/3U6UYg",
+              "isPending": false,
+              "purchaseToken": "45ad3d25-3093-4db1-a1ea-a7b6a0f37cf6",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "created": "2026-09-21T08:14:27.611Z",
+              "currency": {
+                "amount": -5,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 107770690836563,
+                "name": "galaxy",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "qOEf0kWyxFhikodqYBz/XQ",
+              "isPending": false,
+              "purchaseToken": "acf4edb6-b02f-4ead-9f02-c09c053331bf",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 16401910,
+                "name": "Dodanuki UGC",
+                "type": "Group"
+              },
+              "created": "2026-09-21T08:14:27.604Z",
+              "currency": {
+                "amount": -55,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 139785570660062,
+                "name": "Galaxy",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "iUsrL9yJnmK5h9ofEvUi1Q",
+              "isPending": false,
+              "purchaseToken": "0d413886-fa31-4c8f-a214-2698e8ccde28",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 9000000002,
+                "name": "user1",
+                "type": "User"
+              },
+              "created": "2026-09-21T08:14:27.581Z",
+              "currency": {
+                "amount": -5,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 122543896454209,
+                "name": "galaxy",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "6+kEL8bFMj17/XMLx7p0gg",
+              "isPending": false,
+              "purchaseToken": "a64dd626-7de1-4322-9b1a-5320b0757b50",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 35050545,
+                "name": "tearful sombre",
+                "type": "Group"
+              },
+              "created": "2026-09-20T22:36:37.905Z",
+              "currency": {
+                "amount": -6,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 134037136827386,
+                "name": "Pass Me The Triss",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "c6E9Fk3E6RhTmE+uq3pr8w",
+              "isPending": false,
+              "purchaseToken": "d55a41c0-3a9f-445a-9000-43b172828a62",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 312986751,
+                "name": "Nostalqiaa",
+                "type": "Group"
+              },
+              "created": "2026-09-20T22:36:37.902Z",
+              "currency": {
+                "amount": -75,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 208317363613490,
+                "name": "υ´ᴖ ﻌ ᴖ`υ Sleepy Doggy Kaomoji",
+                "type": "Bundle"
+              },
+              "id": 0,
+              "idHash": "oONLm3ZUxw7VB+r3GMEbUw",
+              "isPending": false,
+              "purchaseToken": "4ee3fbfd-b57d-4a03-9560-fbbe5949375e",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 408168652,
+                "name": "sry",
+                "type": "Group"
+              },
+              "created": "2026-09-20T22:36:37.9Z",
+              "currency": {
+                "amount": -95,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 136730167671339,
+                "name": ",, 🖤. plaid gothic bat beret with horns",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "2TXwxrM4K9JoA5YjG1wwlw",
+              "isPending": false,
+              "purchaseToken": "dc940511-2ed0-4f27-a9b4-75fb03abee5b",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            }
+          ],
+          "nextPageCursor": "eyJrZXkiOjEwLCJzb3J0T3JkZXIiOiJBc2MiLCJwYWdpbmdEaXJlY3Rpb24iOiJGb3J3YXJkIiwicGFnZU51bWJlciI6MiwiZGlzY3JpbWluYXRvciI6InVzZXJJZDoxMDAwMDAxdHJhbnNhY3Rpb25UeXBlOlB1cmNoYXNlaXRlbVByaWNpbmdUeXBlOiIsImNvdW50IjoxMH0KMWI0MTgzMjFhMWZjNzRjNjhhYjQxOGVlMjhjYzQ1M2ZhMTNhOGE1MTg5Y2M4ODRmMjI1OTg2ZTcxZDRhYzk1YQ==",
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "cursor": "eyJrZXkiOjEwLCJzb3J0T3JkZXIiOiJBc2MiLCJwYWdpbmdEaXJlY3Rpb24iOiJGb3J3YXJkIiwicGFnZU51bWJlciI6MiwiZGlzY3JpbWluYXRvciI6InVzZXJJZDoxMDAwMDAxdHJhbnNhY3Rpb25UeXBlOlB1cmNoYXNlaXRlbVByaWNpbmdUeXBlOiIsImNvdW50IjoxMH0KMWI0MTgzMjFhMWZjNzRjNjhhYjQxOGVlMjhjYzQ1M2ZhMTNhOGE1MTg5Y2M4ODRmMjI1OTg2ZTcxZDRhYzk1YQ==",
+          "limit": "10",
+          "transactionType": "Purchase"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [
+            {
+              "agent": {
+                "id": 290083986,
+                "name": "death of a jester",
+                "type": "Group"
+              },
+              "created": "2026-09-20T22:36:37.893Z",
+              "currency": {
+                "amount": -65,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 103584737681801,
+                "name": " Emo Anime Boy Hair",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "T70DRCO4Ke0XST0WJ9D8Yw",
+              "isPending": false,
+              "purchaseToken": "9adbcf05-c6f1-4135-a1d9-5aed7b7ca6e9",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 466501071,
+                "name": "i shot an angel",
+                "type": "Group"
+              },
+              "created": "2026-09-20T22:36:37.892Z",
+              "currency": {
+                "amount": -140,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 116178684054500,
+                "name": "black bug megaspike dj crossbody bag",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "nKOe+OhcttlRFNOGZY1MEA",
+              "isPending": false,
+              "purchaseToken": "5a5eab22-1167-4196-99b7-d4e1f5cede55",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 34447122,
+                "name": "NEKO-HOLiC",
+                "type": "Group"
+              },
+              "created": "2026-09-20T22:36:37.892Z",
+              "currency": {
+                "amount": -7,
+                "type": "Robux"
+              },
+              "details": {
+                "id": 132661122445300,
+                "name": "nightless entertainment district red",
+                "type": "Asset"
+              },
+              "id": 0,
+              "idHash": "+rXFxMa/gS8ElIEZBEfJiA",
+              "isPending": false,
+              "purchaseToken": "65c0c2fc-2931-4e72-8076-341e7d7d69f5",
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            },
+            {
+              "agent": {
+                "id": 1,
+                "name": "Roblox",
+                "type": "User"
+              },
+              "created": "2016-03-19T00:33:42.847Z",
+              "currency": {
+                "amount": -10,
+                "type": "Tickets"
+              },
+              "details": {
+                "id": 380202286,
+                "name": "Four Leaf Clover Bouncers",
+                "type": "Asset"
+              },
+              "id": 805628037,
+              "idHash": "T8WN5rQrq1fTOr5wupnv9Q",
+              "isPending": false,
+              "purchaseToken": null,
+              "transactionSubtype": null,
+              "transactionType": "Purchase"
+            }
+          ],
+          "nextPageCursor": null,
+          "previousPageCursor": "eyJrZXkiOjIwLCJzb3J0T3JkZXIiOiJBc2MiLCJwYWdpbmdEaXJlY3Rpb24iOiJCYWNrd2FyZCIsInBhZ2VOdW1iZXIiOjEsImRpc2NyaW1pbmF0b3IiOiJ1c2VySWQ6MTAwMDAwMXRyYW5zYWN0aW9uVHlwZTpQdXJjaGFzZWl0ZW1QcmljaW5nVHlwZToiLCJjb3VudCI6MTB9CjBlYzJlZjMwMmU0NDEzM2Q0NTI3ZDg5NGY1OGI3ZDg0NTg4MDNkZmY1MmYxYzBmN2YxN2FhY2JjMTg3ZGI1Y2E="
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "10",
+          "transactionType": "CurrencyPurchase"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "10",
+          "transactionType": "Sale"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "data": [],
+          "nextPageCursor": null,
+          "previousPageCursor": null
+        }
+      }
+    }
+  ]
+}

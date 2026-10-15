@@ -352,6 +352,7 @@ impl Core {
             inner.cache.clear_fetched();
             inner.disk.clear();
             inner.res.clear();
+            inner.ledgers.clear();
             inner.store.write().thumbs.clear();
             inner.toast(None, "Cache cleared.", false);
             let usage = CacheUsage {

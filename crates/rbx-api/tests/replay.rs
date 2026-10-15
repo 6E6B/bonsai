@@ -407,3 +407,48 @@ async fn asset_delivery_finds_a_shirts_model_and_template() {
         Some("https://sc0.rbxcdn.com/shirt-image-redacted")
     );
 }
+
+/// Transactions recorded live: type flags, totals, and purchases over two cursor pages.
+#[tokio::test]
+async fn transactions_decode_and_page() {
+    use apis::undocumented as a;
+    let r = Replay::start(&["transactions"]).await;
+    let c = r.client();
+    let flags = a::get_user_transaction_types(&c, 1_000_001).await.unwrap();
+    assert_eq!(flags.get("HasPurchase"), Some(&true));
+    let t = a::get_user_transaction_totals(
+        &c,
+        1_000_001,
+        &a::GetUserTransactionTotalsParams {
+            time_frame: "Month".into(),
+            transaction_type: "summary".into(),
+        },
+    )
+    .await
+    .unwrap();
+    assert!(t.outgoing_robux_total.is_some_and(|n| n < 0));
+    let page = |cursor| a::GetUserTransactionsParams {
+        transaction_type: "Purchase".into(),
+        limit: Some(10),
+        cursor,
+        item_pricing_type: None,
+    };
+    let first = a::get_user_transactions(&c, 1_000_001, &page(None))
+        .await
+        .unwrap();
+    let rows = first.data.unwrap();
+    assert_eq!(rows.len(), 10);
+    assert!(
+        rows.iter()
+            .all(|x| x.id_hash.is_some() && x.currency.as_ref().and_then(|c| c.amount).is_some())
+    );
+    assert!(
+        rows.iter()
+            .any(|x| x.details.as_ref().and_then(|d| d.place.as_ref()).is_some())
+    );
+    let second = a::get_user_transactions(&c, 1_000_001, &page(first.next_page_cursor))
+        .await
+        .unwrap();
+    assert!(!second.data.unwrap().is_empty());
+    assert!(second.next_page_cursor.is_none());
+}

@@ -188,6 +188,7 @@ commands! {
     GoInventory => "nav.inventory", "Go to Inventory", ["inventory", "items"], None, [Shortcut::seq("G", "I")];
     GoTrades => "nav.trades", "Go to Trades", ["trades", "trading"], None, [Shortcut::seq("G", "T")];
     GoValues => "nav.values", "Go to Values (Rolimons)", ["values", "rolimons", "limiteds", "rap", "demand", "worth"], None, [Shortcut::seq("G", "V")];
+    GoTransactions => "nav.transactions", "Go to Transactions", ["transactions", "robux", "sales", "purchases", "spending", "income", "stipend", "ledger", "money"], None, [Shortcut::seq("G", "R")];
     GoMessages => "nav.messages", "Go to Messages", ["messages", "inbox", "pm"], None, [Shortcut::seq("G", "N")];
     GoCommunities => "nav.communities", "Go to Communities", ["groups", "communities"], None, [Shortcut::seq("G", "C")];
     GoProfile => "nav.profile", "Go to your profile", ["profile", "me"], None, [Shortcut::seq("G", "P")];
@@ -307,6 +308,16 @@ commands! {
     CounterTrade => "trade.counter", "Counter trade", ["counter", "trade"], Text, [];
     SendTrade => "trade.send", "Send the trade you're making", ["send", "trade", "offer"], None, [];
     CopyTradesCsv => "trade.export", "Copy the trade list as CSV", ["export", "csv", "history", "copy"], None, [];
+    TxPeriod => "transactions.period", "Set the transactions period (day, week, month, year, all; no argument cycles)", ["transactions", "period", "range", "month", "year", "all time"], Text, [];
+    TxType => "transactions.type", "Show one transaction type (sales, purchases, stipends, ...; empty shows all)", ["transactions", "type", "filter", "sales", "purchases", "stipends", "payouts"], Text, [];
+    TxScope => "transactions.scope", "Show your transactions or a community's (me, or a community name or ID)", ["transactions", "community", "group", "revenue", "funds"], Text, [];
+    TxRange => "transactions.range", "Show transactions between two dates (2026-01-01..2026-03-31; empty clears)", ["transactions", "dates", "from", "to", "between"], Text, [];
+    TxPending => "transactions.pending", "Show only pending Robux, or everything (no argument toggles)", ["transactions", "pending", "held", "escrow"], Text, [];
+    TxSync => "transactions.sync", "Sync transactions now", ["transactions", "refresh", "reload", "sync"], None, [];
+    TxLoadOlder => "transactions.load_older", "Fetch older transaction history", ["transactions", "history", "older", "backfill", "all"], None, [];
+    TxStop => "transactions.stop", "Stop fetching older transactions", ["transactions", "stop", "cancel"], None, [];
+    TxExport => "transactions.export", "Save the shown transactions as CSV", ["transactions", "export", "csv", "save", "download"], None, [];
+    TxCopyCsv => "transactions.copy_csv", "Copy the shown transactions as CSV", ["transactions", "export", "csv", "copy"], None, [];
 
     MessageUser => "user.message", "Message (chat)", ["chat", "message", "dm", "pm", "whisper"], User, [];
     NewGroupChat => "chat.new_group", "Start a chat or group chat", ["new chat", "group chat", "compose", "new message"], None, [];
@@ -363,7 +374,7 @@ commands! {
     Refresh => "view.refresh", "Refresh", ["reload"], None, [Shortcut::key("F5")];
     SetPlayerCommand => "app.player_command", "Set how Roblox is launched (empty for the default)", ["launch", "player", "sober", "flatpak", "wine", "command"], Text, [];
     SetFormatLocale => "app.format_locale", "Set number and date format (e.g. de-DE; empty for the system's)", ["language", "locale", "region", "format", "date", "number"], Text, [];
-    SetNotify => "app.notify", "Turn a notification kind on or off (friend_joins, trades, chats, friend_requests, experience_updates)", ["notifications", "alerts", "desktop", "mute"], Text, [];
+    SetNotify => "app.notify", "Turn a notification kind on or off (friend_joins, trades, chats, friend_requests, experience_updates, sales)", ["notifications", "alerts", "desktop", "mute", "sales"], Text, [];
     ClearCache => "app.clear_cache", "Clear cached data and images", ["cache", "clear", "disk", "storage"], None, [];
 
     NextSubTab => "view.next_subtab", "Next sub-tab", ["tab", "next"], None, [Shortcut::key("CloseBracket")];

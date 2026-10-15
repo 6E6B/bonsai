@@ -19,7 +19,7 @@ Every phase must:
 Blocks several later items. Capture from roblox.com devtools, add to `specs/undocumented/<host>.yaml` with a dated comment and a fixture. Scrub personal data.
 
 - Avatar reset to default, emote equip/unequip.
-- Transaction history: purchases, sales, stipends, group payouts, pending escrow, group ledger, summary by period.
+- ~~Transaction history~~ captured 2026-10-15 from the site's Transactions bundle (`apis.roblox.com/transaction-records/v1/...`); see Phase 6.
 - Group store, group funds balance, payouts (one-time and recurring), allies/enemies.
 - Public servers region, voice chat and camera indicators, age rating, event banners, report flows.
 - Premium tier and renewal date, payment history, age verification status, account PIN status, "who can message me".
@@ -71,12 +71,30 @@ Area: `features/discover` and the search entry in the palette.
 ## Wave 2: needs Wave 0 captures
 
 ### Phase 6: Transactions
-Area: new `features/transactions`, `rbx-core` module, `rbx-api` wrappers.
-- Summary by period (30 days, 90 days, 1 year, all time).
-- Purchases, sales (gross, fee, net), premium stipends, group payouts, pending escrow with release timeline.
-- Group ledger for owned groups.
-- Date range and category filters, CSV export of the ledger.
-- Virtual table. Add to nav, palette and shortcuts.
+Area: new `features/transactions`, `rbx-core/src/transactions.rs`, `rbx-api` wrappers.
+
+Endpoints (captured 2026-10-15, `specs/undocumented/apis.roblox.com.yaml`):
+- `GET /transaction-records/v1/users/{id}/transaction-totals?timeFrame=Day|Week|Month|Year&transactionType=summary`: totals per category, incoming, outgoing, pending.
+- `GET /transaction-records/v1/users/{id}/transaction-types`: which types the account has (`HasPurchase`, ...).
+- `GET /transaction-records/v1/{users|groups}/{id}/transactions?transactionType=&limit=&cursor=`: one type per call, newest first, offset cursor. `id` is always 0; `idHash` is the stable key. The response's `transactionType` is a display string, so the type is the one we asked for.
+- `GET /transaction-records/v1/groups/{id}/revenue/summary/{timeFrame}`: a community's totals.
+- Rate limit is tight (429 after about 8 quick calls), so syncs are slow and shared.
+
+Facts that shape the design:
+- The site only offers Day / Week / Month / Year totals. "All time" and custom ranges come from the local ledger, labelled with how far back it goes.
+- The list has no date filter, so the ledger is synced into SQLite: fetch newest pages per type until a known `idHash`, and fetch older history only on request (`transactions.load_older`), stoppable.
+- Sale rows carry one amount. Whether it is net of the fee isn't verified (test account has no sales), so no gross/fee split until a real sale is recorded.
+- Pending rows have `isPending`; the API gives no release date, so the screen shows "pending since" and the pending total, not a guessed timeline.
+
+Steps (one PR each):
+1. Spec, codegen, fixtures (live from the test account, scrubbed; synthetic for sales, stipends and groups), replay tests.
+2. Core: ledger table, sync and backfill, totals, filters, range sums, CSV, rollups. Unit tests.
+3. IPC and screen: header (balance, pending, scope), period summary tiles, virtual ledger, type filter, detail pane, commands.
+4. Date range, search, amount filter, CSV save and copy.
+5. Community ledgers and revenue summary for communities where the account may see funds.
+6. Beyond the website: all-accounts rollup, monthly in/out chart, spend per experience, top items and buyers, pending panel, new-sale notification (watcher only notifies).
+
+Status 2026-10-15: steps 1–6 built together. The pending panel is the Pending tile, the pending-only filter and the Pending badge on rows. Sales, stipends and community ledgers wait on a live recording (BLOCKERS.md #14).
 
 ### Phase 7: Communities admin
 Area: `features/communities`.

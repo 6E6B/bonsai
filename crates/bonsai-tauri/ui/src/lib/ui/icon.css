@@ -4,4 +4,9 @@
   [data-component="icon"] {
     flex-shrink: 0;
   }
+
+  [data-component="icon"][data-icon="robux"] {
+    background-color: currentColor;
+    mask: url("./assets/robux.png") center / 88% no-repeat;
+  }
 }

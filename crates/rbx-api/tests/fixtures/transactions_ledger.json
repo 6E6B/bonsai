@@ -1,0 +1,687 @@
+{
+  "captured": "2026-10-15",
+  "source": "synthetic",
+  "note": "Built from the live shapes in transactions.json: the test account has no sales, stipends or community funds. First sync (stipend, one page of sales with more, a purchase), older sales, a second sync where a pending sale is released and a new one is pending, Month totals, and a community's summary and ledger with one type refused.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transaction-types"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "HasPurchase": true,
+          "HasSale": true,
+          "HasAffiliatePayout": false,
+          "HasAffiliateSale": false,
+          "HasGroupPayout": false,
+          "HasCurrencyPurchase": false,
+          "HasTradeRobux": false,
+          "HasPremiumStipend": true,
+          "HasEngagementPayout": false,
+          "HasGroupEngagementPayout": false,
+          "HasAdSpend": false,
+          "HasDevEx": false,
+          "HasPendingRobux": false,
+          "HasIndividualToGroup": false,
+          "HasCSAdjustment": false,
+          "HasTransfer": false
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "PremiumStipend"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": 0,
+              "idHash": "st1",
+              "transactionType": "Premium Stipend",
+              "created": "2026-10-01T00:00:00Z",
+              "isPending": false,
+              "agent": {
+                "id": 1,
+                "type": "User",
+                "name": "Roblox"
+              },
+              "details": null,
+              "currency": {
+                "amount": 450,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "Sale"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": "c-sale-2",
+          "data": [
+            {
+              "id": 0,
+              "idHash": "s-pend",
+              "transactionType": "Sale",
+              "created": "2026-10-14T10:00:00.5Z",
+              "isPending": true,
+              "agent": {
+                "id": 2000001,
+                "type": "User",
+                "name": "user1"
+              },
+              "details": {
+                "id": 5000001,
+                "name": "Plain Shirt",
+                "type": "Asset"
+              },
+              "currency": {
+                "amount": 70,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            },
+            {
+              "id": 0,
+              "idHash": "s-old",
+              "transactionType": "Sale",
+              "created": "2026-10-10T09:00:00Z",
+              "isPending": false,
+              "agent": {
+                "id": 2000002,
+                "type": "User",
+                "name": "user2"
+              },
+              "details": {
+                "id": 5000001,
+                "name": "Plain Shirt",
+                "type": "Asset"
+              },
+              "currency": {
+                "amount": 35,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "Purchase"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": 0,
+              "idHash": "p1",
+              "transactionType": "Purchase",
+              "created": "2026-10-15T03:16:03.971Z",
+              "isPending": false,
+              "agent": {
+                "id": 3000001,
+                "type": "Group",
+                "name": "Obstacle Labs"
+              },
+              "details": {
+                "id": 78680820,
+                "name": "Revive",
+                "type": "DeveloperProduct",
+                "place": {
+                  "placeId": 121371815815493,
+                  "universeId": 10767201394,
+                  "name": "Scooter Duo"
+                }
+              },
+              "currency": {
+                "amount": -15,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "Sale",
+          "cursor": "c-sale-2"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": 0,
+              "idHash": "s-oldest",
+              "transactionType": "Sale",
+              "created": "2026-08-02T12:00:00.25Z",
+              "isPending": false,
+              "agent": {
+                "id": 2000001,
+                "type": "User",
+                "name": "user1"
+              },
+              "details": {
+                "id": 5000002,
+                "name": "Plain Pants",
+                "type": "Asset"
+              },
+              "currency": {
+                "amount": 50,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transaction-types"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "HasPurchase": true,
+          "HasSale": true,
+          "HasAffiliatePayout": false,
+          "HasAffiliateSale": false,
+          "HasGroupPayout": false,
+          "HasCurrencyPurchase": false,
+          "HasTradeRobux": false,
+          "HasPremiumStipend": true,
+          "HasEngagementPayout": false,
+          "HasGroupEngagementPayout": false,
+          "HasAdSpend": false,
+          "HasDevEx": false,
+          "HasPendingRobux": false,
+          "HasIndividualToGroup": false,
+          "HasCSAdjustment": false,
+          "HasTransfer": false
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "PremiumStipend"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": 0,
+              "idHash": "st1",
+              "transactionType": "Premium Stipend",
+              "created": "2026-10-01T00:00:00Z",
+              "isPending": false,
+              "agent": {
+                "id": 1,
+                "type": "User",
+                "name": "Roblox"
+              },
+              "details": null,
+              "currency": {
+                "amount": 450,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "Sale"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": "c-sale-2",
+          "data": [
+            {
+              "id": 0,
+              "idHash": "s-new",
+              "transactionType": "Sale",
+              "created": "2026-10-15T08:00:00Z",
+              "isPending": true,
+              "agent": {
+                "id": 2000002,
+                "type": "User",
+                "name": "user2"
+              },
+              "details": {
+                "id": 5000002,
+                "name": "Plain Pants",
+                "type": "Asset"
+              },
+              "currency": {
+                "amount": 35,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            },
+            {
+              "id": 0,
+              "idHash": "s-pend",
+              "transactionType": "Sale",
+              "created": "2026-10-14T10:00:00.5Z",
+              "isPending": false,
+              "agent": {
+                "id": 2000001,
+                "type": "User",
+                "name": "user1"
+              },
+              "details": {
+                "id": 5000001,
+                "name": "Plain Shirt",
+                "type": "Asset"
+              },
+              "currency": {
+                "amount": 70,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            },
+            {
+              "id": 0,
+              "idHash": "s-old",
+              "transactionType": "Sale",
+              "created": "2026-10-10T09:00:00Z",
+              "isPending": false,
+              "agent": {
+                "id": 2000002,
+                "type": "User",
+                "name": "user2"
+              },
+              "details": {
+                "id": 5000001,
+                "name": "Plain Shirt",
+                "type": "Asset"
+              },
+              "currency": {
+                "amount": 35,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "Purchase"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": 0,
+              "idHash": "p1",
+              "transactionType": "Purchase",
+              "created": "2026-10-15T03:16:03.971Z",
+              "isPending": false,
+              "agent": {
+                "id": 3000001,
+                "type": "Group",
+                "name": "Obstacle Labs"
+              },
+              "details": {
+                "id": 78680820,
+                "name": "Revive",
+                "type": "DeveloperProduct",
+                "place": {
+                  "placeId": 121371815815493,
+                  "universeId": 10767201394,
+                  "name": "Scooter Duo"
+                }
+              },
+              "currency": {
+                "amount": -15,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/users/1000001/transaction-totals",
+        "query": {
+          "timeFrame": "Month",
+          "transactionType": "summary"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "salesTotal": 35,
+          "purchasesTotal": -15,
+          "affiliateSalesTotal": -1,
+          "premiumStipendsTotal": 450,
+          "pendingRobuxTotal": 105,
+          "incomingRobuxTotal": 485,
+          "outgoingRobuxTotal": -15
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/groups/4000001/revenue/summary/Month"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "itemSaleRobux": 700,
+          "commissionRobux": 0,
+          "groupPayoutRobux": -100,
+          "pendingRobux": 300
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/groups/4000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "Sale"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": 0,
+              "idHash": "g1",
+              "transactionType": "Sale",
+              "created": "2026-10-12T00:00:00Z",
+              "isPending": false,
+              "agent": {
+                "id": 2000001,
+                "type": "User",
+                "name": "user1"
+              },
+              "details": {
+                "id": 5000001,
+                "name": "Plain Shirt",
+                "type": "Asset"
+              },
+              "currency": {
+                "amount": 700,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/groups/4000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "AffiliateSale"
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 1,
+              "message": "Invalid transaction type."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/groups/4000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "GroupPayout"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": [
+            {
+              "id": 0,
+              "idHash": "g2",
+              "transactionType": "Group Payout",
+              "created": "2026-10-13T00:00:00Z",
+              "isPending": false,
+              "agent": {
+                "id": 2000002,
+                "type": "User",
+                "name": "user2"
+              },
+              "details": null,
+              "currency": {
+                "amount": -100,
+                "type": "Robux"
+              },
+              "purchaseToken": null,
+              "transactionSubtype": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/groups/4000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "IndividualToGroup"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/groups/4000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "CreatorRewardsPayout"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/transaction-records/v1/groups/4000001/transactions",
+        "query": {
+          "limit": "100",
+          "transactionType": "AdSpend"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "previousPageCursor": null,
+          "nextPageCursor": null,
+          "data": []
+        }
+      }
+    }
+  ]
+}

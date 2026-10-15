@@ -31,6 +31,7 @@ export const screens: Screen[] = [
     sidebar: "top",
     shown: () => shell.itemValues,
   },
+  { command: "nav.transactions", label: "Transactions", icon: "dollar", path: "/transactions", sidebar: "top" },
   { command: "nav.messages", label: "Messages", icon: "messages", path: "/messages", sidebar: "top" },
   { command: "nav.communities", label: "Communities", icon: "communities", path: "/communities", sidebar: "top" },
   { command: "nav.chat", label: "Chat", icon: "chat", path: "/chat", sidebar: false },

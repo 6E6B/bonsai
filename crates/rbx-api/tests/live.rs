@@ -1033,3 +1033,67 @@ async fn communities_public() {
          enemies and past names. Members and the owner are scrubbed.",
     );
 }
+
+/// Transactions as www.roblox.com/transactions loads them: which types the account has, the
+/// month's totals, two pages of purchases, currency purchases and the (empty) sales list.
+/// Read only. Six calls, spaced out: this API answers 429 after a few quick ones.
+#[tokio::test]
+async fn transactions() {
+    use apis::undocumented as a;
+    let l = live().await;
+    let c = &l.client;
+    let me = c.account().0 as i64;
+    let types = a::get_user_transaction_types(c, me).await.unwrap();
+    assert!(types.contains_key("HasPurchase"));
+    let p = a::GetUserTransactionTotalsParams {
+        time_frame: "Month".into(),
+        transaction_type: "summary".into(),
+    };
+    let t = a::get_user_transaction_totals(c, me, &p).await.unwrap();
+    assert!(t.incoming_robux_total.is_some() && t.outgoing_robux_total.is_some());
+    let page = |kind: &str, cursor: Option<String>| a::GetUserTransactionsParams {
+        transaction_type: kind.into(),
+        limit: Some(10),
+        cursor,
+        item_pricing_type: None,
+    };
+    let pause = || tokio::time::sleep(std::time::Duration::from_secs(5));
+    pause().await;
+    let first = a::get_user_transactions(c, me, &page("Purchase", None))
+        .await
+        .unwrap();
+    let rows = first.data.clone().unwrap_or_default();
+    assert!(
+        rows.iter()
+            .all(|r| r.id_hash.as_deref().is_some_and(|h| !h.is_empty()))
+    );
+    // Newest first. Fractions drop trailing zeros (`37.9Z`), so pad them before comparing.
+    let at = |r: &apis::undocumented::TransactionRecord| {
+        let c = r.created.clone().unwrap_or_default();
+        let (s, f) = c
+            .trim_end_matches('Z')
+            .split_once('.')
+            .unwrap_or((c.as_str(), ""));
+        format!("{s}.{f:0<7}")
+    };
+    assert!(rows.windows(2).all(|w| at(&w[0]) >= at(&w[1])));
+    if let Some(next) = first.next_page_cursor.filter(|c| !c.is_empty()) {
+        pause().await;
+        a::get_user_transactions(c, me, &page("Purchase", Some(next)))
+            .await
+            .unwrap();
+    }
+    pause().await;
+    a::get_user_transactions(c, me, &page("CurrencyPurchase", None))
+        .await
+        .unwrap();
+    pause().await;
+    a::get_user_transactions(c, me, &page("Sale", None))
+        .await
+        .unwrap();
+    l.save(
+        "transactions",
+        "The test account's transaction types, Month totals, two pages of 10 purchases, currency \
+         purchases and sales (none). Sellers who are people are scrubbed.",
+    );
+}

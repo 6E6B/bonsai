@@ -5,6 +5,8 @@ describe("describePath", () => {
   it("names screens and their sub-paths", () => {
     expect(describePath("/").title).toBe("Home")
     expect(describePath("/friends").title).toBe("Friends")
+    expect(describePath("/transactions").title).toBe("Transactions")
+    expect(describePath("/transactions").icon).toBe("dollar")
     expect(describePath("/settings/privacy").title).toBe("Settings")
   })
 
