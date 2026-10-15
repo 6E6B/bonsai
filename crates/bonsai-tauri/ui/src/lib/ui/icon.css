@@ -7,6 +7,6 @@
 
   [data-component="icon"][data-icon="robux"] {
     background-color: currentColor;
-    mask: url("./assets/robux.png") center / 88% no-repeat;
+    mask: url("./assets/robux.svg") center / 88% no-repeat;
   }
 }

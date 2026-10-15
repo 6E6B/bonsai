@@ -11,9 +11,9 @@
     flex-shrink: 0;
     /* Scales with the text, so a large figure gets a large mark. 13 × 14 at the 13px base. */
     width: 1em;
-    height: 1.08em;
+    height: 1.1em;
     background-color: currentColor;
     opacity: 0.8;
-    mask: url("./assets/robux.png") center / contain no-repeat;
+    mask: url("./assets/robux.svg") center / contain no-repeat;
   }
 }

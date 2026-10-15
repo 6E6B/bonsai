@@ -1,5 +1,5 @@
 @layer components {
-  /* The asset carries its own blue (#0066ff); --color-verified is a lighter shade for text. */
+  /* The asset fill matches --color-verified (#4d94ff), the colour of verified names. */
   [data-component="verified-badge"] {
     display: inline-block;
     flex-shrink: 0;

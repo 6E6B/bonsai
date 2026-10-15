@@ -135,7 +135,7 @@ export default function ItemPage() {
         {(item) => (
           <div class="flex flex-wrap gap-6">
             <Thumbnail
-              class="w-72"
+              class="w-72 self-start"
               alt={item().name}
               src={thumbUrl(bundle() ? "bundle" : "asset", id(), true)}
               fallback="avatar"
@@ -235,6 +235,7 @@ export default function ItemPage() {
                 </Show>
                 <Show when={ms(item().offSaleDeadline)}>{(t) => <Stat label="Off sale on">{date(t())}</Stat>}</Show>
               </Card>
+              <Show when={view.value}>{(v) => <ValuePanel value={v()} />}</Show>
               <Show when={item().tags.length > 0}>
                 <div class="flex flex-wrap items-center gap-1.5">
                   <span class="text-xs text-fg-muted">Tags</span>
@@ -247,7 +248,6 @@ export default function ItemPage() {
                   </For>
                 </div>
               </Show>
-              <Show when={view.value}>{(v) => <ValuePanel value={v()} />}</Show>
               <Show when={item().contents.length > 0}>
                 <div class="flex flex-col gap-1">
                   <span class="text-sm text-fg-muted">Includes</span>

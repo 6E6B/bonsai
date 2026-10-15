@@ -43,7 +43,7 @@
   --color-accent: #3d7dff;
   --color-accent-hover: #5a91ff;
   --color-accent-soft: #3d7dff29;
-  --color-verified: #4d94ff; /* verified names; lighter than the badge blue in assets/verified-badge.svg for legibility on dark */
+  --color-verified: #4d94ff; /* verified names; same blue as the fill in assets/verified-badge.svg */
   --color-on-accent: #ffffff; /* text on accent, danger and success fills */
   --color-contrast: #5c5c5c; /* primary button fill: neutral, lit by --sheen */
   --color-focus: #5a91ff;
