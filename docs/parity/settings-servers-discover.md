@@ -90,3 +90,4 @@
   - [x] UI density / scaling (Compact, Comfortable)
   - [x] Player launch command configuration (Default OS protocol, Flatpak/Sober, Wine, custom script)
   - [x] Disk cache manager (view cache size on disk, clear thumbnail and data caches)
+  - [x] Automatic cache upkeep (data and images unused for 30 days are dropped, images capped at 512 MB, idle screens and images leave memory)

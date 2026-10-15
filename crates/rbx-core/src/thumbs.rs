@@ -1,5 +1,6 @@
 //! Thumbnails: batched lookups through the thumbnails batch endpoint, `Pending` polling, and a
-//! disk cache of image bytes keyed by URL hash. Decoded RGBA goes to the store for the UI.
+//! disk cache of image bytes keyed by URL hash. The encoded bytes go to the store for the UI,
+//! which serves them as they are.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -79,7 +80,8 @@ impl ThumbKey {
             large: true,
         }
     }
-    fn request_id(&self) -> String {
+    /// The batch request id, also the key of its cached URL.
+    pub fn request_id(&self) -> String {
         format!(
             "{}:{}:{}",
             self.kind.api_type(),
@@ -89,12 +91,11 @@ impl ThumbKey {
     }
 }
 
-/// Decoded RGBA8.
+/// An encoded image (WebP, PNG or JPEG) as Roblox sent it.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Image {
-    pub width: u32,
-    pub height: u32,
-    pub rgba: Vec<u8>,
+    pub mime: &'static str,
+    pub bytes: Vec<u8>,
 }
 
 #[derive(Clone, Debug)]
@@ -142,7 +143,8 @@ pub async fn lookup(
     Ok(out)
 }
 
-/// Bytes on disk keyed by URL hash.
+/// Bytes on disk keyed by URL hash. Reads bump a file's modified time, so pruning drops the
+/// least recently used images first.
 pub struct DiskCache {
     dir: PathBuf,
 }
@@ -159,8 +161,16 @@ impl DiskCache {
         let hex: String = h.iter().take(16).map(|b| format!("{b:02x}")).collect();
         self.dir.join(hex)
     }
+    pub fn has(&self, url: &str) -> bool {
+        self.path(url).is_file()
+    }
     pub fn get(&self, url: &str) -> Option<Vec<u8>> {
-        std::fs::read(self.path(url)).ok()
+        let p = self.path(url);
+        let bytes = std::fs::read(&p).ok()?;
+        if let Ok(f) = std::fs::File::options().write(true).open(&p) {
+            let _ = f.set_modified(std::time::SystemTime::now());
+        }
+        Some(bytes)
     }
     /// Bytes of every cached image.
     pub fn size_bytes(&self) -> u64 {
@@ -181,6 +191,35 @@ impl DiskCache {
             }
         }
     }
+    /// Delete images not used since `cutoff`, then the least recently used ones until the rest
+    /// fit in `max_bytes`. Returns how many files went.
+    pub fn prune(&self, cutoff: std::time::SystemTime, max_bytes: u64) -> usize {
+        let Ok(d) = std::fs::read_dir(&self.dir) else {
+            return 0;
+        };
+        let mut files: Vec<(std::time::SystemTime, u64, PathBuf)> = d
+            .flatten()
+            .filter_map(|e| {
+                let m = e.metadata().ok()?;
+                m.is_file()
+                    .then(|| (m.modified().unwrap_or(std::time::UNIX_EPOCH), m.len(), e.path()))
+            })
+            .collect();
+        // Newest first; keep from the front while there is room.
+        files.sort_by_key(|f| std::cmp::Reverse(f.0));
+        let mut total = 0;
+        let mut removed = 0;
+        for (modified, len, path) in files {
+            total += len;
+            if modified < cutoff || total > max_bytes {
+                if std::fs::remove_file(path).is_ok() {
+                    removed += 1;
+                }
+                total -= len;
+            }
+        }
+        removed
+    }
     pub fn put(&self, url: &str, bytes: &[u8]) {
         let p = self.path(url);
         let tmp = p.with_extension("tmp");
@@ -190,13 +229,59 @@ impl DiskCache {
     }
 }
 
-pub fn decode(bytes: &[u8]) -> Option<Image> {
-    let img = image::load_from_memory(bytes).ok()?.to_rgba8();
-    Some(Image {
-        width: img.width(),
-        height: img.height(),
-        rgba: img.into_raw(),
-    })
+/// Which loaded images stay in memory: the most recently loaded ones up to a byte budget.
+/// Evicted ones load again from disk when asked for.
+#[derive(Default)]
+pub(crate) struct Budget {
+    seq: u64,
+    by_key: std::collections::HashMap<ThumbKey, (u64, usize)>,
+    order: std::collections::BTreeMap<u64, ThumbKey>,
+    total: usize,
+}
+
+impl Budget {
+    /// Note a loaded image; returns the keys to drop to stay within `max_bytes`.
+    pub(crate) fn insert(&mut self, k: ThumbKey, bytes: usize, max_bytes: usize) -> Vec<ThumbKey> {
+        self.remove(&k);
+        self.seq += 1;
+        self.by_key.insert(k, (self.seq, bytes));
+        self.order.insert(self.seq, k);
+        self.total += bytes;
+        let mut out = Vec::new();
+        // Never drop the one just loaded; it is about to be shown.
+        while self.total > max_bytes && self.order.len() > 1 {
+            let Some((_, old)) = self.order.pop_first() else {
+                break;
+            };
+            if let Some((_, b)) = self.by_key.remove(&old) {
+                self.total -= b;
+            }
+            out.push(old);
+        }
+        out
+    }
+
+    pub(crate) fn remove(&mut self, k: &ThumbKey) {
+        if let Some((seq, b)) = self.by_key.remove(k) {
+            self.order.remove(&seq);
+            self.total -= b;
+        }
+    }
+
+    pub(crate) fn clear(&mut self) {
+        *self = Budget::default();
+    }
+}
+
+/// Check that `bytes` are an image the webview can show and say which kind.
+pub fn sniff(bytes: Vec<u8>) -> Option<Image> {
+    let mime = match image::guess_format(&bytes).ok()? {
+        image::ImageFormat::WebP => "image/webp",
+        image::ImageFormat::Png => "image/png",
+        image::ImageFormat::Jpeg => "image/jpeg",
+        _ => return None,
+    };
+    Some(Image { mime, bytes })
 }
 
 #[cfg(test)]
@@ -213,12 +298,50 @@ mod tests {
     }
 
     #[test]
-    fn decodes_png() {
+    fn prune_drops_old_then_least_recently_used() {
+        use std::time::{Duration, SystemTime};
+        let d = tempfile::tempdir().unwrap();
+        let c = DiskCache::new(d.path());
+        let t = SystemTime::now();
+        let age = |url: &str, secs: u64| {
+            let f = std::fs::File::options().write(true).open(c.path(url)).unwrap();
+            f.set_modified(t - Duration::from_secs(secs)).unwrap();
+        };
+        for (url, secs) in [("a", 100), ("b", 200), ("c", 300), ("old", 10_000)] {
+            c.put(url, &[0; 10]);
+            age(url, secs);
+        }
+        // Reading "c" makes it the most recently used.
+        assert!(c.get("c").is_some());
+        assert_eq!(c.prune(t - Duration::from_secs(1000), 20), 2);
+        assert!(c.get("old").is_none());
+        assert!(c.get("b").is_none());
+        assert!(c.get("a").is_some() && c.get("c").is_some());
+        assert_eq!(c.size_bytes(), 20);
+    }
+
+    #[test]
+    fn budget_drops_oldest_loaded_first() {
+        let k = |id| ThumbKey::small(ThumbKind::Headshot, id);
+        let mut b = Budget::default();
+        assert!(b.insert(k(1), 10, 25).is_empty());
+        assert!(b.insert(k(2), 10, 25).is_empty());
+        // Loading 1 again makes it the newest.
+        assert!(b.insert(k(1), 10, 25).is_empty());
+        assert_eq!(b.insert(k(3), 10, 25), vec![k(2)]);
+        b.remove(&k(1));
+        assert!(b.insert(k(4), 10, 25).is_empty());
+        // One image over budget on its own is still kept.
+        assert_eq!(b.insert(k(5), 100, 25), vec![k(3), k(4)]);
+    }
+
+    #[test]
+    fn sniffs_images() {
         let mut buf = std::io::Cursor::new(Vec::new());
         image::RgbaImage::from_pixel(2, 3, image::Rgba([1, 2, 3, 255]))
             .write_to(&mut buf, image::ImageFormat::Png)
             .unwrap();
-        let i = decode(buf.get_ref()).unwrap();
-        assert_eq!((i.width, i.height, i.rgba.len()), (2, 3, 24));
+        assert_eq!(sniff(buf.into_inner()).unwrap().mime, "image/png");
+        assert!(sniff(b"<html>".to_vec()).is_none());
     }
 }

@@ -2074,6 +2074,28 @@ async fn settings_account_privacy_and_private_servers() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn thumbnail_seen_before_shows_without_network() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(dir.path());
+    let key = ThumbKey::small(ThumbKind::GameIcon, 42);
+    let url = "https://tr.rbxcdn.com/icon";
+    DiskCache::new(&paths.thumbs_dir()).put(url, &png());
+    std::fs::create_dir_all(&paths.cache).unwrap();
+    Cache::open(&paths.db_file())
+        .unwrap()
+        .put(Kind::ThumbUrl, AccountId::ANONYMOUS, &key.request_id(), &url);
+    // Nothing listens here: any lookup or CDN fetch would fail.
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, Arc::default());
+    r.core.want_thumbs(&[key]);
+    wait_for(
+        &r.core,
+        "icon from disk",
+        |s| matches!(s.thumbs.get(&key), Some(ThumbState::Ready(i)) if i.mime == "image/png"),
+    )
+    .await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn disk_cache_measures_and_clears_but_keeps_local_data() {
     let dir = tempfile::tempdir().unwrap();
     let paths = Paths::in_dir(dir.path());

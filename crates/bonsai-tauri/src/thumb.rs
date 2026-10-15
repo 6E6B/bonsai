@@ -4,7 +4,6 @@
 //! URL path: `/<kind>.<id>.<s|l>`, like `/headshot.1.s`. The UI builds it in
 //! `ui/src/lib/thumb.ts`. A missing image is requested and the response waits for it.
 
-use std::io::Cursor;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -35,13 +34,18 @@ pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, r
         loop {
             let image = match core.store().thumbs.get(&key) {
                 Some(ThumbState::Ready(i)) => Some(i.clone()),
-                Some(ThumbState::Unavailable) | None => {
+                Some(ThumbState::Unavailable) => {
                     return res.respond(status(StatusCode::NOT_FOUND));
                 }
                 Some(ThumbState::Loading) => None,
+                // Dropped from memory in the meantime; it loads again from disk.
+                None => {
+                    core.want_thumbs(&[key]);
+                    None
+                }
             };
             if let Some(image) = image {
-                return res.respond(png(&image));
+                return res.respond(serve(&image));
             }
             if waited >= WAIT {
                 return res.respond(status(StatusCode::GATEWAY_TIMEOUT));
@@ -76,19 +80,12 @@ fn parse(path: &str) -> Option<ThumbKey> {
     parts.next().is_none().then_some(ThumbKey { kind, id, large })
 }
 
-fn png(image: &rbx_core::thumbs::Image) -> Response<Vec<u8>> {
-    let Some(buf) = image::RgbaImage::from_raw(image.width, image.height, image.rgba.clone()) else {
-        return status(StatusCode::INTERNAL_SERVER_ERROR);
-    };
-    let mut out = Cursor::new(Vec::new());
-    if buf.write_to(&mut out, image::ImageFormat::Png).is_err() {
-        return status(StatusCode::INTERNAL_SERVER_ERROR);
-    }
+fn serve(image: &rbx_core::thumbs::Image) -> Response<Vec<u8>> {
     Response::builder()
-        .header(header::CONTENT_TYPE, "image/png")
+        .header(header::CONTENT_TYPE, image.mime)
         // A key always maps to the same image within a run.
         .header(header::CACHE_CONTROL, "max-age=3600")
-        .body(out.into_inner())
+        .body(image.bytes.clone())
         .unwrap_or_else(|_| status(StatusCode::INTERNAL_SERVER_ERROR))
 }
 

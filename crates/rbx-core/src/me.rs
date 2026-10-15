@@ -354,6 +354,7 @@ impl Core {
             inner.res.clear();
             inner.ledgers.clear();
             inner.store.write().thumbs.clear();
+            inner.thumb_budget.lock().clear();
             inner.toast(None, "Cache cleared.", false);
             let usage = CacheUsage {
                 data: inner.cache.size_bytes(),

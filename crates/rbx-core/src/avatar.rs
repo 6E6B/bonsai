@@ -614,19 +614,11 @@ fn current_look(now: avatar::v1::AvatarModelV2, name: String) -> avatar::v2::Out
 
 /// The avatar images are rendered again after a change; drop ours so they reload.
 fn forget_images(inner: &Inner, user: u64) {
-    inner
-        .store
-        .write()
-        .thumbs
-        .retain(|k, _| k.id != user || !matches!(k.kind, ThumbKind::Avatar | ThumbKind::Headshot));
+    inner.forget_thumbs(&[ThumbKind::Avatar, ThumbKind::Headshot], user);
 }
 
 fn forget_outfit_image(inner: &Inner, outfit: u64) {
-    inner
-        .store
-        .write()
-        .thumbs
-        .retain(|k, _| k.id != outfit || k.kind != ThumbKind::Outfit);
+    inner.forget_thumbs(&[ThumbKind::Outfit], outfit);
 }
 
 impl Core {

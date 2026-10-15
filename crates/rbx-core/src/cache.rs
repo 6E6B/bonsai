@@ -78,6 +78,9 @@ impl Kind {
     }
 }
 
+/// Rows Roblox doesn't keep for us. Clearing or pruning the cache never touches them.
+const LOCAL_KINDS: [Kind; 3] = [Kind::Local, Kind::Wishlist, Kind::Recent];
+
 /// A cached value and how old it is.
 #[derive(Clone, Debug)]
 pub struct Cached<T> {
@@ -119,8 +122,10 @@ impl Cache {
     }
 
     fn init(db: Connection) -> rusqlite::Result<Cache> {
+        // Takes effect on a new database only; `prune` converts an old one.
         db.execute_batch(
-            "PRAGMA journal_mode = WAL;
+            "PRAGMA auto_vacuum = INCREMENTAL;
+             PRAGMA journal_mode = WAL;
              PRAGMA synchronous = NORMAL;
              CREATE TABLE IF NOT EXISTS entities (
                  kind TEXT NOT NULL,
@@ -189,6 +194,13 @@ impl Cache {
         if let Err(e) = r {
             tracing::warn!("cache write failed: {e}");
         }
+    }
+
+    pub fn delete(&self, kind: Kind, account: AccountId, id: &str) {
+        let _ = self.db.lock().execute(
+            "DELETE FROM entities WHERE kind = ?1 AND account = ?2 AND id = ?3",
+            params![kind.name(), Self::account_for(kind, account), id],
+        );
     }
 
     /// Every row of a kind for an account (for warming the in-memory store at start).
@@ -281,7 +293,7 @@ impl Cache {
     /// Delete everything fetched from Roblox. Local state Roblox doesn't keep (drafts, pinned
     /// chats, wishlist, recent games) stays.
     pub fn clear_fetched(&self) {
-        let keep = [Kind::Local, Kind::Wishlist, Kind::Recent].map(Kind::name);
+        let keep = LOCAL_KINDS.map(Kind::name);
         let db = self.db.lock();
         let r = db.execute(
             "DELETE FROM entities WHERE kind NOT IN (?1, ?2, ?3)",
@@ -292,6 +304,36 @@ impl Cache {
         }
         let _ = db.execute("DELETE FROM ledger", []);
         let _ = db.execute_batch("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;");
+    }
+
+    /// Delete fetched rows last written before `cutoff` (unix secs) and give the space back.
+    /// Local state and transaction history stay. Returns how many rows went.
+    pub fn prune(&self, cutoff: i64) -> usize {
+        let keep = LOCAL_KINDS.map(Kind::name);
+        let db = self.db.lock();
+        let n = db
+            .execute(
+                "DELETE FROM entities WHERE fetched_at < ?1 AND kind NOT IN (?2, ?3, ?4)",
+                params![cutoff, keep[0], keep[1], keep[2]],
+            )
+            .unwrap_or_else(|e| {
+                tracing::warn!("cache prune failed: {e}");
+                0
+            });
+        let mode = db
+            .query_row("PRAGMA auto_vacuum", [], |r| r.get::<_, i64>(0))
+            .unwrap_or(0);
+        // 2 = incremental. An older database needs one full VACUUM to switch.
+        let r = if mode == 2 {
+            db.execute_batch("PRAGMA incremental_vacuum;")
+        } else {
+            db.execute_batch("PRAGMA auto_vacuum = INCREMENTAL; VACUUM;")
+        };
+        if let Err(e) = r {
+            tracing::warn!("cache vacuum failed: {e}");
+        }
+        let _ = db.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);");
+        n
     }
 
     /// Drop everything private to an account (sign out, remove).
@@ -333,6 +375,51 @@ mod tests {
         assert!(c.get::<String>(Kind::User, AccountId(1), "156").is_some());
         let x = c.get::<String>(Kind::User, AccountId(1), "156").unwrap();
         assert!(x.is_fresh(60));
+    }
+
+    #[test]
+    fn prune_drops_old_fetched_rows_and_keeps_local_state() {
+        let c = Cache::in_memory().unwrap();
+        c.put(Kind::User, AccountId(1), "1", &"old");
+        c.put(Kind::Res, AccountId(1), "feed", &"old");
+        c.put(Kind::Wishlist, AccountId(1), "wishlist", &"mine");
+        c.put(Kind::Local, AccountId(1), "pins", &"mine");
+        c.ledger_put(AccountId(1), "me", [("Sale", "x", 10, &"kept".to_string())]);
+        // Everything above was written "now"; prune as if a minute later.
+        assert_eq!(c.prune(now() + 60), 2);
+        c.put(Kind::User, AccountId(1), "2", &"new");
+        assert_eq!(c.prune(now() - 60), 0);
+        assert!(c.get::<String>(Kind::User, AccountId(1), "1").is_none());
+        assert!(c.get::<String>(Kind::Res, AccountId(1), "feed").is_none());
+        assert!(c.get::<String>(Kind::User, AccountId(1), "2").is_some());
+        assert!(
+            c.get::<String>(Kind::Wishlist, AccountId(1), "wishlist")
+                .is_some()
+        );
+        assert!(c.get::<String>(Kind::Local, AccountId(1), "pins").is_some());
+        assert_eq!(c.ledger_all::<String>(AccountId(1), "me"), vec!["kept"]);
+        c.delete(Kind::User, AccountId(9), "2");
+        assert!(c.get::<String>(Kind::User, AccountId(1), "2").is_none());
+    }
+
+    #[test]
+    fn prune_switches_an_old_database_to_incremental_vacuum() {
+        let d = tempfile::tempdir().unwrap();
+        let path = d.path().join("db.sqlite");
+        {
+            let db = Connection::open(&path).unwrap();
+            db.execute_batch("PRAGMA auto_vacuum = NONE; CREATE TABLE t (x);")
+                .unwrap();
+        }
+        let c = Cache::open(&path).unwrap();
+        let mode = |c: &Cache| {
+            c.db.lock()
+                .query_row("PRAGMA auto_vacuum", [], |r| r.get::<_, i64>(0))
+                .unwrap()
+        };
+        assert_eq!(mode(&c), 0);
+        c.prune(0);
+        assert_eq!(mode(&c), 2);
     }
 
     #[test]

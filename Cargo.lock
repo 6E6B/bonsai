@@ -385,7 +385,6 @@ dependencies = [
 name = "bonsai-tauri"
 version = "0.1.0"
 dependencies = [
- "image",
  "rbx-core",
  "serde",
  "serde_json",

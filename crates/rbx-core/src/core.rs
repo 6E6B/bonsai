@@ -117,6 +117,8 @@ pub(crate) struct Inner {
     pub(crate) quick: Mutex<Option<crate::signin::QuickSession>>,
     pub(crate) quick_poll: Duration,
     thumb_tx: mpsc::UnboundedSender<ThumbKey>,
+    /// Which loaded thumbnails stay in memory.
+    pub(crate) thumb_budget: Mutex<thumbs::Budget>,
     pub(crate) browser_tracker_id: u64,
     pub(crate) settings: RwLock<Settings>,
     toast_seq: Mutex<u64>,
@@ -196,6 +198,7 @@ impl Core {
             quick: Mutex::new(None),
             quick_poll: cfg.quick_poll,
             thumb_tx,
+            thumb_budget: Mutex::new(Default::default()),
             browser_tracker_id: 100_000_000_000 + fastrand::u64(0..899_999_999_999),
             settings: RwLock::new(settings),
             toast_seq: Mutex::new(0),
@@ -231,6 +234,7 @@ impl Core {
         rt.spawn(thumb_worker(inner.clone(), thumb_rx));
         if cfg.background {
             rt.spawn(health_loop(inner.clone()));
+            rt.spawn(tidy_loop(inner.clone()));
             rt.spawn(crate::chat::realtime_loop(inner.clone()));
         }
         let core = Core {
@@ -1375,22 +1379,57 @@ impl Inner {
     }
 }
 
+/// How long a looked-up thumbnail URL is trusted. An older one still shows at once and is
+/// checked again in the background.
+const THUMB_URL_AGE: i64 = 24 * 3600;
+/// Encoded thumbnails kept in memory. Older ones load again from disk when asked for.
+const THUMB_MEMORY_BYTES: usize = 64 << 20;
+
+/// A thumbnail URL looked up before whose image is still on disk, and whether it is fresh.
+fn cached_thumb_url(inner: &Inner, k: &ThumbKey) -> Option<(String, bool)> {
+    let c = inner
+        .cache
+        .get::<String>(Kind::ThumbUrl, AccountId::ANONYMOUS, &k.request_id())?;
+    let fresh = c.is_fresh(THUMB_URL_AGE);
+    inner.disk.has(&c.value).then_some((c.value, fresh))
+}
+
 async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKey>) {
     let mut pending: Vec<ThumbKey> = Vec::new();
+    // Keys already shown from a stale cached URL and waiting to be checked again. A failed
+    // check leaves the shown image alone.
+    let mut stale: HashSet<ThumbKey> = HashSet::new();
     loop {
         // Collect what arrives within one frame.
+        let mut incoming = Vec::new();
         if pending.is_empty() {
             match rx.recv().await {
-                Some(k) => pending.push(k),
+                Some(k) => incoming.push(k),
                 None => return,
             }
         }
         let deadline = tokio::time::Instant::now() + Duration::from_millis(16);
         while let Ok(Some(k)) = tokio::time::timeout_at(deadline, rx.recv()).await {
+            incoming.push(k);
+        }
+        incoming.sort();
+        incoming.dedup();
+        for k in incoming {
+            if let Some((url, fresh)) = cached_thumb_url(&inner, &k) {
+                let inner = inner.clone();
+                tokio::spawn(async move { fetch_image(&inner, k, &url).await });
+                if fresh {
+                    continue;
+                }
+                stale.insert(k);
+            }
             pending.push(k);
         }
         pending.sort();
         pending.dedup();
+        if pending.is_empty() {
+            continue;
+        }
         let batch: Vec<ThumbKey> = pending.drain(..pending.len().min(100)).collect();
         let mut retry = Vec::new();
         match thumbs::lookup(&inner.anon, &batch).await {
@@ -1398,22 +1437,36 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
                 let mut done = HashSet::new();
                 for (k, url, unavailable) in found {
                     done.insert(k);
+                    let was_stale = stale.remove(&k);
+                    let id = k.request_id();
                     match url {
                         Some(url) => {
+                            let prev = inner
+                                .cache
+                                .get::<String>(Kind::ThumbUrl, AccountId::ANONYMOUS, &id);
+                            inner.cache.put(Kind::ThumbUrl, AccountId::ANONYMOUS, &id, &url);
+                            // Same image as the one on screen: nothing to load.
+                            if was_stale && prev.is_some_and(|p| p.value == url) {
+                                continue;
+                            }
                             let inner = inner.clone();
                             tokio::spawn(async move { fetch_image(&inner, k, &url).await });
                         }
                         None if unavailable => {
+                            inner.cache.delete(Kind::ThumbUrl, AccountId::ANONYMOUS, &id);
                             inner.store.write().thumbs.insert(k, ThumbState::Unavailable);
                         }
+                        None if was_stale => {}
                         None => retry.push(k),
                     }
                 }
                 for k in batch.iter().filter(|k| !done.contains(k)) {
-                    inner.store.write().thumbs.insert(*k, ThumbState::Unavailable);
+                    if !stale.remove(k) {
+                        inner.store.write().thumbs.insert(*k, ThumbState::Unavailable);
+                    }
                 }
             }
-            Err(_) => retry.extend(batch),
+            Err(_) => retry.extend(batch.into_iter().filter(|k| !stale.remove(k))),
         }
         if !retry.is_empty() {
             // `Pending`: Roblox is still rendering. Poll again shortly.
@@ -1443,16 +1496,69 @@ async fn fetch_image(inner: &Inner, k: ThumbKey, url: &str) {
             }
         },
     };
-    let img = tokio::task::spawn_blocking(move || thumbs::decode(&bytes))
-        .await
-        .ok()
-        .flatten();
-    inner.store.write().thumbs.insert(
-        k,
-        img.map(|i| ThumbState::Ready(Arc::new(i)))
-            .unwrap_or(ThumbState::Unavailable),
-    );
+    match thumbs::sniff(bytes) {
+        Some(img) => {
+            let evict = inner
+                .thumb_budget
+                .lock()
+                .insert(k, img.bytes.len(), THUMB_MEMORY_BYTES);
+            let mut s = inner.store.write();
+            for old in evict {
+                if matches!(s.thumbs.get(&old), Some(ThumbState::Ready(_))) {
+                    s.thumbs.remove(&old);
+                }
+            }
+            s.thumbs.insert(k, ThumbState::Ready(Arc::new(img)));
+        }
+        None => {
+            inner.store.write().thumbs.insert(k, ThumbState::Unavailable);
+        }
+    }
     inner.repaint();
+}
+
+impl Inner {
+    /// Drop the images of `id` in every size, cached URL included, so the next ask looks them
+    /// up again (after an avatar change Roblox renders new ones).
+    pub(crate) fn forget_thumbs(&self, kinds: &[thumbs::ThumbKind], id: u64) {
+        let mut budget = self.thumb_budget.lock();
+        let mut s = self.store.write();
+        for &kind in kinds {
+            for k in [ThumbKey::small(kind, id), ThumbKey::large(kind, id)] {
+                self.cache
+                    .delete(Kind::ThumbUrl, AccountId::ANONYMOUS, &k.request_id());
+                s.thumbs.remove(&k);
+                budget.remove(&k);
+            }
+        }
+    }
+
+    /// Drop cached data nobody has used in a while, on disk and in memory.
+    fn tidy(&self) {
+        const DAY: i64 = 24 * 3600;
+        /// Rows and images unused this long are deleted.
+        const KEEP_SECS: i64 = 30 * DAY;
+        const IMAGE_DISK_BYTES: u64 = 512 << 20;
+        let rows = self.cache.prune(crate::cache::now() - KEEP_SECS);
+        let cutoff = std::time::SystemTime::now() - Duration::from_secs(KEEP_SECS as u64);
+        let images = self.disk.prune(cutoff, IMAGE_DISK_BYTES);
+        tracing::debug!("cache tidy: {rows} rows, {images} images");
+    }
+}
+
+/// Cache upkeep: idle in-memory resources every few minutes, old rows and images every few
+/// hours. Waits a little after start so it never competes with the first screens.
+async fn tidy_loop(inner: Arc<Inner>) {
+    tokio::time::sleep(Duration::from_secs(30)).await;
+    let mut tick = tokio::time::interval(Duration::from_secs(5 * 60));
+    loop {
+        tick.tick().await;
+        inner.res.trim(crate::cache::now());
+        if inner.due("cache_tidy", 6 * 3600) {
+            let i = inner.clone();
+            let _ = inner.rt.spawn_blocking(move || i.tidy()).await;
+        }
+    }
 }
 
 /// Session health and unread badges for every account, at a polite interval.

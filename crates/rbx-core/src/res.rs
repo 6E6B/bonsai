@@ -11,6 +11,7 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::future::Future;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicI64, Ordering};
 
 use parking_lot::RwLock;
 use rbx_api::{AccountId, Client, Error};
@@ -22,6 +23,9 @@ use crate::core::Inner;
 
 /// Errors are retried at most this often.
 const ERROR_BACKOFF_SECS: i64 = 30;
+/// Loaded resources no screen asked for in this long are dropped from memory. The saved copy
+/// stays in SQLite and shows again on the next ask.
+const IDLE_SECS: i64 = 15 * 60;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Key {
@@ -106,6 +110,8 @@ struct Slot {
     error_at: i64,
     fetched_at: i64,
     stale: bool,
+    /// When a screen last asked for it. Atomic so the read-locked fast path can bump it.
+    used_at: AtomicI64,
 }
 
 #[derive(Default)]
@@ -174,6 +180,13 @@ impl Resources {
     pub(crate) fn forget_account(&self, account: AccountId) {
         self.slots.write().retain(|k, _| k.account != account);
     }
+
+    /// Drop resources idle for a while so memory doesn't grow with everything ever opened.
+    pub(crate) fn trim(&self, now: i64) {
+        self.slots
+            .write()
+            .retain(|_, s| s.loading || now - s.used_at.load(Ordering::Relaxed) <= IDLE_SECS);
+    }
 }
 
 /// What a fetch gets to work with.
@@ -212,6 +225,7 @@ impl Inner {
         {
             let s = self.res.slots.read();
             if let Some(slot) = s.get(&key) {
+                slot.used_at.store(t, Ordering::Relaxed);
                 let fresh = slot.data.is_some() && !slot.stale && t - slot.fetched_at <= max_age;
                 let backing_off =
                     slot.error.is_some() && t - slot.error_at < ERROR_BACKOFF_SECS && !slot.stale;
@@ -230,6 +244,7 @@ impl Inner {
                 error_at: 0,
                 fetched_at: 0,
                 stale: false,
+                used_at: AtomicI64::new(t),
             });
             if slot.loading {
                 return Res {
@@ -451,5 +466,38 @@ impl Inner {
             }
             inner.repaint();
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn slot(loading: bool, used_at: i64) -> Slot {
+        Slot {
+            data: Some(Arc::new(1u32)),
+            loading,
+            error: None,
+            error_at: 0,
+            fetched_at: 0,
+            stale: false,
+            used_at: AtomicI64::new(used_at),
+        }
+    }
+
+    #[test]
+    fn trim_drops_idle_resources_but_not_loading_ones() {
+        let r = Resources::default();
+        let t = 100_000;
+        {
+            let mut s = r.slots.write();
+            s.insert(Key::shared("a", "recent"), slot(false, t - 60));
+            s.insert(Key::shared("a", "idle"), slot(false, t - IDLE_SECS - 1));
+            s.insert(Key::shared("a", "idle_loading"), slot(true, t - IDLE_SECS - 1));
+        }
+        r.trim(t);
+        assert!(r.snapshot::<u32>(&Key::shared("a", "recent")).is_some());
+        assert!(r.snapshot::<u32>(&Key::shared("a", "idle")).is_none());
+        assert!(r.snapshot::<u32>(&Key::shared("a", "idle_loading")).is_some());
     }
 }
