@@ -63,8 +63,10 @@ export function Backdrop(props: { background: BackgroundView | null; strip?: HTM
               <div
                 class="absolute inset-0"
                 style={{
+                  // Equal dark and clear rows with soft edges, so fractional zoom and scale
+                  // don't alias them into uneven lines.
                   "background-image":
-                    "repeating-linear-gradient(to bottom, transparent 0 2px, var(--backdrop-base) 2px 3px)",
+                    "repeating-linear-gradient(to bottom, transparent 0, var(--backdrop-base) 2px, transparent 4px)",
                   opacity: l().scanlines,
                 }}
               />
