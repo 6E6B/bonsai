@@ -40,20 +40,27 @@ function snapshot(when: string) {
   const cam = scene.camera.position
   const target = scene.controls?.target
   const canvas = RBXRenderer.renderer?.domElement
-  log(when, {
-    instances: scene.addedInstances.length,
-    descs: scene.renderDescs.size,
-    sceneObjects: scene.scene.children.length,
-    camera: [cam.x, cam.y, cam.z].map((n) => +n.toFixed(2)),
-    target: target ? [target.x, target.y, target.z].map((n) => +n.toFixed(2)) : null,
-    canvas: canvas ? [canvas.width, canvas.height, canvas.isConnected] : null,
-    resolution: RBXRenderer.resolution,
-    animating: scene.shouldAnimate,
-    rig: renderer?.currentRig ? renderer.currentRig.GetDescendants().length : null,
-    updating: renderer
-      ? { updating: renderer.currentlyUpdating, rig: renderer.currentlyChangingRig, queued: renderer.hasNewUpdate }
-      : null,
-  })
+  log(
+    when,
+    JSON.stringify({
+      instances: scene.addedInstances.length,
+      descs: scene.renderDescs.size,
+      sceneObjects: scene.scene.children.length,
+      camera: [cam.x, cam.y, cam.z].map((n) => +n.toFixed(2)),
+      target: target ? [target.x, target.y, target.z].map((n) => +n.toFixed(2)) : null,
+      canvas: canvas ? [canvas.width, canvas.height, canvas.isConnected] : null,
+      resolution: RBXRenderer.resolution,
+      lastFrame: RBXRenderer.renderer
+        ? { calls: RBXRenderer.renderer.info.render.calls, triangles: RBXRenderer.renderer.info.render.triangles }
+        : null,
+      lost: RBXRenderer.renderer?.getContext().isContextLost() ?? null,
+      animating: scene.shouldAnimate,
+      rig: renderer?.currentRig ? renderer.currentRig.GetDescendants().length : null,
+      updating: renderer
+        ? { updating: renderer.currentlyUpdating, rig: renderer.currentlyChangingRig, queued: renderer.hasNewUpdate }
+        : null,
+    }),
+  )
 }
 
 let booted: Promise<void> | null = null

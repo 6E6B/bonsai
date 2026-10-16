@@ -420,7 +420,7 @@ export class RBXRenderer {
                 RBXRenderer.renderScene(renderScene, renderScene === RBXRenderer.firstScene)
             }
         } catch (e) {
-            console.warn("Frame failed:", e)
+            console.warn("[3d] frame failed:", e)
         }
 
         if (shouldRequestAnimationFrame) {

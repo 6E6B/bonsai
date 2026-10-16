@@ -3,18 +3,18 @@ import { FLAGS } from "./flags";
 
 export function log(critical: boolean, ...args: any[]) {
     if (critical || FLAGS.VERBOSE_LOGGING) {
-        console.log(...args)
+        console.log("[3d]", ...args)
     }
 }
 
 export function warn(critical: boolean, ...args: any[]) {
     if (critical || FLAGS.VERBOSE_LOGGING) {
-        console.warn(...args)
+        console.warn("[3d]", ...args)
     }
 }
 
 export function error(...args: any[]) {
-    console.error(...args)
+    console.error("[3d]", ...args)
 }
 
 export function time(label: string) {

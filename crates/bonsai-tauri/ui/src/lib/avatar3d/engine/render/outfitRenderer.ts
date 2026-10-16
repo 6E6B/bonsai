@@ -274,7 +274,7 @@ export class OutfitRenderer {
                 this._runQueuedUpdate()
             }
         }).catch((e) => {
-            console.warn("Outfit failed to load:", e)
+            console.warn("[3d] outfit failed to load:", e)
             this.currentlyUpdating = false
             if (this.destroyed) return
             this.onError.Fire("exception")
