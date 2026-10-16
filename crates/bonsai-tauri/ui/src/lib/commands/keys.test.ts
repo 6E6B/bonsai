@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 import type { Keys } from "~/lib/ipc/bindings"
-import { match, toPress } from "./keys"
+import { clashes, match, type Recorded, record, spec, toPress } from "./keys"
 
 const chord = (key: string, ctrl = true, shift = false): Keys => ({
   kind: "chord",
@@ -66,5 +66,43 @@ describe("match", () => {
 
   test("does not run a chord in the middle of a sequence", () => {
     expect(match(press("k", { ctrlKey: true }), [chord("K")], "G")).toEqual({ kind: "none" })
+  })
+})
+
+describe("record", () => {
+  const at = (shortcut: Recorded, t = 0) => ({ shortcut, at: t })
+
+  test("a press with Ctrl or Alt is a chord", () => {
+    const r = record(undefined, press("k", { ctrlKey: true, shiftKey: true }), 0)
+    expect(spec(r)).toBe("Ctrl+Shift+K")
+    expect(spec(record(undefined, press("/", { altKey: true }), 0))).toBe("Alt+Slash")
+  })
+
+  test("two plain keys in a row make a sequence", () => {
+    const g = record(undefined, press("g"), 0)
+    expect(spec(g)).toBe("G")
+    expect(spec(record(at(g, 0), press("h"), 500))).toBe("G H")
+    expect(spec(record(at(g, 0), press("h"), 1500))).toBe("H")
+  })
+
+  test("shift only counts for letters", () => {
+    expect(spec(record(undefined, press("?", { shiftKey: true }), 0))).toBe("Questionmark")
+    expect(spec(record(undefined, press("J", { shiftKey: true }), 0))).toBe("Shift+J")
+  })
+})
+
+describe("clashes", () => {
+  const rec = (key: string, ctrl = true): Recorded => ({ kind: "chord", ctrl, shift: false, alt: false, key })
+
+  test("same keys clash", () => {
+    expect(clashes(rec("K"), chord("K"))).toBe(true)
+    expect(clashes(rec("K"), chord("K", true, true))).toBe(false)
+    expect(clashes({ kind: "sequence", first: "G", second: "H" }, seq("G", "H"))).toBe(true)
+  })
+
+  test("a plain key clashes with sequences it starts", () => {
+    expect(clashes(rec("G", false), seq("G", "H"))).toBe(true)
+    expect(clashes({ kind: "sequence", first: "G", second: "X" }, chord("G", false))).toBe(true)
+    expect(clashes(rec("G"), seq("G", "H"))).toBe(false)
   })
 })

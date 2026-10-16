@@ -49,6 +49,16 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
       danger: true,
     }
   },
+  // From a row it resets one command; with no argument, all of them.
+  "shortcuts.reset": (arg) =>
+    arg?.trim()
+      ? null
+      : {
+          title: "Reset all shortcuts?",
+          description: "Every command gets its default keys back.",
+          confirm: "Reset",
+          danger: true,
+        },
   "theme.delete": () => ({
     title: "Delete this theme?",
     description: "Export it first if you want to keep a copy.",

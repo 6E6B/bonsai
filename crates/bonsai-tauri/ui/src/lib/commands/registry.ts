@@ -87,7 +87,10 @@ export async function run(id: string, arg: string | null = null, asAccount: numb
   if (ask && confirmer && !(await confirmer(ask))) return false
   const h = local.get(id)
   if (h) return h(arg, asAccount)
-  return runBackend(id, arg, asAccount)
+  const ok = await runBackend(id, arg, asAccount)
+  // Shortcuts live in the command list, which is otherwise loaded once.
+  if (ok && id.startsWith("shortcuts.")) await loadCommands()
+  return ok
 }
 
 /** Sends a command to the backend, skipping any UI handler. A handler that also needs the

@@ -18,6 +18,7 @@ const cmd = (id: string, arg: CommandInfo["arg"]): CommandInfo => ({
   keywords: [],
   arg,
   shortcuts: [],
+  rebound: false,
 })
 
 const people = [

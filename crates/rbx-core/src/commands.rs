@@ -96,6 +96,96 @@ impl Shortcut {
     pub fn seq(a: &str, b: &str) -> Shortcut {
         Shortcut::Sequence(a.into(), b.into())
     }
+    /// Text that [`Shortcut::parse`] reads back: `Ctrl+Shift+K`, `Alt+Slash`, `G H`.
+    pub fn spec(&self) -> String {
+        match self {
+            Shortcut::Chord {
+                ctrl,
+                shift,
+                alt,
+                key,
+            } => {
+                let mut s = String::new();
+                for (on, name) in [(ctrl, "Ctrl+"), (alt, "Alt+"), (shift, "Shift+")] {
+                    if *on {
+                        s.push_str(name);
+                    }
+                }
+                s.push_str(key);
+                s
+            }
+            Shortcut::Sequence(a, b) => format!("{a} {b}"),
+        }
+    }
+
+    /// Reads a shortcut: `Ctrl+Shift+K` (Cmd counts as Ctrl) or two plain keys in a row, `G H`.
+    /// Key names are rbx-core's (`K`, `1`, `Slash`, `PageDown`); single characters are upper-cased.
+    pub fn parse(text: &str) -> Result<Shortcut, String> {
+        fn key(k: &str) -> Result<String, String> {
+            let k = k.trim();
+            let ok = !k.is_empty() && k.len() <= 16 && k.chars().all(|c| c.is_ascii_graphic() && c != '+');
+            if !ok {
+                return Err(format!("\"{k}\" isn't a key."));
+            }
+            Ok(if k.chars().count() == 1 {
+                k.to_ascii_uppercase()
+            } else {
+                k.to_owned()
+            })
+        }
+        let parts: Vec<&str> = text.split_whitespace().collect();
+        match parts.as_slice() {
+            [a, b] if !a.contains('+') && !b.contains('+') => Ok(Shortcut::Sequence(key(a)?, key(b)?)),
+            [chord] => {
+                let mut mods: Vec<&str> = chord.split('+').collect();
+                // A trailing "+" is the Plus key: `Ctrl++`.
+                let last = if chord.ends_with("++") {
+                    mods.truncate(mods.len() - 2);
+                    "Plus"
+                } else {
+                    mods.pop().unwrap_or_default()
+                };
+                let (mut ctrl, mut shift, mut alt) = (false, false, false);
+                for m in mods {
+                    match m.to_ascii_lowercase().as_str() {
+                        "ctrl" | "control" | "cmd" | "meta" => ctrl = true,
+                        "shift" => shift = true,
+                        "alt" | "option" => alt = true,
+                        _ => return Err(format!("\"{m}\" isn't Ctrl, Shift or Alt.")),
+                    }
+                }
+                Ok(Shortcut::Chord {
+                    ctrl,
+                    shift,
+                    alt,
+                    key: key(last)?,
+                })
+            }
+            _ => Err("Type a key with Ctrl, Shift or Alt (Ctrl+K), or two keys in a row (G H).".into()),
+        }
+    }
+
+    /// True when pressing one would get in the way of the other: the same keys, or a plain key
+    /// that starts a sequence.
+    pub fn clashes(&self, other: &Shortcut) -> bool {
+        let plain = |s: &Shortcut| match s {
+            Shortcut::Chord {
+                ctrl: false,
+                alt: false,
+                key,
+                ..
+            } => Some(key.clone()),
+            _ => None,
+        };
+        let first = |s: &Shortcut| match s {
+            Shortcut::Sequence(a, _) => Some(a.clone()),
+            _ => None,
+        };
+        self == other
+            || (plain(self).is_some() && plain(self) == first(other))
+            || (first(self).is_some() && first(self) == plain(other))
+    }
+
     /// For display, e.g. `Ctrl+K` or `G H`.
     pub fn label(&self) -> String {
         match self {
@@ -430,6 +520,8 @@ commands! {
     SetNotify => "app.notify", "Turn a notification kind on or off (friend_joins, trades, chats, friend_requests, experience_updates, sales)", ["notifications", "alerts", "desktop", "mute", "sales"], Text, [];
     SetSetting => "settings.set", "Change a setting", ["setting", "preference", "option", "change", "turn on", "turn off"], Setting, [];
     ResetSettings => "settings.reset", "Reset settings to their defaults", ["reset", "default", "restore", "settings"], Setting, [];
+    SetShortcut => "shortcuts.set", "Change a command's shortcut", ["shortcut", "keybinding", "hotkey", "rebind", "keys"], Text, [];
+    ResetShortcuts => "shortcuts.reset", "Reset all shortcuts", ["shortcut", "keybinding", "hotkey", "default", "reset"], None, [];
     ClearCache => "app.clear_cache", "Clear cached data and images", ["cache", "clear", "disk", "storage"], None, [];
 
     NextSubTab => "view.next_subtab", "Next sub-tab", ["tab", "next"], None, [Shortcut::key("CloseBracket")];
@@ -534,6 +626,51 @@ impl Registry {
         self.overrides = o;
     }
 
+    /// True when the user changed this command's shortcuts.
+    pub fn is_rebound(&self, id: CommandId) -> bool {
+        self.overrides.contains_key(&id)
+    }
+
+    /// Gives `id` this one shortcut, or none, and takes it off any other command it clashes
+    /// with (see [`Shortcut::clashes`]). Returns the commands it was taken from.
+    pub fn assign(&mut self, id: CommandId, shortcut: Option<Shortcut>) -> Vec<CommandId> {
+        let mut taken = Vec::new();
+        if let Some(s) = &shortcut {
+            for other in CommandId::ALL.iter().copied().filter(|o| *o != id) {
+                let had = self.shortcuts(other);
+                if had.iter().any(|x| x.clashes(s)) {
+                    let kept = had.iter().filter(|x| !x.clashes(s)).cloned().collect();
+                    self.overrides.insert(other, kept);
+                    taken.push(other);
+                }
+            }
+        }
+        self.overrides.insert(id, shortcut.into_iter().collect());
+        self.tidy();
+        taken
+    }
+
+    /// Puts back the default shortcuts of `id`, or of every command.
+    pub fn reset(&mut self, id: Option<CommandId>) {
+        match id {
+            Some(id) => {
+                self.overrides.remove(&id);
+            }
+            None => self.overrides.clear(),
+        }
+    }
+
+    /// Drops rebindings that match the defaults again.
+    fn tidy(&mut self) {
+        let commands = &self.commands;
+        self.overrides.retain(|id, list| {
+            commands
+                .iter()
+                .find(|c| c.id == *id)
+                .is_none_or(|c| c.default_shortcuts != *list)
+        });
+    }
+
     /// Commands bound to this shortcut.
     pub fn bound_to(&self, s: &Shortcut) -> Vec<CommandId> {
         CommandId::ALL
@@ -570,6 +707,50 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn parse_and_spec_round_trip() {
+        for text in ["Ctrl+K", "Ctrl+Shift+O", "Alt+Slash", "G H", "F5", "Ctrl+Plus"] {
+            let s = Shortcut::parse(text).unwrap();
+            assert_eq!(s.spec(), text);
+        }
+        assert_eq!(Shortcut::parse("cmd+k"), Ok(Shortcut::ctrl("K")));
+        assert_eq!(Shortcut::parse("g h"), Ok(Shortcut::seq("G", "H")));
+        assert_eq!(Shortcut::parse("Ctrl++"), Ok(Shortcut::ctrl("Plus")));
+        assert!(Shortcut::parse("").is_err());
+        assert!(Shortcut::parse("Hyper+K").is_err());
+        assert!(Shortcut::parse("A B C").is_err());
+        for c in Registry::default().all() {
+            for s in &c.default_shortcuts {
+                assert_eq!(Shortcut::parse(&s.spec()).as_ref(), Ok(s), "{}", s.spec());
+            }
+        }
+    }
+
+    #[test]
+    fn assign_takes_clashing_shortcuts() {
+        let mut r = Registry::default();
+        let taken = r.assign(CommandId::Quit, Some(Shortcut::ctrl("K")));
+        assert_eq!(taken, vec![CommandId::OpenCommandBar]);
+        assert!(
+            !r.shortcuts(CommandId::OpenCommandBar)
+                .contains(&Shortcut::ctrl("K"))
+        );
+        assert_eq!(r.bound_to(&Shortcut::ctrl("K")), vec![CommandId::Quit]);
+        // Back to its own default: the rebinding is dropped.
+        r.assign(CommandId::Quit, Some(Shortcut::ctrl("Q")));
+        assert!(!r.is_rebound(CommandId::Quit));
+        r.reset(None);
+        assert_eq!(r.bound_to(&Shortcut::ctrl("K")), vec![CommandId::OpenCommandBar]);
+    }
+
+    #[test]
+    fn plain_key_clashes_with_sequence_start() {
+        assert!(Shortcut::key("G").clashes(&Shortcut::seq("G", "H")));
+        assert!(Shortcut::seq("G", "H").clashes(&Shortcut::key("G")));
+        assert!(!Shortcut::ctrl("G").clashes(&Shortcut::seq("G", "H")));
+        assert!(!Shortcut::seq("G", "H").clashes(&Shortcut::seq("G", "N")));
     }
 
     #[test]

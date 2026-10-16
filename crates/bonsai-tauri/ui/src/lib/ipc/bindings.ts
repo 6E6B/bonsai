@@ -642,6 +642,8 @@ export type CommandInfo = {
 	keywords: string[],
 	arg: Arg,
 	shortcuts: Keys[],
+	/**  The user changed the shortcuts from the defaults. */
+	rebound: boolean,
 };
 
 /**  A community in search results. */

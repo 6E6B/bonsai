@@ -221,6 +221,8 @@ pub struct CommandInfo {
     pub keywords: Vec<String>,
     pub arg: Arg,
     pub shortcuts: Vec<Keys>,
+    /// The user changed the shortcuts from the defaults.
+    pub rebound: bool,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Type)]
@@ -1010,6 +1012,7 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
             keywords: c.keywords.iter().map(|k| (*k).to_owned()).collect(),
             arg: c.arg.into(),
             shortcuts: registry.shortcuts(c.id).iter().map(Keys::from).collect(),
+            rebound: registry.is_rebound(c.id),
         })
         .collect()
 }

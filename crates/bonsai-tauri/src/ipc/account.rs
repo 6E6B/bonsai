@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use rbx_core::commands::CommandId;
+use rbx_core::commands::{CommandId, Registry, Shortcut};
 use rbx_core::experience::ServerChange;
 use rbx_core::me::ServersTab;
 use rbx_core::prefs::{self, PrefKind};
@@ -740,6 +740,50 @@ pub(super) fn run(
                 };
                 core.notice(&msg, false);
             })
+        }
+        CommandId::SetShortcut => (|| {
+            // "<command> <shortcut>" binds it; "<command>" alone leaves the command without one.
+            let a = arg();
+            let a = a.trim();
+            let (key, keys) = a.split_once(char::is_whitespace).unwrap_or((a, ""));
+            let id = CommandId::ALL
+                .iter()
+                .copied()
+                .find(|c| c.key() == key)
+                .ok_or_else(|| format!("\"{key}\" isn't a command."))?;
+            let shortcut = match keys.trim() {
+                "" => None,
+                k => Some(Shortcut::parse(k)?),
+            };
+            let mut registry = Registry::default();
+            registry.load_overrides(core.settings().shortcuts);
+            let taken = registry.assign(id, shortcut);
+            let overrides = registry.overrides().clone();
+            core.update_settings(|s| s.shortcuts = overrides);
+            if let Some(first) = taken.first() {
+                let title = registry.get(*first).title;
+                core.notice(format!("Removed it from \"{title}\"."), false);
+            }
+            Ok(())
+        })(),
+        CommandId::ResetShortcuts => {
+            // An argument resets one command; none resets them all.
+            let a = arg();
+            match a.trim() {
+                "" => {
+                    core.update_settings(|s| s.shortcuts.clear());
+                    Ok(())
+                }
+                key => match CommandId::ALL.iter().copied().find(|c| c.key() == key) {
+                    Some(id) => {
+                        core.update_settings(|s| {
+                            s.shortcuts.remove(&id);
+                        });
+                        Ok(())
+                    }
+                    None => Err(format!("\"{key}\" isn't a command.")),
+                },
+            }
         }
         CommandId::SetDensity => match Density::from_name(&arg()) {
             Some(d) => {
