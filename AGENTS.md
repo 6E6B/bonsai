@@ -143,6 +143,15 @@ Run from the repo root: `cargo fmt`, `cargo clippy --workspace --all-targets -- 
 - No screen you touched waits on the network or shows a blank state when cached data exists.
 - Every new action is a registry command with a title and keywords, and shows up in the command bar.
 - PR description lists the endpoints used and links any new undocumented spec.
+- Your work is committed (see below).
+
+## Committing
+
+- When your task is done and the checks above pass, commit your work. Don't leave it uncommitted.
+- Commit only the files you changed for your task. Don't stage other people's in-progress changes (`git add -A` is usually wrong).
+- Never commit to `main`. If you're on it, create a branch first.
+- Write a short imperative subject line saying what changed (e.g. "Add trade list screen"), plus a body if the why isn't obvious.
+- Don't push, amend or rewrite history unless asked.
 
 ## Style
 
