@@ -69,6 +69,7 @@ export class OutfitRenderer {
     backgroundRenderer: BackgroundRenderer
 
     currentlyChangingRig: boolean = false
+    destroyed: boolean = false
     currentlyUpdating: boolean = false
     hasNewUpdate: boolean = false
     private _queuedMainAnimation: string | undefined
@@ -167,6 +168,11 @@ export class OutfitRenderer {
 
                 //gets rig
                 API.Asset.GetRBX(`roavatar://Rig${this.currentRigType}.rbxm`, undefined).then(result => {
+                    if (this.destroyed) {
+                        this.currentlyChangingRig = false
+                        resolve(new Response(null, {status: 499}))
+                        return
+                    }
                     if (result instanceof RBX) {
                         const dataModel = result.generateTree()
                         const newRig = dataModel.GetChildren()[0]
@@ -179,9 +185,14 @@ export class OutfitRenderer {
 
                         resolve(newRig)
                     } else {
+                        this.currentlyChangingRig = false
                         this.onError.Fire("rig")
                         resolve(result)
                     }
+                }).catch(() => {
+                    this.currentlyChangingRig = false
+                    this.onError.Fire("rig")
+                    resolve(new Response(null, {status: 500}))
                 })
             }
         })
@@ -218,7 +229,8 @@ export class OutfitRenderer {
                 const humanoid = this.currentRig.FindFirstChildOfClass("Humanoid")
                 if (humanoid) {
                     //apply description
-                    hrpWrapper.applyDescription(humanoid).then((result) => {
+                    return hrpWrapper.applyDescription(humanoid).then((result) => {
+                        if (this.destroyed) return
                         if (this._queuedMainAnimation) {
                             this.setMainAnimation(this._queuedMainAnimation)
                             this._queuedMainAnimation = undefined
@@ -248,17 +260,34 @@ export class OutfitRenderer {
                             const oldHumanoidDescription = humanoid.FindFirstChildOfClass("HumanoidDescription")
                             oldHumanoidDescription?.Destroy()
                             this.onError.Fire("humanoidDescription")
+                            this._runQueuedUpdate()
                         }
                     })
                 } else {
-                    this.onError.Fire("rig")
                     this.currentlyUpdating = false
+                    this.onError.Fire("rig")
+                    this._runQueuedUpdate()
                 }
             } else {
-                this.onError.Fire("rig")
                 this.currentlyUpdating = false
+                this.onError.Fire("rig")
+                this._runQueuedUpdate()
             }
+        }).catch((e) => {
+            console.warn("Outfit failed to load:", e)
+            this.currentlyUpdating = false
+            if (this.destroyed) return
+            this.onError.Fire("exception")
+            this._runQueuedUpdate()
         })
+    }
+
+    /**Applies an outfit that was set while the last one was loading */
+    _runQueuedUpdate() {
+        if (this.hasNewUpdate && !this.destroyed) {
+            this.hasNewUpdate = false
+            this._updateOutfit()
+        }
     }
     
     /**
@@ -594,6 +623,7 @@ export class OutfitRenderer {
 
     /**Calls destroy on the rig, stops animating and disconnects connections. The OutfitRenderer should not be interacted with after this */
     destroy() {
+        this.destroyed = true
         this.stopAnimating()
         if (this.currentRig) RBXRenderer.removeInstance(this.currentRig, this.renderScene)
         this.currentRig?.Destroy()

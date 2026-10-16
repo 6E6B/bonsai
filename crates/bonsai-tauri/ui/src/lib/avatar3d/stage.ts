@@ -31,6 +31,8 @@ interface Holder {
 
 let booted: Promise<void> | null = null
 let renderer: OutfitRenderer | null = null
+/** Set when the renderer failed an outfit, so the next one starts from a fresh rig. */
+let broken = false
 let holder: Holder | null = null
 /** The accessory drawn by itself, and the tree it came from. */
 let alone: { root: Instance; accessory: Instance } | null = null
@@ -84,13 +86,20 @@ function outfitFrom(json: OutfitJson, wear: TryOnItem[]) {
 }
 
 function ensureRenderer(outfit: Outfit) {
+  if (broken) dropRenderer()
   if (renderer) {
     renderer.setOutfit(outfit)
     return renderer
   }
   const r = new OutfitRenderer(auth, outfit)
   r.onRenderSuccess.Connect(() => holder?.state("ready"))
-  r.onError.Connect(() => holder?.state("error"))
+  r.onError.Connect((why) => {
+    // An outfit set while this one loaded is applied next; its own result decides.
+    if (r.hasNewUpdate) return
+    console.warn("3D outfit failed:", why)
+    broken = true
+    holder?.state("error")
+  })
   r.onRenderError.Connect(() => holder?.state("error"))
   renderer = r
   return r
@@ -115,6 +124,7 @@ function resetCamera() {
 function dropRenderer() {
   renderer?.destroy()
   renderer = null
+  broken = false
 }
 
 function dropAlone() {

@@ -14,6 +14,12 @@ import { BodyPartDescriptionWrapper } from "./BodyPartDescription";
 import { InstanceWrapper } from "./InstanceWrapper";
 import { MakeupDescriptionWrapper } from "./MakeupDescription";
 
+/**Settles a part's load as failed when it throws, so the whole outfit can't hang on it */
+function partFailed(resolve: (r: Response) => void, e: unknown) {
+    warn(true, "Part failed to load", e)
+    resolve(new Response(null, {status: 500}))
+}
+
 type ClothingDiffType = "Shirt" | "Pants" | "GraphicTShirt"
 type HumanoidDescriptionDiff = "scale" | "bodyColor" | "animation" | "bodyPart" | "clothing" | "face" | "accessory" | "makeup" | "gear" | "staticFacialAnimation"
 
@@ -693,7 +699,7 @@ export class HumanoidDescriptionWrapper extends InstanceWrapper {
                                             }
                                             resolve(undefined)
                                         }
-                                    })
+                                    }).catch((e) => partFailed(resolve, e))
                                 }))
                             } else if (NeverLayeredAccessoryTypes.includes(accessoryType)) {
                                 instance.setProperty("IsLayered", false)
@@ -1047,7 +1053,7 @@ export class HumanoidDescriptionWrapper extends InstanceWrapper {
 
                             dataModel.Destroy()
                         }
-                    })
+                    }).catch((e) => partFailed(resolve, e))
                 }))
             } else {
                 promises.push(new Promise((resolve) => {
@@ -1111,7 +1117,7 @@ export class HumanoidDescriptionWrapper extends InstanceWrapper {
                         } else {
                             resolve(result)
                         }
-                    })
+                    }).catch((e) => partFailed(resolve, e))
                 }))
             }
         }
@@ -1165,7 +1171,7 @@ export class HumanoidDescriptionWrapper extends InstanceWrapper {
                         } else {
                             resolve(rbx)
                         }
-                    })
+                    }).catch((e) => partFailed(resolve, e))
                 }))
             } else {
                 let className: string = change
@@ -1431,7 +1437,7 @@ export class HumanoidDescriptionWrapper extends InstanceWrapper {
                     } else {
                         resolve(rbx)
                     }
-                })
+                }).catch((e) => partFailed(resolve, e))
             }))
         }
 
@@ -1535,7 +1541,7 @@ export class HumanoidDescriptionWrapper extends InstanceWrapper {
                     } else {
                         resolve(rbx)
                     }
-                })
+                }).catch((e) => partFailed(resolve, e))
             }))
         }
 
@@ -1584,7 +1590,7 @@ export class HumanoidDescriptionWrapper extends InstanceWrapper {
                     promises.push(new Promise((resolve) => {
                         animatorW.loadAnimation(subAnimId, true).then((result) => {
                             resolve(result instanceof Response ? result : undefined)
-                        })
+                        }).catch((e) => partFailed(resolve, e))
                     }))
                 }
             }
@@ -1618,7 +1624,7 @@ export class HumanoidDescriptionWrapper extends InstanceWrapper {
 
                     animatorW.loadAvatarAnimation(id, false, true).then((result) => {
                         resolve(result)
-                    })
+                    }).catch((e) => partFailed(resolve, e))
                 }))
             //if a default animation
             } else {

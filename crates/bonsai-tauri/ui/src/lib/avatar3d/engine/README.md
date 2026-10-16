@@ -31,6 +31,12 @@ stay readable. Only `../stage.ts` imports it, and the app loads that module with
 - `misc/flags.ts` points `ASSETS_PATH` and `RIG_PATH` at the bundled files in
   `ui/public/avatar3d/`, so the webview never loads them from the network.
 - `index.ts` exports only what the app uses.
+- Failure handling, so one bad item can't stop every later outfit from drawing:
+  - `HumanoidDescription.ts`: each part load settles as failed when it throws (`partFailed`).
+  - `OutfitRenderer`: a thrown or failed update clears `currentlyUpdating` and
+    `currentlyChangingRig` and applies the outfit queued behind it, and a destroyed renderer
+    ignores loads that finish late.
+  - `RBXRenderer.animateAll`: a frame that throws doesn't end the render loop.
 
 The Draco mesh decoder is three.js's `draco_decoder.js` (asm.js, no `eval`), which
 `../stage.ts` loads as a script before the engine starts.

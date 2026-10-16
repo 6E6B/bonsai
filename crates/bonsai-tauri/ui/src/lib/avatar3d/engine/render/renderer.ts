@@ -414,8 +414,13 @@ export class RBXRenderer {
 
     static animateAll(shouldRequestAnimationFrame: boolean = true) {
         if (!RBXRenderer.renderer) return
-        for (const renderScene of RBXRenderer.scenes) {
-            RBXRenderer.renderScene(renderScene, renderScene === RBXRenderer.firstScene)
+        //a frame that throws must not end the loop
+        try {
+            for (const renderScene of RBXRenderer.scenes) {
+                RBXRenderer.renderScene(renderScene, renderScene === RBXRenderer.firstScene)
+            }
+        } catch (e) {
+            console.warn("Frame failed:", e)
         }
 
         if (shouldRequestAnimationFrame) {
