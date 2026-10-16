@@ -193,7 +193,9 @@
     --color-pressed-on-fill: #00000066;
 
     --shadow-control: 0 1px 1.5px #0000001a, 0 0 0 1px #00000012;
-    --shadow-fill: 0 1px 1.5px #00000033, 0 0 0 1px #3a3a3a80, inset 0 1px 2px #ffffff24, inset 0 -1px 2px #0000000f;
+    --shadow-fill:
+      0 1px 1.5px #00000033, 0 0 0 1px color-mix(in srgb, var(--color-contrast) 70%, #000), inset 0 1px 2px #ffffff24,
+      inset 0 -1px 2px #0000000f;
     --shadow-field: 0 1px 1.5px #0000001a, 0 0 0 1px #00000012;
     --shadow-media: 0 1px 1.5px #0000001a, 0 0 0 1px #00000012;
     --shadow-well: inset 0 1px 1px #00000014, inset 0 0.5px 0.5px #00000014, inset 0 0 0 1px #0000000d;

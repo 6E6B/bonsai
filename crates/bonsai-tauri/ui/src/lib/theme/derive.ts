@@ -114,7 +114,8 @@ export const DEFAULT_SEEDS: Record<Base, Seeds> = {
 
 /* ── Shadows ──
  * Each layer names the seed that scales its alpha. Rings and highlights are drawn at 1px with
- * half alpha rather than 0.5px: WebKitGTK at 1x snaps 0.5px edges but not rounded corners. */
+ * half alpha rather than 0.5px: WebKitGTK at 1x snaps 0.5px edges but not rounded corners.
+ * A color that is not hex (say, one derived from a token) is faded with color-mix instead. */
 type Layer = [knob: keyof ShadowSeeds, geometry: string, color: string, inset?: "inset"]
 type Shadows = Record<string, Layer[]>
 
@@ -186,7 +187,7 @@ const SHADOWS: Record<Base, Shadows> = {
     ],
     "shadow-fill": [
       ["depth", "0 1px 1.5px", "#00000033"],
-      ["ring", "0 0 0 1px", "#3a3a3a80"],
+      ["ring", "0 0 0 1px", "color-mix(in srgb, var(--color-contrast) 70%, #000)"],
       ["highlight", "0 1px 2px", "#ffffff24", "inset"],
       ["depth", "0 -1px 2px", "#0000000f", "inset"],
     ],
@@ -231,11 +232,19 @@ const SHADOWS: Record<Base, Shadows> = {
   },
 }
 
+function fade(color: string, k: number): string {
+  if (!color.startsWith("#")) {
+    if (k === 1) return color
+    return `color-mix(in srgb, ${color} ${Math.min(100, Math.round(k * 100))}%, transparent)`
+  }
+  const c = hex(color)
+  return toHex(withAlpha(c, c.a * k))
+}
+
 function shadow(layers: Layer[], seeds: ShadowSeeds): string {
   return layers
     .map(([knob, geometry, color, inset]) => {
-      const c = hex(color)
-      const css = `${geometry} ${toHex(withAlpha(c, c.a * seeds[knob]))}`
+      const css = `${geometry} ${fade(color, seeds[knob])}`
       return inset ? `inset ${css}` : css
     })
     .join(", ")
