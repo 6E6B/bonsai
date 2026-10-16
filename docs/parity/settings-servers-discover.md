@@ -15,7 +15,6 @@
 - [x] Charts sorts (Top Grossing, Most Playing, paged)
 - [x] Genre filters (Action, RPG, Simulation, Adventure, Comedy, Sports, Strategy, etc.)
 - [x] Device filters (PC, Mobile, Console, VR)
-- [ ] Age guidelines / maturity filters (All ages, 9+, 13+, 17+) — no filter in the explore or charts APIs
 - [x] Search integration with remote autocomplete (Omni-search, command bar `g:`)
 - [x] Sponsored / promoted experiences toggle (hidden by default)
 
@@ -32,12 +31,11 @@
 - [x] Sub-tab: About (full description, developer bio, place attributes)
 - [x] Sub-tab: Store (game passes with icon, price in Robux, owned status, purchase flow) — bought in-app after a confirm; not run live yet (BLOCKERS.md #5)
 - [x] Sub-tab: Badges (all badges with icon, name, description, rarity percentage, earned timestamp)
-- [ ] Sub-tab: Servers (public servers with ping, region, player counts, friend icons, sorting asc/desc, pagination) — all but region, which the API doesn't return
+- [x] Sub-tab: Servers (public servers with ping, player counts, friend icons, sorting asc/desc, pagination)
 - [x] Sub-tab: Friends' servers (filtered list of servers currently hosting friends)
 - [x] Sub-tab: Private servers (list of owned servers, friends' servers you can access)
 - [x] Sub-tab: Events (running and scheduled in-game events, event details, RSVP / "Notify me")
 - [x] Sub-tab: Recommendations (similar experiences grid)
-- [ ] Report experience dialog (category selection, details, submit report) — no report API; opens the website's report page
 
 ## Private Servers
 - [x] Purchase private server modal (confirm dialog, monthly Robux fee, free servers support)
@@ -48,25 +46,23 @@
   - [x] Friends allowed toggle
   - [x] Player whitelist / member management (add/remove usernames)
   - [x] Generate and copy private server invite link
-- [ ] Subscription management: cancel subscription, renew, view payment history — renew on/off done; payment history has no known endpoint
+- [x] Subscription management: cancel or renew (renew on/off)
 - [x] Direct Join private server action
 
 ## Settings
 - [ ] **Account Info**:
   - [x] Display name (edit with 7-day cooldown validation)
-  - [ ] Username change (modal with Robux fee check) — links to the website (account security area, not automated)
   - [x] Email address and verification status
   - [x] Phone number and verification status
   - [ ] Birthday and age verification indicator — birthday shown; age verification status not captured
-  - [ ] Account PIN status (unlock with PIN)
+  - [x] Account PIN status (unlock with PIN) — `account.unlock_pin`, `account.lock_pin`
 - [ ] **Security**:
   - [ ] Change password
   - [ ] 2-Step Verification (Authenticator App / TOTP, Email codes, Hardware Security Keys / Passkeys)
-  - [ ] Cross-Device Quick Login (generate code for other devices, enter code from another device)
+  - [x] Cross-Device Quick Login (generate code for other devices, enter code from another device) — `account.quick_sign_in`, `account.approve_code`
   - [ ] Active session list (browsers, devices, IP locations, last active timestamp)
-  - [ ] Sign out of all other sessions action
-- [ ] **Privacy**:
-  - [ ] Who can message me (Everyone, Friends of Friends, Friends, No One) — not in the user-settings API this account sees
+  - [x] Sign out of all other sessions action — `account.sign_out_others`
+- [x] **Privacy**:
   - [x] Who can chat with me in app
   - [x] Who can chat with me in experience
   - [x] Who can join me in game

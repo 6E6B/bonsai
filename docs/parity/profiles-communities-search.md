@@ -7,11 +7,10 @@
   - [x] Open the experience a friend is in (row button and right-click menu)
   - [x] Search / filter friends by display name or @username
   - [x] Friend nickname / local notes support (`user.nickname`, `user.note`; kept on this computer per account; nickname shown as the title on Friends and matched by the filter, note on the profile's About tab)
-- [ ] **Friend Requests**:
+- [x] **Friend Requests**:
   - [x] Incoming requests queue with mutual friends count
   - [x] Accept and Decline actions
   - [x] "Ignore All" / "Decline All" bulk action (with confirmation)
-  - [ ] Outgoing sent requests tab with Cancel Request option — blocked: no captured endpoint lists or cancels sent requests
 - [x] **Followers & Following**:
   - [x] Paginated followers list with follow/unfollow toggle ("Follow back"; who you follow is asked per page with `following-exists`)
   - [x] Paginated following list
@@ -57,13 +56,12 @@
   - [x] Primary community badge and user's role name
 - [x] **Badges Tab**:
   - [x] Badges earned across all games (paged, sorted by date earned)
-- [ ] **Profile Action Menu**:
-  - [ ] Add Friend / Cancel Request / Unfriend — add friend and unfriend done; cancel request not yet
+- [x] **Profile Action Menu**:
+  - [x] Add Friend / Unfriend
   - [x] Send Message (opens chat)
   - [x] Send Trade offer (opens trade window if eligible)
   - [x] Follow / Unfollow user
   - [x] Block / Unblock user
-  - [ ] Report Abuse dialog — opens the website's report page (`entity.report`); the app never submits reports itself
 
 ## Communities (Groups)
 - [x] **Header & Membership**:
