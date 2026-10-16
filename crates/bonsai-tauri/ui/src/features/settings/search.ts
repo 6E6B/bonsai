@@ -28,7 +28,6 @@ export const extraEntries: SettingsEntry[] = [
   { section: "servers", title: "Private servers", words: "vip server" },
   { section: "appearance", setting: "themes", title: "Themes", words: "colors palette dark light" },
   { section: "appearance", title: "Fonts", words: "font typeface mono" },
-  { section: "appearance", setting: "zoom", title: "Zoom", words: "scale size larger smaller" },
   { section: "background", title: "Background picture", words: "wallpaper image" },
   { section: "background", title: "Background effects", words: "blur dim tint vignette scanlines grain" },
   { section: "layout", title: "Sidebar", words: "screens order hide show" },

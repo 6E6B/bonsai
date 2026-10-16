@@ -21,6 +21,7 @@ import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { shell, startSync } from "~/lib/store"
 import { activeTab, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
+import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
@@ -35,8 +36,6 @@ import { StatusBar } from "./shell/StatusBar"
 import { TabBar } from "./shell/TabBar"
 import { TitleBar } from "./shell/TitleBar"
 import { TopBar } from "./shell/TopBar"
-
-const ZOOMS = [0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2]
 
 /**
  * The window:
@@ -64,7 +63,7 @@ export function Layout(props: ParentProps) {
   const [width, setWidth] = createSignal(window.innerWidth)
   makeEventListener(window, "resize", () => setWidth(window.innerWidth))
   const [drawerPref, setDrawerPref] = createSignal<boolean | null>(null)
-  const [zoom, setZoom] = createSignal(1)
+  const zoom = () => shell.uiScale || 1
   /** The item Ctrl+click or `market.preview` shows beside the page. */
   const [preview, setPreview] = createSignal<{ id: number; bundle: boolean } | null>(null)
   const compact = () => compactPref() ?? width() / zoom() < NARROW
@@ -91,10 +90,9 @@ export function Layout(props: ParentProps) {
   const open = (prefix: string) => (arg: string | null) => {
     if (arg) visitPath(`${prefix}/${arg}`)
   }
-  const zoomBy = (by: 1 | -1) => {
-    const i = ZOOMS.indexOf(zoom())
-    setZoom(ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, i + by))])
-  }
+  /** Zoom is a setting (`ui_scale`), so it is saved and the command bar can set it. */
+  const setZoom = (z: number) => runBackend("settings.set", `ui_scale ${Math.round(z * 100)}`)
+  const zoomBy = (by: 1 | -1) => setZoom(stepZoom(zoom(), by))
   const syncTab = () => {
     const t = activeTab(tabs)
     if (t && t.path !== here()) navigate(t.path)

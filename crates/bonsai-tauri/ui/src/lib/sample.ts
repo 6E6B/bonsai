@@ -116,6 +116,7 @@ export const browserShell: Shell = {
   approve: null,
   itemValues: false,
   avatar3d: false,
+  uiScale: 1,
   sidebar: { order: [], hidden: ["messages"] },
 }
 

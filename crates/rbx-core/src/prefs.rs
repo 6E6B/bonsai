@@ -35,6 +35,19 @@ pub struct Pref {
 
 const MODES: &[(&str, &str)] = &[("system", "System"), ("dark", "Dark"), ("light", "Light")];
 const DENSITIES: &[(&str, &str)] = &[("comfortable", "Comfortable"), ("compact", "Compact")];
+/// Window zoom in percent. The UI's zoom commands step through these.
+pub const ZOOMS: &[(&str, &str)] = &[
+    ("67", "67%"),
+    ("75", "75%"),
+    ("80", "80%"),
+    ("90", "90%"),
+    ("100", "100%"),
+    ("110", "110%"),
+    ("125", "125%"),
+    ("150", "150%"),
+    ("175", "175%"),
+    ("200", "200%"),
+];
 const AVATAR_VIEWS: &[(&str, &str)] = &[("2d", "Image"), ("3d", "3D")];
 
 const fn pref(
@@ -72,6 +85,14 @@ pub const PREFS: &[Pref] = &[
         "Compact makes buttons and fields shorter.",
         &["compact", "comfortable", "spacing"],
         PrefKind::Choice(DENSITIES),
+    ),
+    pref(
+        "ui_scale",
+        "appearance",
+        "Zoom",
+        "Scales the whole window. Ctrl+= and Ctrl+- step through these.",
+        &["zoom", "scale", "size", "larger", "smaller"],
+        PrefKind::Choice(ZOOMS),
     ),
     pref(
         "player_command",
@@ -157,6 +178,14 @@ pub const PREFS: &[Pref] = &[
         &["values", "rolimons", "worth", "rap"],
         PrefKind::Bool,
     ),
+    pref(
+        "background_accounts",
+        "accounts",
+        "Keep other accounts live",
+        "Chat, presence and unread counts for every signed-in account, not only the active one.",
+        &["background", "realtime", "unread", "accounts", "presence"],
+        PrefKind::Bool,
+    ),
 ];
 
 /// The setting with this key.
@@ -184,6 +213,8 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
     Some(match key {
         "mode" => s.appearance.mode.name().to_owned(),
         "density" => s.density.name().to_owned(),
+        "ui_scale" => ((s.ui_scale * 100.0).round() as i32).to_string(),
+        "background_accounts" => on_off(s.background_accounts).to_owned(),
         "player_command" => s.player_command.clone().unwrap_or_default(),
         "avatar_view" => if s.avatar_3d { "3d" } else { "2d" }.to_owned(),
         "format_locale" => s.format_locale.clone(),
@@ -214,6 +245,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
         match key {
             "mode" => s.appearance.mode = Mode::from_name(v).unwrap_or_default(),
             "density" => s.density = Density::from_name(v).unwrap_or_default(),
+            "ui_scale" => s.ui_scale = v.parse::<f32>().unwrap_or(100.0) / 100.0,
             "avatar_view" => s.avatar_3d = v == "3d",
             _ => unreachable!("choice without a setter: {key}"),
         }
@@ -225,6 +257,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
     }
     match key {
         "item_values" => s.item_values = bool()?,
+        "background_accounts" => s.background_accounts = bool()?,
         "player_command" => s.player_command = Some(value.to_owned()).filter(|c| !c.is_empty()),
         "format_locale" => {
             if !valid_format_locale(value) {
@@ -330,6 +363,10 @@ mod tests {
         );
         apply(&mut s, "player_command").unwrap();
         assert_eq!(s.player_command, None);
+        apply(&mut s, "ui_scale 125").unwrap();
+        assert_eq!(s.ui_scale, 1.25);
+        assert_eq!(get(&s, "ui_scale").as_deref(), Some("125"));
+        assert!(apply(&mut s, "ui_scale 130").is_err());
         assert!(apply(&mut s, "density huge").is_err());
         assert!(apply(&mut s, "format_locale not a tag").is_err());
         assert!(apply(&mut s, "nope on").is_err());

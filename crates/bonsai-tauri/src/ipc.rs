@@ -66,6 +66,8 @@ pub struct Shell {
     pub item_values: bool,
     /// Avatar viewers open in 3D instead of on the image.
     pub avatar_3d: bool,
+    /// Window zoom, 1 = 100%.
+    pub ui_scale: f64,
     /// How the user arranged the sidebar.
     pub sidebar: SidebarView,
 }
@@ -954,6 +956,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         keychain_warning: s.keychain_warning.clone(),
         item_values: core.values_enabled(),
         avatar_3d: core.settings().avatar_3d,
+        ui_scale: f64::from(core.settings().ui_scale),
         sidebar: {
             let p = core.settings().sidebar;
             SidebarView {

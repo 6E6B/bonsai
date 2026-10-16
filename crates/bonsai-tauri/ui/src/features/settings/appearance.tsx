@@ -34,17 +34,7 @@ export function AppearanceSection() {
       <ThemeFonts themes={themes} />
       <SettingsGroup title="Size">
         <PrefRow name="density" />
-        <SettingRow setting="zoom" label="Zoom" description="Scales the whole window.">
-          <Button size="sm" onClick={() => run("view.zoom_out")}>
-            Smaller
-          </Button>
-          <Button size="sm" onClick={() => run("view.zoom_reset")}>
-            Reset
-          </Button>
-          <Button size="sm" onClick={() => run("view.zoom_in")}>
-            Larger
-          </Button>
-        </SettingRow>
+        <PrefRow name="ui_scale" />
       </SettingsGroup>
     </>
   )

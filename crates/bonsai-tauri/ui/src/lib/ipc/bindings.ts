@@ -1711,6 +1711,8 @@ export type Shell = {
 	itemValues: boolean,
 	/**  Avatar viewers open in 3D instead of on the image. */
 	avatar3d: boolean,
+	/**  Window zoom, 1 = 100%. */
+	uiScale: number | null,
 	/**  How the user arranged the sidebar. */
 	sidebar: SidebarView,
 };
