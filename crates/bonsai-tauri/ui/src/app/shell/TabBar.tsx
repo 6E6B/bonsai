@@ -52,7 +52,9 @@ export function TabBar() {
 
   return (
     <TabStrip
-      class="shrink-0 bg-deep px-2 pt-1"
+      // No background of its own: the window's shows through, and the page's picture through the
+      // active tab.
+      class="shrink-0 px-2 pt-1"
       tabs={strip()}
       active={tabs.active}
       onSelect={(key) => void run("tab.switch", key)}

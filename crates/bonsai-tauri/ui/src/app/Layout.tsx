@@ -303,6 +303,10 @@ export function Layout(props: ParentProps) {
   // Each tab remembers how far its page was scrolled. Only the active tab's screen exists, so
   // this is all a background tab keeps.
   let main: HTMLElement | undefined
+  // The picture runs up into the active tab, so it is measured against the strip.
+  let column: HTMLDivElement | undefined
+  const [strip, setStrip] = createSignal<HTMLElement>()
+  onMount(() => setStrip(column?.querySelector<HTMLElement>('[data-component="tab-strip"]') ?? undefined))
   const scrolls = new Map<string, number>()
   const restoreScroll = (key: string, y: number) => {
     let tries = 0
@@ -371,31 +375,29 @@ export function Layout(props: ParentProps) {
           <TopBar drawer={drawer()} />
           <div class="flex min-h-0 flex-1">
             <Sidebar compact={compact()} />
-            <div class="flex min-w-0 flex-1 flex-col">
+            <div ref={column} class="relative isolate flex min-w-0 flex-1 flex-col">
+              <Backdrop background={appearance.background} strip={strip()} />
               <TabBar />
-              <div class="relative isolate flex min-h-0 flex-1 flex-col">
-                <Backdrop background={appearance.background} />
-                <main
-                  ref={main}
-                  data-scroller
-                  class="min-h-0 flex-1 bg-canvas"
-                  onScroll={(e) => scrolls.set(tabs.active, e.currentTarget.scrollTop)}
-                >
-                  <div class="flex h-full flex-col">
-                    <ShellAlerts />
-                    <ChallengeDialog />
-                    <ErrorBoundary
-                      fallback={(err) => (
-                        <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
-                          {String(err?.stack ?? err)}
-                        </pre>
-                      )}
-                    >
-                      {props.children}
-                    </ErrorBoundary>
-                  </div>
-                </main>
-              </div>
+              <main
+                ref={main}
+                data-scroller
+                class="min-h-0 flex-1 bg-canvas"
+                onScroll={(e) => scrolls.set(tabs.active, e.currentTarget.scrollTop)}
+              >
+                <div class="flex h-full flex-col">
+                  <ShellAlerts />
+                  <ChallengeDialog />
+                  <ErrorBoundary
+                    fallback={(err) => (
+                      <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
+                        {String(err?.stack ?? err)}
+                      </pre>
+                    )}
+                  >
+                    {props.children}
+                  </ErrorBoundary>
+                </div>
+              </main>
             </div>
             <Show when={preview()}>
               {(p) => (

@@ -3,6 +3,7 @@ export {
   type BackdropLevel,
   type BackdropLevels,
   backdropLayers,
+  cutoutPath,
   EFFECTS,
   previewBackdrop,
   SEE_THROUGH,

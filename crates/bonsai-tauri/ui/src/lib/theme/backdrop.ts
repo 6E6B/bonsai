@@ -81,3 +81,20 @@ export function settleBackdrop(b: BackdropLevels | null) {
     if (!b || b[key] === draft[key]) setDraft(key, undefined)
   }
 }
+
+/** The part of a `width`×`height` box the picture covers, as a CSS `path()`: everything below
+ * `top`, plus `tab` reaching up from `top` with rounded top corners, so the picture runs from the
+ * page into the active tab. */
+export function cutoutPath(
+  width: number,
+  height: number,
+  top: number,
+  tab?: { left: number; right: number; top: number; radius: number },
+) {
+  const n = (v: number) => Math.round(v * 2) / 2
+  const below = `V${n(top)} H${n(width)} V${n(height)} H0 Z`
+  if (!tab || tab.right - tab.left < 1 || tab.top >= top) return `path("M0 ${n(top)} H${n(width)} V${n(height)} H0 Z")`
+  const r = Math.min(tab.radius, (tab.right - tab.left) / 2, top - tab.top)
+  const [l, rt, t] = [n(tab.left), n(tab.right), n(tab.top)]
+  return `path("M0 ${n(top)} H${l} V${n(t + r)} A${n(r)} ${n(r)} 0 0 1 ${n(l + r)} ${t} H${n(rt - r)} A${n(r)} ${n(r)} 0 0 1 ${rt} ${n(t + r)} ${below}")`
+}

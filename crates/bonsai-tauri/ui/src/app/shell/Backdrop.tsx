@@ -1,22 +1,26 @@
-import { createMemo, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
 import type { BackgroundView } from "~/lib/ipc/bindings"
-import { backdropLayers, withDraft } from "~/lib/theme"
+import { backdropLayers, cutoutPath, withDraft } from "~/lib/theme"
 import { backgroundUrl } from "~/lib/thumb"
 
 /** The background picture behind the page area, with its effects. The page and its cards are
  * see-through while one is set (`setSeeThrough` in `~/lib/theme`), so it shows; GIFs play. Sits
  * under its siblings in a parent with `isolate`. Overlays fade toward the theme's page color, so
- * they suit light and dark themes alike. */
-export function Backdrop(props: { background: BackgroundView | null }) {
+ * they suit light and dark themes alike. With `strip`, the tab strip at the top of the parent, the
+ * picture is cut to the page and the active tab, so the tab reads as part of the page. */
+export function Backdrop(props: { background: BackgroundView | null; strip?: HTMLElement }) {
   return (
     <Show when={props.background}>
       {(b) => {
         const l = createMemo(() => backdropLayers(withDraft(b())))
+        const [box, setBox] = createSignal<HTMLDivElement>()
+        const clip = stripCutout(box, () => props.strip)
         return (
           <div
+            ref={setBox}
             aria-hidden="true"
             class="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-            style={{ "background-color": "var(--backdrop-base)" }}
+            style={{ "background-color": "var(--backdrop-base)", "clip-path": clip() }}
           >
             <Show when={backgroundUrl(b().file)}>
               {(src) => (
@@ -79,4 +83,55 @@ export function Backdrop(props: { background: BackgroundView | null }) {
       }}
     </Show>
   )
+}
+
+/** The `clip-path` that cuts `box` to below `strip` plus its active tab. Remeasures when either
+ * resizes, the strip scrolls, or tabs open, close, switch or get dragged. */
+function stripCutout(box: () => HTMLElement | undefined, strip: () => HTMLElement | undefined) {
+  const [clip, setClip] = createSignal<string>()
+  createEffect(() => {
+    const b = box()
+    const s = strip()
+    if (!b || !s) return setClip(undefined)
+    let frame = 0
+    const measure = () => {
+      frame = 0
+      const r = b.getBoundingClientRect()
+      // Rects are zoomed with the root's CSS zoom; the path is in the box's own pixels.
+      const scale = r.width / b.offsetWidth || 1
+      const y = (v: number) => (v - r.top) / scale
+      const x = (v: number) => (v - r.left) / scale
+      const tab = s.querySelector<HTMLElement>('[data-slot="tab"][data-active]')
+      const list = s.querySelector<HTMLElement>('[data-slot="list"]')
+      const top = y(s.getBoundingClientRect().bottom)
+      if (!tab || !list) return setClip(cutoutPath(b.offsetWidth, b.offsetHeight, top))
+      const t = tab.getBoundingClientRect()
+      const v = list.getBoundingClientRect()
+      setClip(
+        cutoutPath(b.offsetWidth, b.offsetHeight, top, {
+          left: x(Math.max(t.left, v.left)),
+          right: x(Math.min(t.right, v.right)),
+          top: y(t.top),
+          radius: Number.parseFloat(getComputedStyle(tab).borderTopLeftRadius) || 0,
+        }),
+      )
+    }
+    const later = () => {
+      if (!frame) frame = requestAnimationFrame(measure)
+    }
+    const resize = new ResizeObserver(later)
+    resize.observe(b)
+    resize.observe(s)
+    const changes = new MutationObserver(later)
+    changes.observe(s, { subtree: true, childList: true, attributeFilter: ["data-active", "style"] })
+    s.addEventListener("scroll", later, { capture: true, passive: true })
+    measure()
+    onCleanup(() => {
+      cancelAnimationFrame(frame)
+      resize.disconnect()
+      changes.disconnect()
+      s.removeEventListener("scroll", later, { capture: true })
+    })
+  })
+  return clip
 }
