@@ -20,7 +20,6 @@ import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile, ItemTile } from "~/lib/tiles"
 import {
-  Avatar,
   Badge,
   Button,
   Card,
@@ -31,19 +30,19 @@ import {
   Facts,
   Icon,
   IconButton,
+  PersonTile,
   SectionHeader,
   Shelf,
   Thumbnail,
   Tile,
   Tooltip,
-  VerifiedBadge,
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
 import { TradingCard } from "./Trading"
 
-/** Entry widths for each row: tiles match `tileGrid`, people and badges are narrower. */
+/** Entry widths for each row: tiles match `tileGrid`; people and badges are narrower. */
 const TILE = "8rem"
-const SMALL = "5rem"
+const SMALL = "6rem"
 /** How many a row shows; "See all" has the rest. */
 const ROW_MAX = 30
 
@@ -232,23 +231,16 @@ function Row<T>(props: {
 
 function Person(props: { person: Connection }) {
   const p = () => props.person
-  const name = () => p().displayName || p().name || `User ${p().id}`
   return (
     <ContextMenu items={userMenu(p().id, { friend: p().friend, following: p().following ?? undefined })}>
-      <button
-        type="button"
-        class="flex min-w-0 flex-col items-center gap-1 py-1 text-center"
-        title={p().name ? `@${p().name}` : undefined}
+      <PersonTile
+        name={p().displayName || p().name || `User ${p().id}`}
+        username={p().name || undefined}
+        src={thumbUrl("headshot", p().id)}
+        presence={p().presence}
+        verified={p().verified}
         onClick={() => run("user.open", String(p().id))}
-      >
-        <Avatar size="lg" name={name()} presence={p().presence} src={thumbUrl("headshot", p().id)} />
-        <span class="flex w-full items-center justify-center gap-1 text-sm">
-          <span class={p().verified ? "truncate text-verified" : "truncate"}>{name()}</span>
-          <Show when={p().verified}>
-            <VerifiedBadge />
-          </Show>
-        </span>
-      </button>
+      />
     </ContextMenu>
   )
 }
@@ -270,19 +262,17 @@ function GroupTile(props: { group: GroupCard }) {
   )
 }
 
-/** A badge's icon and name. Hover for its description and how many players have it. */
+/** A badge's icon and name, and how many players have it. Opens the experience it is from. */
 export function BadgeTile(props: { badge: UserBadge }) {
   const b = () => props.badge
   return (
-    <button
-      type="button"
-      class="flex min-w-0 flex-col items-center gap-1 py-1 text-center"
-      title={`${b().description}\n${percent(b().winRate ?? 0)} have it`}
+    <Tile
+      title={b().name}
+      subtitle={b().winRate === null ? undefined : `${percent(b().winRate ?? 0)} have it`}
+      src={thumbUrl("badge_icon", b().id)}
+      fallback="badge"
       onClick={() => b().placeId && run("game.open", String(b().placeId))}
-    >
-      <Thumbnail class="w-16" alt={b().name} src={thumbUrl("badge_icon", b().id)} fallback="badge" />
-      <span class="line-clamp-2 text-sm">{b().name}</span>
-    </button>
+    />
   )
 }
 

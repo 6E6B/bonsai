@@ -1,0 +1,58 @@
+@layer components {
+  [data-component="person-tile"] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 6px 4px;
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: none;
+    color: var(--color-fg);
+    text-align: center;
+    cursor: default;
+    transition: background-color var(--duration) var(--ease);
+  }
+
+  [data-component="person-tile"]:hover {
+    background-color: var(--color-hover);
+  }
+
+  [data-component="person-tile"]:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
+
+  [data-component="person-tile"] [data-component="avatar"] {
+    margin-bottom: 4px;
+  }
+
+  [data-component="person-tile"] [data-slot="name"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  [data-component="person-tile"] [data-slot="name"][data-verified] [data-slot="name-text"] {
+    color: var(--color-verified);
+  }
+
+  [data-component="person-tile"] [data-slot="name-text"],
+  [data-component="person-tile"] [data-slot="username"] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-component="person-tile"] [data-slot="username"] {
+    width: 100%;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+}

@@ -10,7 +10,8 @@ export interface ShelfProps {
 }
 
 /** One row of tiles or people that scrolls sideways, like the rows on a roblox.com profile.
- * Arrows show on hover when there is more that way; Shift+wheel and the keyboard scroll too. */
+ * An edge fades out while there is more that way, and an arrow shows there on hover. Shift+wheel
+ * and the keyboard scroll it too. */
 export function Shelf(props: ShelfProps) {
   let track!: HTMLDivElement
   const [prev, setPrev] = createSignal(false)
@@ -31,7 +32,13 @@ export function Shelf(props: ShelfProps) {
   })
   const step = (by: number) => track.scrollBy({ left: by * track.clientWidth * 0.8, behavior: "smooth" })
   return (
-    <div data-component="shelf" class={props.class} style={{ "--shelf-item": props.itemWidth }}>
+    <div
+      data-component="shelf"
+      data-prev={prev() ? "" : undefined}
+      data-next={next() ? "" : undefined}
+      class={props.class}
+      style={{ "--shelf-item": props.itemWidth }}
+    >
       <div data-slot="track" ref={track} onScroll={measure}>
         {props.children}
       </div>

@@ -53,6 +53,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `DataTable` | Rows with real columns: servers, members, resellers, transactions, shortcuts. Virtual, scrolls with the page, sticky header. Column widths are fixed tracks, never `auto`. |
 | `VirtualGrid` | Anything that can pass ~100 entries: tile grids (inventory, catalog) or one-column lists (leave out `minItemWidth`). Scrolls with the page. |
 | `PersonCard` | A person in a grid of compact cards: friends playing. A `Card` with avatar, name, one muted line, an optional trailing action. |
+| `PersonTile` | A person as a tile: big round headshot, display name, @username. Friends rows on a profile. |
 | `Tile` | A picture with a title: games, items, outfits, communities. `selected` for worn or picked items. |
 | `Shelf` | One sideways-scrolling row of tiles or people under a `SectionHeader`: profile overview rows. Arrows on hover. |
 | `MediaFrame` | An image with previous and next arrows and a counter laid over it. |

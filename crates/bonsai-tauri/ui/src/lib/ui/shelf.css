@@ -27,9 +27,41 @@
     min-width: 0;
   }
 
+  /* Edges fade into the page while there is more to scroll that way. Set --shelf-fade to the
+   * background when a shelf sits on something other than the page. Overlays, not a mask, since a
+   * mask makes WebKitGTK repaint the whole row on scroll. */
+  [data-component="shelf"]::before,
+  [data-component="shelf"]::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    z-index: 1;
+    width: 48px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration) var(--ease);
+  }
+
+  [data-component="shelf"]::before {
+    left: -2px;
+    background-image: linear-gradient(to right, var(--shelf-fade, var(--color-canvas)), transparent);
+  }
+
+  [data-component="shelf"]::after {
+    right: -2px;
+    background-image: linear-gradient(to left, var(--shelf-fade, var(--color-canvas)), transparent);
+  }
+
+  [data-component="shelf"][data-prev]::before,
+  [data-component="shelf"][data-next]::after {
+    opacity: 1;
+  }
+
   [data-component="shelf"] [data-slot="prev"],
   [data-component="shelf"] [data-slot="next"] {
     position: absolute;
+    z-index: 2;
     top: calc(var(--shelf-item) / 2);
     display: flex;
     align-items: center;
