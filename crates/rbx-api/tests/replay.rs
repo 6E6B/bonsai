@@ -452,3 +452,172 @@ async fn transactions_decode_and_page() {
     assert!(!second.data.unwrap().is_empty());
     assert!(second.next_page_cursor.is_none());
 }
+
+#[tokio::test]
+async fn challenge_hook_answers_and_the_write_is_resent() {
+    let r = Replay::start(&["challenge"]).await;
+    let seen = std::sync::Arc::new(parking_lot::Mutex::new(Vec::new()));
+    let sink = seen.clone();
+    let c = r
+        .builder(AccountId(1))
+        .cookie(rbx_api::Secret::new("replay-cookie"))
+        .on_challenge(move |acc, ch| {
+            sink.lock()
+                .push((acc, ch.kind.clone(), ch.metadata["challengeId"].clone()));
+            let answer =
+                ChallengeAnswer::new(&ch.id, &ch.kind, &serde_json::json!({ "verificationToken": "t" }));
+            async move { Some(answer) }
+        })
+        .build()
+        .unwrap();
+    let req = auth::undocumented::post_authentication_ticket_request(&Default::default()).unwrap();
+    let resp = c.send(req).await.unwrap();
+    assert_eq!(resp.status, 200);
+    assert_eq!(
+        seen.lock().as_slice(),
+        &[(
+            AccountId(1),
+            "twostepverification".to_owned(),
+            serde_json::json!("abc")
+        )]
+    );
+    let reqs = r.requests().await;
+    let retry = reqs.last().unwrap();
+    let meta = retry
+        .headers
+        .get("rblx-challenge-metadata")
+        .unwrap()
+        .to_str()
+        .unwrap();
+    use base64::Engine as _;
+    let meta = base64::engine::general_purpose::STANDARD.decode(meta).unwrap();
+    let meta: serde_json::Value = serde_json::from_slice(&meta).unwrap();
+    assert_eq!(meta["verificationToken"], "t");
+}
+
+#[tokio::test]
+async fn challenge_hook_declining_fails_the_write() {
+    let r = Replay::start(&["challenge"]).await;
+    let c = r
+        .builder(AccountId(1))
+        .cookie(rbx_api::Secret::new("replay-cookie"))
+        .on_challenge(|_, _| async { None })
+        .build()
+        .unwrap();
+    let req = auth::undocumented::post_authentication_ticket_request(&Default::default()).unwrap();
+    let e = c.send(req).await.unwrap_err();
+    assert!(matches!(e, Error::Challenge(_)), "{e:?}");
+    assert_eq!(r.requests().await.len(), 1);
+}
+
+#[tokio::test]
+async fn captcha_keys_and_challenge_continue() {
+    let r = Replay::start(&["challenge_captcha"]).await;
+    let c = r.client();
+    let m = apis::undocumented::get_captcha_metadata(&c).await.unwrap();
+    let keys = m.fun_captcha_public_keys.unwrap();
+    assert_eq!(
+        keys["ACTION_TYPE_WEB_GROUP_JOIN"],
+        "00000000-0000-4000-8000-00000000000B"
+    );
+    apis::undocumented::post_challenge_continue(
+        &c,
+        &apis::undocumented::ChallengeContinueRequest {
+            challenge_id: Some("11111111-2222-3333-4444-555555555555".into()),
+            challenge_type: Some("captcha".into()),
+            challenge_metadata: Some(
+                r#"{"unifiedCaptchaId":"u","captchaToken":"x","actionType":"Generic"}"#.into(),
+            ),
+        },
+    )
+    .await
+    .unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&r.requests().await.pop().unwrap().body).unwrap();
+    assert_eq!(body["challengeID"], "11111111-2222-3333-4444-555555555555");
+    assert!(body["challengeMetadata"].is_string());
+}
+
+#[tokio::test]
+async fn account_pin_status_unlock_and_lock() {
+    let r = Replay::start(&["account_pin"]).await;
+    let c = r.client();
+    let s = auth::v1::get_account_pin(&c).await.unwrap();
+    assert_eq!(s.is_enabled, Some(true));
+    assert_eq!(s.unlocked_until, None);
+    auth::v1::post_account_pin_unlock(
+        &c,
+        &auth::v1::AccountPinRequest {
+            pin: Some("1234".into()),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    auth::v1::post_account_pin_lock(&c).await.unwrap();
+    let reqs = r.requests().await;
+    let unlock = reqs
+        .iter()
+        .find(|q| q.url.path().ends_with("/v1/account/pin/unlock"))
+        .unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&unlock.body).unwrap();
+    assert_eq!(body["pin"], "1234");
+}
+
+#[tokio::test]
+async fn sign_out_others_rotates_the_cookie() {
+    let r = Replay::start(&["sign_out_others"]).await;
+    let got = std::sync::Arc::new(parking_lot::Mutex::new(None));
+    let sink = got.clone();
+    let c = r
+        .builder(AccountId(1))
+        .on_cookie_rotated(move |_, s| *sink.lock() = Some(s.clone()))
+        .build()
+        .unwrap();
+    auth::v2::post_logoutfromallsessionsandreauthenticate(&c, &Default::default())
+        .await
+        .unwrap();
+    let cookie = got.lock().clone().unwrap();
+    assert!(cookie.expose().ends_with("reauthenticated-cookie"));
+}
+
+#[tokio::test]
+async fn two_step_methods_send_and_verify() {
+    use twostepverification::v1 as tsv;
+    let r = Replay::start(&["two_step"]).await;
+    let c = r.client();
+    let cfg = tsv::get_users_by_user_id_configuration(&c, 1000001, &Default::default())
+        .await
+        .unwrap();
+    assert_eq!(cfg.primary_media_type, Some(2));
+    let methods = cfg.methods.unwrap();
+    assert_eq!(methods.len(), 4);
+    assert_eq!(
+        methods[1].media_type,
+        Some(tsv::UserConfigurationMethodMediaType::Authenticator)
+    );
+    // An unknown media type still decodes.
+    assert!(methods[3].media_type.is_some());
+    let send = tsv::SendCodeRequest {
+        challenge_id: Some("abc".into()),
+        ..Default::default()
+    };
+    tsv::post_users_by_user_id_challenges_email_send_code(&c, 1000001, &send)
+        .await
+        .unwrap();
+    let code = |c: &str| tsv::VerifyCodeRequest {
+        challenge_id: Some("abc".into()),
+        code: Some(c.into()),
+        ..Default::default()
+    };
+    let e = tsv::post_users_by_user_id_challenges_authenticator_verify(&c, 1000001, &code("000000"))
+        .await
+        .unwrap_err();
+    assert_eq!(e.code(), Some(10));
+    let ok = tsv::post_users_by_user_id_challenges_email_verify(&c, 1000001, &code("123456"))
+        .await
+        .unwrap();
+    assert_eq!(
+        ok.verification_token.as_deref(),
+        Some("verification-token-redacted")
+    );
+}

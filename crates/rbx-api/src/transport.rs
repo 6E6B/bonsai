@@ -10,7 +10,7 @@ use parking_lot::{Mutex, RwLock};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 
 use crate::error::{ApiError, Challenge, Error, Result};
-use crate::rt::{Body, Method, Request};
+use crate::rt::{Body, ChallengeAnswer, Method, Request};
 use crate::secret::Secret;
 
 /// Which signed-in account a request belongs to. `AccountId::ANONYMOUS` is for public data
@@ -262,6 +262,14 @@ impl Response {
 type CookieHook = Box<dyn Fn(AccountId, &Secret) + Send + Sync>;
 /// `(request, response, csrf token was sent)`
 type ResponseHook = Box<dyn Fn(&Request, &Response, bool) + Send + Sync>;
+type ChallengeHook = Box<
+    dyn Fn(AccountId, Challenge) -> futures::future::BoxFuture<'static, Option<ChallengeAnswer>>
+        + Send
+        + Sync,
+>;
+
+/// How many challenges one request may go through (a captcha can lead to two-step, and so on).
+const MAX_CHALLENGES: u32 = 3;
 
 struct Inner {
     http: reqwest::Client,
@@ -273,6 +281,7 @@ struct Inner {
     retry: RetryPolicy,
     on_cookie_rotated: Option<CookieHook>,
     on_response: Option<ResponseHook>,
+    on_challenge: Option<ChallengeHook>,
     browser_tracker: Option<u64>,
 }
 
@@ -305,6 +314,7 @@ pub struct ClientBuilder {
     retry: RetryPolicy,
     hook: Option<CookieHook>,
     on_response: Option<ResponseHook>,
+    on_challenge: Option<ChallengeHook>,
     user_agent: String,
     browser_tracker: Option<u64>,
 }
@@ -336,6 +346,18 @@ impl ClientBuilder {
         self.on_response = Some(Box::new(f));
         self
     }
+    /// Asked when a signed-in write gets a challenge (two-step, captcha). The hook shows it to
+    /// the user and returns their answer, and the request is sent again with it; `None` gives
+    /// up and the request fails with [`Error::Challenge`]. Reads never ask: the site doesn't
+    /// answer challenges on GET either.
+    pub fn on_challenge<F, Fut>(mut self, f: F) -> Self
+    where
+        F: Fn(AccountId, Challenge) -> Fut + Send + Sync + 'static,
+        Fut: std::future::Future<Output = Option<ChallengeAnswer>> + Send + 'static,
+    {
+        self.on_challenge = Some(Box::new(move |a, c| Box::pin(f(a, c))));
+        self
+    }
     /// Send the site's `RBXEventTrackerV2` cookie with this browser id. Some APIs (blocking)
     /// refuse requests without one. It identifies the install, not the user.
     pub fn browser_tracker(mut self, id: u64) -> Self {
@@ -365,6 +387,7 @@ impl ClientBuilder {
                 retry: self.retry,
                 on_cookie_rotated: self.hook,
                 on_response: self.on_response,
+                on_challenge: self.on_challenge,
                 browser_tracker: self.browser_tracker,
             }),
         })
@@ -385,6 +408,7 @@ impl Client {
             retry: RetryPolicy::default(),
             hook: None,
             on_response: None,
+            on_challenge: None,
             user_agent: format!("Baseplate/{}", env!("CARGO_PKG_VERSION")),
             browser_tracker: None,
         }
@@ -402,11 +426,13 @@ impl Client {
         &self.inner.limiter
     }
 
-    /// Send a request. Handles CSRF, 429 and 5xx retries; returns typed errors for 401 and challenges.
-    pub async fn send(&self, req: Request) -> Result<Response> {
+    /// Send a request. Handles CSRF, 429 and 5xx retries; returns typed errors for 401 and
+    /// challenges. A challenge on a signed-in write goes to the `on_challenge` hook first.
+    pub async fn send(&self, mut req: Request) -> Result<Response> {
         let mut csrf_retried = false;
         let mut n429 = 0;
         let mut n5xx = 0;
+        let mut challenges = 0;
         let (bucket, strict) = self.inner.limiter.bucket(req.host, &req.path);
         loop {
             self.inner.limiter.acquire(&bucket).await;
@@ -443,7 +469,21 @@ impl Client {
             }
 
             if let Some(ch) = challenge_from(&response.headers) {
-                return Err(Error::Challenge(Box::new(ch)));
+                let hook =
+                    self.inner.on_challenge.as_ref().filter(|_| {
+                        req.method != Method::GET && self.signed_in() && challenges < MAX_CHALLENGES
+                    });
+                let Some(hook) = hook else {
+                    return Err(Error::Challenge(Box::new(ch)));
+                };
+                match hook(self.inner.account, ch.clone()).await {
+                    Some(answer) => {
+                        req.challenge = Some(answer);
+                        challenges += 1;
+                        continue;
+                    }
+                    None => return Err(Error::Challenge(Box::new(ch))),
+                }
             }
             if status == 403
                 && roblox

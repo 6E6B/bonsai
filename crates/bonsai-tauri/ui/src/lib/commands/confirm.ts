@@ -17,6 +17,13 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
     confirm: "Block",
     danger: true,
   }),
+  "account.sign_out_others": () => ({
+    title: "Sign out of all other sessions?",
+    description:
+      "Every other browser, device and app signed in to this account is signed out. This app stays signed in.",
+    confirm: "Sign out others",
+    danger: true,
+  }),
   "friends.decline_all": () => ({
     title: "Ignore all friend requests?",
     confirm: "Ignore all",

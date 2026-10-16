@@ -59,6 +59,7 @@ const shellMirror = mirror<Shell>(
     robux: null,
     unread: { messages: 0, friendRequests: 0, trades: 0, notifications: 0, chat: 0 },
     login: null,
+    challenge: null,
     itemValues: false,
   },
   () => commands.shell(),

@@ -1028,13 +1028,19 @@ pub fn inventory_totals(core: State<'_, Arc<Core>>, user_id: Id) -> InvTotalsVie
 }
 
 /// Buys an item from whoever "Buy" sells it for now (`CatalogItem::buy_offer`). Called only from
-/// the dialog `market.buy` opens, after the user saw `price`; nothing is bought if the price
-/// changed.
+/// the dialog `market.buy` or `market.buy_as` opens, after the user saw `price`; nothing is
+/// bought if the price changed. `account` buys as that account instead of the active one.
 #[tauri::command]
 #[specta::specta]
-pub fn buy_item(core: State<'_, Arc<Core>>, id: Id, bundle: bool, price: u32) -> Result<(), String> {
+pub fn buy_item(
+    core: State<'_, Arc<Core>>,
+    id: Id,
+    bundle: bool,
+    price: u32,
+    account: Option<Id>,
+) -> Result<(), String> {
     let account = core
-        .acting(None)
+        .acting(account.map(|a| AccountId(a.0)))
         .ok_or_else(|| "Add an account first.".to_owned())?;
     let item = if bundle {
         ItemRef::bundle(id.0)
@@ -1139,7 +1145,7 @@ pub(super) fn run(
         C::SearchMarketplace => Err("Open the Marketplace to search.".to_owned()),
         C::ViewInventory => Err("Open Inventory first.".to_owned()),
         // The item page handles these with a confirm dialog that shows the price.
-        C::BuyItem | C::BuyResale => Err("Open the item to buy it.".to_owned()),
+        C::BuyItem | C::BuyItemAs | C::BuyResale => Err("Open the item to buy it.".to_owned()),
         C::FavoriteItem => (|| {
             let a = need()?;
             let item = target(inv)?;

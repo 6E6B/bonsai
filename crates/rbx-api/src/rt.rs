@@ -61,6 +61,19 @@ pub struct ChallengeAnswer {
     pub metadata: String,
 }
 
+impl ChallengeAnswer {
+    /// The answer for challenge `id` of type `kind`, with `metadata` (what the challenge
+    /// produced, like a verification token) sent as base64 JSON, as the site does.
+    pub fn new(id: &str, kind: &str, metadata: &serde_json::Value) -> Self {
+        use base64::Engine as _;
+        ChallengeAnswer {
+            id: id.to_owned(),
+            kind: kind.to_owned(),
+            metadata: base64::engine::general_purpose::STANDARD.encode(metadata.to_string()),
+        }
+    }
+}
+
 impl std::fmt::Debug for ChallengeAnswer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ChallengeAnswer")

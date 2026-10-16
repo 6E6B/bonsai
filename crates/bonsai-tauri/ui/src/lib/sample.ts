@@ -112,6 +112,7 @@ export const browserShell: Shell = {
   robux: 22,
   unread: { friendRequests: 2, messages: 1, trades: 1, notifications: 3, chat: 4 },
   login: null,
+  challenge: null,
   itemValues: false,
 }
 

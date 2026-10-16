@@ -15,8 +15,8 @@ import {
 } from "~/lib/ipc/bindings"
 import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
-import { entityMenu, itemTarget, templateItems } from "~/lib/menus"
-import { useLive } from "~/lib/store"
+import { accountItems, entityMenu, itemTarget, templateItems } from "~/lib/menus"
+import { shell, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { ItemTile, tileGrid } from "~/lib/tiles"
@@ -85,27 +85,34 @@ export default function ItemPage() {
   const info = () => view.info
   const thumb = () => thumbUrl(bundle() ? "bundle" : "asset", id())
   const dialog = useDialog()
+  const buy = (account?: number) => {
+    const i = info()
+    if (!i) return showToast("Still loading. Try again in a moment.")
+    if (i.price === null) return showToast("It's not for sale.")
+    if (account === undefined && view.owned) return showToast("You already own this.")
+    const price = i.price
+    const [itemId, isBundle] = [id(), bundle()]
+    dialog.show(
+      () => (
+        <BuyForm
+          name={i.name}
+          seller={i.fromReseller ? "the cheapest reseller" : i.creator}
+          price={price}
+          thumb={thumb()}
+          buy={() => commands.buyItem(itemId, isBundle, price, account ?? null)}
+          onDone={dialog.close}
+          account={account}
+        />
+      ),
+      { title: "Buy item", size: "sm" },
+    )
+  }
+  onCleanup(handle("market.buy", () => buy()))
   onCleanup(
-    handle("market.buy", () => {
-      const i = info()
-      if (!i) return showToast("Still loading. Try again in a moment.")
-      if (i.price === null) return showToast("It's not for sale.")
-      if (view.owned) return showToast("You already own this.")
-      const price = i.price
-      const [itemId, isBundle] = [id(), bundle()]
-      dialog.show(
-        () => (
-          <BuyForm
-            name={i.name}
-            seller={i.fromReseller ? "the cheapest reseller" : i.creator}
-            price={price}
-            thumb={thumb()}
-            buy={() => commands.buyItem(itemId, isBundle, price)}
-            onDone={dialog.close}
-          />
-        ),
-        { title: "Buy item", size: "sm" },
-      )
+    handle("market.buy_as", (arg) => {
+      const account = Number(arg)
+      if (!arg || !shell.accounts.some((a) => a.id === account)) return showToast("Pick an account to buy as.")
+      buy(account)
     }),
   )
   // Non-limited UGC can also carry a collectibleId; only limiteds and collectibles have copies.
@@ -187,6 +194,12 @@ export default function ItemPage() {
                     <Match when>Buy</Match>
                   </Switch>
                 </Button>
+                <Menu
+                  items={accountItems("market.buy_as")}
+                  disabled={item().price === null || accountItems("market.buy_as").length === 0}
+                >
+                  Buy as…
+                </Menu>
                 <ToggleButton
                   icon="star"
                   pressedIcon="star-fill"

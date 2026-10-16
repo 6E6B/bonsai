@@ -111,6 +111,48 @@ pub struct BlockedUsersResponse {
     pub error: Option<String>,
 }
 
+/// `CaptchaMetadata`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CaptchaMetadata {
+    #[serde(rename = "funCaptchaPublicKeys")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fun_captcha_public_keys: Option<HashMap<String, String>>,
+}
+
+/// `ChallengeContinueRequest`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ChallengeContinueRequest {
+    #[serde(rename = "challengeID")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub challenge_id: Option<String>,
+    /// JSON text, not an object
+    #[serde(rename = "challengeMetadata")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub challenge_metadata: Option<String>,
+    /// twostepverification, captcha, ...
+    #[serde(rename = "challengeType")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub challenge_type: Option<String>,
+}
+
+/// `ChallengeContinueResponse`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ChallengeContinueResponse {
+    #[serde(rename = "challengeId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub challenge_id: Option<String>,
+    /// JSON text of the next challenge, if any
+    #[serde(rename = "challengeMetadata")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub challenge_metadata: Option<String>,
+    #[serde(rename = "challengeType")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub challenge_type: Option<String>,
+}
+
 /// `ChatMessagePiece`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -1459,6 +1501,48 @@ pub fn post_quick_login_status_request(body: &QuickLoginKey) -> Result<Request> 
 /// Undocumented; captured 2026-10-14, www.roblox.com/login, Quick Log In.
 pub async fn post_quick_login_status(client: &Client, body: &QuickLoginKey) -> Result<QuickLoginStatus> {
     client.send(post_quick_login_status_request(body)?).await?.json()
+}
+
+/// `GET /captcha/v1/metadata`
+///
+/// Arkose public keys per captcha action.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com Captcha.js.
+pub fn get_captcha_metadata_request() -> Result<Request> {
+    let r = Request::new(Method::GET, HOST, "/captcha/v1/metadata".to_string());
+    Ok(r)
+}
+
+/// `GET /captcha/v1/metadata`
+///
+/// Arkose public keys per captcha action.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com Captcha.js.
+pub async fn get_captcha_metadata(client: &Client) -> Result<CaptchaMetadata> {
+    client.send(get_captcha_metadata_request()?).await?.json()
+}
+
+/// `POST /challenge/v1/continue`
+///
+/// Tell Roblox a challenge was passed.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com Challenge.js (generic challenge continue).
+pub fn post_challenge_continue_request(body: &ChallengeContinueRequest) -> Result<Request> {
+    let mut r = Request::new(Method::POST, HOST, "/challenge/v1/continue".to_string());
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /challenge/v1/continue`
+///
+/// Tell Roblox a challenge was passed.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com Challenge.js (generic challenge continue).
+pub async fn post_challenge_continue(
+    client: &Client,
+    body: &ChallengeContinueRequest,
+) -> Result<ChallengeContinueResponse> {
+    client.send(post_challenge_continue_request(body)?).await?.json()
 }
 
 /// `POST /discovery-api/omni-recommendation`

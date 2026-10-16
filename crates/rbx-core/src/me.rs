@@ -1,7 +1,7 @@
 //! Your own account: what Roblox has on file (email, phone, birthday, Premium), privacy
 //! settings, the display name, private servers across experiences, and the local disk cache.
 
-use rbx_api::generated::{accountinformation, accountsettings, apis, games, premiumfeatures, users};
+use rbx_api::generated::{accountinformation, accountsettings, apis, auth, games, premiumfeatures, users};
 use rbx_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +11,7 @@ use crate::store::UserInfo;
 
 const INFO_AGE: i64 = 300;
 const LIST_AGE: i64 = 300;
+const PIN_AGE: i64 = 60;
 
 /// What Roblox has on file for the signed-in account. Parts Roblox didn't answer stay empty.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -105,7 +106,93 @@ pub(crate) fn privacy_list(r: apis::undocumented::UserSettingsAndOptions) -> Vec
     out
 }
 
+/// The account PIN, which Roblox asks for before changing settings or trading when it is on.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct PinStatus {
+    pub enabled: bool,
+    /// Unix seconds when the PIN locks again; 0 while locked.
+    pub unlocked_until: i64,
+}
+
+/// `unlockedUntil` from the PIN API as unix seconds. The field is a bare number; small values
+/// are read as seconds left (what the site counts down), large ones as a time.
+fn pin_deadline(v: Option<f64>, now: i64) -> i64 {
+    match v {
+        Some(n) if n > 1e12 => (n / 1000.0) as i64,
+        Some(n) if n > 1e9 => n as i64,
+        Some(n) if n > 0.0 => now + n.ceil() as i64,
+        _ => 0,
+    }
+}
+
 impl Core {
+    /// Whether the account PIN is on and unlocked.
+    pub fn pin_status(&self, account: AccountId) -> Res<PinStatus> {
+        if account.is_anonymous() {
+            return Res::default();
+        }
+        self.inner
+            .res(Key::private(account, "pin", ""), PIN_AGE, move |f| async move {
+                let r = auth::v1::get_account_pin(&f.client).await?;
+                Ok(PinStatus {
+                    enabled: r.is_enabled.unwrap_or(false),
+                    unlocked_until: pin_deadline(r.unlocked_until, crate::cache::now()),
+                })
+            })
+    }
+
+    /// Unlock the account PIN for a while, from the PIN dialog.
+    pub fn unlock_pin(&self, account: AccountId, pin: &str) -> Result<(), String> {
+        let pin = pin.trim().to_owned();
+        if pin.len() != 4 || !pin.chars().all(|c| c.is_ascii_digit()) {
+            return Err("Enter the 4-digit PIN.".into());
+        }
+        self.inner.mutate(
+            account,
+            "unlock the PIN",
+            "PIN unlocked.",
+            &["pin"],
+            move |f| async move {
+                let body = auth::v1::AccountPinRequest {
+                    pin: Some(pin),
+                    reauthentication_token: None,
+                };
+                auth::v1::post_account_pin_unlock(&f.client, &body).await?;
+                Ok(())
+            },
+        );
+        Ok(())
+    }
+
+    /// Lock the account PIN again before it times out.
+    pub fn lock_pin(&self, account: AccountId) {
+        self.inner.mutate(
+            account,
+            "lock the PIN",
+            "PIN locked.",
+            &["pin"],
+            move |f| async move {
+                auth::v1::post_account_pin_lock(&f.client).await?;
+                Ok(())
+            },
+        );
+    }
+
+    /// End every other session of the account (other browsers, devices and apps). Roblox
+    /// answers with a new cookie for this one, which the client saves.
+    pub fn sign_out_others(&self, account: AccountId) {
+        self.inner.mutate(
+            account,
+            "sign out other sessions",
+            "Signed out of all other sessions.",
+            &[],
+            move |f| async move {
+                auth::v2::post_logoutfromallsessionsandreauthenticate(&f.client, &Default::default()).await?;
+                Ok(())
+            },
+        );
+    }
+
     /// Email, phone, birthday and Premium for one of your accounts.
     pub fn account_info(&self, account: AccountId) -> Res<AccountInfo> {
         if account.is_anonymous() {
@@ -381,6 +468,15 @@ fn cooldown(e: Error) -> Error {
 mod tests {
     use super::*;
     use apis::undocumented::{UserSettingAndOptions, UserSettingOption, UserSettingOptionValue};
+
+    #[test]
+    fn pin_deadline_reads_seconds_left_or_a_time() {
+        assert_eq!(pin_deadline(None, 1000), 0);
+        assert_eq!(pin_deadline(Some(0.0), 1000), 0);
+        assert_eq!(pin_deadline(Some(299.5), 1000), 1300);
+        assert_eq!(pin_deadline(Some(1_800_000_000.0), 1000), 1_800_000_000);
+        assert_eq!(pin_deadline(Some(1_800_000_000_000.0), 1000), 1_800_000_000);
+    }
 
     fn opt(v: &str, req: Option<&str>) -> UserSettingOption {
         UserSettingOption {

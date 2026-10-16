@@ -1,9 +1,9 @@
 import { useNavigate, useParams } from "@solidjs/router"
-import { Switch as Branch, createMemo, createSignal, For, type JSX, Match, Show } from "solid-js"
+import { Switch as Branch, createMemo, createSignal, For, type JSX, Match, onCleanup, Show } from "solid-js"
 import { filterEntries } from "~/lib/commands/filter"
 import { groupOf } from "~/lib/commands/groups"
 import { commandList, run } from "~/lib/commands/registry"
-import { bytes, date, formatLocales } from "~/lib/format"
+import { bytes, countdown, date, formatLocales } from "~/lib/format"
 import {
   type AccountInfoView,
   type AppSettings,
@@ -11,6 +11,7 @@ import {
   commands,
   type MyServerRow,
   type Person,
+  type PinView,
   type PrivacyRow,
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
@@ -164,6 +165,22 @@ function AccountSection() {
       premium: null,
     }),
   )
+  const pin = useLive(
+    () => shell.active,
+    () => commands.pinStatus(),
+    (): PinView => ({ loading: true, error: null, enabled: false, unlockedUntil: 0 }),
+  )
+  const [now, setNow] = createSignal(Date.now() / 1000)
+  const tick = setInterval(() => setNow(Date.now() / 1000), 1000)
+  onCleanup(() => clearInterval(tick))
+  const unlocked = () => (pin.unlockedUntil ?? 0) > now()
+  const pinText = () => {
+    if (pin.loading) return "Checking…"
+    if (pin.error) return pin.error
+    if (!pin.enabled) return "No PIN set."
+    if (unlocked()) return `Unlocked for ${countdown((pin.unlockedUntil ?? 0) - now())}.`
+    return "Locked. Settings changes need the PIN."
+  }
   const prompt = usePrompt()
   const rename = async () => {
     const name = await prompt({
@@ -224,8 +241,30 @@ function AccountSection() {
         <Row label="Two-step verification" description="Ask for a code from your authenticator app when signing in.">
           {webButton()}
         </Row>
-        <Row label="Account PIN">{webButton()}</Row>
-        <Row label="Signed-in sessions" description="See where you're signed in and sign out other sessions.">
+        <Row label="Account PIN" description={pinText()}>
+          <Show when={pin.enabled}>
+            <Show
+              when={unlocked()}
+              fallback={
+                <Button size="sm" icon="lock" onClick={() => run("account.unlock_pin")}>
+                  Unlock
+                </Button>
+              }
+            >
+              <Button size="sm" icon="lock" onClick={() => run("account.lock_pin")}>
+                Lock
+              </Button>
+            </Show>
+          </Show>
+          {webButton()}
+        </Row>
+        <Row
+          label="Signed-in sessions"
+          description="Sign out every other browser, device and app. This app stays signed in."
+        >
+          <Button size="sm" variant="danger" disabled={!active()} onClick={() => run("account.sign_out_others")}>
+            Sign out others
+          </Button>
           {webButton()}
         </Row>
       </Card>

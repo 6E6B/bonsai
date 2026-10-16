@@ -9,8 +9,8 @@
 
 use std::collections::HashMap;
 
+use rbx_api::AccountId;
 use rbx_api::generated::{catalog, economy, games, groups};
-use rbx_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
 use crate::Core;
@@ -1183,13 +1183,7 @@ impl Core {
                     &Default::default(),
                     &groups::v1::JoinGroupRequest::default(),
                 )
-                .await
-                .map_err(|e| match e {
-                    Error::Challenge(_) => Error::Message(
-                        "Roblox wants a captcha to join. Join once on the website, then come back.".into(),
-                    ),
-                    e => e,
-                })?;
+                .await?;
                 f.inner.toast(
                     Some(account),
                     "Joined, or asked to join if it needs approval",

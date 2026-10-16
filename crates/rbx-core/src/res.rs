@@ -211,7 +211,7 @@ impl Fetch {
     }
 }
 
-const NOT_SIGNED_IN: &str = "This account is not signed in.";
+pub(crate) const NOT_SIGNED_IN: &str = "This account is not signed in.";
 
 impl Inner {
     /// The current snapshot of `key`; starts a load when missing or older than `max_age` secs.
@@ -447,10 +447,7 @@ impl Inner {
                 Err(e) => {
                     inner.note_error(account, &e);
                     let msg = match &e {
-                        Error::Challenge(_) => {
-                            "Roblox wants extra verification. Do this once on the website, then try again."
-                                .to_string()
-                        }
+                        Error::Challenge(c) => crate::challenge::failed_message(c),
                         e => e.user_message(),
                     };
                     inner.toast(Some(account), format!("Could not {what}: {msg}"), true);

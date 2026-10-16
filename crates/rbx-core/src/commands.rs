@@ -177,6 +177,9 @@ commands! {
     MoveAccountDown => "account.move_down", "Move account down in the rail", ["reorder", "order"], None, [];
     RemoveAccount => "account.remove", "Remove account from this app", ["delete", "forget", "remove"], Account, [];
     SignOut => "account.sign_out", "Sign out", ["logout", "log out", "sign out"], None, [];
+    SignOutOthers => "account.sign_out_others", "Sign out of all other sessions", ["logout", "sessions", "devices", "security"], None, [];
+    UnlockPin => "account.unlock_pin", "Unlock account PIN", ["pin", "unlock", "parental", "settings"], None, [];
+    LockPin => "account.lock_pin", "Lock account PIN", ["pin", "lock", "parental"], None, [];
     SetDisplayName => "account.display_name", "Change display name", ["display name", "nickname", "name"], Text, [];
     SetPrivacy => "privacy.set", "Change a privacy setting (setting, then value)", ["privacy", "who can", "inventory", "trade", "chat", "join"], Text, [];
     ReplaceCookie => "account.replace_cookie", "Paste a new cookie for this account", ["expired", "session", "cookie"], None, [];
@@ -246,6 +249,7 @@ commands! {
     ShowFollowersOf => "user.followers", "Show a user's followers", ["followers", "fans"], User, [];
     ShowFollowingOf => "user.following", "Show who a user follows", ["following", "followings", "follows"], User, [];
     AddFriend => "user.add_friend", "Add friend", ["friend", "connect", "request"], User, [];
+    AddFriendAs => "user.add_friend_as", "Add friend as another account", ["friend", "connect", "request", "alt", "as"], User, [];
     Unfriend => "user.unfriend", "Remove friend", ["unfriend", "remove", "connection"], User, [];
     AcceptFriend => "user.accept_friend", "Accept friend request", ["accept", "request"], User, [];
     DeclineFriend => "user.decline_friend", "Decline friend request", ["decline", "ignore", "request"], User, [];
@@ -288,6 +292,7 @@ commands! {
 
     SearchMarketplace => "market.search", "Search the Marketplace", ["catalog", "shop", "items", "find item"], Text, [];
     BuyItem => "market.buy", "Buy this item", ["buy", "purchase", "get"], None, [];
+    BuyItemAs => "market.buy_as", "Buy this item as another account", ["buy", "purchase", "alt", "as"], Account, [];
     BuyResale => "market.buy_resale", "Buy a reseller's copy", ["buy", "resale", "reseller", "limited", "copy"], Text, [];
     FavoriteItem => "market.favorite", "Favorite or unfavorite this item", ["favorite", "favourite", "star"], None, [];
     WishlistItem => "market.wishlist", "Add to or remove from wishlist", ["wishlist", "want", "save", "watch"], None, [];

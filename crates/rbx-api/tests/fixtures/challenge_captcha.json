@@ -1,0 +1,13 @@
+{
+  "captured": "2026-10-15",
+  "source": "synthetic",
+  "note": "Captcha public keys by action (shape from GET apis.roblox.com/captcha/v1/metadata, keys replaced), then the challenge continue call from the site's Challenge.js.",
+  "interactions": [
+    { "request": { "method": "GET", "host": "apis.roblox.com", "path": "/captcha/v1/metadata" },
+      "response": { "status": 200, "headers": { "content-type": "application/json; charset=utf-8" },
+        "body": { "funCaptchaPublicKeys": { "ACTION_TYPE_WEB_LOGIN": "00000000-0000-4000-8000-00000000000A", "ACTION_TYPE_WEB_GROUP_JOIN": "00000000-0000-4000-8000-00000000000B" } } } },
+    { "request": { "method": "POST", "host": "apis.roblox.com", "path": "/challenge/v1/continue" },
+      "response": { "status": 200, "headers": { "content-type": "application/json; charset=utf-8" },
+        "body": { "challengeId": "11111111-2222-3333-4444-555555555555", "challengeType": "", "challengeMetadata": "" } } }
+  ]
+}

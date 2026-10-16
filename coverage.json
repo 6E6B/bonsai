@@ -538,7 +538,7 @@
       "module": "auth::v1",
       "path": "/v1/account/pin",
       "summary": "Gets the account pin status. If the account pin is valid, this returns the time in seconds until when the account pin is unlocked.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -578,7 +578,7 @@
       "module": "auth::v1",
       "path": "/v1/account/pin/lock",
       "summary": "Request to locks the account which has an account pin enabled.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -588,7 +588,7 @@
       "module": "auth::v1",
       "path": "/v1/account/pin/unlock",
       "summary": "Requests to unlock the account pin.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -1108,7 +1108,7 @@
       "module": "auth::v2",
       "path": "/v2/logoutfromallsessionsandreauthenticate",
       "summary": "Logs out user from all other sessions.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6368,7 +6368,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/challenges/authenticator/verify",
       "summary": "Verifies a two step verification challenge code via authenticator app.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6408,7 +6408,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/challenges/email/send-code",
       "summary": "Sends a two step verification challenge code via email.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6418,7 +6418,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/challenges/email/verify",
       "summary": "Verifies a two step verification challenge with a code sent via email.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6508,7 +6508,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/configuration",
       "summary": "Gets two step verification configuration for the specified user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6892,6 +6892,26 @@
     },
     {
       "deprecated": false,
+      "function": "get_captcha_metadata",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/captcha/v1/metadata",
+      "summary": "Arkose public keys per captcha action.",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "post_challenge_continue",
+      "host": "apis.roblox.com",
+      "method": "POST",
+      "module": "apis::undocumented",
+      "path": "/challenge/v1/continue",
+      "summary": "Tell Roblox a challenge was passed.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "post_omni_recommendation",
       "host": "apis.roblox.com",
       "method": "POST",
@@ -7268,6 +7288,16 @@
       "module": "apis::undocumented",
       "path": "/virtual-events/v1/virtual-events/{eventId}/rsvps",
       "summary": "RSVP to an event.",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "captcha_script",
+      "host": "arkoselabs.roblox.com",
+      "method": "GET",
+      "module": "arkoselabs::undocumented",
+      "path": "/v2/{publicKey}/api.js",
+      "summary": "Arkose captcha script for one public key",
       "used": true
     },
     {
@@ -7741,6 +7771,6 @@
       "used": true
     }
   ],
-  "total": 774,
-  "used": 220
+  "total": 777,
+  "used": 231
 }

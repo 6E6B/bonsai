@@ -136,6 +136,11 @@ pub fn sign_in_page() -> String {
     url(www::undocumented::page_login_request())
 }
 
+/// Arkose's puzzle script for one public key, loaded by the captcha window.
+pub fn captcha_script(public_key: &str) -> String {
+    url(rbx_api::generated::arkoselabs::undocumented::captcha_script_request(public_key))
+}
+
 /// Hosts the sign-in window may load as a page or frame: Roblox itself and the captcha
 /// provider its sign-in page embeds. Everything else is blocked.
 pub fn sign_in_window_allows(host: &str) -> bool {
@@ -157,6 +162,11 @@ mod tests {
         assert!(!sign_in_window_allows("roblox.com.example.com"));
         assert!(!sign_in_window_allows("notroblox.com"));
         assert!(!sign_in_window_allows("example.com"));
+        assert!(sign_in_window_allows("arkoselabs.roblox.com"));
+        assert_eq!(
+            captcha_script("ABC-1"),
+            "https://arkoselabs.roblox.com/v2/ABC-1/api.js"
+        );
     }
 
     #[test]

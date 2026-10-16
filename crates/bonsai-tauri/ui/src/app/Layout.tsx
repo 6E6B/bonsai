@@ -21,7 +21,9 @@ import { setTheme, showToast, type ThemeMode, useConfirm, useDialog, usePrompt }
 import { describePath, screens } from "./screens"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
+import { ChallengeDialog } from "./shell/ChallengeDialog"
 import { Drawer } from "./shell/Drawer"
+import { PinForm } from "./shell/PinForm"
 import { ShellAlerts } from "./shell/ShellAlerts"
 import { Sidebar } from "./shell/Sidebar"
 import { StatusBar } from "./shell/StatusBar"
@@ -129,6 +131,9 @@ export function Layout(props: ParentProps) {
     // The dialog starts the backend side (code polling, the sign-in window) and stops it on close.
     handle("account.quick_sign_in", addAccount("quick", "Quick sign-in")),
     handle("account.sign_in_browser", addAccount("browser", "Sign in with Roblox")),
+    handle("account.unlock_pin", () =>
+      dialog.show(() => <PinForm onDone={() => dialog.close()} />, { title: "Unlock account PIN", size: "sm" }),
+    ),
     ...screens.filter((s) => s.command !== "nav.settings").map((s) => handle(s.command, go(s.path))),
     handle("nav.settings", (section) => visitPath(section ? `/settings/${section}` : "/settings")),
     handle("nav.profile", () => shell.active !== null && visitPath(`/users/${shell.active}`)),
@@ -342,6 +347,7 @@ export function Layout(props: ParentProps) {
               >
                 <div class="flex h-full flex-col">
                   <ShellAlerts />
+                  <ChallengeDialog />
                   <ErrorBoundary
                     fallback={(err) => (
                       <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">

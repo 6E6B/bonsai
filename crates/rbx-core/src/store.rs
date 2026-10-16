@@ -430,6 +430,8 @@ pub struct StoreData {
     pub thumbs: HashMap<ThumbKey, ThumbState>,
     pub remote: Loadable<RemoteResults>,
     pub login: Option<LoginState>,
+    /// A two-step or captcha check waiting for the user (see [`crate::challenge`]).
+    pub challenge: Option<crate::challenge::ChallengePrompt>,
     pub toasts: Vec<Toast>,
     pub jobs: u32,
     pub offline: bool,

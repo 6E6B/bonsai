@@ -22,6 +22,7 @@ use tauri_specta::{Builder, Event, collect_commands, collect_events};
 
 mod account;
 mod avatar;
+mod challenge;
 mod communities;
 mod discover;
 mod inbox;
@@ -56,6 +57,8 @@ pub struct Shell {
     pub unread: Unread,
     /// The add-account flow, while it is open.
     pub login: Option<Login>,
+    /// A two-step or captcha check holding an action, while it is open.
+    pub challenge: Option<challenge::ChallengeView>,
     /// Item values from Rolimons are on.
     pub item_values: bool,
 }
@@ -929,6 +932,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         item_values: core.values_enabled(),
         robux: s.active_data().and_then(|d| d.robux).map(|r| r as f64),
         unread: s.active_data().map(|d| d.unread.into()).unwrap_or_default(),
+        challenge: s.challenge.as_ref().map(challenge::view),
         login: s.login.as_ref().map(|l| match l {
             LoginState::Browser => Login::Browser,
             LoginState::QuickStarting => Login::QuickStarting,
@@ -1208,7 +1212,9 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
             core.change_server(acting()?, parse_id(arg(), "server")?, ServerChange::NewLink);
             Ok(())
         }
-        CommandId::AddFriend => user_action(&core, acting()?, &inv, Core::add_friend),
+        CommandId::AddFriend | CommandId::AddFriendAs => {
+            user_action(&core, acting()?, &inv, Core::add_friend)
+        }
         CommandId::Unfriend => user_action(&core, acting()?, &inv, Core::unfriend),
         CommandId::AcceptFriend => user_action(&core, acting()?, &inv, Core::accept_friend),
         CommandId::DeclineFriend => user_action(&core, acting()?, &inv, Core::decline_friend),
@@ -2626,6 +2632,12 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::privacy_settings,
             account::my_private_servers,
             account::app_settings,
+            account::pin_status,
+            account::unlock_pin,
+            challenge::challenge_submit_code,
+            challenge::challenge_use_method,
+            challenge::challenge_cancel,
+            challenge::open_captcha,
             submit_cookie,
             confirm_login,
             cancel_login

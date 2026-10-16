@@ -15,6 +15,8 @@ export interface BuyFormProps {
   onDone: () => void
   /** A line under the price, like "Serial #12". */
   note?: JSX.Element
+  /** Pays as this account instead of the active one. Its balance isn't known here. */
+  account?: number
 }
 
 /** The confirm step before spending Robux: what, from whom, as which account, the price and
@@ -22,8 +24,10 @@ export interface BuyFormProps {
  * changed since. */
 export function BuyForm(props: BuyFormProps) {
   const [busy, setBusy] = createSignal(false)
-  const me = () => shell.accounts.find((a) => a.id === shell.active)
-  const left = () => afterPurchase(shell.robux, props.price)
+  const payer = () => props.account ?? shell.active
+  const me = () => shell.accounts.find((a) => a.id === payer())
+  const balance = () => (payer() === shell.active ? shell.robux : null)
+  const left = () => afterPurchase(balance(), props.price)
   const buy = async () => {
     setBusy(true)
     const r = await props.buy()
@@ -53,7 +57,7 @@ export function BuyForm(props: BuyFormProps) {
           </Show>
         </Stat>
         <Stat label="Balance">
-          <Robux amount={shell.robux} />
+          <Robux amount={balance()} />
         </Stat>
         <Stat label="After">
           <Robux amount={left().after} />

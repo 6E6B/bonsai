@@ -19,9 +19,21 @@ export function joinAsItems(id: string, target: string): MenuEntry[] {
     .map((a) => menuItem(id, { arg: target, asAccount: a.id, label: a.label ?? a.displayName }))
 }
 
+/** "Buy as" rows: one per account other than the active one, with the account as the argument. */
+export function accountItems(id: string): MenuEntry[] {
+  return shell.accounts
+    .filter((a) => a.id !== shell.active)
+    .map((a) => menuItem(id, { arg: String(a.id), label: a.label ?? a.displayName }))
+}
+
 function joinAs(target: string): MenuEntry {
   const items = joinAsItems("game.join_as", target)
   return { kind: "submenu", label: "Join as", icon: "user", items, disabled: items.length === 0 }
+}
+
+function friendAs(userId: string): MenuEntry {
+  const items = joinAsItems("user.add_friend_as", userId)
+  return { kind: "submenu", label: "Add friend as", icon: "user-plus", items, disabled: items.length === 0 }
 }
 
 export interface UserMenuOptions {
@@ -70,6 +82,7 @@ export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[
       : opts.requested
         ? menuItem("user.decline_friend", { arg: id, icon: "user-minus" })
         : menuItem("user.add_friend", { arg: id, icon: "user-plus" }),
+    friendAs(id),
     opts.blocked
       ? menuItem("user.unblock", { arg: id, icon: "block" })
       : menuItem("user.block", { arg: id, icon: "block", danger: true }),

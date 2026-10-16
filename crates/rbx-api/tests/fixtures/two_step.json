@@ -1,0 +1,22 @@
+{
+  "captured": "2026-10-15",
+  "source": "synthetic",
+  "note": "Two-step challenge steps from the site's Challenge.js: the account's methods, an email code sent, a wrong authenticator code (error 10), then a right one with its verification token.",
+  "interactions": [
+    { "request": { "method": "GET", "host": "twostepverification.roblox.com", "path": "/v1/users/1000001/configuration" },
+      "response": { "status": 200, "headers": { "content-type": "application/json; charset=utf-8" },
+        "body": { "primaryMediaType": 2, "methods": [
+          { "mediaType": 0, "enabled": true, "updated": "2026-01-01T00:00:00Z" },
+          { "mediaType": 2, "enabled": true, "updated": "2026-01-01T00:00:00Z" },
+          { "mediaType": 4, "enabled": false, "updated": null },
+          { "mediaType": 9, "enabled": true, "updated": null } ] } } },
+    { "request": { "method": "POST", "host": "twostepverification.roblox.com", "path": "/v1/users/1000001/challenges/email/send-code" },
+      "response": { "status": 200, "headers": { "content-type": "application/json; charset=utf-8" }, "body": {} } },
+    { "request": { "method": "POST", "host": "twostepverification.roblox.com", "path": "/v1/users/1000001/challenges/authenticator/verify" },
+      "response": { "status": 400, "headers": { "content-type": "application/json; charset=utf-8" },
+        "body": { "errors": [ { "code": 10, "message": "Invalid two step verification code." } ] } } },
+    { "request": { "method": "POST", "host": "twostepverification.roblox.com", "path": "/v1/users/1000001/challenges/email/verify" },
+      "response": { "status": 200, "headers": { "content-type": "application/json; charset=utf-8" },
+        "body": { "verificationToken": "verification-token-redacted" } } }
+  ]
+}

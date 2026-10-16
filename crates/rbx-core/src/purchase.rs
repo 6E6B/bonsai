@@ -3,8 +3,10 @@
 //!
 //! Every purchase is one user click on a confirm dialog that showed the price. That price goes
 //! to Roblox as the expected price, so Roblox refuses the purchase if it changed in between, and
-//! we check it against fresh sale details first so the user gets a clear message. A challenge
-//! (2-step verification) is never answered here: the user is sent to the website.
+//! we check it against fresh sale details first so the user gets a clear message. A challenge in
+//! the response headers goes to the challenge dialog like any write ([`crate::challenge`]); a
+//! `TwoStepVerificationRequired` reason in the body has no challenge to answer, so the user is
+//! sent to the website.
 
 use rbx_api::generated::{apis, economy};
 use rbx_api::{AccountId, Client, Error};

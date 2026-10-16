@@ -8,6 +8,7 @@ use std::sync::Arc;
 use rbx_core::{Core, CoreConfig};
 use tauri::Manager;
 
+mod captcha;
 pub mod ipc;
 mod notify;
 mod signin;

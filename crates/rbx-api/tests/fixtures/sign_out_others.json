@@ -1,0 +1,14 @@
+{
+  "captured": "2026-10-15",
+  "source": "synthetic",
+  "note": "Sign out of all other sessions: auth v2 logoutfromallsessionsandreauthenticate answers with a new cookie for this session.",
+  "interactions": [
+    { "request": { "method": "POST", "host": "auth.roblox.com", "path": "/v2/logoutfromallsessionsandreauthenticate" },
+      "response": { "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "set-cookie": ".ROBLOSECURITY=_|WARNING:-DO-NOT-SHARE-THIS.--reauthenticated-cookie; domain=.roblox.com; path=/; secure; HttpOnly"
+        },
+        "body": {} } }
+  ]
+}

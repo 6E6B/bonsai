@@ -306,6 +306,10 @@ pub(super) fn run(
             });
             Ok(())
         })(),
+        CommandId::SignOutOthers => acting().map(|a| core.sign_out_others(a)),
+        CommandId::LockPin => acting().map(|a| core.lock_pin(a)),
+        // The settings screen asks for the PIN and calls `unlock_pin`.
+        CommandId::UnlockPin => Err("Open Settings to enter the PIN.".into()),
         CommandId::ClearCache => {
             core.clear_cache();
             Ok(())

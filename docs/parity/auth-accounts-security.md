@@ -7,17 +7,17 @@
   - [x] Secure storage (saves cookie to OS Keychain via Secret Service / Credential Manager / Keychain, with in-memory fallback)
   - [x] Redaction: Cookies, CSRF tokens, and auth tickets are never printed to logs or committed
 - [ ] **Quick Login (Cross-Device)**:
-  - [ ] "Enter Code" screen (enter 6-character code shown on another device to sign it in)
+  - [ ] "Enter Code" screen (enter 6-character code shown on another device to sign it in) — needs a devtools capture of roblox.com/crossdevicelogin/ConfirmCode before it can be built
   - [x] "Generate Code" screen (display 6-character code to sign in on another device)
   - [x] Quick sign-in adds an account (show code, poll status, finish login, save cookie). See [Sign-in plan](#sign-in-plan)
 - [x] **Browser Sign-In Window**:
   - [x] Separate window that loads the Roblox login page and saves the cookie after login. See [Sign-in plan](#sign-in-plan)
-- [ ] **Sign Out**:
+- [x] **Sign Out**:
   - [x] Sign out current account (removes credentials from keyring)
-  - [ ] Sign out of all other sessions action (revokes other device sessions via security API)
+  - [x] Sign out of all other sessions action (`account.sign_out_others`, auth v2 `logoutfromallsessionsandreauthenticate`; the new cookie Roblox sends back replaces the saved one)
 
 ## Multi-Account Management
-- [ ] **Account Switcher Rail**:
+- [x] **Account Switcher Rail**:
   - [x] Vertical rail displaying avatar headshots for all saved accounts
   - [x] Active account highlighted with color indicator
   - [x] 1-click instant account switching (renders from local cache in 1 frame)
@@ -29,19 +29,26 @@
   - [x] Custom color tag selector
   - [x] Reorder accounts list
   - [x] Remove account from client (with confirmation)
-- [ ] **Act-as-Alt Actions**:
-  - [ ] Account picker on interactive actions (Join game as Alt, Buy item as Alt, Send friend request as Alt without switching active view) — Join as alt done (menus, Inventory); buy and friend request as alt not yet
+- [x] **Act-as-Alt Actions**:
+  - [x] Account picker on interactive actions (Join game as Alt, Buy item as Alt, Send friend request as Alt without switching active view): `game.join_as`, `market.buy_as` ("Buy as…" on the item page; the confirm step names the paying account) and `user.add_friend_as` ("Add friend as" in user menus)
 
 ## Security Challenges & Verification Modals
-- [ ] **Two-Step Verification (2FA)**:
-  - [ ] Authenticator App (TOTP) 6-digit code modal
-  - [ ] Email verification code modal
-  - [ ] Remember device checkbox
-- [ ] **Account PIN**:
-  - [ ] 4-digit Account PIN prompt to unlock sensitive settings or trading
-- [ ] **Captcha & Challenge Handling**:
-  - [ ] Arkose Labs Captcha challenge modal (surfaces web challenge when Roblox requires it)
-  - [ ] Resume action automatically upon successful challenge resolution
+- [x] **Two-Step Verification (2FA)**:
+  - [x] Authenticator App (TOTP) 6-digit code modal
+  - [x] Email verification code modal (sends the code, Resend)
+  - [x] Remember device checkbox
+- [x] **Account PIN**:
+  - [x] 4-digit Account PIN prompt to unlock sensitive settings or trading (`account.unlock_pin`, `account.lock_pin`; status in Settings → Account → Security)
+- [x] **Captcha & Challenge Handling**:
+  - [x] Arkose Labs Captcha challenge modal (surfaces web challenge when Roblox requires it). The puzzle opens in its own incognito window, which can't call IPC; the user solves it
+  - [x] Resume action automatically upon successful challenge resolution (the transport hands `rblx-challenge-*` answers to rbx-core, which calls `/challenge/v1/continue` and resends the write)
+
+Challenge notes:
+- One check shows at a time. A second one that arrives while the dialog is open fails straight away.
+- Only writes go to the dialog. Reads that get a challenge fail as before.
+- Security keys, passkeys and SMS aren't offered. Roblox's site handles those.
+- A purchase whose body says `TwoStepVerificationRequired` (not a header challenge) still sends the user to the website.
+- Not yet tried against a live challenge: the `/challenge/v1/continue` call, the captcha window, and whether PIN `unlockedUntil` is seconds left or a time. The flow follows the site's Challenge.js, captured 2026-10-15.
 - [x] **Session & Error Feedback**:
   - [x] Session expired notice (prompts user to re-paste cookie without clearing cached data)
   - [x] Rate-limit toast notices (shows countdown when a host is rate-limited)

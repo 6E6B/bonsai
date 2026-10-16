@@ -130,10 +130,10 @@ export const commands = {
 	itemResellers: (collectibleId: string) => __TAURI_INVOKE<Paged<ResellerRow>>("item_resellers", { collectibleId }),
 	/**
 	 *  Buys an item from whoever "Buy" sells it for now (`CatalogItem::buy_offer`). Called only from
-	 *  the dialog `market.buy` opens, after the user saw `price`; nothing is bought if the price
-	 *  changed.
+	 *  the dialog `market.buy` or `market.buy_as` opens, after the user saw `price`; nothing is
+	 *  bought if the price changed. `account` buys as that account instead of the active one.
 	 */
-	buyItem: (id: Id, bundle: boolean, price: number) => typedError<null, string>(__TAURI_INVOKE("buy_item", { id, bundle, price })),
+	buyItem: (id: Id, bundle: boolean, price: number, account: number | null) => typedError<null, string>(__TAURI_INVOKE("buy_item", { id, bundle, price, account })),
 	/**
 	 *  Buys one reseller's copy. Called only from the dialog `market.buy_resale` opens, after the
 	 *  user saw `price`.
@@ -255,6 +255,18 @@ export const commands = {
 	myPrivateServers: (tab: string) => __TAURI_INVOKE<List<MyServerRow>>("my_private_servers", { tab }),
 	/**  App preferences, and the disk cache size once measured. */
 	appSettings: () => __TAURI_INVOKE<AppSettings>("app_settings"),
+	/**  Account PIN of the active account. */
+	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
+	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */
+	unlockPin: (pin: string) => typedError<null, string>(__TAURI_INVOKE("unlock_pin", { pin })),
+	/**  Checks a two-step code. A wrong code shows in the dialog. */
+	challengeSubmitCode: (seq: Id, code: string, remember: boolean) => typedError<null, string>(__TAURI_INVOKE("challenge_submit_code", { seq, code, remember })),
+	/**  Switches between `authenticator` and `email`. Picking `email` sends a new code. */
+	challengeUseMethod: (seq: Id, method: string) => typedError<null, string>(__TAURI_INVOKE("challenge_use_method", { seq, method })),
+	/**  Closes the dialog. The action it held fails. */
+	challengeCancel: (seq: Id) => __TAURI_INVOKE<void>("challenge_cancel", { seq }),
+	/**  Opens the puzzle window for a captcha check. */
+	openCaptcha: (seq: Id) => typedError<null, string>(__TAURI_INVOKE("open_captcha", { seq })),
 	/**  Step 1 of adding an account: check a pasted cookie. Progress shows in `Shell.login`. */
 	submitCookie: (text: string) => __TAURI_INVOKE<boolean>("submit_cookie", { text }),
 	/**  Step 2: save the checked account and switch to it. */
@@ -400,6 +412,24 @@ export type CategoryView = {
 	/**  What `CatalogFilter.taxonomy` takes. */
 	taxonomy: string,
 	subcategories: Choice[],
+};
+
+export type ChallengeKind = 
+/**  A 6-digit code. `method` and `methods` are `authenticator` or `email`. */
+{ kind: "code"; method: string; methods: string[]; rememberOption: boolean } | 
+/**  A puzzle, solved in its own window. */
+{ kind: "captcha" };
+
+export type ChallengeView = {
+	/**  Identifies this check in the dialog's replies. */
+	seq: Id,
+	/**  The account Roblox is checking. */
+	account: Id,
+	kind: ChallengeKind,
+	/**  Waiting on Roblox. */
+	busy: boolean,
+	error: string | null,
+	notice: string | null,
 };
 
 export type ChartFilterView = {
@@ -1168,6 +1198,15 @@ export type Person = {
 	following: boolean | null,
 };
 
+export type PinView = {
+	loading: boolean,
+	error: string | null,
+	/**  The account has a PIN that locks settings. */
+	enabled: boolean,
+	/**  Unix seconds the PIN stays unlocked until; 0 when locked. */
+	unlockedUntil: number | null,
+};
+
 /**  A place someone made, in their inventory. */
 export type PlaceCard = {
 	placeId: Id,
@@ -1437,6 +1476,8 @@ export type Shell = {
 	unread: Unread,
 	/**  The add-account flow, while it is open. */
 	login: Login | null,
+	/**  A two-step or captcha check holding an action, while it is open. */
+	challenge: ChallengeView | null,
 	/**  Item values from Rolimons are on. */
 	itemValues: boolean,
 };

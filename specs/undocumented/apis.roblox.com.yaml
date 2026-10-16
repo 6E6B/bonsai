@@ -493,7 +493,48 @@ paths:
         - { in: path, name: timeFrame, required: true, type: string, description: "Day, Week, Month or Year" }
       responses:
         "200": { description: OK, schema: { $ref: "#/definitions/GroupRevenueSummary" } }
+  /challenge/v1/continue:
+    post:
+      # Captured 2026-10-15 from the site's Challenge.js bundle (www.roblox.com, any page that
+      # answers a generic challenge: rblx-challenge-id/-type/-metadata response headers). Sent
+      # after the user passes the challenge (two-step code, captcha), before the original
+      # request is retried with the same id and type and base64(JSON) metadata. The site sends
+      # the id as `challengeID` and the metadata as a JSON string. The answer can name a
+      # further challenge. Not tried live: it needs an account Roblox challenges.
+      x-captured: "2026-10-15, www.roblox.com Challenge.js (generic challenge continue)"
+      x-rust-name: post_challenge_continue
+      summary: Tell Roblox a challenge was passed.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ChallengeContinueRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ChallengeContinueResponse" } }
+  /captcha/v1/metadata:
+    get:
+      # Captured 2026-10-15 live (fixture: challenge_captcha.json) and from the site's
+      # Captcha.js. Public. Maps a captcha action type to the Arkose public key that loads the
+      # puzzle (ACTION_TYPE_GENERIC_CHALLENGE, ACTION_TYPE_GROUP_JOIN, ...).
+      x-captured: "2026-10-15, www.roblox.com Captcha.js"
+      x-rust-name: get_captcha_metadata
+      summary: Arkose public keys per captcha action.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/CaptchaMetadata" } }
 definitions:
+  ChallengeContinueRequest:
+    type: object
+    properties:
+      challengeID: { type: string }
+      challengeType: { type: string, description: "twostepverification, captcha, ..." }
+      challengeMetadata: { type: string, description: "JSON text, not an object" }
+  ChallengeContinueResponse:
+    type: object
+    properties:
+      challengeId: { type: string }
+      challengeType: { type: string }
+      challengeMetadata: { type: string, description: "JSON text of the next challenge, if any" }
+  CaptchaMetadata:
+    type: object
+    properties:
+      funCaptchaPublicKeys: { type: object, additionalProperties: { type: string } }
   TransactionTotals:
     type: object
     properties:

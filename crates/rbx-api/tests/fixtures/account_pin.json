@@ -1,0 +1,15 @@
+{
+  "captured": "2026-10-15",
+  "source": "synthetic",
+  "note": "Account PIN status, unlock and lock (auth v1). unlockedUntil is seconds left, per the site's account settings page; not seen live with a PIN set.",
+  "interactions": [
+    { "request": { "method": "GET", "host": "auth.roblox.com", "path": "/v1/account/pin" },
+      "response": { "status": 200, "headers": { "content-type": "application/json; charset=utf-8" },
+        "body": { "isEnabled": true, "unlockedUntil": null } } },
+    { "request": { "method": "POST", "host": "auth.roblox.com", "path": "/v1/account/pin/unlock" },
+      "response": { "status": 200, "headers": { "content-type": "application/json; charset=utf-8" },
+        "body": { "isEnabled": true, "unlockedUntil": 300 } } },
+    { "request": { "method": "POST", "host": "auth.roblox.com", "path": "/v1/account/pin/lock" },
+      "response": { "status": 200, "headers": { "content-type": "application/json; charset=utf-8" }, "body": {} } }
+  ]
+}

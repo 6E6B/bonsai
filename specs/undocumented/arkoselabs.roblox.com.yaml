@@ -1,0 +1,11 @@
+# Roblox's Arkose Labs (FunCaptcha) host. Never fetched by rbx-api: the captcha window loads
+# this script so the user can solve the puzzle themselves. Kept here so no URL is hardcoded
+# outside specs. Captured 2026-10-15 from the site's Captcha.js bundle, which adds
+# <script src="https://arkoselabs.roblox.com/v2/{publicKey}/api.js" data-callback=...> and then
+# calls setConfig({selector, mode, data: {blob}, onCompleted, ...}) on the object it gets.
+swagger: "2.0"
+host: arkoselabs.roblox.com
+info: { title: "arkoselabs (captcha script)", version: undocumented }
+paths:
+  /v2/{publicKey}/api.js:
+    get: { x-rust-name: captcha_script, x-captured: "2026-10-15, www.roblox.com Captcha.js", summary: Arkose captcha script for one public key, parameters: [{ in: path, name: publicKey, type: string, required: true }], responses: { "200": { description: OK } } }

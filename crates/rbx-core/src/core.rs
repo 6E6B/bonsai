@@ -122,6 +122,8 @@ pub(crate) struct Inner {
     pub(crate) browser_tracker_id: u64,
     pub(crate) settings: RwLock<Settings>,
     toast_seq: Mutex<u64>,
+    /// The challenge waiting for the user, with what answering it needs.
+    pub(crate) challenge: Mutex<crate::challenge::ChallengeState>,
     /// Desktop alerts waiting for the shell (see [`crate::alerts`]).
     pub(crate) alerts: Mutex<crate::alerts::AlertState>,
     search_seq: Mutex<u64>,
@@ -204,6 +206,7 @@ impl Core {
             browser_tracker_id: 100_000_000_000 + fastrand::u64(0..899_999_999_999),
             settings: RwLock::new(settings),
             toast_seq: Mutex::new(0),
+            challenge: Default::default(),
             alerts: Default::default(),
             search_seq: Mutex::new(0),
             search_last: Mutex::new(String::new()),
@@ -606,6 +609,7 @@ impl Inner {
 
     fn build_client(self: &Arc<Self>, id: AccountId, cookie: Secret) -> Result<Client, Error> {
         let me = Arc::downgrade(self);
+        let asker = me.clone();
         Client::builder(id)
             .cookie(cookie)
             .browser_tracker(self.browser_tracker_id)
@@ -615,6 +619,10 @@ impl Inner {
                 if let Some(me) = me.upgrade() {
                     let _ = me.cookies.set(acc, c);
                 }
+            })
+            .on_challenge(move |acc, ch| {
+                let inner = asker.upgrade();
+                async move { inner?.ask_challenge(acc, ch).await }
             })
             .build()
     }
