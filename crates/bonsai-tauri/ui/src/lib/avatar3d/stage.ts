@@ -29,6 +29,33 @@ interface Holder {
   state: (s: StageState) => void
 }
 
+/** Debug logging for the 3D viewer. Filter the console by `[3d]`. */
+function log(...args: unknown[]) {
+  console.info("[3d]", ...args)
+}
+
+/** What the scene holds and where the camera is, for "loads but shows nothing". */
+function snapshot(when: string) {
+  const scene = RBXRenderer.firstScene
+  const cam = scene.camera.position
+  const target = scene.controls?.target
+  const canvas = RBXRenderer.renderer?.domElement
+  log(when, {
+    instances: scene.addedInstances.length,
+    descs: scene.renderDescs.size,
+    sceneObjects: scene.scene.children.length,
+    camera: [cam.x, cam.y, cam.z].map((n) => +n.toFixed(2)),
+    target: target ? [target.x, target.y, target.z].map((n) => +n.toFixed(2)) : null,
+    canvas: canvas ? [canvas.width, canvas.height, canvas.isConnected] : null,
+    resolution: RBXRenderer.resolution,
+    animating: scene.shouldAnimate,
+    rig: renderer?.currentRig ? renderer.currentRig.GetDescendants().length : null,
+    updating: renderer
+      ? { updating: renderer.currentlyUpdating, rig: renderer.currentlyChangingRig, queued: renderer.hasNewUpdate }
+      : null,
+  })
+}
+
 let booted: Promise<void> | null = null
 let renderer: OutfitRenderer | null = null
 /** Set when the renderer failed an outfit, so the next one starts from a fresh rig. */
@@ -68,6 +95,7 @@ async function setup() {
   RBXRenderer.canvasContainer.style.inset = "0"
   RBXRenderer.firstScene.shouldAnimate = false
   RBXRenderer.animateAll()
+  log("engine started")
 }
 
 function boot() {
@@ -91,16 +119,25 @@ function ensureRenderer(outfit: Outfit) {
     renderer.setOutfit(outfit)
     return renderer
   }
+  log("new outfit renderer")
   const r = new OutfitRenderer(auth, outfit)
-  r.onRenderSuccess.Connect(() => holder?.state("ready"))
+  r.onSuccess.Connect(() => log("outfit applied"))
+  r.onRenderSuccess.Connect(() => {
+    snapshot("outfit drawn")
+    holder?.state("ready")
+  })
   r.onError.Connect((why) => {
     // An outfit set while this one loaded is applied next; its own result decides.
     if (r.hasNewUpdate) return
-    console.warn("3D outfit failed:", why)
+    console.warn("[3d] outfit failed:", why)
+    snapshot("after failure")
     broken = true
     holder?.state("error")
   })
-  r.onRenderError.Connect(() => holder?.state("error"))
+  r.onRenderError.Connect((...a: unknown[]) => {
+    console.warn("[3d] a part failed to draw", ...a)
+    holder?.state("error")
+  })
   renderer = r
   return r
 }
@@ -146,7 +183,7 @@ function frame(parts: Instance[]) {
   const controls = scene.controls
   const box = new THREE.Box3()
   for (const p of parts) for (const o of scene.renderDescs.get(p)?.results ?? []) box.expandByObject(o)
-  if (!controls || box.isEmpty()) return
+  if (!controls || box.isEmpty()) return log("nothing to frame", { parts: parts.length, controls: !!controls })
   const center = box.getCenter(new THREE.Vector3())
   const radius = box.getBoundingSphere(new THREE.Sphere()).radius
   const fov = THREE.MathUtils.degToRad(scene.camera.fov)
@@ -159,11 +196,18 @@ function frame(parts: Instance[]) {
 
 /** Loads an accessory and draws it at the origin, the way Roblox's accessory thumbnails do. */
 async function showAccessory(id: number, gen: number, state: (s: StageState) => void) {
+  log("loading accessory", id)
   const rbx = await API.Asset.GetRBX(`rbxassetid://${id}`, { "Roblox-AssetFormat": "avatar_meshpart_accessory" })
-  if (gen !== generation) return
+  if (gen !== generation) return log("accessory replaced before it loaded", id)
+  if (rbx instanceof Response) console.warn("[3d] accessory fetch failed", id, rbx.status)
   const root = rbx instanceof Response ? undefined : rbx.generateTree()
   const accessory = root?.FindFirstChildOfClass("Accessory")
   if (!root || !accessory) {
+    console.warn(
+      "[3d] no Accessory in asset",
+      id,
+      root?.GetChildren().map((c) => c.className),
+    )
     root?.Destroy()
     return state("error")
   }
@@ -173,8 +217,12 @@ async function showAccessory(id: number, gen: number, state: (s: StageState) => 
   const parts = [accessory, ...accessory.GetDescendants()]
   const ok = await RBXRenderer.firstScene.waitUntilFullyCompiled(parts)
   if (gen !== generation) return
-  if (!ok) return state("error")
+  if (!ok) {
+    console.warn("[3d] accessory didn't compile", id)
+    return state("error")
+  }
   frame(parts)
+  snapshot("accessory drawn")
   state("ready")
 }
 
@@ -204,6 +252,7 @@ function orbit(how: string) {
 export async function acquire(el: HTMLElement, lost: () => void, state: (s: StageState) => void): Promise<Lease> {
   await boot()
   holder?.lost()
+  log("acquired", el.clientWidth, el.clientHeight)
   const me: Holder = { lost, state }
   holder = me
   el.prepend(RBXRenderer.canvasContainer)
@@ -215,6 +264,12 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
     show(subject) {
       const key = subjectKey(subject)
       if (!mine() || key === shown) return false
+      log(
+        "show",
+        subject.kind === "accessory"
+          ? subject
+          : { rig: subject.outfit.playerAvatarType, assets: subject.outfit.assets.length, wear: subject.wear },
+      )
       shown = key
       const gen = ++generation
       state("loading")
@@ -233,13 +288,18 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
     },
     async play(name) {
       if (!mine() || !renderer) return false
-      return renderer.setMainAnimation(name)
+      const ok = await renderer.setMainAnimation(name)
+      log("play", name, ok)
+      return ok
     },
     orbit(how) {
       if (mine()) orbit(how)
     },
     resize(width, height) {
-      if (mine() && width > 0 && height > 0) RBXRenderer.setRendererSize(Math.round(width), Math.round(height))
+      const [w, h] = [Math.round(width), Math.round(height)]
+      const [cw, ch] = RBXRenderer.resolution
+      // Resizing to the same size re-lays out the canvas and loops the ResizeObserver.
+      if (mine() && w > 0 && h > 0 && (w !== cw || h !== ch)) RBXRenderer.setRendererSize(w, h)
     },
     release() {
       if (!mine()) return
