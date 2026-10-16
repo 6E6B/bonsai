@@ -1,6 +1,6 @@
 # Agent rules
 
-Read this at the start of every session. Feature checklists are in `docs/parity/`. The roadmap goes in `PLAN.md` (not written yet).
+Read this at the start of every session. Feature checklists are in `docs/parity/`. The roadmap is `docs/PLAN.md`; other docs are in `docs/`.
 
 ## Layout
 
