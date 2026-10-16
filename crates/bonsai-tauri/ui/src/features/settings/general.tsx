@@ -56,7 +56,7 @@ export function GeneralSection() {
         </Show>
         <PrefRow name="avatar_view" />
       </SettingsGroup>
-      <SettingsGroup title="Region">
+      <SettingsGroup title="Region and time">
         <PrefRow name="format_locale">
           <Select
             size="sm"
@@ -66,6 +66,8 @@ export function GeneralSection() {
             onChange={(v) => run("app.format_locale", v === "system" ? "" : v)}
           />
         </PrefRow>
+        <PrefRow name="time_format" />
+        <PrefRow name="relative_dates" />
       </SettingsGroup>
     </>
   )

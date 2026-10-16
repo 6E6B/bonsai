@@ -1146,6 +1146,20 @@ export type Login =
 /**  Quick sign-in code to approve on another device. `expiresAt` is unix seconds. */
 { kind: "quickCode"; code: string; expiresAt: Id; linked: string | null } | { kind: "validating" } | { kind: "confirm"; user: User; alreadyAdded: boolean } | { kind: "failed"; message: string };
 
+/**  Display settings the whole window follows. Values as `settings.set` takes them. */
+export type Look = {
+	/**  `comfortable` or `compact`. */
+	density: string,
+	/**  BCP 47 tag for numbers and dates; empty follows the system. */
+	formatLocale: string,
+	/**  `system`, `reduce` or `full`. */
+	motion: string,
+	/**  `auto`, `12h` or `24h`. */
+	timeFormat: string,
+	relativeDates: boolean,
+	statusBar: boolean,
+};
+
 /**  Someone's look, or an outfit's: what it puts on and the body under it. */
 export type LookView = {
 	loading: boolean,
@@ -1717,6 +1731,7 @@ export type Shell = {
 	uiScale: number | null,
 	/**  How the user arranged the sidebar. */
 	sidebar: SidebarView,
+	look: Look,
 };
 
 export type ShoutView = {

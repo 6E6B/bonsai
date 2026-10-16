@@ -117,6 +117,14 @@ export const browserShell: Shell = {
   itemValues: false,
   avatar3d: false,
   uiScale: 1,
+  look: {
+    density: "comfortable",
+    formatLocale: "",
+    motion: "system",
+    timeFormat: "auto",
+    relativeDates: true,
+    statusBar: true,
+  },
   sidebar: { order: [], hidden: ["messages"] },
 }
 

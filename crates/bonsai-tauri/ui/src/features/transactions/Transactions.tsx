@@ -2,7 +2,7 @@ import { createMemo, createResource, createSignal, For, type JSX, onCleanup, Sho
 import { createStore, unwrap } from "solid-js/store"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
 import { handle, run } from "~/lib/commands/registry"
-import { ago, date, full } from "~/lib/format"
+import { ago, date, dateTime, full } from "~/lib/format"
 import {
   type AccountTotalsView,
   commands,
@@ -623,7 +623,7 @@ function Detail(props: { row: TxRowView | undefined }) {
               </div>
             </div>
             <dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 border-t border-line px-4 py-3 text-sm">
-              <DetailRow label="When">{new Date(r().at ?? 0).toLocaleString()}</DetailRow>
+              <DetailRow label="When">{dateTime(r().at ?? 0)}</DetailRow>
               <Show when={r().itemName}>
                 <DetailRow label={kindLabel(r().itemKind) || "Item"}>
                   <Linked open={itemOpen(r())}>{r().itemName}</Linked>

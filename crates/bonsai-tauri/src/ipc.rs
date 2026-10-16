@@ -70,6 +70,23 @@ pub struct Shell {
     pub ui_scale: f64,
     /// How the user arranged the sidebar.
     pub sidebar: SidebarView,
+    pub look: Look,
+}
+
+/// Display settings the whole window follows. Values as `settings.set` takes them.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct Look {
+    /// `comfortable` or `compact`.
+    pub density: String,
+    /// BCP 47 tag for numbers and dates; empty follows the system.
+    pub format_locale: String,
+    /// `system`, `reduce` or `full`.
+    pub motion: String,
+    /// `auto`, `12h` or `24h`.
+    pub time_format: String,
+    pub relative_dates: bool,
+    pub status_bar: bool,
 }
 
 /// Sidebar order and hidden screens, named by `nav.*` command without the prefix.
@@ -959,6 +976,17 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         item_values: core.values_enabled(),
         avatar_3d: core.settings().avatar_3d,
         ui_scale: f64::from(core.settings().ui_scale),
+        look: {
+            let p = core.settings();
+            Look {
+                density: p.density.name().to_owned(),
+                format_locale: p.format_locale,
+                motion: p.motion,
+                time_format: p.time_format,
+                relative_dates: p.relative_dates,
+                status_bar: p.status_bar,
+            }
+        },
         sidebar: {
             let p = core.settings().sidebar;
             SidebarView {

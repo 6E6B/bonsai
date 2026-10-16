@@ -36,6 +36,10 @@ export function AppearanceSection() {
         <PrefRow name="density" />
         <PrefRow name="ui_scale" />
       </SettingsGroup>
+      <SettingsGroup title="Window">
+        <PrefRow name="motion" />
+        <PrefRow name="status_bar" />
+      </SettingsGroup>
     </>
   )
 }

@@ -1,6 +1,5 @@
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { useLocation, useNavigate } from "@solidjs/router"
-import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, createSignal, ErrorBoundary, on, onCleanup, onMount, type ParentProps, Show } from "solid-js"
 import { NewChat } from "~/features/chat/NewChat"
 import { CommandPalette } from "~/features/palette/CommandPalette"
@@ -14,7 +13,7 @@ import {
   setConfirmer,
   shortcutListener,
 } from "~/lib/commands/registry"
-import { setFormatLocale } from "~/lib/format"
+import { setClockFormat, setFormatLocale, setRelativeDates } from "~/lib/format"
 import { commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
@@ -234,15 +233,6 @@ export function Layout(props: ParentProps) {
     handle("help.shortcuts", () => dialog.show(() => <ShortcutsDialog />, { title: "Keyboard shortcuts", size: "lg" })),
     handle("view.sidebar", () => setCompactPref(!compact())),
     handle("view.drawer", () => setDrawerPref(!drawer())),
-    handle("view.density", (d) => {
-      if (d !== "compact" && d !== "comfortable") return showToast("Pick compact or comfortable.")
-      document.documentElement.dataset.density = d
-      void runBackend("view.density", d)
-    }),
-    handle("app.format_locale", (tag) => {
-      setFormatLocale(tag ?? "")
-      void runBackend("app.format_locale", tag)
-    }),
     handle("view.zoom_in", () => zoomBy(1)),
     handle("view.zoom_out", () => zoomBy(-1)),
     handle("view.zoom_reset", () => setZoom(1)),
@@ -329,12 +319,14 @@ export function Layout(props: ParentProps) {
     ),
   )
   const appearance = useAppearance()
-  // Saved density and number format, once at startup.
-  onMount(async () => {
-    if (!isTauri()) return
-    const app = await commands.appSettings()
-    document.documentElement.dataset.density = app.density
-    setFormatLocale(app.formatLocale)
+  // Display settings, applied whenever they change.
+  createEffect(() => {
+    const root = document.documentElement.dataset
+    root.density = shell.look.density
+    root.motion = shell.look.motion
+    setFormatLocale(shell.look.formatLocale)
+    setClockFormat(shell.look.timeFormat)
+    setRelativeDates(shell.look.relativeDates)
   })
   // CSS zoom on the root scales everything, including popovers, and keeps layout in px.
   createEffect(() => {
@@ -414,7 +406,9 @@ export function Layout(props: ParentProps) {
           </div>
         </div>
       </div>
-      <StatusBar zoom={zoom()} />
+      <Show when={shell.look.statusBar}>
+        <StatusBar zoom={zoom()} />
+      </Show>
     </div>
   )
 }

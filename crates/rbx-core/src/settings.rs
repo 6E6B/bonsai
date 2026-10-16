@@ -313,6 +313,14 @@ pub struct Settings {
     pub sidebar: SidebarPrefs,
     /// Avatar viewers open in 3D instead of on the image. Off by default: the engine is heavy.
     pub avatar_3d: bool,
+    /// Animations: `system` follows the OS "reduce motion" setting, `reduce` or `full`.
+    pub motion: String,
+    /// Clock times: `auto` follows the number and date format, `12h` or `24h`.
+    pub time_format: String,
+    /// Recent times read "5m ago" instead of the date and time.
+    pub relative_dates: bool,
+    /// The bar at the bottom of the window with the account, balance and zoom.
+    pub status_bar: bool,
 }
 
 impl Default for Settings {
@@ -331,6 +339,10 @@ impl Default for Settings {
             item_values: false,
             sidebar: SidebarPrefs::default(),
             avatar_3d: false,
+            motion: "system".into(),
+            time_format: "auto".into(),
+            relative_dates: true,
+            status_bar: true,
         }
     }
 }

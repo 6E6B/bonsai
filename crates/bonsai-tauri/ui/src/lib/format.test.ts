@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest"
-import { ago, bytes, compact, countdown, date, full, percent, setFormatLocale } from "./format"
+import {
+  ago,
+  bytes,
+  compact,
+  countdown,
+  date,
+  full,
+  percent,
+  setClockFormat,
+  setFormatLocale,
+  setRelativeDates,
+  time,
+} from "./format"
 
 describe("compact", () => {
   it("keeps small numbers exact", () => {
@@ -73,5 +85,30 @@ describe("setFormatLocale", () => {
     setFormatLocale("not a locale!!")
     expect(compact(5)).toBe("5")
     setFormatLocale("en-US")
+  })
+})
+
+describe("clock and relative times", () => {
+  // A local time, so the hour doesn't depend on the test machine's time zone.
+  const at = new Date(2026, 7, 4, 16, 5).getTime()
+
+  it("follows the clock setting", () => {
+    setFormatLocale("en-US")
+    setClockFormat("24h")
+    expect(time(at)).toBe("16:05")
+    setClockFormat("12h")
+    expect(time(at)).toBe("4:05 PM")
+    setClockFormat("nonsense")
+    expect(time(at)).toBe("4:05 PM") // en-US's own clock
+  })
+
+  it("gives the date and time when relative times are off", () => {
+    setFormatLocale("en-US")
+    setClockFormat("24h")
+    setRelativeDates(false)
+    expect(ago(at, at + 60_000)).toBe("Aug 4, 2026, 16:05")
+    setRelativeDates(true)
+    expect(ago(at, at + 60_000)).toBe("1m ago")
+    setClockFormat("auto")
   })
 })

@@ -2,6 +2,8 @@
 import { createSignal } from "solid-js"
 
 const [locale, setLocale] = createSignal<string | undefined>(undefined)
+const [clock, setClock] = createSignal<"auto" | "12h" | "24h">("auto")
+const [relative, setRelative] = createSignal(true)
 
 /** Empty or invalid tags fall back to the system locale. */
 export function setFormatLocale(tag: string) {
@@ -13,22 +15,41 @@ export function setFormatLocale(tag: string) {
   }
 }
 
+/** The clock (Settings → General): `auto` follows the locale. Unknown values count as `auto`. */
+export function setClockFormat(format: string) {
+  setClock(format === "12h" || format === "24h" ? format : "auto")
+}
+
+/** Whether `ago` says "5m ago" or gives the date and time. */
+export function setRelativeDates(on: boolean) {
+  setRelative(on)
+}
+
 let cache: {
-  tag: string | undefined
+  key: string
   compact: Intl.NumberFormat
   full: Intl.NumberFormat
   date: Intl.DateTimeFormat
+  time: Intl.DateTimeFormat
+  dateTime: Intl.DateTimeFormat
 } | null = null
 
-/** Reads the locale signal, so callers in JSX update when it changes. */
+/** Reads the locale and clock signals, so callers in JSX update when they change. */
 function fmts() {
   const tag = locale()
-  if (!cache || cache.tag !== tag) {
+  const c = clock()
+  const key = `${tag ?? ""} ${c}`
+  if (!cache || cache.key !== key) {
+    const hour12 = c === "auto" ? undefined : c === "12h"
+    const day = { month: "short", day: "numeric", year: "numeric" } as const
+    const clockOpts = { hour: "numeric", minute: "2-digit", hour12 } as const
     cache = {
-      tag,
+      key,
       compact: new Intl.NumberFormat(tag, { notation: "compact", maximumFractionDigits: 1 }),
       full: new Intl.NumberFormat(tag),
-      date: new Intl.DateTimeFormat(tag, { month: "short", day: "numeric", year: "numeric" }),
+      date: new Intl.DateTimeFormat(tag, day),
+      time: new Intl.DateTimeFormat(tag, clockOpts),
+      dateTime: new Intl.DateTimeFormat(tag, { ...day, ...clockOpts }),
     }
   }
   return cache
@@ -66,8 +87,20 @@ export function date(ms: number): string {
   return fmts().date.format(ms)
 }
 
-/** "now", "5m ago", "3h ago", "2d ago", then the date. `now` is for tests. */
+/** "4:05 PM" or "16:05", per the clock setting. */
+export function time(ms: number): string {
+  return fmts().time.format(ms)
+}
+
+/** "Aug 4, 2026, 4:05 PM". */
+export function dateTime(ms: number): string {
+  return fmts().dateTime.format(ms)
+}
+
+/** "now", "5m ago", "3h ago", "2d ago", then the date. With relative times off in Settings,
+ * always the date and time. `now` is for tests. */
 export function ago(ms: number, now = Date.now()): string {
+  if (!relative()) return dateTime(ms)
   const s = Math.max(0, Math.round((now - ms) / 1000))
   if (s < 45) return "now"
   const m = Math.round(s / 60)

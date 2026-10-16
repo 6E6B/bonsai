@@ -92,3 +92,26 @@
     transform: rotate(360deg);
   }
 }
+
+/* Reduced motion (Settings → Appearance → Motion, or the OS when it is "System"). Animations
+ * still run for 1ms so menus and dialogs that wait for `animationend` still close. Spinners keep
+ * turning: they say work is happening. Unlayered, so it beats every component and utility layer. */
+:root[data-motion="reduce"] *:not([data-component="spinner"]),
+:root[data-motion="reduce"] ::before,
+:root[data-motion="reduce"] ::after {
+  animation-duration: 1ms;
+  animation-iteration-count: 1;
+  transition-duration: 1ms;
+  scroll-behavior: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-motion="system"] *:not([data-component="spinner"]),
+  :root[data-motion="system"] ::before,
+  :root[data-motion="system"] ::after {
+    animation-duration: 1ms;
+    animation-iteration-count: 1;
+    transition-duration: 1ms;
+    scroll-behavior: auto;
+  }
+}

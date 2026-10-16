@@ -55,6 +55,7 @@
 - [x] Settings search in the side pane (titles, descriptions, keywords and the Roblox account rows); results open `/settings/:section/:setting`, which scrolls to and flashes the row. `nav.settings` takes `section/setting` too.
 - [x] Zoom is saved (`ui_scale`, 67–200%) and set from Settings > Appearance, the command bar or Ctrl+=/Ctrl+-. Settings > Accounts has "Keep other accounts live" (`background_accounts`). `allow_multiple_clients` has no UI: nothing reads it yet.
 - [x] Shortcut rebinding in Settings > Keyboard: Change records a chord or a two-key sequence, warns which commands already use it and takes it from them on save; No shortcut, Use default, per-row reset and Reset all. Same as `shortcuts.set <command> [keys]` and `shortcuts.reset [command]` in the command bar. Overrides are saved in settings; a rebound command keeps only its new shortcut.
+- [x] Motion (System follows the OS, Reduced, Full; spinners keep turning) and a Status bar switch in Settings > Appearance. Clock (Automatic, 12-hour, 24-hour) and Relative times (off shows the date and time instead of "5m ago") in Settings > General. Density and number format now apply as soon as they change from any place, not only after a restart.
 - [ ] **Account Info**:
   - [x] Display name (edit with 7-day cooldown validation)
   - [x] Email address and verification status

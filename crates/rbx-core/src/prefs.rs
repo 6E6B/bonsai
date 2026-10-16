@@ -48,6 +48,8 @@ pub const ZOOMS: &[(&str, &str)] = &[
     ("175", "175%"),
     ("200", "200%"),
 ];
+const MOTIONS: &[(&str, &str)] = &[("system", "System"), ("reduce", "Reduced"), ("full", "Full")];
+const TIME_FORMATS: &[(&str, &str)] = &[("auto", "Automatic"), ("12h", "12-hour"), ("24h", "24-hour")];
 const AVATAR_VIEWS: &[(&str, &str)] = &[("2d", "Image"), ("3d", "3D")];
 
 const fn pref(
@@ -95,6 +97,22 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Choice(ZOOMS),
     ),
     pref(
+        "motion",
+        "appearance",
+        "Motion",
+        "Reduced turns off transitions and animations, except loading spinners. System follows the OS.",
+        &["animation", "reduce motion", "transition", "accessibility"],
+        PrefKind::Choice(MOTIONS),
+    ),
+    pref(
+        "status_bar",
+        "appearance",
+        "Status bar",
+        "The line at the bottom with the account, balance, running jobs and zoom.",
+        &["footer", "bottom", "bar", "hide"],
+        PrefKind::Bool,
+    ),
+    pref(
         "player_command",
         "general",
         "Launch Roblox with",
@@ -121,6 +139,22 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Text {
             placeholder: "System",
         },
+    ),
+    pref(
+        "time_format",
+        "general",
+        "Clock",
+        "Automatic uses the number and date format's clock.",
+        &["time", "12 hour", "24 hour", "am", "pm", "clock"],
+        PrefKind::Choice(TIME_FORMATS),
+    ),
+    pref(
+        "relative_dates",
+        "general",
+        "Relative times",
+        "Show \"5m ago\" for the last week. Off shows the date and time.",
+        &["ago", "date", "time", "relative", "absolute"],
+        PrefKind::Bool,
     ),
     pref(
         "notify.friend_joins",
@@ -219,6 +253,10 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "avatar_view" => if s.avatar_3d { "3d" } else { "2d" }.to_owned(),
         "format_locale" => s.format_locale.clone(),
         "item_values" => on_off(s.item_values).to_owned(),
+        "motion" => s.motion.clone(),
+        "time_format" => s.time_format.clone(),
+        "relative_dates" => on_off(s.relative_dates).to_owned(),
+        "status_bar" => on_off(s.status_bar).to_owned(),
         _ => return None,
     })
 }
@@ -247,6 +285,8 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
             "density" => s.density = Density::from_name(v).unwrap_or_default(),
             "ui_scale" => s.ui_scale = v.parse::<f32>().unwrap_or(100.0) / 100.0,
             "avatar_view" => s.avatar_3d = v == "3d",
+            "motion" => v.clone_into(&mut s.motion),
+            "time_format" => v.clone_into(&mut s.time_format),
             _ => unreachable!("choice without a setter: {key}"),
         }
         return Ok(());
@@ -258,6 +298,8 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
     match key {
         "item_values" => s.item_values = bool()?,
         "background_accounts" => s.background_accounts = bool()?,
+        "relative_dates" => s.relative_dates = bool()?,
+        "status_bar" => s.status_bar = bool()?,
         "player_command" => s.player_command = Some(value.to_owned()).filter(|c| !c.is_empty()),
         "format_locale" => {
             if !valid_format_locale(value) {
