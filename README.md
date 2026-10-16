@@ -34,8 +34,8 @@ bun run app      # desktop app with hot reload
 bun run check    # typecheck, lint, tests
 ```
 
-See [`AGENTS.md`](../AGENTS.md) for the architecture and rules.
+See [`AGENTS.md`](AGENTS.md) for the architecture and rules.
 
 ## License
 
-GPL-3.0-only. See [`LICENSE`](../LICENSE).
+GPL-3.0-only. See [`LICENSE`](LICENSE).
