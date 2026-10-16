@@ -30,7 +30,7 @@
   - [x] Left/Right Arms, Left/Right Legs, Torso bundles
 - [ ] **Animations & Emotes**:
   - [x] Animation packs: Idle, Walk, Run, Jump, Fall, Climb, Swim
-  - [ ] Emote assignment hotbar (slots 1 through 8) — equipped emotes are listed; equip/unequip endpoints are not in the tracker or `specs/undocumented/`, need a capture
+  - [x] Emote assignment hotbar (slots 1 through 8) — `avatar.emote` puts an emote in a slot or clears it (right-click an emote)
   - [ ] Emote animation playback preview
 - [x] **Outfits ("Costumes")**:
   - [x] List saved outfits with rendered preview thumbnails

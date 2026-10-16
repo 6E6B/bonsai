@@ -1,0 +1,29 @@
+# Emote hotbar. These are absent from the tracker.
+swagger: "2.0"
+host: avatar.roblox.com
+info: { title: "avatar (emotes)", version: undocumented }
+paths:
+  /v1/emotes/{assetId}/{position}:
+    post:
+      # Captured 2026-10-16 from the avatar editor bundle (equipEmote); www.roblox.com/my/avatar.
+      x-captured: "2026-10-16, www.roblox.com/my/avatar"
+      x-rust-name: post_emote_equip
+      summary: Put an emote the user owns in a hotbar slot (1 to 8).
+      parameters:
+        - { in: path, name: assetId, required: true, type: integer, format: int64 }
+        - { in: path, name: position, required: true, type: integer, format: int32 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+  /v1/emotes/{position}:
+    delete:
+      # Captured 2026-10-16 from the avatar editor bundle (unequipEmote); www.roblox.com/my/avatar.
+      x-captured: "2026-10-16, www.roblox.com/my/avatar"
+      x-rust-name: delete_emote_unequip
+      summary: Clear a hotbar slot.
+      parameters:
+        - { in: path, name: position, required: true, type: integer, format: int32 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+definitions:
+  Empty:
+    type: object

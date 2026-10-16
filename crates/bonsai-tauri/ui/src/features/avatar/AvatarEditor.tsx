@@ -229,7 +229,12 @@ export default function AvatarEditor() {
             <div class="-mx-2 -mt-2 flex flex-col">
               <For each={view.emotes}>
                 {(e) => (
-                  <ContextMenu items={itemMenu(e.id)}>
+                  <ContextMenu
+                    items={[
+                      ...itemMenu(e.id),
+                      menuItem("avatar.emote", { arg: String(e.typeId), label: "Clear slot" }),
+                    ]}
+                  >
                     <ListItem
                       leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", e.id)} />}
                       title={e.name}

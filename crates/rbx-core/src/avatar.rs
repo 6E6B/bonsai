@@ -980,6 +980,30 @@ impl Core {
         Ok(())
     }
 
+    /// Put emote `asset` in hotbar `slot` (1 to 8), or clear the slot when `asset` is `None`.
+    pub fn set_emote(&self, account: AccountId, slot: i32, asset: Option<u64>) -> Result<(), String> {
+        if !(1..=8).contains(&slot) {
+            return Err("Emote slots are 1 to 8.".into());
+        }
+        let (doing, done) = match asset {
+            Some(_) => ("equip the emote", "Emote equipped."),
+            None => ("clear the emote slot", "Emote slot cleared."),
+        };
+        self.inner
+            .mutate(account, doing, done, &["avatar"], move |f| async move {
+                match asset {
+                    Some(id) => {
+                        avatar::undocumented::post_emote_equip(&f.client, id as i64, slot).await?;
+                    }
+                    None => {
+                        avatar::undocumented::delete_emote_unequip(&f.client, slot).await?;
+                    }
+                }
+                Ok(())
+            });
+        Ok(())
+    }
+
     /// Ask Roblox to render `account`'s avatar images again, for when they look stale.
     pub fn redraw_avatar(&self, account: AccountId) {
         self.inner.mutate(

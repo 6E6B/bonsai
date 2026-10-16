@@ -2031,6 +2031,12 @@ async fn avatar_wear_outfits_and_rig() {
     c.redraw_avatar(ME);
     wait_for(c, "redrawn", toast("Avatar redrawn.")).await;
 
+    assert!(c.set_emote(ME, 9, None).is_err());
+    c.set_emote(ME, 2, Some(3_333_499_508)).unwrap();
+    wait_for(c, "emote equipped", toast("Emote equipped.")).await;
+    c.set_emote(ME, 2, None).unwrap();
+    wait_for(c, "emote cleared", toast("Emote slot cleared.")).await;
+
     let recent = poll(|| c.recent_items(ME)).await;
     assert_eq!(recent.len(), 2);
     assert!(!recent[0].outfit && recent[1].outfit);

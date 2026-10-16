@@ -307,6 +307,7 @@ commands! {
     MoveLayer => "avatar.layer", "Move layered clothing up or down (item id, then up or down)", ["layer", "order", "layered clothing", "on top", "under", "avatar"], Text, [];
     SetBodyColor => "avatar.color", "Set body color (color id, or part:color id)", ["skin", "color", "colour", "tone", "body", "avatar"], Text, [];
     SetScale => "avatar.scale", "Set body scale (scale, then value)", ["height", "width", "head", "proportion", "body type", "scale", "size", "avatar"], Text, [];
+    SetEmote => "avatar.emote", "Put an emote in a hotbar slot (slot 1-8, then item id; slot alone clears it)", ["emote", "hotbar", "slot", "dance", "avatar"], Text, [];
     RedrawAvatar => "avatar.redraw", "Redraw avatar image", ["redraw", "refresh", "thumbnail", "render", "avatar"], None, [];
 
     SearchMarketplace => "market.search", "Search the Marketplace", ["catalog", "shop", "items", "find item"], Text, [];

@@ -511,6 +511,20 @@ pub(super) fn run(
                 .map_err(|_| "Not a number.".to_owned())?;
             core.set_scale(a, scale, value)
         })(),
+        CommandId::SetEmote => (|| {
+            let a = need()?;
+            let text = arg.ok_or("Which slot?")?;
+            let mut it = text.split_whitespace();
+            let slot = it
+                .next()
+                .and_then(|s| s.parse().ok())
+                .ok_or("Say a slot from 1 to 8.")?;
+            let asset = match it.next() {
+                Some(id) => Some(id.parse().map_err(|_| "Not an item id.".to_owned())?),
+                None => None,
+            };
+            core.set_emote(a, slot, asset)
+        })(),
         CommandId::RedrawAvatar => (|| {
             core.redraw_avatar(need()?);
             Ok(())

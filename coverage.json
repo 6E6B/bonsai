@@ -7352,6 +7352,26 @@
     },
     {
       "deprecated": false,
+      "function": "post_emote_equip",
+      "host": "avatar.roblox.com",
+      "method": "POST",
+      "module": "avatar::undocumented",
+      "path": "/v1/emotes/{assetId}/{position}",
+      "summary": "Put an emote the user owns in a hotbar slot (1 to 8).",
+      "used": false
+    },
+    {
+      "deprecated": false,
+      "function": "delete_emote_unequip",
+      "host": "avatar.roblox.com",
+      "method": "DELETE",
+      "module": "avatar::undocumented",
+      "path": "/v1/emotes/{position}",
+      "summary": "Clear a hotbar slot.",
+      "used": false
+    },
+    {
+      "deprecated": false,
       "function": "get_item_details",
       "host": "catalog.roblox.com",
       "method": "GET",
@@ -7821,6 +7841,6 @@
       "used": true
     }
   ],
-  "total": 782,
+  "total": 784,
   "used": 236
 }

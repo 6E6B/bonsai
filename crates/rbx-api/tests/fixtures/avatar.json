@@ -1,7 +1,7 @@
 {
   "captured": "2026-10-14",
   "source": "GET bodies captured from avatar.roblox.com for the public Roblox account (user 156): /v1/users/156/avatar (same AvatarModelV2 as /v1/avatar), /v2/avatar/users/156/outfits and /v1/outfits/24477597/details and /v1/avatar-rules (trimmed to the wearable types). Write responses are from the tracker's avatar v1/v2 schemas. /v1/avatar-rules scales and body color palettes are live (signed out, 2026-10-14). /v1/recent-items/0/list is synthetic from the tracker schema (list type 0 is all items).",
-  "note": "Read the rules, the avatar and outfits; take an item off; wear an outfit (items, body type, colors, scales); save an outfit; switch to R15; swap a T-shirt; a wear Roblox refuses. Then replace an outfit with the current look, rename it, delete it and redraw the avatar image. Then read recent items, paint the arms and set the height. Then switch to R6 while wearing a layered jacket (synthetic).",
+  "note": "Read the rules, the avatar and outfits; take an item off; wear an outfit (items, body type, colors, scales); save an outfit; switch to R15; swap a T-shirt; a wear Roblox refuses. Then replace an outfit with the current look, rename it, delete it and redraw the avatar image. Then read recent items, paint the arms and set the height. Then switch to R6 while wearing a layered jacket (synthetic). Then put an emote in slot 2 and clear it (bodies synthetic: the site returns an empty object).",
   "interactions": [
     {
       "request": {
@@ -2078,6 +2078,40 @@
         "body": {
           "success": true
         }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "avatar.roblox.com",
+        "path": "/v1/emotes/3333499508/2",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "host": "avatar.roblox.com",
+        "path": "/v1/emotes/2",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
       }
     }
   ]
