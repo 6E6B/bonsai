@@ -1,6 +1,6 @@
 # Beyond the website
 
-Features from `PLAN.md` "Beyond the website" that have shipped, with the command that reaches each.
+Features beyond the website, with the command that reaches each.
 
 | Feature | Where | Command |
 |---|---|---|
