@@ -7,21 +7,32 @@
     min-width: 0;
     padding: 6px 4px;
     border: 0;
-    border-radius: var(--radius-lg);
     background: none;
     color: var(--color-fg);
     text-align: center;
     cursor: default;
+  }
+
+  /* Hover and focus mark the picture, like a tile's, not a box around the whole thing: a filled
+   * box would sit behind the presence dot's canvas-colored ring. */
+  [data-component="person-tile"] [data-slot="frame"] {
+    transition: box-shadow var(--duration) var(--ease);
+  }
+
+  [data-component="person-tile"] [data-slot="frame"]::after {
     transition: background-color var(--duration) var(--ease);
   }
 
-  [data-component="person-tile"]:hover {
+  [data-component="person-tile"]:hover [data-slot="frame"]::after {
     background-color: var(--color-hover);
   }
 
   [data-component="person-tile"]:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: -2px;
+    outline: none;
+  }
+
+  [data-component="person-tile"]:focus-visible [data-slot="frame"] {
+    box-shadow: 0 0 0 2px var(--color-focus);
   }
 
   [data-component="person-tile"] [data-component="avatar"] {

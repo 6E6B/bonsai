@@ -35,6 +35,10 @@ export async function loadCommands() {
   setList(await ipc.commands())
 }
 
+// A hot reload in `bun run app` starts this module over with an empty list, and the layout only
+// loads it at startup, so menus would show raw command ids until a restart.
+if (import.meta.hot) void loadCommands()
+
 /** Registers a UI-side handler for a command id. Returns a function that removes it. */
 export function handle(id: string, fn: Handler) {
   local.set(id, fn)
