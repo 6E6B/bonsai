@@ -1,0 +1,3 @@
+[submodule "vendor/roblox-api-tracker"]
+	path = vendor/roblox-api-tracker
+	url = https://github.com/Paficent/Roblox-Api-Tracker.git
