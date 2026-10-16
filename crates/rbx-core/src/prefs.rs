@@ -369,6 +369,14 @@ pub const PREFS: &[Pref] = &[
         &["background", "realtime", "unread", "accounts", "presence"],
         PrefKind::Bool,
     ),
+    pref(
+        "account_accent",
+        "accounts",
+        "Account color as accent",
+        "Buttons, links and focus rings take the active account's color tag. Accounts with no color keep the theme's.",
+        &["accent", "color", "colour", "tag", "theme"],
+        PrefKind::Bool,
+    ),
 ];
 
 /// The setting with this key.
@@ -398,6 +406,7 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "density" => s.density.name().to_owned(),
         "ui_scale" => ((s.ui_scale * 100.0).round() as i32).to_string(),
         "background_accounts" => on_off(s.background_accounts).to_owned(),
+        "account_accent" => on_off(s.account_accent).to_owned(),
         "player_command" => s.player_command.clone().unwrap_or_default(),
         "avatar_view" => if s.avatar_3d { "3d" } else { "2d" }.to_owned(),
         "format_locale" => s.format_locale.clone(),
@@ -464,6 +473,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
     match key {
         "item_values" => s.item_values = bool()?,
         "background_accounts" => s.background_accounts = bool()?,
+        "account_accent" => s.account_accent = bool()?,
         "relative_dates" => s.relative_dates = bool()?,
         "status_bar" => s.status_bar = bool()?,
         "drawer" => s.drawer = bool()?,

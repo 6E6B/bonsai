@@ -1,4 +1,4 @@
-export { applyAppearance, type Mode, previewTheme, setSeeThrough, shownBase } from "./apply"
+export { applyAppearance, type Mode, previewTheme, setAccentTag, setSeeThrough, shownBase } from "./apply"
 export {
   type BackdropLevel,
   type BackdropLevels,

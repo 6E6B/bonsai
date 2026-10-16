@@ -78,6 +78,7 @@ const shellMirror = mirror<Shell>(
       homeContinue: true,
       homeFavorites: true,
       homeRecommended: true,
+      accountAccent: false,
     },
     sidebar: { order: [], hidden: ["messages"] },
   },

@@ -1174,6 +1174,8 @@ export type Look = {
 	homeContinue: boolean,
 	homeFavorites: boolean,
 	homeRecommended: boolean,
+	/**  Use the active account's color tag as the accent. */
+	accountAccent: boolean,
 };
 
 /**  Someone's look, or an outfit's: what it puts on and the body under it. */

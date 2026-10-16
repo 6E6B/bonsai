@@ -131,6 +131,7 @@ export const browserShell: Shell = {
     homeContinue: true,
     homeFavorites: true,
     homeRecommended: true,
+    accountAccent: false,
   },
   sidebar: { order: [], hidden: ["messages"] },
 }

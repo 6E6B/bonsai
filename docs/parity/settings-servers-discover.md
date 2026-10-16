@@ -58,6 +58,7 @@
 - [x] Motion (System follows the OS, Reduced, Full; spinners keep turning) and a Status bar switch in Settings > Appearance. Clock (Automatic, 12-hour, 24-hour) and Relative times (off shows the date and time instead of "5m ago") in Settings > General. Density and number format now apply as soon as they change from any place, not only after a restart.
 - [x] Settings > Layout: Open on launch (a screen, or the tabs from last time with pins and the active tab), Sidebar (Automatic, Expanded, Collapsed) and the friends drawer, all saved; Ctrl+B and Ctrl+\\ save too. Home rows (Friends playing, Continue, Favorites, Recommended) can be turned off.
 - [x] Settings > Notifications > When: quiet hours (whole local hours, may cross midnight; the UTC offset is read at startup), mute while the active account is in a game (its own presence is fetched with its friends'), notify while the app is in front, and ask for the system message sound.
+- [x] Settings > Accounts: rename, color tag and move up/down per account (the same `account.*` commands as the rail menu), and "Account color as accent", which repaints the accent tokens from the active account's tag.
 - [ ] **Account Info**:
   - [x] Display name (edit with 7-day cooldown validation)
   - [x] Email address and verification status

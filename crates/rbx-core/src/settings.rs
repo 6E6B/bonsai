@@ -303,6 +303,8 @@ pub struct Settings {
     pub allow_multiple_clients: bool,
     /// Keep realtime and unread polling for every signed-in account, not only the active one.
     pub background_accounts: bool,
+    /// The active account's color tag replaces the theme's accent.
+    pub account_accent: bool,
     pub locale: String,
     /// Locale for numbers and dates in the UI (BCP 47, e.g. `de-DE`); empty follows the system.
     pub format_locale: String,
@@ -438,6 +440,7 @@ impl Default for Settings {
             player_command: None,
             allow_multiple_clients: false,
             background_accounts: true,
+            account_accent: false,
             locale: "en_us".into(),
             format_locale: String::new(),
             notify: NotifyPrefs::default(),

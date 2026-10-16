@@ -96,6 +96,8 @@ pub struct Look {
     pub home_continue: bool,
     pub home_favorites: bool,
     pub home_recommended: bool,
+    /// Use the active account's color tag as the accent.
+    pub account_accent: bool,
 }
 
 /// Sidebar order and hidden screens, named by `nav.*` command without the prefix.
@@ -1001,6 +1003,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                 home_continue: p.home.continue_playing,
                 home_favorites: p.home.favorites,
                 home_recommended: p.home.recommended,
+                account_accent: p.account_accent,
             }
         },
         sidebar: {
