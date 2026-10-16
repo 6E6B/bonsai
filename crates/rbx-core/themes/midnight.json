@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "dark",
   "seeds": {
+    "font": { "google": "Manrope" },
     "background": "#11151f",
     "foreground": "#e6e9f0",
     "accent": "#5b7cff",

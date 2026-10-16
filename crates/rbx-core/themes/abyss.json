@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "dark",
   "seeds": {
+    "font": { "google": "Space Grotesk" },
     "background": "#0c1719",
     "foreground": "#dcefee",
     "accent": "#2fb8b0",

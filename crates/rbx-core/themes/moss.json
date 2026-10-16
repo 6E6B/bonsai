@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "dark",
   "seeds": {
+    "font": { "google": "Work Sans" },
     "background": "#151a16",
     "foreground": "#e4ecdf",
     "accent": "#6fae6a",

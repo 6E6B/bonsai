@@ -96,6 +96,11 @@ A theme's `font` or `mono` seed may be `{ "google": "Family Name" }`. Settings â
 Fonts picks one from a searchable list; `theme.font` and `theme.mono_font` do the same from the
 command bar. Changing the font of a built-in makes a copy first and says so.
 
+Built-ins set a text font too. Dark, Light and both Adwaitas use the bundled Inter. The rest use
+Google families: Ember Figtree, Midnight Manrope, Fjord IBM Plex Sans, Paper Source Sans 3, Moss
+Work Sans, Dusk Outfit, Abyss Space Grotesk, Phosphor IBM Plex Mono, Sakura Nunito, Glacier Plus
+Jakarta Sans. The font of a theme in use downloads the first time it is applied.
+
 - **Catalog.** `fonts.google.com/metadata/fonts`, fetched only when the picker opens or a theme
   names a Google font, cached for 7 days. Italic-only families are left out.
 - **Files.** `fonts.googleapis.com/css2` for weights 400â€“700 (nearest available), then each

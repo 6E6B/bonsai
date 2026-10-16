@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "light",
   "seeds": {
+    "font": "inter",
     "background": "#fafafb",
     "foreground": "#333338",
     "accent": "#3584e4",

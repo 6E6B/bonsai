@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "light",
   "seeds": {
+    "font": { "google": "Plus Jakarta Sans" },
     "background": "#f3f7fa",
     "foreground": "#14212b",
     "accent": "#0a7ea4",

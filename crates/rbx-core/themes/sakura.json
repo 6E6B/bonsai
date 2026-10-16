@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "light",
   "seeds": {
+    "font": { "google": "Nunito" },
     "background": "#fdf7f8",
     "foreground": "#2e1f26",
     "accent": "#c93f6e",

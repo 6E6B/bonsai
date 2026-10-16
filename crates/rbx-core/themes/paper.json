@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "light",
   "seeds": {
+    "font": { "google": "Source Sans 3" },
     "background": "#f7f3ea",
     "foreground": "#2b2620",
     "accent": "#a8502a",

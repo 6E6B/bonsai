@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "dark",
   "seeds": {
+    "font": { "google": "Figtree" },
     "background": "#1c1714",
     "foreground": "#f3ece6",
     "accent": "#d9612b",

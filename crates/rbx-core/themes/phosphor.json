@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "dark",
   "seeds": {
+    "font": { "google": "IBM Plex Mono" },
     "background": "#0a0c0a",
     "foreground": "#c8f5c8",
     "accent": "#3ddc6a",

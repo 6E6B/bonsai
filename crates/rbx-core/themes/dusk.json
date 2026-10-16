@@ -6,6 +6,7 @@
   "version": "1.0.0",
   "base": "dark",
   "seeds": {
+    "font": { "google": "Outfit" },
     "background": "#1a1625",
     "foreground": "#ece6f5",
     "accent": "#a37cf0",

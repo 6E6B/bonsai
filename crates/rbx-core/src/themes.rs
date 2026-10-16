@@ -558,6 +558,26 @@ mod tests {
     }
 
     #[test]
+    fn builtin_fonts() {
+        let t = Themes::default();
+        assert_eq!(t.get("dark").unwrap().google_font(FontSlot::Sans), None);
+        assert_eq!(t.get("adwaita").unwrap().google_font(FontSlot::Sans), None);
+        assert_eq!(
+            t.get("ember").unwrap().google_font(FontSlot::Sans),
+            Some("Figtree")
+        );
+        // A seed that isn't a bundled id must be a valid Google family, or it would never load.
+        for (theme, _) in t.all() {
+            let seed = &theme.seeds["font"];
+            assert!(
+                seed.as_str().is_some_and(|s| s == "inter") || theme.google_font(FontSlot::Sans).is_some(),
+                "{}",
+                theme.id
+            );
+        }
+    }
+
+    #[test]
     fn parse_fills_and_cleans_text() {
         let t = Theme::parse(r##"{"schema":1,"id":"x","base":"light","name":"  a\u0007b  ","extra":1}"##)
             .unwrap();
