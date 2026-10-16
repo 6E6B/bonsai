@@ -10,7 +10,13 @@ import { quickCode } from "./approve"
  * `shell.approve`; closing the dialog early cancels the code (the `onClose` of the caller calls
  * `approveClose`).
  */
-export function ApproveCode(props: { initial?: string; onSeq: (seq: number) => void; onDone: () => void }) {
+export function ApproveCode(props: {
+  /** The account the other device signs in as. */
+  account: number | null
+  initial?: string
+  onSeq: (seq: number) => void
+  onDone: () => void
+}) {
   const [code, setCode] = createSignal(quickCode(props.initial ?? ""))
   const [seq, setSeq] = createSignal<number>()
   const [error, setError] = createSignal<string>()
@@ -19,13 +25,13 @@ export function ApproveCode(props: { initial?: string; onSeq: (seq: number) => v
     return a && a.seq === seq() ? a : undefined
   }
   const account = () => {
-    const a = shell.accounts.find((x) => x.id === shell.active)
+    const a = shell.accounts.find((x) => x.id === props.account)
     return a ? `@${a.name}` : "this account"
   }
   const submit = async (e: SubmitEvent) => {
     e.preventDefault()
     setError(undefined)
-    const r = await commands.approveEnter(code())
+    const r = await commands.approveEnter(code(), props.account)
     if (r.status === "error") return setError(r.error)
     setSeq(r.data)
     props.onSeq(r.data)

@@ -136,11 +136,18 @@ export function Layout(props: ParentProps) {
     // The dialog starts the backend side (code polling, the sign-in window) and stops it on close.
     handle("account.quick_sign_in", addAccount("quick", "Quick sign-in")),
     handle("account.sign_in_browser", addAccount("browser", "Sign in with Roblox")),
-    handle("account.approve_code", (arg) => {
+    handle("account.approve_code", (arg, asAccount) => {
       // The attempt to cancel if the dialog closes before it is approved.
       let seq: number | undefined
       dialog.show(
-        () => <ApproveCode initial={arg ?? undefined} onSeq={(s) => (seq = s)} onDone={() => dialog.close()} />,
+        () => (
+          <ApproveCode
+            account={asAccount ?? shell.active}
+            initial={arg ?? undefined}
+            onSeq={(s) => (seq = s)}
+            onDone={() => dialog.close()}
+          />
+        ),
         {
           title: "Sign in another device",
           size: "sm",

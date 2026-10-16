@@ -7,7 +7,7 @@
   - [x] Secure storage (saves cookie to OS Keychain via Secret Service / Credential Manager / Keychain, with in-memory fallback)
   - [x] Redaction: Cookies, CSRF tokens, and auth tickets are never printed to logs or committed
 - [x] **Quick Login (Cross-Device)**:
-  - [x] "Enter Code" screen (enter 6-character code shown on another device to sign it in): `account.approve_code` (also Settings → Account → Security). Enter the code, see the device and location, then Confirm (`auth-token-service/v1/login/enterCode`, `validateCode`); closing early sends `login/cancel`
+  - [x] "Enter Code" screen (enter 6-character code shown on another device to sign it in): `account.approve_code` (also the account rail menu and Settings → Account → Security). Enter the code, see the device and location, then Confirm (`auth-token-service/v1/login/enterCode`, `validateCode`); closing early sends `login/cancel`
   - [x] "Generate Code" screen (display 6-character code to sign in on another device)
   - [x] Quick sign-in adds an account (show code, poll status, finish login, save cookie). See [Sign-in plan](#sign-in-plan)
 - [x] **Browser Sign-In Window**:

@@ -278,8 +278,8 @@ export const commands = {
 	challengeCancel: (seq: Id) => __TAURI_INVOKE<void>("challenge_cancel", { seq }),
 	/**  Opens the puzzle window for a captcha check. */
 	openCaptcha: (seq: Id) => typedError<null, string>(__TAURI_INVOKE("open_captcha", { seq })),
-	/**  Enters a code for the active account. Returns the attempt's `seq`. */
-	approveEnter: (code: string) => typedError<Id, string>(__TAURI_INVOKE("approve_enter", { code })),
+	/**  Enters a code for `account` (default: the active one). Returns the attempt's `seq`. */
+	approveEnter: (code: string, account: number | null) => typedError<Id, string>(__TAURI_INVOKE("approve_enter", { code, account })),
 	/**  Approves the code the dialog shows. */
 	approveConfirm: (seq: Id) => typedError<null, string>(__TAURI_INVOKE("approve_confirm", { seq })),
 	/**  Closes the dialog. An entered code that wasn't approved is cancelled. */

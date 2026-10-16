@@ -11,7 +11,8 @@ import { isPlain, match, toPress } from "./keys"
  * local handler with `handle`; the rest go to the backend.
  */
 
-type Handler = (arg: string | null) => void
+/** `asAccount` is set when a menu runs the command for a given account. */
+type Handler = (arg: string | null, asAccount: number | null) => void
 
 const local = new Map<string, Handler>()
 let pageContext: string | null = null
@@ -85,7 +86,7 @@ export async function run(id: string, arg: string | null = null, asAccount: numb
   const ask = confirmations[id]?.(arg)
   if (ask && confirmer && !(await confirmer(ask))) return false
   const h = local.get(id)
-  if (h) return h(arg)
+  if (h) return h(arg, asAccount)
   return runBackend(id, arg, asAccount)
 }
 

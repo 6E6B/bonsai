@@ -4,8 +4,8 @@
 
 use std::sync::Arc;
 
-use rbx_core::Core;
 use rbx_core::signin::{ApprovePrompt, ApproveStep};
+use rbx_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
 use tauri::State;
@@ -51,12 +51,12 @@ pub(super) fn view(p: &ApprovePrompt) -> ApproveView {
     }
 }
 
-/// Enters a code for the active account. Returns the attempt's `seq`.
+/// Enters a code for `account` (default: the active one). Returns the attempt's `seq`.
 #[tauri::command]
 #[specta::specta]
-pub fn approve_enter(core: State<'_, Arc<Core>>, code: String) -> Result<Id, String> {
+pub fn approve_enter(core: State<'_, Arc<Core>>, code: String, account: Option<Id>) -> Result<Id, String> {
     let a = core
-        .acting(None)
+        .acting(account.map(|a| AccountId(a.0)))
         .ok_or_else(|| "Add an account first.".to_owned())?;
     core.approve_enter(a, &code).map(Id)
 }

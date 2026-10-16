@@ -38,6 +38,7 @@ export function AccountRail() {
       menuItem("account.replace_cookie", as),
       menuItem("account.sign_out", { ...as, icon: "sign-out" }),
       menuItem("account.sign_out_others", as),
+      menuItem("account.approve_code", { ...as, label: "Sign in another device…", icon: "devices" }),
       {
         label: "Remove from app…",
         icon: "trash",
