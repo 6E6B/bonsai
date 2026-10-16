@@ -61,6 +61,7 @@ import {
   useConfirm,
   usePrompt,
   VerifiedBadge,
+  Viewport,
   VirtualGrid,
   WindowControls,
 } from "~/lib/ui"
@@ -611,6 +612,11 @@ export default function Components() {
         <MediaFrame class="w-64" index={0} count={3} onStep={() => {}} caption="Trailer" captionIcon="video">
           <Thumbnail alt="Media frame" shape="wide" />
         </MediaFrame>
+        <Viewport class="w-40" tabindex={0} aria-label="Viewport">
+          <span class="absolute right-2 bottom-2">
+            <Spinner size="sm" />
+          </span>
+        </Viewport>
         <div class="grid w-full grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
           <Tile title="Tile Cats" subtitle="1,037 playing" onClick={noop} />
           <Tile

@@ -1,0 +1,22 @@
+@layer components {
+  [data-component="viewport"] {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-control);
+    background-image: var(--sheen-soft);
+    box-shadow: var(--shadow-media);
+    outline: none;
+  }
+
+  [data-component="viewport"]:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+
+  /* An image laid over the frame already has the frame's look. */
+  [data-component="viewport"] > [data-component="thumbnail"] {
+    box-shadow: none;
+  }
+}

@@ -480,6 +480,8 @@ export type BadgeRow = {
 export type BundlePartView = {
 	id: Id,
 	name: string,
+	/**  Asset type id; 0 when the catalog didn't say. */
+	typeId: number,
 };
 
 /**  One marketplace search, as the filters set it. */

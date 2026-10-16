@@ -2,9 +2,9 @@ import { convertFileSrc } from "@tauri-apps/api/core"
 import * as THREE from "three"
 import dracoUrl from "three/examples/jsm/libs/draco/draco_decoder.js?url"
 import { shell } from "~/lib/store"
-import { Authentication, HOST, Outfit, OutfitRenderer, RBXRenderer } from "./engine"
+import { API, Authentication, CFrame, HOST, type Instance, Outfit, OutfitRenderer, RBXRenderer } from "./engine"
 import { assetPath } from "./host"
-import { type OutfitJson, outfitKey, type TryOnItem } from "./outfit"
+import { type OutfitJson, type Subject, subjectKey, type TryOnItem } from "./outfit"
 
 /**
  * The 3D engine keeps one WebGL canvas for the whole app. A viewer leases it while it is on
@@ -15,8 +15,8 @@ import { type OutfitJson, outfitKey, type TryOnItem } from "./outfit"
 export type StageState = "loading" | "ready" | "error"
 
 export interface Lease {
-  /** Builds the outfit. False when it is already showing. */
-  show(json: OutfitJson, tryOn: TryOnItem | null): boolean
+  /** Draws an outfit or an accessory. False when it is already showing. */
+  show(subject: Subject): boolean
   /** Plays a set animation (`idle`, `walk`) or `emote.<id>`. False when it couldn't. */
   play(name: string): Promise<boolean>
   orbit(how: string): void
@@ -32,6 +32,11 @@ interface Holder {
 let booted: Promise<void> | null = null
 let renderer: OutfitRenderer | null = null
 let holder: Holder | null = null
+/** The accessory drawn by itself, and the tree it came from. */
+let alone: { root: Instance; accessory: Instance } | null = null
+/** Bumped on every `show`, so a slow accessory load can tell it was replaced. */
+let generation = 0
+const auth = new Authentication()
 
 function loadScript(src: string) {
   return new Promise<void>((resolve, reject) => {
@@ -71,10 +76,10 @@ function boot() {
   return booted
 }
 
-function outfitFrom(json: OutfitJson, tryOn: TryOnItem | null) {
+function outfitFrom(json: OutfitJson, wear: TryOnItem[]) {
   const outfit = new Outfit()
   outfit.fromJson(json)
-  if (tryOn) outfit.addAsset(tryOn.id, tryOn.typeId, tryOn.name)
+  for (const w of wear) outfit.addAsset(w.id, w.typeId, w.name)
   return outfit
 }
 
@@ -83,7 +88,7 @@ function ensureRenderer(outfit: Outfit) {
     renderer.setOutfit(outfit)
     return renderer
   }
-  const r = new OutfitRenderer(new Authentication(), outfit)
+  const r = new OutfitRenderer(auth, outfit)
   r.onRenderSuccess.Connect(() => holder?.state("ready"))
   r.onError.Connect(() => holder?.state("error"))
   r.onRenderError.Connect(() => holder?.state("error"))
@@ -92,6 +97,10 @@ function ensureRenderer(outfit: Outfit) {
 }
 
 function resetCamera() {
+  if (alone) {
+    frame([alone.accessory, ...alone.accessory.GetDescendants()])
+    return
+  }
   const scene = RBXRenderer.firstScene
   const controls = scene.controls
   if (!controls) return
@@ -101,6 +110,62 @@ function resetCamera() {
   scene.camera.position.set(x * d, 3 + y * d, z * d)
   controls.update()
   renderer?.centerCamera()
+}
+
+function dropRenderer() {
+  renderer?.destroy()
+  renderer = null
+}
+
+function dropAlone() {
+  if (!alone) return
+  RBXRenderer.removeInstance(alone.accessory)
+  alone.root.Destroy()
+  alone = null
+}
+
+/** Shows or hides the ground shadow, which would cut off an accessory drawn at the origin. */
+function setGround(on: boolean) {
+  const plane = RBXRenderer.firstScene.shadowPlane
+  if (plane) plane.visible = on
+}
+
+/** Points the camera at what is drawn, from the front, so it fills the view. */
+function frame(parts: Instance[]) {
+  const scene = RBXRenderer.firstScene
+  const controls = scene.controls
+  const box = new THREE.Box3()
+  for (const p of parts) for (const o of scene.renderDescs.get(p)?.results ?? []) box.expandByObject(o)
+  if (!controls || box.isEmpty()) return
+  const center = box.getCenter(new THREE.Vector3())
+  const radius = box.getBoundingSphere(new THREE.Sphere()).radius
+  const fov = THREE.MathUtils.degToRad(scene.camera.fov)
+  const distance = (radius * 1.3) / Math.sin(fov / 2)
+  const [x, y, z] = scene.lookAwayVector
+  controls.target.copy(center)
+  scene.camera.position.copy(center).add(new THREE.Vector3(x, y, z).normalize().multiplyScalar(distance))
+  controls.update()
+}
+
+/** Loads an accessory and draws it at the origin, the way Roblox's accessory thumbnails do. */
+async function showAccessory(id: number, gen: number, state: (s: StageState) => void) {
+  const rbx = await API.Asset.GetRBX(`rbxassetid://${id}`, { "Roblox-AssetFormat": "avatar_meshpart_accessory" })
+  if (gen !== generation) return
+  const root = rbx instanceof Response ? undefined : rbx.generateTree()
+  const accessory = root?.FindFirstChildOfClass("Accessory")
+  if (!root || !accessory) {
+    root?.Destroy()
+    return state("error")
+  }
+  accessory.FindFirstChild("Handle")?.setProperty("CFrame", new CFrame())
+  alone = { root, accessory }
+  RBXRenderer.addInstance(accessory, auth)
+  const parts = [accessory, ...accessory.GetDescendants()]
+  const ok = await RBXRenderer.firstScene.waitUntilFullyCompiled(parts)
+  if (gen !== generation) return
+  if (!ok) return state("error")
+  frame(parts)
+  state("ready")
 }
 
 const STEP = Math.PI / 12
@@ -137,13 +202,22 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
 
   const mine = () => holder === me
   return {
-    show(json, tryOn) {
-      const key = outfitKey(json, tryOn)
+    show(subject) {
+      const key = subjectKey(subject)
       if (!mine() || key === shown) return false
-      const first = !renderer
       shown = key
+      const gen = ++generation
       state("loading")
-      ensureRenderer(outfitFrom(json, tryOn)).startAnimating()
+      dropAlone()
+      if (subject.kind === "accessory") {
+        dropRenderer()
+        setGround(false)
+        void showAccessory(subject.id, gen, state).catch(() => gen === generation && state("error"))
+        return true
+      }
+      setGround(true)
+      const first = !renderer
+      ensureRenderer(outfitFrom(subject.outfit, subject.wear)).startAnimating()
       if (first) resetCamera()
       return true
     },
@@ -160,6 +234,7 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
     release() {
       if (!mine()) return
       holder = null
+      generation++
       renderer?.stopAnimating()
       RBXRenderer.firstScene.shouldAnimate = false
       RBXRenderer.canvasContainer.remove()

@@ -13,14 +13,14 @@
   - [x] Include unavailable items toggle
 - [ ] **Item Details Page**:
   - [x] High-resolution 2D rendered image preview
-  - [x] Interactive 3D item preview (orbit, zoom, pan) — shown worn by your avatar (Try On); the item isn't drawn on its own
+  - [x] Interactive 3D item preview (orbit, zoom, pan) — shown by default: hats, hair and other rigid accessories on their own, other items and bundles on a grey mannequin, or on your avatar with Try On
   - [ ] Audio asset player (for music and sound effects)
-  - [x] Animation preview player — Try On plays an emote, or the animation a pack replaces, on your avatar
+  - [x] Animation preview player — plays an emote, or the animation a pack replaces, on the mannequin or your avatar; other animations from the viewer's Animation menu
   - [x] Creator attribution link with verified badge
   - [x] Pricing: Robux price, Free, Off Sale, or Lowest Resale Price for Limiteds
   - [x] Favorites count & Favorite toggle button
   - [x] Add to / Remove from local Wishlist
-  - [x] "Try On" avatar preview toggle — `market.try_on`, for wearable assets and emotes; not bundles yet
+  - [x] "Try On" avatar preview toggle — `market.try_on` switches between the item on its own and on your avatar; wearable assets, emotes and bundles
   - [x] Asset metadata: Asset ID, genres, tags, description, created and updated dates
   - [x] Download clothing template (shirts, pants, T-shirts) to the downloads folder, plain or masked to the template regions; in the item page's More menu, item right-click menus and the command bar (not run live yet)
   - [x] Assets the catalog doesn't list (models, decals, images, audio, meshes, plugins, videos, packages): the item page shows their economy details (creator, type, price or "Free to take", Premium only, sales, created and updated) with an Open on website button; buy, wishlist and similar items are hidden. Thumbnails fall back to a per-type icon

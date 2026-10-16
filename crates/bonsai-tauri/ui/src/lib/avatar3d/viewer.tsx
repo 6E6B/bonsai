@@ -4,8 +4,16 @@ import { createStore } from "solid-js/store"
 import { handle, menuItem, run } from "~/lib/commands/registry"
 import { type Avatar3dView, type AvatarSource, commands } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
-import { IconButton, Menu, type MenuEntry, Select, Spinner, showToast, Thumbnail } from "~/lib/ui"
-import { animationName, BASIC_ANIMATIONS, emoteIds, type TryOnItem, toOutfitJson } from "./outfit"
+import { IconButton, Menu, type MenuEntry, Spinner, showToast, Thumbnail, Viewport } from "~/lib/ui"
+import {
+  animationName,
+  BASIC_ANIMATIONS,
+  emoteIds,
+  MANNEQUIN,
+  type Subject,
+  type TryOnItem,
+  toOutfitJson,
+} from "./outfit"
 import type { Lease, StageState } from "./stage"
 
 const KEY = "avatar3d"
@@ -54,15 +62,18 @@ const ORBIT_KEYS: Record<string, string> = {
 }
 
 export interface AvatarViewerProps {
-  source: AvatarSource
+  /** Whose avatar to draw. Without one, a plain grey mannequin. */
+  source?: AvatarSource
   /** The 2D image, shown in 2D mode, while the engine starts and when it can't. */
   image?: string
   alt: string
-  /** An item worn on top of the avatar. */
-  tryOn?: TryOnItem | null
+  /** Items worn on top of the avatar, like an item or bundle being tried on. */
+  wear?: TryOnItem[]
+  /** An accessory drawn by itself, instead of any avatar. */
+  accessory?: number
   /** Played once the model has drawn, like an emote being previewed. */
   animation?: string
-  /** Shows the animation and emote pickers. */
+  /** Adds the Animation submenu. */
   controls?: boolean
   class?: string
   /** Menu entries added to the toolbar's menu. */
@@ -75,18 +86,27 @@ export interface AvatarViewerProps {
  * Only one viewer shows the model at a time; the engine loads on first use.
  */
 export function AvatarViewer(props: AvatarViewerProps) {
-  const key = createMemo(() => JSON.stringify(props.source), undefined, { equals: (a, b) => a === b })
-  const view = useLive(key, () => commands.avatar3d(props.source), blank)
+  const key = createMemo(() => JSON.stringify(props.source ?? null), undefined, { equals: (a, b) => a === b })
+  const view = useLive(key, () => (props.source ? commands.avatar3d(props.source) : Promise.resolve(blank())), blank)
   const [state, setState] = createSignal<StageState | "off" | "failed">("off")
   const [anim, setAnim] = createSignal("idle")
   const [lease, setLease] = createSignal<Lease | null>(null)
   // The image stays up until the first model has drawn; later changes redraw in place.
   const [drawn, setDrawn] = createSignal(false)
+  // Bumped each time a new subject is shown, so its showcase animation plays again.
+  const [shown, setShown] = createSignal(0)
   let box!: HTMLDivElement
   let disposed = false
 
   const want3d = () => mode.on && isTauri()
-  const ready = () => view.rig !== "" && view.error === null
+  const subject = (): Subject | null => {
+    if (props.accessory) return { kind: "accessory", id: props.accessory }
+    const wear = props.wear ?? []
+    if (!props.source) return { kind: "outfit", outfit: MANNEQUIN, wear }
+    if (view.rig === "" || view.error !== null) return null
+    return { kind: "outfit", outfit: toOutfitJson(view), wear }
+  }
+  const ready = () => subject() !== null
 
   createEffect(
     on([want3d, ready], ([want, ok]) => {
@@ -127,12 +147,15 @@ export function AvatarViewer(props: AvatarViewerProps) {
   })
   createEffect(() => {
     const l = lease()
-    if (!l || !ready()) return
-    if (l.show(toOutfitJson(view), props.tryOn ?? null)) setAnim("idle")
+    const s = subject()
+    if (l && s && l.show(s)) {
+      setAnim("idle")
+      setShown((n) => n + 1)
+    }
   })
   createEffect(
-    on([lease, drawn, () => props.animation], ([l, d, a]) => {
-      if (!l || !d || !a) return
+    on([lease, drawn, () => props.animation, shown], ([l, d, a]) => {
+      if (!l || !d || !a || props.accessory) return
       void l.play(a).then((ok) => ok && setAnim(a))
     }),
   )
@@ -168,30 +191,47 @@ export function AvatarViewer(props: AvatarViewerProps) {
   }
 
   const showImage = () => !lease() || !drawn()
-  const emotes = () => emoteIds(view)
-  const animOptions = () => [
-    ...BASIC_ANIMATIONS.map((a) => ({ value: a, label: a[0].toUpperCase() + a.slice(1) })),
-    ...emotes().map((e) => ({ value: `emote.${e.id}`, label: e.name })),
-    // An emote being previewed that isn't equipped.
-    ...(props.animation?.startsWith("emote.") && !emotes().some((e) => `emote.${e.id}` === props.animation)
-      ? [{ value: props.animation, label: "This emote" }]
-      : []),
-  ]
+  const animated = () => !!lease() && !props.accessory
+  const animations = (): MenuEntry[] => {
+    const item = (value: string, label: string) =>
+      menuItem("avatar.play", { arg: value, label, icon: value === anim() ? "check" : undefined })
+    const emotes = emoteIds(view).map((e) => item(`emote.${e.id}`, e.name))
+    // An emote or animation pack being previewed that isn't equipped.
+    const extra = props.animation
+    const listed =
+      extra && (BASIC_ANIMATIONS.some((a) => a === extra) || emoteIds(view).some((e) => `emote.${e.id}` === extra))
+    return [
+      ...BASIC_ANIMATIONS.map((a) => item(a, a[0].toUpperCase() + a.slice(1))),
+      ...(extra && !listed ? [item(extra, "This item")] : []),
+      ...(emotes.length ? [{ kind: "heading" as const, label: "Emotes" }, ...emotes] : []),
+    ]
+  }
   const toolbarMenu = (): MenuEntry[] => [
     menuItem("avatar.view_3d", { label: mode.on ? "Show image" : "Show 3D", icon: mode.on ? "image" : "model" }),
     menuItem("avatar.orbit", { arg: "reset", label: "Reset camera", icon: "refresh", disabled: !lease() }),
-    ...(props.menu ?? []),
+    ...(props.controls
+      ? [
+          {
+            kind: "submenu" as const,
+            label: "Animation",
+            icon: "play" as const,
+            items: animations(),
+            disabled: !animated(),
+          },
+        ]
+      : []),
+    ...(props.menu?.length ? [{ kind: "separator" as const }, ...props.menu] : []),
   ]
 
   return (
     <div class={`flex flex-col gap-2 ${props.class ?? ""}`}>
-      <div
+      <Viewport
         ref={box}
         tabindex={lease() ? 0 : -1}
         role="img"
         aria-label={props.alt}
         onKeyDown={onKey}
-        class="relative aspect-square w-full overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        class="w-full"
       >
         <Show when={showImage()}>
           <Thumbnail class="absolute inset-0 w-full" alt={props.alt} fallback="avatar" src={props.image} />
@@ -201,7 +241,7 @@ export function AvatarViewer(props: AvatarViewerProps) {
             <Spinner size="sm" />
           </span>
         </Show>
-      </div>
+      </Viewport>
       <div class="flex items-center gap-1">
         <IconButton
           size="sm"
@@ -209,15 +249,7 @@ export function AvatarViewer(props: AvatarViewerProps) {
           label={mode.on ? "Show image" : "Show 3D"}
           onClick={() => run("avatar.view_3d")}
         />
-        <Show when={props.controls && lease()}>
-          <Select
-            size="sm"
-            aria-label="Animation"
-            class="min-w-0 flex-1"
-            options={animOptions()}
-            value={anim()}
-            onChange={(v) => void run("avatar.play", v)}
-          />
+        <Show when={lease()}>
           <IconButton size="sm" icon="refresh" label="Reset camera" onClick={() => run("avatar.orbit", "reset")} />
         </Show>
         <Show when={state() === "failed" || state() === "error"}>

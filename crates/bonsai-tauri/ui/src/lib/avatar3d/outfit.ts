@@ -62,9 +62,29 @@ export function toOutfitJson(view: Avatar3dView): OutfitJson {
   }
 }
 
-/** A stable key for what an outfit looks like, so the viewer only rebuilds on real changes. */
-export function outfitKey(json: OutfitJson, tryOn: TryOnItem | null) {
-  return JSON.stringify([json, tryOn?.id ?? null])
+/** What the stage draws: an outfit with items worn on top, or one accessory by itself. */
+export type Subject = { kind: "outfit"; outfit: OutfitJson; wear: TryOnItem[] } | { kind: "accessory"; id: number }
+
+/** A stable key for what a subject looks like, so the viewer only rebuilds on real changes. */
+export function subjectKey(s: Subject) {
+  return s.kind === "accessory" ? `accessory:${s.id}` : JSON.stringify([s.outfit, s.wear.map((w) => w.id)])
+}
+
+const GREY = 194
+
+/** A plain grey R15 body at default scale, for showing items without anyone's avatar. */
+export const MANNEQUIN: OutfitJson = {
+  playerAvatarType: "R15",
+  scale: {},
+  bodyColors: {
+    headColorId: GREY,
+    torsoColorId: GREY,
+    leftArmColorId: GREY,
+    rightArmColorId: GREY,
+    leftLegColorId: GREY,
+    rightLegColorId: GREY,
+  },
+  assets: [],
 }
 
 /** Asset ids of the equipped emotes, by hotbar slot. */
@@ -104,14 +124,26 @@ const ANIMATION_TYPES: Record<number, string> = {
   56: "pose",
 }
 
+/** Rigid accessories (hats, hair, face, neck, shoulder, front, back, waist), which are drawn
+ * by themselves. Other items are shown on a mannequin. */
+const RIGID_ACCESSORY = new Set([8, 41, 42, 43, 44, 45, 46, 47])
+
 /** Whether an asset of this type can be tried on: worn, or for emotes, played. */
 export const canTryOn = (typeId: number) => WEARABLE.has(typeId) || typeId === EMOTE
 
-/** What Try On wears for an item. Emotes aren't worn; they're played. */
-export const tryOnItem = (item: TryOnItem): TryOnItem | null => (item.typeId === EMOTE ? null : item)
+/** Whether an item is drawn by itself rather than on a mannequin. */
+export const showsAlone = (typeId: number) => RIGID_ACCESSORY.has(typeId)
 
-/** The animation that shows an item off: the emote itself, or the animation a pack replaces. */
-export function showcaseAnimation(item: TryOnItem): string | undefined {
-  if (item.typeId === EMOTE) return `emote.${item.id}`
-  return ANIMATION_TYPES[item.typeId]
+/** The items Try On wears from an item or a bundle's parts. Emotes aren't worn; they're played. */
+export const wearable = (items: TryOnItem[]) => items.filter((i) => WEARABLE.has(i.typeId))
+
+const SHOWCASE_ORDER = ["walk", "run", "idle", "jump", "fall", "swim", "climb"]
+
+/** The animation that shows items off: an emote itself, or the animation a pack replaces
+ * (walk first, for a whole pack). */
+export function showcaseAnimation(items: TryOnItem[]): string | undefined {
+  const emote = items.find((i) => i.typeId === EMOTE)
+  if (emote) return `emote.${emote.id}`
+  const names = new Set(items.map((i) => ANIMATION_TYPES[i.typeId]))
+  return SHOWCASE_ORDER.find((n) => names.has(n))
 }

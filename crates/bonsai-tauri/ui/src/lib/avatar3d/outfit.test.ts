@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest"
 import type { Avatar3dView, WornView } from "~/lib/ipc/bindings"
-import { animationName, canTryOn, emoteIds, outfitKey, showcaseAnimation, toOutfitJson, tryOnItem } from "./outfit"
+import {
+  animationName,
+  canTryOn,
+  emoteIds,
+  MANNEQUIN,
+  showcaseAnimation,
+  showsAlone,
+  subjectKey,
+  toOutfitJson,
+  wearable,
+} from "./outfit"
 
 const worn = (id: number, typeId: number, layer: number | null = null): WornView => ({
   id,
@@ -49,13 +59,15 @@ describe("toOutfitJson", () => {
   })
 })
 
-describe("outfitKey", () => {
-  it("changes with the outfit and the try-on item", () => {
-    const j = toOutfitJson(view())
-    const item = { id: 9, name: "Hat", typeId: 8 }
-    expect(outfitKey(j, null)).toBe(outfitKey(toOutfitJson(view()), null))
-    expect(outfitKey(j, item)).not.toBe(outfitKey(j, null))
-    expect(outfitKey(toOutfitJson(view({ colors: [9, 2, 3, 4, 5, 6] })), null)).not.toBe(outfitKey(j, null))
+describe("subjectKey", () => {
+  it("changes with the outfit and the worn items", () => {
+    const outfit = (j = toOutfitJson(view()), wear = [] as { id: number; name: string; typeId: number }[]) =>
+      subjectKey({ kind: "outfit", outfit: j, wear })
+    const hat = { id: 9, name: "Hat", typeId: 8 }
+    expect(outfit()).toBe(outfit(toOutfitJson(view())))
+    expect(outfit(undefined, [hat])).not.toBe(outfit())
+    expect(outfit(toOutfitJson(view({ colors: [9, 2, 3, 4, 5, 6] })))).not.toBe(outfit())
+    expect(subjectKey({ kind: "accessory", id: 9 })).not.toBe(outfit(MANNEQUIN, [hat]))
   })
 })
 
@@ -85,6 +97,11 @@ describe("animationName", () => {
 })
 
 describe("try on", () => {
+  const emote = { id: 5, name: "Wave", typeId: 61 }
+  const walk = { id: 6, name: "Walk", typeId: 55 }
+  const run = { id: 8, name: "Run", typeId: 53 }
+  const hat = { id: 7, name: "Hat", typeId: 8 }
+
   it("knows what can be tried on", () => {
     expect(canTryOn(8)).toBe(true)
     expect(canTryOn(61)).toBe(true)
@@ -92,16 +109,24 @@ describe("try on", () => {
     expect(canTryOn(13)).toBe(false)
   })
 
+  it("draws rigid accessories alone and the rest on a mannequin", () => {
+    expect(showsAlone(8)).toBe(true)
+    expect(showsAlone(64)).toBe(false)
+    expect(showsAlone(11)).toBe(false)
+  })
+
   it("plays emotes instead of wearing them", () => {
-    const emote = { id: 5, name: "Wave", typeId: 61 }
-    expect(tryOnItem(emote)).toBeNull()
-    expect(showcaseAnimation(emote)).toBe("emote.5")
+    expect(wearable([emote])).toEqual([])
+    expect(showcaseAnimation([emote])).toBe("emote.5")
+  })
+
+  it("wears bundle parts and skips unknown types", () => {
+    expect(wearable([hat, { id: 1, name: "?", typeId: 0 }, walk])).toEqual([hat, walk])
   })
 
   it("shows off animation packs with the animation they replace", () => {
-    const walk = { id: 6, name: "Walk", typeId: 55 }
-    expect(tryOnItem(walk)).toEqual(walk)
-    expect(showcaseAnimation(walk)).toBe("walk")
-    expect(showcaseAnimation({ id: 7, name: "Hat", typeId: 8 })).toBeUndefined()
+    expect(showcaseAnimation([walk])).toBe("walk")
+    expect(showcaseAnimation([{ id: 9, name: "Climb", typeId: 48 }, run, walk])).toBe("walk")
+    expect(showcaseAnimation([hat])).toBeUndefined()
   })
 })

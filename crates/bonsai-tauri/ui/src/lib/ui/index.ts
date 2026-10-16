@@ -60,5 +60,6 @@ export { dismissToast, showToast, Toaster, type ToastOptions, type ToastVariant 
 export { ToggleButton, type ToggleButtonProps } from "./toggle-button"
 export { Tooltip, type TooltipProps } from "./tooltip"
 export { VerifiedBadge, type VerifiedBadgeProps } from "./verified-badge"
+export { Viewport } from "./viewport"
 export { VirtualGrid, type VirtualGridProps } from "./virtual-grid"
 export { WindowControls, type WindowControlsProps } from "./window-controls"

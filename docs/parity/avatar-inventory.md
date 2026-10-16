@@ -31,7 +31,7 @@
 - [x] **Animations & Emotes**:
   - [x] Animation packs: Idle, Walk, Run, Jump, Fall, Climb, Swim
   - [x] Emote assignment hotbar (slots 1 through 8) — `avatar.emote` puts an emote in a slot or clears it (right-click an emote)
-  - [x] Emote animation playback preview — `avatar.play` plays idle, walk, run, jump, fall, climb, swim or an equipped emote
+  - [x] Emote animation playback preview — `avatar.play` plays idle, walk, run, jump, fall, climb, swim or an equipped emote; also the viewer's Animation menu
 - [x] **Outfits ("Costumes")**:
   - [x] List saved outfits with rendered preview thumbnails
   - [x] Create new outfit from current appearance

@@ -251,9 +251,12 @@ pub struct ItemInfo {
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
 pub struct BundlePartView {
     pub id: Id,
     pub name: String,
+    /// Asset type id; 0 when the catalog didn't say.
+    pub type_id: i32,
 }
 
 /// Rolimons' demand rating, lowest first.
@@ -524,6 +527,7 @@ pub fn item_page(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> ItemView {
                     .map(|p| BundlePartView {
                         id: Id(p.id),
                         name: p.name.clone(),
+                        type_id: p.asset_type,
                     })
                     .collect(),
                 in_catalog: true,

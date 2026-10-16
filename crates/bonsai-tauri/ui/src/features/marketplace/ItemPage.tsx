@@ -1,11 +1,11 @@
 import { useLocation, useParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, Match, on, onCleanup, Show, Switch } from "solid-js"
 import { assetIcon } from "~/lib/asset-icon"
-import { canTryOn, showcaseAnimation, type TryOnItem, tryOnItem } from "~/lib/avatar3d/outfit"
+import { canTryOn, showcaseAnimation, showsAlone, type TryOnItem, wearable } from "~/lib/avatar3d/outfit"
 import { AvatarViewer, show3d } from "~/lib/avatar3d/viewer"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
-import { handle, run } from "~/lib/commands/registry"
+import { handle, menuItem, run } from "~/lib/commands/registry"
 import { ago, compact, date } from "~/lib/format"
 import {
   commands,
@@ -121,17 +121,22 @@ export default function ItemPage() {
       buy(account)
     }),
   )
-  // Try On shows your avatar in 3D wearing the item, or doing the emote.
+  // The 3D view shows the item by itself (accessories alone, the rest on a mannequin), or with
+  // Try On, your avatar wearing it or doing the emote. Bundles use their parts.
   const [trying, setTrying] = createSignal(false)
   createEffect(on(id, () => setTrying(false), { defer: true }))
-  const tryOn = (): TryOnItem | null => {
+  const parts = (): TryOnItem[] => {
     const i = info()
-    return i && !bundle() && canTryOn(i.assetType) ? { id: i.id, name: i.name, typeId: i.assetType } : null
+    if (!i) return []
+    if (bundle()) return i.contents.filter((c) => c.typeId > 0)
+    return [{ id: i.id, name: i.name, typeId: i.assetType }]
   }
+  const previewable = () => parts().some((p) => canTryOn(p.typeId))
+  const alone = () => !bundle() && !trying() && showsAlone(info()?.assetType ?? 0)
   onCleanup(
     handle("market.try_on", () => {
-      if (!tryOn()) return showToast("This can't be tried on.")
-      if (shell.active === null) return showToast("Sign in to try items on.")
+      if (!previewable()) return showToast("This can't be shown in 3D.")
+      if (shell.active === null && !trying()) return showToast("Sign in to try items on.")
       show3d()
       setTrying((t) => !t)
     }),
@@ -163,7 +168,7 @@ export default function ItemPage() {
         {(item) => (
           <div class="flex flex-wrap gap-6">
             <Show
-              when={trying() && shell.active !== null && tryOn()}
+              when={previewable()}
               fallback={
                 <Thumbnail
                   class="w-72 self-start"
@@ -173,17 +178,26 @@ export default function ItemPage() {
                 />
               }
             >
-              {(t) => (
-                <AvatarViewer
-                  class="w-72 self-start"
-                  source={{ kind: "me" }}
-                  image={thumbUrl("avatar", shell.active ?? 0, true)}
-                  alt={`You wearing ${t().name}`}
-                  tryOn={tryOnItem(t())}
-                  animation={showcaseAnimation(t())}
-                  controls
-                />
-              )}
+              <AvatarViewer
+                class="w-72 self-start"
+                source={trying() && shell.active !== null ? { kind: "me" } : undefined}
+                image={
+                  trying()
+                    ? thumbUrl("avatar", shell.active ?? 0, true)
+                    : thumbUrl(bundle() ? "bundle" : "asset", id(), true)
+                }
+                alt={trying() ? `You wearing ${item().name}` : item().name}
+                accessory={alone() ? item().id : undefined}
+                wear={wearable(parts())}
+                animation={showcaseAnimation(parts())}
+                controls
+                menu={[
+                  menuItem("market.try_on", {
+                    label: trying() ? "View alone" : "Try on",
+                    icon: trying() ? "eye" : "avatar",
+                  }),
+                ]}
+              />
             </Show>
             <div class="flex min-w-64 flex-1 flex-col gap-3">
               <div class="flex flex-col gap-1">
@@ -259,7 +273,7 @@ export default function ItemPage() {
                 >
                   Favorite
                 </ToggleButton>
-                <Show when={tryOn()}>
+                <Show when={previewable()}>
                   <ToggleButton icon="avatar" pressed={trying()} onChange={() => run("market.try_on")}>
                     Try on
                   </ToggleButton>
