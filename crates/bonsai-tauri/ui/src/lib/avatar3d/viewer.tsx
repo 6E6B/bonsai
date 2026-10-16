@@ -225,14 +225,10 @@ export function AvatarViewer(props: AvatarViewerProps) {
 
   return (
     <div class={`flex flex-col gap-2 ${props.class ?? ""}`}>
-      <Viewport
-        ref={box}
-        tabindex={lease() ? 0 : -1}
-        role="img"
-        aria-label={props.alt}
-        onKeyDown={onKey}
-        class="w-full"
-      >
+      <Viewport tabindex={lease() ? 0 : -1} role="img" aria-label={props.alt} onKeyDown={onKey} class="w-full">
+        {/* The engine's canvas lives here. Solid clears an element whose dynamic children all
+            go away, so the canvas can't share a parent with the <Show>s below. */}
+        <div ref={box} class="absolute inset-0" />
         <Show when={showImage()}>
           <Thumbnail class="absolute inset-0 w-full" alt={props.alt} fallback="avatar" src={props.image} />
         </Show>
