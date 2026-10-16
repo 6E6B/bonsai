@@ -345,6 +345,14 @@ pub struct Settings {
     pub cache_days: u32,
     /// Thumbnails and 3D asset files on disk stay under this many megabytes.
     pub image_cache_mb: u32,
+    /// An icon in the system tray to show the window or quit.
+    pub tray: bool,
+    /// Closing the window hides it to the tray instead of quitting. Only with `tray`.
+    pub close_to_tray: bool,
+    /// The app starts when the user logs in to the computer.
+    pub start_on_login: bool,
+    /// A start at login stays in the tray without opening the window. Only with `tray`.
+    pub start_hidden: bool,
 }
 
 /// A daily stretch without notifications, in whole local hours. `start` is when it begins and
@@ -467,6 +475,10 @@ impl Default for Settings {
             notify_in_front: false,
             cache_days: 30,
             image_cache_mb: 1024,
+            tray: false,
+            close_to_tray: false,
+            start_on_login: false,
+            start_hidden: false,
         }
     }
 }

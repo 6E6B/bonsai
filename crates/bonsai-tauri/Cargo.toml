@@ -23,6 +23,7 @@ tauri-build = { workspace = true }
 rbx-core = { workspace = true }
 tauri = { workspace = true }
 tauri-specta = { workspace = true }
+tauri-plugin-autostart = { workspace = true }
 tauri-plugin-clipboard-manager = { workspace = true }
 tauri-plugin-notification = { workspace = true }
 rfd = { workspace = true }

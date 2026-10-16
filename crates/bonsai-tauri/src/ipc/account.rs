@@ -758,7 +758,14 @@ fn import_settings(app: &AppHandle) {
         let Some(core) = app.try_state::<Arc<Core>>() else {
             return;
         };
-        match core.import_settings(&path) {
+        let r = core.import_settings(&path);
+        let main = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            if let Some(core) = main.try_state::<Arc<Core>>() {
+                crate::desktop::sync(&main, &core.settings());
+            }
+        });
+        match r {
             Ok(0) => core.notice("Those settings match yours already.", false),
             Ok(1) => core.notice("Loaded 1 setting.", false),
             Ok(n) => core.notice(format!("Loaded {n} settings."), false),
@@ -885,8 +892,10 @@ pub(super) fn run(
                 core.update_settings(|s| {
                     let _ = prefs::apply(s, &a);
                 });
-                if p.section == "data" {
-                    core.tidy_soon();
+                match p.section {
+                    "data" => core.tidy_soon(),
+                    "desktop" => crate::desktop::sync(app, &core.settings()),
+                    _ => {}
                 }
             })
         }
@@ -901,6 +910,7 @@ pub(super) fn run(
                 core.update_settings(|s| {
                     let _ = prefs::reset(s, target);
                 });
+                crate::desktop::sync(app, &core.settings());
                 let msg = match n {
                     0 => "Already at the defaults.".to_owned(),
                     1 => "Reset 1 setting.".to_owned(),

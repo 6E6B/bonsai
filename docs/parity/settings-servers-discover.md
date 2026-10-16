@@ -60,6 +60,7 @@
 - [x] Settings > Notifications > When: quiet hours (whole local hours, may cross midnight; the UTC offset is read at startup), mute while the active account is in a game (its own presence is fetched with its friends'), notify while the app is in front, and ask for the system message sound.
 - [x] Settings > Accounts: rename, color tag and move up/down per account (the same `account.*` commands as the rail menu), and "Account color as accent", which repaints the accent tokens from the active account's tag.
 - [x] Settings > Data: how long unused cache is kept and the image cache size (the tidy job reads both; changing one tidies at once), settings export/import as JSON (import checks each setting like `settings.set` and never takes the launch command), reset all, and Copy diagnostics (versions, platform, cache size, changed settings; no names, ids or paths).
+- [x] Settings > Desktop: tray icon (Show / Quit; left click shows the window), close to tray, start on login (`tauri-plugin-autostart`, which passes `--login`) and start in the tray. Turning the tray off brings a hidden window back.
 - [ ] **Account Info**:
   - [x] Display name (edit with 7-day cooldown validation)
   - [x] Email address and verification status

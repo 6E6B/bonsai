@@ -369,6 +369,38 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "tray",
+        "desktop",
+        "Tray icon",
+        "An icon in the system tray to show the window or quit. Some Linux desktops need an extension to show tray icons.",
+        &["tray", "system tray", "notification area", "menu bar", "icon"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "close_to_tray",
+        "desktop",
+        "Close to tray",
+        "Closing the window keeps the app running in the tray, with notifications. Quit from the tray menu or the command bar.",
+        &["close", "minimize", "background", "keep running", "tray"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "start_on_login",
+        "desktop",
+        "Start on login",
+        "Open the app when you log in to this computer.",
+        &["autostart", "startup", "login", "boot", "launch"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "start_hidden",
+        "desktop",
+        "Start in the tray",
+        "When started on login, stay in the tray instead of opening the window.",
+        &["hidden", "minimized", "silent", "tray", "startup"],
+        PrefKind::Bool,
+    ),
+    pref(
         "item_values",
         "data",
         "Item values",
@@ -469,6 +501,10 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "notify_in_front" => on_off(s.notify_in_front).to_owned(),
         "cache_days" => s.cache_days.to_string(),
         "image_cache_mb" => s.image_cache_mb.to_string(),
+        "tray" => on_off(s.tray).to_owned(),
+        "close_to_tray" => on_off(s.close_to_tray).to_owned(),
+        "start_on_login" => on_off(s.start_on_login).to_owned(),
+        "start_hidden" => on_off(s.start_hidden).to_owned(),
         _ => return None,
     })
 }
@@ -528,6 +564,10 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
         "mute_in_game" => s.mute_in_game = bool()?,
         "notify_sound" => s.notify_sound = bool()?,
         "notify_in_front" => s.notify_in_front = bool()?,
+        "tray" => s.tray = bool()?,
+        "close_to_tray" => s.close_to_tray = bool()?,
+        "start_on_login" => s.start_on_login = bool()?,
+        "start_hidden" => s.start_hidden = bool()?,
         "player_command" => s.player_command = Some(value.to_owned()).filter(|c| !c.is_empty()),
         "format_locale" => {
             if !valid_format_locale(value) {

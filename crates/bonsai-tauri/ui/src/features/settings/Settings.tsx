@@ -9,6 +9,7 @@ import { AccountsSection } from "./accounts"
 import { AppearanceSection } from "./appearance"
 import { BackgroundSection } from "./background"
 import { DataSection } from "./data"
+import { DesktopSection } from "./desktop"
 import { DeveloperSection } from "./developer"
 import { GeneralSection } from "./general"
 import { LayoutSection } from "./layout"
@@ -30,6 +31,7 @@ const pages: Record<SettingsSectionId, Component> = {
   layout: LayoutSection,
   notifications: NotificationsSection,
   shortcuts: ShortcutsSection,
+  desktop: DesktopSection,
   accounts: AccountsSection,
   data: DataSection,
   developer: DeveloperSection,

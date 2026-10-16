@@ -45,9 +45,10 @@ nucleo-matcher = "0.3"
 directories = "6"
 sha2 = "0.11"
 open = "5"
-tauri = { version = "2.12", features = [] }
+tauri = { version = "2.12", features = ["tray-icon"] }
 tauri-build = { version = "2.5", features = [] }
 # Copy link, Copy ID, CSV exports. Written from Rust, so the webview gets no clipboard permission.
+tauri-plugin-autostart = "=2.7.0"
 tauri-plugin-clipboard-manager = "=2.4.0"
 tauri-plugin-notification = "=2.5.0"
 # Native file picker for the background picture. Opened from Rust, so the webview gets no file access.

@@ -11,6 +11,7 @@ use tauri::Manager;
 mod asset;
 mod bg;
 mod captcha;
+mod desktop;
 mod font;
 pub mod ipc;
 mod notify;
@@ -34,6 +35,8 @@ pub fn run() {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(desktop::plugin())
+        .on_window_event(desktop::on_window_event)
         // Only the app's own window talks to the backend. The sign-in window shows
         // roblox.com and must never reach it (Tauri's ACL already denies remote pages).
         .invoke_handler(move |invoke| {
@@ -52,7 +55,9 @@ pub fn run() {
             eprintln!("PROFILE {:?} setup start", t0.elapsed()); // PROFILE-TMP
             builder.mount_events(app);
             let repaint = notify::spawn(app.handle().clone())?;
-            app.manage(Arc::new(Core::start(CoreConfig::standard(), repaint)));
+            let core = Arc::new(Core::start(CoreConfig::standard(), repaint));
+            desktop::start(app.handle(), &core.settings());
+            app.manage(core);
             eprintln!("PROFILE {:?} setup end", t0.elapsed()); // PROFILE-TMP
             Ok(())
         })
