@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, onCleanup, onMount, Show } from "solid-js"
 import type { BackgroundView } from "~/lib/ipc/bindings"
 import { backdropLayers, cutoutPath, withDraft } from "~/lib/theme"
 import { backgroundUrl } from "~/lib/thumb"
@@ -60,16 +60,7 @@ export function Backdrop(props: { background: BackgroundView | null; strip?: HTM
               </svg>
             </Show>
             <Show when={l().scanlines > 0}>
-              <div
-                class="absolute inset-0"
-                style={{
-                  // Equal dark and clear rows with soft edges, so fractional zoom and scale
-                  // don't alias them into uneven lines.
-                  "background-image":
-                    "repeating-linear-gradient(to bottom, transparent 0, var(--backdrop-base) 2px, transparent 4px)",
-                  opacity: l().scanlines,
-                }}
-              />
+              <Scanlines opacity={l().scanlines} />
             </Show>
             <Show when={l().vignette > 0}>
               <div
@@ -85,6 +76,49 @@ export function Backdrop(props: { background: BackgroundView | null; strip?: HTM
       }}
     </Show>
   )
+}
+
+/** Alternating dark and clear rows, each one CSS pixel tall. Drawn on a canvas at device
+ * resolution: a CSS gradient this fine is resampled under fractional zoom or display scale and
+ * turns into wide bands. Dark rows use `--backdrop-base`, so light themes get light rows. */
+function Scanlines(props: { opacity: number }) {
+  let canvas!: HTMLCanvasElement
+  onMount(() => {
+    let frame = 0
+    const draw = () => {
+      frame = 0
+      const r = canvas.getBoundingClientRect()
+      // Device pixels per CSS pixel, including the root's CSS zoom.
+      const scale = (r.height / canvas.offsetHeight || 1) * window.devicePixelRatio
+      const w = Math.round(canvas.offsetWidth * scale)
+      const h = Math.round(canvas.offsetHeight * scale)
+      if (!w || !h) return
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+      ctx.fillStyle = getComputedStyle(canvas).getPropertyValue("--backdrop-base").trim() || "#000"
+      const row = Math.max(1, Math.round(scale))
+      for (let y = 0; y < h; y += row * 2) ctx.fillRect(0, y, w, row)
+    }
+    const later = () => {
+      if (!frame) frame = requestAnimationFrame(draw)
+    }
+    const resize = new ResizeObserver(later)
+    resize.observe(canvas)
+    // Display scale and root zoom changes don't resize the box in CSS pixels.
+    const zoom = new MutationObserver(later)
+    zoom.observe(document.documentElement, { attributeFilter: ["style"] })
+    window.addEventListener("resize", later)
+    draw()
+    onCleanup(() => {
+      cancelAnimationFrame(frame)
+      resize.disconnect()
+      zoom.disconnect()
+      window.removeEventListener("resize", later)
+    })
+  })
+  return <canvas ref={canvas} class="absolute inset-0 size-full" style={{ opacity: props.opacity }} />
 }
 
 /** The `clip-path` that cuts `box` to below `strip` plus its active tab. Remeasures when either

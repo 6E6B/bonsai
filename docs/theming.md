@@ -132,8 +132,8 @@ and menus stay opaque.
   it), `tint` (wash in `--color-accent`), `vignette`, `scanlines` and `grain`; the rest are 0–100.
   Blur, dim and saturation are a CSS `filter` on the picture, which overhangs the edges by twice
   the blur so they don't fade. The others are overlays: vignette and scanlines fade toward
-  `--backdrop-base`, so they suit light themes too. Scanlines alternate 2 px rows with soft
-  edges, so fractional zoom doesn't alias them; grain is an SVG `feTurbulence` blended with
+  `--backdrop-base`, so they suit light themes too. Scanlines are alternating 1 px rows drawn
+  on a canvas at device resolution, since a gradient that fine bands under fractional zoom; grain is an SVG `feTurbulence` blended with
   `overlay`. `view.background_effects_reset` turns them all off. Sliders preview while dragging
   (`previewBackdrop`) and save on release.
 
