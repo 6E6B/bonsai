@@ -6,7 +6,7 @@
   - [x] Game status indicator with place title and 1-click Join button
   - [x] Open the experience a friend is in (row button and right-click menu)
   - [x] Search / filter friends by display name or @username
-  - [x] Friend nickname / local notes support (`user.nickname`, `user.note`; kept on this computer per account; nickname shown as the title on Friends and matched by the filter, note on the profile's About tab)
+  - [x] Friend nickname / local notes support (`user.nickname`, `user.note`; kept on this computer per account; nickname shown as the title on Friends and matched by the filter, note on the profile's Overview tab)
 - [x] **Friend Requests**:
   - [x] Incoming requests queue with mutual friends count
   - [x] Accept and Decline actions
@@ -41,6 +41,7 @@
 - [x] **About Tab**:
   - [x] Bio / About text with URL and hashtag formatting (Roblox links open in the app or on the website, hashtags search Roblox, @mentions show the headshot and open the profile; other sites stay plain text)
   - [x] Collections & showcase (pinned badges, favorited items)
+  - [x] Overview tab like roblox.com's profile: bio, note, trading card and facts, what they wear now (avatar and item icons), and one row each of friends, experiences, favorites, communities, badges and collectibles with "See all" opening that tab and list. Empty rows are hidden
   - [x] Account statistics: Join date, account age, total place visits
   - [x] Trading card (Rolimons, opt-in; beyond parity): value, RAP, leaderboard rank, Premium / private inventory / terminated flags, update age, and Rolimons badges with each tier family folded to its top tier. "Turn on" link while values are off; "hasn't scanned" for unknown players
 - [x] **Outfits Tab** (replaces the Currently Wearing card on About):

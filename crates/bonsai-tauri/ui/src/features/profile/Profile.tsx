@@ -2,7 +2,7 @@ import { useParams, useSearchParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, Match, on, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
 import { run } from "~/lib/commands/registry"
-import { ago, compact, date, percent } from "~/lib/format"
+import { compact } from "~/lib/format"
 import {
   type Connection,
   commands,
@@ -15,10 +15,9 @@ import {
   type TraderView,
   type UserBadge,
 } from "~/lib/ipc/bindings"
-import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { userMenu } from "~/lib/menus"
-import { shell, useLive } from "~/lib/store"
+import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile, ItemTile, PlayingRow, tileGrid } from "~/lib/tiles"
@@ -27,12 +26,7 @@ import {
   Badge,
   Button,
   Card,
-  Clamp,
   ContextMenu,
-  Fact,
-  FactGroup,
-  Facts,
-  Icon,
   IconButton,
   ListItem,
   Menu,
@@ -51,10 +45,10 @@ import {
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
 import { Outfits } from "./Outfits"
-import { TradingCard } from "./Trading"
+import { BadgeTile, Overview } from "./Overview"
 
 const allSections = [
-  { value: "about", label: "About" },
+  { value: "about", label: "Overview" },
   { value: "outfits", label: "Outfits" },
   { value: "connections", label: "Connections" },
   { value: "experiences", label: "Experiences" },
@@ -74,11 +68,6 @@ const isExperienceList = (v: string): v is ExperienceList => experienceLists.som
 /** A list that has finished loading with nothing in it. Errors keep their tab so they show. */
 const isEmpty = (l: { loading: boolean; error: string | null; items: unknown[] }) =>
   !l.loading && !l.error && l.items.length === 0
-
-const ms = (iso: string) => {
-  const t = Date.parse(iso)
-  return Number.isNaN(t) ? undefined : t
-}
 
 /** A user: picture, names, presence and counts beside one or two actions, then sub-tabs.
  * Everything else (trade, follow, decline, copy) is in the More menu. Your own accounts'
@@ -159,6 +148,12 @@ export default function Profile() {
     if (!sections().some((t) => t.value === section())) setSection("about")
   })
   useSubTabs(sections, section, setSection)
+  /** "See all" on the overview: that tab, on the list it came from. */
+  const seeAll = (tab: string, list?: string) => {
+    if (list && isPeopleList(list)) setPeople(list)
+    if (list && isExperienceList(list)) setGames(list)
+    setSection(tab)
+  }
   useCommandContext(() => `user:${userId()}`)
   createEffect(() => {
     const u = view.user
@@ -306,75 +301,18 @@ export default function Profile() {
 
       <Tabs aria-label="Profile sections" items={sections()} value={section()} onChange={setSection}>
         <TabPanel value="about">
-          <div class="@container">
-            <div class="grid grid-cols-1 gap-4 @2xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
-              <div class="flex min-w-0 flex-col gap-4">
-                <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
-                  <h3 class="text-sm font-medium text-fg-muted">Bio</h3>
-                  <Show
-                    when={view.user?.description.trim()}
-                    fallback={<span class="text-fg-muted">{view.user ? "No bio." : ""}</span>}
-                  >
-                    {(d) => (
-                      <Clamp lines={8}>
-                        <Description text={d()} tags />
-                      </Clamp>
-                    )}
-                  </Show>
-                </Card>
-                <Show when={view.note}>
-                  {(n) => (
-                    <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
-                      <h3 class="flex items-center justify-between text-sm font-medium text-fg-muted">
-                        Your note
-                        <Tooltip content="Edit note">
-                          <IconButton size="sm" icon="edit" label="Edit note" onClick={() => run("user.note", id())} />
-                        </Tooltip>
-                      </h3>
-                      <p class="whitespace-pre-line break-words">{n()}</p>
-                    </Card>
-                  )}
-                </Show>
-                <TradingCard view={trading} enabled={shell.itemValues} />
-              </div>
-              <Facts class="h-fit">
-                <FactGroup>
-                  <Show when={view.user && ms(view.user.created)}>
-                    {(t) => <Fact label="Joined">{date(t())}</Fact>}
-                  </Show>
-                  <Fact label="User ID">
-                    <span class="flex items-center gap-1">
-                      {params.id}
-                      <Tooltip content="Copy ID">
-                        <IconButton
-                          size="sm"
-                          icon="copy"
-                          label="Copy ID"
-                          onClick={() => run("entity.copy_id", `user:${id()}`)}
-                        />
-                      </Tooltip>
-                    </span>
-                  </Fact>
-                  <Show when={!view.mine}>
-                    <LastOnline view={view} />
-                  </Show>
-                  <Show when={relationText()}>{(t) => <Fact label="Relation">{t()}</Fact>}</Show>
-                  <Show when={view.visits !== null}>
-                    <Fact label="Place visits">{compact(view.visits ?? 0)}</Fact>
-                  </Show>
-                  <Show when={view.favoritesReceived !== null}>
-                    <Fact label="Favorites received">{compact(view.favoritesReceived ?? 0)}</Fact>
-                  </Show>
-                  <Show when={view.unfriendedAt}>{(t) => <Fact label="Unfriended you">{date(t())}</Fact>}</Show>
-                  <Show when={view.pastNames.length > 0}>
-                    <Fact label="Past names">
-                      <For each={view.pastNames}>{(n) => <Badge>{n}</Badge>}</For>
-                    </Fact>
-                  </Show>
-                </FactGroup>
-              </Facts>
-            </div>
-          </div>
+          <Overview
+            userId={userId()}
+            view={view}
+            relation={relationText()}
+            creations={creations}
+            favorites={favorites}
+            badges={badges}
+            groups={groups}
+            collectibles={collectibles}
+            trading={trading}
+            onSeeAll={seeAll}
+          />
         </TabPanel>
         <TabPanel value="outfits">
           <Outfits userId={userId()} mine={view.mine} outfits={outfits} />
@@ -442,29 +380,6 @@ function FriendButton(props: { status: string; id: string }) {
   )
 }
 
-/** When they were last online. Roblox doesn't say, so this is the newer of what the app saw
- * and, with values on, what Rolimons saw (marked with its icon). */
-function LastOnline(props: { view: ProfileView }) {
-  const by = () => (props.view.lastOnlineBy === "rolimons" ? VALUES_SOURCE : "this app")
-  const where = () => (props.view.lastLocation ? ` (${props.view.lastLocation})` : "")
-  return (
-    <Show when={props.view.presence === "offline"} fallback={<Fact label="Last online">Now</Fact>}>
-      <Show when={props.view.lastOnline}>
-        {(t) => (
-          <Fact label="Last online">
-            <Tooltip content={`Seen by ${by()} on ${date(t())}${where()}`} class="inline-flex items-center gap-1">
-              <Show when={props.view.lastOnlineBy === "rolimons"}>
-                <Icon name="rolimons" size={12} class="text-fg-faint" aria-label={VALUES_SOURCE} />
-              </Show>
-              {ago(t())}
-            </Tooltip>
-          </Fact>
-        )}
-      </Show>
-    </Show>
-  )
-}
-
 /** A header count that opens that list in Connections. A dash, not a link, when Roblox didn't
  * send it. */
 function CountLink(props: { n: number | null; label: string; command: string; id: string }) {
@@ -523,19 +438,7 @@ function Badges(props: { list: List<UserBadge> }) {
   return (
     <ListState list={list} icon="badge" empty="No badges" more="badges">
       <div class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-3">
-        <For each={list.items}>
-          {(b) => (
-            <button
-              type="button"
-              class="flex flex-col items-center gap-1 text-center"
-              title={`${b.description}\n${percent(b.winRate ?? 0)} have it`}
-              onClick={() => b.placeId && run("game.open", String(b.placeId))}
-            >
-              <Thumbnail class="w-16" alt={b.name} src={thumbUrl("badge_icon", b.id)} fallback="badge" />
-              <span class="line-clamp-2 text-sm">{b.name}</span>
-            </button>
-          )}
-        </For>
+        <For each={list.items}>{(b) => <BadgeTile badge={b} />}</For>
       </div>
     </ListState>
   )
