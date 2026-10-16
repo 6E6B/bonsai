@@ -1653,6 +1653,8 @@ export type Shell = {
 	approve: ApproveView | null,
 	/**  Item values from Rolimons are on. */
 	itemValues: boolean,
+	/**  Avatar viewers open in 3D instead of on the image. */
+	avatar3d: boolean,
 	/**  How the user arranged the sidebar. */
 	sidebar: SidebarView,
 };

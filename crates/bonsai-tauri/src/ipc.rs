@@ -64,6 +64,8 @@ pub struct Shell {
     pub approve: Option<approve::ApproveView>,
     /// Item values from Rolimons are on.
     pub item_values: bool,
+    /// Avatar viewers open in 3D instead of on the image.
+    pub avatar_3d: bool,
     /// How the user arranged the sidebar.
     pub sidebar: SidebarView,
 }
@@ -949,6 +951,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
             .collect(),
         keychain_warning: s.keychain_warning.clone(),
         item_values: core.values_enabled(),
+        avatar_3d: core.settings().avatar_3d,
         sidebar: {
             let p = core.settings().sidebar;
             SidebarView {

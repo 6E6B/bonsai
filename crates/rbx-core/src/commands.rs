@@ -321,6 +321,7 @@ commands! {
     SetEmote => "avatar.emote", "Put an emote in a hotbar slot (slot 1-8, then item id; slot alone clears it)", ["emote", "hotbar", "slot", "dance", "avatar"], Text, [];
     RedrawAvatar => "avatar.redraw", "Redraw avatar image", ["redraw", "refresh", "thumbnail", "render", "avatar"], None, [];
     Toggle3d => "avatar.view_3d", "Show the avatar in 3D or as an image", ["3d", "2d", "model", "render", "preview", "spin", "avatar"], None, [];
+    SetAvatarView => "avatar.default_view", "Open avatars in 3D or as an image (3d or 2d)", ["3d", "2d", "default", "model", "image", "setting", "avatar"], Text, [];
     PlayAnimation => "avatar.play", "Play an animation in the 3D view (idle, walk, run, jump, fall, climb, swim, or an emote id)", ["animation", "emote", "dance", "play", "pose", "3d", "avatar"], Text, [];
     Orbit3d => "avatar.orbit", "Move the 3D camera (left, right, up, down, in, out or reset)", ["camera", "rotate", "orbit", "zoom", "turn", "reset", "3d", "avatar"], Text, [];
 

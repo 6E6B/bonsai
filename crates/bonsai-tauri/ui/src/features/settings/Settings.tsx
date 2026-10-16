@@ -634,6 +634,18 @@ function AppearanceSection() {
             onChange={(v) => run("view.density", v)}
           />
         </Row>
+        <Row label="Avatars" description="How avatars and items open. 3D shows a spinner until the model loads.">
+          <RadioGroup
+            aria-label="Avatars"
+            orientation="horizontal"
+            value={shell.avatar3d ? "3d" : "2d"}
+            options={[
+              { value: "2d", label: "Image" },
+              { value: "3d", label: "3D" },
+            ]}
+            onChange={(v) => run("avatar.default_view", v)}
+          />
+        </Row>
         <Row label="Number and date format" description="Applies to counts, prices and dates.">
           <Select
             size="sm"

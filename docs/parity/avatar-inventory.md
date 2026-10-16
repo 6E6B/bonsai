@@ -3,7 +3,7 @@
 ## Avatar Editor
 - [x] **Viewport & Preview**:
   - [x] 2D full-body rendered preview
-  - [x] 3D interactive preview (orbit, zoom, pan) — drag, right-drag and scroll, or `avatar.orbit` and arrow keys; `avatar.view_3d` switches between 3D and the image
+  - [x] 3D interactive preview (orbit, zoom, pan) — drag, right-drag and scroll, or `avatar.orbit` and arrow keys; `avatar.view_3d` switches between 3D and the image; Settings → Appearance → Avatars (`avatar.default_view`) picks which one viewers open in, and 3D shows a spinner, not the image, until the model loads
   - [x] Redraw avatar thumbnail trigger
   - [x] R6 vs R15 rig switch (with accessory compatibility check) — `avatar.rig`; switching to R6 names worn items that only show on R15, and the Wearing list dims them
 - [x] **Body Colors & Skin Tones**:

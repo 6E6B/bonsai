@@ -1,9 +1,8 @@
 import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, createMemo, createSignal, on, onCleanup, onMount, Show } from "solid-js"
-import { createStore } from "solid-js/store"
 import { handle, menuItem, run } from "~/lib/commands/registry"
 import { type Avatar3dView, type AvatarSource, commands } from "~/lib/ipc/bindings"
-import { useLive } from "~/lib/store"
+import { shell, useLive } from "~/lib/store"
 import { IconButton, Menu, type MenuEntry, Spinner, showToast, Thumbnail, Viewport } from "~/lib/ui"
 import {
   animationName,
@@ -16,28 +15,12 @@ import {
 } from "./outfit"
 import type { Lease, StageState } from "./stage"
 
-const KEY = "avatar3d"
-
-function stored() {
-  try {
-    return localStorage.getItem(KEY) !== "off"
-  } catch {
-    return true
-  }
-}
-
-/** Whether viewers show the 3D model or the image. Remembered per machine. */
-const [mode, setMode] = createStore({ on: stored() })
+// Showing 3D or the image, once toggled. Each new viewer starts from the setting again.
+const [picked, setPicked] = createSignal<boolean | null>(null)
+const is3d = () => picked() ?? shell.avatar3d
 
 /** Switches viewers to 3D, as Try On does. */
-export const show3d = () => setOn(true)
-
-function setOn(on: boolean) {
-  setMode("on", on)
-  try {
-    localStorage.setItem(KEY, on ? "on" : "off")
-  } catch {}
-}
+export const show3d = () => setPicked(true)
 
 const blank = (): Avatar3dView => ({
   loading: true,
@@ -64,7 +47,7 @@ const ORBIT_KEYS: Record<string, string> = {
 export interface AvatarViewerProps {
   /** Whose avatar to draw. Without one, a plain grey mannequin. */
   source?: AvatarSource
-  /** The 2D image, shown in 2D mode, while the engine starts and when it can't. */
+  /** The 2D image, shown in 2D mode and when the model can't load. */
   image?: string
   alt: string
   /** Items worn on top of the avatar, like an item or bundle being tried on. */
@@ -91,14 +74,15 @@ export function AvatarViewer(props: AvatarViewerProps) {
   const [state, setState] = createSignal<StageState | "off" | "failed">("off")
   const [anim, setAnim] = createSignal("idle")
   const [lease, setLease] = createSignal<Lease | null>(null)
-  // The image stays up until the first model has drawn; later changes redraw in place.
+  // Animations wait for the first model to draw.
   const [drawn, setDrawn] = createSignal(false)
   // Bumped each time a new subject is shown, so its showcase animation plays again.
   const [shown, setShown] = createSignal(0)
   let box!: HTMLDivElement
   let disposed = false
 
-  const want3d = () => mode.on && isTauri()
+  setPicked(null)
+  const want3d = () => is3d() && isTauri()
   const subject = (): Subject | null => {
     if (props.accessory) return { kind: "accessory", id: props.accessory }
     const wear = props.wear ?? []
@@ -178,7 +162,7 @@ export function AvatarViewer(props: AvatarViewerProps) {
     else showToast({ title: "Couldn't play that animation", variant: "error" })
   }
 
-  onCleanup(handle("avatar.view_3d", () => setOn(!mode.on)))
+  onCleanup(handle("avatar.view_3d", () => setPicked(!is3d())))
   onCleanup(handle("avatar.play", (arg) => void play(arg)))
   onCleanup(handle("avatar.orbit", (arg) => lease()?.orbit(arg?.trim().toLowerCase() || "reset")))
 
@@ -190,7 +174,10 @@ export function AvatarViewer(props: AvatarViewerProps) {
     lease()?.orbit(how)
   }
 
-  const showImage = () => !lease() || !drawn()
+  // In 3D the image never shows unless the model can't; a spinner holds the space instead.
+  const failed = () => state() === "failed" || state() === "error" || (!!props.source && view.error !== null)
+  const showImage = () => !want3d() || failed()
+  const waiting = () => want3d() && !failed() && state() !== "ready"
   const animated = () => !!lease() && !props.accessory
   const animations = (): MenuEntry[] => {
     const item = (value: string, label: string) =>
@@ -207,7 +194,7 @@ export function AvatarViewer(props: AvatarViewerProps) {
     ]
   }
   const toolbarMenu = (): MenuEntry[] => [
-    menuItem("avatar.view_3d", { label: mode.on ? "Show image" : "Show 3D", icon: mode.on ? "image" : "model" }),
+    menuItem("avatar.view_3d", { label: is3d() ? "Show image" : "Show 3D", icon: is3d() ? "image" : "model" }),
     menuItem("avatar.orbit", { arg: "reset", label: "Reset camera", icon: "refresh", disabled: !lease() }),
     ...(props.controls
       ? [
@@ -228,27 +215,27 @@ export function AvatarViewer(props: AvatarViewerProps) {
       <Viewport tabindex={lease() ? 0 : -1} role="img" aria-label={props.alt} onKeyDown={onKey} class="w-full">
         {/* The engine's canvas lives here. Solid clears an element whose dynamic children all
             go away, so the canvas can't share a parent with the <Show>s below. */}
-        <div ref={box} class="absolute inset-0" />
+        <div ref={box} class="absolute inset-0" classList={{ invisible: waiting() || showImage() }} />
         <Show when={showImage()}>
           <Thumbnail class="absolute inset-0 w-full" alt={props.alt} fallback="avatar" src={props.image} />
         </Show>
-        <Show when={state() === "loading" && want3d()}>
-          <span class="absolute right-2 bottom-2">
-            <Spinner size="sm" />
+        <Show when={waiting()}>
+          <span class="absolute inset-0 flex items-center justify-center">
+            <Spinner />
           </span>
         </Show>
       </Viewport>
       <div class="flex items-center gap-1">
         <IconButton
           size="sm"
-          icon={mode.on ? "image" : "model"}
-          label={mode.on ? "Show image" : "Show 3D"}
+          icon={is3d() ? "image" : "model"}
+          label={is3d() ? "Show image" : "Show 3D"}
           onClick={() => run("avatar.view_3d")}
         />
         <Show when={lease()}>
           <IconButton size="sm" icon="refresh" label="Reset camera" onClick={() => run("avatar.orbit", "reset")} />
         </Show>
-        <Show when={state() === "failed" || state() === "error"}>
+        <Show when={want3d() && failed()}>
           <span class="text-xs text-fg-muted">3D unavailable</span>
         </Show>
         <span class="flex-1" />

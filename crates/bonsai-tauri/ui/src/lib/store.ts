@@ -62,6 +62,7 @@ const shellMirror = mirror<Shell>(
     challenge: null,
     approve: null,
     itemValues: false,
+    avatar3d: false,
     sidebar: { order: [], hidden: ["messages"] },
   },
   () => commands.shell(),

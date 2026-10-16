@@ -230,6 +230,8 @@ pub struct Settings {
     /// Off by default: show limited item values from Rolimons (a third-party site) next to RAP.
     pub item_values: bool,
     pub sidebar: SidebarPrefs,
+    /// Avatar viewers open in 3D instead of on the image. Off by default: the engine is heavy.
+    pub avatar_3d: bool,
 }
 
 impl Default for Settings {
@@ -247,6 +249,7 @@ impl Default for Settings {
             shortcuts: HashMap::new(),
             item_values: false,
             sidebar: SidebarPrefs::default(),
+            avatar_3d: false,
         }
     }
 }

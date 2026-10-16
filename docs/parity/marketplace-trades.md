@@ -13,7 +13,7 @@
   - [x] Include unavailable items toggle
 - [ ] **Item Details Page**:
   - [x] High-resolution 2D rendered image preview
-  - [x] Interactive 3D item preview (orbit, zoom, pan) — shown by default: hats, hair and other rigid accessories on their own, other items and bundles on a grey mannequin, or on your avatar with Try On
+  - [x] Interactive 3D item preview (orbit, zoom, pan) — when Avatars is set to 3D in Settings, or with `avatar.view_3d`: hats, hair and other rigid accessories on their own, other items and bundles on a grey mannequin, or on your avatar with Try On
   - [ ] Audio asset player (for music and sound effects)
   - [x] Animation preview player — plays an emote, or the animation a pack replaces, on the mannequin or your avatar; other animations from the viewer's Animation menu
   - [x] Creator attribution link with verified badge

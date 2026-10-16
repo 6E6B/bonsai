@@ -573,6 +573,17 @@ pub(super) fn run(
             }
             None => Err("Pick compact or comfortable.".into()),
         },
+        CommandId::SetAvatarView => match arg().trim().to_ascii_lowercase().as_str() {
+            "3d" => {
+                core.update_settings(|s| s.avatar_3d = true);
+                Ok(())
+            }
+            "2d" | "image" => {
+                core.update_settings(|s| s.avatar_3d = false);
+                Ok(())
+            }
+            _ => Err("Pick 3d or 2d.".into()),
+        },
         CommandId::SetPlayerCommand => {
             // `{uri}` marks where the join link goes; the launcher adds it at the end if missing.
             let cmd = arg().trim().to_owned();
