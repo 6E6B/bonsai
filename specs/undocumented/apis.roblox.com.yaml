@@ -556,7 +556,57 @@ paths:
       summary: Arkose public keys per captcha action.
       responses:
         "200": { description: OK, schema: { $ref: "#/definitions/CaptchaMetadata" } }
+  /token-metadata-service/v1/sessions:
+    get:
+      # Captured 2026-10-16 live (fixture: settings.json). Used by
+      # www.roblox.com/my/account#!/security ("Account Sessions"). The response carries session
+      # tokens and IPs; callers must drop them.
+      x-captured: "2026-10-16, www.roblox.com/my/account#!/security"
+      x-rust-name: get_sessions
+      summary: Signed-in sessions of the account.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/SessionList" } }
+  /age-verification-service/v1/age-verification/verified-age:
+    get:
+      # Captured 2026-10-16 live (fixture: settings.json). Used by
+      # www.roblox.com/my/account#!/info for the age verification status.
+      x-captured: "2026-10-16, www.roblox.com/my/account#!/info"
+      x-rust-name: get_verified_age
+      summary: Whether the account passed age verification.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/VerifiedAge" } }
 definitions:
+  SessionList:
+    type: object
+    properties:
+      sessions:
+        type: array
+        items: { $ref: "#/definitions/SessionInfo" }
+  SessionInfo:
+    type: object
+    properties:
+      location: { $ref: "#/definitions/SessionLocation" }
+      agent: { $ref: "#/definitions/SessionAgent" }
+      lastAccessedTimestampEpochMilliseconds: { type: string, description: "Epoch ms as a string" }
+      isCurrentSession: { type: boolean }
+  SessionLocation:
+    type: object
+    properties:
+      city: { type: string }
+      subdivision: { type: string }
+      country: { type: string }
+  SessionAgent:
+    type: object
+    properties:
+      type: { type: string, description: "App, Browser, ..." }
+      value: { type: string }
+      os: { type: string }
+  VerifiedAge:
+    type: object
+    properties:
+      isVerified: { type: boolean }
+      verifiedAge: { type: integer, format: int32 }
+      isSeventeenPlus: { type: boolean }
   ChallengeContinueRequest:
     type: object
     properties:

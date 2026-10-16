@@ -1,0 +1,49 @@
+{
+  "captured": "2026-10-16",
+  "source": "synthetic",
+  "note": "Premium account. The subscriptions/details body is read from the site's billing bundle, not captured (the test account has no Premium); every value is made up.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "premiumfeatures.roblox.com",
+        "path": "/v1/users/1000001/validate-membership"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": true
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "premiumfeatures.roblox.com",
+        "path": "/v1/users/1000001/subscriptions/details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "subscriptionProductModel": {
+            "premiumFeatureId": 2,
+            "robuxStipendAmount": 1000,
+            "expiration": "2026-12-01T00:00:00Z",
+            "renewal": "2026-11-01T00:00:00Z",
+            "created": "2026-01-01T00:00:00Z",
+            "purchasePlatform": "Web",
+            "subscriptionName": "Premium 1000"
+          },
+          "price": {
+            "currency": "USD",
+            "amountInCents": 999
+          }
+        }
+      }
+    }
+  ]
+}

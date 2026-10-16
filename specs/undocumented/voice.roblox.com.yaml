@@ -1,0 +1,24 @@
+# voice.roblox.com is not in the tracker. Only endpoints we use, with the fields we use.
+swagger: "2.0"
+host: voice.roblox.com
+info: { title: "voice (undocumented)", version: undocumented }
+paths:
+  /v1/settings:
+    get:
+      # Captured 2026-10-16 live (fixture: settings.json). Used by
+      # www.roblox.com/my/account#!/privacy (Voice and camera settings).
+      x-captured: "2026-10-16, www.roblox.com/my/account#!/privacy"
+      x-rust-name: get_voice_settings
+      summary: Voice chat and avatar camera status of the account.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/VoiceSettings" } }
+definitions:
+  VoiceSettings:
+    type: object
+    properties:
+      isVoiceEnabled: { type: boolean }
+      isUserEligible: { type: boolean }
+      isVerifiedForVoice: { type: boolean }
+      isBanned: { type: boolean }
+      isAvatarVideoEnabled: { type: boolean }
+      isAvatarVideoEligible: { type: boolean }

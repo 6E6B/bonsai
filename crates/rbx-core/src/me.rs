@@ -1,7 +1,9 @@
 //! Your own account: what Roblox has on file (email, phone, birthday, Premium), privacy
 //! settings, the display name, private servers across experiences, and the local disk cache.
 
-use rbx_api::generated::{accountinformation, accountsettings, apis, auth, games, premiumfeatures, users};
+use rbx_api::generated::{
+    accountinformation, accountsettings, apis, auth, games, premiumfeatures, users, voice,
+};
 use rbx_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
@@ -25,6 +27,42 @@ pub struct AccountInfo {
     /// (year, month, day).
     pub birthdate: Option<(i32, i32, i32)>,
     pub premium: Option<bool>,
+    /// Tier and dates of the Premium subscription, when there is one.
+    pub plan: Option<PremiumPlan>,
+    /// Passed age verification; None until known.
+    pub age_verified: Option<bool>,
+    pub voice: Option<VoiceStatus>,
+}
+
+/// Premium subscription tier and when it renews or ends (ISO dates as Roblox sends them).
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct PremiumPlan {
+    pub name: String,
+    pub renews: Option<String>,
+    pub expires: Option<String>,
+}
+
+/// Voice chat and avatar camera state of the account.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct VoiceStatus {
+    pub voice_enabled: bool,
+    pub voice_eligible: bool,
+    pub voice_verified: bool,
+    pub banned: bool,
+    pub camera_enabled: bool,
+    pub camera_eligible: bool,
+}
+
+/// One signed-in session. Roblox's session token and IP are dropped here and never leave core.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct SessionRow {
+    /// `Troy, Michigan, United States`; empty when unknown.
+    pub location: String,
+    /// `App on Windows`, `Browser on macOS`...
+    pub device: String,
+    /// Unix seconds; 0 when unknown.
+    pub last_active: i64,
+    pub current: bool,
 }
 
 /// One privacy setting and the values this account may pick.
@@ -203,11 +241,14 @@ impl Core {
             INFO_AGE,
             move |f| async move {
                 let c = &f.client;
-                let (email, phone, birth, premium) = tokio::join!(
+                let (email, phone, birth, premium, sub, age, voice) = tokio::join!(
                     accountsettings::v1::get_email(c),
                     accountinformation::v1::get_phone(c),
                     users::v1::get_birthdate(c),
                     premiumfeatures::undocumented::get_has_premium(c, account.0 as i64),
+                    premiumfeatures::undocumented::get_subscription_details(c, account.0 as i64),
+                    apis::undocumented::get_verified_age(c),
+                    voice::undocumented::get_voice_settings(c),
                 );
                 // Fail only when nothing came back, so one blocked part doesn't hide the rest.
                 if let (Err(e), Err(_), Err(_), Err(_)) = (&email, &phone, &birth, &premium) {
@@ -232,7 +273,41 @@ impl Core {
                     info.birthdate = Some((y, m, d));
                 }
                 info.premium = premium.ok();
+                // 404 means no subscription; any other failure leaves the plan unknown.
+                if let Ok(d) = sub
+                    && let Some(p) = d.subscription_product_model
+                {
+                    info.plan = Some(PremiumPlan {
+                        name: p.subscription_name.unwrap_or_default(),
+                        renews: p.renewal,
+                        expires: p.expiration,
+                    });
+                }
+                info.age_verified = age.ok().and_then(|a| a.is_verified);
+                info.voice = voice.ok().map(|v| VoiceStatus {
+                    voice_enabled: v.is_voice_enabled.unwrap_or(false),
+                    voice_eligible: v.is_user_eligible.unwrap_or(false),
+                    voice_verified: v.is_verified_for_voice.unwrap_or(false),
+                    banned: v.is_banned.unwrap_or(false),
+                    camera_enabled: v.is_avatar_video_enabled.unwrap_or(false),
+                    camera_eligible: v.is_avatar_video_eligible.unwrap_or(false),
+                });
                 Ok(info)
+            },
+        )
+    }
+
+    /// Signed-in sessions of one of your accounts, newest first.
+    pub fn sessions(&self, account: AccountId) -> Res<Vec<SessionRow>> {
+        if account.is_anonymous() {
+            return Res::default();
+        }
+        self.inner.res(
+            Key::private(account, "sessions", ""),
+            PIN_AGE,
+            move |f| async move {
+                let r = apis::undocumented::get_sessions(&f.client).await?;
+                Ok(session_rows(r.sessions.unwrap_or_default()))
             },
         )
     }
@@ -462,6 +537,47 @@ fn cooldown(e: Error) -> Error {
         }
         e => e,
     }
+}
+
+fn session_rows(list: Vec<apis::undocumented::SessionInfo>) -> Vec<SessionRow> {
+    let mut rows: Vec<SessionRow> = list
+        .into_iter()
+        .map(|s| {
+            let location = s
+                .location
+                .map(|l| {
+                    [l.city, l.subdivision, l.country]
+                        .into_iter()
+                        .flatten()
+                        .filter(|x| !x.is_empty())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                })
+                .unwrap_or_default();
+            let device = s
+                .agent
+                .map(|a| {
+                    let kind = a.type_.or(a.value).unwrap_or_default();
+                    match (kind.is_empty(), a.os.filter(|o| !o.is_empty())) {
+                        (false, Some(os)) => format!("{kind} on {os}"),
+                        (false, None) => kind,
+                        (true, os) => os.unwrap_or_default(),
+                    }
+                })
+                .unwrap_or_default();
+            SessionRow {
+                location,
+                device,
+                last_active: s
+                    .last_accessed_timestamp_epoch_milliseconds
+                    .and_then(|m| m.parse::<i64>().ok())
+                    .map_or(0, |m| m / 1000),
+                current: s.is_current_session.unwrap_or(false),
+            }
+        })
+        .collect();
+    rows.sort_by(|a, b| b.current.cmp(&a.current).then(b.last_active.cmp(&a.last_active)));
+    rows
 }
 
 #[cfg(test)]

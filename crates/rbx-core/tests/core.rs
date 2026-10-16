@@ -2094,6 +2094,20 @@ async fn settings_account_privacy_and_private_servers() {
     assert!(info.phone.is_empty() && !info.phone_verified);
     assert_eq!(info.birthdate, Some((2000, 1, 2)));
     assert_eq!(info.premium, Some(false));
+    assert_eq!(info.plan, None);
+    assert_eq!(info.age_verified, Some(false));
+    let v = info.voice.clone().unwrap();
+    assert!(v.voice_enabled && v.voice_eligible && v.voice_verified && !v.banned);
+    assert!(!v.camera_enabled && v.camera_eligible);
+
+    // Newest first, the current session on top; token and IP never reach the row.
+    let sessions = poll(|| c.sessions(ME)).await;
+    assert_eq!(sessions.len(), 2);
+    assert!(sessions[0].current);
+    assert_eq!(sessions[0].device, "Browser on Linux");
+    assert_eq!(sessions[0].location, "Springfield, Example, United States");
+    assert_eq!(sessions[1].device, "App on Windows");
+    assert_eq!(sessions[1].last_active, 1_792_200_000);
 
     // Only settings with a plain value; unknown ones are kept and tolerated.
     let privacy = poll(|| c.privacy(ME)).await;
@@ -2647,4 +2661,18 @@ async fn approving_a_code_from_another_device() {
     )
     .await;
     assert_ne!(c.store().account_data(ME).unwrap().session, SessionState::Expired);
+}
+
+#[tokio::test]
+async fn premium_plan_and_renewal() {
+    let replay = Replay::from_fixture(&replay::load("account_extras")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let info = poll(|| r.core.account_info(ME)).await;
+    assert_eq!(info.premium, Some(true));
+    let plan = info.plan.clone().unwrap();
+    assert_eq!(plan.name, "Premium 1000");
+    assert_eq!(plan.renews.as_deref(), Some("2026-11-01T00:00:00Z"));
+    assert_eq!(plan.expires.as_deref(), Some("2026-12-01T00:00:00Z"));
 }

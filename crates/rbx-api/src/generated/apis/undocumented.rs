@@ -1147,6 +1147,57 @@ pub struct RsvpResponse {
     pub rsvp_status: Option<String>,
 }
 
+/// `SessionAgent`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SessionAgent {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os: Option<String>,
+    /// App, Browser, ...
+    #[serde(rename = "type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+}
+
+/// `SessionLocation`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SessionLocation {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub city: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub country: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subdivision: Option<String>,
+}
+
+/// `SessionInfo`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SessionInfo {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub agent: Option<SessionAgent>,
+    #[serde(rename = "isCurrentSession")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_current_session: Option<bool>,
+    /// Epoch ms as a string
+    #[serde(rename = "lastAccessedTimestampEpochMilliseconds")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_accessed_timestamp_epoch_milliseconds: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<SessionLocation>,
+}
+
+/// `SessionList`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SessionList {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sessions: Option<Vec<SessionInfo>>,
+}
+
 /// `TransactionAgent`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -1377,6 +1428,21 @@ pub type UserSettingsAndOptions = HashMap<String, UserSettingAndOptions>;
 /// `UserSettingsUpdate`
 pub type UserSettingsUpdate = HashMap<String, String>;
 
+/// `VerifiedAge`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct VerifiedAge {
+    #[serde(rename = "isSeventeenPlus")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_seventeen_plus: Option<bool>,
+    #[serde(rename = "isVerified")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_verified: Option<bool>,
+    #[serde(rename = "verifiedAge")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verified_age: Option<i32>,
+}
+
 /// Query, header and form inputs for [`get_explore_sort_content`].
 #[derive(Debug, Clone, Default)]
 pub struct GetExploreSortContentParams {
@@ -1492,6 +1558,29 @@ pub struct GetUniverseEventsParams {
     pub from_utc: Option<String>,
     pub limit: Option<i32>,
     pub cursor: Option<String>,
+}
+
+/// `GET /age-verification-service/v1/age-verification/verified-age`
+///
+/// Whether the account passed age verification.
+///
+/// Undocumented; captured 2026-10-16, www.roblox.com/my/account#!/info.
+pub fn get_verified_age_request() -> Result<Request> {
+    let r = Request::new(
+        Method::GET,
+        HOST,
+        "/age-verification-service/v1/age-verification/verified-age".to_string(),
+    );
+    Ok(r)
+}
+
+/// `GET /age-verification-service/v1/age-verification/verified-age`
+///
+/// Whether the account passed age verification.
+///
+/// Undocumented; captured 2026-10-16, www.roblox.com/my/account#!/info.
+pub async fn get_verified_age(client: &Client) -> Result<VerifiedAge> {
+    client.send(get_verified_age_request()?).await?.json()
 }
 
 /// `POST /auth-token-service/v1/login/cancel`
@@ -2363,6 +2452,29 @@ pub fn get_omni_search_request(params: &GetOmniSearchParams) -> Result<Request> 
 /// Undocumented; captured 2026-10-12, www.roblox.com/discover?Keyword=adopt.
 pub async fn get_omni_search(client: &Client, params: &GetOmniSearchParams) -> Result<OmniSearch> {
     client.send(get_omni_search_request(params)?).await?.json()
+}
+
+/// `GET /token-metadata-service/v1/sessions`
+///
+/// Signed-in sessions of the account.
+///
+/// Undocumented; captured 2026-10-16, www.roblox.com/my/account#!/security.
+pub fn get_sessions_request() -> Result<Request> {
+    let r = Request::new(
+        Method::GET,
+        HOST,
+        "/token-metadata-service/v1/sessions".to_string(),
+    );
+    Ok(r)
+}
+
+/// `GET /token-metadata-service/v1/sessions`
+///
+/// Signed-in sessions of the account.
+///
+/// Undocumented; captured 2026-10-16, www.roblox.com/my/account#!/security.
+pub async fn get_sessions(client: &Client) -> Result<SessionList> {
+    client.send(get_sessions_request()?).await?.json()
 }
 
 /// `GET /transaction-records/v1/groups/{groupId}/revenue/summary/{timeFrame}`

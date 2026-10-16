@@ -31,6 +31,69 @@ pub struct AccountInfoView {
     pub birthdate: Option<String>,
     /// None until known.
     pub premium: Option<bool>,
+    /// Premium tier name, e.g. `Premium 1000`; None without a subscription.
+    pub premium_plan: Option<String>,
+    /// ISO date the subscription renews on.
+    pub premium_renews: Option<String>,
+    /// ISO date the subscription ends on.
+    pub premium_expires: Option<String>,
+    /// None until known.
+    pub age_verified: Option<bool>,
+    pub voice: Option<VoiceView>,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct VoiceView {
+    pub voice_enabled: bool,
+    pub voice_eligible: bool,
+    pub voice_verified: bool,
+    pub banned: bool,
+    pub camera_enabled: bool,
+    pub camera_eligible: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionView {
+    pub location: String,
+    pub device: String,
+    /// Unix seconds; 0 when unknown.
+    pub last_active: f64,
+    pub current: bool,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionsView {
+    pub loading: bool,
+    pub error: Option<String>,
+    pub sessions: Vec<SessionView>,
+}
+
+/// Signed-in sessions of the active account, current one first.
+#[tauri::command]
+#[specta::specta]
+pub fn account_sessions(core: State<'_, Arc<Core>>) -> SessionsView {
+    let r = core.acting(None).map(|a| core.sessions(a)).unwrap_or_default();
+    SessionsView {
+        loading: r.first_load(),
+        error: r.error.clone(),
+        sessions: r
+            .data
+            .as_deref()
+            .map(|d| {
+                d.iter()
+                    .map(|s| SessionView {
+                        location: s.location.clone(),
+                        device: s.device.clone(),
+                        last_active: s.last_active as f64,
+                        current: s.current,
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -118,6 +181,18 @@ pub fn account_info(core: State<'_, Arc<Core>>) -> AccountInfoView {
         phone_verified: i.phone_verified,
         birthdate: i.birthdate.map(|(y, m, d)| format!("{y:04}-{m:02}-{d:02}")),
         premium: i.premium,
+        premium_plan: i.plan.as_ref().map(|p| p.name.clone()).filter(|n| !n.is_empty()),
+        premium_renews: i.plan.as_ref().and_then(|p| p.renews.clone()),
+        premium_expires: i.plan.as_ref().and_then(|p| p.expires.clone()),
+        age_verified: i.age_verified,
+        voice: i.voice.map(|v| VoiceView {
+            voice_enabled: v.voice_enabled,
+            voice_eligible: v.voice_eligible,
+            voice_verified: v.voice_verified,
+            banned: v.banned,
+            camera_enabled: v.camera_enabled,
+            camera_eligible: v.camera_eligible,
+        }),
     }
 }
 

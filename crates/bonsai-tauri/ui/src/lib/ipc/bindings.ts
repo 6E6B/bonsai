@@ -250,6 +250,8 @@ export const commands = {
 	outfitLook: (outfitId: string) => __TAURI_INVOKE<LookView>("outfit_look", { outfitId }),
 	/**  Email, phone, birthday and Premium of the active account. */
 	accountInfo: () => __TAURI_INVOKE<AccountInfoView>("account_info"),
+	/**  Signed-in sessions of the active account, current one first. */
+	accountSessions: () => __TAURI_INVOKE<SessionsView>("account_sessions"),
 	/**  Privacy settings of the active account. */
 	privacySettings: () => __TAURI_INVOKE<List<PrivacyRow>>("privacy_settings"),
 	/**  Private servers of the active account across experiences: `owned` or `invited`. */
@@ -328,6 +330,15 @@ export type AccountInfoView = {
 	birthdate: string | null,
 	/**  None until known. */
 	premium: boolean | null,
+	/**  Premium tier name, e.g. `Premium 1000`; None without a subscription. */
+	premiumPlan: string | null,
+	/**  ISO date the subscription renews on. */
+	premiumRenews: string | null,
+	/**  ISO date the subscription ends on. */
+	premiumExpires: string | null,
+	/**  None until known. */
+	ageVerified: boolean | null,
+	voice: VoiceView | null,
 };
 
 export type AccountTotalsView = {
@@ -1559,6 +1570,20 @@ export type Servers = {
 /**  Whether an account's saved cookie still works. */
 export type Session = "unknown" | "ok" | "expired" | "noCookie";
 
+export type SessionView = {
+	location: string,
+	device: string,
+	/**  Unix seconds; 0 when unknown. */
+	lastActive: number | null,
+	current: boolean,
+};
+
+export type SessionsView = {
+	loading: boolean,
+	error: string | null,
+	sessions: SessionView[],
+};
+
 export type SettingRow = {
 	/**  The `group.setting` argument. */
 	key: string,
@@ -1890,6 +1915,15 @@ export type ValuesStatus = {
 	/**  ms since the epoch; `None` before the first load. */
 	fetchedAt: number | null,
 	count: number,
+};
+
+export type VoiceView = {
+	voiceEnabled: boolean,
+	voiceEligible: boolean,
+	voiceVerified: boolean,
+	banned: boolean,
+	cameraEnabled: boolean,
+	cameraEligible: boolean,
 };
 
 /**  A wardrobe section: inventory slots (`a<asset type>`) the avatar can wear. */

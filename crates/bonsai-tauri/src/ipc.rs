@@ -2657,6 +2657,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             avatar::profile_outfits,
             avatar::outfit_look,
             account::account_info,
+            account::account_sessions,
             account::privacy_settings,
             account::my_private_servers,
             account::app_settings,

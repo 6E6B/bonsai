@@ -15,6 +15,7 @@ import {
   type Person,
   type PinView,
   type PrivacyRow,
+  type SessionsView,
   type ThemeView,
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
@@ -184,7 +185,17 @@ function AccountSection() {
       phoneVerified: false,
       birthdate: null,
       premium: null,
+      premiumPlan: null,
+      premiumRenews: null,
+      premiumExpires: null,
+      ageVerified: null,
+      voice: null,
     }),
+  )
+  const sessions = useLive(
+    () => shell.active,
+    () => commands.accountSessions(),
+    (): SessionsView => ({ loading: true, error: null, sessions: [] }),
   )
   const pin = useLive(
     () => shell.active,
@@ -215,6 +226,11 @@ function AccountSection() {
     const t = Date.parse(`${info.birthdate}T12:00:00`)
     return Number.isNaN(t) ? null : date(t)
   }
+  const day = (iso: string | null) => {
+    const t = Date.parse(iso ?? "")
+    return Number.isNaN(t) ? null : date(t)
+  }
+  const seen = (secs: number | null) => (secs ? date(secs * 1000) : "")
   const value = (v: () => string | null, empty = "None") => (
     <Show when={!info.loading} fallback={<Skeleton class="h-4 w-32 rounded-sm" />}>
       <span class={v() ? undefined : "text-fg-muted"}>{v() || empty}</span>
@@ -247,14 +263,43 @@ function AccountSection() {
             <Verified ok={info.phoneVerified} />
           </Show>
         </Row>
-        <Row label="Birthday">{value(birthday, "Unknown")}</Row>
-        <Row label="Premium">
-          <Show when={info.premium !== null} fallback={value(() => null, "Unknown")}>
-            <Show when={info.premium} fallback={<span class="text-fg-muted">No</span>}>
-              <Badge variant="accent">Premium</Badge>
+        <Row label="Birthday">
+          {value(birthday, "Unknown")}
+          <Show when={!info.loading && info.ageVerified !== null}>
+            <Show when={info.ageVerified} fallback={<Badge>Age not verified</Badge>}>
+              <Badge variant="success">Age verified</Badge>
             </Show>
           </Show>
         </Row>
+        <Row label="Premium">
+          <Show when={info.premium !== null} fallback={value(() => null, "Unknown")}>
+            <Show when={info.premium} fallback={<span class="text-fg-muted">No</span>}>
+              <Badge variant="accent">{info.premiumPlan ?? "Premium"}</Badge>
+              <Show when={day(info.premiumRenews)}>{(d) => <span class="text-fg-muted">Renews {d()}</span>}</Show>
+              <Show when={!info.premiumRenews && day(info.premiumExpires)}>
+                {(d) => <span class="text-fg-muted">Ends {d()}</span>}
+              </Show>
+            </Show>
+          </Show>
+        </Row>
+        <Show when={info.voice}>
+          {(v) => (
+            <Row label="Voice and camera" description="Set on the website. Shown here for reference.">
+              <Badge variant={v().voiceEnabled ? "success" : undefined}>
+                {v().banned
+                  ? "Voice banned"
+                  : v().voiceEnabled
+                    ? "Voice on"
+                    : v().voiceEligible
+                      ? "Voice off"
+                      : "Voice unavailable"}
+              </Badge>
+              <Badge variant={v().cameraEnabled ? "success" : undefined}>
+                {v().cameraEnabled ? "Camera on" : v().cameraEligible ? "Camera off" : "Camera unavailable"}
+              </Badge>
+            </Row>
+          )}
+        </Show>
       </Card>
       <SectionHeader title="Security" />
       <Card class={rows}>
@@ -288,6 +333,22 @@ function AccountSection() {
           </Button>
           {webButton()}
         </Row>
+        <Show when={sessions.sessions.length > 0}>
+          <div class="flex flex-col gap-1 px-3 py-2 text-sm">
+            <For each={sessions.sessions}>
+              {(x) => (
+                <div class="flex items-center gap-2">
+                  <span>{x.device || "Unknown device"}</span>
+                  <span class="text-fg-muted">{x.location}</span>
+                  <span class="ml-auto text-fg-muted">{seen(x.lastActive)}</span>
+                  <Show when={x.current}>
+                    <Badge variant="accent">This app</Badge>
+                  </Show>
+                </div>
+              )}
+            </For>
+          </div>
+        </Show>
         <Row label="Quick sign-in" description="Sign in another device with the code it shows.">
           <Button size="sm" icon="devices" disabled={!active()} onClick={() => run("account.approve_code")}>
             Enter code

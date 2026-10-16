@@ -14,3 +14,26 @@ paths:
         - { in: path, name: userId, required: true, type: integer, format: int64 }
       responses:
         "200": { description: OK, schema: { type: boolean } }
+  /v1/users/{userId}/subscriptions/details:
+    get:
+      # Read from the www.roblox.com billing page bundle on 2026-10-16; live it returns 404 for an
+      # account without Premium (fixtures: settings.json for the 404, account_extras.json for a synthetic 200).
+      x-captured: "2026-10-16, www.roblox.com/my/account#!/billing"
+      x-rust-name: get_subscription_details
+      summary: Premium subscription tier and renewal. 404 when there is no subscription.
+      parameters:
+        - { in: path, name: userId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/SubscriptionDetails" } }
+definitions:
+  SubscriptionDetails:
+    type: object
+    properties:
+      subscriptionProductModel: { $ref: "#/definitions/SubscriptionProduct" }
+  SubscriptionProduct:
+    type: object
+    properties:
+      subscriptionName: { type: string }
+      renewal: { type: string, description: "ISO date" }
+      expiration: { type: string, description: "ISO date" }
+      robuxStipendAmount: { type: integer, format: int64 }

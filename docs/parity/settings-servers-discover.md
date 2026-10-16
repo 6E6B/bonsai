@@ -6,7 +6,7 @@
 - [x] Recommended sorts (Roblox Home feed via `discovery-api/omni-recommendation`)
 - [x] Favorites row (experiences favorited by the active account)
 - [x] Today's picks and dynamic topic categories from the feed
-- [ ] Promotional / seasonal event cards and banners — endpoint not captured
+- [ ] Promotional / seasonal event cards and banners — endpoint not captured; `/v1/events/single` and `virtual-events` exist but their response shapes aren't recorded (BLOCKERS #18)
 - [x] Quick account overview (avatar, display name, username, current Robux balance)
 - [x] Pull-to-refresh / manual feed reload button
 
@@ -26,7 +26,7 @@
 - [x] Stats grid: active players, total visits, favorites count, up/down votes, like ratio percentage
 - [x] Metadata: max server size, genre, subgenre, created date, updated relative date
 - [x] Age guidelines & maturity rating (descriptors: Mild Violence, Purchases, etc.)
-- [ ] Voice chat and camera / face tracking support indicators — no known endpoint; not captured yet
+- [x] Voice chat and camera support indicators — shown for the account in Settings > Account (`voice.roblox.com/v1/settings`), not per experience
 - [x] Quick actions: vote up/down (with eligibility status), favorite toggle, follow/notify bell, report abuse
 - [x] Sub-tab: About (full description, developer bio, place attributes)
 - [x] Sub-tab: Store (game passes with icon, price in Robux, owned status, purchase flow) — bought in-app after a confirm; not run live yet (BLOCKERS.md #5)
@@ -54,13 +54,13 @@
   - [x] Display name (edit with 7-day cooldown validation)
   - [x] Email address and verification status
   - [x] Phone number and verification status
-  - [ ] Birthday and age verification indicator — birthday shown; age verification status not captured
+  - [x] Birthday and age verification indicator — `age-verification-service/v1/age-verification/verified-age`
   - [x] Account PIN status (unlock with PIN) — `account.unlock_pin`, `account.lock_pin`
 - [ ] **Security**:
   - [ ] Change password
   - [ ] 2-Step Verification (Authenticator App / TOTP, Email codes, Hardware Security Keys / Passkeys)
   - [x] Cross-Device Quick Login (generate code for other devices, enter code from another device) — `account.quick_sign_in`, `account.approve_code`
-  - [ ] Active session list (browsers, devices, IP locations, last active timestamp)
+  - [x] Active session list (devices, locations, last active) — IPs and tokens are dropped in core
   - [x] Sign out of all other sessions action — `account.sign_out_others`
 - [x] **Privacy**:
   - [x] Who can chat with me in app
@@ -79,7 +79,7 @@
   - [ ] App display language selector
   - [x] Localized number and date/time format — Settings > Appearance, `app.format_locale`; relative times ("5m ago") stay English
 - [ ] **Billing & Subscriptions**:
-  - [ ] Premium membership tier and renewal date — Premium yes/no shown; tier and renewal date not captured
+  - [x] Premium membership tier and renewal date — `premiumfeatures/v1/users/{id}/subscriptions/details` (shape from the site bundle; fixture is synthetic)
   - [x] Active private server subscriptions
 - [ ] **App Preferences (Client native)**:
   - [ ] Theme (Light, Dark, System, Custom palettes) — twelve built-in themes, a dark and a light pick that System switches between; editor and import in progress, see [theming.md](../theming.md)

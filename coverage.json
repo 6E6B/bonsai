@@ -6862,6 +6862,16 @@
     },
     {
       "deprecated": false,
+      "function": "get_verified_age",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/age-verification-service/v1/age-verification/verified-age",
+      "summary": "Whether the account passed age verification.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "post_quick_login_cancel",
       "host": "apis.roblox.com",
       "method": "POST",
@@ -7182,6 +7192,16 @@
     },
     {
       "deprecated": false,
+      "function": "get_sessions",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/token-metadata-service/v1/sessions",
+      "summary": "Signed-in sessions of the account.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "get_group_revenue_summary",
       "host": "apis.roblox.com",
       "method": "GET",
@@ -7358,7 +7378,7 @@
       "module": "avatar::undocumented",
       "path": "/v1/emotes/{assetId}/{position}",
       "summary": "Put an emote the user owns in a hotbar slot (1 to 8).",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -7368,7 +7388,7 @@
       "module": "avatar::undocumented",
       "path": "/v1/emotes/{position}",
       "summary": "Clear a hotbar slot.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -7582,6 +7602,16 @@
     },
     {
       "deprecated": false,
+      "function": "get_subscription_details",
+      "host": "premiumfeatures.roblox.com",
+      "method": "GET",
+      "module": "premiumfeatures::undocumented",
+      "path": "/v1/users/{userId}/subscriptions/details",
+      "summary": "Premium subscription tier and renewal. 404 when there is no subscription.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "get_has_premium",
       "host": "premiumfeatures.roblox.com",
       "method": "GET",
@@ -7608,6 +7638,16 @@
       "module": "thumbnails::undocumented",
       "path": "/v1/batch",
       "summary": "Thumbnails of mixed types in one request (up to 100).",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "get_voice_settings",
+      "host": "voice.roblox.com",
+      "method": "GET",
+      "module": "voice::undocumented",
+      "path": "/v1/settings",
+      "summary": "Voice chat and avatar camera status of the account.",
       "used": true
     },
     {
@@ -7841,6 +7881,6 @@
       "used": true
     }
   ],
-  "total": 784,
-  "used": 236
+  "total": 788,
+  "used": 242
 }

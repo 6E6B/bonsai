@@ -1,7 +1,7 @@
 {
   "captured": "2026-10-14",
   "source": "synthetic",
-  "note": "Account info, privacy and private server list. Response shapes observed live on 2026-10-14 (user-settings-api, accountsettings, accountinformation, users, premiumfeatures, games my-private-servers and vip-servers); every value here is made up. Writes are not sent live because they would change the test account; their request shapes come from the site's UserSettings bundle and the tracker swagger.",
+  "note": "Account info, privacy and private server list. Response shapes observed live on 2026-10-14 (user-settings-api, accountsettings, accountinformation, users, premiumfeatures, games my-private-servers and vip-servers); every value here is made up. Writes are not sent live because they would change the test account; their request shapes come from the site's UserSettings bundle and the tracker swagger. Sessions, verified-age and voice settings were captured live on 2026-10-16 with tokens, IPs and places replaced; the 404 on subscriptions/details is what a non-Premium account gets.",
   "interactions": [
     {
       "request": { "method": "GET", "host": "apis.roblox.com", "path": "/user-settings-api/v1/user-settings/settings-and-options" },
@@ -245,6 +245,38 @@
     {
       "request": { "method": "PATCH", "host": "users.roblox.com", "path": "/v1/users/1000001/display-names" },
       "response": { "status": 200, "headers": { "content-type": "application/json" }, "body": {} }
+    },
+    {
+      "request": { "method": "GET", "host": "premiumfeatures.roblox.com", "path": "/v1/users/1000001/subscriptions/details" },
+      "response": {
+        "status": 404,
+        "headers": { "content-type": "application/json" },
+        "body": {"errors": [{"code": 0, "message": "NotFound"}]}
+      }
+    },
+    {
+      "request": { "method": "GET", "host": "apis.roblox.com", "path": "/token-metadata-service/v1/sessions" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {"sessions": [{"token": "redacted", "location": {"city": "Springfield", "subdivision": "Example", "country": "United States"}, "agent": {"type": "Browser", "value": "Firefox", "os": "Linux"}, "lastAccessedIp": "203.0.113.7", "lastAccessedTimestampEpochMilliseconds": "1792122671844", "isCurrentSession": true, "parentSessionToken": null, "isCoupInvalid": false, "isTrustedSession": false, "delayLabels": null}, {"token": "redacted", "location": {"city": "Springfield", "subdivision": "Example", "country": "United States"}, "agent": {"type": "App", "value": null, "os": "Windows"}, "lastAccessedIp": "203.0.113.8", "lastAccessedTimestampEpochMilliseconds": "1792200000000", "isCurrentSession": false, "parentSessionToken": null, "isCoupInvalid": false, "isTrustedSession": false, "delayLabels": null}]}
+      }
+    },
+    {
+      "request": { "method": "GET", "host": "apis.roblox.com", "path": "/age-verification-service/v1/age-verification/verified-age" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {"isVerified": false, "verifiedAge": 0, "isSeventeenPlus": false}
+      }
+    },
+    {
+      "request": { "method": "GET", "host": "voice.roblox.com", "path": "/v1/settings" },
+      "response": {
+        "status": 200,
+        "headers": { "content-type": "application/json" },
+        "body": {"isVoiceEnabled": true, "isUserOptIn": true, "isUserEligible": true, "isBanned": false, "banReason": 0, "bannedUntil": null, "canVerifyAgeForVoice": false, "isVerifiedForVoice": true, "denialReason": 0, "isOptInDisabled": false, "hasEverOpted": false, "isAvatarVideoEnabled": false, "isAvatarVideoOptIn": false, "isAvatarVideoOptInDisabled": false, "isAvatarVideoEligible": true, "hasEverOptedAvatarVideo": false, "userHasAvatarCameraAlwaysAvailable": false, "canVerifyPhoneForVoice": false, "seamlessVoiceStatus": 3}
+      }
     }
   ]
 }
