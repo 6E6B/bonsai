@@ -9,5 +9,5 @@ fn main() {
         // SAFETY: first thing in main, before any other thread exists.
         unsafe { std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1") };
     }
-    bonsai_tauri::run();
+    bonsai_lib::run();
 }

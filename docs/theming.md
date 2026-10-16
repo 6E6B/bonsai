@@ -52,7 +52,7 @@ Token values follow one grammar per kind:
 
 ## Code
 
-`crates/bonsai-tauri/ui/src/lib/theme/`:
+`crates/bonsai/ui/src/lib/theme/`:
 
 | File | What it does |
 |---|---|
@@ -71,11 +71,11 @@ Elsewhere:
 | `crates/rbx-core/themes/*.json` | The built-ins: Dark, Light, Midnight, Fjord, Ember, Paper, Moss, Dusk, Abyss, Phosphor, Sakura, Glacier, Adwaita, Adwaita Dark (GNOME's libadwaita colors). Bundled with `include_str!`. |
 | `crates/rbx-core/src/themes.rs` | Parses and checks documents (shape, id, size, a small value charset), loads `<config>/themes/*.json`, and `Core::apply_theme` / `cycle_theme` / `save_theme` / `delete_theme`. Files are written on the worker. |
 | `rbx-core/src/settings.rs` | `Appearance { mode, dark, light }`: theme ids per base. |
-| `bonsai-tauri/src/ipc/account.rs` | `appearance()` (mode and the two documents), `themes()` (every installed theme as `ThemeView`), and the `theme.*` commands. |
+| `bonsai/src/ipc/account.rs` | `appearance()` (mode and the two documents), `themes()` (every installed theme as `ThemeView`), and the `theme.*` commands. |
 | `ui/src/app/appearance.ts` | Applies `appearance()` live, on every `storeChanged`. |
 | `ui/src/lib/ui/theme-card.tsx` | `ThemeCard`: a small window drawn with a theme's tokens. |
 | `crates/rbx-core/src/fonts.rs` | The Google Fonts catalog, the download of one family into `<cache>/fonts/<slug>/<weight>.ttf`, and the checks on names, paths and file headers. |
-| `bonsai-tauri/src/font.rs` | `font://<slug>/<weight>.ttf`: serves those files to the webview. |
+| `bonsai/src/font.rs` | `font://<slug>/<weight>.ttf`: serves those files to the webview. |
 | `ui/src/lib/ui/combobox.tsx` | `Combobox`: the searchable font picker. |
 
 Rust checks structure and keeps every value to `[A-Za-z0-9#.,()\- ]`, so a theme can't carry a

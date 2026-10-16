@@ -79,7 +79,7 @@ Rules:
 ### Browser sign-in window
 
 - Command `account.signInWithBrowser` (palette title "Add account with Roblox sign-in page"). It opens a separate Tauri window, not a view in the main window.
-- The window loads only the Roblox login page. That URL is defined in `rbx-api` and listed in `specs/undocumented/www.roblox.com.yaml`, not hardcoded in `bonsai-tauri`. The window gets no IPC capabilities in `capabilities/` and no bindings. Navigation is limited to roblox.com hosts; any other link opens in the system browser.
+- The window loads only the Roblox login page. That URL is defined in `rbx-api` and listed in `specs/undocumented/www.roblox.com.yaml`, not hardcoded in `bonsai`. The window gets no IPC capabilities in `capabilities/` and no bindings. Navigation is limited to roblox.com hosts; any other link opens in the system browser.
 - It uses its own non-persistent data store (Tauri `data_directory` / incognito per platform), wiped when the window closes, so cookies and IndexedDB are not shared with the main webview or with previous sign-ins.
 - The main window's CSP stays as it is. The remote-content exception applies only to this window.
 - Rust watches the window's navigation. Once it leaves the login page, read the `.ROBLOSECURITY` cookie from the webview's cookie store (Rust side only), close the window, and run the existing confirm-and-save step. The cookie never goes to the UI.
@@ -97,7 +97,7 @@ Rules:
 Steps 1 and 2 are built. Both flows end in the same confirm step as a pasted cookie.
 
 - Quick sign-in: `account.quick_sign_in` ("Add account with quick sign-in"). `rbx-core/src/signin.rs` polls every 5 s like the site and sends the login without `secureAuthenticationIntent`. The endpoints are in `specs/undocumented/apis.roblox.com.yaml` (`/auth-token-service/v1/login/{create,status,cancel}`). Create, status and cancel were captured live (fixture `quick_sign_in.json`). `UserLinked`, `Validated` and the login body (`ctype` AuthToken, `cvalue` code, `password` privateKey, to the documented `auth /v2/login`) come from the site's `CrossDeviceLoginDisplayCode.js` and `ReactLogin.js`. The approved path is a synthetic fixture (`quick_sign_in_approved.json`) because recording it needs a second signed-in device.
-- Browser window: `account.sign_in_browser` ("Add account with Roblox sign-in page"). `bonsai-tauri/src/signin.rs`, window label `signin`, page from `links::sign_in_page()` (`/login` in `specs/undocumented/www.roblox.com.yaml`). It allows pages and frames on `roblox.com` and `arkoselabs.com`, because the page embeds the captcha from there. Links that open a new window go to the system browser only if they are Roblox links; everything else is blocked. Besides the ACL, the invoke handler in `lib.rs` rejects every webview except `main`.
+- Browser window: `account.sign_in_browser` ("Add account with Roblox sign-in page"). `bonsai/src/signin.rs`, window label `signin`, page from `links::sign_in_page()` (`/login` in `specs/undocumented/www.roblox.com.yaml`). It allows pages and frames on `roblox.com` and `arkoselabs.com`, because the page embeds the captcha from there. Links that open a new window go to the system browser only if they are Roblox links; everything else is blocked. Besides the ACL, the invoke handler in `lib.rs` rejects every webview except `main`.
 - The paste dialog links to both flows, so the `+` button reaches them too.
 
 Not tried by hand yet:

@@ -1,6 +1,6 @@
 /**
  * Registers the Google fonts a theme uses with the webview. The backend downloads them and serves
- * each weight over `font://` (crates/bonsai-tauri/src/font.rs); `FontFace` loads it from there, so
+ * each weight over `font://` (crates/bonsai/src/font.rs); `FontFace` loads it from there, so
  * no stylesheet is injected and nothing comes from the network. The theme's font stack names the
  * family first, so text switches to it as soon as it loads.
  */

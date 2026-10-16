@@ -9,7 +9,7 @@ bonsai/
 ├── crates/
 │   ├── rbx-api/       # Roblox API client (REST & SignalR WebSocket, rate limiting, auth)
 │   ├── rbx-core/      # Domain engine (StoreData, multi-account sessions, cache, launcher, commands)
-│   ├── bonsai-tauri/   # Tauri shell + SolidJS UI (ui/)
+│   ├── bonsai/        # Tauri shell + SolidJS UI (ui/)
 │   └── rbx-codegen/   # Generator xtask converting OpenAPI/Swagger specs to Rust API wrappers
 ├── specs/             # Custom Swagger 2.0 specs for undocumented Roblox endpoints
 ├── vendor/            # roblox-api-tracker submodule/specs
@@ -25,10 +25,10 @@ bonsai/
 
 ## Desktop app
 
-The UI is a Tauri 2 shell (`crates/bonsai-tauri`) around a SolidJS app (`crates/bonsai-tauri/ui`). Install [bun](https://bun.sh), then:
+The UI is a Tauri 2 shell (`crates/bonsai`) around a SolidJS app (`crates/bonsai/ui`). Install [bun](https://bun.sh), then:
 
 ```sh
-cd crates/bonsai-tauri/ui
+cd crates/bonsai/ui
 bun install
 bun run app      # desktop app with hot reload
 bun run check    # typecheck, lint, tests

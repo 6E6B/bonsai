@@ -1,5 +1,5 @@
 [package]
-name = "bonsai-tauri"
+name = "bonsai"
 description = "Tauri shell: wires rbx-core to the Solid UI over typed IPC"
 version.workspace = true
 edition.workspace = true
@@ -10,7 +10,7 @@ rust-version.workspace = true
 workspace = true
 
 [lib]
-name = "bonsai_tauri"
+name = "bonsai_lib"
 
 [[bin]]
 name = "bonsai"

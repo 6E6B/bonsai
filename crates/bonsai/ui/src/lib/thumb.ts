@@ -1,6 +1,6 @@
 import { convertFileSrc, isTauri } from "@tauri-apps/api/core"
 
-/** Thumbnail kinds served by the `thumb://` protocol (crates/bonsai-tauri/src/thumb.rs). */
+/** Thumbnail kinds served by the `thumb://` protocol (crates/bonsai/src/thumb.rs). */
 export type ThumbKind =
   | "headshot"
   | "avatar"
@@ -21,7 +21,7 @@ export function thumbUrl(kind: ThumbKind, id: number | string, large = false) {
 }
 
 /** URL for the background picture, a file name from `AppearanceView.background`, served by the
- * `bg://` protocol (crates/bonsai-tauri/src/bg.rs). Undefined outside the app. */
+ * `bg://` protocol (crates/bonsai/src/bg.rs). Undefined outside the app. */
 export function backgroundUrl(file: string) {
   if (!isTauri()) return undefined
   return convertFileSrc(file, "bg")
