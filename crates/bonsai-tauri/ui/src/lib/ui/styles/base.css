@@ -74,6 +74,19 @@
   }
 }
 
+/* Opacity only, for backdrops that must not scale with the surface above them. */
+@keyframes ui-opacity-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-opacity-out {
+  to {
+    opacity: 0;
+  }
+}
+
 @keyframes ui-spin {
   to {
     transform: rotate(360deg);

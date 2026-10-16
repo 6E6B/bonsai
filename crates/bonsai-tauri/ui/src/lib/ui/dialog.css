@@ -4,11 +4,11 @@
     inset: 0;
     z-index: 50;
     background: var(--color-scrim);
-    animation: ui-fade-in var(--duration) var(--ease);
+    animation: ui-opacity-in var(--duration) var(--ease);
   }
 
   [data-component="dialog-overlay"][data-closed] {
-    animation: ui-fade-out var(--duration) var(--ease);
+    animation: ui-opacity-out var(--duration) var(--ease);
   }
 
   [data-component="dialog-positioner"] {
