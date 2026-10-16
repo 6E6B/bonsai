@@ -55,8 +55,6 @@ pub struct Background {
     pub image: u8,
     /// How opaque pages and panels stay over the picture, 0–100.
     pub panels: u8,
-    /// Blur radius in px behind see-through cards, 0–40; 0 leaves them clear.
-    pub frost: u8,
     /// Effects drawn on the picture. See [`Background::LEVELS`] for each range.
     pub blur: u8,
     pub dim: u8,
@@ -69,10 +67,9 @@ pub struct Background {
 
 impl Background {
     /// Every adjustable level by name, with its maximum.
-    pub const LEVELS: [(&'static str, u8); 10] = [
+    pub const LEVELS: [(&'static str, u8); 9] = [
         ("image", 100),
         ("panels", 100),
-        ("frost", 40),
         ("blur", 40),
         ("dim", 100),
         ("saturation", 200),
@@ -87,7 +84,6 @@ impl Background {
         Some(match name {
             "image" => &mut self.image,
             "panels" => &mut self.panels,
-            "frost" => &mut self.frost,
             "blur" => &mut self.blur,
             "dim" => &mut self.dim,
             "saturation" => &mut self.saturation,
@@ -105,7 +101,6 @@ impl Background {
             file: std::mem::take(&mut self.file),
             image: self.image,
             panels: self.panels,
-            frost: self.frost,
             ..Background::default()
         };
     }
@@ -117,7 +112,6 @@ impl Default for Background {
             file: String::new(),
             image: 70,
             panels: 75,
-            frost: 0,
             blur: 0,
             dim: 0,
             saturation: 100,
@@ -559,13 +553,12 @@ mod tests {
         let mut b: Background = serde_json::from_str(r#"{"file":"a.png","image":40}"#).unwrap();
         assert_eq!((b.image, b.panels, b.saturation, b.blur), (40, 75, 100, 0));
         *b.level_mut("blur").unwrap() = 12;
-        *b.level_mut("frost").unwrap() = 8;
         *b.level_mut("saturation").unwrap() = 0;
         assert!(b.level_mut("nope").is_none());
         b.reset_effects();
         assert_eq!(
-            (b.file.as_str(), b.image, b.frost, b.blur, b.saturation),
-            ("a.png", 40, 8, 0, 100)
+            (b.file.as_str(), b.image, b.blur, b.saturation),
+            ("a.png", 40, 0, 100)
         );
         for (name, _) in Background::LEVELS {
             assert!(b.level_mut(name).is_some(), "{name}");

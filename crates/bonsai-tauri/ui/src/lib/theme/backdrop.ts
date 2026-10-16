@@ -13,11 +13,10 @@ import type { Tokens } from "./tokens"
 export const SEE_THROUGH = ["color-canvas", "color-surface"] as const
 
 /** Overrides for `tokens` with the page and cards at `opacity` (0–1). `backdrop-base` keeps the
- * opaque page color for under the picture; `backdrop-frost` is the `backdrop-filter` cards use to
- * blur what shows through them by `frost` px. */
-export function seeThrough(tokens: Tokens, opacity: number, frost = 0): Tokens {
+ * opaque page color for under the picture. */
+export function seeThrough(tokens: Tokens, opacity: number): Tokens {
   const a = Math.min(1, Math.max(0, opacity)) * 255
-  const out: Tokens = { "backdrop-frost": frost > 0 ? `blur(${frost}px)` : "none" }
+  const out: Tokens = {}
   const canvas = colorOf(tokens, "color-canvas")
   if (canvas) out["backdrop-base"] = toHex(canvas)
   for (const name of SEE_THROUGH) {

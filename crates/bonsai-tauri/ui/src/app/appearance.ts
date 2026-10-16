@@ -30,10 +30,7 @@ export function useAppearance() {
   )
   createEffect(() => registerFonts(a.fonts))
   createEffect(() => settleBackdrop(a.background))
-  createEffect(() => {
-    const b = a.background && withDraft(a.background)
-    setSeeThrough(b ? b.panels / 100 : undefined, b ? b.frost : 0)
-  })
+  createEffect(() => setSeeThrough(a.background ? withDraft(a.background).panels / 100 : undefined))
   // The backend needs the OS preference to know which theme System mode shows.
   onMount(() => {
     if (!isTauri() || typeof window.matchMedia !== "function") return

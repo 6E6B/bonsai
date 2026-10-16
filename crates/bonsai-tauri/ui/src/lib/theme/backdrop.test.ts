@@ -5,7 +5,6 @@ describe("seeThrough", () => {
   it("fades the page and cards and keeps the solid page color", () => {
     const t = { "color-canvas": "#1a1a1a", "color-surface": "var(--color-raised)", "color-raised": "#282828" }
     expect(seeThrough(t, 0.75)).toEqual({
-      "backdrop-frost": "none",
       "backdrop-base": "#1a1a1a",
       "color-canvas": "#1a1a1abf",
       "color-surface": "#282828bf",
@@ -14,15 +13,10 @@ describe("seeThrough", () => {
 
   it("clamps the opacity and skips tokens that aren't colors", () => {
     expect(seeThrough({ "color-canvas": "#ffffff" }, 2)).toEqual({
-      "backdrop-frost": "none",
       "backdrop-base": "#ffffff",
       "color-canvas": "#ffffff",
     })
-    expect(seeThrough({}, 0.5)).toEqual({ "backdrop-frost": "none" })
-  })
-
-  it("blurs behind cards with frost", () => {
-    expect(seeThrough({}, 0.5, 12)).toEqual({ "backdrop-frost": "blur(12px)" })
+    expect(seeThrough({}, 0.5)).toEqual({})
   })
 })
 
@@ -30,7 +24,6 @@ describe("backdropLayers", () => {
   const plain = {
     image: 70,
     panels: 75,
-    frost: 0,
     blur: 0,
     dim: 0,
     saturation: 100,

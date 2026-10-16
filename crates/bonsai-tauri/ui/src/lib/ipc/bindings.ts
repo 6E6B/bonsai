@@ -476,8 +476,6 @@ export type BackgroundView = {
 	image: number,
 	/**  How opaque pages and panels stay, 0–100. */
 	panels: number,
-	/**  Blur radius in px behind see-through cards, 0–40. */
-	frost: number,
 	/**  Blur radius in px, 0–40. */
 	blur: number,
 	/**  Darkening, 0–100. */
