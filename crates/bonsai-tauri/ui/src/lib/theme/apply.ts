@@ -16,8 +16,9 @@ let media: MediaQueryList | undefined
 let set = new Set<string>()
 /** A theme being edited, shown in place of the saved one for its base. */
 let draft: Theme | undefined
-/** How opaque the page stays over the background picture (0–1), or undefined with none. */
-let panels: number | undefined
+/** How opaque the page stays over the background picture (0–1) and the blur behind cards (px),
+ * or undefined with none. */
+let panels: { opacity: number; frost: number } | undefined
 
 function base(): Base {
   if (mode !== "system") return mode
@@ -31,7 +32,7 @@ function paint() {
   root.style.colorScheme = b
   const theme = draft?.base === b ? draft : themes[b]
   const tokens = theme ? resolve(theme) : {}
-  if (panels !== undefined) Object.assign(tokens, seeThrough(tokens, panels))
+  if (panels !== undefined) Object.assign(tokens, seeThrough(tokens, panels.opacity, panels.frost))
   for (const name of set) if (!(name in tokens)) root.style.removeProperty(`--${name}`)
   for (const [name, value] of Object.entries(tokens)) root.style.setProperty(`--${name}`, value)
   set = new Set(Object.keys(tokens))
@@ -63,10 +64,11 @@ export function previewTheme(theme: Theme | undefined) {
   paint()
 }
 
-/** Makes the page and cards see-through at `opacity` (0–1) over the background picture, or
- * opaque again when undefined. */
-export function setSeeThrough(opacity: number | undefined) {
-  if (panels === opacity) return
-  panels = opacity
+/** Makes the page and cards see-through at `opacity` (0–1) over the background picture, with
+ * `frost` px of blur behind cards, or opaque again when undefined. */
+export function setSeeThrough(opacity: number | undefined, frost = 0) {
+  const next = opacity === undefined ? undefined : { opacity, frost }
+  if (panels?.opacity === next?.opacity && panels?.frost === next?.frost) return
+  panels = next
   paint()
 }

@@ -186,7 +186,7 @@ impl Core {
     }
 
     /// Sets one level of the picture, as `"<name> <number>"`: `image` and `panels` (0–100),
-    /// or an effect (see [`Background::LEVELS`]). Out of range values are clamped.
+    /// `frost` (blur behind cards, 0–40 px), or an effect (see [`Background::LEVELS`]). Out of range values are clamped.
     pub fn set_background_level(&self, arg: &str) -> Result<(), String> {
         let (name, n) = parse_level(arg)?;
         if self.settings().appearance.background.is_none() {

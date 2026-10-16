@@ -364,6 +364,8 @@ pub struct BackgroundView {
     pub image: u8,
     /// How opaque pages and panels stay, 0–100.
     pub panels: u8,
+    /// Blur radius in px behind see-through cards, 0–40.
+    pub frost: u8,
     /// Blur radius in px, 0–40.
     pub blur: u8,
     /// Darkening, 0–100.
@@ -415,6 +417,7 @@ pub fn appearance(core: State<'_, Arc<Core>>) -> AppearanceView {
             file: b.file,
             image: b.image,
             panels: b.panels,
+            frost: b.frost,
             blur: b.blur,
             dim: b.dim,
             saturation: b.saturation,

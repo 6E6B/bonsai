@@ -754,6 +754,7 @@ function BackgroundCard() {
           <div class="grid grid-cols-2 gap-x-6 gap-y-4 py-3">
             {level("image", "Picture strength", 100, 5, "%")}
             {level("panels", "Page opacity", 100, 5, "%")}
+            {level("frost", "Card blur", 40, 1, "px")}
           </div>
           <div class="py-3">
             <div class="mb-3 flex items-center justify-between gap-3">

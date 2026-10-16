@@ -5,6 +5,7 @@
     flex-direction: column;
     border-radius: var(--radius-lg);
     background: var(--color-surface);
+    backdrop-filter: var(--backdrop-frost, none);
     box-shadow: var(--shadow-raised);
     font-size: var(--text-sm);
   }
