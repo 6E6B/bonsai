@@ -278,6 +278,12 @@ export const commands = {
 	challengeCancel: (seq: Id) => __TAURI_INVOKE<void>("challenge_cancel", { seq }),
 	/**  Opens the puzzle window for a captcha check. */
 	openCaptcha: (seq: Id) => typedError<null, string>(__TAURI_INVOKE("open_captcha", { seq })),
+	/**  Enters a code for the active account. Returns the attempt's `seq`. */
+	approveEnter: (code: string) => typedError<Id, string>(__TAURI_INVOKE("approve_enter", { code })),
+	/**  Approves the code the dialog shows. */
+	approveConfirm: (seq: Id) => typedError<null, string>(__TAURI_INVOKE("approve_confirm", { seq })),
+	/**  Closes the dialog. An entered code that wasn't approved is cancelled. */
+	approveClose: (seq: Id) => __TAURI_INVOKE<void>("approve_close", { seq }),
 	/**  Step 1 of adding an account: check a pasted cookie. Progress shows in `Shell.login`. */
 	submitCookie: (text: string) => __TAURI_INVOKE<boolean>("submit_cookie", { text }),
 	/**  Step 2: save the checked account and switch to it. */
@@ -366,6 +372,19 @@ export type AppearanceView = {
 	light: string,
 	/**  The Google Fonts the two themes use, to register with the webview as they download. */
 	fonts: FontView[],
+};
+
+export type ApproveStepView = { step: "enter" } | 
+/**  `device` like "Chrome on Windows"; `location` may be empty. */
+{ step: "confirm"; device: string; location: string } | { step: "done" };
+
+export type ApproveView = {
+	/**  Identifies this attempt in the dialog's replies. */
+	seq: Id,
+	step: ApproveStepView,
+	/**  Waiting on Roblox. */
+	busy: boolean,
+	error: string | null,
 };
 
 export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen";
@@ -1563,6 +1582,8 @@ export type Shell = {
 	login: Login | null,
 	/**  A two-step or captcha check holding an action, while it is open. */
 	challenge: ChallengeView | null,
+	/**  The "Sign in another device" dialog, once a code was entered. */
+	approve: ApproveView | null,
 	/**  Item values from Rolimons are on. */
 	itemValues: boolean,
 	/**  How the user arranged the sidebar. */

@@ -1020,6 +1020,17 @@ pub struct QuickLoginCode {
     pub status: Option<String>,
 }
 
+/// `QuickLoginDevice`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct QuickLoginDevice {
+    #[serde(rename = "deviceInfo")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_info: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<String>,
+}
+
 /// `QuickLoginKey`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -1530,6 +1541,36 @@ pub async fn post_quick_login_create(client: &Client) -> Result<QuickLoginCode> 
     client.send(post_quick_login_create_request()?).await?.json()
 }
 
+/// `POST /auth-token-service/v1/login/enterCode`
+///
+/// Link a quick sign-in code to the signed-in account and see the device asking.
+///
+/// Undocumented; captured 2026-10-16, www.roblox.com/crossdevicelogin/ConfirmCode.
+pub fn post_quick_login_enter_code_request(body: &QuickLoginCancel) -> Result<Request> {
+    let mut r = Request::new(
+        Method::POST,
+        HOST,
+        "/auth-token-service/v1/login/enterCode".to_string(),
+    );
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /auth-token-service/v1/login/enterCode`
+///
+/// Link a quick sign-in code to the signed-in account and see the device asking.
+///
+/// Undocumented; captured 2026-10-16, www.roblox.com/crossdevicelogin/ConfirmCode.
+pub async fn post_quick_login_enter_code(
+    client: &Client,
+    body: &QuickLoginCancel,
+) -> Result<QuickLoginDevice> {
+    client
+        .send(post_quick_login_enter_code_request(body)?)
+        .await?
+        .json()
+}
+
 /// `POST /auth-token-service/v1/login/status`
 ///
 /// Where a quick sign-in code is.
@@ -1552,6 +1593,36 @@ pub fn post_quick_login_status_request(body: &QuickLoginKey) -> Result<Request> 
 /// Undocumented; captured 2026-10-14, www.roblox.com/login, Quick Log In.
 pub async fn post_quick_login_status(client: &Client, body: &QuickLoginKey) -> Result<QuickLoginStatus> {
     client.send(post_quick_login_status_request(body)?).await?.json()
+}
+
+/// `POST /auth-token-service/v1/login/validateCode`
+///
+/// Approve a quick sign-in code entered with enterCode.
+///
+/// Undocumented; captured 2026-10-16, www.roblox.com/crossdevicelogin/ConfirmCode.
+pub fn post_quick_login_validate_code_request(body: &QuickLoginCancel) -> Result<Request> {
+    let mut r = Request::new(
+        Method::POST,
+        HOST,
+        "/auth-token-service/v1/login/validateCode".to_string(),
+    );
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /auth-token-service/v1/login/validateCode`
+///
+/// Approve a quick sign-in code entered with enterCode.
+///
+/// Undocumented; captured 2026-10-16, www.roblox.com/crossdevicelogin/ConfirmCode.
+pub async fn post_quick_login_validate_code(
+    client: &Client,
+    body: &QuickLoginCancel,
+) -> Result<serde_json::Value> {
+    client
+        .send(post_quick_login_validate_code_request(body)?)
+        .await?
+        .json()
 }
 
 /// `GET /captcha/v1/metadata`

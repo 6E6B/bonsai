@@ -546,6 +546,8 @@ pub(super) fn run(
         CommandId::LockPin => acting().map(|a| core.lock_pin(a)),
         // The settings screen asks for the PIN and calls `unlock_pin`.
         CommandId::UnlockPin => Err("Open Settings to enter the PIN.".into()),
+        // The dialog takes the code and calls `approve_enter`.
+        CommandId::ApproveCode => Err("Open the command bar to enter the code.".into()),
         CommandId::ClearCache => {
             core.clear_cache();
             Ok(())

@@ -288,6 +288,11 @@ function AccountSection() {
           </Button>
           {webButton()}
         </Row>
+        <Row label="Quick sign-in" description="Sign in another device with the code it shows.">
+          <Button size="sm" icon="devices" disabled={!active()} onClick={() => run("account.approve_code")}>
+            Enter code
+          </Button>
+        </Row>
       </Card>
     </>
   )

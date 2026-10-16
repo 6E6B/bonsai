@@ -1164,3 +1164,55 @@ async fn transactions() {
          purchases and sales (none). Sellers who are people are scrubbed.",
     );
 }
+
+/// Approving a quick sign-in from the signed-in side. The code comes from an anonymous
+/// client here, which never finishes with `/v2/login`, so no session is made. Then a second
+/// code is entered and cancelled, and a made-up code shows the error body.
+#[tokio::test]
+async fn quick_sign_in_approve() {
+    use apis::undocumented as a;
+    let l = live().await;
+    let anon = l.anon();
+    let code = |c: &a::QuickLoginCode| a::QuickLoginCancel { code: c.code.clone() };
+    let key = |c: &a::QuickLoginCode| a::QuickLoginKey {
+        code: c.code.clone(),
+        private_key: c.private_key.clone(),
+    };
+
+    let first = a::post_quick_login_create(&anon).await.unwrap();
+    let device = a::post_quick_login_enter_code(&l.client, &code(&first))
+        .await
+        .unwrap();
+    assert!(device.device_info.is_some_and(|d| !d.is_empty()));
+    let s = a::post_quick_login_status(&anon, &key(&first)).await.unwrap();
+    assert_eq!(s.status.as_deref(), Some("UserLinked"));
+    a::post_quick_login_validate_code(&l.client, &code(&first))
+        .await
+        .unwrap();
+    let s = a::post_quick_login_status(&anon, &key(&first)).await.unwrap();
+    assert_eq!(s.status.as_deref(), Some("Validated"));
+
+    let second = a::post_quick_login_create(&anon).await.unwrap();
+    a::post_quick_login_enter_code(&l.client, &code(&second))
+        .await
+        .unwrap();
+    a::post_quick_login_cancel(&l.client, &code(&second))
+        .await
+        .unwrap();
+    let s = a::post_quick_login_status(&anon, &key(&second)).await.unwrap();
+    assert_eq!(s.status.as_deref(), Some("Cancelled"));
+
+    let bad = a::QuickLoginCancel {
+        code: Some("ZZZZZZ".into()),
+    };
+    let e = a::post_quick_login_enter_code(&l.client, &bad).await.unwrap_err();
+    eprintln!("bad code: {e:?}");
+    assert!(e.status().is_some_and(|s| (400..500).contains(&s)), "{e:?}");
+
+    l.save(
+        "quick_sign_in_approve",
+        "Approving quick sign-in codes: enterCode then validateCode (status goes UserLinked, \
+         Validated), enterCode then cancel, and a made-up code. The anonymous side never calls \
+         /v2/login. Codes, keys, device and location scrubbed.",
+    );
+}

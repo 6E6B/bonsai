@@ -21,6 +21,7 @@ use tauri::{AppHandle, Manager, State};
 use tauri_specta::{Builder, Event, collect_commands, collect_events};
 
 mod account;
+mod approve;
 mod avatar;
 mod challenge;
 mod communities;
@@ -59,6 +60,8 @@ pub struct Shell {
     pub login: Option<Login>,
     /// A two-step or captcha check holding an action, while it is open.
     pub challenge: Option<challenge::ChallengeView>,
+    /// The "Sign in another device" dialog, once a code was entered.
+    pub approve: Option<approve::ApproveView>,
     /// Item values from Rolimons are on.
     pub item_values: bool,
     /// How the user arranged the sidebar.
@@ -956,6 +959,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         robux: s.active_data().and_then(|d| d.robux).map(|r| r as f64),
         unread: s.active_data().map(|d| d.unread.into()).unwrap_or_default(),
         challenge: s.challenge.as_ref().map(challenge::view),
+        approve: s.approve.as_ref().map(approve::view),
         login: s.login.as_ref().map(|l| match l {
             LoginState::Browser => Login::Browser,
             LoginState::QuickStarting => Login::QuickStarting,
@@ -2666,6 +2670,9 @@ pub fn builder() -> Builder<tauri::Wry> {
             challenge::challenge_use_method,
             challenge::challenge_cancel,
             challenge::open_captcha,
+            approve::approve_enter,
+            approve::approve_confirm,
+            approve::approve_close,
             submit_cookie,
             confirm_login,
             cancel_login

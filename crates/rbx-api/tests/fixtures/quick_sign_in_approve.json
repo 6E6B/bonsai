@@ -1,0 +1,260 @@
+{
+  "captured": "2026-10-16",
+  "source": "live",
+  "note": "Approving quick sign-in codes: enterCode then validateCode (status goes UserLinked, Validated), enterCode then cancel, and a made-up code. The anonymous side never calls /v2/login. Codes, keys, device and location scrubbed.",
+  "interactions": [
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/create",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "code": "ABC123",
+          "expirationTime": "2099-01-01T00:00:00.0000000",
+          "imagePath": "/v1/login/qr-code-image?key=00000000-0000-4000-8000-000000000001&code=ABC123",
+          "privateKey": "00000000-0000-4000-8000-000000000001",
+          "status": "Created"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/enterCode",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "XSRF token invalid"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/enterCode",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "deviceInfo": "Chrome on Windows",
+          "location": "Springfield, United States"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/status",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "XSRF token invalid"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "accountName": "Te*****",
+          "accountPictureUrl": null,
+          "expirationTime": "2099-01-01T00:00:00.0000000",
+          "status": "UserLinked"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/validateCode",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "accountName": "Te*****",
+          "accountPictureUrl": null,
+          "expirationTime": "2099-01-01T00:00:00.0000000",
+          "status": "Validated"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/create",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "code": "DEF456",
+          "expirationTime": "2099-01-01T00:00:00.0000000",
+          "imagePath": "/v1/login/qr-code-image?key=00000000-0000-4000-8000-000000000002&code=DEF456",
+          "privateKey": "00000000-0000-4000-8000-000000000002",
+          "status": "Created"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/enterCode",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "deviceInfo": "Chrome on Windows",
+          "location": "Springfield, United States"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/cancel",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/status",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "accountName": null,
+          "accountPictureUrl": null,
+          "expirationTime": "2099-01-01T00:00:00.0000000",
+          "status": "Cancelled"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "apis.roblox.com",
+        "path": "/auth-token-service/v1/login/enterCode",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": "CodeInvalid"
+      }
+    }
+  ]
+}

@@ -113,6 +113,7 @@ export const browserShell: Shell = {
   unread: { friendRequests: 2, messages: 1, trades: 1, notifications: 3, chat: 4 },
   login: null,
   challenge: null,
+  approve: null,
   itemValues: false,
   sidebar: { order: [], hidden: ["messages"] },
 }

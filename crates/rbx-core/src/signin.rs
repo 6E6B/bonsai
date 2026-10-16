@@ -2,11 +2,15 @@
 //! through the same check-and-confirm step as a pasted cookie (`LoginState::Validating` →
 //! `Confirm`), so nothing is saved until the user confirms.
 //!
+//! The other direction, approving a code another device shows, is [`ApprovePrompt`]: the
+//! signed-in account enters the code, sees which device asked, then confirms or cancels.
+//!
 //! Quick sign-in never sends `secureAuthenticationIntent`, so its sessions are not bound to a
 //! key and need no `x-bound-auth-token`. See the sign-in plan in
 //! `docs/parity/auth-accounts-security.md`.
 
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use parking_lot::Mutex;
 use rbx_api::generated::{apis, auth};
@@ -30,7 +34,161 @@ pub(crate) struct QuickSession {
     code: String,
 }
 
+/// Where the "Sign in another device" dialog is.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ApproveStep {
+    /// Waiting for the code (or checking it while `busy`).
+    Enter,
+    /// Roblox linked the code to the account; confirm or cancel.
+    Confirm { device: String, location: String },
+    /// Approved. The other device signs itself in.
+    Done,
+}
+
+/// The "Sign in another device" dialog behind `account.approve_code`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ApprovePrompt {
+    /// Identifies this attempt in replies from the dialog.
+    pub seq: u64,
+    pub account: AccountId,
+    pub code: String,
+    pub step: ApproveStep,
+    pub busy: bool,
+    pub error: Option<String>,
+}
+
+static APPROVE_SEQ: AtomicU64 = AtomicU64::new(0);
+
+/// A code as the site takes it: six letters or digits, spaces dropped, upper-cased.
+pub fn normalize_code(code: &str) -> Option<String> {
+    let c: String = code
+        .chars()
+        .filter(|c| !c.is_whitespace())
+        .map(|c| c.to_ascii_uppercase())
+        .collect();
+    (c.len() == 6 && c.chars().all(|c| c.is_ascii_alphanumeric())).then_some(c)
+}
+
+/// What to tell the user when enterCode or validateCode fails. Roblox answers with a bare
+/// JSON string like `"CodeInvalid"`.
+fn approve_error(e: &Error) -> String {
+    match e {
+        Error::Status { status: 400..=499, body, .. } if body.trim().trim_matches('"') == "InvalidLocation" => {
+            "Roblox won't approve this code: the other device looks like it is somewhere else. Sign in there with your password.".into()
+        }
+        Error::Status { status: 400..=499, errors, .. } if errors.is_empty() => {
+            "That code didn't work. Check it, or get a new one on the other device.".into()
+        }
+        e => e.user_message(),
+    }
+}
+
 impl Core {
+    /// Enter a code from another device's quick sign-in screen. Roblox links it to `account`
+    /// and the dialog shows which device asked. Nothing signs in until [`Self::approve_confirm`].
+    pub fn approve_enter(&self, account: AccountId, code: &str) -> Result<u64, String> {
+        let code = normalize_code(code).ok_or_else(|| "Enter the 6-character code.".to_owned())?;
+        let client = self
+            .inner
+            .client(account)
+            .filter(|c| c.signed_in())
+            .ok_or_else(|| crate::res::NOT_SIGNED_IN.to_owned())?;
+        let seq = APPROVE_SEQ.fetch_add(1, Ordering::Relaxed) + 1;
+        self.inner.store.write().approve = Some(ApprovePrompt {
+            seq,
+            account,
+            code: code.clone(),
+            step: ApproveStep::Enter,
+            busy: true,
+            error: None,
+        });
+        self.inner.repaint();
+        let inner = self.inner.clone();
+        self.inner.rt.spawn(async move {
+            let body = apis::undocumented::QuickLoginCancel { code: Some(code) };
+            let r = apis::undocumented::post_quick_login_enter_code(&client, &body).await;
+            if let Err(e) = &r {
+                inner.note_error(account, e);
+            }
+            inner.update_approve(seq, |p| {
+                p.busy = false;
+                match r {
+                    Ok(d) => {
+                        p.step = ApproveStep::Confirm {
+                            device: d
+                                .device_info
+                                .filter(|s| !s.is_empty())
+                                .unwrap_or_else(|| "an unknown device".into()),
+                            location: d.location.unwrap_or_default(),
+                        }
+                    }
+                    Err(e) => p.error = Some(approve_error(&e)),
+                }
+            });
+        });
+        Ok(seq)
+    }
+
+    /// Approve the code the dialog shows. The other device then signs in as the account.
+    pub fn approve_confirm(&self, seq: u64) -> Result<(), String> {
+        let (account, code) = match &self.inner.store.read().approve {
+            Some(p) if p.seq == seq && !p.busy && matches!(p.step, ApproveStep::Confirm { .. }) => {
+                (p.account, p.code.clone())
+            }
+            _ => return Err("This code has closed.".into()),
+        };
+        let client = self
+            .inner
+            .client(account)
+            .filter(|c| c.signed_in())
+            .ok_or_else(|| crate::res::NOT_SIGNED_IN.to_owned())?;
+        self.inner.update_approve(seq, |p| {
+            p.busy = true;
+            p.error = None;
+        });
+        let inner = self.inner.clone();
+        self.inner.rt.spawn(async move {
+            let body = apis::undocumented::QuickLoginCancel { code: Some(code) };
+            let r = apis::undocumented::post_quick_login_validate_code(&client, &body).await;
+            if let Err(e) = &r {
+                inner.note_error(account, e);
+            }
+            inner.update_approve(seq, |p| {
+                p.busy = false;
+                match r {
+                    Ok(_) => p.step = ApproveStep::Done,
+                    Err(e) => p.error = Some(approve_error(&e)),
+                }
+            });
+        });
+        Ok(())
+    }
+
+    /// Close the dialog. A code that was entered but not approved is cancelled on Roblox, so
+    /// the other device can't sign in with it.
+    pub fn approve_close(&self, seq: u64) {
+        let p = {
+            let mut s = self.inner.store.write();
+            match &s.approve {
+                Some(p) if p.seq == seq => s.approve.take(),
+                _ => None,
+            }
+        };
+        self.inner.repaint();
+        let Some(p) = p else { return };
+        // Still checking the code: it may get linked, so cancel it too.
+        let linked = p.busy || matches!(p.step, ApproveStep::Confirm { .. });
+        let Some(client) = self.inner.client(p.account).filter(|_| linked) else {
+            return;
+        };
+        self.inner.rt.spawn(async move {
+            let body = apis::undocumented::QuickLoginCancel { code: Some(p.code) };
+            if let Err(e) = apis::undocumented::post_quick_login_cancel(&client, &body).await {
+                tracing::debug!("cancelling an entered quick sign-in code: {}", e.user_message());
+            }
+        });
+    }
+
     /// `account.quick_sign_in`: get a code, show it, and sign in once another device approves
     /// it. Progress shows in `login`.
     pub fn start_quick_sign_in(&self) {
@@ -84,6 +242,17 @@ impl Core {
 }
 
 impl Inner {
+    /// Change the approve dialog if it is still showing attempt `seq`.
+    fn update_approve(&self, seq: u64, f: impl FnOnce(&mut ApprovePrompt)) {
+        let mut s = self.store.write();
+        match s.approve.as_mut() {
+            Some(p) if p.seq == seq => f(p),
+            _ => return,
+        }
+        drop(s);
+        self.repaint();
+    }
+
     /// Start a new flow: stops older ones and cancels a waiting code on Roblox.
     pub(crate) fn next_login(&self) -> u64 {
         let seq = {

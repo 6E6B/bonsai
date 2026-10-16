@@ -6882,12 +6882,32 @@
     },
     {
       "deprecated": false,
+      "function": "post_quick_login_enter_code",
+      "host": "apis.roblox.com",
+      "method": "POST",
+      "module": "apis::undocumented",
+      "path": "/auth-token-service/v1/login/enterCode",
+      "summary": "Link a quick sign-in code to the signed-in account and see the device asking.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "post_quick_login_status",
       "host": "apis.roblox.com",
       "method": "POST",
       "module": "apis::undocumented",
       "path": "/auth-token-service/v1/login/status",
       "summary": "Where a quick sign-in code is.",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "post_quick_login_validate_code",
+      "host": "apis.roblox.com",
+      "method": "POST",
+      "module": "apis::undocumented",
+      "path": "/auth-token-service/v1/login/validateCode",
+      "summary": "Approve a quick sign-in code entered with enterCode.",
       "used": true
     },
     {
@@ -7801,6 +7821,6 @@
       "used": true
     }
   ],
-  "total": 780,
-  "used": 234
+  "total": 782,
+  "used": 236
 }

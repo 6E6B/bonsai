@@ -176,6 +176,7 @@ commands! {
     SwitchTo9 => "account.switch_9", "Switch to account 9", ["switch"], None, [Shortcut::ctrl("9")];
     AddAccount => "account.add", "Add account", ["sign in", "login", "cookie", "new account"], None, [];
     QuickSignIn => "account.quick_sign_in", "Add account with quick sign-in", ["sign in", "login", "code", "quick", "new account"], None, [];
+    ApproveCode => "account.approve_code", "Sign in another device with a code", ["quick sign-in", "code", "another device", "approve", "login", "cross-device"], Text, [];
     SignInWithBrowser => "account.sign_in_browser", "Add account with Roblox sign-in page", ["sign in", "login", "browser", "password", "new account"], None, [];
     RenameAccount => "account.rename", "Rename account (local label)", ["label", "rename", "account"], Text, [];
     SetAccountColor => "account.color", "Set account color tag", ["color", "colour", "tag"], Color, [];

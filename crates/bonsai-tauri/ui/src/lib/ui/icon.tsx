@@ -42,6 +42,7 @@ import copy from "@phosphor-icons/core/assets/regular/copy.svg?raw"
 import crown from "@phosphor-icons/core/assets/regular/crown.svg?raw"
 import model from "@phosphor-icons/core/assets/regular/cube.svg?raw"
 import dollar from "@phosphor-icons/core/assets/regular/currency-dollar.svg?raw"
+import devices from "@phosphor-icons/core/assets/regular/devices.svg?raw"
 import value from "@phosphor-icons/core/assets/regular/diamond.svg?raw"
 import more from "@phosphor-icons/core/assets/regular/dots-three.svg?raw"
 import download from "@phosphor-icons/core/assets/regular/download-simple.svg?raw"
@@ -181,6 +182,7 @@ const svgs = {
   block,
   flag,
   lock,
+  devices,
   globe,
   calendar,
   clock,

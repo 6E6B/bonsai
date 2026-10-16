@@ -2578,3 +2578,67 @@ async fn google_font_copies_a_builtin_and_downloads_its_files() {
     let reqs = replay.requests().await;
     assert!(reqs.iter().all(|q| !q.headers.contains_key("cookie")));
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn approving_a_code_from_another_device() {
+    use rbx_core::signin::ApproveStep;
+    let replay = Replay::start(&["quick_sign_in_approve"]).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let step = |s: &StoreData| {
+        s.approve
+            .as_ref()
+            .filter(|p| !p.busy)
+            .map(|p| (p.step.clone(), p.error.clone()))
+    };
+
+    assert_eq!(
+        c.approve_enter(ME, "abc"),
+        Err("Enter the 6-character code.".into())
+    );
+    // Entered, then confirmed: the code is approved.
+    let seq = c.approve_enter(ME, "abc 123").unwrap();
+    assert_eq!(c.store().approve.as_ref().unwrap().code, "ABC123");
+    wait_for(c, "device shown", |s| {
+        matches!(step(s), Some((ApproveStep::Confirm { device, location }, None))
+            if device == "Chrome on Windows" && location == "Springfield, United States")
+    })
+    .await;
+    c.approve_confirm(seq).unwrap();
+    wait_for(c, "approved", |s| {
+        matches!(step(s), Some((ApproveStep::Done, None)))
+    })
+    .await;
+    c.approve_close(seq);
+    assert!(c.store().approve.is_none());
+
+    // Entered, then closed: the code is cancelled so the other device can't use it.
+    let seq = c.approve_enter(ME, "DEF456").unwrap();
+    wait_for(c, "device shown", |s| {
+        matches!(step(s), Some((ApproveStep::Confirm { .. }, _)))
+    })
+    .await;
+    c.approve_close(seq);
+    let start = Instant::now();
+    while !replay
+        .requests()
+        .await
+        .iter()
+        .any(|q| q.url.path().ends_with("/login/cancel"))
+    {
+        assert!(start.elapsed() < Duration::from_secs(10), "no cancel request");
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+
+    // A wrong code stays on the entry step with a message.
+    c.approve_enter(ME, "ZZZZZZ").unwrap();
+    wait_for(
+        c,
+        "error",
+        |s| matches!(step(s), Some((ApproveStep::Enter, Some(e))) if e.starts_with("That code didn't work")),
+    )
+    .await;
+    assert_ne!(c.store().account_data(ME).unwrap().session, SessionState::Expired);
+}

@@ -341,6 +341,51 @@ async fn quick_sign_in_code_status_and_cancel() {
 }
 
 #[tokio::test]
+async fn quick_sign_in_approve_from_signed_in_side() {
+    use apis::undocumented as a;
+    let r = Replay::start(&["quick_sign_in_approve"]).await;
+    let anon = r.builder(AccountId::ANONYMOUS).build().unwrap();
+    let me = r.client();
+    let first = a::post_quick_login_create(&anon).await.unwrap();
+    let code = a::QuickLoginCancel {
+        code: first.code.clone(),
+    };
+    let key = a::QuickLoginKey {
+        code: first.code.clone(),
+        private_key: first.private_key.clone(),
+    };
+    let d = a::post_quick_login_enter_code(&me, &code).await.unwrap();
+    assert_eq!(d.device_info.as_deref(), Some("Chrome on Windows"));
+    assert_eq!(d.location.as_deref(), Some("Springfield, United States"));
+    let s = a::post_quick_login_status(&anon, &key).await.unwrap();
+    assert_eq!(s.status.as_deref(), Some("UserLinked"));
+    a::post_quick_login_validate_code(&me, &code).await.unwrap();
+    let s = a::post_quick_login_status(&anon, &key).await.unwrap();
+    assert_eq!(s.status.as_deref(), Some("Validated"));
+
+    let second = a::post_quick_login_create(&anon).await.unwrap();
+    let code = a::QuickLoginCancel { code: second.code };
+    a::post_quick_login_enter_code(&me, &code).await.unwrap();
+    a::post_quick_login_cancel(&me, &code).await.unwrap();
+    let key = a::QuickLoginKey {
+        code: code.code.clone(),
+        private_key: second.private_key,
+    };
+    let s = a::post_quick_login_status(&anon, &key).await.unwrap();
+    assert_eq!(s.status.as_deref(), Some("Cancelled"));
+
+    // A wrong code answers 400 with a bare JSON string.
+    let bad = a::QuickLoginCancel {
+        code: Some("ZZZZZZ".into()),
+    };
+    let e = a::post_quick_login_enter_code(&me, &bad).await.unwrap_err();
+    assert!(
+        matches!(&e, Error::Status { status: 400, body, .. } if body == "\"CodeInvalid\""),
+        "{e:?}"
+    );
+}
+
+#[tokio::test]
 async fn quick_sign_in_login_sets_the_cookie() {
     let r = Replay::start(&["quick_sign_in_approved"]).await;
     let got = std::sync::Arc::new(parking_lot::Mutex::new(None));

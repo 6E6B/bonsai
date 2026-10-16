@@ -23,6 +23,7 @@ import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { useAppearance } from "./appearance"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
+import { ApproveCode } from "./shell/ApproveCode"
 import { ChallengeDialog } from "./shell/ChallengeDialog"
 import { Drawer } from "./shell/Drawer"
 import { PinForm } from "./shell/PinForm"
@@ -135,6 +136,18 @@ export function Layout(props: ParentProps) {
     // The dialog starts the backend side (code polling, the sign-in window) and stops it on close.
     handle("account.quick_sign_in", addAccount("quick", "Quick sign-in")),
     handle("account.sign_in_browser", addAccount("browser", "Sign in with Roblox")),
+    handle("account.approve_code", (arg) => {
+      // The attempt to cancel if the dialog closes before it is approved.
+      let seq: number | undefined
+      dialog.show(
+        () => <ApproveCode initial={arg ?? undefined} onSeq={(s) => (seq = s)} onDone={() => dialog.close()} />,
+        {
+          title: "Sign in another device",
+          size: "sm",
+          onClose: () => seq !== undefined && void commands.approveClose(seq),
+        },
+      )
+    }),
     handle("account.unlock_pin", () =>
       dialog.show(() => <PinForm onDone={() => dialog.close()} />, { title: "Unlock account PIN", size: "sm" }),
     ),

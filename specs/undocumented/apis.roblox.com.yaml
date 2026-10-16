@@ -437,6 +437,32 @@ paths:
         - { in: body, name: body, required: true, schema: { $ref: "#/definitions/QuickLoginCancel" } }
       responses:
         "200": { description: OK, schema: { type: object } }
+  /auth-token-service/v1/login/enterCode:
+    post:
+      # Read 2026-10-16 from CrossDeviceLoginConfirmCode.js on www.roblox.com/crossdevicelogin/
+      # ConfirmCode (signed in), checked live (fixture: quick_sign_in_approve.json). Links the
+      # signed-in account to a code another device shows and says which device that is. The
+      # site checks the code against ^[a-zA-Z0-9]{6}$ and sends it upper-cased. Errors answer
+      # with a bare string body: "InvalidLocation" (the other device is somewhere else) or
+      # another code such as "CodeInvalid".
+      x-captured: "2026-10-16, www.roblox.com/crossdevicelogin/ConfirmCode"
+      x-rust-name: post_quick_login_enter_code
+      summary: Link a quick sign-in code to the signed-in account and see the device asking.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/QuickLoginCancel" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/QuickLoginDevice" } }
+  /auth-token-service/v1/login/validateCode:
+    post:
+      # Same page (fixture: quick_sign_in_approve.json): "Confirm" after enterCode. The other
+      # device's status poll then says Validated and it signs in. "Cancel" sends login/cancel.
+      x-captured: "2026-10-16, www.roblox.com/crossdevicelogin/ConfirmCode"
+      x-rust-name: post_quick_login_validate_code
+      summary: Approve a quick sign-in code entered with enterCode.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/QuickLoginCancel" } }
+      responses:
+        "200": { description: OK, schema: { type: object } }
   /transaction-records/v1/users/{userId}/transaction-totals:
     get:
       # Captured 2026-10-15 from the Transactions bundle (www.roblox.com/transactions, Summary)
@@ -669,6 +695,13 @@ definitions:
     type: object
     properties:
       code: { type: string }
+  QuickLoginDevice:
+    type: object
+    properties:
+      # e.g. "Chrome on Windows"; the site shows "Logging in on {deviceInfo}".
+      deviceInfo: { type: string }
+      # Where the other device is, as one line for display.
+      location: { type: string }
   UserSettingsAndOptions:
     type: object
     additionalProperties: { $ref: "#/definitions/UserSettingAndOptions" }
