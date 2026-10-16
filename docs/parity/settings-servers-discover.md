@@ -59,6 +59,7 @@
 - [x] Settings > Layout: Open on launch (a screen, or the tabs from last time with pins and the active tab), Sidebar (Automatic, Expanded, Collapsed) and the friends drawer, all saved; Ctrl+B and Ctrl+\\ save too. Home rows (Friends playing, Continue, Favorites, Recommended) can be turned off.
 - [x] Settings > Notifications > When: quiet hours (whole local hours, may cross midnight; the UTC offset is read at startup), mute while the active account is in a game (its own presence is fetched with its friends'), notify while the app is in front, and ask for the system message sound.
 - [x] Settings > Accounts: rename, color tag and move up/down per account (the same `account.*` commands as the rail menu), and "Account color as accent", which repaints the accent tokens from the active account's tag.
+- [x] Settings > Data: how long unused cache is kept and the image cache size (the tidy job reads both; changing one tidies at once), settings export/import as JSON (import checks each setting like `settings.set` and never takes the launch command), reset all, and Copy diagnostics (versions, platform, cache size, changed settings; no names, ids or paths).
 - [ ] **Account Info**:
   - [x] Display name (edit with 7-day cooldown validation)
   - [x] Email address and verification status

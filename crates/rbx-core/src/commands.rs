@@ -522,6 +522,9 @@ commands! {
     ResetSettings => "settings.reset", "Reset settings to their defaults", ["reset", "default", "restore", "settings"], Setting, [];
     SetShortcut => "shortcuts.set", "Change a command's shortcut", ["shortcut", "keybinding", "hotkey", "rebind", "keys"], Text, [];
     ResetShortcuts => "shortcuts.reset", "Reset all shortcuts", ["shortcut", "keybinding", "hotkey", "default", "reset"], None, [];
+    ExportSettings => "settings.export", "Save settings to a file", ["export", "backup", "save", "settings", "file", "move"], None, [];
+    ImportSettings => "settings.import", "Load settings from a file", ["import", "restore", "load", "settings", "file", "backup"], None, [];
+    CopyDiagnostics => "app.copy_diagnostics", "Copy diagnostics for a bug report", ["diagnostics", "debug", "bug", "report", "version", "about", "support"], None, [];
     ClearCache => "app.clear_cache", "Clear cached data and images", ["cache", "clear", "disk", "storage"], None, [];
 
     NextSubTab => "view.next_subtab", "Next sub-tab", ["tab", "next"], None, [Shortcut::key("CloseBracket")];

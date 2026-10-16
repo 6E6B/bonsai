@@ -5,7 +5,9 @@
 //! Values cross as text: `on`/`off` for switches, the option's value for choices, a whole
 //! number for ranges and the text itself for text.
 
-use crate::settings::{Density, Mode, Settings, valid_format_locale};
+use serde::{Deserialize, Serialize};
+
+use crate::settings::{Density, Mode, SavedTabs, Settings, SidebarPrefs, valid_format_locale};
 
 /// What kind of control a setting takes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -47,6 +49,19 @@ pub const ZOOMS: &[(&str, &str)] = &[
     ("150", "150%"),
     ("175", "175%"),
     ("200", "200%"),
+];
+const CACHE_DAYS: &[(&str, &str)] = &[
+    ("7", "1 week"),
+    ("30", "1 month"),
+    ("90", "3 months"),
+    ("365", "1 year"),
+];
+const IMAGE_CACHE: &[(&str, &str)] = &[
+    ("256", "256 MB"),
+    ("512", "512 MB"),
+    ("1024", "1 GB"),
+    ("2048", "2 GB"),
+    ("4096", "4 GB"),
 ];
 const MOTIONS: &[(&str, &str)] = &[("system", "System"), ("reduce", "Reduced"), ("full", "Full")];
 const TIME_FORMATS: &[(&str, &str)] = &[("auto", "Automatic"), ("12h", "12-hour"), ("24h", "24-hour")];
@@ -362,6 +377,30 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "cache_days",
+        "data",
+        "Keep unused data for",
+        "Saved screens and images nobody opened for this long are deleted. Checked every few hours.",
+        &["cache", "keep", "age", "days", "storage", "disk"],
+        PrefKind::Choice(CACHE_DAYS),
+    ),
+    pref(
+        "image_cache_mb",
+        "data",
+        "Image cache size",
+        "Thumbnails and 3D models on disk. The least recently used go first past this.",
+        &[
+            "cache",
+            "images",
+            "thumbnails",
+            "size",
+            "limit",
+            "storage",
+            "disk",
+        ],
+        PrefKind::Choice(IMAGE_CACHE),
+    ),
+    pref(
         "background_accounts",
         "accounts",
         "Keep other accounts live",
@@ -428,6 +467,8 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "mute_in_game" => on_off(s.mute_in_game).to_owned(),
         "notify_sound" => on_off(s.notify_sound).to_owned(),
         "notify_in_front" => on_off(s.notify_in_front).to_owned(),
+        "cache_days" => s.cache_days.to_string(),
+        "image_cache_mb" => s.image_cache_mb.to_string(),
         _ => return None,
     })
 }
@@ -462,6 +503,8 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
             "sidebar_mode" => v.clone_into(&mut s.sidebar_mode),
             "quiet_start" => s.quiet.start = v.parse().unwrap_or(22),
             "quiet_end" => s.quiet.end = v.parse().unwrap_or(8),
+            "cache_days" => s.cache_days = v.parse().unwrap_or(30),
+            "image_cache_mb" => s.image_cache_mb = v.parse().unwrap_or(1024),
             _ => unreachable!("choice without a setter: {key}"),
         }
         return Ok(());
@@ -510,6 +553,88 @@ pub fn apply(s: &mut Settings, arg: &str) -> Result<&'static Pref, String> {
         set(s, key, value)?;
     }
     Ok(p)
+}
+
+/// Settings not at their defaults, as `(key, value)`, for diagnostics. The launch command
+/// only says whether it is set, since it can hold paths.
+pub fn changed(s: &Settings) -> Vec<(&'static str, String)> {
+    let fresh = Settings::default();
+    PREFS
+        .iter()
+        .filter_map(|p| {
+            let v = get(s, p.key)?;
+            if get(&fresh, p.key).as_deref() == Some(v.as_str()) {
+                return None;
+            }
+            let v = if p.key == "player_command" {
+                "(set)".to_owned()
+            } else {
+                v
+            };
+            Some((p.key, v))
+        })
+        .collect()
+}
+
+/// Marks a file `export` wrote, so importing some other JSON file fails instead of resetting
+/// everything to defaults.
+const EXPORT_FORMAT: &str = "bonsai-settings";
+
+#[derive(Serialize, Deserialize)]
+struct Exported {
+    format: String,
+    version: u32,
+    settings: Settings,
+}
+
+/// Settings as a file to take to another computer. The launch command and saved tabs belong to
+/// this one and are left out.
+pub fn export(s: &Settings) -> String {
+    let mut settings = s.clone();
+    settings.player_command = None;
+    settings.session = SavedTabs::default();
+    let file = Exported {
+        format: EXPORT_FORMAT.to_owned(),
+        version: 1,
+        settings,
+    };
+    serde_json::to_string_pretty(&file).unwrap_or_default()
+}
+
+/// Takes the settings from a file `export` wrote. Each one is checked as if typed into
+/// `settings.set` and skipped if bad. Shortcuts and the sidebar come too; the launch command,
+/// themes, background and saved tabs stay as they are, since a file from someone else must
+/// not choose what the app runs. Returns how many settings changed.
+pub fn import(s: &mut Settings, text: &str) -> Result<usize, String> {
+    let file: Exported = serde_json::from_str(text)
+        .ok()
+        .filter(|f: &Exported| f.format == EXPORT_FORMAT)
+        .ok_or_else(|| "That isn't a settings file from this app.".to_owned())?;
+    let new = file.settings;
+    let mut changed = 0;
+    for p in PREFS.iter().filter(|p| p.key != "player_command") {
+        let Some(v) = get(&new, p.key) else { continue };
+        if get(s, p.key).as_deref() != Some(v.as_str()) && set(s, p.key, &v).is_ok() {
+            changed += 1;
+        }
+    }
+    if s.shortcuts != new.shortcuts {
+        s.shortcuts = new.shortcuts;
+        changed += 1;
+    }
+    let mut sidebar = SidebarPrefs::default();
+    let order_ok = sidebar
+        .set_order(new.sidebar.order.iter().map(String::as_str))
+        .is_ok();
+    sidebar.hidden.clear();
+    for h in &new.sidebar.hidden {
+        let _ = sidebar.set_hidden(h, true);
+    }
+    if order_ok && s.sidebar != sidebar {
+        s.sidebar = sidebar;
+        changed += 1;
+    }
+    Ok(changed)
 }
 
 /// The settings `target` names: one key, every setting in a section, or `all`.
@@ -615,5 +740,39 @@ mod tests {
         assert_eq!(s, Settings::default());
         assert_eq!(reset(&mut s, "all"), Ok(0));
         assert!(reset(&mut s, "nope").is_err());
+    }
+
+    #[test]
+    fn import_takes_back_an_export_but_not_the_launch_command() {
+        let mut a = Settings::default();
+        apply(&mut a, "density compact").unwrap();
+        apply(&mut a, "cache_days 7").unwrap();
+        apply(&mut a, "player_command evil {uri}").unwrap();
+        a.sidebar.set_hidden("trades", true).unwrap();
+        let file = export(&a);
+        assert!(!file.contains("evil"));
+
+        let mut b = Settings::default();
+        apply(&mut b, "player_command mine {uri}").unwrap();
+        assert_eq!(import(&mut b, &file), Ok(3));
+        assert_eq!(b.density, Density::Compact);
+        assert_eq!(b.cache_days, 7);
+        assert!(b.sidebar.is_hidden("trades"));
+        assert_eq!(b.player_command.as_deref(), Some("mine {uri}"));
+        assert_eq!(import(&mut b, &file), Ok(0));
+
+        // A file that tries to sneak the command in anyway is ignored for it.
+        let sneaky = file.replace("\"player_command\": null", "\"player_command\": \"evil {uri}\"");
+        assert!(sneaky.contains("evil"));
+        import(&mut b, &sneaky).unwrap();
+        assert_eq!(b.player_command.as_deref(), Some("mine {uri}"));
+    }
+
+    #[test]
+    fn import_rejects_other_files() {
+        let mut s = Settings::default();
+        assert!(import(&mut s, "{}").is_err());
+        assert!(import(&mut s, "not json").is_err());
+        assert_eq!(s, Settings::default());
     }
 }

@@ -34,6 +34,9 @@ export const extraEntries: SettingsEntry[] = [
   { section: "shortcuts", title: "Keyboard shortcuts", words: "keys bindings hotkeys commands" },
   { section: "accounts", title: "Signed-in accounts", words: "add remove cookie switch" },
   { section: "data", setting: "cache", title: "Cache", words: "clear disk storage" },
+  { section: "data", setting: "settings_file", title: "Settings file", words: "export import backup restore move" },
+  { section: "data", setting: "reset_all", title: "Reset all settings", words: "defaults restore factory" },
+  { section: "data", setting: "diagnostics", title: "Diagnostics", words: "bug report version debug support" },
   { section: "developer", title: "Component gallery", words: "components ui" },
 ]
 

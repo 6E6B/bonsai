@@ -101,6 +101,7 @@ import inbox from "@phosphor-icons/core/assets/regular/tray.svg?raw"
 import trendDown from "@phosphor-icons/core/assets/regular/trend-down.svg?raw"
 import trendUp from "@phosphor-icons/core/assets/regular/trend-up.svg?raw"
 import badge from "@phosphor-icons/core/assets/regular/trophy.svg?raw"
+import upload from "@phosphor-icons/core/assets/regular/upload-simple.svg?raw"
 import user from "@phosphor-icons/core/assets/regular/user.svg?raw"
 import userMinus from "@phosphor-icons/core/assets/regular/user-minus.svg?raw"
 import userPlus from "@phosphor-icons/core/assets/regular/user-plus.svg?raw"
@@ -132,6 +133,7 @@ const svgs = {
   search,
   copy,
   download,
+  upload,
   info,
   alert,
   "circle-check": circleCheck,

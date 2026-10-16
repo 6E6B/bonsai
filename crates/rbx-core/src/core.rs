@@ -531,6 +531,33 @@ impl Core {
         self.send(Cmd::SetSettings(Box::new(s)));
     }
 
+    /// Deletes cached data past the limits in Settings > Data now, in the background, instead
+    /// of at the next tidy.
+    pub fn tidy_soon(&self) {
+        let inner = self.inner.clone();
+        self.inner.rt.spawn_blocking(move || inner.tidy());
+    }
+
+    /// Writes the settings to `path` for another computer (see [`crate::prefs::export`]).
+    pub fn export_settings(&self, path: &std::path::Path) -> Result<(), String> {
+        std::fs::write(path, crate::prefs::export(&self.settings()))
+            .map_err(|e| format!("Can't save {}: {e}", path.display()))
+    }
+
+    /// Takes the settings from a file `export_settings` wrote (see [`crate::prefs::import`]). Returns
+    /// how many changed.
+    pub fn import_settings(&self, path: &std::path::Path) -> Result<usize, String> {
+        let text =
+            std::fs::read_to_string(path).map_err(|e| format!("Can't read {}: {e}", path.display()))?;
+        let mut s = self.settings();
+        let n = crate::prefs::import(&mut s, &text)?;
+        if n > 0 {
+            self.update_settings(|cur| *cur = s);
+            self.tidy_soon();
+        }
+        Ok(n)
+    }
+
     /// The active account is in a game, as of its last presence refresh.
     pub fn playing(&self) -> bool {
         let s = self.inner.store.read();
@@ -1596,13 +1623,16 @@ impl Inner {
     /// Drop cached data nobody has used in a while, on disk and in memory.
     fn tidy(&self) {
         const DAY: i64 = 24 * 3600;
-        /// Rows and images unused this long are deleted.
-        const KEEP_SECS: i64 = 30 * DAY;
-        /// Thumbnails and 3D asset files share this.
-        const IMAGE_DISK_BYTES: u64 = 1 << 30;
-        let rows = self.cache.prune(crate::cache::now() - KEEP_SECS);
-        let cutoff = std::time::SystemTime::now() - Duration::from_secs(KEEP_SECS as u64);
-        let images = self.disk.prune(cutoff, IMAGE_DISK_BYTES);
+        let (days, mb) = {
+            let s = self.settings.read();
+            (s.cache_days.clamp(1, 3650), s.image_cache_mb.max(64))
+        };
+        // Rows and images unused this long are deleted.
+        let keep_secs = i64::from(days) * DAY;
+        let rows = self.cache.prune(crate::cache::now() - keep_secs);
+        let cutoff = std::time::SystemTime::now() - Duration::from_secs(keep_secs as u64);
+        // Thumbnails and 3D asset files share this.
+        let images = self.disk.prune(cutoff, u64::from(mb) << 20);
         tracing::debug!("cache tidy: {rows} rows, {images} images");
     }
 }

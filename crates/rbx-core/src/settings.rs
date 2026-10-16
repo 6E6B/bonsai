@@ -341,6 +341,10 @@ pub struct Settings {
     pub notify_sound: bool,
     /// Notify while the app is in front too, not only in the background.
     pub notify_in_front: bool,
+    /// Cached rows and images unused this many days are deleted.
+    pub cache_days: u32,
+    /// Thumbnails and 3D asset files on disk stay under this many megabytes.
+    pub image_cache_mb: u32,
 }
 
 /// A daily stretch without notifications, in whole local hours. `start` is when it begins and
@@ -461,6 +465,8 @@ impl Default for Settings {
             mute_in_game: false,
             notify_sound: false,
             notify_in_front: false,
+            cache_days: 30,
+            image_cache_mb: 1024,
         }
     }
 }

@@ -718,6 +718,95 @@ fn pick_background(app: &AppHandle) {
     });
 }
 
+/// Asks where to save the settings file, then writes it. The dialog gets its own thread.
+fn export_settings(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let mut dialog = rfd::FileDialog::new()
+            .set_title("Save settings")
+            .set_file_name("bonsai-settings.json")
+            .add_filter("Settings", &["json"]);
+        if let Some(w) = app.get_webview_window("main") {
+            dialog = dialog.set_parent(&w);
+        }
+        let Some(path) = dialog.save_file() else {
+            return;
+        };
+        let Some(core) = app.try_state::<Arc<Core>>() else {
+            return;
+        };
+        match core.export_settings(&path) {
+            Ok(()) => core.notice(format!("Saved settings to {}", path.display()), false),
+            Err(e) => core.notice(e, true),
+        }
+    });
+}
+
+/// Asks for a settings file, then takes its settings. The dialog gets its own thread.
+fn import_settings(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let mut dialog = rfd::FileDialog::new()
+            .set_title("Load settings")
+            .add_filter("Settings", &["json"]);
+        if let Some(w) = app.get_webview_window("main") {
+            dialog = dialog.set_parent(&w);
+        }
+        let Some(path) = dialog.pick_file() else {
+            return;
+        };
+        let Some(core) = app.try_state::<Arc<Core>>() else {
+            return;
+        };
+        match core.import_settings(&path) {
+            Ok(0) => core.notice("Those settings match yours already.", false),
+            Ok(1) => core.notice("Loaded 1 setting.", false),
+            Ok(n) => core.notice(format!("Loaded {n} settings."), false),
+            Err(e) => core.notice(e, true),
+        }
+    });
+}
+
+/// Plain text for a bug report: versions, platform, account count, cache size and the
+/// settings not at their defaults. No names, ids, paths or tokens.
+fn diagnostics(app: &AppHandle, core: &Core) -> String {
+    use std::fmt::Write;
+    let info = app.package_info();
+    let store = core.store();
+    let mut out = String::new();
+    let _ = writeln!(out, "{} {}", info.name, info.version);
+    let _ = writeln!(out, "OS: {} {}", std::env::consts::OS, std::env::consts::ARCH);
+    let webview = tauri::webview_version().unwrap_or_else(|e| format!("unknown ({e})"));
+    let _ = writeln!(out, "Webview: {webview}");
+    if cfg!(target_os = "linux") {
+        for var in ["XDG_SESSION_TYPE", "XDG_CURRENT_DESKTOP"] {
+            let v = std::env::var(var).unwrap_or_default();
+            let _ = writeln!(out, "{var}: {v}");
+        }
+    }
+    let _ = writeln!(out, "Accounts: {}", store.accounts.accounts.len());
+    let _ = writeln!(out, "Offline: {}", store.offline);
+    if let Some(u) = store.cache_usage {
+        let _ = writeln!(
+            out,
+            "Cache: {} MB data, {} MB images",
+            u.data >> 20,
+            u.images >> 20
+        );
+    }
+    drop(store);
+    let changed = prefs::changed(&core.settings());
+    if changed.is_empty() {
+        out.push_str("Settings: defaults\n");
+    } else {
+        out.push_str("Settings:\n");
+        for (k, v) in changed {
+            let _ = writeln!(out, "  {k} = {v}");
+        }
+    }
+    out
+}
+
 /// Splits `"<first> <rest>"` from a command argument; `what` names the parts in the error.
 fn two(inv: &Invocation, what: &str) -> Result<(String, String), String> {
     let a = inv.arg.as_deref().unwrap_or_default().trim();
@@ -792,10 +881,13 @@ pub(super) fn run(
         CommandId::SetSetting => {
             // Checked on a copy first so a bad value changes nothing.
             let a = arg();
-            prefs::apply(&mut core.settings(), &a).map(|_| {
+            prefs::apply(&mut core.settings(), &a).map(|p| {
                 core.update_settings(|s| {
                     let _ = prefs::apply(s, &a);
-                })
+                });
+                if p.section == "data" {
+                    core.tidy_soon();
+                }
             })
         }
         CommandId::ResetSettings => {
@@ -947,6 +1039,15 @@ pub(super) fn run(
         CommandId::UnlockPin => Err("Open Settings to enter the PIN.".into()),
         // The dialog takes the code and calls `approve_enter`.
         CommandId::ApproveCode => Err("Open the command bar to enter the code.".into()),
+        CommandId::ExportSettings => {
+            export_settings(app);
+            Ok(())
+        }
+        CommandId::ImportSettings => {
+            import_settings(app);
+            Ok(())
+        }
+        CommandId::CopyDiagnostics => super::copy(app, core, diagnostics(app, core), "Copied diagnostics."),
         CommandId::ClearCache => {
             core.clear_cache();
             Ok(())
