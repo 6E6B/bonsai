@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "dark",
+  "name": "Dark",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {},
+  "tokens": { "color-danger-hover": "#f37373" }
+}

@@ -8,27 +8,48 @@ use serde::{Deserialize, Serialize};
 
 use crate::commands::{CommandId, Shortcut};
 
+/// Which of the two appearance themes is on.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Theme {
+pub enum Mode {
+    /// The OS picks between [`Appearance::dark`] and [`Appearance::light`].
     #[default]
     System,
     Dark,
     Light,
 }
 
-impl Theme {
-    pub const ALL: [Theme; 3] = [Theme::System, Theme::Dark, Theme::Light];
+impl Mode {
+    pub const ALL: [Mode; 3] = [Mode::System, Mode::Dark, Mode::Light];
     pub fn name(self) -> &'static str {
         match self {
-            Theme::System => "system",
-            Theme::Dark => "dark",
-            Theme::Light => "light",
+            Mode::System => "system",
+            Mode::Dark => "dark",
+            Mode::Light => "light",
         }
     }
-    pub fn from_name(s: &str) -> Option<Theme> {
-        Theme::ALL
+    pub fn from_name(s: &str) -> Option<Mode> {
+        Mode::ALL
             .into_iter()
             .find(|t| t.name().eq_ignore_ascii_case(s.trim()))
+    }
+}
+
+/// The theme for each base, by id (see [`crate::themes`]), and which one is on.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Appearance {
+    pub mode: Mode,
+    pub dark: String,
+    pub light: String,
+}
+
+impl Default for Appearance {
+    fn default() -> Self {
+        Appearance {
+            mode: Mode::System,
+            dark: "dark".into(),
+            light: "light".into(),
+        }
     }
 }
 
@@ -116,6 +137,71 @@ impl Default for NotifyPrefs {
     }
 }
 
+/// The sidebar as the user arranged it. Screens are named by their `nav.*` command without the
+/// prefix (`friends`). Grouping is the UI's; this only keeps the order and what is hidden.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SidebarPrefs {
+    /// Screens in the order they were last arranged. Screens missing here keep their default
+    /// place.
+    pub order: Vec<String>,
+    pub hidden: Vec<String>,
+}
+
+impl Default for SidebarPrefs {
+    fn default() -> Self {
+        Self {
+            order: Vec::new(),
+            // The legacy inbox; chat covers most of it. Still in the command bar (G N).
+            hidden: vec!["messages".into()],
+        }
+    }
+}
+
+impl SidebarPrefs {
+    const MAX: usize = 64;
+
+    fn valid(screen: &str) -> bool {
+        !screen.is_empty()
+            && screen.len() <= 32
+            && screen
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
+    }
+
+    /// Replaces the order. Duplicates keep their first place. Errors on a malformed name.
+    pub fn set_order<'a>(&mut self, order: impl IntoIterator<Item = &'a str>) -> Result<(), String> {
+        let mut out: Vec<String> = Vec::new();
+        for s in order {
+            if !Self::valid(s) {
+                return Err(format!("\"{s}\" isn't a screen."));
+            }
+            if !out.iter().any(|x| x == s) {
+                out.push(s.to_owned());
+            }
+        }
+        out.truncate(Self::MAX);
+        self.order = out;
+        Ok(())
+    }
+
+    pub fn is_hidden(&self, screen: &str) -> bool {
+        self.hidden.iter().any(|x| x == screen)
+    }
+
+    /// Shows or hides one screen. Errors on a malformed name.
+    pub fn set_hidden(&mut self, screen: &str, hidden: bool) -> Result<(), String> {
+        if !Self::valid(screen) {
+            return Err(format!("\"{screen}\" isn't a screen."));
+        }
+        self.hidden.retain(|x| x != screen);
+        if hidden && self.hidden.len() < Self::MAX {
+            self.hidden.push(screen.to_owned());
+        }
+        Ok(())
+    }
+}
+
 /// A BCP 47 tag for number and date formatting; empty means the system's.
 pub fn valid_format_locale(s: &str) -> bool {
     s.len() <= 35
@@ -127,7 +213,7 @@ pub fn valid_format_locale(s: &str) -> bool {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
-    pub theme: Theme,
+    pub appearance: Appearance,
     pub density: Density,
     pub ui_scale: f32,
     /// Command used instead of the OS `roblox-player:` handler, with `{uri}`.
@@ -143,12 +229,13 @@ pub struct Settings {
     pub shortcuts: HashMap<CommandId, Vec<Shortcut>>,
     /// Off by default: show limited item values from Rolimons (a third-party site) next to RAP.
     pub item_values: bool,
+    pub sidebar: SidebarPrefs,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            theme: Theme::System,
+            appearance: Appearance::default(),
             density: Density::Comfortable,
             ui_scale: 1.0,
             player_command: None,
@@ -159,6 +246,7 @@ impl Default for Settings {
             notify: NotifyPrefs::default(),
             shortcuts: HashMap::new(),
             item_values: false,
+            sidebar: SidebarPrefs::default(),
         }
     }
 }
@@ -348,6 +436,32 @@ mod tests {
         // Not a permutation of the open tabs: ignored.
         s.reorder_tabs(vec![a.clone(), b.clone()]);
         assert_eq!(s.tabs, vec![b, c, a]);
+    }
+
+    #[test]
+    fn sidebar_order_and_hidden() {
+        let mut p = SidebarPrefs::default();
+        assert!(p.is_hidden("messages"));
+        p.set_order(["trades", "home", "trades", "friends"]).unwrap();
+        assert_eq!(p.order, ["trades", "home", "friends"]);
+        assert!(p.set_order(["Home"]).is_err());
+        assert_eq!(p.order, ["trades", "home", "friends"]);
+        p.set_hidden("friends", true).unwrap();
+        p.set_hidden("friends", true).unwrap();
+        p.set_hidden("messages", false).unwrap();
+        assert_eq!(p.hidden, ["friends"]);
+        assert!(p.set_hidden("", true).is_err());
+    }
+
+    #[test]
+    fn sidebar_defaults_when_missing() {
+        let s: Settings = serde_json::from_str(r#"{"appearance":{"mode":"Dark"}}"#).unwrap();
+        assert_eq!(s.sidebar, SidebarPrefs::default());
+        assert_eq!(s.appearance.mode, Mode::Dark);
+        assert_eq!(s.appearance.light, "light");
+        let s: Settings = serde_json::from_str(r#"{"sidebar":{"order":["home"]}}"#).unwrap();
+        assert_eq!(s.sidebar.order, ["home"]);
+        assert!(s.sidebar.is_hidden("messages"));
     }
 
     #[test]

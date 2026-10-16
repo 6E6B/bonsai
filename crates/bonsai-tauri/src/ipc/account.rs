@@ -7,7 +7,8 @@ use std::sync::Arc;
 use rbx_core::commands::CommandId;
 use rbx_core::experience::ServerChange;
 use rbx_core::me::ServersTab;
-use rbx_core::settings::{Density, NotifyPrefs, Theme, valid_format_locale};
+use rbx_core::settings::{Density, Mode, NotifyPrefs, SidebarPrefs, valid_format_locale};
+use rbx_core::themes::{Base, FontSlot};
 use rbx_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
@@ -83,7 +84,10 @@ pub struct NotifyView {
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
     /// `system`, `dark` or `light`.
-    pub theme: String,
+    pub mode: String,
+    /// Theme ids for each base. Always installed themes of that base.
+    pub dark_theme: String,
+    pub light_theme: String,
     /// `comfortable` or `compact`.
     pub density: String,
     /// Empty uses the system's `roblox-player:` handler.
@@ -115,6 +119,41 @@ pub fn account_info(core: State<'_, Arc<Core>>) -> AccountInfoView {
         birthdate: i.birthdate.map(|(y, m, d)| format!("{y:04}-{m:02}-{d:02}")),
         premium: i.premium,
     }
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PinView {
+    pub loading: bool,
+    pub error: Option<String>,
+    /// The account has a PIN that locks settings.
+    pub enabled: bool,
+    /// Unix seconds the PIN stays unlocked until; 0 when locked.
+    pub unlocked_until: f64,
+}
+
+/// Account PIN of the active account.
+#[tauri::command]
+#[specta::specta]
+pub fn pin_status(core: State<'_, Arc<Core>>) -> PinView {
+    let r = core.acting(None).map(|a| core.pin_status(a)).unwrap_or_default();
+    let p = r.data.as_deref().cloned().unwrap_or_default();
+    PinView {
+        loading: r.first_load(),
+        error: r.error.clone(),
+        enabled: p.enabled,
+        unlocked_until: p.unlocked_until as f64,
+    }
+}
+
+/// Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens.
+#[tauri::command]
+#[specta::specta]
+pub fn unlock_pin(core: State<'_, Arc<Core>>, pin: String) -> Result<(), String> {
+    let a = core
+        .acting(None)
+        .ok_or_else(|| "Add an account first.".to_owned())?;
+    core.unlock_pin(a, &pin)
 }
 
 /// Privacy settings of the active account.
@@ -192,7 +231,9 @@ pub fn app_settings(core: State<'_, Arc<Core>>) -> AppSettings {
     let s = core.settings();
     let usage = core.store().cache_usage;
     AppSettings {
-        theme: s.theme.name().to_owned(),
+        mode: s.appearance.mode.name().to_owned(),
+        dark_theme: core.appearance_theme(Base::Dark).id,
+        light_theme: core.appearance_theme(Base::Light).id,
         density: s.density.name().to_owned(),
         player_command: s.player_command.unwrap_or_default(),
         format_locale: s.format_locale,
@@ -207,6 +248,164 @@ pub fn app_settings(core: State<'_, Arc<Core>>) -> AppSettings {
         cache_data: usage.map(|u| u.data as f64),
         cache_images: usage.map(|u| u.images as f64),
     }
+}
+
+/// An installed theme. The UI reads `doc` with `readTheme` and derives the tokens itself.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ThemeView {
+    pub id: String,
+    pub name: String,
+    pub author: String,
+    /// `dark` or `light`.
+    pub base: String,
+    pub builtin: bool,
+    /// The theme document as JSON.
+    pub doc: String,
+}
+
+/// What the window should look like: the mode and the theme for each base.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AppearanceView {
+    /// `system`, `dark` or `light`.
+    pub mode: String,
+    /// Theme documents as JSON.
+    pub dark: String,
+    pub light: String,
+    /// The Google Fonts the two themes use, to register with the webview as they download.
+    pub fonts: Vec<FontView>,
+}
+
+/// A Google Fonts family on disk, served over `font://`.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FontView {
+    pub family: String,
+    /// Empty until downloaded.
+    pub files: Vec<FontFileView>,
+    pub loading: bool,
+    pub error: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FontFileView {
+    pub weight: u16,
+    /// Path under `font://`, like `space-grotesk/400.ttf`.
+    pub path: String,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn appearance(core: State<'_, Arc<Core>>) -> AppearanceView {
+    AppearanceView {
+        mode: core.settings().appearance.mode.name().to_owned(),
+        dark: core.appearance_theme(Base::Dark).to_json(),
+        light: core.appearance_theme(Base::Light).to_json(),
+        fonts: core
+            .appearance_fonts()
+            .into_iter()
+            .map(|family| {
+                let r = core.google_font(&family);
+                FontView {
+                    files: r
+                        .data
+                        .map(|d| {
+                            d.files
+                                .iter()
+                                .map(|f| FontFileView {
+                                    weight: f.weight,
+                                    path: f.path.clone(),
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                    loading: r.loading,
+                    error: r.error,
+                    family,
+                }
+            })
+            .collect(),
+    }
+}
+
+/// The UI reports whether the OS prefers dark, so System mode knows which theme is on screen.
+#[tauri::command]
+#[specta::specta]
+pub fn set_system_dark(core: State<'_, Arc<Core>>, dark: bool) {
+    core.set_system_dark(dark);
+}
+
+/// Google Fonts families for the font picker.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FontCatalogView {
+    /// Matches for the query, most popular first, at most `FONT_MATCHES`.
+    pub fonts: Vec<FontInfoView>,
+    pub loading: bool,
+    pub error: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FontInfoView {
+    pub family: String,
+    pub category: String,
+}
+
+const FONT_MATCHES: usize = 50;
+
+/// Families whose name contains `query` (any case), only monospace ones when `mono`. Names that
+/// start with the query come first.
+#[tauri::command]
+#[specta::specta]
+pub fn font_catalog(core: State<'_, Arc<Core>>, query: String, mono: bool) -> FontCatalogView {
+    let r = core.font_catalog();
+    let q = query.trim().to_ascii_lowercase();
+    let mut fonts: Vec<(bool, FontInfoView)> = r
+        .data
+        .iter()
+        .flat_map(|c| c.iter())
+        .filter(|f| !mono || f.monospace())
+        .filter_map(|f| {
+            let name = f.family.to_ascii_lowercase();
+            name.contains(&q).then(|| {
+                (
+                    !name.starts_with(&q),
+                    FontInfoView {
+                        family: f.family.clone(),
+                        category: f.category.clone(),
+                    },
+                )
+            })
+        })
+        .collect();
+    // Stable: popularity order holds within each group.
+    fonts.sort_by_key(|f| f.0);
+    fonts.truncate(FONT_MATCHES);
+    FontCatalogView {
+        fonts: fonts.into_iter().map(|f| f.1).collect(),
+        loading: r.loading,
+        error: r.error,
+    }
+}
+
+/// Every installed theme: built-ins first, then the user's by name.
+#[tauri::command]
+#[specta::specta]
+pub fn themes(core: State<'_, Arc<Core>>) -> Vec<ThemeView> {
+    core.themes()
+        .into_iter()
+        .map(|(t, builtin)| ThemeView {
+            doc: t.to_json(),
+            base: t.base.name().to_owned(),
+            id: t.id,
+            name: t.name,
+            author: t.author,
+            builtin,
+        })
+        .collect()
 }
 
 fn servers_tab(s: &str) -> ServersTab {
@@ -256,13 +455,24 @@ pub(super) fn run(
             core.change_server(acting()?, server, ServerChange::RemoveUser(user));
             Ok(())
         })(),
-        CommandId::SetTheme => match Theme::from_name(&arg()) {
-            Some(t) => {
-                core.update_settings(|s| s.theme = t);
+        CommandId::SetMode => match Mode::from_name(&arg()) {
+            Some(m) => {
+                core.update_settings(|s| s.appearance.mode = m);
                 Ok(())
             }
             None => Err("Pick system, dark or light.".into()),
         },
+        CommandId::ApplyTheme => core.apply_theme(arg().trim()),
+        CommandId::CycleTheme => {
+            core.cycle_theme();
+            Ok(())
+        }
+        CommandId::DeleteTheme => core.delete_theme(arg().trim()),
+        CommandId::DuplicateTheme => core
+            .duplicate_theme(arg().trim())
+            .and_then(|id| core.apply_theme(&id)),
+        CommandId::SetThemeFont => core.set_theme_font(FontSlot::Sans, &arg()),
+        CommandId::SetThemeMonoFont => core.set_theme_font(FontSlot::Mono, &arg()),
         CommandId::SetDensity => match Density::from_name(&arg()) {
             Some(d) => {
                 core.update_settings(|s| s.density = d);
@@ -306,6 +516,32 @@ pub(super) fn run(
             });
             Ok(())
         })(),
+        CommandId::ToggleSidebarScreen => (|| {
+            // "<screen>" flips it; "<screen> on" shows it, "<screen> off" hides it.
+            let a = arg();
+            let mut parts = a.split_whitespace();
+            let screen = parts.next().ok_or_else(|| "Which screen?".to_owned())?;
+            let hidden = match parts.next() {
+                Some("on") => false,
+                Some("off") => true,
+                None => !core.settings().sidebar.is_hidden(screen),
+                Some(_) => return Err("Say on or off.".to_owned()),
+            };
+            let mut prefs = core.settings().sidebar;
+            prefs.set_hidden(screen, hidden)?;
+            core.update_settings(|s| s.sidebar = prefs);
+            Ok(())
+        })(),
+        CommandId::SetSidebarOrder => (|| {
+            let mut prefs = core.settings().sidebar;
+            prefs.set_order(arg().split_whitespace())?;
+            core.update_settings(|s| s.sidebar = prefs);
+            Ok(())
+        })(),
+        CommandId::ResetSidebar => {
+            core.update_settings(|s| s.sidebar = SidebarPrefs::default());
+            Ok(())
+        }
         CommandId::SignOutOthers => acting().map(|a| core.sign_out_others(a)),
         CommandId::LockPin => acting().map(|a| core.lock_pin(a)),
         // The settings screen asks for the PIN and calls `unlock_pin`.

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "abyss",
+  "name": "Abyss",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {
+    "background": "#0c1719",
+    "foreground": "#dcefee",
+    "accent": "#2fb8b0",
+    "success": "#5ccf8f",
+    "warning": "#e8b75a",
+    "danger": "#f0675f",
+    "contrast": 1.3
+  },
+  "tokens": {}
+}

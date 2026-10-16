@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "id": "adwaita",
+  "name": "Adwaita",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "light",
+  "seeds": {
+    "background": "#fafafb",
+    "foreground": "#333338",
+    "accent": "#3584e4",
+    "success": "#007c3d",
+    "warning": "#905400",
+    "danger": "#e01b24",
+    "radius": 1.5
+  },
+  "tokens": {
+    "color-deep": "#ebebed",
+    "color-canvas": "#fafafb",
+    "color-surface": "#ffffff",
+    "color-raised": "#ffffff",
+    "color-field": "#ffffff",
+    "color-control": "#ffffff",
+    "color-line": "#00000626",
+    "color-accent-hover": "#1c71d8",
+    "color-focus": "#3584e4",
+    "color-danger-hover": "#c01c28",
+    "color-tag-red": "#e01b24",
+    "color-tag-orange": "#e66100",
+    "color-tag-yellow": "#e5a50a",
+    "color-tag-green": "#2ec27e",
+    "color-tag-blue": "#3584e4",
+    "color-tag-purple": "#9141ac",
+    "color-tag-pink": "#d56199"
+  }
+}

@@ -36,6 +36,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 |---|---|
 | `TextField` | Text input, search-as-you-type filters, the chat composer. |
 | `Select` | One of many options, or options that need a label (privacy, genre, sort with long names). |
+| `Combobox` | One of a long list the backend searches as you type: the theme font picker. A button that opens a search field over the list; the search never replaces the value. `onSearch` gets the text ("" on open). If `onChange` resolves to false, the button goes back. |
 | `Checkbox` | Independent filters ("Hide full") and bulk selection in lists. |
 | `Switch` | A setting that takes effect at once. `layout="row"` puts the label first and the switch at the far end, for settings lists. |
 | `RadioGroup` | One of a few options in a settings form, where all should be visible. |
@@ -131,8 +132,18 @@ Colors live only in `theme.css`. Component CSS uses `var(--color-*)`, never a li
 
 ## Theme
 
-`setTheme("system" | "light" | "dark")` from `theme.ts` sets `data-theme` on `<html>`.
-`index.tsx` calls `setTheme("system")` at startup.
+Themes live in `~/lib/theme` (see `docs/theming.md`). `applyAppearance` sets `data-theme` on
+`<html>` and every resolved token as an inline custom property, which wins over `theme.css`.
+`index.tsx` calls it once at startup so the first paint follows the OS; `app/appearance.ts` then
+keeps the window on the saved mode and themes.
+
+`styles/theme.css` stays the first-paint fallback. Every property in it is listed in
+`~/lib/theme/tokens.ts`, and the built-in Dark and Light themes (`crates/rbx-core/themes/`) must
+resolve to exactly its values; `tokens.test.ts` checks both. Adding a token means adding it to
+the registry and to `derive()`.
+
+`ThemeCard` draws a small window in any theme: it takes resolved tokens and sets them on its
+preview, so the preview uses the same token names as the app.
 
 ## Fonts
 

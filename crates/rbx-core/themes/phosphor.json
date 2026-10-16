@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "phosphor",
+  "name": "Phosphor",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {
+    "background": "#0a0c0a",
+    "foreground": "#c8f5c8",
+    "accent": "#3ddc6a",
+    "success": "#3ddc6a",
+    "warning": "#e5d14a",
+    "danger": "#ff5f56",
+    "contrast": 1.6,
+    "radius": 0,
+    "shadow": { "depth": 0, "ring": 1.6, "highlight": 0 }
+  },
+  "tokens": {}
+}

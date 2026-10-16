@@ -2,22 +2,38 @@ import { useNavigate, useParams } from "@solidjs/router"
 import { Switch as Branch, createMemo, createSignal, For, type JSX, Match, onCleanup, Show } from "solid-js"
 import { filterEntries } from "~/lib/commands/filter"
 import { groupOf } from "~/lib/commands/groups"
-import { commandList, run } from "~/lib/commands/registry"
+import { commandList, menuItem, run } from "~/lib/commands/registry"
 import { bytes, countdown, date, formatLocales } from "~/lib/format"
 import {
   type AccountInfoView,
+  type AppearanceView,
   type AppSettings,
   type CommandInfo,
   commands,
+  type FontCatalogView,
   type MyServerRow,
   type Person,
   type PinView,
   type PrivacyRow,
+  type ThemeView,
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { ServerControls } from "~/lib/private-server"
+import { arrange, nudgeScreen, screenKey, screens } from "~/lib/screens"
 import { settingsSections } from "~/lib/sections"
 import { shell, useLive } from "~/lib/store"
+import {
+  FONTS,
+  type FontSeed,
+  fontChoices,
+  fontLabel,
+  googleFamily,
+  MONOS,
+  type Mode,
+  parseTheme,
+  resolve,
+  shownBase,
+} from "~/lib/theme"
 import { thumbUrl } from "~/lib/thumb"
 import {
   Avatar,
@@ -25,7 +41,11 @@ import {
   Button,
   Card,
   type Column,
+  Combobox,
+  ContextMenu,
   DataTable,
+  Icon,
+  IconButton,
   Kbd,
   ListItem,
   NavItem,
@@ -39,6 +59,7 @@ import {
   Split,
   Switch,
   TextField,
+  ThemeCard,
   usePrompt,
 } from "~/lib/ui"
 import { privacyOptions, shownPrivacy, valueLabel } from "./privacy"
@@ -508,7 +529,9 @@ function NotificationsSection() {
 }
 
 const initialApp = (): AppSettings => ({
-  theme: "system",
+  mode: "system",
+  darkTheme: "dark",
+  lightTheme: "light",
   density: "comfortable",
   playerCommand: "",
   formatLocale: "",
@@ -534,11 +557,11 @@ function AppearanceSection() {
     <>
       <SectionHeader title="Appearance" />
       <Card class={rows}>
-        <Row label="Theme">
+        <Row label="Mode" description="System switches between your dark and light themes with the OS.">
           <RadioGroup
-            aria-label="Theme"
+            aria-label="Mode"
             orientation="horizontal"
-            value={app.theme}
+            value={app.mode}
             options={[
               { value: "system", label: "System" },
               { value: "dark", label: "Dark" },
@@ -579,6 +602,212 @@ function AppearanceSection() {
             Larger
           </Button>
         </Row>
+      </Card>
+      <ThemeGrid dark={app.darkTheme} light={app.lightTheme} />
+      <ThemeFonts />
+      <SidebarCard />
+    </>
+  )
+}
+
+/** Installed themes. Picking one uses it for its base (dark or light) and switches to that base. */
+function ThemeGrid(props: { dark: string; light: string }) {
+  const themes = useLive(
+    () => "themes",
+    () => commands.themes(),
+    (): ThemeView[] => [],
+  )
+  const detail = (t: ThemeView) => {
+    if (t.id === props.dark) return "Used in dark mode"
+    if (t.id === props.light) return "Used in light mode"
+    return t.author || (t.builtin ? "Built in" : "")
+  }
+  return (
+    <>
+      <SectionHeader title="Themes" />
+      <Card class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-3 p-3">
+        <For each={themes}>
+          {(t) => {
+            const tokens = createMemo(() => {
+              const theme = parseTheme(t.doc)
+              return theme ? resolve(theme) : {}
+            })
+            return (
+              <ContextMenu
+                items={[
+                  menuItem("theme.apply", { arg: t.id, icon: "check" }),
+                  menuItem("theme.delete", { arg: t.id, icon: "trash", danger: true, disabled: t.builtin }),
+                ]}
+              >
+                <ThemeCard
+                  class="w-full"
+                  name={t.name}
+                  detail={detail(t)}
+                  tokens={tokens()}
+                  selected={t.id === props.dark || t.id === props.light}
+                  onClick={() => run("theme.apply", t.id)}
+                />
+              </ContextMenu>
+            )
+          }}
+        </For>
+      </Card>
+    </>
+  )
+}
+
+/** The fonts of the theme on screen. Picking one changes that theme; a built-in one is copied
+ * first. Google fonts download in the background and show once they are on disk. */
+function ThemeFonts() {
+  const themes = useLive(
+    () => "themes",
+    () => commands.themes(),
+    (): ThemeView[] => [],
+  )
+  // Mode and documents come in one snapshot, so the theme on screen is never out of step.
+  const appearance = useLive(
+    () => "appearance",
+    () => commands.appearance(),
+    (): AppearanceView => ({ mode: "system", dark: "", light: "", fonts: [] }),
+  )
+  const shown = createMemo(() => {
+    const base = shownBase(appearance.mode as Mode)
+    return parseTheme(base === "dark" ? appearance.dark : appearance.light)
+  })
+  const builtin = () => themes.find((t) => t.id === shown()?.id)?.builtin ?? false
+  const status = (seed: FontSeed<string> | undefined) => {
+    const family = seed && googleFamily(seed)
+    const f = family && appearance.fonts.find((x) => x.family === family)
+    if (!f) return undefined
+    if (f.error) return f.error
+    if (f.files.length === 0) return `Downloading ${f.family}…`
+    return undefined
+  }
+  const description = (seed: FontSeed<string> | undefined) => {
+    const t = shown()
+    if (!t) return undefined
+    return (
+      status(seed) ??
+      (builtin() ? `${t.name} is built in, so picking a font makes a copy of it.` : `Saved in ${t.name}.`)
+    )
+  }
+  return (
+    <>
+      <SectionHeader title="Fonts" class="mt-6" />
+      <Card class={rows}>
+        <Row label="Font" description={description(shown()?.seeds.font)}>
+          <FontPicker
+            label="Font"
+            mono={false}
+            value={(() => {
+              const seed = shown()?.seeds.font
+              return seed ? fontLabel(seed, FONTS) : ""
+            })()}
+            onChange={(v) => run("theme.font", v)}
+          />
+        </Row>
+        <Row label="Code font" description={description(shown()?.seeds.mono)}>
+          <FontPicker
+            label="Code font"
+            mono
+            value={(() => {
+              const seed = shown()?.seeds.mono
+              return seed ? fontLabel(seed, MONOS) : ""
+            })()}
+            onChange={(v) => run("theme.mono_font", v)}
+          />
+        </Row>
+      </Card>
+    </>
+  )
+}
+
+/** Searches the bundled fonts and Google Fonts. Nothing is fetched until the list opens. */
+function FontPicker(props: { label: string; mono: boolean; value: string; onChange: (v: string) => unknown }) {
+  const [query, setQuery] = createSignal<string | null>(null)
+  const catalog = useLive(
+    () => query(),
+    (q): Promise<FontCatalogView> =>
+      q === null ? Promise.resolve(emptyCatalog()) : commands.fontCatalog(q, props.mono),
+    emptyCatalog,
+    { keep: true },
+  )
+  const options = createMemo(() => fontChoices(query() ?? "", props.mono, catalog.fonts))
+  return (
+    <Combobox
+      size="sm"
+      aria-label={props.label}
+      class="w-56"
+      searchPlaceholder="Search Google Fonts"
+      value={props.value}
+      options={options()}
+      loading={catalog.loading}
+      onSearch={setQuery}
+      onChange={props.onChange}
+    />
+  )
+}
+
+const emptyCatalog = (): FontCatalogView => ({ fonts: [], loading: false, error: null })
+
+/** Which screens the sidebar shows and in what order. Dragging rows in the sidebar does the
+ * same as the arrows here. */
+function SidebarCard() {
+  const groups = () => arrange(screens, shell.sidebar).filter((g) => g.length > 0)
+  return (
+    <>
+      <SectionHeader
+        title="Sidebar"
+        class="mt-6"
+        actions={
+          <Button size="sm" variant="ghost" onClick={() => run("view.sidebar_reset")}>
+            Reset
+          </Button>
+        }
+      />
+      <Card class="flex flex-col divide-y divide-line px-4">
+        <For each={groups()}>
+          {(group) => (
+            <div class="flex flex-col py-1.5">
+              <For each={group}>
+                {(s) => {
+                  const key = screenKey(s)
+                  const off = () => s.shown?.() === false
+                  return (
+                    <div class="flex h-10 items-center gap-2.5">
+                      <Icon name={s.icon} />
+                      <span class="flex-1">{s.label}</span>
+                      <Show when={off()}>
+                        <span class="text-sm text-fg-muted">Off while item values are off</span>
+                      </Show>
+                      <IconButton
+                        icon="chevron-up"
+                        label={`Move ${s.label} up`}
+                        size="sm"
+                        disabled={!nudgeScreen(screens, shell.sidebar, key, -1)}
+                        onClick={() => run("view.sidebar_up", key)}
+                      />
+                      <IconButton
+                        icon="chevron-down"
+                        label={`Move ${s.label} down`}
+                        size="sm"
+                        disabled={!nudgeScreen(screens, shell.sidebar, key, 1)}
+                        onClick={() => run("view.sidebar_down", key)}
+                      />
+                      <Switch
+                        hideLabel
+                        checked={!shell.sidebar.hidden.includes(key)}
+                        onChange={(on) => run("view.sidebar_toggle", `${key} ${on ? "on" : "off"}`)}
+                      >
+                        {`Show ${s.label} in the sidebar`}
+                      </Switch>
+                    </div>
+                  )
+                }}
+              </For>
+            </div>
+          )}
+        </For>
       </Card>
     </>
   )

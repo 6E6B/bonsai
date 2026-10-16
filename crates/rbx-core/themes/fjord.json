@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "fjord",
+  "name": "Fjord",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {
+    "background": "#2e3440",
+    "foreground": "#eceff4",
+    "accent": "#5e81ac",
+    "success": "#a3be8c",
+    "warning": "#ebcb8b",
+    "danger": "#bf616a",
+    "contrast": 1.4
+  },
+  "tokens": {}
+}

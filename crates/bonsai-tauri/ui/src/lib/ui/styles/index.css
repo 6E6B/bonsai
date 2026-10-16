@@ -17,6 +17,7 @@
 @import "../checkbox.css";
 @import "../clamp.css";
 @import "../collapsible.css";
+@import "../combobox.css";
 @import "../data-table.css";
 @import "../dialog.css";
 @import "../divider.css";
@@ -47,6 +48,7 @@
 @import "../spinner.css";
 @import "../stat.css";
 @import "../swatch.css";
+@import "../theme-card.css";
 @import "../switch.css";
 @import "../tab-strip.css";
 @import "../tabs.css";

@@ -20,8 +20,9 @@ export interface TileProps {
   /** Always as tall as two title lines and a subtitle, so rows of tiles keep one height as
    * their contents change. Short text leaves the space under it, not between lines. */
   fixed?: boolean
-  /** Opens the thing. Put other actions in a ContextMenu around the tile. */
-  onClick: () => void
+  /** Opens the thing. Put other actions in a ContextMenu around the tile. The event says
+   * whether Ctrl was held, for screens that preview on Ctrl+click. */
+  onClick: (e: MouseEvent) => void
   class?: string
 }
 

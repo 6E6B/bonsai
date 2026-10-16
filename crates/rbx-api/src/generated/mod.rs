@@ -26,6 +26,8 @@ pub mod economy;
 pub mod economycreatorstats;
 pub mod engagementpayouts;
 pub mod followings;
+pub mod fonts_google_com;
+pub mod fonts_googleapis_com;
 pub mod friends;
 pub mod gameinternationalization;
 pub mod gamejoin;

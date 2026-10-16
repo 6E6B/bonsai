@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "glacier",
+  "name": "Glacier",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "light",
+  "seeds": {
+    "background": "#f3f7fa",
+    "foreground": "#14212b",
+    "accent": "#0a7ea4",
+    "success": "#1a7f5a",
+    "warning": "#a15c07",
+    "danger": "#c8323a",
+    "contrast": 1.6,
+    "shadow": { "depth": 1.2, "ring": 0.8, "highlight": 1 }
+  },
+  "tokens": {}
+}

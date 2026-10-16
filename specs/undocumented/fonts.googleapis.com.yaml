@@ -1,0 +1,25 @@
+# Google Fonts' CSS API, a third-party site: the @font-face rules for a family, with the
+# fonts.gstatic.com URL of each file. rbx-core reads the URLs and downloads the files through
+# `Client::fetch_font`; the webview never sees them. No Roblox credentials go to this host.
+swagger: "2.0"
+host: fonts.googleapis.com
+info: { title: "Google Fonts CSS (third party)", version: undocumented }
+paths:
+  /css2:
+    get:
+      # Captured 2026-10-15 live (fixture: fonts.json). The stylesheet a page links from
+      # https://fonts.google.com/specimen/Inter ("Get embed code").
+      x-captured: "2026-10-15, https://fonts.google.com/specimen/Inter"
+      x-rust-name: get_font_css
+      summary: The @font-face rules for one family and its weights.
+      # A weight the family doesn't have fails the whole request with 400. Without a browser
+      # User-Agent (ours is "Baseplate/x") each weight is one TrueType file with every subset,
+      # not a woff2 per unicode range.
+      description: >-
+        family is "Name:wght@400;700" with the name as in the catalog. The body is CSS with one
+        @font-face per weight: font-weight N and src url(https://fonts.gstatic.com/...ttf).
+      produces: [text/css]
+      parameters:
+        - { in: query, name: family, required: true, type: string }
+      responses:
+        "200": { description: OK }

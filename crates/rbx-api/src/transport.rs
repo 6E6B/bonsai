@@ -530,14 +530,26 @@ impl Client {
     /// `https://*.rbxcdn.com` and `https://contentdelivery.roblox.com` URLs are allowed (asset
     /// delivery sometimes returns the latter); no cookie is sent.
     pub async fn fetch_cdn(&self, url: &str) -> Result<Vec<u8>> {
+        self.fetch_file(url, |h| {
+            h == "rbxcdn.com" || h.ends_with(".rbxcdn.com") || h == "contentdelivery.roblox.com"
+        })
+        .await
+    }
+
+    /// Download a font file (a URL from Google Fonts' CSS API). Only `https://fonts.gstatic.com`
+    /// URLs are allowed; no cookie is sent.
+    pub async fn fetch_font(&self, url: &str) -> Result<Vec<u8>> {
+        self.fetch_file(url, |h| h == "fonts.gstatic.com").await
+    }
+
+    /// GET a public file by URL with no credentials, if `allowed` accepts its host.
+    async fn fetch_file(&self, url: &str, allowed: impl Fn(&str) -> bool) -> Result<Vec<u8>> {
         let host = url
             .strip_prefix("https://")
             .and_then(|r| r.split('/').next())
             .unwrap_or("");
-        if !(host == "rbxcdn.com" || host.ends_with(".rbxcdn.com") || host == "contentdelivery.roblox.com") {
-            return Err(Error::Encode(format!(
-                "refusing to fetch non-CDN url host {host}"
-            )));
+        if !allowed(host) {
+            return Err(Error::Encode(format!("refusing to fetch url host {host}")));
         }
         let url = match &self.inner.base {
             Base::Production => url.to_string(),

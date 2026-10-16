@@ -86,8 +86,16 @@
   - [ ] Premium membership tier and renewal date — Premium yes/no shown; tier and renewal date not captured
   - [x] Active private server subscriptions
 - [ ] **App Preferences (Client native)**:
-  - [ ] Theme (Light, Dark, System, Custom palettes) — light, dark and system done; custom palettes not yet
+  - [ ] Theme (Light, Dark, System, Custom palettes) — twelve built-in themes, a dark and a light pick that System switches between; editor and import in progress, see [theming.md](../theming.md)
+    - [x] Token registry, theme document format and seed derivation (`ui/src/lib/theme/`)
+    - [x] Theme storage, selection and `theme.apply` / `theme.cycle` / `theme.delete` (`rbx-core/src/themes.rs`, Settings > Appearance)
+    - [x] Google Fonts in themes: searchable picker, `theme.font` / `theme.mono_font` / `theme.duplicate`, files cached on disk and served over `font://` (`rbx-core/src/fonts.rs`)
+    - [ ] Theme editor with live preview and contrast checks
+    - [ ] Import and export (`.bonsaitheme` files and share codes)
+    - [ ] Inspect mode
+    - [ ] Theme hub
   - [x] UI density / scaling (Compact, Comfortable)
+  - [x] Sidebar layout: screens in groups split by dividers; drag rows or `view.sidebar_up`/`view.sidebar_down` to reorder within a group, `view.sidebar_toggle` to hide (right-click menu, Settings > Appearance); Messages hidden by default; Transactions also opens from Trades
   - [x] Player launch command configuration (Default OS protocol, Flatpak/Sober, Wine, custom script)
   - [x] Disk cache manager (view cache size on disk, clear thumbnail and data caches)
   - [x] Automatic cache upkeep (data and images unused for 30 days are dropped, images capped at 512 MB, idle screens and images leave memory)

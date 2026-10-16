@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "dusk",
+  "name": "Dusk",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {
+    "background": "#1a1625",
+    "foreground": "#ece6f5",
+    "accent": "#a37cf0",
+    "success": "#6fd1a5",
+    "warning": "#f0b86c",
+    "danger": "#e05573",
+    "contrast": 1.2,
+    "radius": 1.5,
+    "shadow": { "depth": 1.4, "ring": 1, "highlight": 1.5 }
+  },
+  "tokens": {}
+}

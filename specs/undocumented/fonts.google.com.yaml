@@ -1,0 +1,37 @@
+# The Google Fonts catalog (https://fonts.google.com), a third-party site. Used to pick a font for
+# a theme; the webview never loads fonts from the network, rbx-core downloads them (see
+# fonts.googleapis.com.yaml). The transport never sends Roblox credentials to a non-Roblox host.
+swagger: "2.0"
+host: fonts.google.com
+info: { title: "Google Fonts catalog (third party)", version: undocumented }
+paths:
+  /metadata/fonts:
+    get:
+      # Captured 2026-10-15 live (fixture: fonts.json). Loaded by https://fonts.google.com to list
+      # every family. About 2.7 MB for 1,950 families; we keep only the fields below and refetch
+      # it at most weekly.
+      x-captured: "2026-10-15, https://fonts.google.com/"
+      x-rust-name: get_font_catalog
+      summary: Every Google Fonts family.
+      description: >-
+        fonts maps a style key to its metrics: "400" is regular weight 400, "400i" its italic.
+        popularity is a rank, lower is more popular. category is one of Sans Serif, Serif,
+        Display, Handwriting or Monospace.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/FontCatalog" } }
+definitions:
+  FontCatalog:
+    type: object
+    properties:
+      familyMetadataList:
+        type: array
+        items: { $ref: "#/definitions/FontFamily" }
+  FontFamily:
+    type: object
+    properties:
+      family: { type: string }
+      category: { type: string }
+      popularity: { type: integer, format: int64 }
+      fonts:
+        type: object
+        additionalProperties: { type: object }

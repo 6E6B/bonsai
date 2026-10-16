@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "id": "adwaita-dark",
+  "name": "Adwaita Dark",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {
+    "background": "#222226",
+    "foreground": "#ffffff",
+    "accent": "#3584e4",
+    "success": "#78e9ab",
+    "warning": "#ffc252",
+    "danger": "#c01c28",
+    "radius": 1.5,
+    "shadow": { "depth": 1, "ring": 1, "highlight": 0 }
+  },
+  "tokens": {
+    "color-deep": "#2e2e32",
+    "color-canvas": "#222226",
+    "color-surface": "#343437",
+    "color-raised": "#36363a",
+    "color-line": "#ffffff26",
+    "color-accent-hover": "#62a0ea",
+    "color-focus": "#3584e4",
+    "color-danger-hover": "#e01b24",
+    "color-tag-red": "#e01b24",
+    "color-tag-orange": "#ff7800",
+    "color-tag-yellow": "#f6d32d",
+    "color-tag-green": "#33d17a",
+    "color-tag-blue": "#3584e4",
+    "color-tag-purple": "#9141ac",
+    "color-tag-pink": "#d56199"
+  }
+}

@@ -36,9 +36,11 @@ import values from "@phosphor-icons/core/assets/regular/chart-line-up.svg?raw"
 import chat from "@phosphor-icons/core/assets/regular/chat-circle.svg?raw"
 import circleCheck from "@phosphor-icons/core/assets/regular/check-circle.svg?raw"
 import clock from "@phosphor-icons/core/assets/regular/clock.svg?raw"
+import code from "@phosphor-icons/core/assets/regular/code-simple.svg?raw"
 import discover from "@phosphor-icons/core/assets/regular/compass.svg?raw"
 import copy from "@phosphor-icons/core/assets/regular/copy.svg?raw"
 import crown from "@phosphor-icons/core/assets/regular/crown.svg?raw"
+import model from "@phosphor-icons/core/assets/regular/cube.svg?raw"
 import dollar from "@phosphor-icons/core/assets/regular/currency-dollar.svg?raw"
 import value from "@phosphor-icons/core/assets/regular/diamond.svg?raw"
 import more from "@phosphor-icons/core/assets/regular/dots-three.svg?raw"
@@ -54,6 +56,7 @@ import globe from "@phosphor-icons/core/assets/regular/globe.svg?raw"
 import server from "@phosphor-icons/core/assets/regular/hard-drives.svg?raw"
 import heart from "@phosphor-icons/core/assets/regular/heart.svg?raw"
 import home from "@phosphor-icons/core/assets/regular/house.svg?raw"
+import image from "@phosphor-icons/core/assets/regular/image.svg?raw"
 import info from "@phosphor-icons/core/assets/regular/info.svg?raw"
 import keyboard from "@phosphor-icons/core/assets/regular/keyboard.svg?raw"
 import link from "@phosphor-icons/core/assets/regular/link.svg?raw"
@@ -62,11 +65,13 @@ import lock from "@phosphor-icons/core/assets/regular/lock.svg?raw"
 import search from "@phosphor-icons/core/assets/regular/magnifying-glass.svg?raw"
 import megaphone from "@phosphor-icons/core/assets/regular/megaphone.svg?raw"
 import minimize from "@phosphor-icons/core/assets/regular/minus.svg?raw"
+import audio from "@phosphor-icons/core/assets/regular/music-notes.svg?raw"
 import send from "@phosphor-icons/core/assets/regular/paper-plane-right.svg?raw"
 import edit from "@phosphor-icons/core/assets/regular/pencil-simple.svg?raw"
 import plus from "@phosphor-icons/core/assets/regular/plus.svg?raw"
 import block from "@phosphor-icons/core/assets/regular/prohibit.svg?raw"
 import pin from "@phosphor-icons/core/assets/regular/push-pin.svg?raw"
+import plugin from "@phosphor-icons/core/assets/regular/puzzle-piece.svg?raw"
 import share from "@phosphor-icons/core/assets/regular/share-fat.svg?raw"
 import sidebar from "@phosphor-icons/core/assets/regular/sidebar-simple.svg?raw"
 import signOut from "@phosphor-icons/core/assets/regular/sign-out.svg?raw"
@@ -82,6 +87,7 @@ import marketplace from "@phosphor-icons/core/assets/regular/storefront.svg?raw"
 import avatar from "@phosphor-icons/core/assets/regular/t-shirt.svg?raw"
 import thumbsDown from "@phosphor-icons/core/assets/regular/thumbs-down.svg?raw"
 import thumbsUp from "@phosphor-icons/core/assets/regular/thumbs-up.svg?raw"
+import pass from "@phosphor-icons/core/assets/regular/ticket.svg?raw"
 import trash from "@phosphor-icons/core/assets/regular/trash.svg?raw"
 import inbox from "@phosphor-icons/core/assets/regular/tray.svg?raw"
 import trendDown from "@phosphor-icons/core/assets/regular/trend-down.svg?raw"
@@ -201,6 +207,12 @@ const svgs = {
   "sort-asc": sortAsc,
   "sort-desc": sortDesc,
   video,
+  audio,
+  image,
+  model,
+  plugin,
+  code,
+  pass,
   values,
   "values-fill": valuesFill,
   value,

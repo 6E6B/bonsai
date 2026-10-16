@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "moss",
+  "name": "Moss",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {
+    "background": "#151a16",
+    "foreground": "#e4ecdf",
+    "accent": "#6fae6a",
+    "success": "#8cc96b",
+    "warning": "#d9b35c",
+    "danger": "#e06a5a",
+    "contrast": 1.2,
+    "radius": 1.25
+  },
+  "tokens": {}
+}

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "ember",
+  "name": "Ember",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {
+    "background": "#1c1714",
+    "foreground": "#f3ece6",
+    "accent": "#d9612b",
+    "success": "#7fc77a",
+    "warning": "#f2c14e",
+    "danger": "#f2554c",
+    "radius": 1.5
+  },
+  "tokens": {}
+}

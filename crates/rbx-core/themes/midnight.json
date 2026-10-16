@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "id": "midnight",
+  "name": "Midnight",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "dark",
+  "seeds": {
+    "background": "#11151f",
+    "foreground": "#e6e9f0",
+    "accent": "#5b7cff",
+    "success": "#4cc38a",
+    "warning": "#e5b454",
+    "danger": "#e86060"
+  },
+  "tokens": {}
+}

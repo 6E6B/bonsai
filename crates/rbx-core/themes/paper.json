@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "id": "paper",
+  "name": "Paper",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "light",
+  "seeds": {
+    "background": "#f7f3ea",
+    "foreground": "#2b2620",
+    "accent": "#a8502a",
+    "success": "#3f7d3a",
+    "warning": "#9a5f08",
+    "danger": "#b8322a",
+    "shadow": { "depth": 0.6, "ring": 1.2, "highlight": 1 }
+  },
+  "tokens": {}
+}

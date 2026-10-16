@@ -1,5 +1,5 @@
 //! Tauri shell. Owns [`Core`], exposes typed IPC commands (see [`ipc`]), serves thumbnails
-//! over `thumb://` (see [`thumb`]) and tells the UI when the store changed (see [`notify`]).
+//! over `thumb://` (see [`thumb`]) and theme fonts over `font://` (see [`font`]), and tells the UI when the store changed (see [`notify`]).
 //!
 //! No logic lives here: commands read the store or forward to `rbx-core`.
 
@@ -9,6 +9,7 @@ use rbx_core::{Core, CoreConfig};
 use tauri::Manager;
 
 mod captcha;
+mod font;
 pub mod ipc;
 mod notify;
 mod signin;
@@ -40,6 +41,7 @@ pub fn run() {
             handler(invoke)
         })
         .register_asynchronous_uri_scheme_protocol(thumb::SCHEME, thumb::handle)
+        .register_asynchronous_uri_scheme_protocol(font::SCHEME, font::handle)
         .on_page_load(move |w, p| eprintln!("PROFILE {:?} page {:?} {}", t0.elapsed(), p.event(), w.label())) // PROFILE-TMP
         .setup(move |app| {
             eprintln!("PROFILE {:?} setup start", t0.elapsed()); // PROFILE-TMP

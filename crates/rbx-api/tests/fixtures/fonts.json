@@ -1,0 +1,154 @@
+{
+  "captured": "2026-10-15",
+  "source": "live",
+  "note": "Google Fonts (third party). Catalog trimmed to four families with empty metrics; font files replaced by a TrueType header and a marker.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "fonts.google.com",
+        "path": "/metadata/fonts"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "familyMetadataList": [
+            {
+              "family": "Fira Code",
+              "category": "Monospace",
+              "popularity": 150,
+              "fonts": {
+                "300": {},
+                "400": {},
+                "500": {},
+                "600": {},
+                "700": {}
+              }
+            },
+            {
+              "family": "Inter",
+              "category": "Sans Serif",
+              "popularity": 3,
+              "fonts": {
+                "100": {},
+                "100i": {},
+                "200": {},
+                "200i": {},
+                "300": {},
+                "300i": {},
+                "400": {},
+                "400i": {},
+                "500": {},
+                "500i": {},
+                "600": {},
+                "600i": {},
+                "700": {},
+                "700i": {},
+                "800": {},
+                "800i": {},
+                "900": {},
+                "900i": {}
+              }
+            },
+            {
+              "family": "Molle",
+              "category": "Handwriting",
+              "popularity": 1108,
+              "fonts": {
+                "400i": {}
+              }
+            },
+            {
+              "family": "Space Grotesk",
+              "category": "Sans Serif",
+              "popularity": 16,
+              "fonts": {
+                "300": {},
+                "400": {},
+                "500": {},
+                "600": {},
+                "700": {}
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "fonts.googleapis.com",
+        "path": "/css2",
+        "query": {
+          "family": "Space Grotesk:wght@400;500;600;700"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/css; charset=utf-8"
+        },
+        "body": "@font-face {\n  font-family: 'Space Grotesk';\n  font-style: normal;\n  font-weight: 400;\n  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUUsj.ttf) format('truetype');\n}\n@font-face {\n  font-family: 'Space Grotesk';\n  font-style: normal;\n  font-weight: 500;\n  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7aUUsj.ttf) format('truetype');\n}\n@font-face {\n  font-family: 'Space Grotesk';\n  font-style: normal;\n  font-weight: 600;\n  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj42Vksj.ttf) format('truetype');\n}\n@font-face {\n  font-family: 'Space Grotesk';\n  font-style: normal;\n  font-weight: 700;\n  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVksj.ttf) format('truetype');\n}\n"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "fonts.gstatic.com",
+        "path": "/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUUsj.ttf"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "font/ttf"
+        },
+        "body": "\u0000\u0001\u0000\u0000space-grotesk-400"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "fonts.gstatic.com",
+        "path": "/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7aUUsj.ttf"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "font/ttf"
+        },
+        "body": "\u0000\u0001\u0000\u0000space-grotesk-500"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "fonts.gstatic.com",
+        "path": "/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj42Vksj.ttf"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "font/ttf"
+        },
+        "body": "\u0000\u0001\u0000\u0000space-grotesk-600"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "fonts.gstatic.com",
+        "path": "/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVksj.ttf"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "font/ttf"
+        },
+        "body": "\u0000\u0001\u0000\u0000space-grotesk-700"
+      }
+    }
+  ]
+}

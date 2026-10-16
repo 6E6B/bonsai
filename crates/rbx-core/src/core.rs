@@ -94,6 +94,9 @@ pub enum Cmd {
         query: String,
     },
     SetSettings(Box<Settings>),
+    /// Writes a user theme to the themes folder.
+    SaveTheme(Box<crate::themes::Theme>),
+    DeleteTheme(String),
     /// Home game sorts as this account (anonymous works too).
     LoadHome(AccountId),
 }
@@ -121,6 +124,9 @@ pub(crate) struct Inner {
     pub(crate) thumb_budget: Mutex<thumbs::Budget>,
     pub(crate) browser_tracker_id: u64,
     pub(crate) settings: RwLock<Settings>,
+    pub(crate) themes: RwLock<crate::themes::Themes>,
+    /// Whether the OS prefers dark, as the UI last reported. Picks the theme in System mode.
+    pub(crate) system_dark: std::sync::atomic::AtomicBool,
     toast_seq: Mutex<u64>,
     /// The challenge waiting for the user, with what answering it needs.
     pub(crate) challenge: Mutex<crate::challenge::ChallengeState>,
@@ -173,6 +179,7 @@ impl Core {
             crate::fmt::set_local_offset(o);
         }
         let settings = Settings::load(&cfg.paths.settings_file());
+        let themes = crate::themes::Themes::load(&cfg.paths.themes_dir());
         let accounts = crate::account::AccountList::load(&cfg.paths.accounts_file());
         let anon = Client::builder(AccountId::ANONYMOUS)
             .base(cfg.base.clone())
@@ -205,6 +212,8 @@ impl Core {
             thumb_budget: Mutex::new(Default::default()),
             browser_tracker_id: 100_000_000_000 + fastrand::u64(0..899_999_999_999),
             settings: RwLock::new(settings),
+            themes: RwLock::new(themes),
+            system_dark: std::sync::atomic::AtomicBool::new(true),
             toast_seq: Mutex::new(0),
             challenge: Default::default(),
             alerts: Default::default(),
@@ -771,6 +780,17 @@ impl Inner {
                     command: s.player_command.clone(),
                 });
                 *self.settings.write() = *s;
+                self.repaint();
+            }
+            Cmd::SaveTheme(t) => {
+                if let Err(e) = crate::themes::save(&self.paths.themes_dir(), &t) {
+                    tracing::warn!("saving theme {}: {e}", t.id);
+                }
+            }
+            Cmd::DeleteTheme(id) => {
+                if let Err(e) = crate::themes::delete(&self.paths.themes_dir(), &id) {
+                    tracing::warn!("deleting theme {id}: {e}");
+                }
             }
         }
         {

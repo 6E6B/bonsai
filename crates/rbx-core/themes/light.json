@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "id": "light",
+  "name": "Light",
+  "author": "Bonsai",
+  "version": "1.0.0",
+  "base": "light",
+  "seeds": {},
+  "tokens": { "color-accent-hover": "#1d4fd8", "color-danger-hover": "#c22424" }
+}
