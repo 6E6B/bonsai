@@ -42,8 +42,8 @@ import { TopBar } from "./shell/TopBar"
  *
  *   title bar (app name, window controls)
  *   rail | top bar (sidebar toggle, command bar, notifications, drawer toggle)
- *        | sidebar | tab strip       | drawer
- *        |         | page            |
+ *        | sidebar | tab strip
+ *        |         | page    | drawer
  *   status bar
  *
  * It owns the commands that only change UI state: navigation, tabs, panels, zoom, theme.
@@ -393,41 +393,43 @@ export function Layout(props: ParentProps) {
             <div ref={column} class="relative isolate flex min-w-0 flex-1 flex-col">
               <Backdrop background={appearance.background} strip={strip()} />
               <TabBar />
-              <main
-                ref={main}
-                data-scroller
-                class="min-h-0 flex-1 bg-canvas"
-                onScroll={(e) => scrolls.set(tabs.active, e.currentTarget.scrollTop)}
-              >
-                <div class="flex h-full flex-col">
-                  <ShellAlerts />
-                  <ChallengeDialog />
-                  <ErrorBoundary
-                    fallback={(err) => (
-                      <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
-                        {String(err?.stack ?? err)}
-                      </pre>
-                    )}
-                  >
-                    {props.children}
-                  </ErrorBoundary>
-                </div>
-              </main>
-            </div>
-            <Show when={preview()}>
-              {(p) => (
-                <aside
-                  aria-label="Item preview"
+              <div class="flex min-h-0 flex-1">
+                <main
+                  ref={main}
                   data-scroller
-                  class="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-l border-line bg-canvas p-3"
+                  class="min-h-0 flex-1 bg-canvas"
+                  onScroll={(e) => scrolls.set(tabs.active, e.currentTarget.scrollTop)}
                 >
-                  <ItemPreview id={p().id} bundle={p().bundle} onClose={() => setPreview(null)} />
-                </aside>
-              )}
-            </Show>
-            <Show when={drawer()}>
-              <Drawer />
-            </Show>
+                  <div class="flex h-full flex-col">
+                    <ShellAlerts />
+                    <ChallengeDialog />
+                    <ErrorBoundary
+                      fallback={(err) => (
+                        <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
+                          {String(err?.stack ?? err)}
+                        </pre>
+                      )}
+                    >
+                      {props.children}
+                    </ErrorBoundary>
+                  </div>
+                </main>
+                <Show when={preview()}>
+                  {(p) => (
+                    <aside
+                      aria-label="Item preview"
+                      data-scroller
+                      class="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-l border-line bg-canvas p-3"
+                    >
+                      <ItemPreview id={p().id} bundle={p().bundle} onClose={() => setPreview(null)} />
+                    </aside>
+                  )}
+                </Show>
+                <Show when={drawer()}>
+                  <Drawer />
+                </Show>
+              </div>
+            </div>
           </div>
         </div>
       </div>
