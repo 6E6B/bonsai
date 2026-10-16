@@ -1,6 +1,6 @@
 # Agent rules
 
-Read this at the start of every session. Feature checklists are in `docs/parity/`. The roadmap goes in `PLAN.md` (not written yet).
+Read this at the start of every session. Other docs are in `docs/`; what's left to build is in `docs/gaps.md`.
 
 ## Layout
 
@@ -138,7 +138,7 @@ Run from the repo root: `cargo fmt`, `cargo clippy --workspace --all-targets -- 
 - `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace` pass.
 - `bun run check` passes in `crates/bonsai/ui`.
 - `bindings.ts` is regenerated and committed if IPC types changed.
-- The area's checklist in `docs/parity/<area>.md` is updated.
+- `docs/gaps.md` is updated if you closed or found a gap.
 - `coverage.json` shows any newly used operations as used.
 - No screen you touched waits on the network or shows a blank state when cached data exists.
 - Every new action is a registry command with a title and keywords, and shows up in the command bar.

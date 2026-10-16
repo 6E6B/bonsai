@@ -6,8 +6,12 @@
 //! signed-in account enters the code, sees which device asked, then confirms or cancels.
 //!
 //! Quick sign-in never sends `secureAuthenticationIntent`, so its sessions are not bound to a
-//! key and need no `x-bound-auth-token`. See the sign-in plan in
-//! `docs/parity/auth-accounts-security.md`.
+//! key and need no `x-bound-auth-token`. Session binding (HBA) ties a session to an ECDSA P-256
+//! key and signs each request with it, to make stolen cookies useless. Roblox doesn't enforce
+//! it now. If it does again, quick sign-in can register a key (kept in the keychain, redacted
+//! like the cookie) and sign in `bonsai-api` with `v1|sha256(body)|timestamp|sig1|sig2`. Only
+//! ever sign with the key a session was created with: a mismatched token looks worse than none,
+//! so pasted cookies and sign-in window sessions stay unsigned.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};

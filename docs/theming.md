@@ -1,8 +1,7 @@
 # Theming
 
 Themes are a first-class feature: easy to make inside the app, easy to share, and safe to import
-from strangers. This is the design and the roadmap. The checklist line lives in
-[`parity/settings-servers-discover.md`](parity/settings-servers-discover.md#settings).
+from strangers. This is the design and the roadmap. What's still missing is in [`gaps.md`](gaps.md).
 
 ## Principles
 

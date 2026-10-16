@@ -11,8 +11,9 @@
 //!   it to the same check-and-confirm step as a pasted cookie. The cookie never reaches the UI.
 //!
 //! The session it creates is bound to a key that roblox.com keeps in the window's IndexedDB,
-//! which goes away with the window. That's accepted; see the sign-in plan in
-//! `docs/parity/auth-accounts-security.md`.
+//! which goes away with the window. That's accepted: Roblox doesn't enforce bound sessions
+//! now. Don't seed or tamper with that IndexedDB. If enforcement returns, mark these accounts
+//! "sign in again" and point users to quick sign-in.
 
 use std::sync::Arc;
 

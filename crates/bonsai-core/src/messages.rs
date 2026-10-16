@@ -1,7 +1,7 @@
 //! Private messages (inbox, sent, archive, news) and the site's notification stream.
 //!
-//! Roblox no longer accepts new private messages (`/v1/messages/send` answers 404, BLOCKERS
-//! #7), so Reply and Compose start a chat instead (see [`crate::chat`]).
+//! Roblox no longer accepts new private messages (`/v1/messages/send` answers 404),
+//! so Reply and Compose start a chat instead (see [`crate::chat`]).
 
 use bonsai_api::AccountId;
 use bonsai_api::generated::notifications;
