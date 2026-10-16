@@ -3,14 +3,36 @@ import { run } from "~/lib/commands/registry"
 import { arrange, nudgeScreen, screenKey, screens } from "~/lib/screens"
 import { shell } from "~/lib/store"
 import { Button, Icon, IconButton, SettingsGroup, Switch } from "~/lib/ui"
+import { PrefRow } from "./prefs"
+
+/** What a launch opens, the window's panels, Home's rows, and which screens the sidebar
+ * shows in what order. */
+export function LayoutSection() {
+  return (
+    <>
+      <SettingsGroup title="Window" description="Saved on this computer for every account.">
+        <PrefRow name="start_screen" />
+        <PrefRow name="sidebar_mode" />
+        <PrefRow name="drawer" />
+      </SettingsGroup>
+      <SettingsGroup title="Home" description="Rows Home shows. Rows with nothing in them stay hidden.">
+        <PrefRow name="home.friends" />
+        <PrefRow name="home.continue_playing" />
+        <PrefRow name="home.favorites" />
+        <PrefRow name="home.recommended" />
+      </SettingsGroup>
+      <SidebarScreens />
+    </>
+  )
+}
 
 /** Which screens the sidebar shows and in what order. Dragging rows in the sidebar does the
  * same as the arrows here. */
-export function LayoutSection() {
+function SidebarScreens() {
   const groups = () => arrange(screens, shell.sidebar).filter((g) => g.length > 0)
   return (
     <SettingsGroup
-      title="Sidebar"
+      title="Sidebar screens"
       description="Drag rows in the sidebar or use the arrows. Each divider starts a group."
       actions={
         <Button size="sm" variant="ghost" onClick={() => run("view.sidebar_reset")}>

@@ -1,5 +1,6 @@
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { useLocation, useNavigate } from "@solidjs/router"
+import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, createSignal, ErrorBoundary, on, onCleanup, onMount, type ParentProps, Show } from "solid-js"
 import { NewChat } from "~/features/chat/NewChat"
 import { CommandPalette } from "~/features/palette/CommandPalette"
@@ -18,7 +19,7 @@ import { commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { shell, startSync } from "~/lib/store"
-import { activeTab, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
+import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
@@ -58,15 +59,16 @@ export function Layout(props: ParentProps) {
   const dialog = useDialog()
   setConfirmer(useConfirm())
   const prompt = usePrompt()
-  const [compactPref, setCompactPref] = createSignal<boolean | null>(null)
   const [width, setWidth] = createSignal(window.innerWidth)
   makeEventListener(window, "resize", () => setWidth(window.innerWidth))
-  const [drawerPref, setDrawerPref] = createSignal<boolean | null>(null)
   const zoom = () => shell.uiScale || 1
   /** The item Ctrl+click or `market.preview` shows beside the page. */
   const [preview, setPreview] = createSignal<{ id: number; bundle: boolean } | null>(null)
-  const compact = () => compactPref() ?? width() / zoom() < NARROW
-  const drawer = () => drawerPref() ?? false
+  const compact = () => {
+    const mode = shell.look.sidebarMode
+    return mode === "auto" ? width() / zoom() < NARROW : mode === "collapsed"
+  }
+  const drawer = () => shell.look.drawer
 
   const here = () => location.pathname + location.search
   // True while a Ctrl+click is being handled, so commands that open a place open it in a
@@ -231,8 +233,9 @@ export function Layout(props: ParentProps) {
       dialog.show(() => <CommandPalette />, { position: "top", label: "Command bar", size: "lg" }),
     ),
     handle("help.shortcuts", () => dialog.show(() => <ShortcutsDialog />, { title: "Keyboard shortcuts", size: "lg" })),
-    handle("view.sidebar", () => setCompactPref(!compact())),
-    handle("view.drawer", () => setDrawerPref(!drawer())),
+    // Saved, so the window opens the same way next time.
+    handle("view.sidebar", () => runBackend("settings.set", `sidebar_mode ${compact() ? "expanded" : "collapsed"}`)),
+    handle("view.drawer", () => runBackend("settings.set", "drawer")),
     handle("view.zoom_in", () => zoomBy(1)),
     handle("view.zoom_out", () => zoomBy(-1)),
     handle("view.zoom_reset", () => setZoom(1)),
@@ -287,6 +290,28 @@ export function Layout(props: ParentProps) {
 
   // Every navigation lands in a tab: screens replace the current tab, entities get their own.
   createEffect(on(here, (path) => tabActions.visit(path)))
+  // The start screen, or the tabs from last time. A reload on another page stays there.
+  // Tabs are saved only after this, so the single launch tab never replaces the saved ones.
+  const [started, setStarted] = createSignal(false)
+  onMount(async () => {
+    try {
+      if (!isTauri() || here() !== "/") return
+      const start = await commands.startTabs()
+      tabActions.restore(start.tabs, start.active)
+      syncTab()
+    } finally {
+      setStarted(true)
+    }
+  })
+  // Remember the tabs for "Open on launch: Tabs from last time", a moment after they change.
+  let saveTimer: ReturnType<typeof setTimeout> | undefined
+  createEffect(() => {
+    if (!started() || shell.look.startScreen !== "last") return
+    const saved = savedTabs(tabs)
+    clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => void commands.saveTabs(saved.tabs, saved.active), 1000)
+  })
+  onCleanup(() => clearTimeout(saveTimer))
 
   // Each tab remembers how far its page was scrolled. Only the active tab's screen exists, so
   // this is all a background tab keeps.

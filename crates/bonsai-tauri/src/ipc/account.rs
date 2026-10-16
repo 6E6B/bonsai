@@ -8,10 +8,12 @@ use rbx_core::commands::{CommandId, Registry, Shortcut};
 use rbx_core::experience::ServerChange;
 use rbx_core::me::ServersTab;
 use rbx_core::prefs::{self, PrefKind};
-use rbx_core::settings::{Density, Mode, NotifyPrefs, SidebarPrefs, valid_format_locale};
+use rbx_core::settings::{
+    Density, Mode, NotifyPrefs, SavedTab, SavedTabs, SidebarPrefs, valid_format_locale,
+};
 use rbx_core::themes::{Base, FontSlot, Theme};
 use rbx_core::{AccountId, Core};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
 
@@ -355,6 +357,80 @@ pub struct PrefView {
 pub struct PrefOption {
     pub value: String,
     pub label: String,
+}
+
+/// A tab to open at launch, or one the UI saves for next time.
+#[derive(Clone, Debug, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TabView {
+    /// An app route like `/games/123`.
+    pub path: String,
+    pub pinned: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct StartTabs {
+    pub tabs: Vec<TabView>,
+    /// Index into `tabs`.
+    pub active: u32,
+}
+
+/// The tabs a launch opens: the ones from last time, or the start screen.
+#[tauri::command]
+#[specta::specta]
+pub fn start_tabs(core: State<'_, Arc<Core>>) -> StartTabs {
+    let s = core.settings();
+    let saved = s.session.clone().sanitized();
+    if s.start_screen == "last" && !saved.tabs.is_empty() {
+        return StartTabs {
+            active: saved.active as u32,
+            tabs: saved
+                .tabs
+                .into_iter()
+                .map(|t| TabView {
+                    path: t.path,
+                    pinned: t.pinned,
+                })
+                .collect(),
+        };
+    }
+    let screen = match s.start_screen.as_str() {
+        "last" | "home" => "",
+        other if prefs::START_SCREENS.iter().any(|(v, _)| *v == other) => other,
+        _ => "",
+    };
+    StartTabs {
+        tabs: vec![TabView {
+            path: format!("/{screen}"),
+            pinned: false,
+        }],
+        active: 0,
+    }
+}
+
+/// Remembers the open tabs for "Open on launch: Tabs from last time". Saved only while that is
+/// picked, so tab changes don't rewrite settings otherwise.
+#[tauri::command]
+#[specta::specta]
+pub fn save_tabs(core: State<'_, Arc<Core>>, tabs: Vec<TabView>, active: u32) {
+    if core.settings().start_screen != "last" {
+        return;
+    }
+    let saved = SavedTabs {
+        tabs: tabs
+            .into_iter()
+            .map(|t| SavedTab {
+                path: t.path,
+                pinned: t.pinned,
+            })
+            .collect(),
+        active: active as usize,
+    }
+    .sanitized();
+    if core.settings().session != saved {
+        core.update_settings(|s| s.session = saved);
+    }
 }
 
 /// Every setting that `settings.set` and `settings.reset` take.

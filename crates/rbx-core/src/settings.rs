@@ -321,6 +321,70 @@ pub struct Settings {
     pub relative_dates: bool,
     /// The bar at the bottom of the window with the account, balance and zoom.
     pub status_bar: bool,
+    /// The screen a launch opens: a screen name like `home`, or `last` for the tabs open when
+    /// the app closed.
+    pub start_screen: String,
+    /// `auto` collapses the sidebar in narrow windows; `expanded` or `collapsed` always.
+    pub sidebar_mode: String,
+    /// The friends and chat drawer on the right is open.
+    pub drawer: bool,
+    pub home: HomeRows,
+    /// The tabs open when the app last saved them, for `start_screen = "last"`.
+    pub session: SavedTabs,
+}
+
+/// Which rows Home shows.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct HomeRows {
+    pub friends: bool,
+    pub continue_playing: bool,
+    pub favorites: bool,
+    pub recommended: bool,
+}
+
+impl Default for HomeRows {
+    fn default() -> Self {
+        Self {
+            friends: true,
+            continue_playing: true,
+            favorites: true,
+            recommended: true,
+        }
+    }
+}
+
+/// Open tabs, saved so a launch can reopen them.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SavedTabs {
+    pub tabs: Vec<SavedTab>,
+    /// Index of the active tab.
+    pub active: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SavedTab {
+    /// An app route like `/games/123?tab=servers`.
+    pub path: String,
+    pub pinned: bool,
+}
+
+impl SavedTabs {
+    /// More tabs than this are dropped from the end.
+    pub const MAX: usize = 50;
+
+    /// Keeps app routes only, at most [`Self::MAX`], with `active` pointing at one of them.
+    pub fn sanitized(mut self) -> SavedTabs {
+        self.tabs
+            .retain(|t| t.path.starts_with('/') && !t.path.starts_with("//") && t.path.len() <= 2048);
+        self.tabs.truncate(Self::MAX);
+        if self.active >= self.tabs.len() {
+            self.active = 0;
+        }
+        self
+    }
 }
 
 impl Default for Settings {
@@ -343,6 +407,11 @@ impl Default for Settings {
             time_format: "auto".into(),
             relative_dates: true,
             status_bar: true,
+            start_screen: "home".into(),
+            sidebar_mode: "auto".into(),
+            drawer: false,
+            home: HomeRows::default(),
+            session: SavedTabs::default(),
         }
     }
 }
@@ -587,5 +656,36 @@ mod tests {
         m.insert(AccountId(5), s);
         save_ui_states(&p, &m).unwrap();
         assert_eq!(load_ui_states(&p), m);
+    }
+
+    #[test]
+    fn saved_tabs_keep_app_routes_only() {
+        let tab = |path: &str| SavedTab {
+            path: path.into(),
+            pinned: false,
+        };
+        let s = SavedTabs {
+            tabs: vec![
+                tab("/games/1"),
+                tab("https://example.com"),
+                tab("//evil"),
+                tab("/friends"),
+            ],
+            active: 3,
+        }
+        .sanitized();
+        let paths: Vec<&str> = s.tabs.iter().map(|t| t.path.as_str()).collect();
+        assert_eq!(paths, ["/games/1", "/friends"]);
+        assert_eq!(
+            s.active, 0,
+            "an active index past the end goes back to the first tab"
+        );
+        let many = SavedTabs {
+            tabs: (0..80).map(|i| tab(&format!("/users/{i}"))).collect(),
+            active: 1,
+        }
+        .sanitized();
+        assert_eq!(many.tabs.len(), SavedTabs::MAX);
+        assert_eq!(many.active, 1);
     }
 }

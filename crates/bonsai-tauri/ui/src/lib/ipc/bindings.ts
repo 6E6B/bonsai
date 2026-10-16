@@ -261,6 +261,13 @@ export const commands = {
 	appSettings: () => __TAURI_INVOKE<AppSettings>("app_settings"),
 	/**  Every setting that `settings.set` and `settings.reset` take. */
 	prefs: () => __TAURI_INVOKE<PrefView[]>("prefs"),
+	/**  The tabs a launch opens: the ones from last time, or the start screen. */
+	startTabs: () => __TAURI_INVOKE<StartTabs>("start_tabs"),
+	/**
+	 *  Remembers the open tabs for "Open on launch: Tabs from last time". Saved only while that is
+	 *  picked, so tab changes don't rewrite settings otherwise.
+	 */
+	saveTabs: (tabs: TabView[], active: number) => __TAURI_INVOKE<void>("save_tabs", { tabs, active }),
 	/**  Every installed theme: built-ins first, then the user's by name. */
 	themes: () => __TAURI_INVOKE<ThemeView[]>("themes"),
 	appearance: () => __TAURI_INVOKE<AppearanceView>("appearance"),
@@ -1158,6 +1165,15 @@ export type Look = {
 	timeFormat: string,
 	relativeDates: boolean,
 	statusBar: boolean,
+	/**  A screen name, or `last` to reopen the tabs saved with `save_tabs`. */
+	startScreen: string,
+	/**  `auto`, `expanded` or `collapsed`. */
+	sidebarMode: string,
+	drawer: boolean,
+	homeFriends: boolean,
+	homeContinue: boolean,
+	homeFavorites: boolean,
+	homeRecommended: boolean,
 };
 
 /**  Someone's look, or an outfit's: what it puts on and the body under it. */
@@ -1762,6 +1778,12 @@ export type Sort = {
 	games: GameCard[],
 };
 
+export type StartTabs = {
+	tabs: TabView[],
+	/**  Index into `tabs`. */
+	active: number,
+};
+
 /**  Sent when the store changed. The UI refetches what it shows. */
 export type StoreChanged = null;
 
@@ -1770,6 +1792,13 @@ export type SwatchView = {
 	name: string,
 	hex: string,
 	basic: boolean,
+};
+
+/**  A tab to open at launch, or one the UI saves for next time. */
+export type TabView = {
+	/**  An app route like `/games/123`. */
+	path: string,
+	pinned: boolean,
 };
 
 /**  An installed theme. The UI reads `doc` with `readTheme` and derives the tokens itself. */

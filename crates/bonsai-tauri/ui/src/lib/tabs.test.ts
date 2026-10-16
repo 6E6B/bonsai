@@ -12,6 +12,8 @@ import {
   move,
   open,
   reopen,
+  restoredTabs,
+  savedTabs,
   step,
   type TabsState,
   togglePin,
@@ -196,5 +198,32 @@ describe("step, goTo and duplicate", () => {
     const s = duplicate(three(), "t0")
     expect(paths(s)).toEqual(["/", "/", "/games/1", "/games/2", "/games/3"])
     expect(s.active).toBe(s.tabs[1].key)
+  })
+})
+
+describe("savedTabs and restoredTabs", () => {
+  it("round-trips paths, pins and the active tab", () => {
+    const s = togglePin(three(), at(three(), "/games/2"))
+    const saved = savedTabs(s)
+    const back = restoredTabs(saved.tabs, saved.active)
+    expect(paths(back)).toEqual(paths(s))
+    expect(back.tabs.map((t) => !!t.pinned)).toEqual(s.tabs.map((t) => !!t.pinned))
+    expect(activeTab(back)?.path).toBe(activeTab(s)?.path)
+  })
+
+  it("puts pinned tabs first and keeps the active one", () => {
+    const back = restoredTabs(
+      [
+        { path: "/friends", pinned: false },
+        { path: "/chat", pinned: true },
+      ],
+      0,
+    )
+    expect(paths(back)).toEqual(["/chat", "/friends"])
+    expect(activeTab(back)?.path).toBe("/friends")
+  })
+
+  it("opens Home when nothing was saved", () => {
+    expect(paths(restoredTabs([], 3))).toEqual(["/"])
   })
 })

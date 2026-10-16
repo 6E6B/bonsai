@@ -87,6 +87,15 @@ pub struct Look {
     pub time_format: String,
     pub relative_dates: bool,
     pub status_bar: bool,
+    /// A screen name, or `last` to reopen the tabs saved with `save_tabs`.
+    pub start_screen: String,
+    /// `auto`, `expanded` or `collapsed`.
+    pub sidebar_mode: String,
+    pub drawer: bool,
+    pub home_friends: bool,
+    pub home_continue: bool,
+    pub home_favorites: bool,
+    pub home_recommended: bool,
 }
 
 /// Sidebar order and hidden screens, named by `nav.*` command without the prefix.
@@ -985,6 +994,13 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                 time_format: p.time_format,
                 relative_dates: p.relative_dates,
                 status_bar: p.status_bar,
+                start_screen: p.start_screen,
+                sidebar_mode: p.sidebar_mode,
+                drawer: p.drawer,
+                home_friends: p.home.friends,
+                home_continue: p.home.continue_playing,
+                home_favorites: p.home.favorites,
+                home_recommended: p.home.recommended,
             }
         },
         sidebar: {
@@ -2702,6 +2718,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::my_private_servers,
             account::app_settings,
             account::prefs,
+            account::start_tabs,
+            account::save_tabs,
             account::themes,
             account::appearance,
             account::set_system_dark,

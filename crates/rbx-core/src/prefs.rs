@@ -50,6 +50,24 @@ pub const ZOOMS: &[(&str, &str)] = &[
 ];
 const MOTIONS: &[(&str, &str)] = &[("system", "System"), ("reduce", "Reduced"), ("full", "Full")];
 const TIME_FORMATS: &[(&str, &str)] = &[("auto", "Automatic"), ("12h", "12-hour"), ("24h", "24-hour")];
+/// Screens a launch can open, by route name, and `last` for the tabs from last time.
+pub const START_SCREENS: &[(&str, &str)] = &[
+    ("home", "Home"),
+    ("friends", "Friends"),
+    ("discover", "Discover"),
+    ("marketplace", "Marketplace"),
+    ("avatar", "Avatar"),
+    ("inventory", "Inventory"),
+    ("trades", "Trades"),
+    ("chat", "Chat"),
+    ("communities", "Communities"),
+    ("last", "Tabs from last time"),
+];
+const SIDEBAR_MODES: &[(&str, &str)] = &[
+    ("auto", "Automatic"),
+    ("expanded", "Expanded"),
+    ("collapsed", "Collapsed"),
+];
 const AVATAR_VIEWS: &[(&str, &str)] = &[("2d", "Image"), ("3d", "3D")];
 
 const fn pref(
@@ -157,6 +175,62 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "start_screen",
+        "layout",
+        "Open on launch",
+        "Tabs from last time reopens the tabs that were open when the app closed.",
+        &["start", "startup", "launch", "restore", "tabs", "session"],
+        PrefKind::Choice(START_SCREENS),
+    ),
+    pref(
+        "sidebar_mode",
+        "layout",
+        "Sidebar",
+        "Automatic collapses it to icons when the window is narrow. Ctrl+B switches it.",
+        &["sidebar", "collapse", "icons", "narrow"],
+        PrefKind::Choice(SIDEBAR_MODES),
+    ),
+    pref(
+        "drawer",
+        "layout",
+        "Friends and chat drawer",
+        "The panel on the right with friends and recent chats.",
+        &["drawer", "panel", "friends", "chat", "right"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "home.friends",
+        "layout",
+        "Friends playing",
+        "",
+        &["home", "friends", "playing", "row"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "home.continue_playing",
+        "layout",
+        "Continue",
+        "Games you played recently.",
+        &["home", "recent", "continue", "row"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "home.favorites",
+        "layout",
+        "Favorites",
+        "",
+        &["home", "favorites", "row"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "home.recommended",
+        "layout",
+        "Recommended",
+        "Roblox's Home feed: picks, charts and topics.",
+        &["home", "recommended", "feed", "sorts", "row"],
+        PrefKind::Bool,
+    ),
+    pref(
         "notify.friend_joins",
         "notifications",
         "Friends joining games",
@@ -257,6 +331,13 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "time_format" => s.time_format.clone(),
         "relative_dates" => on_off(s.relative_dates).to_owned(),
         "status_bar" => on_off(s.status_bar).to_owned(),
+        "start_screen" => s.start_screen.clone(),
+        "sidebar_mode" => s.sidebar_mode.clone(),
+        "drawer" => on_off(s.drawer).to_owned(),
+        "home.friends" => on_off(s.home.friends).to_owned(),
+        "home.continue_playing" => on_off(s.home.continue_playing).to_owned(),
+        "home.favorites" => on_off(s.home.favorites).to_owned(),
+        "home.recommended" => on_off(s.home.recommended).to_owned(),
         _ => return None,
     })
 }
@@ -287,6 +368,8 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
             "avatar_view" => s.avatar_3d = v == "3d",
             "motion" => v.clone_into(&mut s.motion),
             "time_format" => v.clone_into(&mut s.time_format),
+            "start_screen" => v.clone_into(&mut s.start_screen),
+            "sidebar_mode" => v.clone_into(&mut s.sidebar_mode),
             _ => unreachable!("choice without a setter: {key}"),
         }
         return Ok(());
@@ -300,6 +383,11 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
         "background_accounts" => s.background_accounts = bool()?,
         "relative_dates" => s.relative_dates = bool()?,
         "status_bar" => s.status_bar = bool()?,
+        "drawer" => s.drawer = bool()?,
+        "home.friends" => s.home.friends = bool()?,
+        "home.continue_playing" => s.home.continue_playing = bool()?,
+        "home.favorites" => s.home.favorites = bool()?,
+        "home.recommended" => s.home.recommended = bool()?,
         "player_command" => s.player_command = Some(value.to_owned()).filter(|c| !c.is_empty()),
         "format_locale" => {
             if !valid_format_locale(value) {

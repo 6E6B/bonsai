@@ -63,6 +63,29 @@ export function initialTabs(path = "/"): TabsState {
   return { tabs: [{ key: "t0", path }], active: "t0", closed: [], titles: {}, next: 1 }
 }
 
+/** A tab as it is saved between launches. */
+export interface SavedTab {
+  path: string
+  pinned: boolean
+}
+
+/** The tabs to save, and the index of the active one. */
+export function savedTabs(s: TabsState): { tabs: SavedTab[]; active: number } {
+  return {
+    tabs: s.tabs.map((t) => ({ path: t.path, pinned: !!t.pinned })),
+    active: Math.max(0, indexOf(s, s.active)),
+  }
+}
+
+/** Fresh tabs from saved ones, pinned first. Falls back to one tab on Home when none are left. */
+export function restoredTabs(saved: SavedTab[], active: number): TabsState {
+  const order = [...saved.filter((t) => t.pinned), ...saved.filter((t) => !t.pinned)]
+  if (order.length === 0) return initialTabs()
+  const tabs: Tab[] = order.map((t, i) => ({ key: `t${i}`, path: t.path, pinned: t.pinned || undefined }))
+  const activeAt = order.indexOf(saved[active] ?? saved[0])
+  return { tabs, active: tabs[Math.max(0, activeAt)].key, closed: [], titles: {}, next: tabs.length }
+}
+
 export function activeTab(s: TabsState): Tab | undefined {
   return s.tabs.find((t) => t.key === s.active)
 }
@@ -310,6 +333,8 @@ export const tabActions = {
   step: (by: 1 | -1) => apply((s) => step(s, by)),
   goTo: (n: number) => apply((s) => goTo(s, n)),
   reopen: () => apply((s) => reopen(s)),
+  /** Replaces every tab, for opening the saved ones at launch. */
+  restore: (saved: SavedTab[], active: number) => apply(() => restoredTabs(saved, active)),
 }
 
 let describe: (path: string) => { title: string; icon?: IconName } = () => ({ title: "Tab" })

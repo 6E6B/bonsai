@@ -51,7 +51,7 @@ export default function Home() {
           </Button>
         }
       >
-        <Show when={playing().length > 0}>
+        <Show when={shell.look.homeFriends && playing().length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader title="Friends playing" meta={playing().length} />
             <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] items-start gap-2">
@@ -59,7 +59,7 @@ export default function Home() {
             </div>
           </section>
         </Show>
-        <Show when={home.recent.length > 0}>
+        <Show when={shell.look.homeContinue && home.recent.length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader title="Continue" />
             <div class={wideTileGrid}>
@@ -67,7 +67,7 @@ export default function Home() {
             </div>
           </section>
         </Show>
-        <Show when={home.favorites.length > 0}>
+        <Show when={shell.look.homeFavorites && home.favorites.length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader
               title="Favorites"
@@ -83,36 +83,38 @@ export default function Home() {
             </div>
           </section>
         </Show>
-        <Show when={home.sorts.length === 0 && home.error}>
-          {(e) => (
-            <Alert variant="danger" title="Couldn't load recommendations">
-              {e()}
-            </Alert>
-          )}
+        <Show when={shell.look.homeRecommended}>
+          <Show when={home.sorts.length === 0 && home.error}>
+            {(e) => (
+              <Alert variant="danger" title="Couldn't load recommendations">
+                {e()}
+              </Alert>
+            )}
+          </Show>
+          <Show when={home.sorts.length === 0 && home.loading}>
+            <div class={tileGrid}>
+              <For each={Array.from({ length: 12 })}>{() => <Skeleton class="aspect-square w-full rounded-md" />}</For>
+            </div>
+          </Show>
+          <For each={home.sorts}>
+            {(sort) => (
+              <section class="flex flex-col gap-2">
+                <SectionHeader
+                  title={sort.title}
+                  meta={sort.subtitle || undefined}
+                  actions={
+                    <Button variant="ghost" size="sm" onClick={() => run("nav.discover")}>
+                      See all
+                    </Button>
+                  }
+                />
+                <div class={tileGrid}>
+                  <For each={sort.games.slice(0, 12)}>{(g) => <GameTile game={g} />}</For>
+                </div>
+              </section>
+            )}
+          </For>
         </Show>
-        <Show when={home.sorts.length === 0 && home.loading}>
-          <div class={tileGrid}>
-            <For each={Array.from({ length: 12 })}>{() => <Skeleton class="aspect-square w-full rounded-md" />}</For>
-          </div>
-        </Show>
-        <For each={home.sorts}>
-          {(sort) => (
-            <section class="flex flex-col gap-2">
-              <SectionHeader
-                title={sort.title}
-                meta={sort.subtitle || undefined}
-                actions={
-                  <Button variant="ghost" size="sm" onClick={() => run("nav.discover")}>
-                    See all
-                  </Button>
-                }
-              />
-              <div class={tileGrid}>
-                <For each={sort.games.slice(0, 12)}>{(g) => <GameTile game={g} />}</For>
-              </div>
-            </section>
-          )}
-        </For>
       </Page>
     </Show>
   )
