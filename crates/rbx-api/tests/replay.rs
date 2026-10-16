@@ -451,6 +451,19 @@ async fn asset_delivery_finds_a_shirts_model_and_template() {
         image.locations.unwrap()[0].location.as_deref(),
         Some("https://sc0.rbxcdn.com/shirt-image-redacted")
     );
+    // The 3D viewer picks a mesh variant with a format header and a representation list.
+    let params = assetdelivery::v2::GetAssetIdByAssetIdParams {
+        roblox_asset_format: "avatar_meshpart_accessory".into(),
+        content_representation_priority_list: Some(
+            "W3siZm9ybWF0IjoibWVzaCIsIm1ham9yVmVyc2lvbiI6IjUifV0=".into(),
+        ),
+        ..Default::default()
+    };
+    let mesh = assetdelivery::v2::get_asset_id_by_asset_id(&c, 1000013, &params)
+        .await
+        .unwrap();
+    let url = mesh.locations.unwrap()[0].location.clone().unwrap();
+    assert!(c.fetch_cdn(&url).await.unwrap().starts_with(b"version 5.00"));
 }
 
 /// Transactions recorded live: type flags, totals, and purchases over two cursor pages.

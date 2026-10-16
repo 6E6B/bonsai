@@ -20,8 +20,8 @@
   - [x] Notice when a friend removes you (toast; checked on realtime friendship events and every 10 minutes)
 
 ## User Profiles
-- [ ] **Header & Identity**:
-  - [ ] Avatar headshot and 2D/3D full-body render — headshot and 2D full-body render (About tab) done; 3D needs the avatar 3D CDN capture and a WebGL renderer
+- [x] **Header & Identity**:
+  - [x] Avatar headshot and 2D/3D full-body render — 3D on the Outfits tab, for what they wear now and each saved outfit
   - [x] Display name, @username, and verified checkmark badge
   - [x] Past usernames history modal
   - [x] Live presence badge (Online, In Game with place link, In Studio, Offline)

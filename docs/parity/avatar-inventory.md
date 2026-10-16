@@ -1,9 +1,9 @@
 # Avatar Editor & Inventory
 
 ## Avatar Editor
-- [ ] **Viewport & Preview**:
+- [x] **Viewport & Preview**:
   - [x] 2D full-body rendered preview
-  - [ ] 3D interactive preview (orbit, zoom, pan)
+  - [x] 3D interactive preview (orbit, zoom, pan) — drag, right-drag and scroll, or `avatar.orbit` and arrow keys; `avatar.view_3d` switches between 3D and the image
   - [x] Redraw avatar thumbnail trigger
   - [x] R6 vs R15 rig switch (with accessory compatibility check) — `avatar.rig`; switching to R6 names worn items that only show on R15, and the Wearing list dims them
 - [x] **Body Colors & Skin Tones**:
@@ -28,10 +28,10 @@
   - [x] Classic Heads & Dynamic Heads
   - [x] Classic Faces & Animated Faces
   - [x] Left/Right Arms, Left/Right Legs, Torso bundles
-- [ ] **Animations & Emotes**:
+- [x] **Animations & Emotes**:
   - [x] Animation packs: Idle, Walk, Run, Jump, Fall, Climb, Swim
   - [x] Emote assignment hotbar (slots 1 through 8) — `avatar.emote` puts an emote in a slot or clears it (right-click an emote)
-  - [ ] Emote animation playback preview
+  - [x] Emote animation playback preview — `avatar.play` plays idle, walk, run, jump, fall, climb, swim or an equipped emote
 - [x] **Outfits ("Costumes")**:
   - [x] List saved outfits with rendered preview thumbnails
   - [x] Create new outfit from current appearance

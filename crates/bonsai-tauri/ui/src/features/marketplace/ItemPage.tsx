@@ -1,6 +1,8 @@
 import { useLocation, useParams } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Match, on, onCleanup, Show, Switch } from "solid-js"
 import { assetIcon } from "~/lib/asset-icon"
+import { canTryOn, showcaseAnimation, type TryOnItem, tryOnItem } from "~/lib/avatar3d/outfit"
+import { AvatarViewer, show3d } from "~/lib/avatar3d/viewer"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
 import { handle, run } from "~/lib/commands/registry"
@@ -119,6 +121,21 @@ export default function ItemPage() {
       buy(account)
     }),
   )
+  // Try On shows your avatar in 3D wearing the item, or doing the emote.
+  const [trying, setTrying] = createSignal(false)
+  createEffect(on(id, () => setTrying(false), { defer: true }))
+  const tryOn = (): TryOnItem | null => {
+    const i = info()
+    return i && !bundle() && canTryOn(i.assetType) ? { id: i.id, name: i.name, typeId: i.assetType } : null
+  }
+  onCleanup(
+    handle("market.try_on", () => {
+      if (!tryOn()) return showToast("This can't be tried on.")
+      if (shell.active === null) return showToast("Sign in to try items on.")
+      show3d()
+      setTrying((t) => !t)
+    }),
+  )
   // Non-limited UGC can also carry a collectibleId; only limiteds and collectibles have copies.
   const resells = () => Boolean(info()?.collectibleId && info()?.limited)
   const [section, setSection] = createSignal("similar")
@@ -145,12 +162,29 @@ export default function ItemPage() {
       >
         {(item) => (
           <div class="flex flex-wrap gap-6">
-            <Thumbnail
-              class="w-72 self-start"
-              alt={item().name}
-              src={thumbUrl(bundle() ? "bundle" : "asset", id(), true)}
-              fallback={bundle() ? "avatar" : assetIcon(item().assetType)}
-            />
+            <Show
+              when={trying() && shell.active !== null && tryOn()}
+              fallback={
+                <Thumbnail
+                  class="w-72 self-start"
+                  alt={item().name}
+                  src={thumbUrl(bundle() ? "bundle" : "asset", id(), true)}
+                  fallback={bundle() ? "avatar" : assetIcon(item().assetType)}
+                />
+              }
+            >
+              {(t) => (
+                <AvatarViewer
+                  class="w-72 self-start"
+                  source={{ kind: "me" }}
+                  image={thumbUrl("avatar", shell.active ?? 0, true)}
+                  alt={`You wearing ${t().name}`}
+                  tryOn={tryOnItem(t())}
+                  animation={showcaseAnimation(t())}
+                  controls
+                />
+              )}
+            </Show>
             <div class="flex min-w-64 flex-1 flex-col gap-3">
               <div class="flex flex-col gap-1">
                 <div class="flex flex-wrap items-center gap-2">
@@ -225,6 +259,11 @@ export default function ItemPage() {
                 >
                   Favorite
                 </ToggleButton>
+                <Show when={tryOn()}>
+                  <ToggleButton icon="avatar" pressed={trying()} onChange={() => run("market.try_on")}>
+                    Try on
+                  </ToggleButton>
+                </Show>
                 <Show when={item().inCatalog}>
                   <ToggleButton
                     icon="heart"

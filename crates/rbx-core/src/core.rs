@@ -1574,7 +1574,8 @@ impl Inner {
         const DAY: i64 = 24 * 3600;
         /// Rows and images unused this long are deleted.
         const KEEP_SECS: i64 = 30 * DAY;
-        const IMAGE_DISK_BYTES: u64 = 512 << 20;
+        /// Thumbnails and 3D asset files share this.
+        const IMAGE_DISK_BYTES: u64 = 1 << 30;
         let rows = self.cache.prune(crate::cache::now() - KEEP_SECS);
         let cutoff = std::time::SystemTime::now() - Duration::from_secs(KEEP_SECS as u64);
         let images = self.disk.prune(cutoff, IMAGE_DISK_BYTES);

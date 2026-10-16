@@ -1,0 +1,559 @@
+import type { AssetJson, AssetMetaJson } from "./avatar/asset"
+import type { OutfitJson } from "./avatar/outfit"
+
+/**@category API */
+export type SaleLocationType = "ShopOnly" | "ShopAndAllExperiences" | "ExperiencesDevApiOnly" | string
+
+/**@category API */
+export interface NavigationMenuItems {
+    categories: {
+        category: string,
+        taxonomy: string,
+        assetTypeIds: number[],
+        bundleTypeIds: number[],
+        categoryId: number,
+        name: string,
+        orderIndex: number,
+        subcategories: {
+            subcategory: string | null,
+            taxonomy: string,
+            assetTypeIds: number[],
+            bundleTypeIds: number[],
+            subcategoryId: number | null,
+            name: string,
+            shortName: string | null,
+        }[],
+        isSearchable: boolean
+    }[],
+    genres: {
+        genre: number,
+        name: string,
+        isSelected: boolean,
+    }[],
+    sortMenu: {
+        sortOptions: {
+            sortType: number,
+            sortOrder: number,
+            name: string,
+            isSelected: boolean,
+            hasSubMenu: boolean,
+            isPriceRelated: boolean,
+        }[],
+        sortAggregations: {
+            sortAggregation: number,
+            name: string,
+            isSelected: boolean,
+            hasSubMenu: boolean,
+            isPriceRelated: boolean,
+        }[]
+    },
+    creatorFilters: {
+        userId: number,
+        name: string,
+        isSelected: boolean,
+    }[],
+    priceFilters: {
+        currencyType: number,
+        name: string,
+        excludePriceSorts: boolean
+    }[],
+    defaultGearSubcategory: number,
+    defaultCategory: number,
+    defaultCategoryIdForRecommendedSearch: number,
+    defaultCreator: number,
+    defaultCurrency: number,
+    defaultSortType: number,
+    defaultSortAggregation: number,
+    categoriesWithCreator: number[],
+    isGenreAllowed: boolean,
+    robloxUserId: number,
+    robloxUserName: string,
+    gearSubcategory: number,
+    allCategories: number,
+    freeFilter: number,
+    customRobuxFilter: number,
+    robuxFilter: number,
+    salesTypeFilters: {
+        name: string,
+        filter: number,
+    }[]
+}
+
+/**@category API */
+export interface GetTopics_Payload {
+    items: unknown[],
+    maxResult: 40,
+    selectTopics: string[]
+}
+
+/**@category API */
+export interface GetTopics_Result {
+    error: null | unknown,
+    topics: {
+        displayName: string,
+        originalTopicName: string,
+    }[]
+}
+
+/**@category API */
+export interface Search_Payload {
+    taxonomy: string,
+    salesTypeFilter: number,
+    categoryFilter?: number,
+    sortType?: number,
+    keyword?: string,
+    topics?: string[],
+    creatorName?: string,
+    minPrice?: number,
+    maxPrice?: number,
+    includeNotForSale?: boolean,
+    limit?: number
+}
+
+/**@category API */
+export function cloneSearch_Payload(data: Search_Payload) {
+  const newData: Search_Payload = {
+    taxonomy: data.taxonomy,
+    salesTypeFilter: data.salesTypeFilter,
+    categoryFilter: data.categoryFilter,
+    sortType: data.sortType,
+    keyword: data.keyword,
+    topics: undefined,
+    creatorName: data.creatorName,
+    minPrice: data.minPrice,
+    maxPrice: data.maxPrice,
+    includeNotForSale: data.includeNotForSale,
+    limit: data.limit
+  }
+
+  if (data.topics) {
+    newData.topics = []
+    for (const topic of data.topics) {
+      newData.topics.push(topic)
+    }
+  }
+
+  return newData
+}
+
+/**@category API */
+export interface Search_Result {
+    keyword: string | null,
+    previousPageCursor: string | null,
+    nextPageCursor: string | null,
+    data: {
+        bundledItems: {
+            id: number,
+            name: string,
+            type: "Asset" | "UserOutfit",
+        }[],
+        id: number,
+        itemType: "Asset" | "Bundle",
+        assetType?: number,
+        bundleType?: number,
+        name: string,
+        description: string,
+        productId: number,
+        itemStatus: unknown[],
+        itemRestrictions: string[],
+        creatorHasVerifiedBadge: boolean,
+        creatorType: "User" | "Group",
+        creatorTargetId: number,
+        creatorName: string,
+        price: number,
+        lowestPrice?: number,
+        lowestResalePrice: number,
+        priceStatus?: "Off Sale" | string,
+        unitsAvailableForConsumption: number,
+        favoriteCount: number,
+        offSaleDeadline: null | unknown,
+        collectibleItemId: string,
+        totalQuantity: number,
+        saleLocationType: SaleLocationType,
+        hasResellers: boolean,
+        isOffSale?: boolean
+    }[]
+}
+
+/**@category API */
+export interface BundleDetails_Result {
+    bundleType: number,
+    bundledItems: {
+        id: number,
+        name: string,
+        owned: boolean,
+        type: "Asset" | "UserOutfit",
+        supportsHeadShapes?: boolean
+    }[],
+    collectibleItemId: string,
+    creatorHasVerifiedBadge: boolean,
+    creatorName: string,
+    creatorTargetId: number,
+    creatorType: "User" | "Group",
+    description: string,
+    expectedSellerId: number,
+    favoriteCount: number,
+    hasResellers: boolean,
+    id: number,
+    isPBR: boolean,
+    isPurchasable: boolean,
+    isRecolorable: boolean,
+    itemCreatedUtc: string,
+    itemRestrictions: string[],
+    itemStatus: unknown[],
+    itemType: "Asset" | "Bundle",
+    lowestPrice: number,
+    lowestResalePrice: number,
+    name: string,
+    offSaleDeadline: null | unknown,
+    owned: boolean,
+    price: number,
+    productId: number,
+    saleLocationType: SaleLocationType,
+    totalQuantity: number,
+    unitsAvailableForConsumption: number,
+}
+
+/**@category API */
+export interface ThumbnailsCustomization_Payload {
+    thumbnailType: number, //1 - pfp, 2 - fullbody
+    emoteAssetId: number,
+    camera: {
+        fieldOfViewDeg: number,
+        yRotDeg: number,
+        distanceScale: number,
+    }
+}
+
+/**@category API */
+export interface AvatarInventory_Result {
+    avatarInventoryItems: {
+        itemId: number,
+        itemName: string,
+        itemCategory: {
+            itemType: number,
+            itemSubType: number,
+        },
+        availabilityStatus: string,
+        acquisitionTime: string,
+        expirationTime?: string, //"2026-03-30T15:28:38.963Z"¨
+        lastEquipTime?: string,
+        headShape?: string,
+        outfitDetail?: {
+            assets: {
+                id: number
+            }[],
+            bodyColor3s: {
+                headColor3: string,
+                leftArmColor3: string,
+                leftLegColor3: string,
+                rightArmColor3: string,
+                rightLegColor3: string,
+                torsoColor3: string,
+            },
+            playerAvatarType: "R6" | "R15",
+            scales: {
+                bodyType: number,
+                depth: number,
+                head: number,
+                height: number,
+                proportion: number,
+                width: number,
+            }
+        }
+    }[],
+    nextPageToken: string | null,
+}
+
+/**@category API */
+export interface Inventory_Result {
+    data: {
+        assetId: number,
+        assetName: string,
+        collectibleItemId: string | null,
+        collectibleItemInstanceId: string | null,
+        created: string,
+        owner: {
+            buildersClubMembershipType: string | "None",
+            userId: number,
+            username: string,
+        },
+        serialNumber: number,
+        updated: string,
+        userAssetId: number,
+    }[],
+    nextPageCursor: string | null,
+    previousPageCursor: string | null,
+}
+
+/**@category API */
+export interface ItemDetail_Result {
+    assetType: number,
+    bundledItems: [],
+    collectibleItemId: string | null,
+    creatorHasVerifiedBadge: boolean,
+    creatorName: string,
+    creatorTargetId: number,
+    creatorType: "User" | "Group",
+    description: string,
+    favoriteCount: number,
+    id: number,
+    isOffSale: boolean,
+    itemRestrictions: string[],
+    itemStatus: string[],
+    itemType: "Asset" | "Bundle",
+    lowestPrice?: number,
+    name: string,
+    offsaleDeadline: null,
+    saleLocationType: SaleLocationType,
+    supportsHeadShapes?: boolean,
+    taxonomy: {
+        taxonomyId: string,
+        taxonomyName: string,
+    }
+}
+
+/**@category API */
+export interface ItemDetails_Result {
+    data: ItemDetail_Result[]
+}
+
+/**@category API */
+export interface MarketplaceWidget {
+    id: string,
+    type: string,
+    content: {
+        type: "Asset" | "Bundle" | "Look",
+        id: number
+    }[],
+    template: {
+        type: "ItemGroup" | string,
+        seeAllButton: true | null,
+        title: string | null,
+        localizedTitle: string | null,
+        itemFooters: {
+            contentType: string
+        }[],
+        categories: unknown[],
+        previewRows: unknown[],
+        previewColumns: unknown[],
+    }
+}
+
+/**@category API */
+export interface MarketplaceWidgets_Result {
+    widgets: {[K in number]: MarketplaceWidget},
+    configuration: unknown,
+}
+
+/**@category API */
+export interface Look_Result {
+    look: {
+        avatarProperties: {
+            playerAvatarType: "R6" | "R15",
+            scale: {
+                head: number,
+                height: number,
+                depth: number,
+                width: number,
+                bodyType: number,
+                proportion: number,
+            },
+            bodyColor3s: {
+                headColor3: string,
+                leftArmColor3: string,
+                leftLegColor3: string,
+                rightArmColor3: string,
+                rightLegColor3: string,
+                torsoColor3: string,
+            }
+        },
+        createdTime: string,
+        curator: {
+            hasVerifiedBadge: boolean,
+            id: number,
+            name: string,
+            type: "User" | "Group"
+        },
+        description: string,
+        displayProperties: null,
+        favoriteCount: number,
+        items: {
+            assetType: number | null,
+            assetsInBundle: {
+                assetType: number,
+                id: number,
+                isIncluded: boolean,
+                supportsHeadshapes?: boolean,
+                meta?: AssetMetaJson,
+            }[],
+            bundleType: number | null,
+            collectibleItemId: string,
+            collectibleProductId: string,
+            creator: {
+                hasVerifiedBadge: boolean,
+                id: number,
+                name: string,
+                type: "User" | "Group"
+            },
+            description: string,
+            id: number,
+            isPurchasable: boolean,
+            itemRestrictions: string[],
+            itemType: "Asset" | "Bundle",
+            name: string,
+            noPriceStatus: "OffSale" | null,
+            priceInRobux: number | null,
+            quantityOwned: number,
+            meta: undefined | {
+                headShape: "Invalid" | number,
+                order: null | number
+                position: {x: number, y: number, z: number} | null,
+                puffiness: null | number,
+                rotation: {x: number, y: number, z: number} | null,
+                scale: {scale: 0, x: number, y: number, z: number} | null
+                version: number
+            }
+        }[],
+        lookId: string,
+        lookType: "Avatar",
+        moderationStatus: "Approved",
+        name: string,
+        totalPrice: number,
+        totalValue: number,
+        updatedTime: string,
+    }
+}
+
+/**@category API */
+export interface UserLooks_Result {
+    data: {
+        assets: {id: number}[],
+        bundles: {id: number}[],
+        createdTime: string,
+        displayProperties: {
+            backgroundType: "None" | string,
+            backgroundValue: null,
+            emoteAssetId: null,
+        },
+        lookId: string,
+        lookType: "Avatar",
+        moderationStatus: "Approved",
+        name: string,
+        totalValue: number,
+        updatedTime: string, //2025-12-15T15:35:14.075Z
+    }[],
+    nextCursor: string | null,
+    previousCursor: string | null,
+}
+
+/**@category API */
+export interface GetSubscription_Result {
+    "subscriptionProductModel": {
+        "premiumFeatureId": number,
+        "subscriptionTypeName": string,
+        "robuxStipendAmount": number,
+        "isLifetime": boolean,
+        "expiration": string,
+        "renewal": string,
+        "renewedSince": string,
+        "created": string,
+        "purchasePlatform": string,
+        "subscriptionName": string
+    }
+}
+
+/**@category API */
+export interface GetInfoForId_Result {
+    "description": string,
+    "created": string,
+    "isBanned": boolean,
+    "externalAppDisplayName": null,
+    "hasVerifiedBadge": boolean,
+    "id": number,
+    "name": string,
+    "displayName": string
+}
+
+/**@category API */
+export interface GetUserOutfits_Result {
+    data: {
+        id: number,
+        name: string,
+        isEditable: boolean,
+        outfitType: string,
+    }[]
+}
+
+/**@category API */
+export interface UserOmniSearch_Result {
+    "searchResults": {
+        "contentGroupType": "User",
+        "contents": {
+            "username": string,
+            "displayName": string,
+            "previousUsernames": null | string[],
+            "hasVerifiedBadge": boolean,
+            "contentType": "User",
+            "contentId": number,
+            "defaultLayoutData": null
+        }[],
+    }[],
+    "nextPageToken": string,
+}
+
+/**@category API */
+export interface ThumbnailCustomizations_Result {
+    "avatarThumbnailCustomizations": 
+        {
+            "thumbnailType": number,
+            "emoteAssetId": number,
+            "camera": {
+                "fieldOfViewDeg": number,
+                "yRotDeg": number,
+                "distanceScale": number
+            }
+        }[]
+}
+
+/**@category API */
+export interface LatestVersions_Result {
+    "results": {
+        assetId: number,
+        status: "Success" | string,
+        versionNumber: number,
+    }[]
+}
+
+export interface AvatarConfigurations {
+    emotes?: {
+        assetId: number,
+        assetName: string,
+        position: number,
+    }[],
+    background?: {
+        backgroundAsset: AssetJson
+    },
+    thumbnailCustomizations?: ThumbnailsCustomization_Payload[],
+    profileFrame: null,
+}
+
+export interface AvatarModel_Result {
+    avatarModel: OutfitJson,
+    avatarConfigurations: AvatarConfigurations | null,
+}
+
+export interface OutfitModel_Result {
+    outfitModel: OutfitJson,
+    outfitConfigurations: AvatarConfigurations | null,
+}
+
+export type AvatarModelUpdateType = "UpdateName" | "UpdateBodyColors" | "UpdateAssets" | "UpdateScales" | "UpdateBackground" | "UpdateAvatarType"
+export const AllAvatarModelOutfitUpdateTypes: AvatarModelUpdateType[] = ["UpdateBodyColors", "UpdateAssets", "UpdateAvatarType", "UpdateScales", "UpdateBackground"]
+
+export interface GetBackground_Result {
+    generationId: string,
+    status: "Generating" | "Completed" | string,
+    presignedUrl: string | null,
+    failureReason: unknown | null,
+}

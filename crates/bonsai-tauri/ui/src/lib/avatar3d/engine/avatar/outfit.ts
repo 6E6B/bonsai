@@ -1,0 +1,1576 @@
+//Dependencies: asset.js
+
+import { API, Authentication } from "../api";
+import type { Look_Result } from "../api-constant";
+import SimpleView from "../lib/simple-view";
+import { FLAGS } from "../misc/flags";
+import { log, warn } from "../misc/logger";
+import { hexToRgb, mapNum, rgbToHex } from "../misc/misc";
+import { Asset, AssetMeta, AssetType } from "./asset";
+import type { AssetJson, AssetMetaJson } from "./asset"
+import { AccessoryAssetTypes, AssetTypeNameToId, AssetTypes, AvatarType, BrickColors, CatalogBundleTypes, LayeredAssetTypes, LayeredClothingAssetOrder, MakeupAssetTypes, MaxOneOfAssetTypes, MaxPerAsset, OutfitOrigin, ToRemoveBeforeBundleType, WearableAssetTypes } from "./constant"
+
+/**@category Outfit */
+export type ColorType = "BrickColor" | "Color3"
+/**@category Outfit */
+export type ValidationIssueType = "AccessoryLimit" | "LayeredLimit" | "OneOfTypeLimit" | "DuplicateId" | "NotWearable" | "MissingLayeredMeta" | "InvalidAsset" | "MakeupLimit"
+/**@category Outfit */
+export type ValidationIssue = {
+    type: ValidationIssueType,
+    text: string,
+    assetIndex?: number,
+}
+
+/**@category Outfit */
+export type ScaleJson = {
+    height?: number,
+    width?: number,
+    head?: number,
+    depth?: number,
+    proportion?: number,
+    bodyType?: number,
+}
+
+/**@category Outfit */
+export type BodyColor3sJson = {
+    headColor3?: string; torsoColor3?: string; rightArmColor3?: string; leftArmColor3?: string; rightLegColor3?: string; leftLegColor3?: string;
+    headColor?: string; torsoColor?: string; rightArmColor?: string; leftArmColor?: string; rightLegColor?: string; leftLegColor?: string;
+}
+/**@category Outfit */
+export type BodyColorsJson = { headColorId?: number; torsoColorId?: number; rightArmColorId?: number; leftArmColorId?: number; rightLegColorId?: number; leftLegColorId?: number; }
+
+/**@category Outfit */
+export type OutfitJson = {
+    scale?: ScaleJson;
+    playerAvatarType?: AvatarType;
+    assets?: AssetJson[];
+    outfitType?: string;
+    name?: string;
+    creatorId?: number;
+    outfitId?: number;
+    collections?: string[];
+    creationDate?: number;
+    bodyColors?: BodyColorsJson;
+    bodyColor3s?: BodyColor3sJson;
+    id?: number;
+
+    scales?: ScaleJson //i hate this inconsistency, my code will always use scale
+}
+
+/**@category Outfit */
+export type ScaleName = "height" | "width" | "head" | "depth" | "proportion" | "bodyType"
+
+/**@category Outfit */
+export class Scale {
+    height!: number //1
+    width!: number //1
+    head!: number //0.95
+    depth!: number //1
+    proportion!: number //0.5
+    bodyType!: number //0
+
+    constructor() {
+        this.reset()
+    }
+
+    clone() {
+        const copy = new Scale()
+        copy.height = this.height
+        copy.width = this.width
+        copy.head = this.head
+        copy.depth = this.depth
+        copy.proportion = this.proportion
+        copy.bodyType = this.bodyType
+
+        return copy
+    }
+
+    reset() {
+        this.height = 1
+        this.width = 1
+        this.head = 1
+        this.depth = 1
+        this.proportion = 0
+        this.bodyType = 0
+    }
+
+    toJson() {
+        return {
+            "height": this.height,
+            "width": this.width,
+            "head": this.head,
+            "depth": this.depth,
+            "proportion": this.proportion,
+            "bodyType": this.bodyType,
+        }
+    }
+
+    fromJson(scaleJson: ScaleJson) {
+        if (scaleJson.height)
+            this.height = scaleJson.height
+        if (scaleJson.width)
+            this.width = scaleJson.width
+        if (scaleJson.head)
+            this.head = scaleJson.head
+        if (scaleJson.depth)
+            this.depth = scaleJson.depth
+        if (scaleJson.proportion)
+            this.proportion = scaleJson.proportion
+        if (scaleJson.bodyType)
+            this.bodyType = scaleJson.bodyType
+    }
+}
+
+/**@category Outfit */
+export type BodyColor3Name = "headColor3" | "torsoColor3" | "rightArmColor3" | "leftArmColor3" | "rightLegColor3" | "leftLegColor3"
+
+/**@category Outfit */
+export class BodyColor3s {
+    colorType: ColorType //Color3
+
+    headColor3!: string // FFFFFF
+
+    torsoColor3!: string
+
+    rightArmColor3!: string
+    leftArmColor3!: string
+
+    rightLegColor3!: string
+    leftLegColor3!: string
+
+    constructor() {
+        this.colorType = "Color3"
+
+        this.setAll("FFFFFF")
+    }
+
+    clone() {
+        const copy = new BodyColor3s()
+        copy.colorType = this.colorType
+
+        copy.headColor3 = this.headColor3
+
+        copy.torsoColor3 = this.torsoColor3
+
+        copy.rightArmColor3 = this.rightArmColor3
+        copy.leftArmColor3 = this.leftArmColor3
+        
+        copy.rightLegColor3 = this.rightLegColor3
+        copy.leftLegColor3 = this.leftLegColor3
+
+        return copy
+    }
+
+    setAll(color: string) {
+        this.headColor3 = color
+
+        this.torsoColor3 = color
+
+        this.rightArmColor3 = color
+        this.leftArmColor3 = color
+
+        this.rightLegColor3 = color
+        this.leftLegColor3 = color
+    }
+
+    toJson(): BodyColor3sJson {
+        return {
+            "headColor3": this.headColor3.toUpperCase(),
+            "torsoColor3": this.torsoColor3.toUpperCase(),
+
+            "rightArmColor3": this.rightArmColor3.toUpperCase(),
+            "leftArmColor3": this.leftArmColor3.toUpperCase(),
+
+            "rightLegColor3": this.rightLegColor3.toUpperCase(),
+            "leftLegColor3": this.leftLegColor3.toUpperCase(),
+        }
+    }
+
+    toHexJson() {
+        return {
+            "headColor": this.headColor3.toUpperCase(),
+            "torsoColor": this.torsoColor3.toUpperCase(),
+
+            "rightArmColor": this.rightArmColor3.toUpperCase(),
+            "leftArmColor": this.leftArmColor3.toUpperCase(),
+
+            "rightLegColor": this.rightLegColor3.toUpperCase(),
+            "leftLegColor": this.leftLegColor3.toUpperCase(),
+        }
+    }
+
+
+    fromJson(bodyColorsJson: BodyColor3sJson) {
+        if (bodyColorsJson.headColor3)
+            this.headColor3 = bodyColorsJson.headColor3
+        if (bodyColorsJson.torsoColor3)
+            this.torsoColor3 = bodyColorsJson.torsoColor3
+
+        if (bodyColorsJson.rightArmColor3)
+            this.rightArmColor3 = bodyColorsJson.rightArmColor3
+        if (bodyColorsJson.leftArmColor3)
+            this.leftArmColor3 = bodyColorsJson.leftArmColor3
+
+        if (bodyColorsJson.rightLegColor3)
+            this.rightLegColor3 = bodyColorsJson.rightLegColor3
+        if (bodyColorsJson.leftLegColor3)
+            this.leftLegColor3 = bodyColorsJson.leftLegColor3
+
+        //no 3s
+        if (bodyColorsJson.headColor)
+            this.headColor3 = bodyColorsJson.headColor
+        if (bodyColorsJson.torsoColor)
+            this.torsoColor3 = bodyColorsJson.torsoColor
+
+        if (bodyColorsJson.rightArmColor)
+            this.rightArmColor3 = bodyColorsJson.rightArmColor
+        if (bodyColorsJson.leftArmColor)
+            this.leftArmColor3 = bodyColorsJson.leftArmColor
+
+        if (bodyColorsJson.rightLegColor)
+            this.rightLegColor3 = bodyColorsJson.rightLegColor
+        if (bodyColorsJson.leftLegColor)
+            this.leftLegColor3 = bodyColorsJson.leftLegColor
+    }
+}
+
+/**@category Outfit */
+export class BodyColors {
+    colorType: ColorType //BrickColor
+
+    headColorId!: number //1001 - Institutional White
+
+    torsoColorId!: number
+
+    rightArmColorId!: number
+    leftArmColorId!: number
+
+    rightLegColorId!: number
+    leftLegColorId!: number
+
+    constructor() {
+        this.colorType = "BrickColor"
+
+        this.setAll(1001)
+    }
+
+    clone() {
+        const copy = new BodyColors()
+
+        copy.colorType = this.colorType
+
+        copy.headColorId = this.headColorId
+        
+        copy.torsoColorId = this.torsoColorId
+        
+        copy.rightArmColorId = this.rightArmColorId
+        copy.leftArmColorId = this.leftArmColorId
+        
+        copy.rightLegColorId = this.rightLegColorId
+        copy.leftLegColorId = this.leftLegColorId
+
+        return copy
+    }
+
+    setAll(colorId: number) {
+        this.headColorId = colorId
+
+        this.torsoColorId = colorId
+
+        this.rightArmColorId = colorId
+        this.leftArmColorId = colorId
+
+        this.rightLegColorId = colorId
+        this.leftLegColorId = colorId
+    }
+
+    toJson(): BodyColorsJson {
+        return {
+            "headColorId": this.headColorId,
+            "torsoColorId": this.torsoColorId,
+
+            "rightArmColorId": this.rightArmColorId,
+            "leftArmColorId": this.leftArmColorId,
+
+            "rightLegColorId": this.rightLegColorId,
+            "leftLegColorId": this.leftLegColorId,
+        }
+    }
+
+    toHexJson() {
+        return {
+            "headColor": BrickColors[this.headColorId].replace("#",""),
+            "torsoColor": BrickColors[this.torsoColorId].replace("#",""),
+
+            "rightArmColor": BrickColors[this.rightArmColorId].replace("#",""),
+            "leftArmColor": BrickColors[this.leftArmColorId].replace("#",""),
+
+            "rightLegColor": BrickColors[this.rightLegColorId].replace("#",""),
+            "leftLegColor": BrickColors[this.leftLegColorId].replace("#",""),
+        }
+    }
+
+    fromJson(bodyColorsJson: BodyColorsJson) {
+        if (bodyColorsJson.headColorId)
+            this.headColorId = bodyColorsJson.headColorId
+        if (bodyColorsJson.torsoColorId)
+            this.torsoColorId = bodyColorsJson.torsoColorId
+
+        if (bodyColorsJson.rightArmColorId)
+            this.rightArmColorId = bodyColorsJson.rightArmColorId
+        if (bodyColorsJson.leftArmColorId)
+            this.leftArmColorId = bodyColorsJson.leftArmColorId
+
+        if (bodyColorsJson.rightLegColorId)
+            this.rightLegColorId = bodyColorsJson.rightLegColorId
+        if (bodyColorsJson.leftLegColorId)
+            this.leftLegColorId = bodyColorsJson.leftLegColorId
+    }
+
+    toColor3(): BodyColor3s {
+        const newBodyColor3s = new BodyColor3s()
+
+        newBodyColor3s.headColor3 = BrickColors[this.headColorId].replace("#","")
+        newBodyColor3s.torsoColor3 = BrickColors[this.torsoColorId].replace("#","")
+
+        newBodyColor3s.rightArmColor3 = BrickColors[this.rightArmColorId].replace("#","")
+        newBodyColor3s.leftArmColor3 = BrickColors[this.leftArmColorId].replace("#","")
+
+        newBodyColor3s.rightLegColor3 = BrickColors[this.rightLegColorId].replace("#","")
+        newBodyColor3s.leftLegColor3 = BrickColors[this.leftLegColorId].replace("#","")
+
+        return newBodyColor3s
+    }
+}
+
+/**
+ * It is recommended to use an OutfitModel that contains an Outfit instead of using an Outfit directly as they cannot contain things such as avatar backgrounds
+ * 
+ * Usually obtained from API
+ * @category Outfit
+ */
+export class Outfit {
+    scale: Scale = new Scale()
+    bodyColors: BodyColors | BodyColor3s = new BodyColor3s()
+    playerAvatarType: AvatarType = "R15"
+
+    assets: Asset[] = []
+
+    //outfits only
+    name: string = "New Outfit"
+    _id: number = 0
+    lookId?: number | string
+
+    //class only
+    origin?: OutfitOrigin
+    _creatorId?: number
+    creationDate?: number
+    cachedImage?: string //outfits saved to computer
+    editable?: boolean
+    collections?: string[] //collections this outfit is stored in
+
+    /**
+     * @param {number} newId
+     */
+    set id (newId) {
+        this._id = Number(newId)
+    }
+
+    get id() {
+        return this._id
+    }
+
+    /**
+     * @param {number} newId
+     */
+    set creatorId (newId) {
+        this._creatorId = Number(newId)
+        if (this._creatorId < 0) {
+            this._creatorId = 0
+        }
+    }
+
+    get creatorId() {
+        return this._creatorId
+    }
+
+    constructor() {
+        this.creationDate = Date.now()
+    }
+
+    clone() {
+        const copy = new Outfit()
+        copy.scale = this.scale.clone()
+        copy.bodyColors = this.bodyColors.clone()
+        copy.playerAvatarType = this.playerAvatarType
+
+        copy.assets = []
+        for (const asset of this.assets) {
+            copy.assets.push(asset.clone())
+        }
+
+        copy.name = this.name
+        copy.id = this.id
+        
+        copy.origin = this.origin
+        copy.creatorId = this.creatorId
+        copy.creationDate = this.creationDate
+        copy.cachedImage = this.cachedImage
+        copy.editable = this.editable
+        if (this.collections) {
+            copy.collections = []
+            for (const collection of this.collections) {
+                copy.collections.push(collection)
+            }
+        } else {
+            copy.collections = undefined
+        }
+
+        return copy
+    }
+
+    toJson(removeNotOwnedAssets: boolean = false) {
+        const outfitJson: OutfitJson = {
+            "scale": this.scale.toJson(),
+            "playerAvatarType": this.playerAvatarType,
+
+            "assets": this.getAssetsJson(removeNotOwnedAssets),
+
+            "outfitType": "Avatar",
+            "name": this.name,
+
+            //for computer outfits
+            "creatorId": this.creatorId,
+            "outfitId": this.id,
+            "collections": this.collections,
+            "creationDate": this.creationDate,
+        }
+
+        if (this.bodyColors.colorType === "BrickColor") {
+            outfitJson.bodyColors = this.bodyColors.toJson() as BodyColors
+        } else if (this.bodyColors.colorType === "Color3") {
+            outfitJson.bodyColor3s = this.bodyColors.toJson() as BodyColor3s
+        }
+
+        return outfitJson
+    }
+
+    toCleanJson(removeNotOwnedAssets: boolean = false) {
+        const ogJson = this.toJson(removeNotOwnedAssets)
+        ogJson.creatorId = undefined
+        ogJson.outfitType = undefined
+        ogJson.collections = undefined
+
+        return ogJson
+    }
+
+    toCleanJsonV4(removeNotOwnedAssets: boolean = false) {
+        const ogJson = this.toJson(removeNotOwnedAssets)
+        ogJson.creatorId = undefined
+        ogJson.outfitType = undefined
+        ogJson.collections = undefined
+        ogJson.bodyColor3s = undefined
+        ogJson.bodyColors = this.bodyColors.toHexJson() as BodyColorsJson
+
+        return ogJson
+    }
+
+    toMinimalJson() {
+        const ogJson = this.toJson()
+        delete ogJson.creatorId
+        delete ogJson.outfitType
+        delete ogJson.collections
+        ogJson.bodyColors = this.bodyColors.toHexJson() as BodyColorsJson
+        delete ogJson.bodyColor3s
+        delete ogJson.creationDate
+        delete ogJson.outfitId
+        
+        if (ogJson.assets) {
+            for (const asset of ogJson.assets) {
+                delete asset.currentVersionId
+                delete asset.name
+
+                if (asset.supportsHeadShapes === undefined || asset.supportsHeadShapes === null) {
+                    delete asset.supportsHeadShapes
+                }
+
+                const meta = asset.meta
+                if (meta) {
+                    delete meta.version
+                    delete meta.puffiness
+
+                    for (const key of Object.keys(meta) as (keyof AssetMetaJson)[]) {
+                        if (meta[key] === null || meta[key] === undefined) {
+                            delete meta[key]
+                        }
+                    }
+                }
+            }
+        }
+
+        return ogJson
+    }
+
+    fromJson(outfitJson: OutfitJson) {
+        //scale
+        this.scale = new Scale()
+        if (outfitJson.scale) {
+            this.scale.fromJson(outfitJson.scale)
+        } else if (outfitJson.scales) {
+            this.scale.fromJson(outfitJson.scales)
+        }
+
+        //bodycolors
+        const bodyColorsJson: BodyColor3sJson | BodyColorsJson | undefined = outfitJson.bodyColors
+
+        if (bodyColorsJson && !("headColor3" in bodyColorsJson) && !("headColor" in bodyColorsJson)) {
+            const oldBodyColors = new BodyColors()
+            oldBodyColors.fromJson(bodyColorsJson)
+
+            if (FLAGS.BODYCOLOR3) {
+                this.bodyColors = oldBodyColors.toColor3()
+            } else {
+                this.bodyColors = oldBodyColors
+            }
+        } else if (outfitJson.bodyColor3s) {
+            if (!FLAGS.BODYCOLOR3) {
+                throw new Error("Creating BodyColor3s while they are disabled!")
+            }
+
+            this.bodyColors = new BodyColor3s()
+            this.bodyColors.fromJson(outfitJson.bodyColor3s)
+        } else if (bodyColorsJson) {
+            this.bodyColors = new BodyColor3s()
+            this.bodyColors.fromJson(bodyColorsJson as BodyColor3sJson)
+        }
+
+        //playerAvatarType
+        if (outfitJson.playerAvatarType)
+            this.playerAvatarType = outfitJson.playerAvatarType
+
+        //assets
+        if (outfitJson.assets) {
+            this.assets = []
+            for (let i = 0; i < outfitJson.assets.length; i++) {
+                const asset = new Asset()
+                asset.fromJson(outfitJson.assets[i])
+                this.assets.push(asset)
+            }
+        }
+
+        //name
+        if (outfitJson.name) {
+            this.name = outfitJson.name
+        } else {
+            this.name = "Avatar"
+        }
+
+        //id
+        if (outfitJson.id || outfitJson.outfitId) {
+            if (outfitJson.outfitId)
+                this.id = outfitJson.outfitId
+            if (outfitJson.id)
+                this.id = outfitJson.id
+        }
+
+        //creatorId
+        if (outfitJson.creatorId) {
+            this.creatorId = outfitJson.creatorId
+        }
+
+        //collections
+        if (outfitJson.collections) {
+            this.collections = outfitJson.collections
+        }
+
+        //creationDate
+        if (outfitJson.creationDate) {
+            this.creationDate = outfitJson.creationDate
+        }
+
+        this.fixOrders()
+    }
+
+    /**
+     * @deprecated Incorrect, use getValidationIssues() instead
+     */
+    isValid() {
+        const count: {[K in string]: number} = {}
+
+        for (let i = 0; i < this.assets.length; i++) {
+            if (MaxPerAsset[this.assets[i].assetType.name]) {
+                if (!count[this.assets[i].assetType.name]) {
+                    count[this.assets[i].assetType.name] = 1
+                } else {
+                    count[this.assets[i].assetType.name] += 1
+                }
+            }
+        }
+
+        for (const key in count) {
+            if (count[key]) {
+                if (MaxPerAsset[key] < count[key]) {
+                    //AlertMessage("Exceeded maximum of: " + key, true, 5)
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
+
+    getValidationIssues(): ValidationIssue[] {
+        const issues: ValidationIssue[] = []
+
+        const usedIds: number[] = []
+
+        let totalAccessories = 0
+        let totalLayered = 0
+        let totalMakeup = 0
+
+        for (let i = 0; i < this.assets.length; i++) {
+            const asset = this.assets[i]
+
+            //check for type
+            if (!(asset instanceof Asset)) {
+                issues.push({
+                    type: "InvalidAsset",
+                    text: "Asset is not of type Asset",
+                    assetIndex: i,
+                })
+                continue;
+            }
+
+            //check for valid structure
+            let structureIsValid = true
+            if (typeof asset.id !== "number" || isNaN(asset.id) || asset.id < 1 || Math.floor(asset.id) !== asset.id) {
+                structureIsValid = false
+            }
+            if (typeof asset.name !== "string") {
+                structureIsValid = false
+            }
+            if (asset.currentVersionId) {
+                if (typeof asset.currentVersionId !== "number") {
+                    structureIsValid = false
+                }
+            }
+
+            if (!structureIsValid) {
+                issues.push({
+                    type: "InvalidAsset",
+                    text: "Asset has invalid structure",
+                    assetIndex: i,
+                })
+                continue;
+            }
+
+            //accessory limit
+            if (AccessoryAssetTypes.includes(asset.assetType.name)) {
+                totalAccessories += 1
+
+                if (totalAccessories > 10) {
+                    issues.push({
+                        type: "AccessoryLimit",
+                        text: "Too many accessories",
+                        assetIndex: i,
+                    })
+                }
+            }
+
+            //layered limit
+            if (LayeredAssetTypes.includes(asset.assetType.name) && !MakeupAssetTypes.includes(asset.assetType.name) && !MaxOneOfAssetTypes.includes(asset.assetType.name)) {
+                totalLayered += 1
+
+                if (totalLayered > 10) {
+                    issues.push({
+                        type: "LayeredLimit",
+                        text: "Too many layered accessories",
+                        assetIndex: i,
+                    })
+                }
+            }
+
+            //makeup limit
+            if (MakeupAssetTypes.includes(asset.assetType.name)) {
+                totalMakeup += 1
+
+                if (totalMakeup > 6) {
+                    issues.push({
+                        "type": "MakeupLimit",
+                        "text": "Too much makeup",
+                        assetIndex: i,
+                    })
+                }
+            }
+
+            //one of type limit
+            if (MaxOneOfAssetTypes.includes(asset.assetType.name)) {
+                for (let j = 0; j < this.assets.length; j++) {
+                    const otherAsset = this.assets[j]
+                    if (otherAsset.assetType.name === asset.assetType.name && j < i) {
+                        issues.push({
+                            type: "OneOfTypeLimit",
+                            text: `${asset.assetType.name} cannot be worn multiple times`,
+                            assetIndex: i,
+                        })
+                    }
+                }
+            }
+
+            //duplicate id
+            if (usedIds.includes(asset.id)) {
+                issues.push({
+                    type: "DuplicateId",
+                    text: "Same asset worn twice",
+                    assetIndex: i,
+                })
+            } else {
+                usedIds.push(asset.id)
+            }
+
+            //not wearable type
+            if (!WearableAssetTypes.includes(asset.assetType.name)) {
+                issues.push({
+                    type: "NotWearable",
+                    text: `${asset.assetType.name} is not wearable`,
+                    assetIndex: i,
+                })
+            }
+
+            //check for layered meta
+            if (!AccessoryAssetTypes.includes(asset.assetType.name) && LayeredAssetTypes.includes(asset.assetType.name)) {
+                if (asset.meta) {
+                    if (typeof asset.meta.order !== "number") {
+                        issues.push({
+                            type: "MissingLayeredMeta",
+                            text: "Layered accessory is missing order",
+                            assetIndex: i,
+                        })
+                    }
+                }
+            }
+        }
+
+        return issues
+    }
+
+    getAssetsJson(removeNotOwnedAssets: boolean = false) {
+        const serializedAssets: AssetJson[] = []
+        if (this.assets) {
+            for (let i = 0; i < this.assets.length; i++) {
+                if (!removeNotOwnedAssets || !this.assets[i].notOwned) {
+                    serializedAssets.push(this.assets[i].toJson())
+                }
+            }
+        }
+
+        return serializedAssets
+    }
+
+    containsAsset(assetId: number) {
+        let contains = false
+
+        if (this.assets) {
+            for (let i = 0; i < this.assets.length; i++) {
+                if (this.assets[i].id == assetId) {
+                    contains = true
+                    break
+                }
+            }
+        }
+
+        return contains
+    }
+
+    containsAssets(assetIds: number[]) {
+        let isMissingAsset = false
+        for (const asset of assetIds) {
+            if (!this.containsAsset(asset)) {
+                isMissingAsset = true
+                break
+            }
+        }
+
+        return !isMissingAsset
+    }
+
+    containsAssetType(assetType: string) {
+        for (const asset of this.assets) {
+            if (asset.assetType.name === assetType) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    //INCORRECT IMPLEMENTATION, SOME REGULAR ACCESSORIES CAN CONTAIN WrapLayer
+    /*containsLayered() {
+        let contains = false
+
+        for (const asset of this.assets) {
+            switch(asset.assetType.name) {
+                case "DressSkirtAccessory":
+                case "ShortsAccessory":
+                case "JacketAccessory":
+                case "ShirtAccessory":
+                case "SweaterAccessory":
+                case "TShirtAccessory":
+                case "PantsAccessory":
+                case "LeftShoeAccessory":
+                case "RightShoeAccessory":
+                case "EyebrowAccessory":
+                    contains = true
+                    break;
+                default:
+                    break
+            }
+        }
+
+        return contains
+    }*/
+
+    removeAsset(assetId: number) {
+        let index = null
+
+        for (let i = 0; i < this.assets.length; i++) {
+            if (this.assets[i].id == assetId) {
+                index = i
+                break
+            }
+        }
+
+        if (index || index == 0) {
+            this.assets.splice(index,1)
+        }
+    }
+
+    removeAssetType(type: string | number) {
+        let typeName = ""
+        if (typeof type === "number") {
+            typeName = AssetTypes[type]
+        } else {
+            typeName = type
+        }
+
+        for (let i = this.assets.length - 1; i >= 0; i--) {
+            const asset = this.assets[i]
+            if (asset.assetType.name === typeName) {
+                this.assets.splice(i, 1)
+            }
+        }
+    }
+
+    addAsset(id: number, type: string | number, name: string, supportsHeadShapes?: boolean) {
+        if (this.containsAsset(id)) {
+            return
+        }
+
+        let typeId = 0
+        let typeName = ""
+        if (typeof type === "number") {
+            typeId = type
+            typeName = AssetTypes[type]
+        } else {
+            typeName = type
+            typeId = AssetTypeNameToId.get(type) || 0
+        }
+
+        if (MaxOneOfAssetTypes.includes(typeName)) {
+            this.removeAssetType(typeName)
+        }
+
+        if (typeName === "Head") {
+            const toRemove = ToRemoveBeforeBundleType.DynamicHead
+            for (const type of toRemove) {
+                this.removeAssetType(type)
+            }
+        }
+
+        const asset = new Asset()
+        asset.id = id
+        asset.name = name
+        if (supportsHeadShapes !== undefined) {
+            asset.supportsHeadShapes = supportsHeadShapes
+        }
+
+        asset.assetType = new AssetType()
+        asset.assetType.id = typeId
+        if (LayeredClothingAssetOrder[asset.assetType.id] !== undefined) {
+            asset.meta = new AssetMeta()
+            const toUseOrder = LayeredClothingAssetOrder[asset.assetType.id]
+            asset.meta.order = toUseOrder
+            this.fixOrders()
+        }
+        asset.assetType.name = typeName
+
+        this.assets.push(asset)
+    }
+
+    /**
+     * Fixes multiple layered assets having the same order value
+     */
+    fixOrders() {
+        for (const asset of this.assets.slice().reverse()) {
+            //add order to all assets that should have one
+            if (!AccessoryAssetTypes.includes(asset.assetType.name) && LayeredAssetTypes.includes(asset.assetType.name)) {
+                if (asset.meta) {
+                    if (typeof asset.meta.order !== "number") {
+                        log(false, "missing order", asset, asset.meta.order)
+                        asset.meta.order = this.getNextOrder(LayeredClothingAssetOrder[asset.assetType.id])
+                    }
+                }
+            }
+        }
+
+        //fix conflicting orders
+        let ordersAreFixed = false
+        while (!ordersAreFixed) {
+            let newOrdersAreFixed = true
+
+            //find first used order that is conflicting
+            for (const asset of this.assets) {
+                if (asset.meta?.order !== undefined) {
+                    //get assets at conflicting order
+                    const assetsAtOrder = this.getAssetsAtOrder(asset.meta.order)
+                    if (assetsAtOrder.length > 1) {
+                        //sort between asset0 and asset1, taking into consideration assetType
+                        const asset0 = assetsAtOrder[0]
+                        const asset1 = assetsAtOrder[1]
+                        const asset0should = LayeredClothingAssetOrder[asset0.assetType.id] || 0
+                        const asset1should = LayeredClothingAssetOrder[asset1.assetType.id] || 0
+
+                        if (asset0should > asset1should) {
+                            asset0.setOrder(asset.meta.order + 1)
+                        } else {
+                            asset1.setOrder(asset.meta.order + 1)
+                        }
+
+                        //end loop so we can find next first conflicting
+                        newOrdersAreFixed = false
+                        break
+                    }
+                }
+            }
+
+            ordersAreFixed = newOrdersAreFixed
+        }
+    }
+
+    getAssetsAtOrder(order: number) {
+        const assets = []
+
+        for (const asset of this.assets) {
+            if (asset.meta?.order === order) {
+                assets.push(asset)
+            }
+        }
+
+        return assets
+    }
+
+    isOrderUsed(order: number, self?: Asset): boolean {
+        for (const asset of this.assets) {
+            if (asset !== self && asset.meta && asset.meta.order === order) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    getNextOrder(order: number): number {
+        while (this.isOrderUsed(order)) {
+            order += 1
+        }
+
+        return order
+    }
+
+    async addAssetId(assetId: number, auth: Authentication): Promise<boolean> {
+        const assetDetailsResponse = await API.Catalog.GetItemDetails(auth, [{itemType: "Asset", id: assetId}])
+
+        if (assetDetailsResponse instanceof Response) {
+            return false
+        }
+
+        const assetDetails = assetDetailsResponse
+
+        if (assetDetails.data.length > 0) {
+            this.addAsset(assetId, assetDetails.data[0].assetType, assetDetails.data[0].name, assetDetails.data[0].supportsHeadShapes)
+        } else {
+            return this.addAssetIdEconomy(assetId)
+        }
+
+        /*const asset = new Asset()
+        asset.id = assetId
+        asset.name = assetDetails.Name
+
+        asset.assetType = new AssetType()
+        asset.assetType.id = assetDetails.AssetTypeId
+        if (LayeredClothingAssetOrder[asset.assetType.id]) {
+            asset.meta = new AssetMeta()
+            asset.meta.order = LayeredClothingAssetOrder[asset.assetType.id]
+        }
+        asset.assetType.name = AssetTypes[assetDetails.AssetTypeId]
+
+        this.assets.push(asset)*/
+
+        return true
+    }
+
+    async addAssetIdEconomy(assetId: number): Promise<boolean> {
+        const assetDetailsResponse = await API.Economy.GetAssetDetails(assetId)
+
+        if (assetDetailsResponse.status !== 200) {
+            return false
+        }
+
+        const assetDetails = await assetDetailsResponse.json()
+
+        if (assetDetails.errors) {
+            return false
+        }
+
+        this.addAsset(assetId, assetDetails.AssetTypeId, assetDetails.Name)
+        return true
+    }
+
+    async addBundleId(bundleId: number, auth?: Authentication): Promise<boolean> {
+        const bundleDetails = await API.Catalog.GetBundleDetails(bundleId)
+
+        if (!(bundleDetails instanceof Response)) {
+            const bundleType = CatalogBundleTypes[bundleDetails.bundleType]
+
+            for (const item of bundleDetails.bundledItems) {
+                if (item.type === "UserOutfit") { //find first outfit in bundle
+                    const result = await API.Avatar.GetOutfitDetails(item.id, this.creatorId || 1)
+                    if (result instanceof Outfit) {
+                        for (const asset of result.assets) {
+                            this.addAsset(asset.id, asset.assetType.id, asset.name, asset.supportsHeadShapes)
+                        }
+
+                        if (bundleType === "Character") {
+                            this.scale = result.scale.clone()
+                        }
+
+                        return true
+                    }
+                    break
+                }
+            }
+
+            //if no UserOutfit
+            if (!bundleDetails.bundledItems.find((v) => {return v.type === "UserOutfit"})) {
+                const promises = []
+                for (const item of bundleDetails.bundledItems) {
+                    if (item.type !== "Asset") continue
+                    const promise = auth ? this.addAssetId(item.id, auth) : this.addAssetIdEconomy(item.id)
+                    promises.push(promise)
+                }
+                await Promise.all(promises)
+                return true
+            }
+        } else {
+            warn(true, "Failed to get bundleDetails", bundleDetails)
+        }
+
+        return false
+    }
+
+    getAssetId(assetId: number): Asset | undefined {
+        for (const asset of this.assets) {
+            if (asset.id === assetId) {
+                return asset
+            }
+        }
+    }
+
+    async fromLook(look: Look_Result["look"], auth: Authentication): Promise<boolean> {
+        //metadata
+        this.origin = "Look"
+        this.creatorId = look.curator.id
+        this.creationDate = new Date(look.createdTime).getUTCMilliseconds()
+        this.lookId = look.lookId
+
+        //body
+        this.scale.fromJson(look.avatarProperties.scale)
+        this.playerAvatarType = look.avatarProperties.playerAvatarType
+        this.bodyColors.fromJson(look.avatarProperties.bodyColor3s)
+
+        //assets
+        const assetPromises: Promise<boolean>[] = []
+
+        for (const item of look.items) {
+            if (item.itemType === "Asset" && item.assetType !== null) {
+                this.addAsset(item.id, item.assetType, item.name)
+            } else if (item.itemType === "Bundle") {
+                const assetsList: {
+                    itemType: "Asset" | "Bundle";
+                    id: number;
+                }[] = []
+                const assetMetaList: (AssetMetaJson | undefined)[] = []
+                const assetIdList: number[] = []
+                for (const asset of item.assetsInBundle) {
+                    if (asset.isIncluded) {
+                        assetsList.push({itemType: "Asset", id: asset.id})
+                        if (asset.meta) {
+                            assetMetaList.push(asset.meta)
+                        } else {
+                            assetMetaList.push(undefined)
+                        }
+                        assetIdList.push(asset.id)
+                    }
+                }
+
+                const assetDetails = await API.Catalog.GetItemDetails(auth, assetsList)
+
+                if (assetDetails instanceof Response) {
+                    return false
+                } else {
+                    for (const assetDetail of assetDetails.data) {
+                        this.addAsset(assetDetail.id, assetDetail.assetType, assetDetail.name, assetDetail.supportsHeadShapes)
+
+                        const index = assetIdList.indexOf(assetDetail.id)
+                        const meta = assetMetaList[index]
+                        if (meta) {
+                            const addedAsset = this.getAssetId(assetDetail.id)
+                            if (addedAsset) {
+                                addedAsset.meta = new AssetMeta()
+                                addedAsset.meta.fromJson(meta)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        const successes = await Promise.all(assetPromises)
+        for (const success of successes) {
+            if (!success) {
+                return false
+            }
+        }
+
+        for (const item of look.items) {
+            if (item.meta) {
+                const asset = this.getAssetId(item.id)
+                if (asset) {
+                    asset.meta = new AssetMeta()
+                    asset.meta.fromJson(item.meta)
+                }
+            }
+        }
+
+        return true
+    }
+
+    async fromBuffer(buffer: ArrayBuffer, auth: Authentication): Promise<Response | Outfit> {
+        const view = new SimpleView(buffer)
+
+        //flags
+        const outfitFlags = view.readUint8()
+        
+        const allSameColor = !!(outfitFlags & 2)
+        const hasCreatorId = !!(outfitFlags & 4)
+        this.playerAvatarType = (outfitFlags & 1) ? AvatarType.R15 : AvatarType.R6
+
+        //creator id
+        if (hasCreatorId) {
+            this.creatorId = view.readUint32()
+        }
+
+        //scale
+        this.scale.height = view.readUint8() / 100
+        this.scale.width = view.readUint8() / 100
+        this.scale.depth = view.readUint8() / 100
+        this.scale.head = view.readUint8() / 100
+        const rawBodyType = view.readUint8()
+        this.scale.bodyType = rawBodyType / 100
+        if (rawBodyType > 0) {
+            this.scale.proportion = view.readUint8() / 100
+        }
+
+        //body colors
+        this.bodyColors = new BodyColor3s()
+        if (allSameColor) {
+            const r = view.readUint8()
+            const g = view.readUint8()
+            const b = view.readUint8()
+            const color = rgbToHex(r,g,b)
+            this.bodyColors.setAll(color)
+        } else {
+            const bodyColorNames: BodyColor3Name[] = ["headColor3", "torsoColor3", "leftArmColor3", "rightArmColor3", "leftLegColor3", "rightLegColor3"]
+            for (const bodyColor of bodyColorNames) {
+                const r = view.readUint8()
+                const g = view.readUint8()
+                const b = view.readUint8()
+                const color = rgbToHex(r,g,b)
+                this.bodyColors[bodyColor] = color
+            }
+        }
+
+        //assets
+        const assetsToAdd: Partial<Asset>[] = []
+        const assetPromises: Promise<undefined>[] = []
+
+        while (view.viewOffset < view.buffer.byteLength) {
+            const flags = view.readUint8()
+            let id = 0
+
+            if (flags & 16) {
+                id = Number(view.readUint64())
+            } else {
+                id = view.readUint32()
+            }
+
+            //order
+            let assetOrder = undefined
+
+            if (flags & 1) {
+                const order = view.readUint8()
+                assetOrder = order
+            }
+
+            //pos
+            let assetPos = undefined
+
+            if (flags & 2) {
+                const posX = mapNum(view.readUint8(), 0,255, -1,1)
+                const posY = mapNum(view.readUint8(), 0,255, -1,1)
+                const posZ = mapNum(view.readUint8(), 0,255, -1,1)
+                assetPos = {X: posX, Y: posY, Z: posZ}
+            }
+
+            //rot
+            let assetRot = undefined
+
+            if (flags & 4) {
+                const rotX = mapNum(view.readUint8(), 0,255, -90,90)
+                const rotY = mapNum(view.readUint8(), 0,255, -90,90)
+                const rotZ = mapNum(view.readUint8(), 0,255, -90,90)
+                assetRot = {X: rotX, Y: rotY, Z: rotZ}
+            }
+
+            //scale
+            let assetScale = undefined
+
+            if (flags & 8) {
+                const scaleX = mapNum(view.readUint8(), 0,255, 0.5,2)
+                const scaleY = mapNum(view.readUint8(), 0,255, 0.5,2)
+                const scaleZ = mapNum(view.readUint8(), 0,255, 0.5,2)
+                assetScale = {X: scaleX, Y: scaleY, Z: scaleZ}
+            }
+
+            //headshape
+            /*let assetHeadShape: number | undefined = undefined
+            if (flags & 32) {
+                assetHeadShape = Number(view.readUint64())
+            }*/
+            if (flags & 32) {
+                view.readUint64()
+            }
+            let assetHeadShape: string | undefined = undefined
+            if (flags & 128) {
+                assetHeadShape = view.readUtf8String()
+            }
+
+            //staticfacialanimation
+            let staticFacialAnimation: boolean | undefined = undefined
+            if (flags & 64) {
+                staticFacialAnimation = true
+            }
+
+            /*assetPromises.push(new Promise((resolve) => {
+                this.addAssetId(id, auth).then(() => {
+                    let asset: Asset | undefined = undefined
+                    for (const assetIn of this.assets) {
+                        if (assetIn.id === id) {
+                            asset = assetIn
+                        }
+                    }
+
+                    if (asset && (assetOrder || assetPos || assetRot || assetScale || assetHeadShape !== undefined)) {
+                        asset.meta = new AssetMeta()
+                        asset.meta.order = assetOrder
+                        asset.meta.position = assetPos
+                        asset.meta.rotation = assetRot
+                        asset.meta.scale = assetScale
+                        asset.meta.headShape = assetHeadShape
+                        asset.meta.staticFacialAnimation = staticFacialAnimation
+                    }
+
+                    resolve(undefined)
+                })
+            }))*/
+            let meta = undefined
+            if ((assetOrder !== undefined || assetPos || assetRot || assetScale || assetHeadShape !== undefined || staticFacialAnimation !== undefined)) {
+                meta = new AssetMeta()
+                meta.order = assetOrder
+                meta.position = assetPos
+                meta.rotation = assetRot
+                meta.scale = assetScale
+                meta.headShape = assetHeadShape
+                meta.staticFacialAnimation = staticFacialAnimation
+            }
+
+            assetsToAdd.push({
+                id: id,
+                meta: meta,
+            })
+        }
+
+        //get asset details
+        const assetDetailsRequest: {
+            itemType: "Asset" | "Bundle";
+            id: number;
+        }[] = []
+        for (const assetToAdd of assetsToAdd) {
+            assetDetailsRequest.push({itemType: "Asset", id: assetToAdd.id!})
+        }
+
+        //add assets using catalog api
+        const assetDetails = await API.Catalog.GetItemDetails(auth, assetDetailsRequest)
+        if (!(assetDetails instanceof Response)) {
+            //add assets
+            for (const assetDetail of assetDetails.data) {
+                this.addAsset(assetDetail.id, assetDetail.assetType, assetDetail.name, assetDetail.supportsHeadShapes)
+            }
+        }
+
+        //add assets using economy api (fallback)
+        for (const asset of assetsToAdd) {
+            const assetId = asset.id
+            if (assetId && !this.getAssetId(assetId)) {
+                assetPromises.push(new Promise(resolve => {
+                    this.addAssetIdEconomy(assetId).then(() => {
+                        resolve(undefined)
+                    })
+                }))
+            }
+        }
+
+        await Promise.all(assetPromises)
+
+        const assetDeliveryPromises = []
+
+        //add assets using assetdelivery (SUPER fallback)
+        for (const asset of assetsToAdd) {
+            const assetId = asset.id
+            if (assetId && !this.getAssetId(assetId)) {
+                assetDeliveryPromises.push(new Promise(resolve => {
+                    API.Asset.GetAssetTypeId(assetId).then((assetTypeId) => {
+                        if (!(assetTypeId instanceof Response)) {
+                            if (Number(assetTypeId) === assetTypeId) {
+                                this.addAsset(assetId, assetTypeId, `${AssetTypes[assetTypeId] || "Asset"} (${assetId})`)
+                                resolve(undefined)
+                            } else {
+                                resolve(undefined)
+                            }
+                        } else {
+                            resolve(undefined)
+                        }
+                    })
+                }))
+            }
+        }
+
+        await Promise.all(assetDeliveryPromises)
+
+        //add asset meta
+        for (const assetToAdd of assetsToAdd) {
+            let asset: Asset | undefined = undefined
+            for (const assetIn of this.assets) {
+                if (assetIn.id === assetToAdd.id) {
+                    asset = assetIn
+                }
+            }
+
+            if (asset) {
+                asset.meta = assetToAdd.meta
+            }
+        }
+
+        this.fixOrders()
+
+        return this
+    }
+
+    toBuffer(): ArrayBuffer {
+        //get right bodycolors
+        let bodyColors: BodyColor3s | undefined = undefined
+        if (this.bodyColors instanceof BodyColor3s) {
+            bodyColors = this.bodyColors
+        } else {
+            bodyColors = this.bodyColors.toColor3()
+        }
+
+        //calculate buffer size
+        let bufferSize = 1+5+3
+        if (Math.floor(this.scale.bodyType * 100) > 0) bufferSize += 1
+        const m = bodyColors.headColor3;
+        const allSameColor = (bodyColors.headColor3 === m && bodyColors.torsoColor3 === m && bodyColors.leftArmColor3 === m && bodyColors.rightArmColor3 === m && bodyColors.leftLegColor3 === m && bodyColors.rightLegColor3)
+        if (!allSameColor) bufferSize += 15
+        if (this.creatorId) bufferSize += 4
+        for (const asset of this.assets) {
+            const order = asset.meta?.order
+            let pos = asset.meta?.position
+            let rot = asset.meta?.rotation
+            let scale = asset.meta?.scale
+            const headShape = asset.meta?.headShape
+
+            if (pos && (Math.abs(pos.X) + Math.abs(pos.Y) + Math.abs(pos.Z)) < 0.01) {
+                pos = undefined
+            }
+
+            if (rot && (Math.abs(rot.X) + Math.abs(rot.Y) + Math.abs(rot.Z)) < 0.01) {
+                rot = undefined
+            }
+
+            if (scale && (Math.round(scale.X * 100) === 100 && Math.round(scale.Y * 100) === 100 && Math.round(scale.Z * 100)) === 100) {
+                scale = undefined
+            }
+
+            bufferSize += 5
+            if (asset.id > Math.pow(2,32)) bufferSize += 4
+
+            if (order !== undefined) bufferSize += 1
+            if (pos) bufferSize += 3
+            if (rot) bufferSize += 3
+            if (scale) bufferSize += 3
+            if (headShape !== undefined) bufferSize += 4 + headShape.length
+        }
+
+        //create buffer
+        //log(false, `Outfit is ${bufferSize} bytes`)
+        const buffer = new ArrayBuffer(bufferSize)
+        const view = new SimpleView(buffer)
+
+        //flags 1 byte
+        let outfitFlags = 0
+        if (this.playerAvatarType === AvatarType.R15) outfitFlags += 1
+        if (allSameColor) outfitFlags += 2
+        if (this.creatorId) outfitFlags += 4
+        view.writeUint8(outfitFlags)
+
+        //creator id
+        if (this.creatorId) view.writeUint32(this.creatorId)
+
+        //scale 5-6 bytes
+        view.writeUint8(Math.floor(this.scale.height * 100))
+        view.writeUint8(Math.floor(this.scale.width * 100))
+        view.writeUint8(Math.floor(this.scale.depth * 100))
+        view.writeUint8(Math.floor(this.scale.head * 100))
+        view.writeUint8(Math.floor(this.scale.bodyType * 100))
+        if (Math.floor(this.scale.bodyType * 100) > 0) {
+            view.writeUint8(Math.floor(this.scale.proportion * 100))
+        }
+
+        //body colors 3-18 bytes
+        const headColor = hexToRgb(bodyColors.headColor3) || {r:0,g:0,b:0}
+        view.writeUint8(Math.floor(headColor.r * 255))
+        view.writeUint8(Math.floor(headColor.g * 255))
+        view.writeUint8(Math.floor(headColor.b * 255))
+
+        if (!allSameColor) {
+            const torsoColor = hexToRgb(bodyColors.torsoColor3) || {r:0,g:0,b:0}
+            view.writeUint8(Math.floor(torsoColor.r * 255))
+            view.writeUint8(Math.floor(torsoColor.g * 255))
+            view.writeUint8(Math.floor(torsoColor.b * 255))
+
+            const leftArmColor = hexToRgb(bodyColors.leftArmColor3) || {r:0,g:0,b:0}
+            view.writeUint8(Math.floor(leftArmColor.r * 255))
+            view.writeUint8(Math.floor(leftArmColor.g * 255))
+            view.writeUint8(Math.floor(leftArmColor.b * 255))
+
+            const rightArmColor = hexToRgb(bodyColors.rightArmColor3) || {r:0,g:0,b:0}
+            view.writeUint8(Math.floor(rightArmColor.r * 255))
+            view.writeUint8(Math.floor(rightArmColor.g * 255))
+            view.writeUint8(Math.floor(rightArmColor.b * 255))
+
+            const leftLegColor = hexToRgb(bodyColors.leftLegColor3) || {r:0,g:0,b:0}
+            view.writeUint8(Math.floor(leftLegColor.r * 255))
+            view.writeUint8(Math.floor(leftLegColor.g * 255))
+            view.writeUint8(Math.floor(leftLegColor.b * 255))
+
+            const rightLegColor = hexToRgb(bodyColors.rightLegColor3) || {r:0,g:0,b:0}
+            view.writeUint8(Math.floor(rightLegColor.r * 255))
+            view.writeUint8(Math.floor(rightLegColor.g * 255))
+            view.writeUint8(Math.floor(rightLegColor.b * 255))
+        }
+
+        //assets 5-15 bytes each
+        for (const asset of this.assets) {
+            const id = asset.id
+
+            const order = asset.meta?.order
+            let pos = asset.meta?.position
+            let rot = asset.meta?.rotation
+            let scale = asset.meta?.scale
+            const headShape = asset.meta?.headShape
+
+            if (pos && (Math.abs(pos.X) + Math.abs(pos.Y) + Math.abs(pos.Z)) < 0.01) {
+                pos = undefined
+            }
+
+            if (rot && (Math.abs(rot.X) + Math.abs(rot.Y) + Math.abs(rot.Z)) < 0.01) {
+                rot = undefined
+            }
+
+            if (scale && (Math.round(scale.X * 100) === 100 && Math.round(scale.Y * 100) === 100 && Math.round(scale.Z * 100)) === 100) {
+                scale = undefined
+            }
+
+            const idIs64bit = id > Math.pow(2,32)
+
+            let flags = 0
+            if (order !== undefined) flags += 1
+            if (pos) flags += 2
+            if (rot) flags += 4
+            if (scale) flags += 8
+            if (idIs64bit) flags += 16
+            //if (headShape !== undefined) flags += 32
+            if (asset.meta?.staticFacialAnimation) flags += 64
+            if (headShape) flags += 128
+
+            view.writeUint8(flags)
+
+            if (!idIs64bit) {
+                view.writeUint32(id)
+            } else {
+                view.writeUint64(BigInt(id))
+            }
+
+            if (order !== undefined) {
+                view.writeUint8(order)
+            }
+
+            if (pos) {
+                view.writeUint8(Math.floor(mapNum(pos.X, -1,1, 0,255)))
+                view.writeUint8(Math.floor(mapNum(pos.Y, -1,1,0,255)))
+                view.writeUint8(Math.floor(mapNum(pos.Z, -1,1, 0,255)))
+            }
+
+            if (rot) {
+                view.writeUint8(Math.floor(mapNum(rot.X, -90,90, 0,255)))
+                view.writeUint8(Math.floor(mapNum(rot.Y, -90,90, 0,255)))
+                view.writeUint8(Math.floor(mapNum(rot.Z, -90,90, 0,255)))
+            }
+
+            if (scale) {
+                view.writeUint8(Math.floor(mapNum(scale.X, 0.5,2, 0,255)))
+                view.writeUint8(Math.floor(mapNum(scale.Y, 0.5,2, 0,255)))
+                view.writeUint8(Math.floor(mapNum(scale.Z, 0.5,2, 0,255)))
+            }
+
+            /*if (headShape !== undefined) {
+                view.writeUint64(BigInt(headShape))
+            }*/
+            if (headShape) {
+                view.writeUtf8String(headShape)
+            }
+        }
+
+        return view.buffer
+    }
+}

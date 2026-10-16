@@ -1,7 +1,7 @@
 {
   "captured": "2026-10-14",
   "source": "Written from the tracker's assetdelivery v2 schema (AssetResponseItemV2) and the XML model format a classic shirt asset serves. Ids and CDN paths are made up; not a live capture.",
-  "note": "Look up a shirt, fetch its model from the CDN, then look up the template image it points at.",
+  "note": "Look up a shirt, fetch its model from the CDN, then look up the template image it points at. Then fetch a mesh variant the way the 3D avatar viewer asks for it.",
   "interactions": [
     {
       "request": {
@@ -67,6 +67,52 @@
           "isArchived": false,
           "assetTypeId": 1
         }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "assetdelivery.roblox.com",
+        "path": "/v2/assetId/1000013",
+        "query": {
+          "contentRepresentationPriorityList": "W3siZm9ybWF0IjoibWVzaCIsIm1ham9yVmVyc2lvbiI6IjUifV0="
+        },
+        "headers": {
+          "roblox-assetformat": "avatar_meshpart_accessory"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "locations": [
+            {
+              "assetFormat": "source",
+              "location": "https://c2.rbxcdn.com/mesh-redacted"
+            }
+          ],
+          "requestId": "request-redacted",
+          "IsHashDynamic": false,
+          "IsCopyrightProtected": false,
+          "isArchived": false,
+          "assetTypeId": 4
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "c2.rbxcdn.com",
+        "path": "/mesh-redacted"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/octet-stream"
+        },
+        "body": "version 5.00\n"
       }
     }
   ]

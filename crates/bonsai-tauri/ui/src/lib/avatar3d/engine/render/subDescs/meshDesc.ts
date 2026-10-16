@@ -1,0 +1,973 @@
+import * as THREE from 'three'
+import { BodyPartNameToEnum, HumanoidRigType, MeshType, PartType, WrapLayerAutoSkin } from "../../rblx/constant"
+import { CFrame, Color3, Instance, isAffectedByHumanoid, Vector2, Vector3 } from "../../rblx/rbx"
+import { API, Cache } from '../../api'
+import { FileMesh } from '../../mesh/mesh'
+import { layerClothingChunked, layerClothingChunkedNormals2, layerClothingChunkedNormals, offsetMesh, getDistIndexArray, minus, magnitude, transferSkeleton, inheritSkeleton, inheritUV, hashVec2, buildVertKD, divide } from '../../mesh/mesh-deform'
+import { RBFDeformerPatch } from '../../mesh/cage-mesh-deform'
+import { getModelLayersDesc, WrapDeformerDesc, WrapLayerDesc, type ModelLayersDesc } from './layersDesc'
+import { mapNum } from '../../misc/misc'
+import { FLAGS } from '../../misc/flags'
+import { nearestSearch } from '../../misc/kd-tree-3'
+import { getModelHSRDesc, HSRDesc } from './hsrDesc'
+import { log, warn } from '../../misc/logger'
+import { buildCube, buildWedge } from '../../mesh/mesh-builder'
+import { DisposableDesc } from '../renderDesc'
+//import { OBJExporter } from 'three/examples/jsm/Addons.js'
+//import { download } from '../misc/misc'
+
+//const CACHE_cage = new Map<Instance, Promise<[MeshDesc, FileMesh]>>()
+
+/*function arrIsSame<T>(arr0: T[], arr1: T[]) {
+    if (arr0.length !== arr1.length) {
+        return false
+    }
+
+    for (const element of arr0) {
+        if (!arr1.includes(element)) {
+            return false
+        }
+    }
+
+    return true
+}*/
+
+const HSR_CACHE = new Cache<string,number[]>()
+
+function doHSR(totalUvToHits: Map<number,number>, targetCage: FileMesh, mesh: FileMesh, moveVerts: boolean = true, cacheStr?: string) {
+    let closestVertIndexArr = undefined
+
+    if (cacheStr) {
+        closestVertIndexArr = HSR_CACHE.get(cacheStr)
+    }
+
+    if (!closestVertIndexArr) {
+        const vertKD = buildVertKD(targetCage)
+
+        closestVertIndexArr = new Array(mesh.coreMesh.numverts)
+        for (let i = 0; i < mesh.coreMesh.numverts; i++) {
+            const vertPos = mesh.coreMesh.getPos(i)
+            const closestVertData = nearestSearch(vertKD, vertPos)
+            const closestVertI = closestVertData.index
+            closestVertIndexArr[i] = closestVertI
+        }
+
+        if (cacheStr) {
+            HSR_CACHE.set(cacheStr, closestVertIndexArr)
+        }
+    }
+
+    const vertHitsMap: Map<number,number> = new Map()
+    const facesToRemove: number[] = []
+
+    for (let i = 0; i < mesh.coreMesh.numverts; i++) {
+        const vertPos = mesh.coreMesh.getPos(i)
+        
+        const closestVertIndex = closestVertIndexArr[i]
+        const closestVertUV = targetCage.coreMesh.getUV(closestVertIndex)
+
+        //if (distance(closestVert.position, vert.position) > 0.3) continue
+
+        const hits = totalUvToHits.get(hashVec2(...closestVertUV))
+        if (hits !== undefined) {
+            vertHitsMap.set(i, hits)
+
+            if (moveVerts) {
+                const toDivide = mapNum(hits, 0, 1, 1, 1.3)
+                mesh.coreMesh.setPos(i, divide(vertPos, [toDivide, toDivide, toDivide]))
+            }
+        }
+    }
+
+    for (let i = 0; i < mesh.coreMesh.numfaces; i++) {
+        const face = mesh.coreMesh.getFace(i)
+        const aHits = vertHitsMap.get(face[0]) || 0
+        const bHits = vertHitsMap.get(face[1]) || 0
+        const cHits = vertHitsMap.get(face[2]) || 0
+
+        const totalHits = aHits + bHits + cHits
+
+        if (totalHits >= 3) {
+            facesToRemove.push(i)
+        }
+    }
+    /*for (let i = 0; i < mesh.coreMesh.faces.length; i++) {
+        //const face = mesh.coreMesh.faces[i]
+        const triangle = mesh.coreMesh.getTriangle(i)
+        const trianglePos = averageVec3(triangle)
+
+        const closestFace = nearestSearch(faceKD, trianglePos)
+        const cfFace = targetCage.coreMesh.faces[closestFace.index]
+        //const cfTriangle = targetCage.coreMesh.getTriangle(closestFace.index)
+
+        const cfTriangleHash = hashVec3Safe(
+            hashVec2(...targetCage.coreMesh.verts[cfFace.a].uv),
+            hashVec2(...targetCage.coreMesh.verts[cfFace.b].uv),
+            hashVec2(...targetCage.coreMesh.verts[cfFace.c].uv)
+        )
+
+        const hits = uvToHits.get(cfTriangleHash)
+
+        if (hits && hits >= 0.99) {
+            //mesh.removeFace(i)
+            facesToRemove.push(i)
+            //const U = minus(cfTriangle[1], cfTriangle[0])
+            //const V = minus(cfTriangle[2], cfTriangle[0])
+    
+            //const invnormal = multiply(minus([0,0,0],(cross(U, V))), [5,5,5])
+
+            //mesh.coreMesh.verts[face.a].position = add(mesh.coreMesh.verts[face.a].position, invnormal)
+            //mesh.coreMesh.verts[face.b].position = add(mesh.coreMesh.verts[face.b].position, invnormal)
+            //mesh.coreMesh.verts[face.c].position = add(mesh.coreMesh.verts[face.c].position, invnormal)
+        } else if (hits === undefined) {
+            console.log(cfTriangleHash)
+        }
+    }*/
+
+    mesh.removeFaces(facesToRemove)
+}
+
+/**
+ * Converts a FileMesh to geometry that can be used by ThreeJS
+ * @category Mesh */
+export function fileMeshToTHREEGeometry(mesh: FileMesh, canIncludeSkinning = true, forceVertexColor?: Vector3) {
+    const geometry = new THREE.BufferGeometry()
+
+    //position
+    geometry.setAttribute("position", new THREE.BufferAttribute(mesh.coreMesh.getPositions(), 3))
+
+    //normal
+    geometry.setAttribute("normal", new THREE.BufferAttribute(mesh.coreMesh.getNormals(), 3))
+
+    //uv
+    const uvs = mesh.coreMesh.getUVs().slice()
+    for (let i = 0; i < uvs.length/2; i++) {
+        uvs[i*2 + 1] = 1 - uvs[i*2 + 1]
+    }
+    geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2))
+
+    //colors
+    const colors = new Float32Array(mesh.coreMesh.numverts * 4)
+    for (let i = 0; i < mesh.coreMesh.numverts; i++) {
+        if (FLAGS.USE_VERTEX_COLOR && !forceVertexColor) {
+            const color = mesh.coreMesh.getColor(i)
+            colors[i * 4 + 0] = color[0] / 255
+            colors[i * 4 + 1] = color[1] / 255
+            colors[i * 4 + 2] = color[2] / 255
+            colors[i * 4 + 3] = color[3] / 255
+        } else if (forceVertexColor) {
+            colors[i * 4 + 0] = forceVertexColor.X
+            colors[i * 4 + 1] = forceVertexColor.Y
+            colors[i * 4 + 2] = forceVertexColor.Z
+            colors[i * 4 + 3] = 1
+        } else {
+            colors[i * 4 + 0] = 1
+            colors[i * 4 + 1] = 1
+            colors[i * 4 + 2] = 1
+            colors[i * 4 + 3] = 1
+        }
+    }
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 4))
+
+    //faces
+    let facesEnd = mesh.coreMesh.numfaces
+    let facesStart = 0
+    if (mesh.lods) {
+        if (mesh.lods.lodOffsets.length >= 2) {
+            facesStart = mesh.lods.lodOffsets[0]
+            facesEnd = mesh.lods.lodOffsets[1]
+            if (facesEnd === 0) {
+                facesEnd = mesh.coreMesh.numfaces
+            }
+        }
+    }
+
+    //indices
+    const toUseIndices = mesh.coreMesh.getIndices().subarray(facesStart*3, facesEnd*3)
+    geometry.setIndex(new THREE.BufferAttribute(toUseIndices, 1))
+
+    //skinning
+    const meshSkinning = mesh.skinning
+    if (meshSkinning && meshSkinning.numskinnings > 0 && canIncludeSkinning) {
+        //bone weight and indices
+        const skinIndices = meshSkinning.indices.slice()
+        const skinWeights = meshSkinning.weights.slice()
+        
+        const hasRootBone = meshSkinning.getBone("Root") !== undefined || meshSkinning.getBone("root") !== undefined
+        //const skinIndices = []
+        //const skinWeights = []
+        
+        for (let i = 0; i < meshSkinning.numskinnings; i++) {
+            const boneWeights = meshSkinning.getWeight(i)
+            const boneIndices = meshSkinning.getIndex(i)
+            
+            skinWeights[i * 4 + 0] = boneWeights[0] / 255
+            skinWeights[i * 4 + 1] = boneWeights[1] / 255
+            skinWeights[i * 4 + 2] = boneWeights[2] / 255
+            skinWeights[i * 4 + 3] = boneWeights[3] / 255
+
+            const index0 = boneIndices[0]
+            const index1 = boneIndices[1]
+            const index2 = boneIndices[2]
+            const index3 = boneIndices[3]
+            skinIndices[i * 4 + 0] = !hasRootBone && index0 > 0 ? index0 + 1 : index0
+            skinIndices[i * 4 + 1] = !hasRootBone && index1 > 0 ? index1 + 1 : index1
+            skinIndices[i * 4 + 2] = !hasRootBone && index2 > 0 ? index2 + 1 : index2
+            skinIndices[i * 4 + 3] = !hasRootBone && index3 > 0 ? index3 + 1 : index3
+        }
+            
+        geometry.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(skinIndices, 4))
+        geometry.setAttribute("skinWeight", new THREE.Float32BufferAttribute(skinWeights, 4))
+        //console.log(mesh)
+        //console.log(geometry.attributes.skinIndex)
+        //console.log(geometry.attributes.skinWeight)
+    }
+
+    return geometry
+}
+
+export async function promiseForMesh(url: string, readOnly: boolean = false): Promise<[string, Response | FileMesh]> {
+    return new Promise((resolve) => {
+        API.Asset.GetMesh(url, undefined, readOnly).then(result => {
+            resolve([url, result])
+        })
+    })
+}
+
+/**
+ * Child of a RenderableDesc
+ * Used to describe meshes
+ */
+export class MeshDesc extends DisposableDesc {
+    //size: Vector3 = new Vector3(1,1,1)
+    scaleIsRelative: boolean = false
+    mesh?: string
+    shape: "block" | "wedge" = "block"
+    canHaveSkinning: boolean = true
+    forceVertexColor: Vector3 | undefined
+
+    //layering
+    deformerDesc?: WrapDeformerDesc
+    layerDesc?: WrapLayerDesc
+    target?: string
+    targetOrigin?: CFrame
+    modelLayersDesc?: ModelLayersDesc
+    hsrDesc?: HSRDesc
+    hsrType?: "target" | "layer"
+    
+    //faces
+    headMesh?: string
+
+    //WrapTextureTransfer
+    wrapTextureTarget?: string
+    wrapTextureTargetOrigin?: CFrame
+    wrapTextureMinBound?: Vector2
+    wrapTextureMaxBound?: Vector2
+
+    //result data
+    compilationTimestamp: number = -1
+    instance?: Instance
+    fileMesh?: FileMesh
+    wasAutoSkinned: boolean = false
+    wasDeformed: boolean = false
+
+    isSame(other: MeshDesc) {
+        const singularTrue = //this.size.isSame(other.size) &&
+            this.scaleIsRelative === other.scaleIsRelative &&
+            this.mesh === other.mesh &&
+            this.canHaveSkinning === other.canHaveSkinning &&
+            this.headMesh === other.headMesh &&
+            this.wrapTextureTarget === other.wrapTextureTarget &&
+            this.shape === other.shape
+        
+        if (!singularTrue) {
+            return singularTrue
+        }
+
+        //wraptexture
+        if ((this.wrapTextureTargetOrigin && !other.wrapTextureTargetOrigin) || (this.wrapTextureTargetOrigin && !other.wrapTextureTargetOrigin)) {
+            return false
+        }
+
+        if (this.wrapTextureTargetOrigin && other.wrapTextureTargetOrigin) {
+            return this.wrapTextureTargetOrigin.isSame(other.wrapTextureTargetOrigin)
+        }
+
+        //deformer desc
+        if ((this.deformerDesc && !other.deformerDesc) || (!this.deformerDesc && other.deformerDesc)) {
+            return false
+        }
+
+        if (this.deformerDesc && other.deformerDesc) {
+            if (!this.deformerDesc.isSame(other.deformerDesc)) {
+                return false
+            }
+        }
+
+        //layer desc
+        if ((this.layerDesc && !other.layerDesc) || (!this.layerDesc && other.layerDesc)) {
+            return false
+        }
+
+        if (this.layerDesc && other.layerDesc) {
+            if (!this.layerDesc.isSame(other.layerDesc)) {
+                return false
+            }
+        }
+
+        //model layer desc
+        if ((!this.modelLayersDesc && other.modelLayersDesc) || (this.modelLayersDesc && !other.modelLayersDesc)) {
+            return false
+        }
+
+        if (this.modelLayersDesc && other.modelLayersDesc) {
+            if (!this.modelLayersDesc.isSame(other.modelLayersDesc)) {
+                return false
+            }
+        }
+
+        //hsr desc
+        if ((!this.hsrDesc && other.hsrDesc) || (this.hsrDesc && !other.hsrDesc)) {
+            return false
+        }
+
+        if (this.hsrDesc && other.hsrDesc) {
+            const isSame = this.hsrType === "target" ? this.hsrDesc.hasSame(other.hsrDesc) : this.hsrDesc.isSame(other.hsrDesc)
+
+            if (!isSame) {
+                return false
+            }
+        }
+
+        //vertex color
+        if ((!this.forceVertexColor && other.forceVertexColor) || (this.forceVertexColor && !other.forceVertexColor)) {
+            return false
+        }
+
+        if (this.forceVertexColor && other.forceVertexColor) {
+            if (!this.forceVertexColor.isSame(other.forceVertexColor)) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    async wrapDeformer(mesh: FileMesh) {
+        if (this.deformerDesc) {
+            //load meshes
+            const meshMap = new Map<string,FileMesh>()
+
+            const meshPromises: (Promise<[string, Response | FileMesh]>)[] = []
+            meshPromises.push(promiseForMesh(this.deformerDesc.cage))
+            meshPromises.push(promiseForMesh(this.deformerDesc.targetCage))
+
+            const values = await Promise.all(meshPromises)
+            for (const [url, mesh] of values) {
+                if (mesh instanceof FileMesh) {
+                    meshMap.set(url, mesh)
+                } else {
+                    return mesh
+                }
+            }
+
+            const cage_mesh = meshMap.get(this.deformerDesc.cage)
+            if (!cage_mesh) {
+                throw new Error("not possible")
+            }
+            log(false, cage_mesh.coreMesh.numverts - cage_mesh.removeDuplicateVertices(0.01))
+
+            const targetCage_mesh = meshMap.get(this.deformerDesc.targetCage)
+            if (!targetCage_mesh) {
+                throw new Error("Should not happen")
+            }
+
+            //offset meshes
+            offsetMesh(cage_mesh, this.deformerDesc.cageOrigin)
+            offsetMesh(targetCage_mesh, this.deformerDesc.targetCageOrigin)
+
+            //deform self cage to match target cage
+            const targetDeformer = new RBFDeformerPatch(cage_mesh, targetCage_mesh, mesh)
+            await targetDeformer.solveAsync()
+            targetDeformer.deformMesh()
+        }
+    }
+
+    async wrapLayer(mesh: FileMesh) {
+        let the_ref_mesh = undefined
+
+        if (this.layerDesc && this.modelLayersDesc && this.modelLayersDesc.targetCages && this.modelLayersDesc.targetCages.length > 0 && this.modelLayersDesc.targetCFrames && this.modelLayersDesc.targetSizes && this.modelLayersDesc.layers) {
+            //load meshes
+            const meshMap = new Map<string,FileMesh>()
+
+            const meshPromises: (Promise<[string, Response | FileMesh]>)[] = []
+            meshPromises.push(promiseForMesh(this.layerDesc.reference))
+            meshPromises.push(promiseForMesh(this.layerDesc.cage))
+
+            const values = await Promise.all(meshPromises)
+            for (const [url, mesh] of values) {
+                if (mesh instanceof FileMesh) {
+                    meshMap.set(url, mesh)
+                } else {
+                    return mesh
+                }
+            }
+
+            const ref_mesh = meshMap.get(this.layerDesc.reference)
+            if (!ref_mesh) {
+                throw new Error("not possible")
+            }
+            ref_mesh.removeDuplicateVertices(0.01)
+            log(false, ref_mesh.coreMesh.numverts - ref_mesh.removeDuplicateVertices(0.01))
+
+            const cage_mesh = meshMap.get(this.layerDesc.cage)
+            if (!cage_mesh) {
+                throw new Error("Should not happen")
+            }
+            cage_mesh.removeDuplicateVertices(0.01)
+
+            //compare ref_mesh and cage_mesh, clothing should not be deformed if they are identical
+            let referenceAndCageIdentical = true
+
+            const distIndexArr = getDistIndexArray(ref_mesh, cage_mesh)
+            for (let i = 0; i < ref_mesh.coreMesh.numverts; i++) {
+                const distVert = distIndexArr[i]
+                if (distVert !== undefined) {
+                    const distVertPos = cage_mesh.coreMesh.getPos(distVert)
+                    const refVertPos = ref_mesh.coreMesh.getPos(i)
+
+                    const diff = magnitude(minus(refVertPos, distVertPos))
+                    if (diff > 0.001) {
+                        referenceAndCageIdentical = false
+                        break
+                    }
+                }
+            }
+
+            let noDeformation = false
+
+            if (!referenceAndCageIdentical) {
+                if (this.hsrDesc) {
+                    //get self layer index
+                    let layerIndex = 0
+
+                    for (let i = 0; i < this.modelLayersDesc.layers.length; i++) {
+                        if (this.modelLayersDesc.layers[i].isSame(this.layerDesc)) {
+                            layerIndex = i
+                            break
+                        }
+                    }
+
+                    //hsr
+                    mesh.stripLODS()
+
+                    const targetCage = cage_mesh
+                    offsetMesh(targetCage, this.layerDesc.cageOrigin)
+
+                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                    mesh.size
+
+                    const uvToHitsArray = await this.hsrDesc.compileUVsToHits()
+                    //console.log(uvToHitsArray)
+                    if (uvToHitsArray && !(uvToHitsArray instanceof Response) && uvToHitsArray.length > 0 && layerIndex < uvToHitsArray.length) {
+                        //get total accumulated
+                        const totalUvToHits = new Map<number,number>()
+                        for (let i = layerIndex + 1; i < uvToHitsArray.length; i++) {
+                            const uvToHitMap = uvToHitsArray[i]
+
+                            for (const key of uvToHitMap.keys()) {
+                                const current = totalUvToHits.get(key)
+                                const newValue = uvToHitMap.get(key)
+
+                                if ((newValue && current === undefined) || (newValue && current && newValue > current)) {
+                                    totalUvToHits.set(key, newValue)
+                                }
+                            }
+                        }
+
+                        doHSR(totalUvToHits, targetCage, mesh, false, `${this.layerDesc.cage}-${this.mesh}`)
+                    }
+                }
+
+                //DO DEFORMATION
+
+                //offset ref_mesh
+                offsetMesh(ref_mesh, this.layerDesc.referenceOrigin)
+
+                //create destination cage
+                let dist_mesh = ref_mesh.clone()
+                if (!dist_mesh) {
+                    throw new Error("this.layerDesc.reference is missing! That shouldn't be possible...")
+                }
+
+                //get target mesh
+                const targetMeshes = await this.modelLayersDesc.compileTargetMeshes()
+                if (!targetMeshes || (targetMeshes instanceof Response)) {
+                    warn(true, "Failed to get targetMeshes", targetMeshes)
+                    return targetMeshes
+                }
+
+                for (let i = 0; i < this.modelLayersDesc.layers.length; i++) {
+                    if (this.modelLayersDesc.layers[i].isSame(this.layerDesc)) {
+                        dist_mesh = targetMeshes[i]
+                        break
+                    }
+                }
+
+                if (FLAGS.SHOW_CAGE) {
+                    the_ref_mesh = dist_mesh
+                    the_ref_mesh.skinning.numskinnings = 0
+                    the_ref_mesh.skinning.bones = []
+                }
+
+                //layer the clothing
+                const layeredClothingCacheId = `${this.mesh}-${this.layerDesc.reference}`
+
+                switch (FLAGS.LAYERED_CLOTHING_ALGORITHM) {
+                    case "rbf":
+                        { 
+                            //autoskin
+                            const shouldAutoSkin = this.layerDesc.autoSkin === WrapLayerAutoSkin.EnabledOverride ||
+                                                    this.layerDesc.autoSkin === WrapLayerAutoSkin.EnabledPreserve && mesh.skinning.numskinnings < 1 ||
+                                                    mesh.skinning.numskinnings <= 0 //ISSUE: Roblox doesnt actually do this but we need to because our attachments are wrong
+                            if (FLAGS.AUTO_SKIN_EVERYTHING || shouldAutoSkin) {
+                                this.wasAutoSkinned = true
+                                const transferTo = ref_mesh.clone() //TODO: fix the issue caused when transferring directly to ref_mesh (rbf deformer fails to deform properly, last equipped body part is ignored or something)
+                                transferSkeleton(transferTo, dist_mesh)
+                                inheritSkeleton(mesh, transferTo)
+                            }
+
+                            //deform the mesh
+                            const rbfDeformer = new RBFDeformerPatch(ref_mesh, dist_mesh, mesh)
+                            if (rbfDeformer.refVerts.length === 0) {
+                                noDeformation = true
+                            }
+                            rbfDeformer.affectBones = FLAGS.USE_LOCAL_SKELETONDESC
+                            this.wasDeformed = true
+                            await rbfDeformer.solveAsync()
+                            rbfDeformer.deformMesh()
+
+                            break
+                        }
+                    case "linearnormal":
+                        layerClothingChunkedNormals(mesh, ref_mesh, dist_mesh, layeredClothingCacheId)
+                        break
+                    case "linearnormal2":
+                        layerClothingChunkedNormals2(mesh, ref_mesh, dist_mesh, layeredClothingCacheId)
+                        break
+                    case "linear":
+                    default:
+                        layerClothingChunked(mesh, ref_mesh, dist_mesh, layeredClothingCacheId)
+                        break
+                }
+            }
+            
+            if (referenceAndCageIdentical || noDeformation) {
+                //TODO: Place the attachment properly instead of doing this
+                let totalOffset = this.layerDesc.cageOrigin.inverse()
+                if (this.layerDesc.importOrigin) {
+                    totalOffset = totalOffset.multiply(this.layerDesc.importOrigin.inverse())
+                }
+                const rig = this.instance?.parent?.parent
+                if (rig) {
+                    const lowerTorso = rig.FindFirstChild("LowerTorso")
+
+                    if (lowerTorso) {
+                        const lowerTorsoSize = lowerTorso.PropOrDefault("Size", new Vector3()) as Vector3
+                        totalOffset = totalOffset.multiply(new CFrame(0,-lowerTorsoSize.Y, 0))
+                    }
+                }
+                offsetMesh(mesh, totalOffset)
+            }
+
+            if (!FLAGS.SHOW_CAGE) the_ref_mesh = undefined
+            if (FLAGS.HIDE_LAYERED_CLOTHING) return the_ref_mesh
+        }
+
+        return the_ref_mesh
+    }
+
+    async wrapTarget(mesh: FileMesh) {
+        if (this.target && this.targetOrigin && this.hsrDesc) {
+            //load meshes
+            const meshMap = new Map<string,FileMesh>()
+
+            const meshPromises: (Promise<[string, Response | FileMesh]>)[] = []
+            meshPromises.push(promiseForMesh(this.target))
+
+            const values = await Promise.all(meshPromises)
+            for (const [url, mesh] of values) {
+                if (mesh instanceof FileMesh) {
+                    meshMap.set(url, mesh)
+                } else {
+                    return mesh
+                }
+            }
+
+            mesh.stripLODS()
+
+            const targetCage = meshMap.get(this.target)!
+            targetCage.removeDuplicateVertices()
+            offsetMesh(targetCage, this.targetOrigin)
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            mesh.size
+
+            const uvToHitsArray = await this.hsrDesc.compileUVsToHits()
+            //console.log(uvToHitsArray)
+            if (uvToHitsArray && !(uvToHitsArray instanceof Response) && uvToHitsArray.length > 0) {
+                //get total accumulated
+                const totalUvToHits = new Map<number,number>()
+                for (const uvToHitMap of uvToHitsArray) {
+                    for (const key of uvToHitMap.keys()) {
+                        const current = totalUvToHits.get(key)
+                        const newValue = uvToHitMap.get(key)
+
+                        if ((newValue && current === undefined) || (newValue && current && newValue > current)) {
+                            totalUvToHits.set(key, newValue)
+                        }
+                    }
+                }
+
+                doHSR(totalUvToHits, targetCage, mesh, true, `${this.target}-${this.mesh}`)
+            }
+        }
+    }
+
+    async wrapTextureTransfer(mesh: FileMesh) {
+        if (this.wrapTextureTarget && this.wrapTextureTargetOrigin && this.wrapTextureMinBound && this.wrapTextureMaxBound) {
+            //load meshes
+            const meshMap = new Map<string,FileMesh>()
+
+            const meshPromises: (Promise<[string, Response | FileMesh]>)[] = []
+            meshPromises.push(promiseForMesh(this.wrapTextureTarget))
+
+            const values = await Promise.all(meshPromises)
+            for (const [url, mesh] of values) {
+                if (mesh instanceof FileMesh) {
+                    meshMap.set(url, mesh)
+                } else {
+                    return mesh
+                }
+            }
+
+            const targetCage = meshMap.get(this.wrapTextureTarget)!
+            offsetMesh(targetCage, this.wrapTextureTargetOrigin)
+            //// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            //mesh.size
+
+            for (let i = targetCage.coreMesh.numverts - 1; i >= 0; i--) {
+                const vertUV = targetCage.coreMesh.getUV(i)
+
+                targetCage.coreMesh.setUV(i, 
+                        [mapNum(vertUV[0], this.wrapTextureMinBound.X, this.wrapTextureMaxBound.X, 0, 1),
+                            mapNum(vertUV[1] + 0.05, this.wrapTextureMinBound.Y, this.wrapTextureMaxBound.Y, 0, 1)])
+
+                //if (vert.uv[0] < 0 || vert.uv[0] > 1 || vert.uv[1] < 0 || vert.uv[1] > 1) {
+                //    targetCage.deleteVert(i)
+                //    vert.uv = [-Infinity, -Infinity]
+                //}
+            }
+
+            if (targetCage.coreMesh.numfaces > 0) {
+                inheritUV(mesh, targetCage)
+            }
+
+            for (let i = mesh.coreMesh.numverts - 1; i >= 0; i--) {
+                const vertUV = mesh.coreMesh.getUV(i)
+
+                if (vertUV[0] < 0.05 || vertUV[0] > 0.95 || vertUV[1] < 0.05 || vertUV[1] > 0.95) {
+                //    targetCage.deleteVert(i)
+                    mesh.coreMesh.setColor(i, [255,255,255,0])
+                    //mesh.coreMesh.setUV(i, [-Infinity, -Infinity])
+                }
+            }
+        }
+    }
+
+    async getMesh(): Promise<FileMesh | Response> {
+        let mesh = undefined
+
+        const meshToLoad = this.mesh
+        if (meshToLoad) {
+            mesh = await API.Asset.GetMesh(meshToLoad, undefined)
+            if (mesh instanceof Response) {
+                warn(true, "Failed to get mesh for compileMesh", meshToLoad, mesh)
+                return mesh
+            }
+        } else {
+            switch (this.shape) {
+                case "wedge":
+                    mesh = buildWedge(0.5, 0.5, 0.5)
+                    break
+                case "block":
+                default:
+                    mesh = buildCube(0.5, 0.5, 0.5)
+                    break
+            }
+        }
+
+        return mesh
+    }
+
+    async compileMesh(): Promise<THREE.Mesh | THREE.SkinnedMesh | Response | undefined> {
+        let mesh = undefined
+
+        mesh = await this.getMesh()
+        if (mesh instanceof Response) return mesh
+
+        //inherit facs data from head
+        if (!mesh.facs && this.headMesh && mesh.skinning.numskinnings > 0) {
+            const headMesh = await API.Asset.GetMesh(this.headMesh, undefined, true)
+            if (headMesh instanceof Response) {
+                warn(true, "Failed to get headMesh for compileMesh", headMesh)
+                return headMesh
+            }
+            if (headMesh.facs) {
+                mesh.facs = headMesh.facs.clone()
+            }
+        }
+
+        //wrapdeformer (unused)
+        const wrapDeformerResult = await this.wrapDeformer(mesh)
+        if (wrapDeformerResult instanceof Response) return wrapDeformerResult
+
+        //wraplayer
+        const the_ref_mesh = await this.wrapLayer(mesh)
+        if (the_ref_mesh instanceof Response) return the_ref_mesh
+
+        //wraptarget
+        const wrapTargetResult = await this.wrapTarget(mesh)
+        if (wrapTargetResult instanceof Response) return wrapTargetResult
+
+        //wraptexturetransfer
+        const wrapTextureTransferResult = await this.wrapTextureTransfer(mesh)
+        if (wrapTextureTransferResult instanceof Response) return wrapTextureTransferResult
+
+        this.fileMesh = mesh
+
+        const geometry = fileMeshToTHREEGeometry(the_ref_mesh || mesh, this.canHaveSkinning, this.forceVertexColor)
+        this.toDispose.push(geometry)
+
+        //create and add mesh to scene
+        let threeMesh = undefined
+
+        if (geometry.attributes.skinWeight) {
+            threeMesh = new THREE.SkinnedMesh(geometry)
+            threeMesh.frustumCulled = false
+        } else {
+            threeMesh = new THREE.Mesh(geometry)
+        }
+        threeMesh.castShadow = true
+        threeMesh.geometry = geometry
+        threeMesh.name = this.instance?.PropOrDefault("Name", "Mesh") as string + "_" + this.instance?.id
+
+        threeMesh.scale.set(mesh.size[0], mesh.size[1], mesh.size[2])
+
+        this.compilationTimestamp = Date.now() / 1000
+
+        return threeMesh
+    }
+
+    fromInstance(child: Instance) {
+        this.instance = child
+
+        const wrapTextureTransfer = child.FindFirstChildOfClass("WrapTextureTransfer")
+        let toUse = child
+        if (child.parent && child.className === "Decal") {
+            toUse = child.parent
+        }
+
+        if (wrapTextureTransfer) {
+            this.fromWrapTextureTransfer(wrapTextureTransfer)
+        }
+        
+        switch (toUse.className) {
+            case "WedgePart":
+            case "Part": {
+                this.fromPart(toUse)
+    
+                break
+            }
+            case "MeshPart": {
+                this.fromMeshPart(toUse)
+
+                break
+            }
+        }
+
+        if (child.className === "Decal") {
+            this.forceVertexColor = undefined
+        }
+    }
+
+    fromPart(child: Instance) {
+        this.canHaveSkinning = false
+
+        if (child.className === "WedgePart") this.shape = "wedge"
+        switch (child.PropOrDefault("Shape", PartType.Block)) {
+            case PartType.Wedge:
+                this.shape = "wedge"
+                break
+        }
+
+        const specialMesh = child.FindFirstChildOfClass("SpecialMesh")
+        if (specialMesh) {
+            //this.size = specialMesh.Property("Scale") as Vector3
+
+            switch (specialMesh.Property("MeshType")) {
+                case MeshType.FileMesh: {
+                    this.mesh = specialMesh.Property("MeshId") as string
+                    break
+                }
+                case MeshType.Head: {
+                    this.mesh = "rbxasset://avatar/heads/head.mesh"
+                    //this.size = this.size.multiply(new Vector3(0.8, 0.8, 0.8))
+                    break
+                } //TODO: add the rest of the mesh types
+                default: {
+                    warn(false, `MeshType ${specialMesh.Property("MeshType")} is not supported`)
+                    break
+                }
+            }
+
+            const textureId = specialMesh.Prop("TextureId") as string
+            if (textureId.length > 0) {
+                const vertexColor = specialMesh.Prop("VertexColor") as Vector3
+                this.forceVertexColor = vertexColor.clone()
+            }
+        } else {
+            const affectedByHumanoid = isAffectedByHumanoid(child)
+            if (affectedByHumanoid && child.Prop("Name") !== "Head") { //clothing and stuff
+                const parent = child.parent
+                const humanoid = parent?.FindFirstChildOfClass("Humanoid")
+
+                if (parent && humanoid && humanoid.Property("RigType") === HumanoidRigType.R6) {
+                    //get mesh of body part based on CharacterMesh
+                    let characterMeshStr = null
+                    
+                    const children2 = parent.GetChildren()
+                    for (const child2 of children2) {
+                        if (child2.className === "CharacterMesh") {
+                            if (BodyPartNameToEnum[child.Property("Name") as string] === child2.Property("BodyPart")) {
+                                //TODO: check if the other properties are important
+                                characterMeshStr = "rbxassetid://" + (child2.Property("MeshId") as bigint)
+                            }
+                        }
+                    }
+
+                    if (!characterMeshStr) { //use default blocky meshes
+                        characterMeshStr = `rbxasset://avatar/meshes/${["","torso","leftarm","rightarm","leftleg","rightleg"][BodyPartNameToEnum[child.Property("Name") as string]]}.mesh`
+                    }
+
+                    this.mesh = characterMeshStr
+                } else { //This should never happen, r15 characters use meshparts
+
+                }
+            } else { //TODO: render as regular part (cube, cylinder, sphere, etc.)
+
+            }
+        }
+    }
+
+    fromMeshPart(child: Instance) {
+        this.canHaveSkinning = true
+
+        const meshIdStr = child.Property("MeshId") as string
+
+        this.mesh = meshIdStr
+        //this.size = child.Property("Size") as Vector3
+        this.scaleIsRelative = true
+
+        //check for surface appearance
+        const surfaceAppearance = child.FindLastChildOfClass("SurfaceAppearance")
+        if (surfaceAppearance) {
+            const color = surfaceAppearance.HasProperty("Color") ? surfaceAppearance.Prop("Color") as Color3 : new Color3(1,1,1)
+            const colorMap = surfaceAppearance.Prop("ColorMap") as string
+
+            if (colorMap.length > 0) {
+                this.forceVertexColor = new Vector3(color.R, color.G, color.B)
+            }
+        }
+
+        //find model
+        let model = undefined
+        if (child.parent?.className === "Model") {
+            model = child.parent
+        }
+        if (child.parent?.parent?.className === "Model") {
+            model = child.parent.parent
+        }
+
+        //head mesh
+        if (model) {
+            const head = model.FindFirstChild("Head")
+            if (head && head.className === "MeshPart") {
+                this.headMesh = head.Prop("MeshId") as string
+            }
+        }
+
+        //wrap layer
+        const wrapLayer = child.FindFirstChildOfClass("WrapLayer")
+        const wrapDeformer = child.FindFirstChildOfClass("WrapDeformer")
+        const wrapTarget = child.FindFirstChildOfClass("WrapTarget")
+
+        if (wrapTarget) {
+            this.target = wrapTarget.Prop("CageMeshId") as string
+            this.targetOrigin = wrapTarget.Prop("CageOrigin") as CFrame
+            this.hsrType = "target"
+            if (FLAGS.ENABLE_HSR && model && child.Prop("Name") !== "Head") this.hsrDesc = getModelHSRDesc(model)
+        }
+
+        if (wrapLayer && model) {
+            this.hsrType = "layer"
+            if (FLAGS.ENABLE_HSR) this.hsrDesc = getModelHSRDesc(model)
+            this.modelLayersDesc = getModelLayersDesc(model)
+            this.scaleIsRelative = false
+            //this.size = new Vector3(1,1,1)
+            const layerOrder = wrapLayer.Prop("Order") as number
+            const deformationReference = wrapLayer.Prop("ReferenceMeshId") as string
+            const referenceOrigin = wrapLayer.Prop("ReferenceOrigin") as CFrame
+            const deformationCage = wrapLayer.Prop("CageMeshId") as string
+            const cageOrigin = wrapLayer.Prop("CageOrigin") as CFrame
+
+            this.layerDesc = new WrapLayerDesc(deformationReference, referenceOrigin, deformationCage, cageOrigin)
+            if (wrapLayer.HasProperty("AutoSkin")) {
+                this.layerDesc.autoSkin = wrapLayer.Prop("AutoSkin") as number
+            }
+            if (wrapLayer.HasProperty("ImportOrigin")) {
+                this.layerDesc.importOrigin = wrapLayer.Prop("ImportOrigin") as CFrame
+            }
+            this.layerDesc.mesh = this.mesh
+            this.layerDesc.order = layerOrder
+        } else if (wrapDeformer && wrapTarget) {
+            this.scaleIsRelative = false
+
+            const cage = wrapTarget.Prop("CageMeshId") as string
+            const cageOrigin = wrapTarget.Prop("CageOrigin") as CFrame
+
+            const targetCage = wrapDeformer.Prop("CageMeshId") as string
+            const targetCageOrigin = wrapDeformer.Prop("CageOrigin") as CFrame
+
+            this.deformerDesc = new WrapDeformerDesc(cage, cageOrigin, targetCage, targetCageOrigin)
+        }
+    }
+
+    fromWrapTextureTransfer(child: Instance) {
+        this.wrapTextureMinBound = child.Prop("UVMinBound") as Vector2
+        this.wrapTextureMaxBound = child.Prop("UVMaxBound") as Vector2
+
+        const wrapTarget = child.parent?.parent?.FindFirstChildOfClass("WrapTarget")
+        if (wrapTarget) {
+            this.wrapTextureTarget = wrapTarget.Prop("CageMeshId") as string
+            this.wrapTextureTargetOrigin = (wrapTarget.Prop("CageOrigin") as CFrame).removeNaN()
+        }
+    }
+
+    dispose(renderer: THREE.WebGLRenderer) {
+        this.instance = undefined
+
+        this.clearToDispose()
+        this.disposeRenderLists(renderer)
+    }
+}

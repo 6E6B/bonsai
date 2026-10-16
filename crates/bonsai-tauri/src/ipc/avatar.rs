@@ -552,3 +552,110 @@ pub(super) fn run(
     };
     Some(r)
 }
+
+/// Whose avatar the 3D viewer shows.
+#[derive(Clone, Debug, serde::Deserialize, Type)]
+#[serde(tag = "kind", content = "id", rename_all = "camelCase")]
+pub enum AvatarSource {
+    /// The active account's avatar.
+    Me,
+    /// A user's current avatar. Public.
+    User(Id),
+    /// A saved outfit. Public. The id is a string because outfit ids can exceed 2^53.
+    Outfit(String),
+}
+
+/// What the 3D viewer needs to build an avatar: rig, assets, BrickColor ids and scales.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct Avatar3dView {
+    pub loading: bool,
+    pub error: Option<String>,
+    /// "R6" or "R15"; empty until loaded.
+    pub rig: String,
+    pub assets: Vec<WornView>,
+    /// Equipped emotes; `typeId` is the slot.
+    pub emotes: Vec<WornView>,
+    /// BrickColor ids: head, torso, left arm, right arm, left leg, right leg.
+    pub colors: Vec<i32>,
+    pub scales: Avatar3dScales,
+    /// Changes when the avatar was read again.
+    pub rev: f64,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct Avatar3dScales {
+    pub height: f64,
+    pub width: f64,
+    pub head: f64,
+    pub depth: f64,
+    pub proportion: f64,
+    pub body_type: f64,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn avatar_3d(core: State<'_, Arc<Core>>, source: AvatarSource) -> Avatar3dView {
+    let r = match source {
+        AvatarSource::Me => core.avatar(viewer(&core)),
+        AvatarSource::User(id) => core.user_look(id.0),
+        AvatarSource::Outfit(id) => match id.parse() {
+            Ok(id) => core.outfit(id),
+            Err(_) => Res {
+                error: Some("Not an outfit id.".to_owned()),
+                ..Res::default()
+            },
+        },
+    };
+    avatar_3d_view(r)
+}
+
+fn avatar_3d_view(r: Res<Look>) -> Avatar3dView {
+    let look = r.data.as_deref();
+    let worn = |a: &rbx_core::avatar::Worn| WornView {
+        id: Id(a.id),
+        name: a.name.clone(),
+        type_id: a.type_id as i32,
+        type_name: a.type_name.clone(),
+        r15_only: rbx_core::avatar::r15_only(a.type_id),
+        layer: a.layer,
+    };
+    Avatar3dView {
+        loading: r.loading,
+        error: r.error.clone(),
+        rig: look.map(|l| l.rig.clone()).unwrap_or_default(),
+        assets: look
+            .map(|l| l.assets.iter().map(worn).collect())
+            .unwrap_or_default(),
+        emotes: look
+            .map(|l| {
+                l.emotes
+                    .iter()
+                    .map(|e| WornView {
+                        id: Id(e.id),
+                        name: e.name.clone(),
+                        type_id: e.slot,
+                        type_name: "Emote".to_owned(),
+                        r15_only: true,
+                        layer: None,
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
+        colors: look
+            .map(|l| Part::ALL.iter().map(|&p| l.colors.get(p)).collect())
+            .unwrap_or_default(),
+        scales: look
+            .map(|l| Avatar3dScales {
+                height: l.scales.height,
+                width: l.scales.width,
+                head: l.scales.head,
+                depth: l.scales.depth,
+                proportion: l.scales.proportion,
+                body_type: l.scales.body_type,
+            })
+            .unwrap_or_default(),
+        rev: r.fetched_at as f64,
+    }
+}

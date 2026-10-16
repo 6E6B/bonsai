@@ -1,0 +1,293 @@
+import { AssetTypeNameToId, AssetTypes } from "./constant"
+
+type VecXYZ = {X: number, Y: number, Z: number}
+type Vecxyz = {x: number, y: number, z: number}
+
+function toVecXYZ(vec: Vecxyz) {
+    return {
+        X: vec.x,
+        Y: vec.y,
+        Z: vec.z
+    }
+}
+
+/** @category Outfit */
+type AssetMetaJson = {
+    version?: number
+
+    position?: VecXYZ | Vecxyz | null,
+    rotation?: VecXYZ | Vecxyz | null,
+    scale?: VecXYZ | Vecxyz | null,
+    order?: number | null
+    puffiness?: number | null
+    headShape?: "Invalid" | string | number
+    staticFacialAnimation?: boolean
+}
+
+/** @category Outfit */
+type AssetTypeJson = { id?: number; name?: string }
+
+/** @category Outfit */
+type AssetJson = {
+    id?: number,
+    name?: string,
+    assetType?: AssetTypeJson,
+    currentVersionId?: number,
+    meta?: AssetMetaJson,
+    supportsHeadShapes?: boolean,
+}
+
+type ItemType = "Asset" | "Bundle" | "Outfit" | "Look" | "Avatar" | "None"
+/** @category Outfit */
+export class ItemInfo {
+    itemType: ItemType
+    type: string
+    id: number | string
+    name: string
+    bundledAssets: number[] = []
+    creatorId?: number
+
+    price?: number
+    limitedType?: "Limited" | "LimitedUnique"
+    offsale?: boolean
+    supportsHeadShapes?: boolean
+    headShape?: string
+
+    expirationTime?: Date
+    acquisitionTime?: Date
+    
+    constructor(itemType: ItemType, type: string, id: number | string, name: string, supportsHeadShapes?: boolean) {
+        this.itemType = itemType
+        this.type = type
+        this.id = id
+        this.name = name
+        this.supportsHeadShapes = supportsHeadShapes
+    }
+}
+
+/** @category Outfit */
+class AssetType {
+    _id: number //67
+    _name: string //JacketAccessory
+
+    constructor() {
+        this._id = 2
+        this._name = "TShirt"
+    }
+
+    clone() {
+        const copy = new AssetType()
+        copy.id = this.id
+        copy._name = this._name
+        
+        return copy
+    }
+
+    toJson() {
+        return {
+            "id": this.id,
+            "name": this._name,
+        }
+    }
+
+    fromJson(assetTypeJson: AssetTypeJson) {
+        if (assetTypeJson.id)
+            this.id = assetTypeJson.id
+        if (assetTypeJson.name)
+            this._name = assetTypeJson.name
+    }
+
+    set id(newId) {
+        this._id = newId
+        this._name = AssetTypes[Number(newId)]
+    }
+
+    get id() {
+        return this._id
+    }
+
+    set name(newName: string) {
+        const newId = AssetTypeNameToId.get(newName)
+        this._id = newId || this._id
+        this._name = newName
+    }
+
+    get name() {
+        return this._name
+    }
+}
+
+function cloneVecXYZ(vec: VecXYZ): VecXYZ {
+    return {X: vec.X, Y: vec.Y, Z: vec.Z}
+}
+
+/** @category Outfit */
+class AssetMeta {
+    version: number
+    order?: number
+    puffiness?: number //deprecated by roblox
+
+    position?: VecXYZ
+    rotation?: VecXYZ
+    scale?: VecXYZ
+
+    headShape?: string
+    staticFacialAnimation?: boolean
+
+    constructor() {
+        this.version = 1
+    }
+
+    clone() {
+        const copy = new AssetMeta()
+        copy.version = this.version
+        copy.order = this.order
+        copy.puffiness = this.puffiness
+        copy.headShape = this.headShape
+        copy.staticFacialAnimation = this.staticFacialAnimation
+
+        if (this.position) copy.position = cloneVecXYZ(this.position)
+        if (this.rotation) copy.rotation = cloneVecXYZ(this.rotation)
+        if (this.scale) copy.scale = cloneVecXYZ(this.scale)
+
+        return copy
+    }
+
+    toJson() {
+        const toReturn: AssetMetaJson = {
+            "version": this.version,
+            "position": this.position,
+            "rotation": this.rotation,
+            "scale": this.scale,
+            "headShape": this.headShape,
+            "staticFacialAnimation": this.staticFacialAnimation,
+        }
+
+        if (this.order || this.order == 0) {
+            toReturn["order"] = this.order
+        }
+        if (this.puffiness || this.puffiness == 0) {
+            toReturn["puffiness"] = this.puffiness
+        }
+
+        return toReturn
+    }
+
+    fromJson(assetMetaJson: AssetMetaJson) {
+        if (assetMetaJson.version !== undefined) {
+            this.version = assetMetaJson.version
+        }
+
+        if (assetMetaJson.order !== undefined && assetMetaJson.order !== null) {
+            this.order = assetMetaJson.order
+        }
+        if (assetMetaJson.puffiness !== undefined && assetMetaJson.puffiness !== null) {
+            this.puffiness = assetMetaJson.puffiness
+        }
+
+        if (assetMetaJson.position && 'X' in assetMetaJson.position) {
+            this.position = assetMetaJson.position as VecXYZ
+        } else if (assetMetaJson.position) {
+            this.position = toVecXYZ(assetMetaJson.position as Vecxyz)
+        }
+        if (assetMetaJson.rotation && 'X' in assetMetaJson.rotation) {
+            this.rotation = assetMetaJson.rotation as VecXYZ
+        } else if (assetMetaJson.rotation) {
+            this.rotation = toVecXYZ(assetMetaJson.rotation as Vecxyz)
+        }
+        if (assetMetaJson.scale && 'X' in assetMetaJson.scale) {
+            this.scale = assetMetaJson.scale as VecXYZ
+        } else if (assetMetaJson.scale) {
+            this.scale = toVecXYZ(assetMetaJson.scale as Vecxyz)
+        }
+
+        if (assetMetaJson.headShape && assetMetaJson.headShape !== "Invalid") {
+            this.headShape = String(assetMetaJson.headShape)
+        }
+
+        this.staticFacialAnimation = assetMetaJson.staticFacialAnimation
+    }
+}
+
+let uuidCount = 0
+
+/** @category Outfit */
+class Asset {
+    id: number = 0
+    name: string = "Error"
+
+    assetType: AssetType = new AssetType()
+    currentVersionId?: number
+
+    meta?: AssetMeta //only present on layered clothing and positioned assets
+
+    supportsHeadShapes?: boolean
+
+    //class only
+    notOwned?: boolean
+    _uuid = uuidCount++
+
+    clone() {
+        const copy = new Asset()
+        copy.id = this.id
+        copy.name = this.name
+
+        copy.assetType = this.assetType.clone()
+        copy.currentVersionId = this.currentVersionId
+
+        if (this.meta) copy.meta = this.meta.clone()
+
+        copy.supportsHeadShapes = this.supportsHeadShapes
+
+        copy.notOwned = this.notOwned
+        copy._uuid = this._uuid
+
+        return copy
+    }
+
+    toJson() {
+        const toReturn: AssetJson = {
+            "id": this.id,
+            "name": this.name,
+            "assetType": this.assetType.toJson(),
+            "currentVersionId": this.currentVersionId,
+            "supportsHeadShapes": this.supportsHeadShapes,
+        }
+
+        if (this.meta) {
+            toReturn["meta"] = this.meta.toJson()
+        }
+
+        return toReturn
+    }
+
+    fromJson(assetJson: AssetJson) {
+        this.id = Number(assetJson.id)
+        if (assetJson.name)
+            this.name = assetJson.name
+
+        this.assetType = new AssetType()
+        if (assetJson.assetType)
+            this.assetType.fromJson(assetJson.assetType)
+
+        this.currentVersionId = assetJson.currentVersionId
+        
+        if (assetJson.meta) {
+            this.meta = new AssetMeta()
+            this.meta.fromJson(assetJson.meta)
+        }
+
+        this.supportsHeadShapes = assetJson.supportsHeadShapes
+    }
+
+    setOrder(order: number) {
+        if (!this.meta) {
+            this.meta = new AssetMeta()
+        }
+
+        this.meta.order = order
+    }
+}
+
+export { AssetType, AssetMeta, Asset }
+export type { AssetTypeJson, AssetMetaJson, AssetJson }

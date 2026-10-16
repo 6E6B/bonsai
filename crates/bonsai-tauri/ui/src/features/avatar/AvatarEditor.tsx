@@ -1,4 +1,5 @@
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
+import { AvatarViewer } from "~/lib/avatar3d/viewer"
 import { useSubTabs } from "~/lib/commands/hooks"
 import { menuItem, run } from "~/lib/commands/registry"
 import {
@@ -144,9 +145,7 @@ export default function AvatarEditor() {
     >
       <div class="flex items-start gap-6">
         <aside class="sticky top-4 flex w-64 shrink-0 flex-col gap-3">
-          <ContextMenu items={previewMenu()}>
-            <Thumbnail alt="Your avatar" fallback="avatar" src={preview()} />
-          </ContextMenu>
+          <AvatarViewer source={{ kind: "me" }} image={preview()} alt="Your avatar" menu={previewMenu()} controls />
           <div class="flex items-center justify-between">
             <SegmentedControl
               aria-label="Body type"
@@ -231,6 +230,7 @@ export default function AvatarEditor() {
                 {(e) => (
                   <ContextMenu
                     items={[
+                      menuItem("avatar.play", { arg: `emote.${e.id}`, label: "Play in 3D", icon: "play" }),
                       ...itemMenu(e.id),
                       menuItem("avatar.emote", { arg: String(e.typeId), label: "Clear slot" }),
                     ]}
@@ -240,6 +240,15 @@ export default function AvatarEditor() {
                       title={e.name}
                       subtitle={e.typeName}
                       onClick={() => run("market.open", String(e.id))}
+                      actionsOnHover
+                      actions={
+                        <IconButton
+                          size="sm"
+                          icon="play"
+                          label="Play in 3D"
+                          onClick={() => run("avatar.play", `emote.${e.id}`)}
+                        />
+                      }
                     />
                   </ContextMenu>
                 )}

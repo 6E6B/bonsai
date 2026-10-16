@@ -1,4 +1,5 @@
 import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js"
+import { AvatarViewer } from "~/lib/avatar3d/viewer"
 import { useListCursor } from "~/lib/commands/hooks"
 import { menuItem, run } from "~/lib/commands/registry"
 import { commands, type List, type LookView, type OutfitView } from "~/lib/ipc/bindings"
@@ -88,7 +89,13 @@ export function Outfits(props: { userId: number; mine: boolean; outfits: List<Ou
     <div class="@container">
       <div class="flex flex-col gap-6 @3xl:flex-row @3xl:items-start">
         <aside class="flex w-full flex-col gap-3 @3xl:sticky @3xl:top-4 @3xl:w-72 @3xl:shrink-0">
-          <Thumbnail alt={title()} fallback="avatar" src={image(picked(), true)} class="w-full max-w-72" />
+          <AvatarViewer
+            class="w-full max-w-72"
+            source={picked() === NOW ? { kind: "user", id: props.userId } : { kind: "outfit", id: picked() }}
+            image={image(picked(), true)}
+            alt={title()}
+            controls
+          />
           <div class="flex items-start justify-between gap-2">
             <div class="flex min-w-0 flex-col">
               <h3 class="truncate font-medium">{title()}</h3>

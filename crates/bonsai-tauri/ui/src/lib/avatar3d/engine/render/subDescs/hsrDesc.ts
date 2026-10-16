@@ -1,0 +1,272 @@
+import { HSR } from "../../mesh/hidden-surface-removal";
+import { FileMesh } from "../../mesh/mesh";
+import { hashVec2, offsetMesh } from "../../mesh/mesh-deform";
+import { FLAGS } from "../../misc/flags";
+import { time, timeEnd } from "../../misc/logger";
+import { AlphaMode } from "../../rblx/constant";
+import type { CFrame, Connection, Instance } from "../../rblx/rbx";
+import { arrIsSameOrder, arrIsSameWrapLayer, WrapLayerDesc } from "./layersDesc";
+import { promiseForMesh } from "./meshDesc";
+import { Cache } from "../../api";
+
+const modelHSRDescs = new Map<Instance,HSRDesc>()
+const CACHE_uvToHits = new Cache<string,Map<number,number>>()
+
+export class HSRDesc {
+    layers?: WrapLayerDesc[]
+    layerTransparent?: boolean[]
+
+    uvsToHits?: Promise<Map<number,number>[] | Response>
+
+    destroyConnection: Connection | undefined
+
+    isSame(other: HSRDesc) {
+        if ((!this.layers && other.layers) || (this.layers && !other.layers)) {
+            return false
+        }
+
+        if (this.layers && other.layers) {
+            if (!arrIsSameWrapLayer(this.layers, other.layers)) {
+                return false
+            }
+        }
+
+        if ((!this.layerTransparent && other.layerTransparent) || (this.layerTransparent && !other.layerTransparent)) {
+            return false
+        }
+
+        if (this.layerTransparent && other.layerTransparent) {
+            if (!arrIsSameOrder(this.layerTransparent, other.layerTransparent)) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    hasSame(other: HSRDesc) {
+        if ((!this.layers && other.layers) || (this.layers && !other.layers)) {
+            return false
+        }
+
+        if ((!this.layerTransparent && other.layerTransparent) || (this.layerTransparent && !other.layerTransparent)) {
+            return false
+        }
+
+        if (this.layers && other.layers && this.layerTransparent && other.layerTransparent) {
+            if (this.layers.length !== other.layers.length) return false
+            if (this.layerTransparent.length !== other.layerTransparent.length) return false
+
+            for (const layer of this.layers) {
+                let foundLayer = false
+                const selfIndex = this.layers.indexOf(layer)
+
+                for (const otherLayer of other.layers) {
+                    const otherIndex = other.layers.indexOf(otherLayer)
+
+                    if (layer.isSame(otherLayer)) {
+                        foundLayer = true
+
+                        if (this.layerTransparent[selfIndex] !== other.layerTransparent[otherIndex]) {
+                            return false
+                        }
+
+                        break
+                    }
+                }
+
+                if (!foundLayer) {
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
+
+    fromModel(model: Instance) {
+        this.layerTransparent = []
+
+        const layerTransparencyMap = new Map<WrapLayerDesc,boolean>()
+
+        //underneath wrap layers
+        const underneathLayers: WrapLayerDesc[] = []
+
+        for (const otherWrapLayer of model.GetDescendants()) {
+            if (otherWrapLayer.className === "WrapLayer") {
+                const layerOrder = otherWrapLayer.Prop("Order") as number
+                const deformationReference = otherWrapLayer.Prop("ReferenceMeshId") as string
+                const referenceOrigin = otherWrapLayer.Prop("ReferenceOrigin") as CFrame
+                const deformationCage = otherWrapLayer.Prop("CageMeshId") as string
+                const cageOrigin = otherWrapLayer.Prop("CageOrigin") as CFrame
+
+                const underneathLayer = new WrapLayerDesc(deformationReference, referenceOrigin, deformationCage, cageOrigin)
+                underneathLayer.order = layerOrder
+                if (otherWrapLayer.HasProperty("AutoSkin")) {
+                    underneathLayer.autoSkin = otherWrapLayer.Prop("AutoSkin") as number
+                }
+                if (otherWrapLayer.HasProperty("ImportOrigin")) {
+                    underneathLayer.importOrigin = otherWrapLayer.Prop("ImportOrigin") as CFrame
+                }
+                const parent = otherWrapLayer.parent
+                if (parent && parent.className === "MeshPart") {
+                    underneathLayer.mesh = parent.Prop("MeshId") as string
+                }
+
+                let isTransparent = false
+
+                const surfaceAppearance = parent?.FindFirstChildOfClass("SurfaceAppearance")
+                if (surfaceAppearance) {
+                    const surfaceAppearanceAlphaMode = surfaceAppearance.Prop("AlphaMode") as number
+                    if (surfaceAppearanceAlphaMode === AlphaMode.Transparency) {
+                        isTransparent = true
+                    }
+                }
+
+                layerTransparencyMap.set(underneathLayer, isTransparent)
+                underneathLayers.push(underneathLayer)
+            }
+        }
+
+        this.layers = underneathLayers.sort((a,b) => {return (a.order || 0) - (b.order || 0)})
+
+        for (const layer of this.layers) {
+            this.layerTransparent.push(layerTransparencyMap.get(layer)!)
+        }
+    }
+
+    async createUVsToHits() {
+        const uvsToHits = []
+
+        //load meshes
+        const meshMap = new Map<string,FileMesh>()
+
+        const meshPromises: (Promise<[string, Response | FileMesh]>)[] = []
+        
+        if (!this.layers) {
+            throw new Error("HSRDesc has not had fromModel() called")
+        }
+        for (const enclosedLayer of this.layers) {
+            const layer = enclosedLayer
+            const cacheId = `${layer.mesh}-${layer.reference}-${layer.cage}`
+
+            const cacheEntry = FLAGS.CACHE_HSR_HITS ? CACHE_uvToHits.get(cacheId) : undefined
+
+            if (!cacheEntry) {
+                meshPromises.push(promiseForMesh(enclosedLayer.cage, true))
+                meshPromises.push(promiseForMesh(enclosedLayer.reference, true))
+                if (enclosedLayer.mesh) meshPromises.push(promiseForMesh(enclosedLayer.mesh, true))
+            }
+        }
+
+        const values = await Promise.all(meshPromises)
+        for (const [url, mesh] of values) {
+            if (mesh instanceof FileMesh) {
+                meshMap.set(url, mesh)
+            } else {
+                return mesh
+            }
+        }
+
+        //for each layer
+        time("HSRDesc.createUVsToHits.layers")
+        for (const layer of this.layers) {
+            const index = this.layers.indexOf(layer)
+            const isTransparent = this.layerTransparent ? this.layerTransparent[index] : false
+
+            const cacheId = `${layer.mesh}-${layer.reference}-${layer.cage}`
+
+            const cacheEntry = FLAGS.CACHE_HSR_HITS ? CACHE_uvToHits.get(cacheId) : undefined
+
+            const latestUvToHitsMap = cacheEntry ? cacheEntry : new Map<number,number>()
+
+            if (!cacheEntry && !isTransparent) {
+                const cage = meshMap.get(layer.cage)?.clone()
+                const reference = meshMap.get(layer.reference)?.clone()
+                const mesh = layer.mesh ? meshMap.get(layer.mesh) : undefined
+
+                if (!cage || !reference) {
+                    throw new Error("this isnt possible, shut up typescript")
+                }
+
+                offsetMesh(reference, layer.referenceOrigin)
+                offsetMesh(cage, layer.cageOrigin)
+
+                if (mesh) {
+                    const hsr = new HSR(mesh, reference, cage)
+                    hsr.cullType = "back"
+                    const innerHits = hsr.calculateInnerHits()
+                    for (let i = 0; i < reference.coreMesh.numfaces; i++) {
+                        const face = reference.coreMesh.getFace(i)
+                        const auv = hashVec2(...reference.coreMesh.getUV(face[0]))
+                        const buv = hashVec2(...reference.coreMesh.getUV(face[1]))
+                        const cuv = hashVec2(...reference.coreMesh.getUV(face[2]))
+
+                        const innerHit = innerHits[i] / hsr.rayCount
+
+                        //a
+                        const originalInnerHitA = latestUvToHitsMap.get(auv)
+                        if (originalInnerHitA === undefined || originalInnerHitA > innerHit) {
+                            latestUvToHitsMap.set(auv, innerHit)
+                        }
+
+                        //b
+                        const originalInnerHitB = latestUvToHitsMap.get(buv)
+                        if (originalInnerHitB === undefined || originalInnerHitB > innerHit) {
+                            latestUvToHitsMap.set(buv, innerHit)
+                        }
+
+                        //c
+                        const originalInnerHitC = latestUvToHitsMap.get(cuv)
+                        if (originalInnerHitC === undefined || originalInnerHitC > innerHit) {
+                            latestUvToHitsMap.set(cuv, innerHit)
+                        }
+                    }
+                }
+
+                CACHE_uvToHits.set(cacheId, latestUvToHitsMap)
+            }
+            uvsToHits.push(latestUvToHitsMap)
+        }
+        timeEnd("HSRDesc.createUVsToHits.layers")
+
+        return uvsToHits
+    }
+
+    async compileUVsToHits() {
+        if (!this.layers) {
+            throw new Error("HSRDesc has not had fromModel() called")
+        }
+
+        if (this.uvsToHits) {
+            return this.uvsToHits
+        }
+
+        this.uvsToHits = new Promise((resolve) => {
+            this.createUVsToHits().then((result) => {
+                resolve(result)
+            })
+        })
+        
+        return this.uvsToHits
+    }
+}
+
+export function getModelHSRDesc(model: Instance) {
+    const newHSRDesc = new HSRDesc()
+    newHSRDesc.fromModel(model)
+
+    const oldLayerDesc = modelHSRDescs.get(model)
+    if (oldLayerDesc && newHSRDesc.isSame(oldLayerDesc)) {
+        return oldLayerDesc
+    } else {
+        oldLayerDesc?.destroyConnection?.Disconnect()
+        modelHSRDescs.set(model, newHSRDesc)
+        newHSRDesc.destroyConnection = model.Destroying.Connect(() => {
+            modelHSRDescs.delete(model)
+            newHSRDesc.destroyConnection?.Disconnect()
+            newHSRDesc.destroyConnection = undefined
+        })
+        return newHSRDesc
+    }
+}

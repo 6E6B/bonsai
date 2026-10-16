@@ -1,0 +1,180 @@
+import * as THREE from 'three'
+import type { CFrame, Instance } from "../rblx/rbx"
+import { disposeMesh } from './renderer';
+import { rad } from '../misc/misc';
+import { API } from '../api';
+import type { Vec3 } from '../mesh/mesh';
+import type { RBXRendererScene } from './rendererScene';
+import { finishManagedTexture, type ManagedTexture } from './textureManager';
+
+export const RenderDescsToRegister: (typeof RenderDesc)[] = []
+export const RenderDescClassTypes = new Map<string, typeof RenderDesc>()
+
+function getRenderDescForClass(className: string): typeof RenderDesc | undefined {
+    return RenderDescClassTypes.get(className)
+}
+
+export function getRenderDescForInstance(instance: Instance): typeof RenderDesc | undefined {
+    const potentialRenderDesc = getRenderDescForClass(instance.className)
+    if (potentialRenderDesc && potentialRenderDesc.shouldRenderInstance(instance)) return potentialRenderDesc
+    return undefined
+}
+
+export function setTHREEObjectCF(threeObject: THREE.Object3D, cframe: CFrame) {
+    threeObject.position.set(cframe.Position[0], cframe.Position[1], cframe.Position[2])
+    threeObject.rotation.order = "YXZ"
+    threeObject.rotation.x = rad(cframe.Orientation[0])
+    threeObject.rotation.y = rad(cframe.Orientation[1])
+    threeObject.rotation.z = rad(cframe.Orientation[2])
+}
+
+export async function getTexture(texture?: string, colorSpace: THREE.ColorSpace = THREE.SRGBColorSpace): Promise<THREE.Texture | undefined> {
+    if (texture) {
+        const source = texture.replace(".dds", ".png")
+
+        const image = await API.Generic.LoadImage(source)
+        if (image) {
+            const texture = new THREE.Texture(image)
+            texture.wrapS = THREE.ClampToEdgeWrapping
+            texture.wrapT = THREE.ClampToEdgeWrapping
+            texture.colorSpace = colorSpace
+            
+            texture.needsUpdate = true
+            
+            return texture
+        }
+    }
+
+    return undefined
+}
+
+export type THREEDisposable = THREE.Texture | THREE.BufferGeometry | THREE.Material | THREE.InstancedMesh | THREE.WebGLRenderTarget
+
+export class DisposableDesc {
+    toDispose: THREEDisposable[] = []
+    managedTextures: ManagedTexture[] = []
+
+    disposeMesh(scene: THREE.Scene, mesh: THREE.Mesh) {
+        disposeMesh(scene, mesh)
+    }
+
+    disposeMeshes(scene: THREE.Scene, meshes: THREE.Mesh[]) {
+        for (const mesh of meshes) {
+            this.disposeMesh(scene, mesh)
+        }
+    }
+
+    disposeRenderLists(renderer: THREE.WebGLRenderer) {
+        renderer.renderLists.dispose()
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    dispose(_renderer: THREE.WebGLRenderer, _scene: THREE.Scene) {
+        throw new Error("Virtual method dispose called")
+    }
+
+    clearToDispose() {
+        for (const disposeable of this.toDispose) {
+            disposeable.dispose()
+        }
+        this.toDispose = []
+
+        for (const managedTexture of this.managedTextures) {
+            finishManagedTexture(managedTexture.url, managedTexture.params)
+        }
+        this.managedTextures = []
+    }
+
+    removeFromToDispose(disposable: THREEDisposable) {
+        const index = this.toDispose.indexOf(disposable)
+        if (index > -1) {
+            this.toDispose.splice(index, 1)
+        }
+    }
+}
+
+/**
+ * Abstract class used to describe all rendered instances
+ */
+export class RenderDesc extends DisposableDesc {
+    static classTypes: string[] = []
+
+    renderScene: RBXRendererScene
+    results?: THREE.Object3D[]
+    instance?: Instance
+
+    compiled: boolean = false
+    failed: boolean = false
+
+    constructor(renderScene: RBXRendererScene) {
+        super()
+        this.renderScene = renderScene
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    isSame(_newDesc: RenderDesc): boolean {
+        throw new Error("Virtual method isSame called")
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    needsRegeneration(_newDesc: RenderDesc): boolean {
+        throw new Error("Virtual method needsRegeneration called")
+    }
+
+    fromRenderDesc(newDesc: RenderDesc) {
+        if (this.needsRegeneration(newDesc)) {
+            throw new Error("These RenderableDesc objects have differences that require recompilation")
+        }
+
+        this.virtualFromRenderDesc(newDesc)
+    }
+
+    transferFrom(oldDesc: RenderDesc) {
+        this.virtualTransferFrom(oldDesc)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    virtualTransferFrom(_oldDesc: RenderDesc) {
+        //things that should be transferred after recompilation should be here (for example individual particles in emitters)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    virtualFromRenderDesc(_newDesc: RenderDesc) {
+        //everything that doesnt require compilation should be here
+        throw new Error("Virtual method virtualFromRenderDesc called")
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    fromInstance(_child: Instance) {
+        throw new Error("Virtual method fromInstance called")
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async compileResults(_renderer: THREE.WebGLRenderer, _scene: THREE.Scene): Promise<THREE.Object3D[] | Response | undefined> {
+        throw new Error("Virtual method compileResults called")
+    }
+
+    updateResults() {
+        throw new Error("Virtual method updateResults called")
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    moveLoose(_diff: Vec3) {
+        //here loose things such as particles and trails should move (used to simulate movement without actually moving character)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    static shouldRenderInstance(_instance: Instance) {
+        return true
+    }
+
+    static register() {
+        for (const classType of this.classTypes) {
+            RenderDescClassTypes.set(classType, this)
+        }
+    }
+
+    static() {
+        return this.constructor as typeof RenderDesc
+    }
+}

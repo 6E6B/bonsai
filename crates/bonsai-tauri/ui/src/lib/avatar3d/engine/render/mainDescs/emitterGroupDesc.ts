@@ -1,0 +1,1210 @@
+import * as THREE from 'three'
+import { CFrame, Color3, ColorSequence, Instance, NumberRange, NumberSequence, NumberSequenceKeypoint, Vector2, Vector3 } from "../../rblx/rbx";
+import { DisposableDesc, RenderDesc } from "./../renderDesc";
+import { mathRandom, rad, RNG, specialClamp } from '../../misc/misc';
+import { RBXRendererScene } from './../rendererScene';
+import { NormalId, ParticleEmitterShapeInOut, ParticleFlipbookLayout, ParticleFlipbookMode, ParticleOrientation } from '../../rblx/constant';
+import { basicParticle_fragmentShader, fire_fragmentShader, particle_fragmentShader, particle_fragmentShader_additiveOld, particle_vertexShader, smoke_fragmentShader, sparkles2016_fragmentShader, sparkles_fragmentShader } from './../shaders/particleShader';
+import { AttachmentWrapper } from '../../rblx/instance/Attachment';
+import { FLAGS } from '../../misc/flags';
+import type { Vec3 } from '../../mesh/mesh';
+import type { BasePartWrapper } from '../../rblx/instance/BasePart';
+import { getManagedTexture } from '../textureManager';
+
+function randomBetween(min: number, max: number): number {
+    return Math.random() * (max - min) + min
+}
+
+function velocityFromSpread(speed: number, spread: Vector2) {
+	const theta = spread.X
+	const phi = spread.Y
+
+    const velocity = new Vector3(
+        -speed * Math.sin(phi),
+        -speed * Math.cos(phi) * Math.sin(theta),
+        -speed * Math.cos(phi) * Math.cos(theta)
+    )
+
+	return velocity
+}
+
+function pingPong(t: number, maxLength: number): number {
+    const repeat = t % (2 * maxLength)
+    return maxLength - Math.abs(repeat - maxLength)
+}
+
+class Particle {
+    lifetime: number
+    time: number = 0
+
+    position: Vector3
+    rotation: number
+
+    velocity: Vector3
+    rotationSpeed: number
+    
+    seed: number = Math.random()
+
+    constructor(lifetime: number, position: Vector3, rotation: number, velocity: Vector3, rotationSpeed: number) {
+        this.lifetime = lifetime
+        this.position = position
+        this.rotation = rotation
+        this.velocity = velocity
+        this.rotationSpeed = rotationSpeed
+    }
+
+    get intSeed() {
+        return Math.floor(this.seed * 1000000)
+    }
+
+    camDistance(renderScene: RBXRendererScene): number {
+        const cameraPos = new Vector3(...renderScene.camera.position.toArray())
+        const particlePos = this.position
+
+        const distance = cameraPos.minus(particlePos).magnitude()
+        return distance
+    }
+
+    getMatrix(renderScene: RBXRendererScene, size: number, orientation: number, squash: number): THREE.Matrix4 {
+        const camera = renderScene.camera
+
+        const particlePos = new THREE.Vector3(...this.position.toVec3())
+
+        const translation = new THREE.Matrix4().makeTranslation(particlePos)
+
+        const sizeX = squash > 0 ? size / (1 + squash) : size * (1 - squash)
+        const sizeY = squash > 0 ? size * (1 + squash) : size / (1 - squash)
+        const scale = new THREE.Matrix4().makeScale(sizeX,sizeY,1)
+
+        switch (orientation) {
+            case ParticleOrientation.FacingCameraWorldUp:
+                {
+                    const cameraLookVector = new THREE.Vector3()
+                    camera.getWorldDirection(cameraLookVector)
+                    const rotationParticlePosMatrix = new THREE.Matrix4().lookAt(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0), cameraLookVector)
+
+                    const _pos = new THREE.Vector3()
+                    const _scale = new THREE.Vector3()
+                    const rotationQuat = new THREE.Quaternion()
+                    rotationParticlePosMatrix.decompose(_pos, rotationQuat, _scale)
+
+                    const rotation = new THREE.Matrix4().makeRotationFromQuaternion(rotationQuat)
+                    const flatRotation = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,0,1), rad(this.rotation))
+                    const offsetRotation = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0), rad(-90))
+                    const offset2Rotation = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,1,0), rad(180))
+
+                    const final = translation.multiply(rotation).multiply(offsetRotation).multiply(offset2Rotation).multiply(flatRotation).multiply(scale)
+
+                    return final
+                }
+            case ParticleOrientation.VelocityPerpendicular:
+                {
+                    const normalizedVelocity = new THREE.Vector3(...this.velocity.normalize().toVec3())
+                    const rotationParticlePosMatrix = new THREE.Matrix4().lookAt(new THREE.Vector3(0,0,0), normalizedVelocity, new THREE.Vector3(0,1,0))
+
+                    const _pos = new THREE.Vector3()
+                    const _scale = new THREE.Vector3()
+                    const rotationQuat = new THREE.Quaternion()
+                    rotationParticlePosMatrix.decompose(_pos, rotationQuat, _scale)
+
+                    const rotation = new THREE.Matrix4().makeRotationFromQuaternion(rotationQuat)
+                    const flatRotation = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,0,1), rad(this.rotation))
+
+                    const final = translation.multiply(rotation).multiply(flatRotation).multiply(scale)
+
+                    return final
+                }
+            case ParticleOrientation.VelocityParallel:
+                {
+                    const toCamera = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion)
+                    const velocityVector = new THREE.Vector3(...this.velocity.toVec3())
+
+                    const vY = velocityVector.normalize()
+                    const vX = new THREE.Vector3().crossVectors(toCamera.normalize(), vY).normalize()
+                    const vZ = new THREE.Vector3().crossVectors(vX, vY).normalize()
+
+                    const rotation = new THREE.Matrix4().set(
+                        vX.x, vY.x, vZ.x, 0,
+                        vX.y, vY.y, vZ.y, 0,
+                        vX.z, vY.z, vZ.z, 0,
+                        0, 0, 0, 1
+                    )
+
+                    const flatRotation = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,0,1), rad(this.rotation + 90))
+                    const final = translation.multiply(rotation).multiply(flatRotation).multiply(scale)
+
+                    return final
+                }
+            case ParticleOrientation.FacingCamera:
+            default:
+                {
+                    const rotation = new THREE.Matrix4().makeRotationFromQuaternion(camera.quaternion)
+
+                    const flatRotation = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,0,1), rad(this.rotation))
+                    const final = translation.multiply(rotation).multiply(flatRotation).multiply(scale)
+
+                    return final
+                }
+        }
+    }
+
+    getFlipbookTransitionTime(total: number, framerate: number, mode: number, startRandom: boolean): number {
+        const rng = new RNG(this.intSeed + 324)
+        const randomVal = rng.nextFloat()
+
+        const offset = startRandom ? mathRandom(0, total-1, randomVal) : 0
+
+        switch (mode) {
+            case ParticleFlipbookMode.Loop:
+                return this.time * framerate - Math.floor(this.time * framerate)
+            case ParticleFlipbookMode.OneShot: //ignores framerate
+                {
+                    const untilEnd = total-1 - offset
+
+                    const currentTime = this.time/this.lifetime * untilEnd
+                    const currentOffset = Math.round(currentTime)
+                    const nextOffset = currentOffset + 1
+
+                    return 1 - (nextOffset - (currentTime + 0.5))
+                }
+            case ParticleFlipbookMode.PingPong:
+                return this.time * framerate - Math.floor(this.time * framerate)
+            case ParticleFlipbookMode.Random:
+                return this.time * framerate - Math.floor(this.time * framerate)
+        }
+
+        return 0
+    }
+
+    getFlipbookIndex(total: number, isNext: boolean, framerate: number, mode: number, startRandom: boolean): number {
+        const rng = new RNG(this.intSeed + 324)
+        const randomVal = rng.nextFloat()
+
+        let offset = startRandom ? mathRandom(0, total-1, randomVal) : 0
+
+        switch (mode) {
+            case ParticleFlipbookMode.Loop:
+                {
+                    offset += Math.floor(this.time * framerate)
+                    if (isNext) offset += 1
+
+                    break
+                }
+            case ParticleFlipbookMode.OneShot: //ignores framerate
+                {
+                    const untilEnd = total-1 - offset
+
+                    offset += Math.round(this.time/this.lifetime * untilEnd)
+                    if (isNext) offset += 1
+
+                    break
+                }
+            case ParticleFlipbookMode.PingPong:
+                {
+                    let frameCount = Math.floor(this.time * framerate)
+                    if (isNext) frameCount += 1
+
+                    offset = pingPong(offset + frameCount, total-1)
+                    break
+                }
+            case ParticleFlipbookMode.Random:
+                {
+                    let frameCount = Math.floor(this.time * framerate)
+                    if (isNext) frameCount += 1
+
+                    offset += mathRandom(0, total-1, new RNG(this.intSeed + 334 + ((frameCount*13) % 100000)).nextFloat())
+                    break
+                }
+        }
+
+        //when all frames have played
+        if (offset >= total) {
+            if (mode !== ParticleFlipbookMode.OneShot) {
+                offset %= total
+            } else {
+                offset = total - 1
+            }
+        }
+
+        return offset
+    }
+
+    tick(dt: number, drag: number, acceleration: Vector3) {
+        this.time += specialClamp(dt,0,this.lifetime)
+
+        this.position = this.position.add(this.velocity.multiply(new Vector3(dt,dt,dt)))
+
+        const accMult = 0.5 * Math.pow(dt, 2)
+        this.position = this.position.add(acceleration.multiply(new Vector3(accMult, accMult, accMult)))
+
+        this.velocity = this.velocity.add(acceleration.multiply(new Vector3(dt,dt,dt)))
+
+        const dragVal = Math.pow(2, -drag * dt)
+        this.velocity = this.velocity.multiply(new Vector3(dragVal, dragVal, dragVal))
+
+        this.rotation += this.rotationSpeed * dt
+    }
+}
+
+const EmitterShaderType = {
+    "Particle": 0,
+    "Smoke": 1,
+    "Sparkles2016": 2,
+    "BasicParticle": 3,
+    "Fire": 4,
+    "ParticleOld": 5,
+    "Sparkles": 6,
+}
+
+const EmitterBlendType = {
+    "PremultipliedAdditive": 0,
+    "Additive": 1,
+    "Normal": 2,
+    "Add": 3,
+}
+
+class EmitterDesc extends DisposableDesc {
+    renderScene: RBXRendererScene
+
+    passedTime: number = 0
+
+    lockedToPart: boolean = false
+
+    lifetime: NumberRange = new NumberRange(1,1)
+    spreadAngle: Vector2 = new Vector2(0,0)
+
+    speed: NumberRange = new NumberRange(1,1)
+    rotation: NumberRange = new NumberRange(0,0)
+    rotationSpeed: NumberRange = new NumberRange(0,0)
+    localAcceleration: Vector3 = new Vector3(0,0,0)
+    acceleration: Vector3 = new Vector3(0,0,0)
+    drag: number = 0
+    timeScale: number = 1
+
+    orientation: number = ParticleOrientation.FacingCamera
+    zOffset: number = 0
+    offset: Vector3 = new Vector3()
+    shapeInOut: number = 0
+
+    opacity: number = 1
+    lightEmission: number = 1
+    lightInfluence: number = 0
+    blending: number = EmitterBlendType.PremultipliedAdditive
+
+    brightness: number = 1
+    color: ColorSequence = new ColorSequence()
+    size: NumberSequence = new NumberSequence()
+    squash: NumberSequence = new NumberSequence([new NumberSequenceKeypoint(0,0,0)])
+    transparency: NumberSequence = new NumberSequence([new NumberSequenceKeypoint(0,0,0)])
+    normalizeSizeKeypointTime: boolean = true
+
+    flipbookLayout: number = ParticleFlipbookLayout.None
+    flipbookBlendFrames: boolean = true
+    flipbookFramerate: NumberRange = new NumberRange(1,1)
+    flipbookMode: number = ParticleFlipbookMode.Loop
+    flipbookSizeX: number = 1
+    flipbookSizeY: number = 1
+    flipbookStartRandom: boolean = false
+
+    //requires recompilation
+    rate: number = 10
+    colorTexture?: string
+    alphaTexture?: string
+    texture?: string
+    shader: number = 0
+
+    //results
+    instanceOpacityBuffer?: THREE.InstancedBufferAttribute
+    instanceColorBuffer?: THREE.InstancedBufferAttribute
+    instanceSeedTimeBuffer?: THREE.InstancedBufferAttribute
+    instanceFlipbookBuffer?: THREE.InstancedBufferAttribute
+    result?: THREE.InstancedMesh
+    resultMaterial?: THREE.ShaderMaterial
+    particles: Particle[] = []
+    initialParticleCount: number = 0
+
+    constructor(renderScene: RBXRendererScene) {
+        super()
+
+        this.renderScene = renderScene
+    }
+
+    get maxCount() {
+        const calculatedMax = Math.max(Math.ceil(this.lifetime.Max * this.rate) * 2, 1)
+        const particleMax = this.initialParticleCount + calculatedMax
+        return particleMax
+    }
+
+    needsRegeneration(newDesc: EmitterDesc) {
+        return this.texture === newDesc.texture &&
+                this.alphaTexture === newDesc.alphaTexture &&
+                this.colorTexture === newDesc.colorTexture &&
+                this.rate === newDesc.rate &&
+                this.shader === newDesc.shader
+    }
+
+    isSame(newDesc: EmitterDesc) {
+        return !this.needsRegeneration(newDesc) &&
+                this.lockedToPart === newDesc.lockedToPart &&
+                this.lifetime.isSame(newDesc.lifetime) &&
+                this.spreadAngle.isSame(newDesc.spreadAngle) &&
+                this.speed.isSame(newDesc.speed) &&
+                this.rotation.isSame(newDesc.rotation) &&
+                this.rotationSpeed.isSame(newDesc.rotationSpeed) &&
+                this.localAcceleration.isSame(newDesc.localAcceleration) &&
+                this.acceleration.isSame(newDesc.acceleration) &&
+                this.drag === newDesc.drag &&
+                this.timeScale === newDesc.timeScale &&
+                this.orientation === newDesc.orientation &&
+                this.zOffset === newDesc.zOffset &&
+                this.offset.isSame(newDesc.offset) &&
+                this.shapeInOut === newDesc.shapeInOut &&
+                this.opacity === newDesc.opacity &&
+                this.lightEmission === newDesc.lightEmission &&
+                this.lightInfluence === newDesc.lightInfluence &&
+                this.blending === newDesc.blending &&
+                this.color.isSame(newDesc.color) &&
+                this.size.isSame(newDesc.size) &&
+                this.squash.isSame(newDesc.squash) &&
+                this.transparency.isSame(newDesc.transparency) &&
+                this.normalizeSizeKeypointTime === newDesc.normalizeSizeKeypointTime &&
+                this.flipbookLayout === newDesc.flipbookLayout &&
+                this.flipbookBlendFrames === newDesc.flipbookBlendFrames &&
+                this.flipbookFramerate.isSame(newDesc.flipbookFramerate) &&
+                this.flipbookMode === newDesc.flipbookMode &&
+                this.flipbookSizeX === newDesc.flipbookSizeX &&
+                this.flipbookSizeY === newDesc.flipbookSizeY &&
+                this.flipbookStartRandom === newDesc.flipbookStartRandom &&
+                this.brightness === newDesc.brightness
+    }
+
+    fromEmitterDesc(other: EmitterDesc) {
+        //everything that doesnt require compilation should be here
+        this.lockedToPart = other.lockedToPart
+        
+        this.lifetime = other.lifetime.clone()
+        this.rate = other.rate
+        this.spreadAngle = other.spreadAngle.clone()
+
+        this.speed = other.speed.clone()
+        this.rotation = other.rotation.clone()
+        this.rotationSpeed = other.rotationSpeed.clone()
+        this.localAcceleration = other.localAcceleration.clone()
+        this.acceleration = other.acceleration.clone()
+        this.drag = other.drag
+        this.timeScale = other.timeScale
+
+        this.orientation = other.orientation
+        this.zOffset = other.zOffset
+        this.offset = other.offset.clone()
+        this.shapeInOut = other.shapeInOut
+
+        this.opacity = other.opacity
+        this.lightEmission = other.lightEmission
+        this.lightInfluence = other.lightInfluence
+        this.blending = other.blending
+
+        this.brightness = other.brightness
+        this.color = other.color.clone()
+        this.size = other.size.clone()
+        this.squash = other.squash.clone()
+        this.transparency = other.transparency.clone()
+        this.normalizeSizeKeypointTime = other.normalizeSizeKeypointTime
+
+        this.flipbookLayout = other.flipbookLayout
+        this.flipbookBlendFrames = other.flipbookBlendFrames
+        this.flipbookFramerate = other.flipbookFramerate.clone()
+        this.flipbookMode = other.flipbookMode
+        this.flipbookSizeX = other.flipbookSizeX
+        this.flipbookSizeY = other.flipbookSizeY
+        this.flipbookStartRandom = other.flipbookStartRandom
+    }
+
+    getFlipbookSize(): [number,number] {
+        let flipbookSizeX = this.flipbookSizeX
+        let flipbookSizeY = this.flipbookSizeY
+        switch (this.flipbookLayout) {
+            case ParticleFlipbookLayout.None:
+                flipbookSizeX = 1
+                flipbookSizeY = 1
+                break
+            case ParticleFlipbookLayout.Grid2x2:
+                flipbookSizeX = 2
+                flipbookSizeY = 2
+                break
+            case ParticleFlipbookLayout.Grid4x4:
+                flipbookSizeX = 4
+                flipbookSizeY = 4
+                break
+            case ParticleFlipbookLayout.Grid8x8:
+                flipbookSizeX = 8
+                flipbookSizeY = 8
+                break
+            case ParticleFlipbookLayout.Custom:
+                //default
+                break
+        }
+
+        return [flipbookSizeX, flipbookSizeY]
+    }
+
+    async compileResult(): Promise<THREE.Mesh | Response | undefined> {
+        const texturePromises: (Promise<THREE.Texture | undefined> | undefined)[] = [
+            this.texture ? getManagedTexture(this.texture, {colorSpace: THREE.SRGBColorSpace}) : undefined,
+            this.alphaTexture ? getManagedTexture(this.alphaTexture, {colorSpace: THREE.NoColorSpace}) : undefined,
+            this.colorTexture ? getManagedTexture(this.colorTexture, {colorSpace: THREE.SRGBColorSpace}) : undefined
+        ]
+
+        //managed texture disposal
+        if (this.texture) this.managedTextures.push({url: this.texture, params: {colorSpace: THREE.SRGBColorSpace}})
+        if (this.alphaTexture) this.managedTextures.push({url: this.alphaTexture, params: {colorSpace: THREE.NoColorSpace}})
+        if (this.colorTexture) this.managedTextures.push({url: this.colorTexture, params: {colorSpace: THREE.SRGBColorSpace}})
+
+        let [mapToUse, alphaMapToUse, colorMapToUse] = await Promise.all(texturePromises)
+
+        if (!mapToUse) {
+            mapToUse = new THREE.DataTexture(new Uint8Array([0,0,0,0]), 1, 1, THREE.RGBAFormat)
+            mapToUse.needsUpdate = true
+            this.toDispose.push(mapToUse)
+        }
+        if (!alphaMapToUse) {
+            alphaMapToUse = new THREE.DataTexture(new Uint8Array([255,255,255,255]), 1, 1, THREE.RGBAFormat)
+            alphaMapToUse.needsUpdate = true
+            this.toDispose.push(alphaMapToUse)
+        }
+        if (!colorMapToUse) {
+            colorMapToUse = new THREE.DataTexture(new Uint8Array([255,255,255,255]), 1, 1, THREE.RGBAFormat)
+            colorMapToUse.needsUpdate = true
+            this.toDispose.push(colorMapToUse)
+        }
+
+        const geometry = new THREE.PlaneGeometry(2,2)
+        this.toDispose.push(geometry)
+
+        this.instanceColorBuffer = new THREE.InstancedBufferAttribute(new Float32Array(this.maxCount * 3), 3)
+        geometry.setAttribute("instanceColor", this.instanceColorBuffer)
+        this.instanceOpacityBuffer = new THREE.InstancedBufferAttribute(new Float32Array(this.maxCount), 1)
+        geometry.setAttribute("instanceOpacity", this.instanceOpacityBuffer)
+        this.instanceSeedTimeBuffer = new THREE.InstancedBufferAttribute(new Float32Array(this.maxCount * 3), 3) //now includes flipbook frame time!
+        geometry.setAttribute("instanceSeedTime", this.instanceSeedTimeBuffer)
+        this.instanceFlipbookBuffer = new THREE.InstancedBufferAttribute(new Float32Array(this.maxCount * 4), 4)
+        geometry.setAttribute("instanceFlipbook", this.instanceFlipbookBuffer)
+
+        const [flipbookSizeX, flipbookSizeY] = this.getFlipbookSize()
+
+        let fragmentShader = particle_fragmentShader
+
+        switch (this.shader) {
+            case EmitterShaderType.Particle:
+                fragmentShader = particle_fragmentShader
+                break
+            case EmitterShaderType.Smoke:
+                fragmentShader = smoke_fragmentShader
+                break
+            case EmitterShaderType.Sparkles2016:
+                fragmentShader = sparkles2016_fragmentShader
+                break
+            case EmitterShaderType.BasicParticle:
+                fragmentShader = basicParticle_fragmentShader
+                break
+            case EmitterShaderType.Fire:
+                fragmentShader = fire_fragmentShader
+                break
+            case EmitterShaderType.ParticleOld:
+                fragmentShader = particle_fragmentShader_additiveOld
+                break
+            case EmitterShaderType.Sparkles:
+                fragmentShader = sparkles_fragmentShader
+                break
+        }
+
+        const material = new THREE.ShaderMaterial({
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            opacity: this.opacity,
+            lights: true,
+            premultipliedAlpha: true,
+            toneMapped: true,
+
+            blending: this.blending === EmitterBlendType.PremultipliedAdditive || this.blending === EmitterBlendType.Add ? THREE.CustomBlending : this.blending === EmitterBlendType.Additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+            
+            blendSrc: THREE.OneFactor,
+            blendDst: this.blending === EmitterBlendType.Add ? THREE.OneFactor : THREE.OneMinusSrcAlphaFactor,
+            blendEquation: THREE.AddEquation,
+            
+            blendSrcAlpha: THREE.OneMinusDstAlphaFactor,
+            blendDstAlpha: THREE.OneFactor,
+            blendEquationAlpha: THREE.AddEquation,
+
+            vertexShader: particle_vertexShader,
+            fragmentShader: fragmentShader,
+            uniforms: THREE.UniformsUtils.merge([
+                THREE.UniformsLib.lights,    
+                {
+                    uMap: { value: mapToUse },
+                    uAlphaMap: { value: alphaMapToUse },
+                    uColorMap: { value: colorMapToUse },
+
+                    uLightInfluence: { value: this.lightInfluence },
+                    uLightEmission: { value: this.lightEmission },
+                    uBrightness: { value: this.brightness },
+                    uOpacity: { value: this.opacity },
+                    uZOffset: { value: this.zOffset },
+                    uFlipbookSize: { value: new THREE.Vector2(1/flipbookSizeX, 1/flipbookSizeY) }
+                }
+            ]),
+        })
+        this.toDispose.push(material)
+        this.resultMaterial = material
+        
+        this.result = new THREE.InstancedMesh(geometry, material, this.maxCount)
+        this.toDispose.push(this.result)
+        this.result.name = "Particles"
+        this.result.frustumCulled = false
+
+        return this.result
+    }
+
+    emit(groupDesc: EmitterGroupDesc, force: boolean = false) {
+        if (this.particles.length >= this.maxCount || (groupDesc.enabled === false && !force)) {
+            return
+        }
+
+        const speed = randomBetween(this.speed.Min, this.speed.Max)
+        const spreadX = rad((Math.random() - 0.5) * 2 * Math.abs(this.spreadAngle.X))
+        const spreadY = rad((Math.random() - 0.5) * 2 * Math.abs(this.spreadAngle.Y))
+        const spread = new Vector2(spreadX, spreadY)
+
+        let velocityMultiplierScalar = 1
+        if (this.shapeInOut === ParticleEmitterShapeInOut.Inward) {
+            velocityMultiplierScalar = -1
+        } else if (this.shapeInOut === ParticleEmitterShapeInOut.InAndOut) {
+            velocityMultiplierScalar = Math.random() > 0.5 ? 1 : -1
+        }
+        const velocityMultiplier = new THREE.Vector3(velocityMultiplierScalar,velocityMultiplierScalar,velocityMultiplierScalar)
+
+        const velocityFront = velocityFromSpread(speed, spread)
+        const velocityOriginal = new THREE.Vector3(...velocityFront.toVec3()).multiply(velocityMultiplier)
+        const velocityLocal = velocityOriginal.applyQuaternion(groupDesc.getNormalQuaternionForVelocity())
+        
+        const worldVelocity = velocityLocal.applyQuaternion(new THREE.Quaternion().setFromRotationMatrix(groupDesc.cframe.getTHREEMatrix()))
+        const worldVelocityRoblox = new Vector3(...worldVelocity.toArray()).add(groupDesc.parentVelocity)
+
+        let localPos = groupDesc.getRandomLocalPos()
+        localPos = localPos.add(this.offset)
+
+        const worldPos = groupDesc.toWorldSpace(localPos)
+
+        const particle = new Particle(
+            randomBetween(this.lifetime.Min, this.lifetime.Max),
+            worldPos,
+            randomBetween(this.rotation.Min, this.rotation.Max),
+            worldVelocityRoblox,
+            randomBetween(this.rotationSpeed.Min, this.rotationSpeed.Max)
+        )
+        
+        this.particles.push(particle)
+    }
+
+    vectorLocalToWorld(pivot: CFrame, vector: Vector3) {
+        const localVectorCF = new CFrame(...vector.toVec3())
+        const rotatedWorldCF = pivot.clone()
+        rotatedWorldCF.Position = [0,0,0]
+        const localVectorToWorldCF = rotatedWorldCF.multiply(localVectorCF)
+        const localVectorToWorld = new Vector3(...localVectorToWorldCF.Position)
+
+        return localVectorToWorld
+    }
+
+    tick(dt: number, groupDesc: EmitterGroupDesc) {
+        this.passedTime += dt * this.timeScale
+
+        //locked to part logic
+        if (this.lockedToPart) {
+            for (const particle of this.particles) {
+                //update position
+                const particleCF = new CFrame(...particle.position.toVec3())
+                const localParticleCF = groupDesc.lastCframe.inverse().multiply(particleCF)
+                const newParticleCF = groupDesc.cframe.multiply(localParticleCF)
+                const newParticleCFOnlyOrientation = newParticleCF.clone()
+                newParticleCFOnlyOrientation.Position = [0,0,0]
+
+                particle.position = new Vector3(...newParticleCF.Position)
+
+                //update velocity
+                particle.velocity = new Vector3(...newParticleCFOnlyOrientation.multiply(new CFrame(...particle.velocity.toVec3())).Position)
+            }
+        }
+
+        //tick particles
+        for (const particle of this.particles) {
+            const acceleration = this.lockedToPart ? new Vector3(0,0,0) : this.acceleration
+            let localAccelerationToWorld = this.vectorLocalToWorld(groupDesc.cframe, this.localAcceleration)
+            if (this.lockedToPart) {
+                localAccelerationToWorld = localAccelerationToWorld.add(this.vectorLocalToWorld(groupDesc.cframe, this.acceleration))
+            }
+
+            particle.tick(dt * this.timeScale, this.drag, acceleration.add(localAccelerationToWorld))
+        }
+
+        //destroy old particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i]
+            if (particle.time >= particle.lifetime) {
+                this.particles.splice(i,1)
+            }
+        }
+
+        //emit particles
+        this.passedTime = specialClamp(this.passedTime, 0, 5)
+        while (this.passedTime >= 1 / this.rate) {
+            this.emit(groupDesc)
+            this.passedTime -= 1 / this.rate
+        }
+
+        //sort particles
+        //this.particles.sort((a, b) => {
+        //    return b.camDistance() - a.camDistance()
+        //})
+    }
+
+    updateResult(renderScene: RBXRendererScene) {
+        if (!this.result || !this.instanceColorBuffer || !this.instanceOpacityBuffer || !this.instanceSeedTimeBuffer || !this.instanceFlipbookBuffer) return
+        this.result.count = this.particles.length
+
+        const [flipbookSizeX, flipbookSizeY] = this.getFlipbookSize()
+        const flipbookTotal = flipbookSizeX * flipbookSizeY
+
+        if (this.resultMaterial) {
+            this.resultMaterial.uniforms.uOpacity.value = this.opacity
+            this.resultMaterial.uniforms.uZOffset.value = this.zOffset
+            this.resultMaterial.uniforms.uLightInfluence.value = this.lightInfluence
+            this.resultMaterial.uniforms.uLightEmission.value = this.lightEmission
+            this.resultMaterial.uniforms.uBrightness.value = this.brightness
+            this.resultMaterial.uniforms.uFlipbookSize.value.set(1/flipbookSizeX, 1/flipbookSizeY)
+            this.resultMaterial.needsUpdate = true
+        }
+
+        for (let i = 0; i < this.result.count; i++) {
+            const particle = this.particles[i]
+
+            const time = particle.time
+            const normalizedTime = particle.time / particle.lifetime
+
+            const color = this.color.getValue(normalizedTime)
+            const linearColor = new THREE.Color(color.R, color.G, color.B).convertSRGBToLinear()
+
+            const size = Math.max(this.size.getValue(this.normalizeSizeKeypointTime ? normalizedTime : time, particle.seed + 0), 0)
+            const squash = this.squash.getValue(this.normalizeSizeKeypointTime ? normalizedTime : time, particle.seed + 2)
+            const opacity = 1 - this.transparency.getValue(normalizedTime, particle.seed + 1)
+
+            const flipbookFramerate = mathRandom(this.flipbookFramerate.Min, this.flipbookFramerate.Max, new RNG(particle.seed+67).nextFloat()) || 1
+            /*let flipbookFrameTime = this.flipbookMode === ParticleFlipbookMode.OneShot ? particle.lifetime / flipbookTotal : 1 / flipbookFramerate
+            if (!this.flipbookBlendFrames) flipbookFrameTime = 1000000*/
+
+            this.result.setMatrixAt(i, particle.getMatrix(renderScene, size, this.orientation, squash))
+            this.instanceColorBuffer.setXYZ(i, linearColor.r, linearColor.g, linearColor.b)
+            this.instanceOpacityBuffer.setX(i, opacity)
+            this.instanceSeedTimeBuffer.setXYZ(i, particle.seed, normalizedTime, particle.getFlipbookTransitionTime(flipbookTotal, flipbookFramerate, this.flipbookMode, this.flipbookStartRandom))
+
+            const flipbookFrame0 = particle.getFlipbookIndex(flipbookTotal, false, flipbookFramerate, this.flipbookMode, this.flipbookStartRandom)
+            const flipbookFrame1 = this.flipbookBlendFrames ? particle.getFlipbookIndex(flipbookTotal, true, flipbookFramerate, this.flipbookMode, this.flipbookStartRandom) : flipbookFrame0
+            
+            const column0 = flipbookFrame0 % flipbookSizeX
+            const row0 = Math.floor(flipbookFrame0 / flipbookSizeX)
+
+            const column1 = flipbookFrame1 % flipbookSizeX
+            const row1 = Math.floor(flipbookFrame1 / flipbookSizeX)
+
+            const u0 = column0 * 1 / flipbookSizeX
+            const v0 = ((flipbookSizeY-1) - row0) * 1 / flipbookSizeY
+
+            const u1 = column1 * 1 / flipbookSizeX
+            const v1 = ((flipbookSizeY-1) - row1) * 1 / flipbookSizeY
+
+            this.instanceFlipbookBuffer.setXYZW(i, u0, v0, u1, v1)
+        }
+
+        this.result.instanceMatrix.needsUpdate = true
+        this.instanceColorBuffer.needsUpdate = true
+        this.instanceOpacityBuffer.needsUpdate = true
+        this.instanceSeedTimeBuffer.needsUpdate = true
+        this.instanceFlipbookBuffer.needsUpdate = true
+    }
+
+    dispose(renderer: THREE.WebGLRenderer) {
+        const mesh = this.result
+        if (mesh) {
+            mesh.removeFromParent()
+        }
+
+        this.clearToDispose()
+        this.disposeRenderLists(renderer)
+    }
+}
+
+export class EmitterGroupDesc extends RenderDesc {
+    static classTypes: string[] = ["ParticleEmitter", "Sparkles", "Fire", "Smoke"]
+
+    lastTime: number = Date.now() / 1000
+    time: number = Date.now() / 1000
+
+    enabled: boolean = true
+
+    lowerBound: Vector3 = new Vector3(0,0,0)
+    higherBound: Vector3 = new Vector3(0,0,0)
+
+    lastCframe: CFrame = new CFrame()
+    cframe: CFrame = new CFrame()
+    emitterDir: number = NormalId.Top
+    parentVelocity: Vector3 = new Vector3()
+
+    emitterDescs: EmitterDesc[] = []
+
+    //special for emitter group
+    getRandomLocalPos(): Vector3 {
+        const totalSize = this.higherBound.minus(this.lowerBound)
+
+        const x = Math.random() * totalSize.X + this.lowerBound.X
+        const y = Math.random() * totalSize.Y + this.lowerBound.Y
+        const z = Math.random() * totalSize.Z + this.lowerBound.Z
+
+        return new Vector3(x,y,z)
+    }
+
+    toWorldSpace(vec: Vector3): Vector3 {
+        const vecAsCF = new CFrame(...vec.toVec3())
+
+        const worldSpace = new Vector3().fromVec3(this.cframe.multiply(vecAsCF).Position)
+
+        return worldSpace
+    }
+
+    getRandomWorldPos(): Vector3 {
+        const randomWorldPos = this.toWorldSpace(this.getRandomLocalPos())
+        
+        return randomWorldPos
+    }
+
+    getNormalQuaternionForVelocity() {
+        switch (this.emitterDir) {
+            case NormalId.Right:
+                {
+                    return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,-1), new THREE.Vector3(1,0,0))
+                }
+            case NormalId.Top:
+                {
+                    return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,1,0))
+                }
+            case NormalId.Back:
+                {
+                    return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,1))
+                }
+            case NormalId.Left:
+                {
+                    return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,-1), new THREE.Vector3(-1,0,0))
+                }
+            case NormalId.Bottom:
+                {
+                    return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,-1,0))
+                }
+            case NormalId.Front:
+            default:
+                {
+                    return new THREE.Quaternion()
+                }
+        }
+    }
+
+    createEmitter(config: Partial<EmitterDesc>): EmitterDesc {
+        const emitter = new EmitterDesc(this.renderScene)
+        Object.assign(emitter, config)
+        return emitter
+    }
+
+    //inherited from RenderDesc
+    isSame(newDesc: EmitterGroupDesc): boolean {
+        if (this.needsRegeneration(newDesc)) {
+            return false
+        }
+
+        return this.time === newDesc.time //we actually only need this because its always different
+    }
+
+    needsRegeneration(newDesc: EmitterGroupDesc): boolean {
+        if (this.emitterDescs.length !== newDesc.emitterDescs.length) {
+            return true
+        }
+
+        for (let i = 0; i < this.emitterDescs.length; i++) {
+            if (!this.emitterDescs[i].needsRegeneration(newDesc.emitterDescs[i])) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    virtualFromRenderDesc(other: EmitterGroupDesc) {
+        //everything that doesnt require compilation should be here (except lastTime since thats data we want to keep from previous)
+        this.time = other.time
+        this.cframe = other.cframe
+        this.lowerBound = other.lowerBound
+        this.higherBound = other.higherBound
+        this.emitterDir = other.emitterDir
+        this.enabled = other.enabled
+
+        for (let i = 0; i < this.emitterDescs.length; i++) {
+            this.emitterDescs[i].fromEmitterDesc(other.emitterDescs[i])
+        }
+    }
+
+    virtualTransferFrom(other: EmitterGroupDesc): void {
+        if (this.emitterDescs.length === other.emitterDescs.length) {
+            for (let i = 0; i < this.emitterDescs.length; i++) {
+                this.emitterDescs[i].particles = other.emitterDescs[i].particles
+                this.emitterDescs[i].initialParticleCount = this.emitterDescs[i].particles.length
+            }
+        }
+    }
+
+    fromInstance(child: Instance) {
+        this.instance = child
+
+        const parent = child.parent
+        if (parent) {
+            //get cframe
+            if (parent.className === "Attachment") {
+                const attachmentW = new AttachmentWrapper(parent)
+                this.cframe = attachmentW.getWorldCFrame()
+            } else {
+                this.cframe = (parent.PropOrDefault("CFrame", this.cframe) as CFrame).clone()
+            }
+
+            this.lastCframe = this.cframe
+
+            //get emit bounds
+            if (parent.HasProperty("Size") || parent.HasProperty("size")) {
+                const size = parent.Prop("Size") as Vector3
+                this.higherBound = size.multiply(new Vector3(0.5,0.5,0.5))
+                this.lowerBound = size.multiply(new Vector3(-0.5,-0.5,-0.5))
+            }
+
+            let lastParent: Instance | undefined = parent
+            while (lastParent) {
+                if (lastParent.IsA("BasePart")) {
+                    const assembly = (lastParent.w as BasePartWrapper).GetAssembly()
+                    this.parentVelocity = assembly.linearVelocity.clone()
+                    break
+                }
+                lastParent = lastParent.parent
+            }
+        }
+
+        //check if enabled
+        this.enabled = child.PropOrDefault("Enabled", true) as boolean
+
+        const className = child.className
+
+        switch (className) {
+            case "ParticleEmitter":
+                this.fromParticleEmitter(child)
+                break
+            case "Sparkles":
+                this.fromSparkles(child)
+                break
+            case "Fire":
+                this.fromFire(child)
+                break
+            case "Smoke":
+                this.fromSmoke(child)
+                break
+        }
+    }
+
+    fromParticleEmitter(child: Instance) {
+        this.emitterDir = child.PropOrDefault("EmissionDirection", this.emitterDir) as number
+
+        const emitterDesc = new EmitterDesc(this.renderScene)
+        if (child.HasProperty("Lifetime"))  emitterDesc.lifetime = child.Prop("Lifetime") as NumberRange
+        if (child.HasProperty("Rate")) emitterDesc.rate = child.Prop("Rate") as number
+        if (child.HasProperty("SpreadAngle")) emitterDesc.spreadAngle = child.Prop("SpreadAngle") as Vector2
+
+        if (child.HasProperty("ShapeInOut")) emitterDesc.shapeInOut = child.Prop("ShapeInOut") as number
+
+        if (child.HasProperty("Speed")) emitterDesc.speed = child.Prop("Speed") as NumberRange
+        if (child.HasProperty("Rotation")) emitterDesc.rotation = child.Prop("Rotation") as NumberRange
+        if (child.HasProperty("RotSpeed")) emitterDesc.rotationSpeed = child.Prop("RotSpeed") as NumberRange
+        if (child.HasProperty("Acceleration")) emitterDesc.acceleration = child.Prop("Acceleration") as Vector3
+        if (child.HasProperty("Drag")) emitterDesc.drag = child.Prop("Drag") as number
+        if (child.HasProperty("TimeScale")) emitterDesc.timeScale = child.Prop("TimeScale") as number
+
+        if (child.HasProperty("Size")) emitterDesc.size = child.Prop("Size") as NumberSequence
+        if (child.HasProperty("Squash")) emitterDesc.squash = child.Prop("Squash") as NumberSequence
+        if (child.HasProperty("Color")) emitterDesc.color = child.Prop("Color") as ColorSequence
+        if (child.HasProperty("Texture")) emitterDesc.texture = child.Prop("Texture") as string
+        if (child.HasProperty("Transparency")) emitterDesc.transparency = child.Prop("Transparency") as NumberSequence
+        emitterDesc.lightEmission = specialClamp(child.PropOrDefault("LightEmission", emitterDesc.lightEmission) as number, 0, 1)
+        emitterDesc.blending = emitterDesc.lightEmission === 0 ? EmitterBlendType.Normal : EmitterBlendType.PremultipliedAdditive
+        if (child.HasProperty("LightInfluence")) emitterDesc.lightInfluence = child.Prop("LightInfluence") as number
+        if (child.HasProperty("ZOffset")) emitterDesc.zOffset = child.Prop("ZOffset") as number
+        if (child.HasProperty("Orientation")) emitterDesc.orientation = child.Prop("Orientation") as number
+        if (child.HasProperty("LockedToPart")) emitterDesc.lockedToPart = child.Prop("LockedToPart") as boolean
+
+        emitterDesc.brightness = child.PropOrDefault("Brightness", emitterDesc.brightness) as number
+
+        emitterDesc.flipbookLayout = child.PropOrDefault("FlipbookLayout", emitterDesc.flipbookLayout) as number
+        emitterDesc.flipbookBlendFrames = child.PropOrDefault("FlipbookBlendFrames", emitterDesc.flipbookBlendFrames) as boolean
+        emitterDesc.flipbookFramerate = child.PropOrDefault("FlipbookFramerate", emitterDesc.flipbookFramerate) as NumberRange
+        emitterDesc.flipbookMode = child.PropOrDefault("FlipbookMode", emitterDesc.flipbookMode) as number
+        emitterDesc.flipbookSizeX = child.PropOrDefault("FlipbookSizeX", emitterDesc.flipbookSizeX) as number
+        emitterDesc.flipbookSizeY = child.PropOrDefault("FlipbookSizeY", emitterDesc.flipbookSizeY) as number
+        emitterDesc.flipbookStartRandom = child.PropOrDefault("FlipbookStartRandom", emitterDesc.flipbookStartRandom) as boolean
+
+        /*emitterDesc.texture = "rbxasset://textures/particles/test.dds"
+        emitterDesc.color = ColorSequence.fromColor(new Color3(1,1,1))
+        emitterDesc.transparency = new NumberSequence([new NumberSequenceKeypoint(0,0,0)])
+        emitterDesc.size = new NumberSequence([new NumberSequenceKeypoint(0,0.2,0)])
+        emitterDesc.acceleration = new Vector3(0,0,0)
+        emitterDesc.lifetime = new NumberRange(1,1)
+        emitterDesc.rate = 100
+        emitterDesc.speed = new NumberRange(4,4)
+        emitterDesc.drag = 1
+        emitterDesc.timeScale = 1
+        emitterDesc.spreadAngle = new Vector2(0,20)
+        emitterDesc.rotation = new NumberRange(0,0)
+        emitterDesc.rotationSpeed = new NumberRange(0,0)
+        emitterDesc.shapeInOut = ParticleEmitterShapeInOut.Outward
+        this.emitterDir = NormalId.Left*/
+        
+        /*emitterDesc.texture = "rbxassetid://82396777608885"
+        emitterDesc.color = ColorSequence.fromColor(new Color3(1,1,1))
+        emitterDesc.transparency = new NumberSequence([new NumberSequenceKeypoint(0,0,0)])
+        emitterDesc.size = new NumberSequence([new NumberSequenceKeypoint(0,1,0)])
+        emitterDesc.acceleration = new Vector3(0,0,0)
+        emitterDesc.lifetime = new NumberRange(5,5)
+        emitterDesc.rate = 0.2
+        emitterDesc.speed = new NumberRange(0,0)
+        emitterDesc.drag = 1
+        emitterDesc.timeScale = 1
+        emitterDesc.spreadAngle = new Vector2(0,20)
+        emitterDesc.rotation = new NumberRange(0,0)
+        emitterDesc.rotationSpeed = new NumberRange(0,0)
+        emitterDesc.shapeInOut = ParticleEmitterShapeInOut.Outward
+        emitterDesc.flipbookFramerate = new NumberRange(1,1)
+        emitterDesc.flipbookMode = ParticleFlipbookMode.Random
+        emitterDesc.flipbookLayout = ParticleFlipbookLayout.Custom
+        emitterDesc.flipbookSizeX = 4
+        emitterDesc.flipbookSizeY = 2
+        emitterDesc.flipbookStartRandom = true
+        emitterDesc.flipbookBlendFrames = true
+        emitterDesc.zOffset = 2
+        this.emitterDir = NormalId.Left*/
+
+        this.emitterDescs.push(emitterDesc)
+    }
+
+    fromSparkles(child: Instance) {
+        this.lowerBound = new Vector3(-0.2, -0.2, -0.2)
+        this.higherBound = new Vector3(0.2, 0.2, 0.2)
+
+        const color = (child.PropOrDefault("SparkleColor", new Color3(144 / 255, 25 / 255, 255 / 255)) as Color3).clone()
+
+        //big sparkles
+        this.emitterDescs.push(this.createEmitter({
+            texture: "rbxasset://textures/particles/sparkles_main.dds",
+            alphaTexture: "rbxasset://textures/particles/common_alpha.dds",
+            colorTexture: "rbxasset://textures/particles/sparkles_color.dds",
+            drag: 0.2,
+            size: new NumberSequence([new NumberSequenceKeypoint(0, 0.37, 0), new NumberSequenceKeypoint(1, 0.37 + 0.65, 0)]),
+            speed: new NumberRange(5,5),
+            rotation: new NumberRange(-90, 90),
+            rotationSpeed: new NumberRange(40, 100),
+            spreadAngle: new Vector2(100,100),
+            rate: 30,
+            lifetime: new NumberRange(1.3, 1.3),
+            timeScale: child.PropOrDefault("TimeScale", 1) as number,
+            color: ColorSequence.fromColor(color),
+            shader: EmitterShaderType.Sparkles,
+            blending: EmitterBlendType.PremultipliedAdditive,
+        }))
+        
+        //tiny sparkles
+        this.emitterDescs.push(this.createEmitter({
+            texture: "rbxasset://textures/particles/sparkles_main.dds",
+            alphaTexture: "rbxasset://textures/particles/common_alpha.dds",
+            drag: 2,
+            size: new NumberSequence([new NumberSequenceKeypoint(0, 0.1, 0), new NumberSequenceKeypoint(1, 0.1 + 0.34, 0)]),
+            speed: new NumberRange(8,8),
+            rotation: new NumberRange(-90, 90),
+            rotationSpeed: new NumberRange(-500, 500),
+            spreadAngle: new Vector2(150,150),
+            rate: 5,
+            lifetime: new NumberRange(1.7, 1.7),
+            timeScale: child.PropOrDefault("TimeScale", 1) as number,
+            color: ColorSequence.fromColor(color),
+            offset: new Vector3(0,4,0),
+            shader: EmitterShaderType.Sparkles,
+            blending: EmitterBlendType.PremultipliedAdditive,
+        }))
+    }
+
+    fromFire(child: Instance) {
+        const size = child.PropOrDefault("size_xml", 3) as number / 3.5
+        const boundSize = size / 8
+        const heat = child.PropOrDefault("heat_xml", 5) as number
+        const timeScale = child.PropOrDefault("TimeScale", 1) as number
+
+        const color = (child.PropOrDefault("Color", new Color3(236 / 255, 139 / 255, 70 / 255)) as Color3).clone()
+        const secondaryColor = (child.PropOrDefault("SecondaryColor", new Color3(106 / 255, 44 / 255, 13 / 255)) as Color3).clone()
+
+        this.lowerBound = new Vector3(-boundSize, -boundSize, -boundSize)
+        this.higherBound = new Vector3(boundSize, boundSize, boundSize)
+
+        const strongColor = color.clone()
+        strongColor.R *= 4
+        strongColor.G *= 4
+        strongColor.B *= 4
+
+        this.emitterDescs.push(this.createEmitter({
+            texture: "rbxasset://textures/particles/fire_main.dds",
+            alphaTexture: "rbxasset://textures/particles/fire_alpha.dds",
+            drag: 0.4,
+            localAcceleration: new Vector3(0,0.5 * (1*size*size/4 + 0.7*heat),0),
+            rotation: new NumberRange(-90,90),
+            size: new NumberSequence([new NumberSequenceKeypoint(0, 1.1*size, 0), new NumberSequenceKeypoint(2, 1.1*size - 0.8*size*2, 0)]),
+            speed: new NumberRange(0.4*(0.2*size*size + 0.2 * heat), 0.4*(0.2*size*size + 0.2 * heat)),
+            rotationSpeed: new NumberRange(100,100),
+            spreadAngle: new Vector2(10,10),
+            rate: 65,
+            lifetime: new NumberRange(1,2),
+            normalizeSizeKeypointTime: false,
+            timeScale: timeScale,
+            color: ColorSequence.fromColor(strongColor),
+            brightness: 1,
+            shader: EmitterShaderType.Particle,
+            blending: EmitterBlendType.PremultipliedAdditive,
+        }))
+
+        //this.lowerBound = new Vector3(-boundSize * 2, -boundSize * 2, -boundSize * 2)
+        //this.higherBound = new Vector3(boundSize * 2, boundSize * 2, boundSize * 2)
+
+        const sparkSize = size * 0.2
+
+        this.emitterDescs.push(this.createEmitter({
+            texture: "rbxasset://textures/particles/fire_sparks_main.dds",
+            alphaTexture: "rbxasset://textures/particles/common_alpha.dds",
+            colorTexture: "rbxasset://textures/particles/fire_sparks_color.dds",
+            drag: 0.4,
+            localAcceleration: new Vector3(0,0.5 * (1 * size * size / 4 + 0.7 * heat),0),
+            rotation: new NumberRange(-90,90),
+            size: new NumberSequence([new NumberSequenceKeypoint(0, sparkSize, 0), new NumberSequenceKeypoint(2, sparkSize - (sparkSize / 2) * 2, 0)]),
+            speed: new NumberRange(0.4 * (0.1 * size * size + 0.2 * heat), 0.4 * (0.1 * size * size + 0.2 * heat)),
+            rotationSpeed: new NumberRange(100,100),
+            spreadAngle: new Vector2(10,10),
+            rate: 65,
+            lifetime: new NumberRange(1,2),
+            normalizeSizeKeypointTime: false,
+            timeScale: timeScale,
+            color: ColorSequence.fromColor(secondaryColor),
+            shader: EmitterShaderType.BasicParticle,
+            blending: EmitterBlendType.Add,
+        }))
+    }
+
+    fromSmoke(child: Instance) {
+        const size = child.PropOrDefault("size_xml", 1) as number
+        const endSize = 10 + size
+        const timeScale = child.PropOrDefault("TimeScale", 1) as number
+        const riseVelocity = child.PropOrDefault("riseVelocity_xml", 1) as number
+        const opacity = child.PropOrDefault("opacity_xml", 0.5) as number
+        const color = (child.PropOrDefault("Color", new Color3(1,1,1)) as Color3).clone()
+
+        this.emitterDescs.push(this.createEmitter({
+            texture: "rbxasset://textures/particles/smoke_main.dds",
+            alphaTexture: "rbxasset://textures/particles/common_alpha.dds",
+            drag: 0.1,
+            opacity: opacity,
+            acceleration: new Vector3(0, 0, 0.4),
+            size: new NumberSequence([new NumberSequenceKeypoint(0, size, 0), new NumberSequenceKeypoint(1, endSize, 0)]),
+            rotation: new NumberRange(-90, 90),
+            speed: new NumberRange(riseVelocity * 0.9, riseVelocity * 1),
+            rotationSpeed: new NumberRange(-20, 20),
+            spreadAngle: new Vector2(30,30),
+            rate: 7,
+            lifetime: new NumberRange(5,5),
+            timeScale: timeScale,
+            color: ColorSequence.fromColor(color),
+            blending: EmitterBlendType.Normal,
+            lightInfluence: 1,
+            lightEmission: 0,
+            shader: EmitterShaderType.Smoke,
+        }))
+    }
+
+    async compileResults(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Promise<THREE.Object3D[] | Response | undefined> {
+        //create result promises
+        const resultPromises: Promise<THREE.Mesh | Response | undefined>[] = []
+        for (const emitterDesc of this.emitterDescs) {
+            resultPromises.push(emitterDesc.compileResult())
+        }
+
+        //use promises
+        this.results = []
+
+        const compiledResults = await Promise.all(resultPromises)
+        for (const compiledResult of compiledResults) {
+            if (compiledResult instanceof THREE.Mesh) {
+                this.results.push(compiledResult)
+            } else { //failed to compile results, cancel everything
+                this.disposeMeshes(scene, this.results as THREE.Mesh[])
+                this.disposeRenderLists(renderer)
+                return compiledResult
+            }
+        }
+
+        //tick particles if flag
+        const startFull = this.renderScene.particlesStartFull || FLAGS.PARTICLES_START_FULL
+        const startFullFramerate = this.renderScene.particlesStartFullFramerate
+
+        if (startFull) {
+            for (const emitterDesc of this.emitterDescs) {
+                for (let i = 0; i < Math.min(emitterDesc.lifetime.Max * 2 * startFullFramerate, startFull * startFullFramerate); i++) {
+                    emitterDesc.tick(1 / startFullFramerate, this)
+                }
+                emitterDesc.updateResult(this.renderScene)
+            }
+        }
+
+        return this.results
+    }
+
+    updateResults(forceDeltaTime?: number) {
+        const dt = forceDeltaTime !== undefined ? forceDeltaTime : specialClamp(this.time - this.lastTime, 0, 1 / 10) * FLAGS.RENDERER_DELTA_TIME_MULTIPLIER
+        this.lastTime = this.time
+        
+        for (const emitterDesc of this.emitterDescs) {
+            emitterDesc.tick(dt, this)
+            emitterDesc.updateResult(this.renderScene)
+        }
+
+        this.lastCframe = this.cframe.clone()
+    }
+
+    moveLoose(vec: Vec3) {
+        for (const emitterDesc of this.emitterDescs) {
+            if (emitterDesc.lockedToPart) continue
+
+            for (const particle of emitterDesc.particles) {
+                particle.position = particle.position.add(new Vector3().fromVec3(vec))
+            }
+        }
+    }
+
+    dispose(renderer: THREE.WebGLRenderer) {
+        for (const emitterDesc of this.emitterDescs) {
+            emitterDesc.dispose(renderer)
+        }
+    }
+}

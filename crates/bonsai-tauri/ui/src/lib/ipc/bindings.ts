@@ -248,6 +248,7 @@ export const commands = {
 	profileOutfits: (userId: Id) => __TAURI_INVOKE<List<OutfitView>>("profile_outfits", { userId }),
 	/**  What an outfit puts on. Public. */
 	outfitLook: (outfitId: string) => __TAURI_INVOKE<LookView>("outfit_look", { outfitId }),
+	avatar3d: (source: AvatarSource) => __TAURI_INVOKE<Avatar3dView>("avatar_3d", { source }),
 	/**  Email, phone, birthday and Premium of the active account. */
 	accountInfo: () => __TAURI_INVOKE<AccountInfoView>("account_info"),
 	/**  Signed-in sessions of the active account, current one first. */
@@ -415,6 +416,40 @@ export type AuditRow = {
 	/**  ISO date-time. */
 	created: string,
 };
+
+export type Avatar3dScales = {
+	height: number | null,
+	width: number | null,
+	head: number | null,
+	depth: number | null,
+	proportion: number | null,
+	bodyType: number | null,
+};
+
+/**  What the 3D viewer needs to build an avatar: rig, assets, BrickColor ids and scales. */
+export type Avatar3dView = {
+	loading: boolean,
+	error: string | null,
+	/**  "R6" or "R15"; empty until loaded. */
+	rig: string,
+	assets: WornView[],
+	/**  Equipped emotes; `typeId` is the slot. */
+	emotes: WornView[],
+	/**  BrickColor ids: head, torso, left arm, right arm, left leg, right leg. */
+	colors: number[],
+	scales: Avatar3dScales,
+	/**  Changes when the avatar was read again. */
+	rev: number | null,
+};
+
+/**  Whose avatar the 3D viewer shows. */
+export type AvatarSource = 
+/**  The active account's avatar. */
+{ kind: "me" } | 
+/**  A user's current avatar. Public. */
+{ kind: "user"; id: Id } | 
+/**  A saved outfit. Public. The id is a string because outfit ids can exceed 2^53. */
+{ kind: "outfit"; id: string };
 
 export type AvatarView = {
 	loading: boolean,

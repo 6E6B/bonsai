@@ -320,6 +320,9 @@ commands! {
     SetScale => "avatar.scale", "Set body scale (scale, then value)", ["height", "width", "head", "proportion", "body type", "scale", "size", "avatar"], Text, [];
     SetEmote => "avatar.emote", "Put an emote in a hotbar slot (slot 1-8, then item id; slot alone clears it)", ["emote", "hotbar", "slot", "dance", "avatar"], Text, [];
     RedrawAvatar => "avatar.redraw", "Redraw avatar image", ["redraw", "refresh", "thumbnail", "render", "avatar"], None, [];
+    Toggle3d => "avatar.view_3d", "Show the avatar in 3D or as an image", ["3d", "2d", "model", "render", "preview", "spin", "avatar"], None, [];
+    PlayAnimation => "avatar.play", "Play an animation in the 3D view (idle, walk, run, jump, fall, climb, swim, or an emote id)", ["animation", "emote", "dance", "play", "pose", "3d", "avatar"], Text, [];
+    Orbit3d => "avatar.orbit", "Move the 3D camera (left, right, up, down, in, out or reset)", ["camera", "rotate", "orbit", "zoom", "turn", "reset", "3d", "avatar"], Text, [];
 
     SearchMarketplace => "market.search", "Search the Marketplace", ["catalog", "shop", "items", "find item"], Text, [];
     BuyItem => "market.buy", "Buy this item", ["buy", "purchase", "get"], None, [];
@@ -332,6 +335,7 @@ commands! {
     ToggleItemValues => "market.values", "Turn item values from Rolimons on or off", ["values", "rolimons", "worth", "rap"], None, [];
     PriceHistoryRange => "market.history_range", "Set the price history range (7d, 30d, 90d, 1y, all; no argument cycles)", ["price history", "chart", "range", "rap", "sales", "limited"], Text, [];
     PriceHistoryZoom => "market.history_zoom", "Zoom the price history chart (in, out, reset)", ["price history", "chart", "zoom", "pan", "limited"], Text, [];
+    TryOn => "market.try_on", "Try on this item in 3D", ["try on", "preview", "wear", "fit", "3d", "avatar"], None, [];
     PriceHistoryScale => "market.history_scale", "Show the price history on a log or linear scale (log, linear; no argument toggles)", ["price history", "chart", "log", "scale", "limited"], Text, [];
     PriceHistoryView => "market.history_view", "Show price history as a chart or a table (chart, table; no argument toggles)", ["price history", "chart", "table", "sales", "limited"], Text, [];
     SearchAuditLog => "group.audit_search", "Search the community audit log", ["audit", "log", "search", "performer", "community", "group"], Text, [];

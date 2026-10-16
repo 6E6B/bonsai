@@ -3,6 +3,7 @@
 
 pub mod account;
 pub mod alerts;
+pub mod assets;
 pub mod avatar;
 pub mod cache;
 pub mod challenge;
