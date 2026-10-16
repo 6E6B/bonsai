@@ -17,7 +17,7 @@ import {
   scopes,
 } from "~/lib/commands/palette"
 import { command, commandList, run } from "~/lib/commands/registry"
-import { commands, type RemoteSearch, type ThemeView } from "~/lib/ipc/bindings"
+import { commands, type PrefView, type RemoteSearch, type ThemeView } from "~/lib/ipc/bindings"
 import { screenKey, sidebarScreens } from "~/lib/screens"
 import { friends, shell, useLive } from "~/lib/store"
 import { tabLabel, tabs } from "~/lib/tabs"
@@ -35,6 +35,11 @@ export function CommandPalette() {
     () => commands.themes(),
     (): ThemeView[] => [],
   )
+  const prefs = useLive(
+    () => "prefs",
+    () => commands.prefs(),
+    (): PrefView[] => [],
+  )
   const entries = createMemo(() =>
     paletteEntries(
       commandList(),
@@ -42,6 +47,7 @@ export function CommandPalette() {
       tabs.tabs.map((t) => ({ key: t.key, title: tabLabel(t.path).title })),
       sidebarScreens().map((s) => ({ key: screenKey(s), title: s.label })),
       themes,
+      prefs,
     ),
   )
   const people = createMemo(() =>

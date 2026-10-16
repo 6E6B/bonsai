@@ -1,3 +1,4 @@
+import { settingsSections } from "~/lib/sections"
 import type { ConfirmOptions } from "~/lib/ui"
 
 /**
@@ -35,6 +36,19 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
       : { title: "Leave this community?", confirm: "Leave", danger: true },
   "group.kick": () => ({ title: "Remove this member?", confirm: "Remove", danger: true }),
   "group.delete_post": () => ({ title: "Delete this post?", confirm: "Delete", danger: true }),
+  // Resetting one setting from its row needs no question; a section or everything does.
+  "settings.reset": (arg) => {
+    const target = arg?.trim() || "all"
+    const section = settingsSections.find((s) => s.value === target)
+    if (target !== "all" && !section) return null
+    return {
+      title: section ? `Reset ${section.label} settings?` : "Reset all settings?",
+      description:
+        "They go back to their defaults. Themes, the background, the sidebar, shortcuts and accounts are kept.",
+      confirm: "Reset",
+      danger: true,
+    }
+  },
   "theme.delete": () => ({
     title: "Delete this theme?",
     description: "Export it first if you want to keep a copy.",

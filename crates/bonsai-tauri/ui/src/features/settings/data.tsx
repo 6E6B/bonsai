@@ -1,7 +1,7 @@
 import { run } from "~/lib/commands/registry"
 import { bytes } from "~/lib/format"
-import { shell } from "~/lib/store"
-import { Button, SettingRow, SettingSwitch, SettingsGroup } from "~/lib/ui"
+import { Button, SettingRow, SettingsGroup } from "~/lib/ui"
+import { PrefRow } from "./prefs"
 import { useAppSettings } from "./shared"
 
 /** What the app keeps on disk, and data it fetches from outside Roblox. */
@@ -14,19 +14,14 @@ export function DataSection() {
   return (
     <>
       <SettingsGroup title="Cache">
-        <SettingRow label="Saved data and images" description={usage()}>
+        <SettingRow setting="cache" label="Saved data and images" description={usage()}>
           <Button size="sm" icon="trash" onClick={() => run("app.clear_cache")}>
             Clear
           </Button>
         </SettingRow>
       </SettingsGroup>
       <SettingsGroup title="Third-party data">
-        <SettingSwitch
-          label="Item values"
-          description="Show Rolimons values, demand and trends for limiteds, the Values screen, and trading stats and last online on profiles. Refreshed every two minutes while a screen shows them."
-          checked={shell.itemValues}
-          onChange={() => run("market.values")}
-        />
+        <PrefRow name="item_values" />
       </SettingsGroup>
     </>
   )

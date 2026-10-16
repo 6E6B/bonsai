@@ -4,7 +4,8 @@ import { FontPicker } from "~/lib/font-picker"
 import { commands, type ThemeView } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
 import { FONTS, type FontSeed, fontLabel, googleFamily, MONOS, type Mode, parseTheme, shownBase } from "~/lib/theme"
-import { Button, RadioGroup, SettingRow, SettingsGroup } from "~/lib/ui"
+import { Button, SettingRow, SettingsGroup } from "~/lib/ui"
+import { PrefRow } from "./prefs"
 import { useAppearance, useAppSettings } from "./shared"
 
 /** Theme, fonts and size. Saved on this computer for every account. */
@@ -19,20 +20,9 @@ export function AppearanceSection() {
   return (
     <>
       <SettingsGroup title="Theme" description="Saved on this computer for every account.">
-        <SettingRow label="Mode" description="System switches between your dark and light themes with the OS.">
-          <RadioGroup
-            aria-label="Mode"
-            orientation="horizontal"
-            value={app.mode}
-            options={[
-              { value: "system", label: "System" },
-              { value: "dark", label: "Dark" },
-              { value: "light", label: "Light" },
-            ]}
-            onChange={(v) => run("view.theme", v)}
-          />
-        </SettingRow>
+        <PrefRow name="mode" />
         <SettingRow
+          setting="themes"
           label="Themes"
           description={`Dark: ${themeName(app.darkTheme)}. Light: ${themeName(app.lightTheme)}. Pick, edit and make themes in their own tab.`}
         >
@@ -43,19 +33,8 @@ export function AppearanceSection() {
       </SettingsGroup>
       <ThemeFonts themes={themes} />
       <SettingsGroup title="Size">
-        <SettingRow label="Density" description="Compact makes buttons and fields shorter.">
-          <RadioGroup
-            aria-label="Density"
-            orientation="horizontal"
-            value={app.density}
-            options={[
-              { value: "comfortable", label: "Comfortable" },
-              { value: "compact", label: "Compact" },
-            ]}
-            onChange={(v) => run("view.density", v)}
-          />
-        </SettingRow>
-        <SettingRow label="Zoom" description="Scales the whole window.">
+        <PrefRow name="density" />
+        <SettingRow setting="zoom" label="Zoom" description="Scales the whole window.">
           <Button size="sm" onClick={() => run("view.zoom_out")}>
             Smaller
           </Button>

@@ -237,6 +237,7 @@ pub enum Arg {
     Font,
     Tab,
     Screen,
+    Setting,
 }
 
 impl From<ArgKind> for Arg {
@@ -255,6 +256,7 @@ impl From<ArgKind> for Arg {
             ArgKind::Font => Arg::Font,
             ArgKind::Tab => Arg::Tab,
             ArgKind::Screen => Arg::Screen,
+            ArgKind::Setting => Arg::Setting,
         }
     }
 }
@@ -2665,6 +2667,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::privacy_settings,
             account::my_private_servers,
             account::app_settings,
+            account::prefs,
             account::themes,
             account::appearance,
             account::set_system_dark,

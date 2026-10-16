@@ -51,6 +51,8 @@
 
 ## Settings
 - [x] Layout: sections split into **Roblox account** (Profile, Security, Privacy, Private servers; saved on Roblox) and **This app** (General, Appearance, Background, Layout, Notifications, Keyboard, Accounts, Data and storage, Developer; saved on this computer), with icons. Old names (`account`, `advanced`) still open via `nav.settings`. Shared `SettingsGroup` / `SettingRow` / `SettingSwitch` in `lib/ui`.
+- [x] One list of app settings in `rbx-core/src/prefs.rs` (key, section, title, kind, default). `settings.set <key> [value]` changes one (a switch without a value flips) and `settings.reset <key|section|all>` puts defaults back; the command bar lists on/off and each choice per setting, and resets per section. Changed rows show a dot and a reset button.
+- [x] Settings search in the side pane (titles, descriptions, keywords and the Roblox account rows); results open `/settings/:section/:setting`, which scrolls to and flashes the row. `nav.settings` takes `section/setting` too.
 - [ ] **Account Info**:
   - [x] Display name (edit with 7-day cooldown validation)
   - [x] Email address and verification status

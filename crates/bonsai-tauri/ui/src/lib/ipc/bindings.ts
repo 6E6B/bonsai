@@ -259,6 +259,8 @@ export const commands = {
 	myPrivateServers: (tab: string) => __TAURI_INVOKE<List<MyServerRow>>("my_private_servers", { tab }),
 	/**  App preferences, and the disk cache size once measured. */
 	appSettings: () => __TAURI_INVOKE<AppSettings>("app_settings"),
+	/**  Every setting that `settings.set` and `settings.reset` take. */
+	prefs: () => __TAURI_INVOKE<PrefView[]>("prefs"),
 	/**  Every installed theme: built-ins first, then the user's by name. */
 	themes: () => __TAURI_INVOKE<ThemeView[]>("themes"),
 	appearance: () => __TAURI_INVOKE<AppearanceView>("appearance"),
@@ -406,7 +408,7 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting";
 
 export type AuditRow = {
 	actorId: Id,
@@ -1405,6 +1407,34 @@ export type PlaceCard = {
 export type Point = {
 	t: number | null,
 	v: number | null,
+};
+
+export type PrefOption = {
+	value: string,
+	label: string,
+};
+
+/**  One setting from `rbx_core::prefs`, with its value now and in a fresh install. */
+export type PrefView = {
+	key: string,
+	/**  The settings section it sits in. */
+	section: string,
+	title: string,
+	description: string,
+	keywords: string[],
+	/**  `bool`, `choice`, `range` or `text`. */
+	kind: string,
+	/**  `choice` only: `(value, label)` pairs. */
+	options: PrefOption[],
+	/**  `range` only. */
+	min: number,
+	max: number,
+	step: number,
+	/**  `text` only: shown when empty. */
+	placeholder: string,
+	/**  `on`/`off` for `bool`, the option for `choice`, a number for `range`, else the text. */
+	value: string,
+	default: string,
 };
 
 /**  How a user shows up: matches the `Presence` type of the UI's `Avatar`. */

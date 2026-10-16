@@ -1,8 +1,8 @@
 import { createSignal, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { formatLocales } from "~/lib/format"
-import { shell } from "~/lib/store"
-import { Button, RadioGroup, Select, SettingRow, SettingsGroup, TextField } from "~/lib/ui"
+import { Button, Select, SettingsGroup, TextField } from "~/lib/ui"
+import { PrefRow } from "./prefs"
 import { useAppSettings } from "./shared"
 
 /** Launch command presets. `{uri}` is the `roblox-player:` link; without it the link goes last. */
@@ -30,9 +30,9 @@ export function GeneralSection() {
   return (
     <>
       <SettingsGroup title="Playing" description="Saved on this computer for every account.">
-        <SettingRow label="Launch Roblox with" description="How Join opens the game.">
+        <PrefRow name="player_command" description="How Join opens the game.">
           <Select class="w-48" aria-label="Launch Roblox with" options={launchModes} value={mode()} onChange={pick} />
-        </SettingRow>
+        </PrefRow>
         <Show when={mode() === "custom"}>
           <form
             class="flex items-end gap-2 py-2.5"
@@ -54,21 +54,10 @@ export function GeneralSection() {
             </Button>
           </form>
         </Show>
-        <SettingRow label="Avatars" description="How avatars and items open. 3D shows a spinner until the model loads.">
-          <RadioGroup
-            aria-label="Avatars"
-            orientation="horizontal"
-            value={shell.avatar3d ? "3d" : "2d"}
-            options={[
-              { value: "2d", label: "Image" },
-              { value: "3d", label: "3D" },
-            ]}
-            onChange={(v) => run("avatar.default_view", v)}
-          />
-        </SettingRow>
+        <PrefRow name="avatar_view" />
       </SettingsGroup>
       <SettingsGroup title="Region">
-        <SettingRow label="Number and date format" description="Applies to counts, prices and dates.">
+        <PrefRow name="format_locale">
           <Select
             size="sm"
             aria-label="Number and date format"
@@ -76,7 +65,7 @@ export function GeneralSection() {
             options={[{ value: "system", label: "System" }, ...formatLocales]}
             onChange={(v) => run("app.format_locale", v === "system" ? "" : v)}
           />
-        </SettingRow>
+        </PrefRow>
       </SettingsGroup>
     </>
   )

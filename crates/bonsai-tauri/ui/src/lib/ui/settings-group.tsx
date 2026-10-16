@@ -1,4 +1,5 @@
 import { type JSX, type ParentProps, Show } from "solid-js"
+import { IconButton } from "./button"
 import { SectionHeader } from "./section-header"
 import { Switch } from "./switch"
 
@@ -36,20 +37,47 @@ export interface SettingRowProps extends ParentProps {
   description?: JSX.Element
   /** `stacked` puts the control under the label at full width: sliders, long fields. */
   layout?: "inline" | "stacked"
+  /** Id for deep links (`/settings/:section/:setting`) and search results to scroll to. */
+  setting?: string
+  /** Not at its default: marks the label and shows `onReset`. */
+  changed?: boolean
+  onReset?: () => void
   class?: string
 }
 
 /** One setting: label and description on the left, its value or control on the right. */
 export function SettingRow(props: SettingRowProps) {
   return (
-    <div data-component="setting-row" data-layout={props.layout ?? "inline"} class={props.class}>
+    <div
+      data-component="setting-row"
+      data-layout={props.layout ?? "inline"}
+      data-setting={props.setting}
+      data-changed={props.changed ? "" : undefined}
+      class={props.class}
+    >
       <div data-slot="text">
-        <span data-slot="label">{props.label}</span>
+        <span data-slot="label">
+          {props.label}
+          <Show when={props.changed}>
+            <span data-slot="changed" title="Changed from the default" />
+          </Show>
+        </span>
         <Show when={props.description}>
           <span data-slot="description">{props.description}</span>
         </Show>
       </div>
-      <div data-slot="control">{props.children}</div>
+      <div data-slot="control">
+        {props.children}
+        <Show when={props.changed && props.onReset}>
+          <IconButton
+            icon="undo"
+            size="sm"
+            variant="ghost"
+            label="Reset to default"
+            onClick={() => props.onReset?.()}
+          />
+        </Show>
+      </div>
     </div>
   )
 }

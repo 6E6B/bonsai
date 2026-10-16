@@ -70,6 +70,29 @@ describe("paletteEntries", () => {
     expect(rows.map((r) => [r.title, r.arg])).toEqual([["view.sidebar_toggle: Trades", "trades"]])
   })
 
+  it("lists on and off for switches and each option for choices", () => {
+    const prefs = [
+      { key: "notify.sales", section: "notifications", title: "Sales", keywords: [], kind: "bool", options: [] },
+      {
+        key: "density",
+        section: "appearance",
+        title: "Density",
+        keywords: [],
+        kind: "choice",
+        options: [{ value: "compact", label: "Compact" }],
+      },
+      { key: "format_locale", section: "general", title: "Format", keywords: [], kind: "text", options: [] },
+    ]
+    const rows = paletteEntries([cmd("settings.set", "setting")], [], [], [], [], prefs)
+    expect(rows.map((r) => [r.title, r.arg])).toEqual([
+      ["Sales: On", "notify.sales on"],
+      ["Sales: Off", "notify.sales off"],
+      ["Density: Compact", "density compact"],
+    ])
+    const resets = paletteEntries([cmd("settings.reset", "setting")], [], [], [], [], prefs)
+    expect(resets.map((r) => r.arg)).toEqual(["all", "general", "appearance", "notifications"])
+  })
+
   it("keeps the bare settings command next to its sections", () => {
     const rows = paletteEntries([cmd("nav.settings", "settingsSection")], [])
     expect(rows[0].arg).toBeNull()

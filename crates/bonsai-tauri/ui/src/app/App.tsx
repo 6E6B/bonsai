@@ -52,7 +52,7 @@ export function App() {
         <Route path="/communities" component={Communities} />
         <Route path="/communities/:id" component={Community} />
         <Route path="/search" component={Search} />
-        <Route path="/settings/:section?" component={Settings} />
+        <Route path="/settings/:section?/:setting?" component={Settings} />
         <Route path="/themes" component={Themes} />
         <Route path="/themes/:id" component={ThemeEditor} />
         <Route path="/components" component={Components} />

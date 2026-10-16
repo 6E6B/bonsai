@@ -7,6 +7,7 @@ use std::sync::Arc;
 use rbx_core::commands::CommandId;
 use rbx_core::experience::ServerChange;
 use rbx_core::me::ServersTab;
+use rbx_core::prefs::{self, PrefKind};
 use rbx_core::settings::{Density, Mode, NotifyPrefs, SidebarPrefs, valid_format_locale};
 use rbx_core::themes::{Base, FontSlot, Theme};
 use rbx_core::{AccountId, Core};
@@ -323,6 +324,76 @@ pub fn app_settings(core: State<'_, Arc<Core>>) -> AppSettings {
         cache_data: usage.map(|u| u.data as f64),
         cache_images: usage.map(|u| u.images as f64),
     }
+}
+
+/// One setting from `rbx_core::prefs`, with its value now and in a fresh install.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PrefView {
+    pub key: String,
+    /// The settings section it sits in.
+    pub section: String,
+    pub title: String,
+    pub description: String,
+    pub keywords: Vec<String>,
+    /// `bool`, `choice`, `range` or `text`.
+    pub kind: String,
+    /// `choice` only: `(value, label)` pairs.
+    pub options: Vec<PrefOption>,
+    /// `range` only.
+    pub min: i32,
+    pub max: i32,
+    pub step: i32,
+    /// `text` only: shown when empty.
+    pub placeholder: String,
+    /// `on`/`off` for `bool`, the option for `choice`, a number for `range`, else the text.
+    pub value: String,
+    pub default: String,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+pub struct PrefOption {
+    pub value: String,
+    pub label: String,
+}
+
+/// Every setting that `settings.set` and `settings.reset` take.
+#[tauri::command]
+#[specta::specta]
+pub fn prefs(core: State<'_, Arc<Core>>) -> Vec<PrefView> {
+    let s = core.settings();
+    prefs::PREFS
+        .iter()
+        .map(|p| {
+            let (kind, options, (min, max, step), placeholder) = match p.kind {
+                PrefKind::Bool => ("bool", &[][..], (0, 0, 0), ""),
+                PrefKind::Choice(o) => ("choice", o, (0, 0, 0), ""),
+                PrefKind::Range { min, max, step } => ("range", &[][..], (min, max, step), ""),
+                PrefKind::Text { placeholder } => ("text", &[][..], (0, 0, 0), placeholder),
+            };
+            PrefView {
+                key: p.key.to_owned(),
+                section: p.section.to_owned(),
+                title: p.title.to_owned(),
+                description: p.description.to_owned(),
+                keywords: p.keywords.iter().map(|k| (*k).to_owned()).collect(),
+                kind: kind.to_owned(),
+                options: options
+                    .iter()
+                    .map(|(v, l)| PrefOption {
+                        value: (*v).to_owned(),
+                        label: (*l).to_owned(),
+                    })
+                    .collect(),
+                min,
+                max,
+                step,
+                placeholder: placeholder.to_owned(),
+                value: prefs::get(&s, p.key).unwrap_or_default(),
+                default: prefs::default_value(p.key).unwrap_or_default(),
+            }
+        })
+        .collect()
 }
 
 /// An installed theme. The UI reads `doc` with `readTheme` and derives the tokens itself.
@@ -642,6 +713,34 @@ pub(super) fn run(
         }
         CommandId::SetBackgroundLevel => core.set_background_level(&arg()),
         CommandId::ResetBackgroundEffects => core.reset_background_effects(),
+        CommandId::SetSetting => {
+            // Checked on a copy first so a bad value changes nothing.
+            let a = arg();
+            prefs::apply(&mut core.settings(), &a).map(|_| {
+                core.update_settings(|s| {
+                    let _ = prefs::apply(s, &a);
+                })
+            })
+        }
+        CommandId::ResetSettings => {
+            let target = arg();
+            let target = if target.trim().is_empty() {
+                "all"
+            } else {
+                target.trim()
+            };
+            prefs::reset(&mut core.settings(), target).map(|n| {
+                core.update_settings(|s| {
+                    let _ = prefs::reset(s, target);
+                });
+                let msg = match n {
+                    0 => "Already at the defaults.".to_owned(),
+                    1 => "Reset 1 setting.".to_owned(),
+                    n => format!("Reset {n} settings."),
+                };
+                core.notice(&msg, false);
+            })
+        }
         CommandId::SetDensity => match Density::from_name(&arg()) {
             Some(d) => {
                 core.update_settings(|s| s.density = d);

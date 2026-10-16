@@ -1,4 +1,4 @@
-import type { Arg, CommandInfo, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
+import type { Arg, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
 import { settingsSections } from "~/lib/sections"
 import type { ThumbKind } from "~/lib/thumb"
 import { filterEntries } from "./filter"
@@ -68,20 +68,61 @@ export interface PaletteTheme {
   builtin: boolean
 }
 
+/** A setting, for `settings.set` and `settings.reset`. */
+export type PalettePref = Pick<PrefView, "key" | "section" | "title" | "keywords" | "kind" | "options">
+
 const COLORS = ["none", "red", "orange", "yellow", "green", "blue", "purple", "pink"]
 const MODES = ["system", "light", "dark"]
 
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
+/** Rows for `settings.set`: on and off for switches, one per option for choices. Text and
+ * number settings are changed on their settings page. */
+function settingRows(c: CommandInfo, prefs: PalettePref[]): PaletteEntry[] {
+  const out: PaletteEntry[] = []
+  for (const p of prefs) {
+    const section = settingsSections.find((s) => s.value === p.section)?.label ?? ""
+    const words = `${c.keywords.join(" ")} ${p.keywords.join(" ")} ${section}`
+    const row = (value: string, label: string) =>
+      out.push({
+        key: `${c.id}:${p.key}:${value}`,
+        title: `${p.title}: ${label}`,
+        words,
+        id: c.id,
+        arg: `${p.key} ${value}`,
+      })
+    if (p.kind === "bool") {
+      row("on", "On")
+      row("off", "Off")
+    } else if (p.kind === "choice") for (const o of p.options) row(o.value, o.label)
+  }
+  return out
+}
+
+/** Rows for `settings.reset`: everything, then each section that has settings. */
+function resetRows(c: CommandInfo, prefs: PalettePref[]): PaletteEntry[] {
+  const words = c.keywords.join(" ")
+  const row = (value: string, label: string) => ({
+    key: `${c.id}:${value}`,
+    title: `${c.title}: ${label}`,
+    words,
+    id: c.id,
+    arg: value,
+  })
+  const sections = settingsSections.filter((s) => prefs.some((p) => p.section === s.value))
+  return [row("all", "All"), ...sections.map((s) => row(s.value, s.label))]
+}
+
 /** Every command, with one row per choice for arguments that have a short fixed list
- * (accounts, settings sections, colors, modes, themes, tabs, sidebar screens) and an asking row for typed
- * arguments. */
+ * (accounts, settings sections, colors, modes, themes, tabs, sidebar screens, settings) and an
+ * asking row for typed arguments. */
 export function paletteEntries(
   commands: CommandInfo[],
   accounts: PaletteAccount[],
   tabs: PaletteTab[] = [],
   screens: PaletteScreen[] = [],
   themes: PaletteTheme[] = [],
+  prefs: PalettePref[] = [],
 ): PaletteEntry[] {
   const out: PaletteEntry[] = []
   for (const c of commands) {
@@ -123,6 +164,9 @@ export function paletteEntries(
         break
       case "screen":
         for (const s of screens) choice(s.key, s.title)
+        break
+      case "setting":
+        out.push(...(c.id === "settings.reset" ? resetRows(c, prefs) : settingRows(c, prefs)))
         break
       default:
         out.push({ ...base, key: c.id, title: `${c.title}…`, arg: null, ask: c.arg })

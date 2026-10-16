@@ -375,7 +375,12 @@ export default function Components() {
               </Button>
             }
           >
-            <SettingRow label="Launch Roblox with" description="How Join opens the game.">
+            <SettingRow
+              label="Launch Roblox with"
+              description="Changed from the default: a dot and a reset button."
+              changed
+              onReset={() => {}}
+            >
               <Select
                 class="w-40"
                 aria-label="Launch Roblox with"

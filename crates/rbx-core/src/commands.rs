@@ -34,6 +34,8 @@ pub enum ArgKind {
     Tab,
     /// a screen that can sit in the sidebar
     Screen,
+    /// a setting from [`crate::prefs::PREFS`], then its value
+    Setting,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -426,6 +428,8 @@ commands! {
     SetPlayerCommand => "app.player_command", "Set how Roblox is launched (empty for the default)", ["launch", "player", "sober", "flatpak", "wine", "command"], Text, [];
     SetFormatLocale => "app.format_locale", "Set number and date format (e.g. de-DE; empty for the system's)", ["language", "locale", "region", "format", "date", "number"], Text, [];
     SetNotify => "app.notify", "Turn a notification kind on or off (friend_joins, trades, chats, friend_requests, experience_updates, sales)", ["notifications", "alerts", "desktop", "mute", "sales"], Text, [];
+    SetSetting => "settings.set", "Change a setting", ["setting", "preference", "option", "change", "turn on", "turn off"], Setting, [];
+    ResetSettings => "settings.reset", "Reset settings to their defaults", ["reset", "default", "restore", "settings"], Setting, [];
     ClearCache => "app.clear_cache", "Clear cached data and images", ["cache", "clear", "disk", "storage"], None, [];
 
     NextSubTab => "view.next_subtab", "Next sub-tab", ["tab", "next"], None, [Shortcut::key("CloseBracket")];
