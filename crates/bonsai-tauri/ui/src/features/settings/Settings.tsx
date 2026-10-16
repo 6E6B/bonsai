@@ -23,8 +23,18 @@ import { ServerControls } from "~/lib/private-server"
 import { arrange, nudgeScreen, screenKey, screens } from "~/lib/screens"
 import { settingsSections } from "~/lib/sections"
 import { shell, useLive } from "~/lib/store"
-import { FONTS, type FontSeed, fontLabel, googleFamily, MONOS, type Mode, parseTheme, shownBase } from "~/lib/theme"
-import { thumbUrl } from "~/lib/thumb"
+import {
+  FONTS,
+  type FontSeed,
+  fontLabel,
+  googleFamily,
+  MONOS,
+  type Mode,
+  parseTheme,
+  setSeeThrough,
+  shownBase,
+} from "~/lib/theme"
+import { backgroundUrl, thumbUrl } from "~/lib/thumb"
 import {
   Avatar,
   Badge,
@@ -44,6 +54,7 @@ import {
   SegmentedControl,
   Select,
   Skeleton,
+  Slider,
   Split,
   Switch,
   TextField,
@@ -675,8 +686,90 @@ function AppearanceSection() {
           </Button>
         </Row>
       </Card>
+      <BackgroundCard />
       <ThemeFonts />
       <SidebarCard />
+    </>
+  )
+}
+
+/** A picture or GIF behind every page, from a file or a link. The page and cards turn
+ * see-through over it; the window chrome and menus stay as the theme draws them. */
+function BackgroundCard() {
+  const appearance = useLive(
+    () => "appearance",
+    () => commands.appearance(),
+    (): AppearanceView => ({ mode: "system", dark: "", light: "", fonts: [], background: null }),
+  )
+  const prompt = usePrompt()
+  const fromLink = async () => {
+    const url = await prompt({ title: "Background from a link", label: "Image link (https)", submit: "Use" })
+    if (url) void run("view.background", url)
+  }
+  // Dragging previews the page opacity at once; the value is saved when the drag ends.
+  const [panels, setPanels] = createSignal<number | null>(null)
+  const [image, setImage] = createSignal<number | null>(null)
+  const percent = (v: number) => `${v}%`
+  return (
+    <>
+      <SectionHeader title="Background" class="mt-6" />
+      <Card class={rows}>
+        <Row label="Picture" description="PNG, JPEG, GIF or WebP, up to 32 MB. Shows behind every page.">
+          <Show when={appearance.background && backgroundUrl(appearance.background.file)}>
+            {(src) => <img src={src()} alt="" class="h-8 w-14 rounded-sm border border-line object-cover" />}
+          </Show>
+          <Button size="sm" icon="image" onClick={() => run("view.background_file")}>
+            Choose file
+          </Button>
+          <Button size="sm" icon="link" onClick={fromLink}>
+            From link
+          </Button>
+          <Show when={appearance.background}>
+            <Button size="sm" variant="ghost" onClick={() => run("view.background_clear")}>
+              Remove
+            </Button>
+          </Show>
+        </Row>
+        <Show when={appearance.background}>
+          {(b) => (
+            <>
+              <div class="py-3">
+                <Slider
+                  label="Picture strength"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={image() ?? b().image}
+                  format={percent}
+                  onChange={setImage}
+                  onChangeEnd={(v) => {
+                    setImage(null)
+                    void run("view.background_level", `image ${v}`)
+                  }}
+                />
+              </div>
+              <div class="py-3">
+                <Slider
+                  label="Page opacity"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={panels() ?? b().panels}
+                  format={percent}
+                  onChange={(v) => {
+                    setPanels(v)
+                    setSeeThrough(v / 100)
+                  }}
+                  onChangeEnd={(v) => {
+                    setPanels(null)
+                    void run("view.background_level", `panels ${v}`)
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </Show>
+      </Card>
     </>
   )
 }
@@ -693,7 +786,7 @@ function ThemeFonts() {
   const appearance = useLive(
     () => "appearance",
     () => commands.appearance(),
-    (): AppearanceView => ({ mode: "system", dark: "", light: "", fonts: [] }),
+    (): AppearanceView => ({ mode: "system", dark: "", light: "", fonts: [], background: null }),
   )
   const shown = createMemo(() => {
     const base = shownBase(appearance.mode as Mode)

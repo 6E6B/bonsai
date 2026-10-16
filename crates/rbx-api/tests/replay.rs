@@ -553,6 +553,37 @@ async fn google_fonts_catalog_css_and_files() {
     }
 }
 
+/// A background image from a pasted link: any https host, no credentials, capped in size.
+#[tokio::test]
+async fn user_image_from_any_https_host() {
+    let r = Replay::start(&["background_image"]).await;
+    let c = r.client();
+    let gif = c
+        .fetch_user_image("https://images.example.com/cat.gif", 1 << 20)
+        .await
+        .unwrap();
+    assert!(gif.starts_with(b"GIF89a"));
+    assert!(
+        c.fetch_user_image("https://images.example.com/big.png", 16)
+            .await
+            .is_err()
+    );
+    assert!(
+        c.fetch_user_image("https://images.example.com/gone.png", 1 << 20)
+            .await
+            .is_err()
+    );
+    assert!(
+        c.fetch_user_image("http://images.example.com/cat.gif", 1 << 20)
+            .await
+            .is_err()
+    );
+    assert!(c.fetch_user_image("file:///etc/passwd", 1 << 20).await.is_err());
+    for q in r.requests().await {
+        assert!(q.headers.get("cookie").is_none());
+    }
+}
+
 #[tokio::test]
 async fn challenge_hook_answers_and_the_write_is_resent() {
     let r = Replay::start(&["challenge"]).await;

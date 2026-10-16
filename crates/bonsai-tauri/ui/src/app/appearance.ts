@@ -2,12 +2,12 @@ import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, on, onCleanup, onMount } from "solid-js"
 import { type AppearanceView, commands } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
-import { applyAppearance, type Mode, parseTheme, registerFonts } from "~/lib/theme"
+import { applyAppearance, type Mode, parseTheme, registerFonts, setSeeThrough } from "~/lib/theme"
 
-const initial = (): AppearanceView => ({ mode: "system", dark: "", light: "", fonts: [] })
+const initial = (): AppearanceView => ({ mode: "system", dark: "", light: "", fonts: [], background: null })
 
 /** Keeps the window on the saved mode and themes, live, and loads their Google fonts as they
- * download. Call once from the layout. */
+ * download. Call once from the layout. Returns the live view, for the background picture. */
 export function useAppearance() {
   const a = useLive(
     () => "appearance",
@@ -21,6 +21,7 @@ export function useAppearance() {
     ),
   )
   createEffect(() => registerFonts(a.fonts))
+  createEffect(() => setSeeThrough(a.background ? a.background.panels / 100 : undefined))
   // The backend needs the OS preference to know which theme System mode shows.
   onMount(() => {
     if (!isTauri() || typeof window.matchMedia !== "function") return
@@ -30,4 +31,5 @@ export function useAppearance() {
     media.addEventListener("change", report)
     onCleanup(() => media.removeEventListener("change", report))
   })
+  return a
 }

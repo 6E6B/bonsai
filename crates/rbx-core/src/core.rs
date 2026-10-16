@@ -97,6 +97,10 @@ pub enum Cmd {
     /// Writes a user theme to the themes folder.
     SaveTheme(Box<crate::themes::Theme>),
     DeleteTheme(String),
+    /// Copies or downloads a background picture, then shows it.
+    LoadBackground(crate::backgrounds::Source),
+    /// Deletes background pictures that settings no longer name.
+    PruneBackgrounds,
     /// Home game sorts as this account (anonymous works too).
     LoadHome(AccountId),
 }
@@ -786,6 +790,11 @@ impl Inner {
                 if let Err(e) = crate::themes::save(&self.paths.themes_dir(), &t) {
                     tracing::warn!("saving theme {}: {e}", t.id);
                 }
+            }
+            Cmd::LoadBackground(src) => self.load_background(src).await,
+            Cmd::PruneBackgrounds => {
+                let keep = self.settings.read().appearance.background.clone().map(|b| b.file);
+                crate::backgrounds::prune(&self.paths.backgrounds_dir(), keep.as_deref());
             }
             Cmd::DeleteTheme(id) => {
                 if let Err(e) = crate::themes::delete(&self.paths.themes_dir(), &id) {

@@ -25,6 +25,7 @@ import { useAppearance } from "./appearance"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
 import { ApproveCode } from "./shell/ApproveCode"
+import { Backdrop } from "./shell/Backdrop"
 import { ChallengeDialog } from "./shell/ChallengeDialog"
 import { Drawer } from "./shell/Drawer"
 import { PinForm } from "./shell/PinForm"
@@ -325,7 +326,7 @@ export function Layout(props: ParentProps) {
       { defer: true },
     ),
   )
-  useAppearance()
+  const appearance = useAppearance()
   // Saved density and number format, once at startup.
   onMount(async () => {
     if (!isTauri()) return
@@ -372,26 +373,29 @@ export function Layout(props: ParentProps) {
             <Sidebar compact={compact()} />
             <div class="flex min-w-0 flex-1 flex-col">
               <TabBar />
-              <main
-                ref={main}
-                data-scroller
-                class="min-h-0 flex-1 bg-canvas"
-                onScroll={(e) => scrolls.set(tabs.active, e.currentTarget.scrollTop)}
-              >
-                <div class="flex h-full flex-col">
-                  <ShellAlerts />
-                  <ChallengeDialog />
-                  <ErrorBoundary
-                    fallback={(err) => (
-                      <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
-                        {String(err?.stack ?? err)}
-                      </pre>
-                    )}
-                  >
-                    {props.children}
-                  </ErrorBoundary>
-                </div>
-              </main>
+              <div class="relative isolate flex min-h-0 flex-1 flex-col">
+                <Backdrop background={appearance.background} />
+                <main
+                  ref={main}
+                  data-scroller
+                  class="min-h-0 flex-1 bg-canvas"
+                  onScroll={(e) => scrolls.set(tabs.active, e.currentTarget.scrollTop)}
+                >
+                  <div class="flex h-full flex-col">
+                    <ShellAlerts />
+                    <ChallengeDialog />
+                    <ErrorBoundary
+                      fallback={(err) => (
+                        <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
+                          {String(err?.stack ?? err)}
+                        </pre>
+                      )}
+                    >
+                      {props.children}
+                    </ErrorBoundary>
+                  </div>
+                </main>
+              </div>
             </div>
             <Show when={preview()}>
               {(p) => (

@@ -41,6 +41,30 @@ pub struct Appearance {
     pub mode: Mode,
     pub dark: String,
     pub light: String,
+    /// A picture behind every page, under whichever theme is on.
+    pub background: Option<Background>,
+}
+
+/// A picture shown behind the app. Pages and panels turn see-through over it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Background {
+    /// File name in `Paths::backgrounds_dir()` (see [`crate::backgrounds::valid_file`]).
+    pub file: String,
+    /// How strongly the picture shows through the theme's background, 0–100.
+    pub image: u8,
+    /// How opaque pages and panels stay over the picture, 0–100.
+    pub panels: u8,
+}
+
+impl Default for Background {
+    fn default() -> Self {
+        Background {
+            file: String::new(),
+            image: 70,
+            panels: 75,
+        }
+    }
 }
 
 impl Default for Appearance {
@@ -49,6 +73,7 @@ impl Default for Appearance {
             mode: Mode::System,
             dark: "dark".into(),
             light: "light".into(),
+            background: None,
         }
     }
 }

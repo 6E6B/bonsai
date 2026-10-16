@@ -389,6 +389,8 @@ export type AppearanceView = {
 	light: string,
 	/**  The Google Fonts the two themes use, to register with the webview as they download. */
 	fonts: FontView[],
+	/**  The picture behind the app, if any. */
+	background: BackgroundView | null,
 };
 
 export type ApproveStepView = { step: "enter" } | 
@@ -464,6 +466,16 @@ export type AvatarView = {
 	scales: ScaleView[],
 	/**  Changes when the avatar was read again, so the preview image reloads. */
 	rev: number | null,
+};
+
+/**  The app background picture and how see-through things are over it. */
+export type BackgroundView = {
+	/**  File name under `bg://`. */
+	file: string,
+	/**  How strongly the picture shows, 0–100. */
+	image: number,
+	/**  How opaque pages and panels stay, 0–100. */
+	panels: number,
 };
 
 export type BadgeRow = {

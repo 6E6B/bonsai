@@ -236,6 +236,10 @@ commands! {
     InspectTheme => "theme.inspect", "Inspect: pick part of the preview to edit its tokens", ["theme", "inspect", "pick", "token", "element", "editor"], None, [];
     FixThemeContrast => "theme.fix_contrast", "Fix low contrast in the theme", ["theme", "contrast", "readable", "accessibility", "fix", "wcag"], None, [];
     ThemeLivePreview => "theme.live", "Show theme edits across the whole app (on or off)", ["theme", "live", "preview", "apply", "editor"], None, [];
+    SetBackground => "view.background", "Set background picture (https link or file path)", ["background", "wallpaper", "picture", "image", "photo", "gif", "url", "link", "appearance"], Text, [];
+    PickBackground => "view.background_file", "Choose background picture from files", ["background", "wallpaper", "picture", "image", "photo", "gif", "file", "upload", "appearance"], None, [];
+    ClearBackground => "view.background_clear", "Remove background picture", ["background", "wallpaper", "picture", "remove", "clear", "appearance"], None, [];
+    SetBackgroundLevel => "view.background_level", "Background strength (image or panels, then 0-100)", ["background", "wallpaper", "opacity", "transparency", "see-through", "fade", "appearance"], Text, [];
     SetDensity => "view.density", "Density (compact or comfortable)", ["density", "compact", "comfortable", "dense", "spacing"], Text, [];
     ZoomIn => "view.zoom_in", "Zoom in", ["scale", "bigger", "font"], None, [Shortcut::ctrl("Plus"), Shortcut::ctrl("Equals")];
     ZoomOut => "view.zoom_out", "Zoom out", ["scale", "smaller", "font"], None, [Shortcut::ctrl("Minus")];

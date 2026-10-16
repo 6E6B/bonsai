@@ -542,12 +542,51 @@ impl Client {
         self.fetch_file(url, |h| h == "fonts.gstatic.com").await
     }
 
+    /// Download an image the user pasted a link to, for the app background. Any `https` host,
+    /// since the user picked it; no cookie is sent. Fails past `max` bytes without reading on.
+    /// The caller checks that the bytes are an image.
+    pub async fn fetch_user_image(&self, url: &str, max: usize) -> Result<Vec<u8>> {
+        let host = https_host(url);
+        if host.is_empty() || host.contains(['@', '\\']) {
+            return Err(Error::Encode("only https links work".into()));
+        }
+        let url = match &self.inner.base {
+            Base::Production => url.to_string(),
+            Base::Replay(_) => self.inner.base.url(host, &url[8 + host.len()..]),
+        };
+        self.inner.limiter.acquire(host).await;
+        let mut resp = self
+            .inner
+            .http
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| Error::Network(e.without_url().to_string()))?;
+        let status = resp.status().as_u16();
+        if !(200..300).contains(&status) {
+            return Err(Error::Message(format!("The link answered {status}.")));
+        }
+        let too_big = || Error::Message(format!("The image is over {} MB.", max >> 20));
+        if resp.content_length().is_some_and(|n| n > max as u64) {
+            return Err(too_big());
+        }
+        let mut body = Vec::new();
+        while let Some(chunk) = resp
+            .chunk()
+            .await
+            .map_err(|e| Error::Network(e.without_url().to_string()))?
+        {
+            if body.len() + chunk.len() > max {
+                return Err(too_big());
+            }
+            body.extend_from_slice(&chunk);
+        }
+        Ok(body)
+    }
+
     /// GET a public file by URL with no credentials, if `allowed` accepts its host.
     async fn fetch_file(&self, url: &str, allowed: impl Fn(&str) -> bool) -> Result<Vec<u8>> {
-        let host = url
-            .strip_prefix("https://")
-            .and_then(|r| r.split('/').next())
-            .unwrap_or("");
+        let host = https_host(url);
         if !allowed(host) {
             return Err(Error::Encode(format!("refusing to fetch url host {host}")));
         }
@@ -712,6 +751,13 @@ impl Client {
             }
         }
     }
+}
+
+/// The host of an `https://` URL, or empty.
+fn https_host(url: &str) -> &str {
+    url.strip_prefix("https://")
+        .and_then(|r| r.split(['/', '?', '#']).next())
+        .unwrap_or("")
 }
 
 fn status_error(status: u16, body: &[u8]) -> Error {

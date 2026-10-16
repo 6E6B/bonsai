@@ -90,6 +90,7 @@
     - [ ] Import and export (`.bonsaitheme` files and share codes)
     - [x] Inspect mode (`theme.inspect`: click part of the editor preview to list the tokens that paint it)
     - [ ] Theme hub (community themes on the Themes screen; later)
+    - [x] Background picture or GIF behind pages, from a file or https link, with picture strength and page opacity (`view.background*`, Settings > Appearance; see [theming.md](../theming.md#background-picture))
   - [x] UI density / scaling (Compact, Comfortable)
   - [x] Sidebar layout: screens in groups split by dividers; drag rows or `view.sidebar_up`/`view.sidebar_down` to reorder within a group, `view.sidebar_toggle` to hide (right-click menu, Settings > Appearance); Messages hidden by default; Transactions also opens from Trades
   - [x] Player launch command configuration (Default OS protocol, Flatpak/Sober, Wine, custom script)

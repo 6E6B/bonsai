@@ -5,6 +5,7 @@ pub mod account;
 pub mod alerts;
 pub mod assets;
 pub mod avatar;
+pub mod backgrounds;
 pub mod cache;
 pub mod challenge;
 pub mod chat;

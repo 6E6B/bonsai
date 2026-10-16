@@ -12,7 +12,7 @@ use rbx_core::themes::{Base, FontSlot, Theme};
 use rbx_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 use super::{Id, Invocation, List, parse_id};
 
@@ -350,6 +350,20 @@ pub struct AppearanceView {
     pub light: String,
     /// The Google Fonts the two themes use, to register with the webview as they download.
     pub fonts: Vec<FontView>,
+    /// The picture behind the app, if any.
+    pub background: Option<BackgroundView>,
+}
+
+/// The app background picture and how see-through things are over it.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BackgroundView {
+    /// File name under `bg://`.
+    pub file: String,
+    /// How strongly the picture shows, 0–100.
+    pub image: u8,
+    /// How opaque pages and panels stay, 0–100.
+    pub panels: u8,
 }
 
 /// A Google Fonts family on disk, served over `font://`.
@@ -383,6 +397,11 @@ pub fn appearance(core: State<'_, Arc<Core>>) -> AppearanceView {
             .into_iter()
             .map(|family| font_view(&core, family))
             .collect(),
+        background: core.settings().appearance.background.map(|b| BackgroundView {
+            file: b.file,
+            image: b.image,
+            panels: b.panels,
+        }),
     }
 }
 
@@ -507,6 +526,30 @@ fn servers_tab(s: &str) -> ServersTab {
     }
 }
 
+/// Opens the system file picker (XDG desktop portal, or zenity without one) for a background
+/// picture.
+fn pick_background(app: &AppHandle) {
+    let app = app.clone();
+    // The dialog blocks until the user answers, so it gets its own thread.
+    std::thread::spawn(move || {
+        let mut dialog = rfd::FileDialog::new()
+            .set_title("Background picture")
+            .add_filter("Images", &["png", "jpg", "jpeg", "gif", "webp"]);
+        let window = app.get_webview_window("main");
+        if let Some(w) = &window {
+            dialog = dialog.set_parent(w);
+        }
+        let Some(path) = dialog.pick_file() else {
+            return;
+        };
+        if let Some(core) = app.try_state::<Arc<Core>>()
+            && let Err(e) = core.set_background(&path.to_string_lossy())
+        {
+            core.notice(e, true);
+        }
+    });
+}
+
 /// Splits `"<first> <rest>"` from a command argument; `what` names the parts in the error.
 fn two(inv: &Invocation, what: &str) -> Result<(String, String), String> {
     let a = inv.arg.as_deref().unwrap_or_default().trim();
@@ -518,6 +561,7 @@ fn two(inv: &Invocation, what: &str) -> Result<(String, String), String> {
 
 /// Settings commands and `list.more` for private servers. `None` for other commands.
 pub(super) fn run(
+    app: &AppHandle,
     core: &Core,
     id: CommandId,
     inv: &Invocation,
@@ -566,6 +610,16 @@ pub(super) fn run(
         CommandId::SetThemeMonoFont => core.set_theme_font(FontSlot::Mono, &arg()),
         // The editor sends the whole document; it is checked like an imported one.
         CommandId::SaveTheme => Theme::parse(&arg()).and_then(|t| core.save_theme(t)),
+        CommandId::SetBackground => core.set_background(&arg()),
+        CommandId::PickBackground => {
+            pick_background(app);
+            Ok(())
+        }
+        CommandId::ClearBackground => {
+            core.clear_background();
+            Ok(())
+        }
+        CommandId::SetBackgroundLevel => core.set_background_level(&arg()),
         CommandId::SetDensity => match Density::from_name(&arg()) {
             Some(d) => {
                 core.update_settings(|s| s.density = d);

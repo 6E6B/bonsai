@@ -110,6 +110,25 @@ command bar. Changing the font of a built-in makes a copy first and says so.
 - **Stack.** A Google family is put in front of the bundled stack for its slot, so text stays
   readable while it downloads or if it fails.
 
+## Background picture
+
+Settings > Appearance > Background puts a picture or GIF behind the page area. It belongs to the
+appearance settings, not to a theme, so it stays when the theme changes. The sidebar, title bar
+and menus stay opaque.
+
+- **Source.** `view.background_file` opens the system file picker (`rfd` over the XDG desktop
+  portal, from Rust; the webview gets no file access). `view.background` takes an https link or a
+  full path. Links download through `rbx-api` (`Client::fetch_user_image`: https only, no
+  cookies, shared rate limiter, at most 32 MB).
+- **Storage.** PNG, JPEG, GIF and WebP only, checked by header. The file is saved as
+  `<config>/backgrounds/<hash>.<ext>` and older ones are deleted (`rbx-core/src/backgrounds.rs`).
+  `view.background_clear` removes it.
+- **Webview.** Served over the local `bg:` scheme (added to `img-src`); `bg://` refuses any name
+  that isn't `<16 hex>.<ext>`.
+- **See-through.** `view.background_level` sets `image` (picture opacity) and `panels` (opacity
+  of `color-canvas` and `color-surface`, 0–100). `lib/theme/backdrop.ts` rewrites those two
+  tokens with alpha; the picture sits on `--backdrop-base`, the opaque canvas.
+
 ## Roadmap
 
 One PR per phase.

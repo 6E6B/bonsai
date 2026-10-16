@@ -1,0 +1,19 @@
+{
+  "captured": "2026-10-16",
+  "source": "synthetic",
+  "note": "A background image from a link the user pasted (any https host). Image bodies are a file header and a marker.",
+  "interactions": [
+    {
+      "request": { "method": "GET", "host": "images.example.com", "path": "/cat.gif" },
+      "response": { "status": 200, "headers": { "content-type": "image/gif" }, "body": "GIF89a-background" }
+    },
+    {
+      "request": { "method": "GET", "host": "images.example.com", "path": "/big.png" },
+      "response": { "status": 200, "headers": { "content-type": "image/png" }, "body": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" }
+    },
+    {
+      "request": { "method": "GET", "host": "images.example.com", "path": "/gone.png" },
+      "response": { "status": 404, "headers": { "content-type": "text/html" }, "body": "not found" }
+    }
+  ]
+}

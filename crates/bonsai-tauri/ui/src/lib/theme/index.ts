@@ -1,4 +1,5 @@
-export { applyAppearance, type Mode, previewTheme, shownBase } from "./apply"
+export { applyAppearance, type Mode, previewTheme, setSeeThrough, shownBase } from "./apply"
+export { SEE_THROUGH, seeThrough } from "./backdrop"
 export { type Check, colorOf, fixValue, PAIRS, type Pair, runChecks } from "./checks"
 export * from "./color"
 export {

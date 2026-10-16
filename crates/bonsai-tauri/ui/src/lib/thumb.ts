@@ -19,3 +19,10 @@ export function thumbUrl(kind: ThumbKind, id: number | string, large = false) {
   if (!isTauri()) return undefined
   return convertFileSrc(`${kind}.${id}.${large ? "l" : "s"}`, "thumb")
 }
+
+/** URL for the background picture, a file name from `AppearanceView.background`, served by the
+ * `bg://` protocol (crates/bonsai-tauri/src/bg.rs). Undefined outside the app. */
+export function backgroundUrl(file: string) {
+  if (!isTauri()) return undefined
+  return convertFileSrc(file, "bg")
+}

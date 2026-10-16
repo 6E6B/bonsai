@@ -9,6 +9,7 @@ use rbx_core::{Core, CoreConfig};
 use tauri::Manager;
 
 mod asset;
+mod bg;
 mod captcha;
 mod font;
 pub mod ipc;
@@ -44,6 +45,7 @@ pub fn run() {
         .register_asynchronous_uri_scheme_protocol(thumb::SCHEME, thumb::handle)
         .register_asynchronous_uri_scheme_protocol(asset::SCHEME, asset::handle)
         .register_asynchronous_uri_scheme_protocol(font::SCHEME, font::handle)
+        .register_asynchronous_uri_scheme_protocol(bg::SCHEME, bg::handle)
         .on_page_load(move |w, p| eprintln!("PROFILE {:?} page {:?} {}", t0.elapsed(), p.event(), w.label())) // PROFILE-TMP
         .setup(move |app| {
             eprintln!("PROFILE {:?} setup start", t0.elapsed()); // PROFILE-TMP

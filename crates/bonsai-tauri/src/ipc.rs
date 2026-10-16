@@ -1051,7 +1051,7 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
     if let Some(r) = avatar::run(&core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = account::run(&core, id, &inv, core.acting(picked)) {
+    if let Some(r) = account::run(&app, &core, id, &inv, core.acting(picked)) {
         return r;
     }
     let move_by = |by: isize| {
