@@ -556,7 +556,7 @@ function Requests(props: { groupId: number }) {
                     <Button size="sm" onClick={() => run("group.decline_request", String(u.id))}>
                       Decline
                     </Button>
-                    <Button size="sm" variant="primary" onClick={() => run("group.accept_request", String(u.id))}>
+                    <Button size="sm" onClick={() => run("group.accept_request", String(u.id))}>
                       Accept
                     </Button>
                   </>

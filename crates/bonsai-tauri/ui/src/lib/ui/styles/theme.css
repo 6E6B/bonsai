@@ -45,7 +45,7 @@
   --color-accent-soft: #3d7dff29;
   --color-verified: #4d94ff; /* verified names; same blue as the fill in assets/verified-badge.svg */
   --color-on-accent: #ffffff; /* text on accent, danger and success fills */
-  --color-contrast: #5c5c5c; /* primary button fill: neutral, lit by --sheen */
+  --color-contrast: #3d7dff; /* primary button fill, lit by --sheen; the accent unless a theme overrides it */
   --color-focus: #5a91ff;
   --color-success: #3fbf7f;
   --color-success-soft: #3fbf7f24;
@@ -176,7 +176,7 @@
     --color-accent-hover: #1d4fd8;
     --color-accent-soft: #2563eb1f;
     --color-on-accent: #ffffff;
-    --color-contrast: #242424;
+    --color-contrast: #2563eb;
     --color-focus: #2563eb;
     --color-success: #16803c;
     --color-success-soft: #16803c1a;

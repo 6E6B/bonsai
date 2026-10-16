@@ -1,8 +1,9 @@
 /*
  * Button. Each variant only sets the --button-* variables; size sets height, padding and font
- * size. A button is a fill with an elevation shadow under it. Primary is a neutral contrast
- * fill with a sheen that lights it from above, as in the OpenCode console; danger is a
- * secondary button with danger text, never a saturated fill.
+ * size. A button is a fill with an elevation shadow under it. Primary is an accent fill with
+ * a sheen that lights it from above; use it for the one main action on a screen or dialog,
+ * not on every row of a list. Danger is a secondary button with danger text, never a
+ * saturated fill.
  * Hover and press lay a translucent overlay on top, so every variant gets them for free.
  */
 @layer components {

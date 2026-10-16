@@ -666,7 +666,7 @@ function StorePanel(props: { list: List<PassRow> }) {
                 </Show>
               </div>
               <Show when={!p.owned && p.price !== null}>
-                <Button size="sm" variant="primary" onClick={() => run("game.buy_pass", String(p.id))}>
+                <Button size="sm" onClick={() => run("game.buy_pass", String(p.id))}>
                   Buy
                 </Button>
               </Show>

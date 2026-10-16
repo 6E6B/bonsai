@@ -103,7 +103,7 @@ export default function Friends() {
     return (
       <Switch>
         <Match when={section() === "requests"}>
-          <Button size="sm" variant="primary" onClick={() => run("user.accept_friend", id)}>
+          <Button size="sm" onClick={() => run("user.accept_friend", id)}>
             Accept
           </Button>
           <Button size="sm" onClick={() => run("user.decline_friend", id)}>
