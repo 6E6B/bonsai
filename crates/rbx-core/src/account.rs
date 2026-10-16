@@ -192,7 +192,7 @@ pub trait CookieStore: Send + Sync {
     fn delete(&self, id: AccountId) -> Result<(), String>;
 }
 
-const SERVICE: &str = "io.github._6E6B.Bonsai";
+const SERVICE: &str = "io.github.6e6b.bonsai";
 /// The app was called Baseplate. Cookies saved under this name move to `SERVICE` when read.
 const LEGACY_SERVICE: &str = "io.github._6E6B.Baseplate";
 
@@ -358,7 +358,7 @@ impl Paths {
                     .or_else(|| Some(u.home_dir().to_path_buf()))
             })
             .unwrap_or_else(std::env::temp_dir);
-        match directories::ProjectDirs::from("io.github", "_6E6B", "Bonsai") {
+        match directories::ProjectDirs::from("io.github", "6e6b", "bonsai") {
             Some(d) => {
                 let paths = Paths {
                     config: d.config_dir().to_path_buf(),
