@@ -3,7 +3,7 @@
 # Request shapes and the response fields we read come from the site's GroupForums bundle
 # (www.roblox.com/communities/{id}#!/forums, 2026-10-13). Every call needs a signed-in account
 # (anonymous answers 401 "Authentication token is missing"); responses in the fixture are
-# synthetic until a test account with forums is available (BLOCKERS #9).
+# synthetic until a test account with forums is available.
 swagger: "2.0"
 host: groups.roblox.com
 info: { title: "groups (undocumented)", version: undocumented }

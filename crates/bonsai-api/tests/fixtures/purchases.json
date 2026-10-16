@@ -1,7 +1,7 @@
 {
   "captured": "2026-10-14",
   "source": "live + synthetic",
-  "note": "marketplace-items/v1/items/details recorded live, signed out (Silly Fun 299652, Valkyrie Helm 1365767, Winning Blueberry Head 16595564026). Resellers copied from market.json (names and ids already scrubbed). Purchase responses are synthetic, with the fields the site's ItemPurchase bundle reads: buying for real would spend Robux on the test account (BLOCKERS.md #5).",
+  "note": "marketplace-items/v1/items/details recorded live, signed out (Silly Fun 299652, Valkyrie Helm 1365767, Winning Blueberry Head 16595564026). Resellers copied from market.json (names and ids already scrubbed). Purchase responses are synthetic, with the fields the site's ItemPurchase bundle reads: buying for real would spend Robux on the test account.",
   "interactions": [
     {
       "request": {
