@@ -4,15 +4,15 @@
 
 use std::sync::Arc;
 
-use rbx_core::commands::{CommandId, Registry, Shortcut};
-use rbx_core::experience::ServerChange;
-use rbx_core::me::ServersTab;
-use rbx_core::prefs::{self, PrefKind};
-use rbx_core::settings::{
+use bonsai_core::commands::{CommandId, Registry, Shortcut};
+use bonsai_core::experience::ServerChange;
+use bonsai_core::me::ServersTab;
+use bonsai_core::prefs::{self, PrefKind};
+use bonsai_core::settings::{
     Density, Mode, NotifyPrefs, SavedTab, SavedTabs, SidebarPrefs, valid_format_locale,
 };
-use rbx_core::themes::{Base, FontSlot, Theme};
-use rbx_core::{AccountId, Core};
+use bonsai_core::themes::{Base, FontSlot, Theme};
+use bonsai_core::{AccountId, Core};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
@@ -328,7 +328,7 @@ pub fn app_settings(core: State<'_, Arc<Core>>) -> AppSettings {
     }
 }
 
-/// One setting from `rbx_core::prefs`, with its value now and in a fresh install.
+/// One setting from `bonsai_core::prefs`, with its value now and in a fresh install.
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct PrefView {
@@ -603,7 +603,7 @@ pub fn font_files(core: State<'_, Arc<Core>>, families: Vec<String>) -> Vec<Font
     families
         .into_iter()
         .take(4)
-        .filter(|f| rbx_core::fonts::valid_family(f))
+        .filter(|f| bonsai_core::fonts::valid_family(f))
         .map(|f| font_view(&core, f))
         .collect()
 }

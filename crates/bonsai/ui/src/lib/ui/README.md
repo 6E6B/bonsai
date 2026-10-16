@@ -142,7 +142,7 @@ Themes live in `~/lib/theme` (see `docs/theming.md`). `applyAppearance` sets `da
 keeps the window on the saved mode and themes.
 
 `styles/theme.css` stays the first-paint fallback. Every property in it is listed in
-`~/lib/theme/tokens.ts`, and the built-in Dark and Light themes (`crates/rbx-core/themes/`) must
+`~/lib/theme/tokens.ts`, and the built-in Dark and Light themes (`crates/bonsai-core/themes/`) must
 resolve to exactly its values; `tokens.test.ts` checks both. Adding a token means adding it to
 the registry and to `derive()`.
 

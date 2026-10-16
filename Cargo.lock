@@ -399,7 +399,7 @@ dependencies = [
 name = "bonsai"
 version = "0.1.0"
 dependencies = [
- "rbx-core",
+ "bonsai-core",
  "rfd",
  "serde",
  "serde_json",
@@ -415,6 +415,60 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "bonsai-api"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "bonsai-api",
+ "fastrand",
+ "futures",
+ "parking_lot",
+ "reqwest",
+ "rustls",
+ "rustls-platform-verifier",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+ "wiremock",
+]
+
+[[package]]
+name = "bonsai-codegen"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "heck 0.5.0",
+ "serde_json",
+ "serde_norway",
+]
+
+[[package]]
+name = "bonsai-core"
+version = "0.1.0"
+dependencies = [
+ "bonsai-api",
+ "directories",
+ "fastrand",
+ "image",
+ "keyring",
+ "nucleo-matcher",
+ "open",
+ "parking_lot",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "url",
 ]
 
 [[package]]
@@ -3677,60 +3731,6 @@ name = "raw-window-handle"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20675572f6f24e9e76ef639bc5552774ed45f1c30e2951e1e99c59888861c539"
-
-[[package]]
-name = "rbx-api"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "fastrand",
- "futures",
- "parking_lot",
- "rbx-api",
- "reqwest",
- "rustls",
- "rustls-platform-verifier",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "tokio",
- "tokio-tungstenite",
- "tracing",
- "wiremock",
-]
-
-[[package]]
-name = "rbx-codegen"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "heck 0.5.0",
- "serde_json",
- "serde_norway",
-]
-
-[[package]]
-name = "rbx-core"
-version = "0.1.0"
-dependencies = [
- "directories",
- "fastrand",
- "image",
- "keyring",
- "nucleo-matcher",
- "open",
- "parking_lot",
- "rbx-api",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2 0.11.1",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
- "url",
-]
 
 [[package]]
 name = "redox_syscall"

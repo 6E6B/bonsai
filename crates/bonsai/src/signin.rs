@@ -16,7 +16,7 @@
 
 use std::sync::Arc;
 
-use rbx_core::{Core, Secret, links};
+use bonsai_core::{Core, Secret, links};
 use tauri::webview::{NewWindowResponse, PageLoadEvent};
 use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent};
 
@@ -100,7 +100,7 @@ fn allowed(url: &Url) -> bool {
     }
 }
 
-/// Once the page has a session, hand it to rbx-core and close the window.
+/// Once the page has a session, hand it to bonsai-core and close the window.
 fn take_session(w: &WebviewWindow, core: &Core) {
     let Ok(site) = links::sign_in_page().parse::<Url>() else {
         return;

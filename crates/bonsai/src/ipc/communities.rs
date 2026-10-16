@@ -5,10 +5,10 @@
 
 use std::sync::Arc;
 
-use rbx_core::commands::CommandId;
-use rbx_core::communities::{Affiliation, Setting};
-use rbx_core::resolve::{Pasted, resolve};
-use rbx_core::{AccountId, Core};
+use bonsai_core::commands::CommandId;
+use bonsai_core::communities::{Affiliation, Setting};
+use bonsai_core::resolve::{Pasted, resolve};
+use bonsai_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
 use tauri::{AppHandle, State};
@@ -254,8 +254,8 @@ pub fn community_search(core: State<'_, Arc<Core>>, query: String) -> List<Commu
     List::paged(core.search_communities(&query, false), |g| CommunityHit::from(g))
 }
 
-impl From<&rbx_core::communities::CommunityRow> for CommunityHit {
-    fn from(g: &rbx_core::communities::CommunityRow) -> Self {
+impl From<&bonsai_core::communities::CommunityRow> for CommunityHit {
+    fn from(g: &bonsai_core::communities::CommunityRow) -> Self {
         CommunityHit {
             id: Id(g.id),
             name: g.name.clone(),
@@ -437,7 +437,7 @@ pub fn community_revenue(core: State<'_, Arc<Core>>, group_id: Id) -> RevenueVie
 #[specta::specta]
 pub fn community_affiliates(core: State<'_, Arc<Core>>, group_id: Id) -> AffiliatesView {
     let r = core.community_affiliates(group_id.0);
-    let hits = |v: &[rbx_core::communities::CommunityRow]| v.iter().map(CommunityHit::from).collect();
+    let hits = |v: &[bonsai_core::communities::CommunityRow]| v.iter().map(CommunityHit::from).collect();
     AffiliatesView {
         loading: r.loading,
         error: r.error,
@@ -929,8 +929,8 @@ pub(super) fn csv_field(s: &str) -> String {
     }
 }
 
-impl From<&rbx_core::people::GroupRole> for GroupCard {
-    fn from(g: &rbx_core::people::GroupRole) -> Self {
+impl From<&bonsai_core::people::GroupRole> for GroupCard {
+    fn from(g: &bonsai_core::people::GroupRole) -> Self {
         GroupCard {
             id: Id(g.group_id),
             name: g.name.clone(),

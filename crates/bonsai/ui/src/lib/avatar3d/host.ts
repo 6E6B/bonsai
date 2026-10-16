@@ -1,5 +1,5 @@
 /** Where the 3D engine loads Roblox asset files from: the `rbxasset://` protocol
- * (crates/bonsai/src/asset.rs), which fetches and caches them in rbx-core. */
+ * (crates/bonsai/src/asset.rs), which fetches and caches them in bonsai-core. */
 
 /** The path and query for one asset file. `representations` is the base64 JSON the engine
  * builds; the protocol takes it as base64url with the padding left in. The protocol rejects

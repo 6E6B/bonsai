@@ -1,5 +1,5 @@
 //! `rbxasset://` serves Roblox asset files (models, meshes, textures, animations) to the 3D
-//! avatar viewer. `rbx-core` fetches and caches them; the webview never touches the network.
+//! avatar viewer. `bonsai-core` fetches and caches them; the webview never touches the network.
 //!
 //! URL path: `/<account>.<asset id>`, with optional query `f=<Roblox-AssetFormat>` and
 //! `r=<contentRepresentationPriorityList, base64url>`. The UI builds it in
@@ -7,8 +7,8 @@
 
 use std::sync::Arc;
 
-use rbx_core::assets::AssetReq;
-use rbx_core::{AccountId, Core};
+use bonsai_core::assets::AssetReq;
+use bonsai_core::{AccountId, Core};
 use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 

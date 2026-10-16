@@ -6,8 +6,8 @@
 
 use std::sync::Arc;
 
-use rbx_core::Core;
-use rbx_core::settings::Settings;
+use bonsai_core::Core;
+use bonsai_core::settings::Settings;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Window, WindowEvent};

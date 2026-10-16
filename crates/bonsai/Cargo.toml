@@ -1,6 +1,6 @@
 [package]
 name = "bonsai"
-description = "Tauri shell: wires rbx-core to the Solid UI over typed IPC"
+description = "Tauri shell: wires bonsai-core to the Solid UI over typed IPC"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -20,7 +20,7 @@ path = "src/main.rs"
 tauri-build = { workspace = true }
 
 [dependencies]
-rbx-core = { workspace = true }
+bonsai-core = { workspace = true }
 tauri = { workspace = true }
 tauri-specta = { workspace = true }
 tauri-plugin-autostart = { workspace = true }

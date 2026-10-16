@@ -1,4 +1,4 @@
-//! `thumb://` serves thumbnails from `rbx-core`'s cache so the webview loads and caches them
+//! `thumb://` serves thumbnails from `bonsai-core`'s cache so the webview loads and caches them
 //! like any image, with no base64 over IPC and no network access from the webview.
 //!
 //! URL path: `/<kind>.<id>.<s|l>`, like `/headshot.1.s`. The UI builds it in
@@ -7,8 +7,8 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use rbx_core::Core;
-use rbx_core::thumbs::{ThumbKey, ThumbKind, ThumbState};
+use bonsai_core::Core;
+use bonsai_core::thumbs::{ThumbKey, ThumbKind, ThumbState};
 use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 
@@ -80,7 +80,7 @@ fn parse(path: &str) -> Option<ThumbKey> {
     parts.next().is_none().then_some(ThumbKey { kind, id, large })
 }
 
-fn serve(image: &rbx_core::thumbs::Image) -> Response<Vec<u8>> {
+fn serve(image: &bonsai_core::thumbs::Image) -> Response<Vec<u8>> {
     Response::builder()
         .header(header::CONTENT_TYPE, image.mime)
         // A key always maps to the same image within a run.

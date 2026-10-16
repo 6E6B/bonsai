@@ -95,7 +95,7 @@ Source: `apis.roblox.com/transaction-records/v1` (captured 2026-10-15 from the s
   - [x] Trade value threshold / Rolimons integration toggle
 
 ## Item values (Rolimons, opt-in)
-Beyond the website. Source: `api.rolimons.com/items/v2/itemdetails` (`specs/undocumented/api.rolimons.com.yaml`), decoded in `rbx-core/src/values.rs`, refetched once the copy is 2 minutes old and only while a screen that shows values is open (`useValuesRefresh`).
+Beyond the website. Source: `api.rolimons.com/items/v2/itemdetails` (`specs/undocumented/api.rolimons.com.yaml`), decoded in `bonsai-core/src/values.rs`, refetched once the copy is 2 minutes old and only while a screen that shows values is open (`useValuesRefresh`).
 - [x] Values screen (`nav.values`, G V): every tracked limited with value, RAP, RAP-vs-value gap, demand, trend and flags; search by name, acronym or ID; filter by Limited 1.0/2.0 and flags; sort by value, RAP, demand, gap or name
 - [x] Item tiles: value next to RAP, and a chip over the picture with demand, trend and a projected warning
 - [x] Item page: value panel with acronym, limited version, RAP gap, demand, trend, flags and update time

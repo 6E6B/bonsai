@@ -1,4 +1,4 @@
-//! `font://` serves the Google Fonts that `rbx-core` downloaded for themes, so the webview loads
+//! `font://` serves the Google Fonts that `bonsai-core` downloaded for themes, so the webview loads
 //! them from disk with no network access. The UI registers them with the `FontFace` API in
 //! `ui/src/lib/theme/fonts.ts`.
 //!
@@ -7,8 +7,8 @@
 
 use std::sync::Arc;
 
-use rbx_core::Core;
-use rbx_core::fonts::valid_file;
+use bonsai_core::Core;
+use bonsai_core::fonts::valid_file;
 use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 

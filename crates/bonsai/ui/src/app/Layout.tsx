@@ -161,7 +161,7 @@ export function Layout(props: ParentProps) {
     ),
     ...screens.filter((s) => s.command !== "nav.settings").map((s) => handle(s.command, go(s.path))),
     handle("nav.settings", (section) => visitPath(section ? `/settings/${section}` : "/settings")),
-    // The order is saved in rbx-core; the groups that bound a move live in `screens`.
+    // The order is saved in bonsai-core; the groups that bound a move live in `screens`.
     ...([-1, 1] as const).map((by) =>
       handle(by < 0 ? "view.sidebar_up" : "view.sidebar_down", (arg) => {
         const order = arg ? nudgeScreen(screens, shell.sidebar, arg.trim(), by) : null
@@ -358,7 +358,7 @@ export function Layout(props: ParentProps) {
     document.documentElement.style.setProperty("zoom", String(zoom()))
   })
 
-  // Backend toasts show once in the app toaster, then leave rbx-core's list. A refetch that
+  // Backend toasts show once in the app toaster, then leave bonsai-core's list. A refetch that
   // raced the dismissal can bring one back, so remember what was shown.
   const shown = new Set<number>()
   createEffect(() => {

@@ -1,6 +1,6 @@
 import type { Keys } from "~/lib/ipc/bindings"
 
-/** A key press in rbx-core's key names (`"K"`, `"1"`, `"Slash"`, `"PageDown"`). */
+/** A key press in bonsai-core's key names (`"K"`, `"1"`, `"Slash"`, `"PageDown"`). */
 export interface Press {
   key: string
   ctrl: boolean
@@ -22,7 +22,7 @@ const NAMED: Record<string, string> = {
   "]": "CloseBracket",
 }
 
-/** Maps a DOM key event to rbx-core's key names. Returns undefined for lone modifiers. */
+/** Maps a DOM key event to bonsai-core's key names. Returns undefined for lone modifiers. */
 export function toPress(
   e: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "shiftKey" | "altKey">,
 ): Press | undefined {
@@ -61,7 +61,7 @@ function chordMatches(s: Extract<Keys, { kind: "chord" }>, p: Press) {
   return s.key === p.key && s.ctrl === p.ctrl && s.alt === p.alt && (!shiftMatters || s.shift === p.shift)
 }
 
-/** A shortcut being recorded, in the shape rbx-core's `Shortcut::parse` reads back. */
+/** A shortcut being recorded, in the shape bonsai-core's `Shortcut::parse` reads back. */
 export type Recorded =
   | { kind: "chord"; ctrl: boolean; shift: boolean; alt: boolean; key: string }
   | { kind: "sequence"; first: string; second: string }
@@ -94,7 +94,7 @@ export function spec(s: Recorded): string {
 const plainKey = (s: Recorded | Keys) => (s.kind === "chord" && !s.ctrl && !s.alt ? s.key : undefined)
 const firstKey = (s: Recorded | Keys) => (s.kind === "sequence" ? s.first : undefined)
 
-/** Like rbx-core's `Shortcut::clashes`: the same keys, or a plain key that starts a sequence. */
+/** Like bonsai-core's `Shortcut::clashes`: the same keys, or a plain key that starts a sequence. */
 export function clashes(a: Recorded, b: Keys): boolean {
   if (a.kind === "chord" && b.kind === "chord")
     return a.key === b.key && a.ctrl === b.ctrl && a.alt === b.alt && a.shift === b.shift

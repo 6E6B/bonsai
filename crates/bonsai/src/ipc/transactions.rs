@@ -7,12 +7,12 @@
 
 use std::sync::Arc;
 
-use rbx_core::commands::CommandId;
-use rbx_core::transactions::{
+use bonsai_core::commands::CommandId;
+use bonsai_core::transactions::{
     Filter, Group, Ledger, Period, Scope, Sums, Totals, TxKind, Txn, by_month, spend_by_experience, sums,
     top_buyers, top_items,
 };
-use rbx_core::{AccountId, Core};
+use bonsai_core::{AccountId, Core};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, State};
@@ -51,7 +51,7 @@ impl TxQuery {
     fn filter(&self) -> Filter {
         let secs = |ms: f64| (ms / 1000.0).floor() as i64;
         let (from, to) = match (self.period(), self.period.as_str()) {
-            (Some(p), _) => (Some(rbx_core::cache::now() - p.secs()), None),
+            (Some(p), _) => (Some(bonsai_core::cache::now() - p.secs()), None),
             (None, "custom") => (self.from.map(secs), self.to.map(secs)),
             _ => (None, None),
         };
@@ -204,7 +204,7 @@ fn sums_view(s: &Sums) -> TotalsView {
     }
 }
 
-fn totals_view(r: rbx_core::res::Res<Totals>) -> TotalsView {
+fn totals_view(r: bonsai_core::res::Res<Totals>) -> TotalsView {
     let t = r.data.as_deref().cloned().unwrap_or_default();
     TotalsView {
         loading: r.loading && r.data.is_none(),
@@ -353,7 +353,7 @@ pub fn transaction_insights(core: State<'_, Arc<Core>>, q: TxQuery) -> TxInsight
     let rows = matching(&l, &q);
     let it = || rows.iter().copied();
     TxInsights {
-        months: by_month(it(), rbx_core::fmt::local_offset())
+        months: by_month(it(), bonsai_core::fmt::local_offset())
             .into_iter()
             .map(|(month, i, o)| MonthView {
                 month,
@@ -445,7 +445,7 @@ pub(super) fn run(
                 return copy(
                     app,
                     core,
-                    rbx_core::transactions::csv(&rows),
+                    bonsai_core::transactions::csv(&rows),
                     &format!("Copied {n} transactions as CSV."),
                 );
             }

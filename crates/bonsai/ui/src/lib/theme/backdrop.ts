@@ -31,7 +31,7 @@ export type BackdropLevels = Omit<BackgroundView, "file">
 export type BackdropLevel = keyof BackdropLevels
 
 /** The effect sliders, in the order Settings shows them. `max` matches `Background::LEVELS` in
- * rbx-core. */
+ * bonsai-core. */
 export const EFFECTS: readonly { key: BackdropLevel; label: string; max: number; step: number; unit: string }[] = [
   { key: "blur", label: "Blur", max: 40, step: 1, unit: "px" },
   { key: "dim", label: "Dim", max: 100, step: 5, unit: "%" },

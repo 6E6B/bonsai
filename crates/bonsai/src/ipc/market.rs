@@ -8,12 +8,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use rbx_core::commands::CommandId;
-use rbx_core::inventory::{InvItem, InvSlot, stack, totals};
-use rbx_core::market::{CatalogItem, CatalogQuery, CatalogSort, ItemKind, ItemRef, SalesType};
-use rbx_core::purchase::Seller;
-use rbx_core::values::{Demand, ItemValue, LimitedKind, Trend, ValueTable};
-use rbx_core::{AccountId, Core};
+use bonsai_core::commands::CommandId;
+use bonsai_core::inventory::{InvItem, InvSlot, stack, totals};
+use bonsai_core::market::{CatalogItem, CatalogQuery, CatalogSort, ItemKind, ItemRef, SalesType};
+use bonsai_core::purchase::Seller;
+use bonsai_core::values::{Demand, ItemValue, LimitedKind, Trend, ValueTable};
+use bonsai_core::{AccountId, Core};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::State;
@@ -546,13 +546,13 @@ pub fn item_page(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> ItemView {
 fn price_label(price: Option<i64>) -> String {
     match price {
         Some(0) => "Free".to_owned(),
-        Some(p) => rbx_core::fmt::robux(p),
+        Some(p) => bonsai_core::fmt::robux(p),
         None => "Off sale".to_owned(),
     }
 }
 
 /// An item page for an asset the catalog doesn't list, from its economy details.
-fn asset_page_info(id: Id, x: &rbx_core::inventory::AssetInfo) -> ItemInfo {
+fn asset_page_info(id: Id, x: &bonsai_core::inventory::AssetInfo) -> ItemInfo {
     ItemInfo {
         id,
         bundle: false,
@@ -569,7 +569,7 @@ fn asset_page_info(id: Id, x: &rbx_core::inventory::AssetInfo) -> ItemInfo {
             price_label(x.price)
         },
         from_reseller: false,
-        type_name: rbx_core::market::asset_type_name(x.asset_type).to_owned(),
+        type_name: bonsai_core::market::asset_type_name(x.asset_type).to_owned(),
         asset_type: x.asset_type,
         limited: None,
         off_sale: x.price.is_none(),
@@ -1096,7 +1096,7 @@ pub fn inventory_inspect(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> In
         creator_id: Id(x.creator_id),
         creator_is_group: x.creator_is_group,
         creator_verified: x.creator_verified,
-        type_name: rbx_core::market::asset_type_name(x.asset_type).to_owned(),
+        type_name: bonsai_core::market::asset_type_name(x.asset_type).to_owned(),
         price_label: if x.price.is_none() && x.public_domain {
             "Free to take".to_owned()
         } else {

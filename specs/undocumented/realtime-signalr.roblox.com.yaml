@@ -12,7 +12,7 @@ paths:
     get:
       x-captured: "2026-10-13, every signed-in page on www.roblox.com"
       x-rust-name: get_userhub
-      summary: WebSocket upgrade for the realtime hub. Use rbx_api::realtime, not this request directly.
+      summary: WebSocket upgrade for the realtime hub. Use bonsai_api::realtime, not this request directly.
       responses:
         "101": { description: Switching protocols }
 definitions: {}

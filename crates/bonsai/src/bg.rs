@@ -1,4 +1,4 @@
-//! `bg://` serves the app background picture that `rbx-core` copied into
+//! `bg://` serves the app background picture that `bonsai-core` copied into
 //! `Paths::backgrounds_dir()`, so the webview shows it with no file or network access.
 //!
 //! URL path: `/<16 hex>.<png|jpg|gif|webp>`, as in `BackgroundView::file`. Anything else is
@@ -6,8 +6,8 @@
 
 use std::sync::Arc;
 
-use rbx_core::Core;
-use rbx_core::backgrounds::{content_type, valid_file};
+use bonsai_core::Core;
+use bonsai_core::backgrounds::{content_type, valid_file};
 use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 

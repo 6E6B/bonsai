@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["crates/*"]
-default-members = ["crates/rbx-core"]
+default-members = ["crates/bonsai-core"]
 
 [workspace.package]
 version = "0.1.0"
@@ -16,8 +16,8 @@ dbg_macro = "deny"
 todo = "warn"
 
 [workspace.dependencies]
-rbx-api = { path = "crates/rbx-api" }
-rbx-core = { path = "crates/rbx-core" }
+bonsai-api = { path = "crates/bonsai-api" }
+bonsai-core = { path = "crates/bonsai-core" }
 
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "json", "form", "multipart", "http2", "charset", "gzip", "brotli"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }

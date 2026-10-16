@@ -8,7 +8,7 @@ type Code = Extract<ChallengeKind, { kind: "code" }>
 
 /**
  * The check Roblox put in front of an action: a 6-digit code or a puzzle. It opens by itself
- * from `shell.challenge` and sits above any other dialog. When the check passes, rbx-core sends
+ * from `shell.challenge` and sits above any other dialog. When the check passes, bonsai-core sends
  * the action again; cancelling fails it.
  */
 export function ChallengeDialog() {

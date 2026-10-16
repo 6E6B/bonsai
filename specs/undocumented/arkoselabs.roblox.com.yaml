@@ -1,4 +1,4 @@
-# Roblox's Arkose Labs (FunCaptcha) host. Never fetched by rbx-api: the captcha window loads
+# Roblox's Arkose Labs (FunCaptcha) host. Never fetched by bonsai-api: the captcha window loads
 # this script so the user can solve the puzzle themselves. Kept here so no URL is hardcoded
 # outside specs. Captured 2026-10-15 from the site's Captcha.js bundle, which adds
 # <script src="https://arkoselabs.roblox.com/v2/{publicKey}/api.js" data-callback=...> and then

@@ -1,6 +1,6 @@
-//! Turns rbx-core's repaint calls into at most one [`StoreChanged`] event per frame, so a
+//! Turns bonsai-core's repaint calls into at most one [`StoreChanged`] event per frame, so a
 //! burst of background writes costs the UI one refetch instead of hundreds. Also shows
-//! rbx-core's desktop alerts as system notifications while the window is in the background.
+//! bonsai-core's desktop alerts as system notifications while the window is in the background.
 
 use std::io;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -8,7 +8,7 @@ use std::sync::{Arc, OnceLock};
 use std::thread;
 use std::time::Duration;
 
-use rbx_core::{Core, Repaint};
+use bonsai_core::{Core, Repaint};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_notification::NotificationExt;
 use tauri_specta::Event;

@@ -7627,7 +7627,7 @@
       "method": "GET",
       "module": "realtime_signalr::undocumented",
       "path": "/userhub",
-      "summary": "WebSocket upgrade for the realtime hub. Use rbx_api::realtime, not this request directly.",
+      "summary": "WebSocket upgrade for the realtime hub. Use bonsai_api::realtime, not this request directly.",
       "used": false
     },
     {

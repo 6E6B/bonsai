@@ -8,7 +8,7 @@ from strangers. This is the design and the roadmap. The checklist line lives in
 
 - **A theme is data, never code.** Hex colors, px lengths, shadow layers and font names. No raw
   CSS, no URLs. Imported and hub themes can't run anything or reach the network on their own. A
-  Google Fonts family is only a name; `rbx-core` downloads it (see [Fonts](#fonts)).
+  Google Fonts family is only a name; `bonsai-core` downloads it (see [Fonts](#fonts)).
 - **Three colors make a theme.** A dozen seeds derive every token; single tokens can be pinned
   after that.
 - **One path for every theme.** Dark and Light are theme documents like any user theme.
@@ -62,19 +62,19 @@ Token values follow one grammar per kind:
 | `theme.ts` | The document type, `readTheme` (validation), `tokenValue` (per-kind grammar), `resolve` (derive + pins). |
 | `apply.ts` | `applyAppearance(mode, {dark, light})`: follows the OS in System mode, sets `data-theme`, `color-scheme` and every resolved token on `<html>`. |
 | `fonts.ts` | `registerFonts` adds downloaded Google fonts with the `FontFace` API from `font://`; `fontChoices` builds the picker list. |
-| `builtins.ts` | Tests only: reads the built-ins from `crates/rbx-core/themes/`. |
+| `builtins.ts` | Tests only: reads the built-ins from `crates/bonsai-core/themes/`. |
 
 Elsewhere:
 
 | File | What it does |
 |---|---|
-| `crates/rbx-core/themes/*.json` | The built-ins: Dark, Light, Midnight, Fjord, Ember, Paper, Moss, Dusk, Abyss, Phosphor, Sakura, Glacier, Adwaita, Adwaita Dark (GNOME's libadwaita colors). Bundled with `include_str!`. |
-| `crates/rbx-core/src/themes.rs` | Parses and checks documents (shape, id, size, a small value charset), loads `<config>/themes/*.json`, and `Core::apply_theme` / `cycle_theme` / `save_theme` / `delete_theme`. Files are written on the worker. |
-| `rbx-core/src/settings.rs` | `Appearance { mode, dark, light }`: theme ids per base. |
+| `crates/bonsai-core/themes/*.json` | The built-ins: Dark, Light, Midnight, Fjord, Ember, Paper, Moss, Dusk, Abyss, Phosphor, Sakura, Glacier, Adwaita, Adwaita Dark (GNOME's libadwaita colors). Bundled with `include_str!`. |
+| `crates/bonsai-core/src/themes.rs` | Parses and checks documents (shape, id, size, a small value charset), loads `<config>/themes/*.json`, and `Core::apply_theme` / `cycle_theme` / `save_theme` / `delete_theme`. Files are written on the worker. |
+| `bonsai-core/src/settings.rs` | `Appearance { mode, dark, light }`: theme ids per base. |
 | `bonsai/src/ipc/account.rs` | `appearance()` (mode and the two documents), `themes()` (every installed theme as `ThemeView`), and the `theme.*` commands. |
 | `ui/src/app/appearance.ts` | Applies `appearance()` live, on every `storeChanged`. |
 | `ui/src/lib/ui/theme-card.tsx` | `ThemeCard`: a small window drawn with a theme's tokens. |
-| `crates/rbx-core/src/fonts.rs` | The Google Fonts catalog, the download of one family into `<cache>/fonts/<slug>/<weight>.ttf`, and the checks on names, paths and file headers. |
+| `crates/bonsai-core/src/fonts.rs` | The Google Fonts catalog, the download of one family into `<cache>/fonts/<slug>/<weight>.ttf`, and the checks on names, paths and file headers. |
 | `bonsai/src/font.rs` | `font://<slug>/<weight>.ttf`: serves those files to the webview. |
 | `ui/src/lib/ui/combobox.tsx` | `Combobox`: the searchable font picker. |
 
@@ -84,7 +84,7 @@ URL, a quote or a `;`. The UI checks each value against its token's kind in `tok
 `tokens.test.ts` keeps three things in step: every property in `theme.css` is in the registry or
 in `UNTHEMED`, the registry names nothing `theme.css` lacks, and Dark and Light resolve to
 exactly the values in `theme.css`. `theme.css` stays as the first-paint fallback. If you change a
-value there, the test names the pin to add or update in `rbx-core/themes/`. `builtins.test.ts`
+value there, the test names the pin to add or update in `bonsai-core/themes/`. `builtins.test.ts`
 checks that every built-in keeps text readable (WCAG ratios for text on surfaces and on fills).
 
 Derivation mixes in sRGB, not OKLCH. With fitted amounts it reproduces the hand-tuned built-ins
@@ -107,7 +107,7 @@ Jakarta Sans. The font of a theme in use downloads the first time it is applied.
   `fonts.gstatic.com` TTF. The headers are checked, then the files are saved to
   `<cache>/fonts/<slug>/<weight>.ttf` and refreshed after 30 days. If they go missing, they are
   downloaded again.
-- **Network.** All of it goes through `rbx-api` (`Client::fetch_font` only accepts
+- **Network.** All of it goes through `bonsai-api` (`Client::fetch_font` only accepts
   `fonts.gstatic.com`), under the shared rate limiter, with no cookies. Google sees the family
   name and the machine's IP, as with the Rolimons values.
 - **Webview.** The CSP gains only the local `font:` scheme in `font-src`; the webview still
@@ -123,10 +123,10 @@ and menus stay opaque.
 
 - **Source.** `view.background_file` opens the system file picker (`rfd` over the XDG desktop
   portal, from Rust; the webview gets no file access). `view.background` takes an https link or a
-  full path. Links download through `rbx-api` (`Client::fetch_user_image`: https only, no
+  full path. Links download through `bonsai-api` (`Client::fetch_user_image`: https only, no
   cookies, shared rate limiter, at most 32 MB).
 - **Storage.** PNG, JPEG, GIF and WebP only, checked by header. The file is saved as
-  `<config>/backgrounds/<hash>.<ext>` and older ones are deleted (`rbx-core/src/backgrounds.rs`).
+  `<config>/backgrounds/<hash>.<ext>` and older ones are deleted (`bonsai-core/src/backgrounds.rs`).
   `view.background_clear` removes it.
 - **Webview.** Served over the local `bg:` scheme (added to `img-src`); `bg://` refuses any name
   that isn't `<16 hex>.<ext>`.
@@ -154,7 +154,7 @@ One PR per phase.
 
 ### 2. Storage and selection (done)
 
-- [x] `rbx-core/src/themes.rs`: built-ins bundled from `rbx-core/themes/`, user themes one
+- [x] `bonsai-core/src/themes.rs`: built-ins bundled from `bonsai-core/themes/`, user themes one
   `<id>.json` each in `Paths::themes_dir()`, strict on shape, size and characters.
 - [x] `Appearance { mode: System | Dark | Light, dark, light }` replaces `settings::Theme`. In
   System mode the OS picks between the two, so custom pairs still follow it. Old settings are
@@ -202,7 +202,7 @@ One PR per phase.
 The document is hub-ready: `id` + `version` for updates, a content hash for integrity, `author`
 becomes an account id, and previews draw from tokens so no images are uploaded.
 
-**Decide first:** `AGENTS.md` makes `rbx-api` the only crate that touches the network, and it is
+**Decide first:** `AGENTS.md` makes `bonsai-api` the only crate that touches the network, and it is
 the Roblox client. The hub needs a sibling crate (e.g. `hub-api`) under the same rules (no
 secrets in logs, shared rate limits) or an amended rule.
 

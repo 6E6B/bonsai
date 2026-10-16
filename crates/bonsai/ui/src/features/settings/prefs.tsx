@@ -26,7 +26,7 @@ export const usePref = (key: string) => {
 
 const set = (key: string, value: string) => run("settings.set", `${key} ${value}`)
 
-/** One setting from rbx-core's list: its title, description, a control for its kind, and a
+/** One setting from bonsai-core's list: its title, description, a control for its kind, and a
  * reset button while it differs from the default. Pass children to use another control. */
 export function PrefRow(props: { name: string; description?: JSX.Element; children?: JSX.Element }) {
   const pref = usePref(props.name)

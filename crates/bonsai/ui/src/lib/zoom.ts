@@ -1,4 +1,4 @@
-/** The zoom levels rbx-core's `ui_scale` setting takes. */
+/** The zoom levels bonsai-core's `ui_scale` setting takes. */
 export const ZOOMS = [0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2]
 
 /** The level `by` steps from `z`, starting from the nearest level when `z` isn't one. */

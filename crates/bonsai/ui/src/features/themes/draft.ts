@@ -155,7 +155,7 @@ export function fixContrast(d: Draft): { draft: Draft; fixed: number; failing: n
   return { draft, fixed: fixed.size, failing }
 }
 
-/** An id for a new theme, like rbx-core's: the name in kebab case, then a number if taken. */
+/** An id for a new theme, like bonsai-core's: the name in kebab case, then a number if taken. */
 export function newId(name: string, taken: (id: string) => boolean): string {
   const stem =
     name

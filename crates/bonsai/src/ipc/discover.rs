@@ -3,9 +3,9 @@
 
 use std::sync::Arc;
 
-use rbx_core::commands::CommandId;
-use rbx_core::store::HomeSort;
-use rbx_core::{AccountId, Core};
+use bonsai_core::commands::CommandId;
+use bonsai_core::store::HomeSort;
+use bonsai_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
 use tauri::State;

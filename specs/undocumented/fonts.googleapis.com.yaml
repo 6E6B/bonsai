@@ -1,5 +1,5 @@
 # Google Fonts' CSS API, a third-party site: the @font-face rules for a family, with the
-# fonts.gstatic.com URL of each file. rbx-core reads the URLs and downloads the files through
+# fonts.gstatic.com URL of each file. bonsai-core reads the URLs and downloads the files through
 # `Client::fetch_font`; the webview never sees them. No Roblox credentials go to this host.
 swagger: "2.0"
 host: fonts.googleapis.com

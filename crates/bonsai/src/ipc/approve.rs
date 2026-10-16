@@ -4,8 +4,8 @@
 
 use std::sync::Arc;
 
-use rbx_core::signin::{ApprovePrompt, ApproveStep};
-use rbx_core::{AccountId, Core};
+use bonsai_core::signin::{ApprovePrompt, ApproveStep};
+use bonsai_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
 use tauri::State;

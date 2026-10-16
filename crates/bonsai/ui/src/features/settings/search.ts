@@ -10,7 +10,7 @@ export interface SettingsEntry {
   words: string
 }
 
-/** Rows that aren't in rbx-core's settings list: Roblox account settings, actions and pages. */
+/** Rows that aren't in bonsai-core's settings list: Roblox account settings, actions and pages. */
 export const extraEntries: SettingsEntry[] = [
   { section: "profile", title: "Display name", words: "name rename" },
   { section: "profile", title: "Username", words: "name rename" },
@@ -40,7 +40,7 @@ export const extraEntries: SettingsEntry[] = [
   { section: "developer", title: "Component gallery", words: "components ui" },
 ]
 
-/** The settings and rows matching `query`, settings from rbx-core first. */
+/** The settings and rows matching `query`, settings from bonsai-core first. */
 export function searchSettings(prefs: PrefView[], query: string): SettingsEntry[] {
   if (!query.trim()) return []
   const entries: SettingsEntry[] = [

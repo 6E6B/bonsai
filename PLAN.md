@@ -28,7 +28,7 @@ Blocks several later items. Capture from roblox.com devtools, add to `specs/undo
 ## Wave 1: independent, run in parallel
 
 ### Phase 1: Messages and notifications
-Area: `features/messages`, `features/notifications`, `features/chat`, matching `rbx-core` modules.
+Area: `features/messages`, `features/notifications`, `features/chat`, matching `bonsai-core` modules.
 - Notification categories (friend requests, trades, group shouts, experience updates, Robux and security alerts) with filter.
 - Real-time updates for notifications and chat if a push channel exists. Otherwise poll via a core job that only notifies, and record that in the checklist.
 - Verify Enter to send and Shift+Enter for newline in the composer. Fix or tick.
@@ -36,7 +36,7 @@ Area: `features/messages`, `features/notifications`, `features/chat`, matching `
 Status 2026-10-15: built, with desktop OS alerts for the kinds turned on in Settings. Message deletion and single-notification mark-read are dropped: no working endpoint (BLOCKERS.md).
 
 ### Phase 2: Auth and account safety
-Area: `app/shell/AddAccount.tsx`, `rbx-core/src/account.rs`, `rbx-api` auth wrappers.
+Area: `app/shell/AddAccount.tsx`, `bonsai-core/src/account.rs`, `bonsai-api` auth wrappers.
 - 2FA modal: authenticator code, email code, remember device.
 - Account PIN prompt for protected actions.
 - Captcha and challenge modal that surfaces the challenge to the user and resumes the action after they solve it. Never auto-solve.
@@ -45,7 +45,7 @@ Area: `app/shell/AddAccount.tsx`, `rbx-core/src/account.rs`, `rbx-api` auth wrap
 - Act-as-alt account picker on join, buy and friend-request actions.
 
 ### Phase 3: Inventory
-Area: `features/inventory`, `rbx-core/src/inventory.rs`.
+Area: `features/inventory`, `bonsai-core/src/inventory.rs`.
 - Categories: game passes, badges, places, development assets (audio, decals, meshes, models, plugins, videos).
 - Item card details: thumbnail, name, creator, verified badge.
 - Inspection drawer: description, creator, asset ID, resale price.
@@ -55,7 +55,7 @@ Area: `features/inventory`, `rbx-core/src/inventory.rs`.
 Status 2026-10-15: built. Places list only what the user made, and the passes fixture is empty (BLOCKERS.md #15).
 
 ### Phase 4: Profiles and friends
-Area: `features/profile`, `features/friends`, `rbx-core/src/people.rs`.
+Area: `features/profile`, `features/friends`, `bonsai-core/src/people.rs`.
 - Followers list with follow/unfollow toggle, paginated.
 - Connections tab follow toggle (do not load the whole following list).
 - Cancel sent friend request, outgoing requests tab.
@@ -72,7 +72,7 @@ Area: `features/discover` and the search entry in the palette.
 ## Wave 2: needs Wave 0 captures
 
 ### Phase 6: Transactions
-Area: new `features/transactions`, `rbx-core/src/transactions.rs`, `rbx-api` wrappers.
+Area: new `features/transactions`, `bonsai-core/src/transactions.rs`, `bonsai-api` wrappers.
 
 Endpoints (captured 2026-10-15, `specs/undocumented/apis.roblox.com.yaml`):
 - `GET /transaction-records/v1/users/{id}/transaction-totals?timeFrame=Day|Week|Month|Year&transactionType=summary`: totals per category, incoming, outgoing, pending.

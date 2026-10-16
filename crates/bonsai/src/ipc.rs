@@ -1,20 +1,20 @@
-//! Typed IPC between the UI and `rbx-core`. Every command and event here is exported to
+//! Typed IPC between the UI and `bonsai-core`. Every command and event here is exported to
 //! `ui/src/lib/ipc/bindings.ts` by tauri-specta; never call `invoke()` by hand in the UI.
 //!
-//! Commands run on the main thread, so they only take short locks or send to `rbx-core`.
-//! Types here are UI-facing views of `rbx-core` data, not the store itself.
+//! Commands run on the main thread, so they only take short locks or send to `bonsai-core`.
+//! Types here are UI-facing views of `bonsai-core` data, not the store itself.
 
 use std::sync::Arc;
 
-use rbx_core::commands::{ArgKind, CommandId, Registry, Shortcut};
-use rbx_core::discover::CONTINUE_TOPIC;
-use rbx_core::experience::ServerChange;
-use rbx_core::launcher::JoinTarget;
-use rbx_core::links;
-use rbx_core::people::FriendState;
-use rbx_core::res::{Page, Res};
-use rbx_core::store::{LoginState, PresenceKind, ServerPick, SessionState};
-use rbx_core::{AccountId, Cmd, ColorTag, Core};
+use bonsai_core::commands::{ArgKind, CommandId, Registry, Shortcut};
+use bonsai_core::discover::CONTINUE_TOPIC;
+use bonsai_core::experience::ServerChange;
+use bonsai_core::launcher::JoinTarget;
+use bonsai_core::links;
+use bonsai_core::people::FriendState;
+use bonsai_core::res::{Page, Res};
+use bonsai_core::store::{LoginState, PresenceKind, ServerPick, SessionState};
+use bonsai_core::{AccountId, Cmd, ColorTag, Core};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
@@ -118,8 +118,8 @@ pub struct Unread {
     pub chat: u32,
 }
 
-impl From<rbx_core::store::Unread> for Unread {
-    fn from(u: rbx_core::store::Unread) -> Self {
+impl From<bonsai_core::store::Unread> for Unread {
+    fn from(u: bonsai_core::store::Unread) -> Self {
         let n = |x: i64| x.clamp(0, u32::MAX as i64) as u32;
         Unread {
             messages: n(u.messages),
@@ -293,7 +293,7 @@ impl From<ArgKind> for Arg {
     }
 }
 
-/// A shortcut. Key names follow `rbx-core` (`"K"`, `"1"`, `"Slash"`, `"PageDown"`).
+/// A shortcut. Key names follow `bonsai-core` (`"K"`, `"1"`, `"Slash"`, `"PageDown"`).
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Keys {
@@ -429,8 +429,8 @@ pub struct GameCard {
     pub genre: String,
 }
 
-impl From<&rbx_core::store::GameCard> for GameCard {
-    fn from(g: &rbx_core::store::GameCard) -> Self {
+impl From<&bonsai_core::store::GameCard> for GameCard {
+    fn from(g: &bonsai_core::store::GameCard) -> Self {
         GameCard {
             universe_id: Id(g.universe_id),
             place_id: Id(g.place_id),
@@ -444,8 +444,8 @@ impl From<&rbx_core::store::GameCard> for GameCard {
     }
 }
 
-impl From<&rbx_core::store::GameInfo> for GameCard {
-    fn from(g: &rbx_core::store::GameInfo) -> Self {
+impl From<&bonsai_core::store::GameInfo> for GameCard {
+    fn from(g: &bonsai_core::store::GameInfo) -> Self {
         let up = g.up_votes.unwrap_or(0);
         let total = up + g.down_votes.unwrap_or(0);
         GameCard {
@@ -514,8 +514,8 @@ pub struct GameDetails {
     pub gear: Vec<String>,
 }
 
-impl From<&rbx_core::store::GameInfo> for GameDetails {
-    fn from(g: &rbx_core::store::GameInfo) -> Self {
+impl From<&bonsai_core::store::GameInfo> for GameDetails {
+    fn from(g: &bonsai_core::store::GameInfo) -> Self {
         GameDetails {
             universe_id: Id(g.universe_id),
             root_place_id: Id(g.root_place_id),
@@ -1483,12 +1483,12 @@ pub fn home(core: State<'_, Arc<Core>>) -> Home {
             .copied()
             .collect();
         let home = d.map(|d| &d.home);
-        let card = |g: &rbx_core::store::GameCard| {
+        let card = |g: &bonsai_core::store::GameCard| {
             s.games
                 .get(&g.universe_id)
                 .map_or_else(|| GameCard::from(g), GameCard::from)
         };
-        let sort = |h: &rbx_core::store::HomeSort| Sort {
+        let sort = |h: &bonsai_core::store::HomeSort| Sort {
             id: h.id.clone(),
             title: h.title.clone(),
             subtitle: h.subtitle.clone(),
@@ -1738,8 +1738,8 @@ pub fn remote_search(core: State<'_, Arc<Core>>, query: String) -> RemoteSearch 
     }
 }
 
-fn remote_row(e: &rbx_core::search::Entry) -> Option<RemoteRow> {
-    use rbx_core::search::Target;
+fn remote_row(e: &bonsai_core::search::Entry) -> Option<RemoteRow> {
+    use bonsai_core::search::Target;
     let (command, arg, kind, id, universe) = match e.target {
         Target::Experience {
             place_id,
@@ -1790,7 +1790,7 @@ pub struct SearchResults {
 #[tauri::command]
 #[specta::specta]
 pub fn search_results(core: State<'_, Arc<Core>>, query: String, scope: String) -> SearchResults {
-    use rbx_core::search::Scope;
+    use bonsai_core::search::Scope;
     let scope = match scope.as_str() {
         "experiences" => Scope::Experiences,
         "people" => Scope::Users,
@@ -2069,7 +2069,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
 #[tauri::command]
 #[specta::specta]
 pub fn profile_trading(core: State<'_, Arc<Core>>, user_id: Id) -> TraderView {
-    use rbx_core::values::BadgeGroup as G;
+    use bonsai_core::values::BadgeGroup as G;
     let ms = |t: i64| (t > 0).then_some(t as f64 * 1000.0);
     let n = |v: Option<i64>| v.map(|v| v as f64);
     let r = core.player_stats(user_id.0);
@@ -2350,7 +2350,7 @@ pub fn profile_people(
         }
         "friends" => {
             let mut l = List::paged(core.friends_of(uid, false), |id| *id);
-            l.items = rbx_core::people::mutuals_first(&l.items, &own).0;
+            l.items = bonsai_core::people::mutuals_first(&l.items, &own).0;
             l
         }
         "followers" => signed_in(&|a| core.followers(a, uid, false)),

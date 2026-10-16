@@ -1,5 +1,5 @@
 // Trimmed for Bonsai: the upstream web API client is gone. Every asset fetch goes through
-// `HOST.assetUrl`, which the app points at its `rbxasset://` protocol (rbx-api fetches and
+// `HOST.assetUrl`, which the app points at its `rbxasset://` protocol (bonsai-api fetches and
 // caches the bytes in Rust). Metadata lookups the renderer doesn't need fail with a Response.
 import { FileMesh } from "./mesh/mesh"
 import { Event, RBX } from "./rblx/rbx"

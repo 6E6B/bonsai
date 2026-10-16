@@ -6,10 +6,10 @@
 
 use std::sync::Arc;
 
-use rbx_core::chat::{ConvKind, Conversation};
-use rbx_core::commands::CommandId;
-use rbx_core::messages::{self as pm, PrivateMessage};
-use rbx_core::{AccountId, Core};
+use bonsai_core::chat::{ConvKind, Conversation};
+use bonsai_core::commands::CommandId;
+use bonsai_core::messages::{self as pm, PrivateMessage};
+use bonsai_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
 use tauri::State;
@@ -82,7 +82,7 @@ pub fn messages(core: State<'_, Arc<Core>>, tab: String) -> Paged<MessageRow> {
 
 /// A loaded message by id, from any tab.
 fn find_message(core: &Core, a: AccountId, id: i64) -> Option<(String, PrivateMessage)> {
-    rbx_core::messages::TABS.iter().find_map(|(tab, _)| {
+    bonsai_core::messages::TABS.iter().find_map(|(tab, _)| {
         let p = core.messages(a, tab, false).data?;
         let m = p.items.iter().find(|m| m.id == id)?.clone();
         Some(((*tab).to_owned(), m))
@@ -111,7 +111,7 @@ pub struct NotificationRow {
 #[tauri::command]
 #[specta::specta]
 pub fn notification_categories() -> Vec<super::market::Choice> {
-    rbx_core::messages::CATEGORIES
+    bonsai_core::messages::CATEGORIES
         .iter()
         .map(|(value, label)| super::market::Choice {
             value: (*value).to_owned(),
@@ -452,7 +452,7 @@ pub(super) fn run(
                     inv.context
                         .as_deref()
                         .filter(|c| c.starts_with("user:"))
-                        .and_then(rbx_core::links::target_id)
+                        .and_then(bonsai_core::links::target_id)
                         .map(|id| id.to_string())
                 })
                 .ok_or_else(|| "Message whom?".to_owned())?;
@@ -505,9 +505,9 @@ pub(super) fn run(
             let a = need()?;
             let conv = chat()?;
             let place = arg
-                .and_then(rbx_core::links::shared_place)
+                .and_then(bonsai_core::links::shared_place)
                 .ok_or_else(|| "Give an experience link or ID.".to_owned())?;
-            let url = rbx_core::links::page(&format!("game:{place}"), None)
+            let url = bonsai_core::links::page(&format!("game:{place}"), None)
                 .ok_or_else(|| "Can't make a link to that experience.".to_owned())?;
             core.send_chat(a, &conv, &url);
             Ok(())

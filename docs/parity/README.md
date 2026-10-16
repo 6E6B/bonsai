@@ -1,6 +1,6 @@
 # Website Parity Checklists
 
-This directory contains parity checklists for every page, screen, and subsystem in the application. All items are initially unchecked. An item is ticked when it ships in the frontend: the screen works from cache first, connects to `rbx-core`, supports keyboard navigation / commands, and has replay test coverage.
+This directory contains parity checklists for every page, screen, and subsystem in the application. All items are initially unchecked. An item is ticked when it ships in the frontend: the screen works from cache first, connects to `bonsai-core`, supports keyboard navigation / commands, and has replay test coverage.
 
 ## Master Page Index
 

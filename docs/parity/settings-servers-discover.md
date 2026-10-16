@@ -51,7 +51,7 @@
 
 ## Settings
 - [x] Layout: sections split into **Roblox account** (Profile, Security, Privacy, Private servers; saved on Roblox) and **This app** (General, Appearance, Background, Layout, Notifications, Keyboard, Accounts, Data and storage, Developer; saved on this computer), with icons. Old names (`account`, `advanced`) still open via `nav.settings`. Shared `SettingsGroup` / `SettingRow` / `SettingSwitch` in `lib/ui`.
-- [x] One list of app settings in `rbx-core/src/prefs.rs` (key, section, title, kind, default). `settings.set <key> [value]` changes one (a switch without a value flips) and `settings.reset <key|section|all>` puts defaults back; the command bar lists on/off and each choice per setting, and resets per section. Changed rows show a dot and a reset button.
+- [x] One list of app settings in `bonsai-core/src/prefs.rs` (key, section, title, kind, default). `settings.set <key> [value]` changes one (a switch without a value flips) and `settings.reset <key|section|all>` puts defaults back; the command bar lists on/off and each choice per setting, and resets per section. Changed rows show a dot and a reset button.
 - [x] Settings search in the side pane (titles, descriptions, keywords and the Roblox account rows); results open `/settings/:section/:setting`, which scrolls to and flashes the row. `nav.settings` takes `section/setting` too.
 - [x] Zoom is saved (`ui_scale`, 67–200%) and set from Settings > Appearance, the command bar or Ctrl+=/Ctrl+-. Settings > Accounts has "Keep other accounts live" (`background_accounts`). `allow_multiple_clients` has no UI: nothing reads it yet.
 - [x] Shortcut rebinding in Settings > Keyboard: Change records a chord or a two-key sequence, warns which commands already use it and takes it from them on save; No shortcut, Use default, per-row reset and Reset all. Same as `shortcuts.set <command> [keys]` and `shortcuts.reset [command]` in the command bar. Overrides are saved in settings; a rebound command keeps only its new shortcut.
@@ -95,8 +95,8 @@
 - [ ] **App Preferences (Client native)**:
   - [ ] Theme (Light, Dark, System, Custom palettes) — twelve built-in themes, a dark and a light pick that System switches between; editor and import in progress, see [theming.md](../theming.md)
     - [x] Token registry, theme document format and seed derivation (`ui/src/lib/theme/`)
-    - [x] Theme storage, selection and `theme.apply` / `theme.cycle` / `theme.delete` (`rbx-core/src/themes.rs`, Settings > Appearance)
-    - [x] Google Fonts in themes: searchable picker, `theme.font` / `theme.mono_font` / `theme.duplicate`, files cached on disk and served over `font://` (`rbx-core/src/fonts.rs`)
+    - [x] Theme storage, selection and `theme.apply` / `theme.cycle` / `theme.delete` (`bonsai-core/src/themes.rs`, Settings > Appearance)
+    - [x] Google Fonts in themes: searchable picker, `theme.font` / `theme.mono_font` / `theme.duplicate`, files cached on disk and served over `font://` (`bonsai-core/src/fonts.rs`)
     - [x] Theme editor with live preview and contrast checks: Themes screen (`nav.themes`, G E), editor tab at `/themes/:id` with seeds, per-token pins, undo/redo, contrast checks with `theme.fix_contrast`, `theme.live` to show the draft app-wide (`ui/src/features/themes/`)
     - [ ] Import and export (`.bonsaitheme` files and share codes)
     - [x] Inspect mode (`theme.inspect`: click part of the editor preview to list the tokens that paint it)

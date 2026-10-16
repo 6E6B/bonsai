@@ -13,7 +13,7 @@ stay readable. Only `../stage.ts` imports it, and the app loads that module with
 ## Changes from upstream
 
 - `api.ts` is a host shim, not the upstream web API client. Asset files load from the app's
-  `rbxasset://` protocol through `HOST.assetUrl`, and rbx-core fetches them through rbx-api.
+  `rbxasset://` protocol through `HOST.assetUrl`, and bonsai-core fetches them through bonsai-api.
   Catalog, economy, outfit and bundle lookups are stubs, because the app passes the outfit in.
 - Post-processing (`postprocessing`, `n8ao`), GLTF export, the HTML loading icon and error
   overlay, and double-size rendering are removed. `renderScene` draws straight to the canvas.

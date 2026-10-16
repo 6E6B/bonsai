@@ -1,2 +1,2 @@
 [alias]
-xtask = "run --quiet -p rbx-codegen --"
+xtask = "run --quiet -p bonsai-codegen --"

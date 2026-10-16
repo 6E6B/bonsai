@@ -1,11 +1,11 @@
 //! Tauri shell. Owns [`Core`], exposes typed IPC commands (see [`ipc`]), serves thumbnails
 //! over `thumb://` (see [`thumb`]) and theme fonts over `font://` (see [`font`]), and tells the UI when the store changed (see [`notify`]).
 //!
-//! No logic lives here: commands read the store or forward to `rbx-core`.
+//! No logic lives here: commands read the store or forward to `bonsai-core`.
 
 use std::sync::Arc;
 
-use rbx_core::{Core, CoreConfig};
+use bonsai_core::{Core, CoreConfig};
 use tauri::Manager;
 
 mod asset;

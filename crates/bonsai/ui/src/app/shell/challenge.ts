@@ -1,4 +1,4 @@
-/** Names of the places a two-step code comes from, by rbx-core's method key. */
+/** Names of the places a two-step code comes from, by bonsai-core's method key. */
 export const METHOD_LABELS: Record<string, string> = {
   authenticator: "Authenticator app",
   email: "Email",

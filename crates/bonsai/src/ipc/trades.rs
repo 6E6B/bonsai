@@ -1,15 +1,15 @@
 //! Trades: the four lists, one trade with both sides valued, and the composer's draft.
 //!
-//! The draft lives in `rbx-core` until `trade.send`. Adding or removing items and Robux are
+//! The draft lives in `bonsai-core` until `trade.send`. Adding or removing items and Robux are
 //! steps inside the composer, so they are plain IPC calls, not registry commands. `list.more`
 //! keys here are `trades:<box>` and `tradable:<user>`.
 
 use std::sync::Arc;
 
-use rbx_core::commands::CommandId;
-use rbx_core::trades::{Draft, Eval, TradeBox, TradeItem, TradeRules, evaluate};
-use rbx_core::values::ValueTable;
-use rbx_core::{AccountId, Core};
+use bonsai_core::commands::CommandId;
+use bonsai_core::trades::{Draft, Eval, TradeBox, TradeItem, TradeRules, evaluate};
+use bonsai_core::values::ValueTable;
+use bonsai_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
 use tauri::{AppHandle, State};
@@ -109,7 +109,7 @@ fn item_view(i: &TradeItem, values: Option<&ValueTable>) -> TradeItemView {
     TradeItemView {
         instance_id: i.instance_id.clone(),
         id: Id(i.item.id),
-        bundle: i.item.kind == rbx_core::market::ItemKind::Bundle,
+        bundle: i.item.kind == bonsai_core::market::ItemKind::Bundle,
         name: i.name.clone(),
         serial: i.serial.and_then(count),
         rap: i.rap.and_then(count),
@@ -353,7 +353,7 @@ pub(super) fn run(
                     inv.context
                         .as_deref()
                         .filter(|c| c.starts_with("user:"))
-                        .and_then(rbx_core::links::target_id)
+                        .and_then(bonsai_core::links::target_id)
                         .map(|id| id.to_string())
                 })
                 .ok_or_else(|| "Trade with whom?".to_owned())?;

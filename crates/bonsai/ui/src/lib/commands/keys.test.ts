@@ -18,7 +18,7 @@ const press = (key: string, mods: Partial<KeyboardEvent> = {}) => {
 }
 
 describe("toPress", () => {
-  test("names punctuation like rbx-core", () => {
+  test("names punctuation like bonsai-core", () => {
     expect(press("/").key).toBe("Slash")
     expect(press("?", { shiftKey: true }).key).toBe("Questionmark")
     expect(press(".").key).toBe("Period")

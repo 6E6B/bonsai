@@ -7,14 +7,14 @@ Portable Rust backend for the Bonsai desktop client (built with Tauri).
 ```
 bonsai/
 ├── crates/
-│   ├── rbx-api/       # Roblox API client (REST & SignalR WebSocket, rate limiting, auth)
-│   ├── rbx-core/      # Domain engine (StoreData, multi-account sessions, cache, launcher, commands)
-│   ├── bonsai/        # Tauri shell + SolidJS UI (ui/)
-│   └── rbx-codegen/   # Generator xtask converting OpenAPI/Swagger specs to Rust API wrappers
-├── specs/             # Custom Swagger 2.0 specs for undocumented Roblox endpoints
-├── vendor/            # roblox-api-tracker submodule/specs
-├── .cargo/            # Cargo aliases (e.g. `cargo xtask codegen`)
-└── Cargo.toml         # Clean workspace manifest containing the backend crates
+│   ├── bonsai-api/        # Roblox API client (REST & SignalR WebSocket, rate limiting, auth)
+│   ├── bonsai-core/       # Domain engine (StoreData, multi-account sessions, cache, launcher, commands)
+│   ├── bonsai/            # Tauri shell + SolidJS UI (ui/)
+│   └── bonsai-codegen/    # Generator xtask converting OpenAPI/Swagger specs to Rust API wrappers
+├── specs/                 # Custom Swagger 2.0 specs for undocumented Roblox endpoints
+├── vendor/                # roblox-api-tracker submodule/specs
+├── .cargo/                # Cargo aliases (e.g. `cargo xtask codegen`)
+└── Cargo.toml             # Clean workspace manifest containing the backend crates
 ```
 
 ## Useful Commands

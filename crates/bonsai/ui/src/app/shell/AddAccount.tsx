@@ -14,7 +14,7 @@ const START = { quick: "account.quick_sign_in", browser: "account.sign_in_browse
 
 /**
  * The dialog behind `account.add`, `account.replace_cookie`, `account.quick_sign_in` and
- * `account.sign_in_browser`. rbx-core does the work and reports progress in `shell.login`;
+ * `account.sign_in_browser`. bonsai-core does the work and reports progress in `shell.login`;
  * every mode ends in the same confirm step. The cookie never comes back to the UI.
  */
 export function AddAccount(props: { mode: AddMode; onDone: () => void }) {
@@ -49,7 +49,7 @@ export function AddAccount(props: { mode: AddMode; onDone: () => void }) {
   onCleanup(() => {
     if (!saving() && (shell.login || mode() === "quick" || mode() === "browser")) void commands.cancelLogin()
   })
-  // Confirmed: rbx-core clears `login` once the account is saved.
+  // Confirmed: bonsai-core clears `login` once the account is saved.
   createEffect(() => {
     if (saving() && login() === null) props.onDone()
   })

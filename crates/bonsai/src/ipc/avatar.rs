@@ -4,12 +4,12 @@
 
 use std::sync::Arc;
 
-use rbx_core::avatar::{BodyColors, Look, Part, Rig, Scale};
-use rbx_core::commands::CommandId;
-use rbx_core::inventory::InvSlot;
-use rbx_core::market::ItemRef;
-use rbx_core::res::Res;
-use rbx_core::{AccountId, Core};
+use bonsai_core::avatar::{BodyColors, Look, Part, Rig, Scale};
+use bonsai_core::commands::CommandId;
+use bonsai_core::inventory::InvSlot;
+use bonsai_core::market::ItemRef;
+use bonsai_core::res::Res;
+use bonsai_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
 use tauri::State;
@@ -158,7 +158,7 @@ pub fn avatar(core: State<'_, Arc<Core>>) -> AvatarView {
                         name: a.name.clone(),
                         type_id: a.type_id as i32,
                         type_name: a.type_name.clone(),
-                        r15_only: rbx_core::avatar::r15_only(a.type_id),
+                        r15_only: bonsai_core::avatar::r15_only(a.type_id),
                         layer: a.layer,
                     })
                     .collect()
@@ -613,12 +613,12 @@ pub fn avatar_3d(core: State<'_, Arc<Core>>, source: AvatarSource) -> Avatar3dVi
 
 fn avatar_3d_view(r: Res<Look>) -> Avatar3dView {
     let look = r.data.as_deref();
-    let worn = |a: &rbx_core::avatar::Worn| WornView {
+    let worn = |a: &bonsai_core::avatar::Worn| WornView {
         id: Id(a.id),
         name: a.name.clone(),
         type_id: a.type_id as i32,
         type_name: a.type_name.clone(),
-        r15_only: rbx_core::avatar::r15_only(a.type_id),
+        r15_only: bonsai_core::avatar::r15_only(a.type_id),
         layer: a.layer,
     };
     Avatar3dView {

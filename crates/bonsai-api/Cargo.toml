@@ -1,0 +1,37 @@
+[package]
+name = "bonsai-api"
+description = "Generated Roblox web API client and hand-written transport"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+rustls = { workspace = true }
+tokio = { workspace = true }
+parking_lot = { workspace = true }
+thiserror = { workspace = true }
+base64 = { workspace = true }
+fastrand = { workspace = true }
+tracing = { workspace = true }
+tokio-tungstenite = { workspace = true }
+rustls-platform-verifier = { workspace = true }
+futures = { workspace = true }
+
+wiremock = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["net"] }
+bonsai-api = { path = ".", features = ["replay"] }
+
+[features]
+# Record-and-replay test harness (wiremock). Enabled by tests of this crate and bonsai-core.
+replay = ["dep:wiremock"]
+# Tests against the real API with a throwaway account from RBX_TEST_COOKIE. Never in CI.
+live = []

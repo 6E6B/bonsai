@@ -6,20 +6,20 @@ Read this at the start of every session. Feature checklists are in `docs/parity/
 
 ```
 crates/
-  rbx-api/        Roblox API client. The only crate that touches the network.
-  rbx-core/       Domain logic: accounts, store, cache, commands, background jobs.
-  rbx-codegen/    Generates rbx-api wrappers from specs (`cargo xtask codegen`).
-  bonsai/         Tauri 2 shell. Wires rbx-core to the UI. No domain logic.
+  bonsai-api/     Roblox API client. The only crate that touches the network.
+  bonsai-core/    Domain logic: accounts, store, cache, commands, background jobs.
+  bonsai-codegen/ Generates bonsai-api wrappers from specs (`cargo xtask codegen`).
+  bonsai/         Tauri 2 shell. Wires bonsai-core to the UI. No domain logic.
     src/ipc.rs      Typed commands and events (tauri-specta).
     src/notify.rs   Batches store changes into one `storeChanged` event per frame.
-    src/thumb.rs    `thumb://` protocol serving thumbnails from rbx-core.
+    src/thumb.rs    `thumb://` protocol serving thumbnails from bonsai-core.
     ui/             SolidJS app (Vite, TypeScript, Tailwind v4, bun).
       src/app/          Shell: providers, router, layout.
       src/features/<x>/ One folder per screen or area.
       src/lib/ipc/      Generated bindings. Never edit.
       src/lib/commands/ UI side of the command registry and shortcut handling.
       src/lib/ui/       Our Kobalte components and theme tokens. See its README.md.
-      src/lib/store.ts  Mirror of rbx-core state.
+      src/lib/store.ts  Mirror of bonsai-core state.
 ```
 
 ## Before you write code
@@ -32,16 +32,16 @@ crates/
 
 ### Network and secrets
 
-- No network calls outside `crates/rbx-api`. The webview never fetches anything remote: no CDNs, no Google Fonts, no Roblox image URLs. The CSP in `tauri.conf.json` enforces this; don't loosen it.
+- No network calls outside `crates/bonsai-api`. The webview never fetches anything remote: no CDNs, no Google Fonts, no Roblox image URLs. The CSP in `tauri.conf.json` enforces this; don't loosen it.
 - No hardcoded endpoint URLs outside generated code and `specs/undocumented/`.
-- Never edit files under `crates/rbx-api/src/generated/`. Change the spec or the generator and rerun `cargo xtask codegen`.
+- Never edit files under `crates/bonsai-api/src/generated/`. Change the spec or the generator and rerun `cargo xtask codegen`.
 - Never log, print, commit or write to disk a `.ROBLOSECURITY` cookie, auth ticket or CSRF token. Redact them in `Debug` impls. Never send one to the UI.
 - Never auto-solve captchas or bypass a challenge. Surface it to the user.
 
 ### User actions
 
 - No automated purchases, trades, friend requests or messages. Every write is a direct result of a user click or keypress.
-- Every user action goes through the command registry in `rbx-core` (`commands.rs`). A button, menu item or shortcut that is not also a command in the command bar is a bug.
+- Every user action goes through the command registry in `bonsai-core` (`commands.rs`). A button, menu item or shortcut that is not also a command in the command bar is a bug.
   - UI code calls `run(id, arg)` from `~/lib/commands/registry`. Never call a write IPC command directly from a component.
   - Exception: steps inside a dialog that a command opened (e.g. `account.add` checking, confirming or cancelling a pasted cookie) may call their IPC commands directly. They are not separate palette entries.
   - Commands that only change UI state (navigation, zoom, sidebar) register a handler with `handle(id, fn)`. Everything else goes to `run_command` in `ipc.rs`.
@@ -55,10 +55,10 @@ crates/
 
 ### IPC (Rust side)
 
-- `rbx-core` is the source of truth. `bonsai` only reads the store or forwards to `rbx-core`.
-- Tauri commands run on the main thread. They take short locks or send to `rbx-core`, nothing else. No network, no disk, no sleeping.
+- `bonsai-core` is the source of truth. `bonsai` only reads the store or forwards to `bonsai-core`.
+- Tauri commands run on the main thread. They take short locks or send to `bonsai-core`, nothing else. No network, no disk, no sleeping.
 - Every command and event uses `#[specta::specta]` / `tauri_specta::Event` and is registered in `ipc::builder()`.
-- IPC types are UI-facing views defined in `ipc.rs`, not `rbx-core` store types. Send only what a screen needs, not the whole store.
+- IPC types are UI-facing views defined in `ipc.rs`, not `bonsai-core` store types. Send only what a screen needs, not the whole store.
 - Ids cross IPC as `ipc::Id` (a JS number; Roblox ids fit). Use a string for anything that can exceed 2^53.
 - Large or streaming data (inventories, chat, presence) uses `tauri::ipc::Channel` or a binary `tauri::ipc::Response`, not repeated full refetches.
 - Images go through `thumb://` (`thumbUrl()` in `ui/src/lib/thumb.ts`). Never send image bytes or base64 over IPC.
@@ -107,9 +107,9 @@ Add a replay fixture for it in the same PR.
 
 ## Testing
 
-- Every endpoint wrapper used by the UI has a replay test with a recorded fixture under `crates/rbx-api/tests/fixtures/`. Scrub IDs and names that could identify a real person before committing.
+- Every endpoint wrapper used by the UI has a replay test with a recorded fixture under `crates/bonsai-api/tests/fixtures/`. Scrub IDs and names that could identify a real person before committing.
 - Live tests (`cargo test --features live`) hit the real API with a throwaway account from `RBX_TEST_COOKIE`. They never run in CI by default.
-- Domain logic (filters, sorting, state transitions) gets unit tests in `rbx-core`.
+- Domain logic (filters, sorting, state transitions) gets unit tests in `bonsai-core`.
 - UI logic that is not layout (shortcut matching, list shaping) gets Vitest tests next to the file: `foo.ts` → `foo.test.ts`.
 
 ## Commands

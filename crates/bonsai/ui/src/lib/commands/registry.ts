@@ -6,7 +6,7 @@ import { confirmations } from "./confirm"
 import { isPlain, match, toPress } from "./keys"
 
 /**
- * The UI side of rbx-core's command registry. Every button, menu item and shortcut calls
+ * The UI side of bonsai-core's command registry. Every button, menu item and shortcut calls
  * `run` with a command id from the registry. Commands that only change UI state register a
  * local handler with `handle`; the rest go to the backend.
  */

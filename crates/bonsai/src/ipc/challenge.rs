@@ -4,8 +4,8 @@
 
 use std::sync::Arc;
 
-use rbx_core::Core;
-use rbx_core::challenge::{ChallengePrompt, PromptKind};
+use bonsai_core::Core;
+use bonsai_core::challenge::{ChallengePrompt, PromptKind};
 use serde::Serialize;
 use specta::Type;
 use tauri::{AppHandle, State};

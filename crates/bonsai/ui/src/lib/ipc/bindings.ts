@@ -1115,7 +1115,7 @@ export type JoinRequestRow = {
 	created: string,
 };
 
-/**  A shortcut. Key names follow `rbx-core` (`"K"`, `"1"`, `"Slash"`, `"PageDown"`). */
+/**  A shortcut. Key names follow `bonsai-core` (`"K"`, `"1"`, `"Slash"`, `"PageDown"`). */
 export type Keys = { kind: "chord"; ctrl: boolean; shift: boolean; alt: boolean; key: string; label: string } | { kind: "sequence"; first: string; second: string; label: string };
 
 export type KindAmount = {
@@ -1448,7 +1448,7 @@ export type PrefOption = {
 	label: string,
 };
 
-/**  One setting from `rbx_core::prefs`, with its value now and in a fresh install. */
+/**  One setting from `bonsai_core::prefs`, with its value now and in a fresh install. */
 export type PrefView = {
 	key: string,
 	/**  The settings section it sits in. */

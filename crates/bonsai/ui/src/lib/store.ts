@@ -5,7 +5,7 @@ import { commands, events, type Friends, type Home, type Shell } from "~/lib/ipc
 import { browserFriends, browserHome, browserShell } from "~/lib/sample"
 
 /**
- * Mirrors of rbx-core state. rbx-core is the source of truth; each mirror refetches when the
+ * Mirrors of bonsai-core state. bonsai-core is the source of truth; each mirror refetches when the
  * backend sends `storeChanged` (at most once per frame) and merges with `reconcile`, so only
  * the parts that changed re-render.
  */

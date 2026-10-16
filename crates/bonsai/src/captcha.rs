@@ -6,7 +6,7 @@
 //! - It opens Roblox's sign-in page, whose content policy lets Arkose's script run, and swaps
 //!   the page for the puzzle before the page's own scripts start.
 //! - When the puzzle is solved, the page navigates to `bonsai-captcha://done?token=…`.
-//!   [`on_navigation`] stops that navigation, hands the token to rbx-core and closes the window.
+//!   [`on_navigation`] stops that navigation, hands the token to bonsai-core and closes the window.
 //!   The token is never logged.
 //!
 //! Closing the window leaves the challenge dialog open, so the user can reopen the puzzle or
@@ -14,7 +14,7 @@
 
 use std::sync::Arc;
 
-use rbx_core::{Core, links};
+use bonsai_core::{Core, links};
 use tauri::webview::NewWindowResponse;
 use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 

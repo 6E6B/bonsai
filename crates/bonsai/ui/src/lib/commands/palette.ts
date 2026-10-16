@@ -286,7 +286,7 @@ export interface SectionInput {
 /** Rows per group when searching everything; a scope shows all of its results. */
 const PER_GROUP = 4
 
-/** Order of Roblox result groups. Titles come from rbx-core's `Group::title`. */
+/** Order of Roblox result groups. Titles come from bonsai-core's `Group::title`. */
 const REMOTE_GROUPS = ["Pasted link", "People", "Experiences", "Communities", "Marketplace"]
 
 /** The command bar's grouped rows. Searching everything puts commands whose title matches

@@ -1,5 +1,5 @@
 # The Google Fonts catalog (https://fonts.google.com), a third-party site. Used to pick a font for
-# a theme; the webview never loads fonts from the network, rbx-core downloads them (see
+# a theme; the webview never loads fonts from the network, bonsai-core downloads them (see
 # fonts.googleapis.com.yaml). The transport never sends Roblox credentials to a non-Roblox host.
 swagger: "2.0"
 host: fonts.google.com

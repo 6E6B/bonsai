@@ -1,11 +1,11 @@
 /**
- * For tests only: the built-in themes, read from the files rbx-core bundles, so the app and the
+ * For tests only: the built-in themes, read from the files bonsai-core bundles, so the app and the
  * tests can't drift apart.
  */
 import { readdirSync, readFileSync } from "node:fs"
 import { readTheme, type Theme } from "./theme"
 
-const dir = `${import.meta.dirname}/../../../../../rbx-core/themes`
+const dir = `${import.meta.dirname}/../../../../../bonsai-core/themes`
 
 export function builtinThemes(): Theme[] {
   return readdirSync(dir)
