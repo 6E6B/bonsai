@@ -18,6 +18,7 @@ mod signin;
 mod thumb;
 
 pub fn run() {
+    notify::capture_local_offset();
     let t0 = std::time::Instant::now(); // PROFILE-TMP
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())

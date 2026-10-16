@@ -68,6 +68,33 @@ const SIDEBAR_MODES: &[(&str, &str)] = &[
     ("expanded", "Expanded"),
     ("collapsed", "Collapsed"),
 ];
+/// Whole hours of the day for quiet hours.
+const HOURS: &[(&str, &str)] = &[
+    ("0", "00:00"),
+    ("1", "01:00"),
+    ("2", "02:00"),
+    ("3", "03:00"),
+    ("4", "04:00"),
+    ("5", "05:00"),
+    ("6", "06:00"),
+    ("7", "07:00"),
+    ("8", "08:00"),
+    ("9", "09:00"),
+    ("10", "10:00"),
+    ("11", "11:00"),
+    ("12", "12:00"),
+    ("13", "13:00"),
+    ("14", "14:00"),
+    ("15", "15:00"),
+    ("16", "16:00"),
+    ("17", "17:00"),
+    ("18", "18:00"),
+    ("19", "19:00"),
+    ("20", "20:00"),
+    ("21", "21:00"),
+    ("22", "22:00"),
+    ("23", "23:00"),
+];
 const AVATAR_VIEWS: &[(&str, &str)] = &[("2d", "Image"), ("3d", "3D")];
 
 const fn pref(
@@ -279,6 +306,54 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "quiet_hours",
+        "notifications",
+        "Quiet hours",
+        "No desktop notifications between the hours below. Badges and lists still update.",
+        &["quiet", "do not disturb", "dnd", "night", "silent", "schedule"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "quiet_start",
+        "notifications",
+        "Quiet from",
+        "",
+        &["quiet", "start", "night"],
+        PrefKind::Choice(HOURS),
+    ),
+    pref(
+        "quiet_end",
+        "notifications",
+        "Quiet until",
+        "",
+        &["quiet", "end", "morning"],
+        PrefKind::Choice(HOURS),
+    ),
+    pref(
+        "mute_in_game",
+        "notifications",
+        "Mute while playing",
+        "No desktop notifications while the active account is in a game.",
+        &["game", "playing", "mute", "silent", "do not disturb"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "notify_sound",
+        "notifications",
+        "Sound",
+        "Asks the system to play its message sound. Some desktops always or never play one.",
+        &["sound", "audio", "chime", "ding"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "notify_in_front",
+        "notifications",
+        "While the app is in front",
+        "Off only notifies while the window is in the background, since badges show the rest.",
+        &["focused", "foreground", "always"],
+        PrefKind::Bool,
+    ),
+    pref(
         "item_values",
         "data",
         "Item values",
@@ -338,6 +413,12 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "home.continue_playing" => on_off(s.home.continue_playing).to_owned(),
         "home.favorites" => on_off(s.home.favorites).to_owned(),
         "home.recommended" => on_off(s.home.recommended).to_owned(),
+        "quiet_hours" => on_off(s.quiet.on).to_owned(),
+        "quiet_start" => s.quiet.start.to_string(),
+        "quiet_end" => s.quiet.end.to_string(),
+        "mute_in_game" => on_off(s.mute_in_game).to_owned(),
+        "notify_sound" => on_off(s.notify_sound).to_owned(),
+        "notify_in_front" => on_off(s.notify_in_front).to_owned(),
         _ => return None,
     })
 }
@@ -370,6 +451,8 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
             "time_format" => v.clone_into(&mut s.time_format),
             "start_screen" => v.clone_into(&mut s.start_screen),
             "sidebar_mode" => v.clone_into(&mut s.sidebar_mode),
+            "quiet_start" => s.quiet.start = v.parse().unwrap_or(22),
+            "quiet_end" => s.quiet.end = v.parse().unwrap_or(8),
             _ => unreachable!("choice without a setter: {key}"),
         }
         return Ok(());
@@ -388,6 +471,10 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
         "home.continue_playing" => s.home.continue_playing = bool()?,
         "home.favorites" => s.home.favorites = bool()?,
         "home.recommended" => s.home.recommended = bool()?,
+        "quiet_hours" => s.quiet.on = bool()?,
+        "mute_in_game" => s.mute_in_game = bool()?,
+        "notify_sound" => s.notify_sound = bool()?,
+        "notify_in_front" => s.notify_in_front = bool()?,
         "player_command" => s.player_command = Some(value.to_owned()).filter(|c| !c.is_empty()),
         "format_locale" => {
             if !valid_format_locale(value) {

@@ -3,8 +3,8 @@
 //! rbx-core's desktop alerts as system notifications while the window is in the background.
 
 use std::io;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, OnceLock};
 use std::thread;
 use std::time::Duration;
 
@@ -12,6 +12,7 @@ use rbx_core::{Core, Repaint};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_notification::NotificationExt;
 use tauri_specta::Event;
+use time::{OffsetDateTime, UtcOffset};
 
 use crate::ipc::StoreChanged;
 
@@ -43,7 +44,27 @@ pub fn spawn(app: AppHandle) -> io::Result<Repaint> {
     }))
 }
 
-/// Show waiting alerts as system notifications, unless the app is in front (the badges and
+/// The machine's UTC offset, read once at startup. Reading it later is unsound on Linux once
+/// other threads exist, so a daylight saving change shows after a restart.
+static LOCAL_OFFSET: OnceLock<UtcOffset> = OnceLock::new();
+
+/// Call first thing in `run`, before any thread starts.
+pub fn capture_local_offset() {
+    match UtcOffset::current_local_offset() {
+        Ok(o) => {
+            let _ = LOCAL_OFFSET.set(o);
+        }
+        Err(e) => tracing::warn!("local time unknown, quiet hours use UTC: {e}"),
+    }
+}
+
+fn local_hour() -> u8 {
+    let offset = LOCAL_OFFSET.get().copied().unwrap_or(UtcOffset::UTC);
+    OffsetDateTime::now_utc().to_offset(offset).hour()
+}
+
+/// Show waiting alerts as system notifications. They are dropped during quiet hours, while
+/// playing if muted, and while the app is in front unless that is turned on (the badges and
 /// lists already say it then).
 fn show_alerts(app: &AppHandle) {
     let Some(core) = app.try_state::<Arc<Core>>() else {
@@ -53,15 +74,29 @@ fn show_alerts(app: &AppHandle) {
     if alerts.is_empty() {
         return;
     }
+    let settings = core.settings();
+    if settings.quiet.covers(local_hour()) || (settings.mute_in_game && core.playing()) {
+        return;
+    }
     let focused = app
         .get_webview_window("main")
         .is_some_and(|w| w.is_focused().unwrap_or(false));
-    if focused {
+    if focused && !settings.notify_in_front {
         return;
     }
     for a in alerts {
-        if let Err(e) = app.notification().builder().title(&a.title).body(&a.body).show() {
+        let mut n = app.notification().builder().title(&a.title).body(&a.body);
+        if settings.notify_sound {
+            n = n.sound(SOUND);
+        }
+        if let Err(e) = n.show() {
             tracing::warn!("could not show a notification: {e}");
         }
     }
 }
+
+/// The system's own message sound.
+#[cfg(target_os = "linux")]
+const SOUND: &str = "message-new-instant";
+#[cfg(not(target_os = "linux"))]
+const SOUND: &str = "Default";

@@ -331,6 +331,48 @@ pub struct Settings {
     pub home: HomeRows,
     /// The tabs open when the app last saved them, for `start_screen = "last"`.
     pub session: SavedTabs,
+    /// Hours when desktop notifications stay silent.
+    pub quiet: QuietHours,
+    /// No desktop notifications while the active account is in a game.
+    pub mute_in_game: bool,
+    /// Ask the system to play its message sound with each notification.
+    pub notify_sound: bool,
+    /// Notify while the app is in front too, not only in the background.
+    pub notify_in_front: bool,
+}
+
+/// A daily stretch without notifications, in whole local hours. `start` is when it begins and
+/// `end` when it is over; it may cross midnight (22 → 8).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct QuietHours {
+    pub on: bool,
+    pub start: u8,
+    pub end: u8,
+}
+
+impl Default for QuietHours {
+    fn default() -> Self {
+        Self {
+            on: false,
+            start: 22,
+            end: 8,
+        }
+    }
+}
+
+impl QuietHours {
+    /// Whether `hour` (0–23, local) is inside the quiet stretch.
+    pub fn covers(self, hour: u8) -> bool {
+        if !self.on || self.start == self.end {
+            return false;
+        }
+        if self.start < self.end {
+            (self.start..self.end).contains(&hour)
+        } else {
+            hour >= self.start || hour < self.end
+        }
+    }
 }
 
 /// Which rows Home shows.
@@ -412,6 +454,10 @@ impl Default for Settings {
             drawer: false,
             home: HomeRows::default(),
             session: SavedTabs::default(),
+            quiet: QuietHours::default(),
+            mute_in_game: false,
+            notify_sound: false,
+            notify_in_front: false,
         }
     }
 }
@@ -687,5 +733,33 @@ mod tests {
         .sanitized();
         assert_eq!(many.tabs.len(), SavedTabs::MAX);
         assert_eq!(many.active, 1);
+    }
+
+    #[test]
+    fn quiet_hours_cross_midnight() {
+        let night = QuietHours {
+            on: true,
+            start: 22,
+            end: 8,
+        };
+        assert!(night.covers(22) && night.covers(23) && night.covers(0) && night.covers(7));
+        assert!(!night.covers(8) && !night.covers(12) && !night.covers(21));
+        let day = QuietHours {
+            on: true,
+            start: 9,
+            end: 17,
+        };
+        assert!(day.covers(9) && day.covers(16));
+        assert!(!day.covers(17) && !day.covers(8));
+        assert!(!QuietHours { on: false, ..night }.covers(23));
+        assert!(
+            !QuietHours {
+                start: 5,
+                end: 5,
+                ..night
+            }
+            .covers(5),
+            "an empty stretch is never quiet"
+        );
     }
 }

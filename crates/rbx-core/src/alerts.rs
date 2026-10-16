@@ -110,7 +110,11 @@ impl Inner {
         before: &HashMap<u64, Presence>,
         after: &HashMap<u64, Presence>,
     ) {
-        for id in joined_games(before, after) {
+        // The account's own presence is in the map too; joining a game yourself is no news.
+        for id in joined_games(before, after)
+            .into_iter()
+            .filter(|u| *u != account.0)
+        {
             let name = self.store.read().user_title(id);
             let place = &after[&id].last_location;
             let body = if place.is_empty() {

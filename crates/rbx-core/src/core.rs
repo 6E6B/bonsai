@@ -531,6 +531,15 @@ impl Core {
         self.send(Cmd::SetSettings(Box::new(s)));
     }
 
+    /// The active account is in a game, as of its last presence refresh.
+    pub fn playing(&self) -> bool {
+        let s = self.inner.store.read();
+        s.accounts
+            .active
+            .and_then(|a| s.data.get(&a)?.presence.get(&a.0))
+            .is_some_and(|p| p.kind == PresenceKind::InGame)
+    }
+
     /// The account that does something: the picked one, else the active one.
     pub fn acting(&self, picked: Option<AccountId>) -> Option<AccountId> {
         picked.or(self.inner.store.read().accounts.active)
@@ -1052,8 +1061,14 @@ impl Inner {
         self.repaint();
     }
 
+    /// Presence of `ids` and of the account itself, which says whether it is in a game for
+    /// "Mute while playing".
     pub(crate) async fn refresh_presence(self: &Arc<Self>, id: AccountId, ids: &[u64]) {
         let Some(c) = self.client(id) else { return };
+        let mut ids = ids.to_vec();
+        if !ids.contains(&id.0) {
+            ids.push(id.0);
+        }
         let mut all = HashMap::new();
         for chunk in ids.chunks(50) {
             let body = presence::v1::UserPresenceRequest {
