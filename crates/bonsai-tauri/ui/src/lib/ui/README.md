@@ -54,6 +54,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `VirtualGrid` | Anything that can pass ~100 entries: tile grids (inventory, catalog) or one-column lists (leave out `minItemWidth`). Scrolls with the page. |
 | `PersonCard` | A person in a grid of compact cards: friends playing. A `Card` with avatar, name, one muted line, an optional trailing action. |
 | `Tile` | A picture with a title: games, items, outfits, communities. `selected` for worn or picked items. |
+| `Shelf` | One sideways-scrolling row of tiles or people under a `SectionHeader`: profile overview rows. Arrows on hover. |
 | `MediaFrame` | An image with previous and next arrows and a counter laid over it. |
 | `Thumbnail` | A `thumb://` image with a fixed aspect ratio and a fallback icon. |
 | `Avatar` | A user or account picture. `presence` dot, `count` badge, sizes `xs`–`xl`. |

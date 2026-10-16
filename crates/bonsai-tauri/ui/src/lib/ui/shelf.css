@@ -1,0 +1,66 @@
+@layer components {
+  [data-component="shelf"] {
+    position: relative;
+    min-width: 0;
+  }
+
+  /* Padding, pulled back with a margin, keeps focus rings from being clipped by the scroll. */
+  [data-component="shelf"] [data-slot="track"] {
+    display: flex;
+    gap: 12px;
+    margin: -2px;
+    padding: 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  [data-component="shelf"] [data-slot="track"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* A context menu's trigger is `display: contents`, so size what it wraps. */
+  [data-component="shelf"] [data-slot="track"] > :not([data-slot="context-trigger"]),
+  [data-component="shelf"] [data-slot="track"] > [data-slot="context-trigger"] > * {
+    flex: none;
+    width: var(--shelf-item);
+    min-width: 0;
+  }
+
+  [data-component="shelf"] [data-slot="prev"],
+  [data-component="shelf"] [data-slot="next"] {
+    position: absolute;
+    top: calc(var(--shelf-item) / 2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--color-media-chip);
+    color: var(--color-on-media);
+    opacity: 0;
+    transform: translateY(-50%);
+    cursor: default;
+    transition: opacity var(--duration) var(--ease);
+  }
+
+  [data-component="shelf"] [data-slot="prev"] {
+    left: 4px;
+  }
+
+  [data-component="shelf"] [data-slot="next"] {
+    right: 4px;
+  }
+
+  [data-component="shelf"]:hover [data-slot="prev"],
+  [data-component="shelf"]:hover [data-slot="next"] {
+    opacity: 1;
+  }
+
+  [data-component="shelf"] [data-slot="prev"]:hover,
+  [data-component="shelf"] [data-slot="next"]:hover {
+    background-image: linear-gradient(var(--color-hover-on-fill), var(--color-hover-on-fill));
+  }
+}

@@ -51,6 +51,7 @@ export {
   SettingsGroup,
   type SettingsGroupProps,
 } from "./settings-group"
+export { Shelf, type ShelfProps } from "./shelf"
 export { Skeleton, type SkeletonProps } from "./skeleton"
 export { Slider, type SliderProps } from "./slider"
 export { Spinner, type SpinnerProps } from "./spinner"

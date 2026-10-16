@@ -41,7 +41,7 @@
 - [x] **About Tab**:
   - [x] Bio / About text with URL and hashtag formatting (Roblox links open in the app or on the website, hashtags search Roblox, @mentions show the headshot and open the profile; other sites stay plain text)
   - [x] Collections & showcase (pinned badges, favorited items)
-  - [x] Overview tab like roblox.com's profile: bio, note, trading card and facts, what they wear now (avatar and item icons), and one row each of friends, experiences, favorites, communities, badges and collectibles with "See all" opening that tab and list. Empty rows are hidden
+  - [x] Overview tab like roblox.com's profile: bio, note, trading card and facts, what they wear now (avatar and item icons), and a sideways-scrolling row each of friends, experiences, favorites, communities, badges and collectibles with "See all" opening that tab and list. Empty rows are hidden
   - [x] Account statistics: Join date, account age, total place visits
   - [x] Trading card (Rolimons, opt-in; beyond parity): value, RAP, leaderboard rank, Premium / private inventory / terminated flags, update age, and Rolimons badges with each tier family folded to its top tier. "Turn on" link while values are off; "hasn't scanned" for unknown players
 - [x] **Outfits Tab** (replaces the Currently Wearing card on About):

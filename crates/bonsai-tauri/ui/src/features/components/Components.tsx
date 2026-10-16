@@ -43,6 +43,7 @@ import {
   SettingRow,
   SettingSwitch,
   SettingsGroup,
+  Shelf,
   Skeleton,
   Slider,
   Spinner,
@@ -666,6 +667,11 @@ export default function Components() {
           />
           <Tile title="Being worn" subtitle={<Robux amount={null} />} fallback="avatar" selected onClick={noop} />
         </div>
+        <Shelf class="w-full" itemWidth="8rem">
+          <For each={Array.from({ length: 14 }, (_, i) => i)}>
+            {(i) => <Tile title={`Shelf item ${i + 1}`} subtitle="In a row" onClick={noop} />}
+          </For>
+        </Shelf>
       </Section>
 
       <Section title="Stat, meter, robux, link">

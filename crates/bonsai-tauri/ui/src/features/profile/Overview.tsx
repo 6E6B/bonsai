@@ -32,6 +32,7 @@ import {
   Icon,
   IconButton,
   SectionHeader,
+  Shelf,
   Thumbnail,
   Tile,
   Tooltip,
@@ -40,13 +41,11 @@ import {
 import { VALUES_SOURCE } from "~/lib/values"
 import { TradingCard } from "./Trading"
 
-/** Columns for tiles, as wide as `tileGrid`'s, and for the smaller people and badges. */
-const tileRow = "grid-cols-[repeat(auto-fill,minmax(8rem,1fr))]"
-const smallRow = "grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))]"
-/** Keeps a grid to its first row; the rest collapse to nothing and are clipped. */
-const oneRow = "grid grid-rows-1 auto-rows-[0] gap-x-3 overflow-hidden p-0.5 -m-0.5"
-/** At most this many in a row, so a wide window doesn't build hundreds of hidden tiles. */
-const ROW_MAX = 12
+/** Entry widths for each row: tiles match `tileGrid`, people and badges are narrower. */
+const TILE = "8rem"
+const SMALL = "5rem"
+/** How many a row shows; "See all" has the rest. */
+const ROW_MAX = 30
 
 const ms = (iso: string) => {
   const t = Date.parse(iso)
@@ -57,7 +56,7 @@ const ms = (iso: string) => {
 export type SeeAll = (section: string, list?: string) => void
 
 /** A bit of everything, like the profile on roblox.com: bio and facts, what they wear, and one
- * row each of friends, experiences, favorites, communities, badges and collectibles, each with
+ * scrolling row each of friends, experiences, favorites, communities, badges and collectibles, each with
  * a link to its full tab. Rows with nothing in them are left out. */
 export function Overview(props: {
   userId: number
@@ -119,7 +118,7 @@ export function Overview(props: {
             title="Friends"
             count={friendCount()}
             list={friends}
-            grid={smallRow}
+            width={SMALL}
             onSeeAll={() => props.onSeeAll("connections", "friends")}
           >
             {(p) => <Person person={p} />}
@@ -127,7 +126,7 @@ export function Overview(props: {
           <Row
             title="Experiences"
             list={props.creations}
-            grid={tileRow}
+            width={TILE}
             onSeeAll={() => props.onSeeAll("experiences", "creations")}
           >
             {(g) => <GameTile game={g} />}
@@ -135,18 +134,18 @@ export function Overview(props: {
           <Row
             title="Favorites"
             list={props.favorites}
-            grid={tileRow}
+            width={TILE}
             onSeeAll={() => props.onSeeAll("experiences", "favorites")}
           >
             {(g) => <GameTile game={g} />}
           </Row>
-          <Row title="Communities" list={props.groups} grid={tileRow} onSeeAll={() => props.onSeeAll("communities")}>
+          <Row title="Communities" list={props.groups} width={TILE} onSeeAll={() => props.onSeeAll("communities")}>
             {(c) => <GroupTile group={c} />}
           </Row>
-          <Row title="Badges" list={props.badges} grid={smallRow} onSeeAll={() => props.onSeeAll("badges")}>
+          <Row title="Badges" list={props.badges} width={SMALL} onSeeAll={() => props.onSeeAll("badges")}>
             {(b) => <BadgeTile badge={b} />}
           </Row>
-          <Row title="Collectibles" list={props.collectibles} grid={tileRow} onSeeAll={() => props.onSeeAll("items")}>
+          <Row title="Collectibles" list={props.collectibles} width={TILE} onSeeAll={() => props.onSeeAll("items")}>
             {(i) => <ItemTile item={i} showSerial showRap />}
           </Row>
           <TradingCard view={props.trading} enabled={shell.itemValues} />
@@ -196,14 +195,14 @@ export function Overview(props: {
   )
 }
 
-/** One row of a list under a heading with its count and "See all". Hidden until the list has
+/** One sideways-scrolling row of a list under a heading with its count and "See all". Hidden until the list has
  * something in it. */
 function Row<T>(props: {
   title: string
   /** The full count when Roblox gives one; otherwise how many have loaded, with "+" if more. */
   count?: number | null
   list: List<T>
-  grid: string
+  width: string
   onSeeAll: () => void
   children: (item: T) => JSX.Element
 }) {
@@ -223,9 +222,9 @@ function Row<T>(props: {
             </Button>
           }
         />
-        <div class={`${props.grid} ${oneRow}`}>
+        <Shelf itemWidth={props.width}>
           <For each={props.list.items.slice(0, ROW_MAX)}>{(item) => props.children(item)}</For>
-        </div>
+        </Shelf>
       </section>
     </Show>
   )
