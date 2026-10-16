@@ -1,4 +1,5 @@
-export { applyAppearance, type Mode, shownBase } from "./apply"
+export { applyAppearance, type Mode, previewTheme, shownBase } from "./apply"
+export { type Check, colorOf, fixValue, PAIRS, type Pair, runChecks } from "./checks"
 export * from "./color"
 export {
   type Base,

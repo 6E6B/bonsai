@@ -27,6 +27,8 @@ describe("isEntityPath", () => {
     expect(isEntityPath("/catalog/5")).toBe(true)
     expect(isEntityPath("/bundles/5")).toBe(true)
     expect(isEntityPath("/passes/9")).toBe(true)
+    expect(isEntityPath("/themes/fjord")).toBe(true)
+    expect(isEntityPath("/themes")).toBe(false)
     expect(isEntityPath("/inventory/5")).toBe(false)
   })
 })

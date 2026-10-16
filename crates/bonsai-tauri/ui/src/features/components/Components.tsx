@@ -9,6 +9,7 @@ import {
   Checkbox,
   Clamp,
   Collapsible,
+  ColorPicker,
   type Column,
   Combobox,
   ContextMenu,
@@ -149,6 +150,8 @@ const galleryFonts = ["Inter", "Space Grotesk", "IBM Plex Sans", "Manrope", "Wor
 export default function Components() {
   const [height, setHeight] = createSignal(100)
   const [swatch, setSwatch] = createSignal("var(--color-accent)")
+  const [picked, setPicked] = createSignal("#3d7dff")
+  const [tint, setTint] = createSignal("#3d7dff33")
   const [themeCard, setThemeCard] = createSignal("Dark")
   const [sort, setSort] = createSignal("Popular")
   const [font, setFont] = createSignal("Inter")
@@ -288,6 +291,11 @@ export default function Components() {
         <For each={["var(--color-accent)", "var(--color-warning)", "var(--color-danger)"]}>
           {(c) => <Swatch color={c} label={c} selected={swatch() === c} onClick={() => setSwatch(c)} />}
         </For>
+      </Section>
+
+      <Section title="Color picker">
+        <ColorPicker class="w-56" label="Accent" value={picked()} onChange={setPicked} />
+        <ColorPicker class="w-56" label="Tint" alpha value={tint()} onChange={setTint} />
       </Section>
 
       <Section title="Radio">

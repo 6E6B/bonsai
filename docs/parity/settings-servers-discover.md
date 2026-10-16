@@ -86,10 +86,10 @@
     - [x] Token registry, theme document format and seed derivation (`ui/src/lib/theme/`)
     - [x] Theme storage, selection and `theme.apply` / `theme.cycle` / `theme.delete` (`rbx-core/src/themes.rs`, Settings > Appearance)
     - [x] Google Fonts in themes: searchable picker, `theme.font` / `theme.mono_font` / `theme.duplicate`, files cached on disk and served over `font://` (`rbx-core/src/fonts.rs`)
-    - [ ] Theme editor with live preview and contrast checks
+    - [x] Theme editor with live preview and contrast checks: Themes screen (`nav.themes`, G E), editor tab at `/themes/:id` with seeds, per-token pins, undo/redo, contrast checks with `theme.fix_contrast`, `theme.live` to show the draft app-wide (`ui/src/features/themes/`)
     - [ ] Import and export (`.bonsaitheme` files and share codes)
-    - [ ] Inspect mode
-    - [ ] Theme hub
+    - [x] Inspect mode (`theme.inspect`: click part of the editor preview to list the tokens that paint it)
+    - [ ] Theme hub (community themes on the Themes screen; later)
   - [x] UI density / scaling (Compact, Comfortable)
   - [x] Sidebar layout: screens in groups split by dividers; drag rows or `view.sidebar_up`/`view.sidebar_down` to reorder within a group, `view.sidebar_toggle` to hide (right-click menu, Settings > Appearance); Messages hidden by default; Transactions also opens from Trades
   - [x] Player launch command configuration (Default OS protocol, Flatpak/Sober, Wine, custom script)

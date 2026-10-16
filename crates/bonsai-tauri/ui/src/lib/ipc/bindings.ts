@@ -268,6 +268,11 @@ export const commands = {
 	 *  start with the query come first.
 	 */
 	fontCatalog: (query: string, mono: boolean) => __TAURI_INVOKE<FontCatalogView>("font_catalog", { query, mono }),
+	/**
+	 *  Google Fonts families the theme editor previews before they are saved in a theme in use.
+	 *  Downloads happen on the worker; this only reads what is on disk so far.
+	 */
+	fontFiles: (families: string[]) => __TAURI_INVOKE<FontView[]>("font_files", { families }),
 	/**  Account PIN of the active account. */
 	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
 	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */

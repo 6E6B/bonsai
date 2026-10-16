@@ -210,6 +210,7 @@ commands! {
     OpenCommunity => "group.open", "Open community", ["group", "community", "open"], Text, [];
     GoComponents => "nav.components", "Go to Components (UI gallery)", ["components", "gallery", "ui", "design"], None, [];
     GoOverview => "nav.overview", "Go to Overview (console clone test)", ["overview", "console", "clone", "test", "card"], None, [];
+    GoThemes => "nav.themes", "Go to Themes", ["themes", "appearance", "colors", "palette", "editor", "customize"], None, [Shortcut::seq("G", "E")];
 
     ToggleDrawer => "view.drawer", "Toggle friends and chat drawer", ["friends", "chat", "drawer", "panel"], None, [Shortcut::ctrl("Backslash")];
     ToggleSidebar => "view.sidebar", "Collapse or expand the sidebar", ["sidebar", "collapse"], None, [Shortcut::ctrl("B")];
@@ -225,6 +226,16 @@ commands! {
     DuplicateTheme => "theme.duplicate", "Duplicate theme", ["theme", "copy", "clone", "new"], Theme, [];
     SetThemeFont => "theme.font", "Theme font", ["theme", "font", "typeface", "google", "text"], Font, [];
     SetThemeMonoFont => "theme.mono_font", "Theme code font", ["theme", "font", "mono", "monospace", "code", "google"], Font, [];
+    NewTheme => "theme.new", "New theme", ["theme", "create", "make", "editor", "custom"], None, [];
+    EditTheme => "theme.edit", "Edit theme", ["theme", "editor", "customize", "colors", "change"], Theme, [];
+    SaveTheme => "theme.save", "Save theme", ["theme", "save", "editor"], Text, [];
+    RenameTheme => "theme.rename", "Rename theme", ["theme", "name", "rename"], Theme, [];
+    RevertTheme => "theme.revert", "Discard unsaved theme changes", ["theme", "discard", "revert", "reset", "editor"], None, [];
+    UndoTheme => "theme.undo", "Undo theme change", ["theme", "undo", "editor"], None, [];
+    RedoTheme => "theme.redo", "Redo theme change", ["theme", "redo", "editor"], None, [];
+    InspectTheme => "theme.inspect", "Inspect: pick part of the preview to edit its tokens", ["theme", "inspect", "pick", "token", "element", "editor"], None, [];
+    FixThemeContrast => "theme.fix_contrast", "Fix low contrast in the theme", ["theme", "contrast", "readable", "accessibility", "fix", "wcag"], None, [];
+    ThemeLivePreview => "theme.live", "Show theme edits across the whole app (on or off)", ["theme", "live", "preview", "apply", "editor"], None, [];
     SetDensity => "view.density", "Density (compact or comfortable)", ["density", "compact", "comfortable", "dense", "spacing"], Text, [];
     ZoomIn => "view.zoom_in", "Zoom in", ["scale", "bigger", "font"], None, [Shortcut::ctrl("Plus"), Shortcut::ctrl("Equals")];
     ZoomOut => "view.zoom_out", "Zoom out", ["scale", "smaller", "font"], None, [Shortcut::ctrl("Minus")];

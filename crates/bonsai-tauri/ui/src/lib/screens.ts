@@ -72,6 +72,7 @@ export const screens: Screen[] = [
   },
   { command: "nav.chat", label: "Chat", icon: "chat", path: "/chat", sidebar: false },
   { command: "nav.notifications", label: "Notifications", icon: "bell", path: "/notifications", sidebar: false },
+  { command: "nav.themes", label: "Themes", icon: "palette", path: "/themes", sidebar: false },
   { command: "nav.settings", label: "Settings", icon: "settings", path: "/settings", sidebar: "bottom" },
   { command: "nav.components", label: "Components", icon: "grid", path: "/components", sidebar: false },
   { command: "nav.overview", label: "Overview", icon: "grid", path: "/overview", sidebar: false },
@@ -147,6 +148,7 @@ const entityTitles: [RegExp, string, IconName][] = [
   [/^\/(catalog|bundles)\//, "Item", "marketplace"],
   [/^\/passes\//, "Pass", "pass"],
   [/^\/communities\/./, "Community", "communities"],
+  [/^\/themes\/./, "Theme", "palette"],
   [/^\/search$/, "Search", "search"],
 ]
 

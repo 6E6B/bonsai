@@ -2,7 +2,8 @@ import { useNavigate, useParams } from "@solidjs/router"
 import { Switch as Branch, createMemo, createSignal, For, type JSX, Match, onCleanup, Show } from "solid-js"
 import { filterEntries } from "~/lib/commands/filter"
 import { groupOf } from "~/lib/commands/groups"
-import { commandList, menuItem, run } from "~/lib/commands/registry"
+import { commandList, run } from "~/lib/commands/registry"
+import { FontPicker } from "~/lib/font-picker"
 import { bytes, countdown, date, formatLocales } from "~/lib/format"
 import {
   type AccountInfoView,
@@ -10,7 +11,6 @@ import {
   type AppSettings,
   type CommandInfo,
   commands,
-  type FontCatalogView,
   type MyServerRow,
   type Person,
   type PinView,
@@ -23,18 +23,7 @@ import { ServerControls } from "~/lib/private-server"
 import { arrange, nudgeScreen, screenKey, screens } from "~/lib/screens"
 import { settingsSections } from "~/lib/sections"
 import { shell, useLive } from "~/lib/store"
-import {
-  FONTS,
-  type FontSeed,
-  fontChoices,
-  fontLabel,
-  googleFamily,
-  MONOS,
-  type Mode,
-  parseTheme,
-  resolve,
-  shownBase,
-} from "~/lib/theme"
+import { FONTS, type FontSeed, fontLabel, googleFamily, MONOS, type Mode, parseTheme, shownBase } from "~/lib/theme"
 import { thumbUrl } from "~/lib/thumb"
 import {
   Avatar,
@@ -42,8 +31,6 @@ import {
   Button,
   Card,
   type Column,
-  Combobox,
-  ContextMenu,
   DataTable,
   Icon,
   IconButton,
@@ -60,7 +47,6 @@ import {
   Split,
   Switch,
   TextField,
-  ThemeCard,
   usePrompt,
 } from "~/lib/ui"
 import { privacyOptions, shownPrivacy, valueLabel } from "./privacy"
@@ -669,55 +655,16 @@ function AppearanceSection() {
           </Button>
         </Row>
       </Card>
-      <ThemeGrid dark={app.darkTheme} light={app.lightTheme} />
+      <SectionHeader title="Themes" class="mt-6" />
+      <Card class={rows}>
+        <Row label="Themes" description="Pick, edit and make themes in their own tab.">
+          <Button size="sm" icon="palette" onClick={() => run("nav.themes")}>
+            Open Themes
+          </Button>
+        </Row>
+      </Card>
       <ThemeFonts />
       <SidebarCard />
-    </>
-  )
-}
-
-/** Installed themes. Picking one uses it for its base (dark or light) and switches to that base. */
-function ThemeGrid(props: { dark: string; light: string }) {
-  const themes = useLive(
-    () => "themes",
-    () => commands.themes(),
-    (): ThemeView[] => [],
-  )
-  const detail = (t: ThemeView) => {
-    if (t.id === props.dark) return "Used in dark mode"
-    if (t.id === props.light) return "Used in light mode"
-    return t.author || (t.builtin ? "Built in" : "")
-  }
-  return (
-    <>
-      <SectionHeader title="Themes" />
-      <Card class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-3 p-3">
-        <For each={themes}>
-          {(t) => {
-            const tokens = createMemo(() => {
-              const theme = parseTheme(t.doc)
-              return theme ? resolve(theme) : {}
-            })
-            return (
-              <ContextMenu
-                items={[
-                  menuItem("theme.apply", { arg: t.id, icon: "check" }),
-                  menuItem("theme.delete", { arg: t.id, icon: "trash", danger: true, disabled: t.builtin }),
-                ]}
-              >
-                <ThemeCard
-                  class="w-full"
-                  name={t.name}
-                  detail={detail(t)}
-                  tokens={tokens()}
-                  selected={t.id === props.dark || t.id === props.light}
-                  onClick={() => run("theme.apply", t.id)}
-                />
-              </ContextMenu>
-            )
-          }}
-        </For>
-      </Card>
     </>
   )
 }
@@ -787,34 +734,6 @@ function ThemeFonts() {
     </>
   )
 }
-
-/** Searches the bundled fonts and Google Fonts. Nothing is fetched until the list opens. */
-function FontPicker(props: { label: string; mono: boolean; value: string; onChange: (v: string) => unknown }) {
-  const [query, setQuery] = createSignal<string | null>(null)
-  const catalog = useLive(
-    () => query(),
-    (q): Promise<FontCatalogView> =>
-      q === null ? Promise.resolve(emptyCatalog()) : commands.fontCatalog(q, props.mono),
-    emptyCatalog,
-    { keep: true },
-  )
-  const options = createMemo(() => fontChoices(query() ?? "", props.mono, catalog.fonts))
-  return (
-    <Combobox
-      size="sm"
-      aria-label={props.label}
-      class="w-56"
-      searchPlaceholder="Search Google Fonts"
-      value={props.value}
-      options={options()}
-      loading={catalog.loading}
-      onSearch={setQuery}
-      onChange={props.onChange}
-    />
-  )
-}
-
-const emptyCatalog = (): FontCatalogView => ({ fonts: [], loading: false, error: null })
 
 /** Which screens the sidebar shows and in what order. Dragging rows in the sidebar does the
  * same as the arrows here. */

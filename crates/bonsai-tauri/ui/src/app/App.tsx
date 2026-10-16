@@ -23,6 +23,8 @@ const Communities = lazy(() => import("~/features/communities/Communities"))
 const Community = lazy(() => import("~/features/communities/Community"))
 const Search = lazy(() => import("~/features/search/Search"))
 const Settings = lazy(() => import("~/features/settings/Settings"))
+const Themes = lazy(() => import("~/features/themes/Themes"))
+const ThemeEditor = lazy(() => import("~/features/themes/Editor"))
 const Components = lazy(() => import("~/features/components/Components"))
 const Overview = lazy(() => import("~/features/overview/Overview"))
 
@@ -51,6 +53,8 @@ export function App() {
         <Route path="/communities/:id" component={Community} />
         <Route path="/search" component={Search} />
         <Route path="/settings/:section?" component={Settings} />
+        <Route path="/themes" component={Themes} />
+        <Route path="/themes/:id" component={ThemeEditor} />
         <Route path="/components" component={Components} />
         <Route path="/overview" component={Overview} />
       </Router>

@@ -13,6 +13,8 @@ let mode: Mode = "system"
 let themes: Partial<Record<Base, Theme>> = {}
 let media: MediaQueryList | undefined
 let set = new Set<string>()
+/** A theme being edited, shown in place of the saved one for its base. */
+let draft: Theme | undefined
 
 function base(): Base {
   if (mode !== "system") return mode
@@ -24,7 +26,7 @@ function paint() {
   const root = document.documentElement
   root.dataset.theme = b
   root.style.colorScheme = b
-  const theme = themes[b]
+  const theme = draft?.base === b ? draft : themes[b]
   const tokens = theme ? resolve(theme) : {}
   for (const name of set) if (!(name in tokens)) root.style.removeProperty(`--${name}`)
   for (const [name, value] of Object.entries(tokens)) root.style.setProperty(`--${name}`, value)
@@ -47,5 +49,12 @@ export function applyAppearance(next: Mode, byBase: Partial<Record<Base, Theme>>
     media = window.matchMedia("(prefers-color-scheme: dark)")
     media.addEventListener("change", paint)
   }
+  paint()
+}
+
+/** Shows `theme` across the app in place of the saved theme for its base, or stops when
+ * undefined. The theme editor's "Apply to app" switch uses it. */
+export function previewTheme(theme: Theme | undefined) {
+  draft = theme
   paint()
 }

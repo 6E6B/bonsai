@@ -2665,6 +2665,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::appearance,
             account::set_system_dark,
             account::font_catalog,
+            account::font_files,
             account::pin_status,
             account::unlock_pin,
             challenge::challenge_submit_code,

@@ -23,6 +23,8 @@ import archive from "@phosphor-icons/core/assets/regular/archive.svg?raw"
 import refresh from "@phosphor-icons/core/assets/regular/arrow-clockwise.svg?raw"
 import trendFlat from "@phosphor-icons/core/assets/regular/arrow-right.svg?raw"
 import external from "@phosphor-icons/core/assets/regular/arrow-square-out.svg?raw"
+import undo from "@phosphor-icons/core/assets/regular/arrow-u-up-left.svg?raw"
+import redo from "@phosphor-icons/core/assets/regular/arrow-u-up-right.svg?raw"
 import trendMixed from "@phosphor-icons/core/assets/regular/arrows-down-up.svg?raw"
 import trades from "@phosphor-icons/core/assets/regular/arrows-left-right.svg?raw"
 import inventory from "@phosphor-icons/core/assets/regular/backpack.svg?raw"
@@ -42,6 +44,7 @@ import copy from "@phosphor-icons/core/assets/regular/copy.svg?raw"
 import crown from "@phosphor-icons/core/assets/regular/crown.svg?raw"
 import model from "@phosphor-icons/core/assets/regular/cube.svg?raw"
 import dollar from "@phosphor-icons/core/assets/regular/currency-dollar.svg?raw"
+import inspect from "@phosphor-icons/core/assets/regular/cursor-click.svg?raw"
 import devices from "@phosphor-icons/core/assets/regular/devices.svg?raw"
 import value from "@phosphor-icons/core/assets/regular/diamond.svg?raw"
 import more from "@phosphor-icons/core/assets/regular/dots-three.svg?raw"
@@ -67,6 +70,7 @@ import search from "@phosphor-icons/core/assets/regular/magnifying-glass.svg?raw
 import megaphone from "@phosphor-icons/core/assets/regular/megaphone.svg?raw"
 import minimize from "@phosphor-icons/core/assets/regular/minus.svg?raw"
 import audio from "@phosphor-icons/core/assets/regular/music-notes.svg?raw"
+import palette from "@phosphor-icons/core/assets/regular/palette.svg?raw"
 import send from "@phosphor-icons/core/assets/regular/paper-plane-right.svg?raw"
 import edit from "@phosphor-icons/core/assets/regular/pencil-simple.svg?raw"
 import plus from "@phosphor-icons/core/assets/regular/plus.svg?raw"
@@ -226,6 +230,10 @@ const svgs = {
   "trend-flat": trendFlat,
   "trend-mixed": trendMixed,
   "trend-unstable": trendUnstable,
+  palette,
+  undo,
+  redo,
+  inspect,
 } as const
 
 export type IconName = keyof typeof svgs

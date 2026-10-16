@@ -42,6 +42,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `RadioGroup` | One of a few options in a settings form, where all should be visible. |
 | `EmojiPicker` | A smiley button that opens a searchable emoji grid: the chat composer. Controlled `open` so a command can open it. The set is bundled. | Picking from a short list of options (use `Select`). |
 | `Slider` | A number in a range: avatar scales. Commit in `onChangeEnd`, not `onChange`. |
+| `ColorPicker` | Edits one color: area, hue and opacity sliders, hex field. The theme editor. Group undo on `onChangeEnd`. |
 | `Swatch` | A pickable color chip whose color comes from data: body colors. |
 
 ### Showing data

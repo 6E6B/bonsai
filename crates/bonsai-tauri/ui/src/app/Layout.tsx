@@ -5,6 +5,7 @@ import { createEffect, createSignal, ErrorBoundary, on, onCleanup, onMount, type
 import { NewChat } from "~/features/chat/NewChat"
 import { CommandPalette } from "~/features/palette/CommandPalette"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
+import { registerThemeCommands } from "~/features/themes/commands"
 import {
   commandContext,
   handle,
@@ -289,6 +290,7 @@ export function Layout(props: ParentProps) {
       "tab.reopen",
       onTab(() => tabActions.reopen()),
     ),
+    ...registerThemeCommands({ visit: visitPath, prompt }),
   ]
   onCleanup(() => {
     for (const f of off) f()

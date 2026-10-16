@@ -8,7 +8,7 @@ use rbx_core::commands::CommandId;
 use rbx_core::experience::ServerChange;
 use rbx_core::me::ServersTab;
 use rbx_core::settings::{Density, Mode, NotifyPrefs, SidebarPrefs, valid_format_locale};
-use rbx_core::themes::{Base, FontSlot};
+use rbx_core::themes::{Base, FontSlot, Theme};
 use rbx_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
@@ -381,28 +381,44 @@ pub fn appearance(core: State<'_, Arc<Core>>) -> AppearanceView {
         fonts: core
             .appearance_fonts()
             .into_iter()
-            .map(|family| {
-                let r = core.google_font(&family);
-                FontView {
-                    files: r
-                        .data
-                        .map(|d| {
-                            d.files
-                                .iter()
-                                .map(|f| FontFileView {
-                                    weight: f.weight,
-                                    path: f.path.clone(),
-                                })
-                                .collect()
-                        })
-                        .unwrap_or_default(),
-                    loading: r.loading,
-                    error: r.error,
-                    family,
-                }
-            })
+            .map(|family| font_view(&core, family))
             .collect(),
     }
+}
+
+/// A Google family's files, downloading them on first ask.
+fn font_view(core: &Core, family: String) -> FontView {
+    let r = core.google_font(&family);
+    FontView {
+        files: r
+            .data
+            .map(|d| {
+                d.files
+                    .iter()
+                    .map(|f| FontFileView {
+                        weight: f.weight,
+                        path: f.path.clone(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
+        loading: r.loading,
+        error: r.error,
+        family,
+    }
+}
+
+/// Google Fonts families the theme editor previews before they are saved in a theme in use.
+/// Downloads happen on the worker; this only reads what is on disk so far.
+#[tauri::command]
+#[specta::specta]
+pub fn font_files(core: State<'_, Arc<Core>>, families: Vec<String>) -> Vec<FontView> {
+    families
+        .into_iter()
+        .take(4)
+        .filter(|f| rbx_core::fonts::valid_family(f))
+        .map(|f| font_view(&core, f))
+        .collect()
 }
 
 /// The UI reports whether the OS prefers dark, so System mode knows which theme is on screen.
@@ -548,6 +564,8 @@ pub(super) fn run(
             .and_then(|id| core.apply_theme(&id)),
         CommandId::SetThemeFont => core.set_theme_font(FontSlot::Sans, &arg()),
         CommandId::SetThemeMonoFont => core.set_theme_font(FontSlot::Mono, &arg()),
+        // The editor sends the whole document; it is checked like an imported one.
+        CommandId::SaveTheme => Theme::parse(&arg()).and_then(|t| core.save_theme(t)),
         CommandId::SetDensity => match Density::from_name(&arg()) {
             Some(d) => {
                 core.update_settings(|s| s.density = d);
