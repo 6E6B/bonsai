@@ -35,3 +35,7 @@ bun run check    # typecheck, lint, tests
 ```
 
 See `AGENTS.md` for the architecture and rules.
+
+## License
+
+GPL-3.0-only. See `LICENSE`.
