@@ -1,6 +1,6 @@
 # Bonsai
 
-Portable Rust backend for the Bonsai desktop client (built with Tauri), cloned and decoupled from Baseplate.
+Portable Rust backend for the Bonsai desktop client (built with Tauri).
 
 ## Structure
 

@@ -192,30 +192,51 @@ pub trait CookieStore: Send + Sync {
     fn delete(&self, id: AccountId) -> Result<(), String>;
 }
 
-const SERVICE: &str = "io.github._6E6B.Baseplate";
+const SERVICE: &str = "io.github._6E6B.Bonsai";
+/// The app was called Baseplate. Cookies saved under this name move to `SERVICE` when read.
+const LEGACY_SERVICE: &str = "io.github._6E6B.Baseplate";
 
 /// The OS keychain (Keychain Services, Windows Credential Manager, Secret Service).
 pub struct Keychain;
 
+fn keychain_get(service: &str, id: AccountId) -> Result<Option<Secret>, String> {
+    let e = keyring::Entry::new(service, &id.to_string()).map_err(|e| e.to_string())?;
+    match e.get_password() {
+        Ok(p) => Ok(Some(Secret::new(p))),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+fn keychain_delete(service: &str, id: AccountId) -> Result<(), String> {
+    let e = keyring::Entry::new(service, &id.to_string()).map_err(|e| e.to_string())?;
+    match e.delete_credential() {
+        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 impl CookieStore for Keychain {
     fn get(&self, id: AccountId) -> Result<Option<Secret>, String> {
-        let e = keyring::Entry::new(SERVICE, &id.to_string()).map_err(|e| e.to_string())?;
-        match e.get_password() {
-            Ok(p) => Ok(Some(Secret::new(p))),
-            Err(keyring::Error::NoEntry) => Ok(None),
-            Err(e) => Err(e.to_string()),
+        if let Some(c) = keychain_get(SERVICE, id)? {
+            return Ok(Some(c));
         }
+        let Some(c) = keychain_get(LEGACY_SERVICE, id)? else {
+            return Ok(None);
+        };
+        // Drop the old entry only once the new one is saved.
+        if self.set(id, &c).is_ok() {
+            let _ = keychain_delete(LEGACY_SERVICE, id);
+        }
+        Ok(Some(c))
     }
     fn set(&self, id: AccountId, cookie: &Secret) -> Result<(), String> {
         let e = keyring::Entry::new(SERVICE, &id.to_string()).map_err(|e| e.to_string())?;
         e.set_password(cookie.expose()).map_err(|e| e.to_string())
     }
     fn delete(&self, id: AccountId) -> Result<(), String> {
-        let e = keyring::Entry::new(SERVICE, &id.to_string()).map_err(|e| e.to_string())?;
-        match e.delete_credential() {
-            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
-            Err(e) => Err(e.to_string()),
-        }
+        let _ = keychain_delete(LEGACY_SERVICE, id);
+        keychain_delete(SERVICE, id)
     }
 }
 
@@ -306,6 +327,19 @@ pub fn parse_cookie_input(input: &str) -> Option<Secret> {
     ok.then(|| Secret::new(value))
 }
 
+/// The app was called Baseplate. Moves its folder to the new name, unless the new one exists.
+fn move_legacy_dir(old: &std::path::Path, new: &std::path::Path) {
+    if old == new || new.exists() || !old.is_dir() {
+        return;
+    }
+    if let Some(parent) = new.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    if let Err(e) = std::fs::rename(old, new) {
+        tracing::warn!("cannot move {} to {}: {e}", old.display(), new.display());
+    }
+}
+
 /// Default config, cache and download locations.
 #[derive(Clone, Debug)]
 pub struct Paths {
@@ -324,14 +358,21 @@ impl Paths {
                     .or_else(|| Some(u.home_dir().to_path_buf()))
             })
             .unwrap_or_else(std::env::temp_dir);
-        match directories::ProjectDirs::from("io.github", "_6E6B", "Baseplate") {
-            Some(d) => Paths {
-                config: d.config_dir().to_path_buf(),
-                cache: d.cache_dir().to_path_buf(),
-                downloads,
-            },
+        match directories::ProjectDirs::from("io.github", "_6E6B", "Bonsai") {
+            Some(d) => {
+                let paths = Paths {
+                    config: d.config_dir().to_path_buf(),
+                    cache: d.cache_dir().to_path_buf(),
+                    downloads,
+                };
+                if let Some(old) = directories::ProjectDirs::from("io.github", "_6E6B", "Baseplate") {
+                    move_legacy_dir(old.config_dir(), &paths.config);
+                    move_legacy_dir(old.cache_dir(), &paths.cache);
+                }
+                paths
+            }
             None => {
-                let t = std::env::temp_dir().join("baseplate");
+                let t = std::env::temp_dir().join("bonsai");
                 Paths {
                     config: t.join("config"),
                     cache: t.join("cache"),
@@ -378,6 +419,24 @@ impl Paths {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn legacy_dir_moves_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let old = dir.path().join("Baseplate/config");
+        let new = dir.path().join("Bonsai/config");
+        std::fs::create_dir_all(&old).unwrap();
+        std::fs::write(old.join("accounts.json"), "[]").unwrap();
+        move_legacy_dir(&old, &new);
+        assert!(new.join("accounts.json").exists());
+        assert!(!old.exists());
+
+        // An existing new folder is never overwritten.
+        std::fs::create_dir_all(&old).unwrap();
+        std::fs::write(old.join("accounts.json"), "old").unwrap();
+        move_legacy_dir(&old, &new);
+        assert_eq!(std::fs::read_to_string(new.join("accounts.json")).unwrap(), "[]");
+    }
 
     fn fake() -> String {
         format!(

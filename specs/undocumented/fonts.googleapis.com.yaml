@@ -13,7 +13,7 @@ paths:
       x-rust-name: get_font_css
       summary: The @font-face rules for one family and its weights.
       # A weight the family doesn't have fails the whole request with 400. Without a browser
-      # User-Agent (ours is "Baseplate/x") each weight is one TrueType file with every subset,
+      # User-Agent (ours is "Bonsai/x") each weight is one TrueType file with every subset,
       # not a woff2 per unicode range.
       description: >-
         family is "Name:wght@400;700" with the name as in the catalog. The body is CSS with one

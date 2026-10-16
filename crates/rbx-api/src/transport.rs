@@ -409,7 +409,7 @@ impl Client {
             hook: None,
             on_response: None,
             on_challenge: None,
-            user_agent: format!("Baseplate/{}", env!("CARGO_PKG_VERSION")),
+            user_agent: format!("Bonsai/{}", env!("CARGO_PKG_VERSION")),
             browser_tracker: None,
         }
     }

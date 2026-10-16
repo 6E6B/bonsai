@@ -1,5 +1,5 @@
 # Friend request actions the site uses that the tracker no longer lists.
-# Each is a user click only; Baseplate never sends friend requests on its own (AGENTS.md).
+# Each is a user click only; Bonsai never sends friend requests on its own (AGENTS.md).
 swagger: "2.0"
 host: friends.roblox.com
 info: { title: "friends (undocumented)", version: undocumented }

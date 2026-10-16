@@ -172,7 +172,7 @@ impl Core {
         rbx_api::transport::init_tls();
         let rt = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(2)
-            .thread_name("baseplate-core")
+            .thread_name("bonsai-core")
             .enable_all()
             .build()
             .unwrap_or_else(|e| panic!("cannot start the background runtime: {e}"));
