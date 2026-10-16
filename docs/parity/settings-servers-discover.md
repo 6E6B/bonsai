@@ -50,6 +50,7 @@
 - [x] Direct Join private server action
 
 ## Settings
+- [x] Layout: sections split into **Roblox account** (Profile, Security, Privacy, Private servers; saved on Roblox) and **This app** (General, Appearance, Background, Layout, Notifications, Keyboard, Accounts, Data and storage, Developer; saved on this computer), with icons. Old names (`account`, `advanced`) still open via `nav.settings`. Shared `SettingsGroup` / `SettingRow` / `SettingSwitch` in `lib/ui`.
 - [ ] **Account Info**:
   - [x] Display name (edit with 7-day cooldown validation)
   - [x] Email address and verification status

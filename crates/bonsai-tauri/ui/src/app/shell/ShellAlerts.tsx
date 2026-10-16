@@ -36,7 +36,7 @@ export function ShellAlerts() {
             variant="danger"
             title="Can't save sessions securely"
             actions={
-              <Button size="sm" onClick={() => run("nav.settings", "advanced")}>
+              <Button size="sm" onClick={() => run("nav.settings", "accounts")}>
                 Settings
               </Button>
             }

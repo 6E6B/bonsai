@@ -1,0 +1,87 @@
+/* Settings pages: titled panels of rows, a line between each row. */
+@layer components {
+  [data-component="settings-group"] {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  [data-component="settings-group"] > [data-slot="description"] {
+    margin-top: -4px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  [data-component="settings-group"] > [data-slot="body"] {
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+  }
+
+  [data-component="settings-group"] > [data-slot="body"] > * + * {
+    border-top: 1px solid var(--color-line);
+  }
+
+  [data-component="settings-group"] > [data-slot="body"][data-list] {
+    padding: 4px;
+  }
+
+  [data-component="settings-group"] > [data-slot="body"][data-list] > * + * {
+    border-top: 0;
+  }
+
+  /* Loading, empty and error states inside a panel get room above and below. */
+  [data-component="settings-group"]
+    > [data-slot="body"]:not([data-list])
+    > :only-child:not([data-component="setting-row"], [data-component="switch"]) {
+    margin: 12px 0;
+  }
+
+  /* A `SettingSwitch` sits in the panel like a row. */
+  [data-component="settings-group"] > [data-slot="body"] > [data-component="switch"] {
+    min-height: 48px;
+    padding: 10px 0;
+  }
+
+  [data-component="setting-row"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 48px;
+    padding: 10px 0;
+  }
+
+  [data-component="setting-row"][data-layout="stacked"] {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  [data-component="setting-row"] [data-slot="text"] {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  [data-component="setting-row"] [data-slot="description"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  [data-component="setting-row"] [data-slot="control"] {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+  }
+
+  [data-component="setting-row"][data-layout="stacked"] [data-slot="control"] {
+    flex-shrink: 1;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

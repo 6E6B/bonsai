@@ -43,6 +43,14 @@ export { SearchButton, type SearchButtonProps } from "./search-button"
 export { SectionHeader, type SectionHeaderProps } from "./section-header"
 export { SegmentedControl, type SegmentedControlProps } from "./segmented-control"
 export { Select, type SelectProps } from "./select"
+export {
+  SettingRow,
+  type SettingRowProps,
+  SettingSwitch,
+  type SettingSwitchProps,
+  SettingsGroup,
+  type SettingsGroupProps,
+} from "./settings-group"
 export { Skeleton, type SkeletonProps } from "./skeleton"
 export { Slider, type SliderProps } from "./slider"
 export { Spinner, type SpinnerProps } from "./spinner"

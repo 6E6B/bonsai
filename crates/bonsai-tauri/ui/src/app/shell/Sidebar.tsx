@@ -130,7 +130,7 @@ export function Sidebar(props: { compact: boolean }) {
       menuItem("view.sidebar_down", { arg: key, label: "Move down", icon: "chevron-down" }),
       menuItem("view.sidebar_toggle", { arg: `${key} off`, label: "Hide from sidebar", icon: "eye" }),
       { kind: "separator" as const },
-      menuItem("nav.settings", { arg: "appearance", label: "Customize sidebar", icon: "sliders" }),
+      menuItem("nav.settings", { arg: "layout", label: "Customize sidebar", icon: "sliders" }),
     ]
   }
 

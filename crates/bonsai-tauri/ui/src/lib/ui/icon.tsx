@@ -45,6 +45,7 @@ import crown from "@phosphor-icons/core/assets/regular/crown.svg?raw"
 import model from "@phosphor-icons/core/assets/regular/cube.svg?raw"
 import dollar from "@phosphor-icons/core/assets/regular/currency-dollar.svg?raw"
 import inspect from "@phosphor-icons/core/assets/regular/cursor-click.svg?raw"
+import database from "@phosphor-icons/core/assets/regular/database.svg?raw"
 import devices from "@phosphor-icons/core/assets/regular/devices.svg?raw"
 import value from "@phosphor-icons/core/assets/regular/diamond.svg?raw"
 import more from "@phosphor-icons/core/assets/regular/dots-three.svg?raw"
@@ -63,6 +64,7 @@ import home from "@phosphor-icons/core/assets/regular/house.svg?raw"
 import image from "@phosphor-icons/core/assets/regular/image.svg?raw"
 import info from "@phosphor-icons/core/assets/regular/info.svg?raw"
 import keyboard from "@phosphor-icons/core/assets/regular/keyboard.svg?raw"
+import layout from "@phosphor-icons/core/assets/regular/layout.svg?raw"
 import link from "@phosphor-icons/core/assets/regular/link.svg?raw"
 import list from "@phosphor-icons/core/assets/regular/list.svg?raw"
 import lock from "@phosphor-icons/core/assets/regular/lock.svg?raw"
@@ -78,6 +80,7 @@ import block from "@phosphor-icons/core/assets/regular/prohibit.svg?raw"
 import pin from "@phosphor-icons/core/assets/regular/push-pin.svg?raw"
 import plugin from "@phosphor-icons/core/assets/regular/puzzle-piece.svg?raw"
 import share from "@phosphor-icons/core/assets/regular/share-fat.svg?raw"
+import shield from "@phosphor-icons/core/assets/regular/shield.svg?raw"
 import sidebar from "@phosphor-icons/core/assets/regular/sidebar-simple.svg?raw"
 import signOut from "@phosphor-icons/core/assets/regular/sign-out.svg?raw"
 import sliders from "@phosphor-icons/core/assets/regular/sliders-horizontal.svg?raw"
@@ -234,6 +237,9 @@ const svgs = {
   undo,
   redo,
   inspect,
+  shield,
+  database,
+  layout,
 } as const
 
 export type IconName = keyof typeof svgs

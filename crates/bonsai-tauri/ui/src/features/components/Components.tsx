@@ -40,6 +40,9 @@ import {
   SectionHeader,
   SegmentedControl,
   Select,
+  SettingRow,
+  SettingSwitch,
+  SettingsGroup,
   Skeleton,
   Slider,
   Spinner,
@@ -359,6 +362,36 @@ export default function Components() {
           <Divider />
           <span class="text-fg-muted">Muted text inside a card.</span>
         </Card>
+      </Section>
+
+      <Section title="Settings group">
+        <div class="flex w-[28rem] flex-col gap-6">
+          <SettingsGroup
+            title="Playing"
+            description="Saved on this computer for every account."
+            actions={
+              <Button size="sm" variant="ghost">
+                Reset
+              </Button>
+            }
+          >
+            <SettingRow label="Launch Roblox with" description="How Join opens the game.">
+              <Select
+                class="w-40"
+                aria-label="Launch Roblox with"
+                value="default"
+                options={[
+                  { value: "default", label: "System default" },
+                  { value: "custom", label: "Custom command" },
+                ]}
+              />
+            </SettingRow>
+            <SettingSwitch label="Trade offers" description="A row that is on or off." checked />
+          </SettingsGroup>
+          <SettingsGroup title="Accounts" meta={1} list>
+            <ListItem leading={<Avatar name="Builder" />} title="Builder" subtitle="@builderman" />
+          </SettingsGroup>
+        </div>
       </Section>
 
       <Section title="Facts and clamp">
