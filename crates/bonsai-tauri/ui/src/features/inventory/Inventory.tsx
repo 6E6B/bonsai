@@ -18,7 +18,7 @@ import {
 } from "~/lib/ipc/bindings"
 import { IdFact, ItemPreview, PreviewDescription, PreviewHeader, wantsPreview } from "~/lib/item-preview"
 import { emptyList, ListState } from "~/lib/list-state"
-import { entityMenu, gameMenu, itemTarget } from "~/lib/menus"
+import { gameMenu, type ItemMenuExtras, itemTarget, shareMenu } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { ItemTile, Price, TILE_WIDTH } from "~/lib/tiles"
@@ -29,7 +29,6 @@ import {
   Fact,
   FactGroup,
   Facts,
-  type MenuEntry,
   NavItem,
   Page,
   Robux,
@@ -380,33 +379,35 @@ function Items(props: {
         ]
       : []),
   ]
-  const menu = (i: ItemCard): MenuEntry[] => {
+  const menu = (i: ItemCard): ItemMenuExtras => {
     const wear = props.wardrobe.wearType(i, props.slot)
     const worn = props.wardrobe.worn().has(i.id)
-    return [
-      { kind: "separator" },
-      menuItem("inventory.inspect", { arg: itemTarget(i.id, i.bundle), icon: "info", label: "Inspect" }),
-      ...(wear
-        ? [
-            menuItem("avatar.wear", {
-              arg: `${i.id}:${wear}`,
-              icon: worn ? "x" : "avatar",
-              label: worn ? "Take off" : "Wear",
-            }),
-          ]
-        : []),
-      ...(props.mine && !i.bundle && !i.limited
-        ? [
-            { kind: "separator" } as const,
-            menuItem("inventory.delete", {
-              arg: itemTarget(i.id),
-              asAccount: props.userId,
-              icon: "trash",
-              danger: true,
-            }),
-          ]
-        : []),
-    ]
+    return {
+      actions: [
+        menuItem("inventory.inspect", { arg: itemTarget(i.id, i.bundle), icon: "info", label: "Inspect" }),
+        ...(wear
+          ? [
+              menuItem("avatar.wear", {
+                arg: `${i.id}:${wear}`,
+                icon: worn ? "x" : "avatar",
+                label: worn ? "Take off" : "Wear",
+              }),
+            ]
+          : []),
+      ],
+      danger:
+        props.mine && !i.bundle && !i.limited
+          ? [
+              menuItem("inventory.delete", {
+                arg: itemTarget(i.id),
+                asAccount: props.userId,
+                icon: "trash",
+                label: "Delete from inventory",
+                danger: true,
+              }),
+            ]
+          : [],
+    }
   }
 
   return (
@@ -527,10 +528,12 @@ function Passes(props: {
       >
         {(p) => (
           <ContextMenu
-            items={entityMenu(`pass:${p.id}`, [
+            items={[
               menuItem("market.open", { arg: `pass:${p.id}`, icon: "pass", label: "Open pass" }),
               menuItem("inventory.inspect", { arg: `pass:${p.id}`, icon: "info", label: "Inspect" }),
-            ])}
+              { kind: "separator" },
+              shareMenu(`pass:${p.id}`),
+            ]}
           >
             <Tile
               title={p.name}

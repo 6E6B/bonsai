@@ -5,6 +5,7 @@ import { handle, menuItem, run } from "~/lib/commands/registry"
 import { compact } from "~/lib/format"
 import { type CommunityHit, commands, type GroupCard } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
+import { shareMenu } from "~/lib/menus"
 import { useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
@@ -136,12 +137,11 @@ export default function Communities() {
                   menuItem("group.primary", {
                     arg: String(c.id),
                     icon: "star",
-                    label: c.primary ? "Clear primary community" : undefined,
+                    label: c.primary ? "Clear primary" : "Make primary",
                   }),
-                  menuItem("entity.copy_id", { arg: `group:${c.id}`, icon: "copy" }),
-                  menuItem("entity.copy_link", { arg: `group:${c.id}`, icon: "link" }),
+                  shareMenu(`group:${c.id}`),
                   { kind: "separator" },
-                  menuItem("group.leave", { arg: String(c.id), icon: "sign-out", danger: true }),
+                  menuItem("group.leave", { arg: String(c.id), icon: "sign-out", label: "Leave", danger: true }),
                 ]}
               >
                 <ListItem
@@ -197,11 +197,7 @@ function Results(props: { query: string; onClear: () => void }) {
           <For each={list.items}>
             {(c) => (
               <ContextMenu
-                items={[
-                  menuItem("group.open", { arg: String(c.id), icon: "communities" }),
-                  menuItem("entity.copy_id", { arg: `group:${c.id}`, icon: "copy" }),
-                  menuItem("entity.copy_link", { arg: `group:${c.id}`, icon: "link" }),
-                ]}
+                items={[menuItem("group.open", { arg: String(c.id), icon: "communities" }), shareMenu(`group:${c.id}`)]}
               >
                 <ListItem
                   leading={<Thumbnail class="w-8" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}

@@ -30,7 +30,6 @@ export function TabBar() {
     const t = tabs.tabs.find((t) => t.key === key)
     const i = tabs.tabs.findIndex((t) => t.key === key)
     return [
-      menuItem("tab.new", { icon: "plus" }),
       menuItem("tab.duplicate", { arg: key, icon: "copy" }),
       menuItem("tab.pin", { arg: key, icon: "pin", label: t?.pinned ? "Unpin tab" : "Pin tab" }),
       { kind: "separator" },

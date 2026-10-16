@@ -17,7 +17,12 @@ export function AccountRail() {
   const menu = (a: Account, index: number): MenuEntry[] => {
     const as = { asAccount: a.id }
     return [
-      menuItem("account.switch", { arg: String(a.id), label: "Switch to this account", icon: "user" }),
+      menuItem("account.switch", {
+        arg: String(a.id),
+        label: "Switch to this account",
+        icon: "user",
+        disabled: shell.active === a.id,
+      }),
       { kind: "separator" },
       {
         label: "Rename…",
@@ -30,15 +35,36 @@ export function AccountRail() {
       {
         kind: "submenu",
         label: "Color tag",
+        icon: "palette",
         items: colors.map((c) => menuItem("account.color", { ...as, arg: c, label: colorName(c) })),
       },
-      menuItem("account.move_up", { ...as, disabled: index === 0 }),
-      menuItem("account.move_down", { ...as, disabled: index === shell.accounts.length - 1 }),
+      {
+        kind: "submenu",
+        label: "Move",
+        icon: "sort-asc",
+        disabled: shell.accounts.length < 2,
+        items: [
+          menuItem("account.move_up", { ...as, label: "Up", icon: "chevron-up", disabled: index === 0 }),
+          menuItem("account.move_down", {
+            ...as,
+            label: "Down",
+            icon: "chevron-down",
+            disabled: index === shell.accounts.length - 1,
+          }),
+        ],
+      },
       { kind: "separator" },
-      menuItem("account.replace_cookie", as),
+      {
+        kind: "submenu",
+        label: "Session",
+        icon: "lock",
+        items: [
+          menuItem("account.approve_code", { ...as, label: "Sign in another device…", icon: "devices" }),
+          menuItem("account.replace_cookie", { ...as, label: "Paste new cookie…" }),
+          menuItem("account.sign_out_others", { ...as, label: "Sign out other sessions" }),
+        ],
+      },
       menuItem("account.sign_out", { ...as, icon: "sign-out" }),
-      menuItem("account.sign_out_others", as),
-      menuItem("account.approve_code", { ...as, label: "Sign in another device…", icon: "devices" }),
       {
         label: "Remove from app…",
         icon: "trash",

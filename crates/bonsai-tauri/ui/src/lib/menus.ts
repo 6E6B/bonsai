@@ -26,14 +26,24 @@ export function accountItems(id: string): MenuEntry[] {
     .map((a) => menuItem(id, { arg: String(a.id), label: a.label ?? a.displayName }))
 }
 
-function joinAs(target: string): MenuEntry {
+/** "Join as" submenu, or nothing when there is no other account. */
+function joinAs(target: string): MenuEntry[] {
   const items = joinAsItems("game.join_as", target)
-  return { kind: "submenu", label: "Join as", icon: "user", items, disabled: items.length === 0 }
+  return items.length > 0 ? [{ kind: "submenu", label: "Join as", icon: "user", items }] : []
 }
 
-function friendAs(userId: string): MenuEntry {
-  const items = joinAsItems("user.add_friend_as", userId)
-  return { kind: "submenu", label: "Add friend as", icon: "user-plus", items, disabled: items.length === 0 }
+/** Copy and open-in-browser rows, in one submenu so they don't crowd the actions. */
+export function shareMenu(target: string): MenuEntry {
+  return {
+    kind: "submenu",
+    label: "Share",
+    icon: "share",
+    items: [
+      menuItem("entity.copy_link", { arg: target, icon: "link" }),
+      menuItem("entity.copy_id", { arg: target, icon: "copy" }),
+      menuItem("entity.open_website", { arg: target, icon: "external" }),
+    ],
+  }
 }
 
 export interface UserMenuOptions {
@@ -45,47 +55,62 @@ export interface UserMenuOptions {
   blocked?: boolean
   /** Whether the active account follows them. Adds Follow or Unfollow when set. */
   following?: boolean
-  /** They sent the active account a friend request. Adds Decline. */
+  /** They sent the active account a friend request. Adds Accept and Decline. */
   requested?: boolean
+  /** The menu is on their profile, whose header already has Open, Message, Add friend and
+   * Inventory, so those are left out. */
+  onProfile?: boolean
 }
 
+/**
+ * Everyday actions at the top level; relationship changes and the rare and destructive ones
+ * under Manage; copy and browser rows under Share.
+ */
 export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[] {
   const id = String(userId)
-  return [
-    menuItem("user.open", { arg: id, icon: "user" }),
-    menuItem("user.message", { arg: id, icon: "chat" }),
-    ...(opts.inGame
-      ? [
-          sep,
-          ...(opts.placeId ? [menuItem("game.open", { arg: String(opts.placeId), icon: "game" })] : []),
-          menuItem("game.join", { arg: joinUser(userId), icon: "play" }),
-          joinAs(joinUser(userId)),
-        ]
+  const target = `user:${id}`
+  const friendAs = joinAsItems("user.add_friend_as", id)
+  const manage: MenuEntry[] = [
+    ...(friendAs.length > 0
+      ? [{ kind: "submenu", label: "Add friend as", icon: "user-plus", items: friendAs } as const]
       : []),
-    menuItem("user.find", { arg: id, icon: "search" }),
-    menuItem("inventory.view", { arg: id, icon: "inventory" }),
-    menuItem("user.friends", { arg: id, icon: "friends" }),
-    menuItem("trade.new", { arg: id, icon: "trades" }),
     ...(opts.following === undefined
       ? []
       : [menuItem(opts.following ? "user.unfollow" : "user.follow", { arg: id, icon: "bell" })]),
-    menuItem("user.nickname", { arg: id, icon: "edit" }),
-    menuItem("user.note", { arg: id, icon: "edit" }),
+    menuItem("user.nickname", { arg: id, icon: "edit", label: "Set nickname…" }),
+    menuItem("user.note", { arg: id, icon: "edit", label: "Edit note…" }),
     sep,
-    menuItem("entity.copy_id", { arg: `user:${id}`, icon: "copy" }),
-    menuItem("entity.copy_link", { arg: `user:${id}`, icon: "link" }),
-    menuItem("entity.open_website", { arg: `user:${id}`, icon: "external" }),
-    menuItem("entity.report", { arg: `user:${id}`, icon: "flag", danger: true }),
-    sep,
-    opts.friend
-      ? menuItem("user.unfriend", { arg: id, icon: "user-minus", danger: true })
-      : opts.requested
-        ? menuItem("user.decline_friend", { arg: id, icon: "user-minus" })
-        : menuItem("user.add_friend", { arg: id, icon: "user-plus" }),
-    friendAs(id),
+    ...(opts.friend ? [menuItem("user.unfriend", { arg: id, icon: "user-minus", danger: true })] : []),
+    ...(opts.requested ? [menuItem("user.decline_friend", { arg: id, icon: "user-minus" })] : []),
     opts.blocked
       ? menuItem("user.unblock", { arg: id, icon: "block" })
       : menuItem("user.block", { arg: id, icon: "block", danger: true }),
+    menuItem("entity.report", { arg: target, icon: "flag", label: "Report", danger: true }),
+  ]
+  return [
+    ...(opts.onProfile ? [] : [menuItem("user.open", { arg: id, icon: "user" })]),
+    ...(opts.onProfile ? [] : [menuItem("user.message", { arg: id, icon: "chat", label: "Message" })]),
+    menuItem("trade.new", { arg: id, icon: "trades", label: "Send trade" }),
+    ...(opts.friend || opts.onProfile
+      ? []
+      : opts.requested
+        ? [menuItem("user.accept_friend", { arg: id, icon: "user-plus" })]
+        : [menuItem("user.add_friend", { arg: id, icon: "user-plus" })]),
+    ...(opts.inGame
+      ? [
+          sep,
+          menuItem("game.join", { arg: joinUser(userId), icon: "play" }),
+          ...joinAs(joinUser(userId)),
+          ...(opts.placeId ? [menuItem("game.open", { arg: String(opts.placeId), icon: "game" })] : []),
+        ]
+      : []),
+    sep,
+    ...(opts.onProfile ? [] : [menuItem("inventory.view", { arg: id, icon: "inventory", label: "Inventory" })]),
+    menuItem("user.friends", { arg: id, icon: "friends", label: "Friends" }),
+    ...(opts.inGame ? [] : [menuItem("user.find", { arg: id, icon: "search", label: "Find server" })]),
+    sep,
+    { kind: "submenu", label: "Manage", icon: "sliders", items: manage },
+    shareMenu(target),
   ]
 }
 
@@ -94,11 +119,9 @@ export function gameMenu(placeId: number): MenuEntry[] {
   return [
     menuItem("game.open", { arg: id, icon: "game" }),
     menuItem("game.join", { arg: id, icon: "play" }),
-    joinAs(id),
+    ...joinAs(id),
     sep,
-    menuItem("entity.copy_id", { arg: `game:${id}`, icon: "copy" }),
-    menuItem("entity.copy_link", { arg: `game:${id}`, icon: "link" }),
-    menuItem("entity.open_website", { arg: `game:${id}`, icon: "external" }),
+    shareMenu(`game:${id}`),
   ]
 }
 
@@ -121,19 +144,43 @@ export function templateItems(itemId: number, assetType: number | undefined): Me
   ]
 }
 
+/** Template downloads as one row (T-shirts) or a submenu (shirts and pants). */
+function templateMenu(itemId: number, assetType: number | undefined): MenuEntry[] {
+  const target = itemTarget(itemId)
+  if (assetType === TSHIRT) return [menuItem("market.template", { arg: target, icon: "download" })]
+  if (assetType !== SHIRT && assetType !== PANTS) return []
+  return [
+    {
+      kind: "submenu",
+      label: "Download template",
+      icon: "download",
+      items: [
+        menuItem("market.template", { arg: target, label: "Template" }),
+        menuItem("market.template_masked", { arg: target, label: "Masked" }),
+      ],
+    },
+  ]
+}
+
+export interface ItemMenuExtras {
+  /** Rows for this screen, like Inspect or Wear, right under Open item. */
+  actions?: MenuEntry[]
+  /** Destructive rows, last, after a separator. */
+  danger?: MenuEntry[]
+}
+
 /** `assetType` adds template downloads for clothing. */
-export function itemMenu(itemId: number, bundle = false, assetType?: number): MenuEntry[] {
+export function itemMenu(itemId: number, bundle = false, assetType?: number, extras: ItemMenuExtras = {}): MenuEntry[] {
   const target = itemTarget(itemId, bundle)
-  const templates = bundle ? [] : templateItems(itemId, assetType)
   return [
     menuItem("market.open", { arg: target, icon: "marketplace" }),
-    menuItem("market.favorite", { arg: target, icon: "star" }),
-    menuItem("market.wishlist", { arg: target, icon: "heart" }),
-    ...(templates.length > 0 ? [sep, ...templates] : []),
+    ...(extras.actions ?? []),
     sep,
-    menuItem("entity.copy_id", { arg: target, icon: "copy" }),
-    menuItem("entity.copy_link", { arg: target, icon: "link" }),
-    menuItem("entity.open_website", { arg: target, icon: "external" }),
+    menuItem("market.favorite", { arg: target, icon: "star", label: "Toggle favorite" }),
+    menuItem("market.wishlist", { arg: target, icon: "heart", label: "Toggle wishlist" }),
+    ...(bundle ? [] : templateMenu(itemId, assetType)),
+    shareMenu(target),
+    ...(extras.danger?.length ? [sep, ...extras.danger] : []),
   ]
 }
 
@@ -142,11 +189,11 @@ export function itemMenu(itemId: number, bundle = false, assetType?: number): Me
 export function entityMenu(target: string, first: MenuEntry[] = []): MenuEntry[] {
   return [
     ...(first.length > 0 ? [...first, sep] : []),
-    menuItem("entity.copy_id", { arg: target, icon: "copy" }),
     menuItem("entity.copy_link", { arg: target, icon: "link" }),
+    menuItem("entity.copy_id", { arg: target, icon: "copy" }),
     menuItem("entity.open_website", { arg: target, icon: "external" }),
     sep,
-    menuItem("entity.report", { arg: target, icon: "flag", danger: true }),
+    menuItem("entity.report", { arg: target, icon: "flag", label: "Report", danger: true }),
   ]
 }
 

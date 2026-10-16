@@ -171,21 +171,28 @@ export default function AvatarEditor() {
             <For each={wearing()}>
               {(w) => (
                 <ContextMenu
-                  items={[
-                    menuItem("avatar.wear", { arg: `${w.id}:${w.typeId}`, label: "Take off", icon: "x" }),
-                    ...(w.layer !== null && layered() > 1
-                      ? [
-                          menuItem("avatar.layer", { arg: `${w.id} up`, label: "Move layer up", icon: "chevron-up" }),
-                          menuItem("avatar.layer", {
-                            arg: `${w.id} down`,
-                            label: "Move layer down",
-                            icon: "chevron-down",
-                          }),
-                        ]
-                      : []),
-                    sep,
-                    ...itemMenu(w.id, false, w.typeId),
-                  ]}
+                  items={itemMenu(w.id, false, w.typeId, {
+                    actions: [
+                      menuItem("avatar.wear", { arg: `${w.id}:${w.typeId}`, label: "Take off", icon: "x" }),
+                      ...(w.layer !== null && layered() > 1
+                        ? [
+                            {
+                              kind: "submenu" as const,
+                              label: "Layer",
+                              icon: "list" as const,
+                              items: [
+                                menuItem("avatar.layer", { arg: `${w.id} up`, label: "Move up", icon: "chevron-up" }),
+                                menuItem("avatar.layer", {
+                                  arg: `${w.id} down`,
+                                  label: "Move down",
+                                  icon: "chevron-down",
+                                }),
+                              ],
+                            },
+                          ]
+                        : []),
+                    ],
+                  })}
                 >
                   <ListItem
                     leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
@@ -229,11 +236,12 @@ export default function AvatarEditor() {
               <For each={view.emotes}>
                 {(e) => (
                   <ContextMenu
-                    items={[
-                      menuItem("avatar.play", { arg: `emote.${e.id}`, label: "Play in 3D", icon: "play" }),
-                      ...itemMenu(e.id),
-                      menuItem("avatar.emote", { arg: String(e.typeId), label: "Clear slot" }),
-                    ]}
+                    items={itemMenu(e.id, false, undefined, {
+                      actions: [
+                        menuItem("avatar.play", { arg: `emote.${e.id}`, label: "Play in 3D", icon: "play" }),
+                        menuItem("avatar.emote", { arg: String(e.typeId), label: "Clear slot", icon: "x" }),
+                      ],
+                    })}
                   >
                     <ListItem
                       leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", e.id)} />}
@@ -354,13 +362,15 @@ function Section(props: { section: WardrobeSection; worn: number[] }) {
               item={i}
               selected={props.worn.includes(i.id)}
               onClick={() => run("avatar.wear", `${i.id}:${slotType(slot())}`)}
-              menu={[
-                menuItem("avatar.wear", {
-                  arg: `${i.id}:${slotType(slot())}`,
-                  icon: "avatar",
-                  label: props.worn.includes(i.id) ? "Take off" : "Wear",
-                }),
-              ]}
+              menu={{
+                actions: [
+                  menuItem("avatar.wear", {
+                    arg: `${i.id}:${slotType(slot())}`,
+                    icon: "avatar",
+                    label: props.worn.includes(i.id) ? "Take off" : "Wear",
+                  }),
+                ],
+              }}
             />
           )}
         </VirtualGrid>
@@ -382,15 +392,15 @@ function Recent() {
               items={
                 r.outfit
                   ? [menuItem("avatar.outfit", { arg: r.id, label: "Wear", icon: "avatar" })]
-                  : [
-                      menuItem("avatar.wear", {
-                        arg: `${r.id}:${r.typeId}`,
-                        label: "Wear or take off",
-                        icon: "avatar",
-                      }),
-                      sep,
-                      ...itemMenu(Number(r.id), false, r.typeId),
-                    ]
+                  : itemMenu(Number(r.id), false, r.typeId, {
+                      actions: [
+                        menuItem("avatar.wear", {
+                          arg: `${r.id}:${r.typeId}`,
+                          label: "Wear or take off",
+                          icon: "avatar",
+                        }),
+                      ],
+                    })
               }
             >
               <Tile

@@ -281,6 +281,7 @@ export default function Profile() {
                   placeId: view.placeId,
                   following: view.mine ? undefined : (rel()?.following ?? false),
                   requested: rel()?.friend === "received",
+                  onProfile: true,
                 })}
               />
             </div>

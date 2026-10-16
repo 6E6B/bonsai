@@ -104,6 +104,7 @@ export default function Themes() {
                     menuItem("theme.edit", { arg: r.id, icon: "edit" }),
                     menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
                     menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
+                    { kind: "separator" },
                     menuItem("theme.delete", {
                       arg: r.id,
                       icon: "trash",

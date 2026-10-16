@@ -4,9 +4,9 @@ import { run } from "~/lib/commands/registry"
 import { compact, percent } from "~/lib/format"
 import type { GameCard, ValueTag } from "~/lib/ipc/bindings"
 import { wantsPreview } from "~/lib/item-preview"
-import { gameMenu, itemMenu, itemTarget, joinUser } from "~/lib/menus"
+import { gameMenu, type ItemMenuExtras, itemMenu, itemTarget, joinUser } from "~/lib/menus"
 import { thumbUrl } from "~/lib/thumb"
-import { Badge, Button, ContextMenu, Icon, ListItem, type MenuEntry, Robux, Thumbnail, Tile, Tooltip } from "~/lib/ui"
+import { Badge, Button, ContextMenu, Icon, ListItem, Robux, Thumbnail, Tile, Tooltip } from "~/lib/ui"
 import { ValueAmount, ValueMarker } from "~/lib/value-tags"
 
 /** Grid classes for tiles, so every screen's tiles are the same size. `tileGrid` for square
@@ -118,13 +118,13 @@ export function ItemTile(props: {
   showSerial?: boolean
   /** Show recent average price instead of the list price. */
   showRap?: boolean
-  /** Extra rows at the end of the right-click menu. */
-  menu?: MenuEntry[]
+  /** This screen's rows in the right-click menu. */
+  menu?: ItemMenuExtras
   /** See `Tile`'s `fixed`. */
   fixed?: boolean
 }) {
   return (
-    <ContextMenu items={[...itemMenu(props.item.id, props.item.bundle, props.item.assetType), ...(props.menu ?? [])]}>
+    <ContextMenu items={itemMenu(props.item.id, props.item.bundle, props.item.assetType, props.menu)}>
       <Tile
         title={props.item.name}
         subtitle={
