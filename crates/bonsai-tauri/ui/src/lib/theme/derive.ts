@@ -134,8 +134,8 @@ const SHADOWS: Record<Base, Shadows> = {
     ],
     "shadow-fill": [
       ["depth", "0 1px 2px", "#00000066"],
-      ["ring", "0 0 0 1px", "#ffffff33"],
-      ["highlight", "0 -1px 0", "#ffffff26"],
+      ["ring", "0 0 0 1px", "color-mix(in srgb, var(--color-contrast) 85%, #fff)"],
+      ["highlight", "0 -1px 0", "color-mix(in srgb, var(--color-contrast) 70%, #fff)"],
     ],
     "shadow-field": [
       ["depth", "0 1px 2px", "#00000066"],
