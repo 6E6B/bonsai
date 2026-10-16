@@ -239,7 +239,8 @@ commands! {
     SetBackground => "view.background", "Set background picture (https link or file path)", ["background", "wallpaper", "picture", "image", "photo", "gif", "url", "link", "appearance"], Text, [];
     PickBackground => "view.background_file", "Choose background picture from files", ["background", "wallpaper", "picture", "image", "photo", "gif", "file", "upload", "appearance"], None, [];
     ClearBackground => "view.background_clear", "Remove background picture", ["background", "wallpaper", "picture", "remove", "clear", "appearance"], None, [];
-    SetBackgroundLevel => "view.background_level", "Background strength (image or panels, then 0-100)", ["background", "wallpaper", "opacity", "transparency", "see-through", "fade", "appearance"], Text, [];
+    SetBackgroundLevel => "view.background_level", "Background level (image, panels, blur, dim, saturation, tint, vignette, scanlines or grain, then a number)", ["background", "wallpaper", "opacity", "transparency", "see-through", "fade", "blur", "dim", "saturation", "tint", "vignette", "scanlines", "crt", "grain", "noise", "effect", "appearance"], Text, [];
+    ResetBackgroundEffects => "view.background_effects_reset", "Reset background effects", ["background", "wallpaper", "effects", "blur", "scanlines", "reset", "clear", "appearance"], None, [];
     SetDensity => "view.density", "Density (compact or comfortable)", ["density", "compact", "comfortable", "dense", "spacing"], Text, [];
     ZoomIn => "view.zoom_in", "Zoom in", ["scale", "bigger", "font"], None, [Shortcut::ctrl("Plus"), Shortcut::ctrl("Equals")];
     ZoomOut => "view.zoom_out", "Zoom out", ["scale", "smaller", "font"], None, [Shortcut::ctrl("Minus")];

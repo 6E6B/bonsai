@@ -364,6 +364,20 @@ pub struct BackgroundView {
     pub image: u8,
     /// How opaque pages and panels stay, 0–100.
     pub panels: u8,
+    /// Blur radius in px, 0–40.
+    pub blur: u8,
+    /// Darkening, 0–100.
+    pub dim: u8,
+    /// Saturation in percent, 0–200; 100 leaves it.
+    pub saturation: u8,
+    /// Accent-color wash, 0–100.
+    pub tint: u8,
+    /// Darkened edges, 0–100.
+    pub vignette: u8,
+    /// CRT-style lines, 0–100.
+    pub scanlines: u8,
+    /// Film grain, 0–100.
+    pub grain: u8,
 }
 
 /// A Google Fonts family on disk, served over `font://`.
@@ -401,6 +415,13 @@ pub fn appearance(core: State<'_, Arc<Core>>) -> AppearanceView {
             file: b.file,
             image: b.image,
             panels: b.panels,
+            blur: b.blur,
+            dim: b.dim,
+            saturation: b.saturation,
+            tint: b.tint,
+            vignette: b.vignette,
+            scanlines: b.scanlines,
+            grain: b.grain,
         }),
     }
 }
@@ -620,6 +641,7 @@ pub(super) fn run(
             Ok(())
         }
         CommandId::SetBackgroundLevel => core.set_background_level(&arg()),
+        CommandId::ResetBackgroundEffects => core.reset_background_effects(),
         CommandId::SetDensity => match Density::from_name(&arg()) {
             Some(d) => {
                 core.update_settings(|s| s.density = d);

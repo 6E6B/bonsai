@@ -55,6 +55,55 @@ pub struct Background {
     pub image: u8,
     /// How opaque pages and panels stay over the picture, 0–100.
     pub panels: u8,
+    /// Effects drawn on the picture. See [`Background::LEVELS`] for each range.
+    pub blur: u8,
+    pub dim: u8,
+    pub saturation: u8,
+    pub tint: u8,
+    pub vignette: u8,
+    pub scanlines: u8,
+    pub grain: u8,
+}
+
+impl Background {
+    /// Every adjustable level by name, with its maximum.
+    pub const LEVELS: [(&'static str, u8); 9] = [
+        ("image", 100),
+        ("panels", 100),
+        ("blur", 40),
+        ("dim", 100),
+        ("saturation", 200),
+        ("tint", 100),
+        ("vignette", 100),
+        ("scanlines", 100),
+        ("grain", 100),
+    ];
+
+    /// The level named `name`, as listed in [`Background::LEVELS`].
+    pub fn level_mut(&mut self, name: &str) -> Option<&mut u8> {
+        Some(match name {
+            "image" => &mut self.image,
+            "panels" => &mut self.panels,
+            "blur" => &mut self.blur,
+            "dim" => &mut self.dim,
+            "saturation" => &mut self.saturation,
+            "tint" => &mut self.tint,
+            "vignette" => &mut self.vignette,
+            "scanlines" => &mut self.scanlines,
+            "grain" => &mut self.grain,
+            _ => return None,
+        })
+    }
+
+    /// Turns every effect off, keeping the picture and its strength.
+    pub fn reset_effects(&mut self) {
+        *self = Background {
+            file: std::mem::take(&mut self.file),
+            image: self.image,
+            panels: self.panels,
+            ..Background::default()
+        };
+    }
 }
 
 impl Default for Background {
@@ -63,6 +112,13 @@ impl Default for Background {
             file: String::new(),
             image: 70,
             panels: 75,
+            blur: 0,
+            dim: 0,
+            saturation: 100,
+            tint: 0,
+            vignette: 0,
+            scanlines: 0,
+            grain: 0,
         }
     }
 }
@@ -490,6 +546,23 @@ mod tests {
         let s: Settings = serde_json::from_str(r#"{"sidebar":{"order":["home"]}}"#).unwrap();
         assert_eq!(s.sidebar.order, ["home"]);
         assert!(s.sidebar.is_hidden("messages"));
+    }
+
+    #[test]
+    fn background_effects() {
+        let mut b: Background = serde_json::from_str(r#"{"file":"a.png","image":40}"#).unwrap();
+        assert_eq!((b.image, b.panels, b.saturation, b.blur), (40, 75, 100, 0));
+        *b.level_mut("blur").unwrap() = 12;
+        *b.level_mut("saturation").unwrap() = 0;
+        assert!(b.level_mut("nope").is_none());
+        b.reset_effects();
+        assert_eq!(
+            (b.file.as_str(), b.image, b.blur, b.saturation),
+            ("a.png", 40, 0, 100)
+        );
+        for (name, _) in Background::LEVELS {
+            assert!(b.level_mut(name).is_some(), "{name}");
+        }
     }
 
     #[test]

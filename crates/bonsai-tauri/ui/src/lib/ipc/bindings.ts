@@ -476,6 +476,20 @@ export type BackgroundView = {
 	image: number,
 	/**  How opaque pages and panels stay, 0–100. */
 	panels: number,
+	/**  Blur radius in px, 0–40. */
+	blur: number,
+	/**  Darkening, 0–100. */
+	dim: number,
+	/**  Saturation in percent, 0–200; 100 leaves it. */
+	saturation: number,
+	/**  Accent-color wash, 0–100. */
+	tint: number,
+	/**  Darkened edges, 0–100. */
+	vignette: number,
+	/**  CRT-style lines, 0–100. */
+	scanlines: number,
+	/**  Film grain, 0–100. */
+	grain: number,
 };
 
 export type BadgeRow = {

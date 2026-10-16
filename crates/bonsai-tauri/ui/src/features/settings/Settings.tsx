@@ -24,6 +24,8 @@ import { arrange, nudgeScreen, screenKey, screens } from "~/lib/screens"
 import { settingsSections } from "~/lib/sections"
 import { shell, useLive } from "~/lib/store"
 import {
+  type BackdropLevel,
+  EFFECTS,
   FONTS,
   type FontSeed,
   fontLabel,
@@ -31,8 +33,9 @@ import {
   MONOS,
   type Mode,
   parseTheme,
-  setSeeThrough,
+  previewBackdrop,
   shownBase,
+  withDraft,
 } from "~/lib/theme"
 import { backgroundUrl, thumbUrl } from "~/lib/thumb"
 import {
@@ -706,10 +709,27 @@ function BackgroundCard() {
     const url = await prompt({ title: "Background from a link", label: "Image link (https)", submit: "Use" })
     if (url) void run("view.background", url)
   }
-  // Dragging previews the page opacity at once; the value is saved when the drag ends.
-  const [panels, setPanels] = createSignal<number | null>(null)
-  const [image, setImage] = createSignal<number | null>(null)
-  const percent = (v: number) => `${v}%`
+  // Dragging previews at once; the value is saved when the drag ends.
+  const level = (key: BackdropLevel, label: string, max: number, step: number, unit: string) => (
+    <Show when={appearance.background}>
+      {(b) => (
+        <Slider
+          label={label}
+          min={0}
+          max={max}
+          step={step}
+          value={withDraft(b())[key]}
+          format={(v) => `${v}${unit}`}
+          onChange={(v) => previewBackdrop(key, v)}
+          onChangeEnd={(v) =>
+            void run("view.background_level", `${key} ${v}`).then((ok) => {
+              if (!ok) previewBackdrop(key, undefined)
+            })
+          }
+        />
+      )}
+    </Show>
+  )
   return (
     <>
       <SectionHeader title="Background" class="mt-6" />
@@ -731,43 +751,21 @@ function BackgroundCard() {
           </Show>
         </Row>
         <Show when={appearance.background}>
-          {(b) => (
-            <>
-              <div class="py-3">
-                <Slider
-                  label="Picture strength"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={image() ?? b().image}
-                  format={percent}
-                  onChange={setImage}
-                  onChangeEnd={(v) => {
-                    setImage(null)
-                    void run("view.background_level", `image ${v}`)
-                  }}
-                />
-              </div>
-              <div class="py-3">
-                <Slider
-                  label="Page opacity"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={panels() ?? b().panels}
-                  format={percent}
-                  onChange={(v) => {
-                    setPanels(v)
-                    setSeeThrough(v / 100)
-                  }}
-                  onChangeEnd={(v) => {
-                    setPanels(null)
-                    void run("view.background_level", `panels ${v}`)
-                  }}
-                />
-              </div>
-            </>
-          )}
+          <div class="grid grid-cols-2 gap-x-6 gap-y-4 py-3">
+            {level("image", "Picture strength", 100, 5, "%")}
+            {level("panels", "Page opacity", 100, 5, "%")}
+          </div>
+          <div class="py-3">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <span class="text-sm text-fg-muted">Effects</span>
+              <Button size="sm" variant="ghost" onClick={() => run("view.background_effects_reset")}>
+                Reset effects
+              </Button>
+            </div>
+            <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+              <For each={EFFECTS}>{(e) => level(e.key, e.label, e.max, e.step, e.unit)}</For>
+            </div>
+          </div>
         </Show>
       </Card>
     </>

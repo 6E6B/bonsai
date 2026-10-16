@@ -2,7 +2,15 @@ import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, on, onCleanup, onMount } from "solid-js"
 import { type AppearanceView, commands } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
-import { applyAppearance, type Mode, parseTheme, registerFonts, setSeeThrough } from "~/lib/theme"
+import {
+  applyAppearance,
+  type Mode,
+  parseTheme,
+  registerFonts,
+  setSeeThrough,
+  settleBackdrop,
+  withDraft,
+} from "~/lib/theme"
 
 const initial = (): AppearanceView => ({ mode: "system", dark: "", light: "", fonts: [], background: null })
 
@@ -21,7 +29,8 @@ export function useAppearance() {
     ),
   )
   createEffect(() => registerFonts(a.fonts))
-  createEffect(() => setSeeThrough(a.background ? a.background.panels / 100 : undefined))
+  createEffect(() => settleBackdrop(a.background))
+  createEffect(() => setSeeThrough(a.background ? withDraft(a.background).panels / 100 : undefined))
   // The backend needs the OS preference to know which theme System mode shows.
   onMount(() => {
     if (!isTauri() || typeof window.matchMedia !== "function") return

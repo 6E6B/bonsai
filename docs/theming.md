@@ -128,6 +128,13 @@ and menus stay opaque.
 - **See-through.** `view.background_level` sets `image` (picture opacity) and `panels` (opacity
   of `color-canvas` and `color-surface`, 0–100). `lib/theme/backdrop.ts` rewrites those two
   tokens with alpha; the picture sits on `--backdrop-base`, the opaque canvas.
+- **Effects.** The same command sets `blur` (0–40 px), `dim`, `saturation` (0–200, 100 leaves
+  it), `tint` (wash in `--color-accent`), `vignette`, `scanlines` and `grain`; the rest are 0–100.
+  Blur, dim and saturation are a CSS `filter` on the picture, which overhangs the edges by twice
+  the blur so they don't fade. The others are overlays: vignette and scanlines fade toward
+  `--backdrop-base`, so they suit light themes too; grain is an SVG `feTurbulence` blended with
+  `overlay`. `view.background_effects_reset` turns them all off. Sliders preview while dragging
+  (`previewBackdrop`) and save on release.
 
 ## Roadmap
 

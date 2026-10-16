@@ -1,5 +1,15 @@
 export { applyAppearance, type Mode, previewTheme, setSeeThrough, shownBase } from "./apply"
-export { SEE_THROUGH, seeThrough } from "./backdrop"
+export {
+  type BackdropLevel,
+  type BackdropLevels,
+  backdropLayers,
+  EFFECTS,
+  previewBackdrop,
+  SEE_THROUGH,
+  seeThrough,
+  settleBackdrop,
+  withDraft,
+} from "./backdrop"
 export { type Check, colorOf, fixValue, PAIRS, type Pair, runChecks } from "./checks"
 export * from "./color"
 export {

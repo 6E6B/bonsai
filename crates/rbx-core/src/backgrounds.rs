@@ -185,40 +185,72 @@ impl Core {
         self.send(Cmd::PruneBackgrounds);
     }
 
-    /// Sets how strongly the picture shows (`image`) or how opaque panels stay (`panels`),
-    /// as `"<which> <0-100>"`.
+    /// Sets one level of the picture, as `"<name> <number>"`: `image` and `panels` (0–100),
+    /// or an effect (see [`Background::LEVELS`]). Out of range values are clamped.
     pub fn set_background_level(&self, arg: &str) -> Result<(), String> {
-        let mut parts = arg.split_whitespace();
-        let which = parts.next().unwrap_or_default();
-        let n = parts
-            .next()
-            .and_then(|n| n.trim_end_matches('%').parse::<f32>().ok())
-            .filter(|n| n.is_finite())
-            .ok_or_else(|| "Give image or panels, then a number from 0 to 100.".to_owned())?;
-        let n = n.round().clamp(0.0, 100.0) as u8;
+        let (name, n) = parse_level(arg)?;
         if self.settings().appearance.background.is_none() {
             return Err("Set a background picture first.".into());
         }
-        match which {
-            "image" => self.update_settings(|s| {
-                if let Some(b) = &mut s.appearance.background {
-                    b.image = n;
-                }
-            }),
-            "panels" => self.update_settings(|s| {
-                if let Some(b) = &mut s.appearance.background {
-                    b.panels = n;
-                }
-            }),
-            _ => return Err("Give image or panels, then a number from 0 to 100.".into()),
-        }
+        self.update_settings(|s| {
+            if let Some(slot) = s.appearance.background.as_mut().and_then(|b| b.level_mut(name)) {
+                *slot = n;
+            }
+        });
         Ok(())
     }
+
+    /// Turns off blur, dim, tint and the other effects on the background picture.
+    pub fn reset_background_effects(&self) -> Result<(), String> {
+        if self.settings().appearance.background.is_none() {
+            return Err("Set a background picture first.".into());
+        }
+        self.update_settings(|s| {
+            if let Some(b) = &mut s.appearance.background {
+                b.reset_effects();
+            }
+        });
+        Ok(())
+    }
+}
+
+/// `"<name> <number>"` to a known level name and its value, clamped to that level's range.
+fn parse_level(arg: &str) -> Result<(&'static str, u8), String> {
+    let names = || {
+        Background::LEVELS
+            .iter()
+            .map(|(n, _)| *n)
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let mut parts = arg.split_whitespace();
+    let which = parts.next().unwrap_or_default().to_ascii_lowercase();
+    let Some(&(name, max)) = Background::LEVELS.iter().find(|(n, _)| *n == which) else {
+        return Err(format!("Give one of {}, then a number.", names()));
+    };
+    let n = parts
+        .next()
+        .and_then(|n| n.trim_end_matches("px").trim_end_matches('%').parse::<f32>().ok())
+        .filter(|n| n.is_finite())
+        .ok_or_else(|| format!("Give a number from 0 to {max} for {name}."))?;
+    Ok((name, n.round().clamp(0.0, f32::from(max)) as u8))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_levels() {
+        assert_eq!(parse_level("blur 12"), Ok(("blur", 12)));
+        assert_eq!(parse_level("Blur 99"), Ok(("blur", 40)));
+        assert_eq!(parse_level("saturation 150%"), Ok(("saturation", 150)));
+        assert_eq!(parse_level("panels -5"), Ok(("panels", 0)));
+        assert_eq!(parse_level("blur 8px"), Ok(("blur", 8)));
+        assert!(parse_level("glow 5").is_err());
+        assert!(parse_level("dim").is_err());
+        assert!(parse_level("").is_err());
+    }
 
     #[test]
     fn sniffs_images() {
