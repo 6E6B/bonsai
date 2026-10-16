@@ -241,6 +241,13 @@ pub struct ItemInfo {
     pub units_left: u32,
     pub premium_only: bool,
     pub contents: Vec<BundlePartView>,
+    /// The Marketplace lists it. Otherwise (models, decals, audio, plugins...) only economy
+    /// details are known: no buying, wishlist, similar items or tags.
+    pub in_catalog: bool,
+    /// Anyone can take a copy, for assets outside the catalog.
+    pub public_domain: bool,
+    /// Copies sold or taken, for assets outside the catalog; 0 when unknown.
+    pub sales: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -463,6 +470,20 @@ pub fn item_page(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> ItemView {
             fetched_at: ms(r.fetched_at),
         })
     };
+    // Assets the catalog doesn't list fall back to their economy details.
+    if r.data.is_none() && r.error.is_some() && !bundle {
+        let a = core.asset_info(id.0);
+        return ItemView {
+            loading: a.loading,
+            error: a.data.is_none().then_some(a.error).flatten(),
+            info: a.data.map(|x| asset_page_info(id, &x)),
+            favorited: me.and_then(|a| core.item_favorited(a, item).data.map(|f| *f)),
+            wishlisted: false,
+            owned: false,
+            owned_by,
+            value,
+        };
+    }
     ItemView {
         loading: r.loading,
         error: r.error,
@@ -505,6 +526,9 @@ pub fn item_page(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> ItemView {
                         name: p.name.clone(),
                     })
                     .collect(),
+                in_catalog: true,
+                public_domain: false,
+                sales: 0,
             }
         }),
         favorited: me.and_then(|a| core.item_favorited(a, item).data.map(|f| *f)),
@@ -512,6 +536,106 @@ pub fn item_page(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> ItemView {
         owned,
         owned_by,
         value,
+    }
+}
+
+fn price_label(price: Option<i64>) -> String {
+    match price {
+        Some(0) => "Free".to_owned(),
+        Some(p) => rbx_core::fmt::robux(p),
+        None => "Off sale".to_owned(),
+    }
+}
+
+/// An item page for an asset the catalog doesn't list, from its economy details.
+fn asset_page_info(id: Id, x: &rbx_core::inventory::AssetInfo) -> ItemInfo {
+    ItemInfo {
+        id,
+        bundle: false,
+        name: x.name.clone(),
+        creator: x.creator.clone(),
+        creator_id: Id(x.creator_id),
+        creator_is_group: x.creator_is_group,
+        creator_verified: x.creator_verified,
+        creator_fake: x.fake_roblox_creator(),
+        price: None,
+        price_label: if x.price.is_none() && x.public_domain {
+            "Free to take".to_owned()
+        } else {
+            price_label(x.price)
+        },
+        from_reseller: false,
+        type_name: rbx_core::market::asset_type_name(x.asset_type).to_owned(),
+        asset_type: x.asset_type,
+        limited: None,
+        off_sale: x.price.is_none(),
+        favorites: 0,
+        description: x.description.clone(),
+        created: x.created.clone(),
+        updated: x.updated.clone(),
+        off_sale_deadline: String::new(),
+        category: String::new(),
+        genres: Vec::new(),
+        tags: Vec::new(),
+        has_resellers: false,
+        collectible_id: String::new(),
+        total_quantity: 0,
+        units_left: 0,
+        premium_only: x.premium_only,
+        contents: Vec::new(),
+        in_catalog: false,
+        public_domain: x.public_domain,
+        sales: count(x.sales as i64).unwrap_or(0),
+    }
+}
+
+/// A game pass's page.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PassView {
+    pub loading: bool,
+    pub error: Option<String>,
+    pub info: Option<PassInfoView>,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PassInfoView {
+    pub id: Id,
+    pub name: String,
+    pub description: String,
+    pub creator: String,
+    pub creator_id: Id,
+    pub creator_is_group: bool,
+    pub price: Option<u32>,
+    /// "R$ 1,234", "Free" or "Off sale".
+    pub price_label: String,
+    pub sales: u32,
+    /// ISO dates; empty when unknown.
+    pub created: String,
+    pub updated: String,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn pass_page(core: State<'_, Arc<Core>>, id: Id) -> PassView {
+    let r = core.pass_info(id.0);
+    PassView {
+        loading: r.loading,
+        error: r.error,
+        info: r.data.map(|x| PassInfoView {
+            id,
+            name: x.name.clone(),
+            description: x.description.clone(),
+            creator: x.creator.clone(),
+            creator_id: Id(x.creator_id),
+            creator_is_group: x.creator_is_group,
+            price: x.price.and_then(count),
+            price_label: price_label(x.price),
+            sales: count(x.sales as i64).unwrap_or(0),
+            created: x.created.clone(),
+            updated: x.updated.clone(),
+        }),
     }
 }
 
@@ -944,11 +1068,7 @@ pub fn inventory_inspect(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> In
             creator_verified: c.creator_verified,
             type_name: c.type_name().to_owned(),
             limited: c.limited.label().map(str::to_owned),
-            price_label: match c.price.filter(|_| !c.off_sale) {
-                Some(0) => "Free".to_owned(),
-                Some(p) => rbx_core::fmt::robux(p),
-                None => "Off sale".to_owned(),
-            },
+            price_label: price_label(c.price.filter(|_| !c.off_sale)),
             lowest_resale: c
                 .lowest_resale
                 .filter(|p| *p > 0 && c.limited.resellable())
@@ -973,10 +1093,10 @@ pub fn inventory_inspect(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> In
         creator_is_group: x.creator_is_group,
         creator_verified: x.creator_verified,
         type_name: rbx_core::market::asset_type_name(x.asset_type).to_owned(),
-        price_label: match x.price {
-            Some(0) => "Free".to_owned(),
-            Some(p) => rbx_core::fmt::robux(p),
-            None => "Off sale".to_owned(),
+        price_label: if x.price.is_none() && x.public_domain {
+            "Free to take".to_owned()
+        } else {
+            price_label(x.price)
         },
         created: x.created.clone(),
         ..InspectView::waiting(a.loading, None)

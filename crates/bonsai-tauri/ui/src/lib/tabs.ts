@@ -51,7 +51,7 @@ export function pathname(path: string): string {
 
 /** Paths that open in their own tab. */
 export function isEntityPath(path: string): boolean {
-  return /^\/(games|users|catalog|bundles|communities)\/[^/?#]+/.test(path)
+  return /^\/(games|users|catalog|bundles|passes|communities)\/[^/?#]+/.test(path)
 }
 
 /** The first segment, which names the screen: `/settings/privacy` → `settings`. */

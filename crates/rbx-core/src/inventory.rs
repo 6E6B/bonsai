@@ -1,6 +1,6 @@
 //! Inventories: any user's, as the viewing account is allowed to see it. Items by category,
 //! collectibles with RAP, totals (with item values when the user opted in), game passes, places
-//! they made, what the inspection drawer shows for assets the catalog doesn't know, and deleting
+//! they made, details of assets the catalog doesn't know and of passes, and deleting
 //! items from your own inventory where the site allows it.
 //!
 //! Lists are keyed by the viewing account: whether an inventory is visible depends on who looks.
@@ -172,6 +172,7 @@ const PLACES_CREATED: i32 = 3;
 /// What the inspection drawer shows for an asset the catalog doesn't list: decals, audio,
 /// models, meshes, plugins, videos.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AssetInfo {
     pub id: u64,
     pub name: String,
@@ -183,6 +184,38 @@ pub struct AssetInfo {
     pub creator_verified: bool,
     /// `None` when it isn't for sale.
     pub price: Option<i64>,
+    pub created: String,
+    pub updated: String,
+    /// Copies sold or taken; Roblox reports 0 for most assets.
+    pub sales: u64,
+    /// Anyone can take a copy: Creator Store models, decals, audio, plugins.
+    pub public_domain: bool,
+    /// Only Premium members can get it.
+    pub premium_only: bool,
+}
+
+impl AssetInfo {
+    /// The creator's name passes for Roblox but isn't Roblox's account.
+    pub fn fake_roblox_creator(&self) -> bool {
+        crate::market::fake_roblox(&self.creator, self.creator_id, self.creator_is_group)
+    }
+}
+
+/// A game pass's own details, for its page. Roblox doesn't say which experience sells it.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PassInfo {
+    pub id: u64,
+    /// What a purchase pays for; 0 when unknown.
+    pub product_id: u64,
+    pub name: String,
+    pub description: String,
+    pub creator: String,
+    pub creator_id: u64,
+    pub creator_is_group: bool,
+    /// `None` when it isn't for sale.
+    pub price: Option<i64>,
+    pub sales: u64,
     pub created: String,
     pub updated: String,
 }
@@ -394,9 +427,34 @@ impl Core {
                     price: x.price_in_robux.filter(|_| x.is_for_sale == Some(true)),
                     created: x.created.unwrap_or_default(),
                     updated: x.updated.unwrap_or_default(),
+                    sales: x.sales.unwrap_or(0).max(0) as u64,
+                    public_domain: x.is_public_domain.unwrap_or(false),
+                    premium_only: x.minimum_membership_level.unwrap_or(0) > 0,
                 })
             },
         )
+    }
+
+    /// A game pass's name, creator, price and dates. Public.
+    pub fn pass_info(&self, pass_id: u64) -> Res<PassInfo> {
+        self.inner
+            .res(Key::shared("pass_info", pass_id), LIST_AGE, move |f| async move {
+                let x = apis::undocumented::get_game_pass_product_info(&f.client, pass_id as i64).await?;
+                let c = x.creator.unwrap_or_default();
+                Ok(PassInfo {
+                    id: pass_id,
+                    product_id: x.product_id.unwrap_or(0).max(0) as u64,
+                    name: x.name.unwrap_or_default(),
+                    description: x.description.unwrap_or_default(),
+                    creator: c.name.unwrap_or_default(),
+                    creator_id: c.id.unwrap_or(0).max(0) as u64,
+                    creator_is_group: c.creator_type.as_deref() == Some("Group"),
+                    price: x.price_in_robux.filter(|_| x.is_for_sale == Some(true)),
+                    sales: x.sales.unwrap_or(0).max(0) as u64,
+                    created: x.created.unwrap_or_default(),
+                    updated: x.updated.unwrap_or_default(),
+                })
+            })
     }
 
     /// Delete an item from the account's own inventory (asks first in the UI).

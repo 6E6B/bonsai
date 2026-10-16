@@ -1,7 +1,7 @@
 {
   "captured": "2026-10-15",
   "source": "live",
-  "note": "Signed in as the test account: builderman's (156) game passes, badges and created places (placesTab=3, two pages), and economy details for decal 41372326, which the catalog doesn't list.",
+  "note": "Signed in as the test account: builderman's (156) game passes, badges and created places (placesTab=3, two pages), and economy details for decal 41372326, which the catalog doesn't list. Pass 1's product info (creator scrubbed), for the pass page.",
   "interactions": [
     {
       "request": {
@@ -1042,6 +1042,48 @@
           "TargetId": 41372326,
           "TimedOptions": null,
           "Updated": "2010-12-12T00:17:52.427Z"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "apis.roblox.com",
+        "path": "/game-passes/v1/game-passes/1/product-info"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "TargetId": 1,
+          "ProductType": "Game Pass",
+          "AssetId": 0,
+          "ProductId": 3613243303,
+          "Name": "Never get banned",
+          "Description": "A pass description.",
+          "AssetTypeId": 0,
+          "Creator": {
+            "Id": 9000000001,
+            "Name": "user1",
+            "CreatorType": "User",
+            "CreatorTargetId": 9000000001
+          },
+          "IconImageAssetId": 835789180,
+          "Created": "2017-05-24T22:20:10.5Z",
+          "Updated": "2026-08-04T23:16:56.748Z",
+          "PriceInRobux": null,
+          "PriceInTickets": null,
+          "Sales": 0,
+          "IsNew": false,
+          "IsForSale": false,
+          "IsPublicDomain": false,
+          "IsLimited": false,
+          "IsLimitedUnique": false,
+          "Remaining": null,
+          "MinimumMembershipLevel": 0,
+          "PriceDiscountDetails": []
         }
       }
     }

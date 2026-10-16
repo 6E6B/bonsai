@@ -80,12 +80,13 @@ export function setConfirmer(fn: typeof confirmer) {
   confirmer = fn
 }
 
+/** Runs a command. False when it was cancelled or the backend refused it (the error is shown). */
 export async function run(id: string, arg: string | null = null, asAccount: number | null = null) {
   const ask = confirmations[id]?.(arg)
-  if (ask && confirmer && !(await confirmer(ask))) return
+  if (ask && confirmer && !(await confirmer(ask))) return false
   const h = local.get(id)
   if (h) return h(arg)
-  await runBackend(id, arg, asAccount)
+  return runBackend(id, arg, asAccount)
 }
 
 /** Sends a command to the backend, skipping any UI handler. A handler that also needs the

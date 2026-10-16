@@ -27,13 +27,26 @@ const people = [
 
 describe("paletteEntries", () => {
   it("lists plain commands, one row per fixed choice, and asking rows for typed args", () => {
-    const rows = paletteEntries([cmd("nav.home", "none"), cmd("view.theme", "theme"), cmd("user.open", "user")], [])
+    const rows = paletteEntries([cmd("nav.home", "none"), cmd("view.theme", "mode"), cmd("user.open", "user")], [])
     expect(rows.map((r) => [r.key, r.arg, r.ask ?? null])).toEqual([
       ["nav.home", null, null],
       ["view.theme:system", "system", null],
       ["view.theme:light", "light", null],
       ["view.theme:dark", "dark", null],
       ["user.open", null, "user"],
+    ])
+  })
+
+  it("lists installed themes, and only user themes to delete", () => {
+    const themes = [
+      { id: "dark", name: "Dark", builtin: true },
+      { id: "mine", name: "Mine", builtin: false },
+    ]
+    const rows = paletteEntries([cmd("theme.apply", "theme"), cmd("theme.delete", "theme")], [], [], [], themes)
+    expect(rows.map((r) => [r.key, r.title])).toEqual([
+      ["theme.apply:dark", "theme.apply: Dark"],
+      ["theme.apply:mine", "theme.apply: Mine"],
+      ["theme.delete:mine", "theme.delete: Mine"],
     ])
   })
 
@@ -50,6 +63,11 @@ describe("paletteEntries", () => {
   it("lists open tabs for tab arguments", () => {
     const rows = paletteEntries([cmd("tab.switch", "tab")], [], [{ key: "t3", title: "Jailbreak" }])
     expect(rows.map((r) => [r.title, r.arg])).toEqual([["tab.switch: Jailbreak", "t3"]])
+  })
+
+  it("lists one row per sidebar screen", () => {
+    const rows = paletteEntries([cmd("view.sidebar_toggle", "screen")], [], [], [{ key: "trades", title: "Trades" }])
+    expect(rows.map((r) => [r.title, r.arg])).toEqual([["view.sidebar_toggle: Trades", "trades"]])
   })
 
   it("keeps the bare settings command next to its sections", () => {

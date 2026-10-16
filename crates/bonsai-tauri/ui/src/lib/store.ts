@@ -61,6 +61,7 @@ const shellMirror = mirror<Shell>(
     login: null,
     challenge: null,
     itemValues: false,
+    sidebar: { order: [], hidden: ["messages"] },
   },
   () => commands.shell(),
 )
@@ -93,14 +94,20 @@ export function useHome() {
 /**
  * One screen's data, for the key `source` returns (like a route id). Refetches on store changes
  * while the caller is mounted, and at once when the key changes. Outside the app it stays at
- * `initial`.
+ * `initial`. A new key starts from `initial`, unless `keep` is set (search results, where the
+ * old matches should stay until the new ones arrive).
  */
-export function useLive<K, T extends object>(source: () => K, fetch: (key: K) => Promise<T>, initial: () => T) {
+export function useLive<K, T extends object>(
+  source: () => K,
+  fetch: (key: K) => Promise<T>,
+  initial: () => T,
+  opts: { keep?: boolean } = {},
+) {
   const m = mirror<T>(initial(), () => fetch(source()))
   if (!isTauri()) return m.state
   createEffect(
     on(source, (_, prev) => {
-      if (prev !== undefined) m.set(initial())
+      if (prev !== undefined && !opts.keep) m.set(initial())
       if (m.started()) void m.refresh()
       else m.start()
     }),

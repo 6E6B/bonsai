@@ -6952,6 +6952,16 @@
     },
     {
       "deprecated": false,
+      "function": "get_game_pass_product_info",
+      "host": "apis.roblox.com",
+      "method": "GET",
+      "module": "apis::undocumented",
+      "path": "/game-passes/v1/game-passes/{gamePassId}/product-info",
+      "summary": "A pass's name, description, creator, price and dates.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "post_purchase_game_pass",
       "host": "apis.roblox.com",
       "method": "POST",
@@ -7372,6 +7382,26 @@
     },
     {
       "deprecated": false,
+      "function": "get_font_catalog",
+      "host": "fonts.google.com",
+      "method": "GET",
+      "module": "fonts_google_com::undocumented",
+      "path": "/metadata/fonts",
+      "summary": "Every Google Fonts family.",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "get_font_css",
+      "host": "fonts.googleapis.com",
+      "method": "GET",
+      "module": "fonts_googleapis_com::undocumented",
+      "path": "/css2",
+      "summary": "The @font-face rules for one family and its weights.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "post_decline_all_friend_requests",
       "host": "friends.roblox.com",
       "method": "POST",
@@ -7771,6 +7801,6 @@
       "used": true
     }
   ],
-  "total": 777,
-  "used": 231
+  "total": 780,
+  "used": 234
 }

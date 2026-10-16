@@ -21,7 +21,8 @@ paths:
       # Used by item pages to read Created and Updated timestamps for assets, and by the
       # inventory drawer for assets the catalog doesn't know (decals, audio, models...);
       # Name, Description, AssetTypeId, Creator and price checked live 2026-10-15 on decal
-      # 41372326 (fixture: inventory.json).
+      # 41372326 (fixture: inventory.json). IsPublicDomain and MinimumMembershipLevel checked live
+      # 2026-10-15 on plugin 11263738833 and decal 41372326: item page for non-catalog assets.
       x-captured: "2026-10-14, www.roblox.com/catalog/1365767"
       x-rust-name: get_asset_economy_details
       summary: Economy metadata for an asset, including Created and Updated timestamps.
@@ -47,6 +48,10 @@ definitions:
       Created: { type: string }
       Updated: { type: string }
       Sales: { type: integer, format: int64 }
+      # Anyone can take a copy (models, decals, plugins shared to the Creator Store).
+      IsPublicDomain: { type: boolean }
+      # 1 or more: only Premium members can get it.
+      MinimumMembershipLevel: { type: integer, format: int32 }
   AssetEconomyCreator:
     type: object
     properties:

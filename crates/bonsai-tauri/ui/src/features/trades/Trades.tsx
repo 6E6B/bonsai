@@ -95,6 +95,9 @@ export default function Trades() {
           size="page"
           actions={
             <>
+              <Tooltip content="Robux transactions">
+                <IconButton icon="transactions" label="Robux transactions" onClick={() => run("nav.transactions")} />
+              </Tooltip>
               <Tooltip content="Copy as CSV">
                 <IconButton icon="copy" label="Copy as CSV" onClick={() => run("trade.export")} />
               </Tooltip>

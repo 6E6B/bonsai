@@ -92,9 +92,9 @@ export default function Notifications() {
             class="w-44"
             aria-label="Category"
             size="sm"
-            value={category()}
-            onChange={(c) => run("notifications.category", c ?? "")}
-            options={[{ value: "", label: "All categories" }, ...(categories() ?? [])]}
+            value={category() || "all"}
+            onChange={(c) => run("notifications.category", c === "all" ? "" : c)}
+            options={[{ value: "all", label: "All categories" }, ...(categories() ?? [])]}
           />
           <Button onClick={() => run("notifications.mark_read")} icon="check">
             Mark all read

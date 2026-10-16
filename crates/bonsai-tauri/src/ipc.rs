@@ -61,6 +61,16 @@ pub struct Shell {
     pub challenge: Option<challenge::ChallengeView>,
     /// Item values from Rolimons are on.
     pub item_values: bool,
+    /// How the user arranged the sidebar.
+    pub sidebar: SidebarView,
+}
+
+/// Sidebar order and hidden screens, named by `nav.*` command without the prefix.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SidebarView {
+    pub order: Vec<String>,
+    pub hidden: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Type)]
@@ -217,8 +227,11 @@ pub enum Arg {
     Text,
     Color,
     Outfit,
+    Mode,
     Theme,
+    Font,
     Tab,
+    Screen,
 }
 
 impl From<ArgKind> for Arg {
@@ -232,8 +245,11 @@ impl From<ArgKind> for Arg {
             ArgKind::Text => Arg::Text,
             ArgKind::Color => Arg::Color,
             ArgKind::Outfit => Arg::Outfit,
+            ArgKind::Mode => Arg::Mode,
             ArgKind::Theme => Arg::Theme,
+            ArgKind::Font => Arg::Font,
             ArgKind::Tab => Arg::Tab,
+            ArgKind::Screen => Arg::Screen,
         }
     }
 }
@@ -930,6 +946,13 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
             .collect(),
         keychain_warning: s.keychain_warning.clone(),
         item_values: core.values_enabled(),
+        sidebar: {
+            let p = core.settings().sidebar;
+            SidebarView {
+                order: p.order,
+                hidden: p.hidden,
+            }
+        },
         robux: s.active_data().and_then(|d| d.robux).map(|r| r as f64),
         unread: s.active_data().map(|d| d.unread.into()).unwrap_or_default(),
         challenge: s.challenge.as_ref().map(challenge::view),
@@ -2580,6 +2603,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             market::catalog_options,
             market::catalog_search,
             market::item_page,
+            market::pass_page,
             market::item_resellers,
             market::buy_item,
             market::buy_resale,
@@ -2632,6 +2656,10 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::privacy_settings,
             account::my_private_servers,
             account::app_settings,
+            account::themes,
+            account::appearance,
+            account::set_system_dark,
+            account::font_catalog,
             account::pin_status,
             account::unlock_pin,
             challenge::challenge_submit_code,

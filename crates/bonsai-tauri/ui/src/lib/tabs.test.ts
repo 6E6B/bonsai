@@ -8,6 +8,7 @@ import {
   duplicate,
   goTo,
   initialTabs,
+  isEntityPath,
   move,
   open,
   reopen,
@@ -20,6 +21,15 @@ import {
 const paths = (s: TabsState) => s.tabs.map((t) => t.path)
 const at = (s: TabsState, path: string) => s.tabs.find((t) => t.path === path)?.key ?? ""
 const three = () => visit(visit(visit(initialTabs("/"), "/games/1"), "/games/2"), "/games/3")
+
+describe("isEntityPath", () => {
+  it("gives items, bundles and passes their own tabs", () => {
+    expect(isEntityPath("/catalog/5")).toBe(true)
+    expect(isEntityPath("/bundles/5")).toBe(true)
+    expect(isEntityPath("/passes/9")).toBe(true)
+    expect(isEntityPath("/inventory/5")).toBe(false)
+  })
+})
 
 describe("visit", () => {
   it("loads screens in the current tab", () => {

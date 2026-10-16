@@ -2,11 +2,10 @@ import { useParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, type JSX, Match, onCleanup, Show, Switch } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { handle, menuItem, run } from "~/lib/commands/registry"
-import { date, percent } from "~/lib/format"
+import { percent } from "~/lib/format"
 import {
   type AvatarView,
   commands,
-  type InspectView,
   type InvCategoryView,
   type InvTotalsView,
   type ItemCard,
@@ -17,6 +16,7 @@ import {
   type UserLookup,
   type WardrobeSection,
 } from "~/lib/ipc/bindings"
+import { IdFact, ItemPreview, PreviewDescription, PreviewHeader, wantsPreview } from "~/lib/item-preview"
 import { emptyList, ListState } from "~/lib/list-state"
 import { entityMenu, gameMenu, itemTarget } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
@@ -24,30 +24,27 @@ import { thumbUrl } from "~/lib/thumb"
 import { ItemTile, Price, TILE_WIDTH } from "~/lib/tiles"
 import {
   Button,
-  Clamp,
   ContextMenu,
   EmptyState,
   Fact,
   FactGroup,
   Facts,
-  IconButton,
   type MenuEntry,
   NavItem,
   Page,
   Robux,
-  SectionHeader,
   Select,
-  Skeleton,
   showToast,
   TextField,
   TextLink,
   Thumbnail,
   Tile,
+  Tooltip,
   usePrompt,
-  VerifiedBadge,
   VirtualGrid,
 } from "~/lib/ui"
 import { useValuesRefresh } from "~/lib/value-tags"
+import { VALUES_SOURCE } from "~/lib/values"
 import { FILTERS, type InvFilter, isFilter, matches, shapeInventory, slotAssetType } from "./filter"
 
 const COLLECTIBLES = "collectibles"
@@ -56,17 +53,24 @@ const BADGES = "badges"
 const PASSES = "passes"
 const PLACES = "places"
 
-/** What the drawer shows: an item or bundle (`item:5`, `bundle:5`) or a pass (`pass:9`). */
-type Inspected = { kind: "item" | "bundle" | "pass"; id: number }
+/** What the drawer shows: an item or bundle (`item:5`, `bundle:5`), a pass (`pass:9`), a badge
+ * (`badge:3`) or a place (`place:1818`). */
+type Inspected = { kind: "item" | "bundle" | "pass" | "badge" | "place"; id: number }
 
-/** `item:5`, `bundle:5`, `pass:9` or a bare id, which is an item. */
+/** `item:5`, `bundle:5`, `pass:9`, `badge:3`, `place:1818` or a bare id, which is an item. */
 function parseTarget(arg: string | null): Inspected | null {
-  const m = /^(?:(item|bundle|pass):)?(\d+)$/.exec(arg?.trim() ?? "")
+  const m = /^(?:(item|bundle|pass|badge|place):)?(\d+)$/.exec(arg?.trim() ?? "")
   if (!m) return null
   return { kind: (m[1] as Inspected["kind"] | undefined) ?? "item", id: Number(m[2]) }
 }
 
 const pagedEmpty = <T,>(): Paged<T> => ({ list: emptyList<T>(), moreKey: "" })
+
+/** A tile click opens the thing's page in a tab; Ctrl+click previews it in the drawer. */
+const openOrInspect = (e: MouseEvent, inspect: (t: Inspected) => void, t: Inspected, open: () => void) => {
+  if (wantsPreview(e)) inspect(t)
+  else open()
+}
 
 /** A user's inventory by category: yours at `/inventory`, anyone's at `/inventory/<id or name>`.
  * Collectibles show serials, RAP and totals. */
@@ -121,18 +125,25 @@ function Totals(props: { userId: number }) {
     commands.inventoryTotals,
     (): InvTotalsView => ({ loading: true, items: 0, rap: 0, value: null, onHold: 0 }),
   )
+  const exact = () =>
+    `${t.items} collectibles · RAP ${(t.rap ?? 0).toLocaleString()}` +
+    (t.value ? ` · Value ${t.value.toLocaleString()} (${VALUES_SOURCE})` : "")
   return (
     <Show when={t.items > 0}>
-      <span class="text-sm text-fg-muted">{t.items} collectibles · RAP</span>
-      <Robux amount={t.rap} />
-      <Show when={t.value}>
-        {(v) => (
-          <>
-            <span class="text-sm text-fg-muted">· Value</span>
-            <Robux amount={v()} />
-          </>
-        )}
-      </Show>
+      <Tooltip content={exact()} class="flex items-center gap-3 text-sm">
+        <span class="flex items-center gap-1">
+          <span class="text-fg-muted">RAP</span>
+          <Robux amount={t.rap} compact />
+        </span>
+        <Show when={t.value}>
+          {(v) => (
+            <span class="flex items-center gap-1">
+              <span class="text-fg-muted">Value</span>
+              <Robux amount={v()} compact />
+            </span>
+          )}
+        </Show>
+      </Tooltip>
     </Show>
   )
 }
@@ -186,13 +197,13 @@ function Browser(props: { userId: number; mine: boolean }) {
   })
   const own = () => props.userId === shell.active
   const wardrobe = useWardrobe(own)
-  const [loaded, setLoaded] = createStore<Loaded>({ items: [], passes: [] })
+  const [loaded, setLoaded] = createStore<Loaded>({ items: [], passes: [], badges: [], places: [] })
 
   onCleanup(
     handle("inventory.inspect", (a) => {
       const t = parseTarget(a)
       if (t) setInspected(t)
-      else showToast("Inspect takes an item ID, item:<id>, bundle:<id> or pass:<id>")
+      else showToast("Inspect takes an item ID, item:<id>, bundle:<id>, pass:<id>, badge:<id> or place:<id>")
     }),
   )
 
@@ -209,7 +220,7 @@ function Browser(props: { userId: number; mine: boolean }) {
                 </Show>
               }
             >
-              <span class="px-2.5 pt-2 text-xs text-fg-muted">{c.name}</span>
+              <span class="px-2.5 pt-3 text-sm font-semibold text-fg">{c.name}</span>
               <For each={c.slots}>
                 {(s) => <NavItem label={s.label} active={slot() === s.value} onClick={() => setSlot(s.value)} />}
               </For>
@@ -234,7 +245,12 @@ function Browser(props: { userId: number; mine: boolean }) {
         >
           <Match when={slot() === BADGES}>
             <Search query={query()} setQuery={setQuery} />
-            <Badges userId={props.userId} query={query()} />
+            <Badges
+              userId={props.userId}
+              query={query()}
+              inspect={setInspected}
+              onLoad={(l) => setLoaded("badges", reconcile(l))}
+            />
           </Match>
           <Match when={slot() === PASSES}>
             <Search query={query()} setQuery={setQuery} />
@@ -247,7 +263,12 @@ function Browser(props: { userId: number; mine: boolean }) {
           </Match>
           <Match when={slot() === PLACES}>
             <Search query={query()} setQuery={setQuery} />
-            <Places userId={props.userId} query={query()} />
+            <Places
+              userId={props.userId}
+              query={query()}
+              inspect={setInspected}
+              onLoad={(l) => setLoaded("places", reconcile(l))}
+            />
           </Match>
         </Switch>
       </div>
@@ -286,9 +307,9 @@ function Search(props: { query: string; setQuery: (q: string) => void; placehold
 
 type Wardrobe = ReturnType<typeof useWardrobe>
 
-/** What the open list has loaded, so the drawer can show serial, RAP and copies, and a pass's
- * details, without fetching again. */
-type Loaded = { items: ItemCard[]; passes: PassCard[] }
+/** What the open list has loaded, so the drawer can show serial, RAP and copies, and a pass's,
+ * badge's or place's details, without fetching again. */
+type Loaded = { items: ItemCard[]; passes: PassCard[]; badges: UserBadge[]; places: PlaceCard[] }
 
 function Items(props: {
   userId: number
@@ -423,9 +444,12 @@ function Items(props: {
               item={i}
               showSerial
               showRap={collectibles()}
-              showCreator
               selected={props.wardrobe.worn().has(i.id)}
-              onClick={() => props.inspect({ kind: i.bundle ? "bundle" : "item", id: i.id })}
+              onClick={(e) =>
+                openOrInspect(e, props.inspect, { kind: i.bundle ? "bundle" : "item", id: i.id }, () =>
+                  run("market.open", itemTarget(i.id, i.bundle)),
+                )
+              }
               menu={menu(i)}
             />
           )}
@@ -437,8 +461,15 @@ function Items(props: {
 
 const byName = (name: string, id: number, query: string) => matches({ id, name, creator: "" }, query)
 
-function Badges(props: { userId: number; query: string }) {
+function Badges(props: {
+  userId: number
+  query: string
+  inspect: (t: Inspected) => void
+  onLoad: (badges: UserBadge[]) => void
+}) {
   const res = useLive(() => props.userId, commands.inventoryBadges, pagedEmpty<UserBadge>)
+  createEffect(() => props.onLoad(res.list.items))
+  onCleanup(() => props.onLoad([]))
   const shown = createMemo(() => res.list.items.filter((b) => byName(b.name, b.id, props.query)))
   return (
     <ListState list={res.list} icon="badge" empty="No badges" more={res.moreKey} autoMore>
@@ -450,14 +481,23 @@ function Badges(props: { userId: number; query: string }) {
         empty={<EmptyState icon="search" title="No badges match" />}
       >
         {(b) => (
-          <ContextMenu items={b.placeId ? gameMenu(b.placeId) : []}>
+          <ContextMenu
+            items={[
+              menuItem("inventory.inspect", { arg: `badge:${b.id}`, icon: "info", label: "Inspect" }),
+              ...(b.placeId ? [{ kind: "separator" } as const, ...gameMenu(b.placeId)] : []),
+            ]}
+          >
             <Tile
               title={b.name}
               subtitle={b.winRate === null ? undefined : `${percent(b.winRate)} have it`}
               src={thumbUrl("badge_icon", b.id)}
               fallback="badge"
               fixed
-              onClick={() => b.placeId && run("game.open", String(b.placeId))}
+              onClick={(e) =>
+                openOrInspect(e, props.inspect, { kind: "badge", id: b.id }, () =>
+                  b.placeId ? run("game.open", String(b.placeId)) : props.inspect({ kind: "badge", id: b.id }),
+                )
+              }
             />
           </ContextMenu>
         )}
@@ -488,6 +528,7 @@ function Passes(props: {
         {(p) => (
           <ContextMenu
             items={entityMenu(`pass:${p.id}`, [
+              menuItem("market.open", { arg: `pass:${p.id}`, icon: "pass", label: "Open pass" }),
               menuItem("inventory.inspect", { arg: `pass:${p.id}`, icon: "info", label: "Inspect" }),
             ])}
           >
@@ -495,9 +536,11 @@ function Passes(props: {
               title={p.name}
               subtitle={<Price amount={p.price} />}
               src={thumbUrl("game_pass", p.id)}
-              fallback="game"
+              fallback="pass"
               fixed
-              onClick={() => props.inspect({ kind: "pass", id: p.id })}
+              onClick={(e) =>
+                openOrInspect(e, props.inspect, { kind: "pass", id: p.id }, () => run("market.open", `pass:${p.id}`))
+              }
             />
           </ContextMenu>
         )}
@@ -506,8 +549,15 @@ function Passes(props: {
   )
 }
 
-function Places(props: { userId: number; query: string }) {
+function Places(props: {
+  userId: number
+  query: string
+  inspect: (t: Inspected) => void
+  onLoad: (places: PlaceCard[]) => void
+}) {
   const res = useLive(() => props.userId, commands.inventoryPlaces, pagedEmpty<PlaceCard>)
+  createEffect(() => props.onLoad(res.list.items))
+  onCleanup(() => props.onLoad([]))
   const shown = createMemo(() => res.list.items.filter((p) => byName(p.name, p.placeId, props.query)))
   return (
     <ListState
@@ -525,7 +575,13 @@ function Places(props: { userId: number; query: string }) {
         empty={<EmptyState icon="search" title="No places match" />}
       >
         {(p) => (
-          <ContextMenu items={gameMenu(p.placeId)}>
+          <ContextMenu
+            items={[
+              menuItem("inventory.inspect", { arg: `place:${p.placeId}`, icon: "info", label: "Inspect" }),
+              { kind: "separator" },
+              ...gameMenu(p.placeId),
+            ]}
+          >
             <Tile
               title={p.name}
               subtitle={
@@ -536,7 +592,11 @@ function Places(props: { userId: number; query: string }) {
               src={p.universeId ? thumbUrl("game_icon", p.universeId) : undefined}
               fallback="game"
               fixed
-              onClick={() => run("game.open", String(p.placeId))}
+              onClick={(e) =>
+                openOrInspect(e, props.inspect, { kind: "place", id: p.placeId }, () =>
+                  run("game.open", String(p.placeId)),
+                )
+              }
             />
           </ContextMenu>
         )}
@@ -575,8 +635,8 @@ function Drawer(props: {
         <Match when={props.target.kind === "pass" && props.loaded.passes.find((p) => p.id === props.target.id)}>
           {(p) => (
             <>
-              <DrawerHeader title={p().name} onClose={props.onClose} />
-              <Thumbnail class="w-full" alt={p().name} src={thumbUrl("game_pass", p().id)} fallback="game" />
+              <PreviewHeader title={p().name} onClose={props.onClose} />
+              <Thumbnail class="w-full" alt={p().name} src={thumbUrl("game_pass", p().id)} fallback="pass" />
               <Facts>
                 <FactGroup>
                   <Fact label="Creator">
@@ -594,8 +654,11 @@ function Drawer(props: {
                   </Fact>
                 </FactGroup>
               </Facts>
-              <Description text={p().description} />
+              <PreviewDescription text={p().description} />
               <div class="flex flex-wrap gap-2">
+                <Button variant="primary" icon="pass" onClick={() => run("market.open", target())}>
+                  Open page
+                </Button>
                 <Button icon="external" onClick={() => run("entity.open_website", target())}>
                   Open on website
                 </Button>
@@ -603,49 +666,72 @@ function Drawer(props: {
             </>
           )}
         </Match>
-        <Match when={props.target.kind === "pass"}>
-          <DrawerHeader title="Pass" onClose={props.onClose} />
-          <span class="text-sm text-fg-muted">Not in the loaded passes.</span>
+        <Match when={props.target.kind === "badge" && props.loaded.badges.find((b) => b.id === props.target.id)}>
+          {(b) => (
+            <>
+              <PreviewHeader title={b().name} onClose={props.onClose} />
+              <Thumbnail class="w-full" alt={b().name} src={thumbUrl("badge_icon", b().id)} fallback="badge" />
+              <Facts>
+                <FactGroup>
+                  <Fact label="Type">Badge</Fact>
+                  <IdFact id={b().id} target={target()} />
+                  <Show when={b().winRate !== null}>
+                    <Fact label="Won by">{percent(b().winRate ?? 0)} of players</Fact>
+                  </Show>
+                </FactGroup>
+              </Facts>
+              <PreviewDescription text={b().description} />
+              <Show when={b().placeId}>
+                {(place) => (
+                  <div class="flex flex-wrap gap-2">
+                    <Button variant="primary" icon="game" onClick={() => run("game.open", String(place()))}>
+                      Open experience
+                    </Button>
+                  </div>
+                )}
+              </Show>
+            </>
+          )}
+        </Match>
+        <Match when={props.target.kind === "place" && props.loaded.places.find((p) => p.placeId === props.target.id)}>
+          {(p) => (
+            <>
+              <PreviewHeader title={p().name} onClose={props.onClose} />
+              <Thumbnail
+                class="w-full"
+                alt={p().name}
+                src={p().universeId ? thumbUrl("game_icon", p().universeId) : undefined}
+                fallback="game"
+              />
+              <Facts>
+                <FactGroup>
+                  <Show when={p().creator}>
+                    <Fact label="Creator">{p().creator}</Fact>
+                  </Show>
+                  <Fact label="Type">Place</Fact>
+                  <IdFact id={p().placeId} target={`game:${p().placeId}`} />
+                  <Show when={p().universeId}>{(u) => <Fact label="Universe ID">{u()}</Fact>}</Show>
+                  <Fact label="Access">
+                    <Show when={p().price} fallback="Free">
+                      {(price) => <Robux amount={price()} />}
+                    </Show>
+                  </Fact>
+                </FactGroup>
+              </Facts>
+              <div class="flex flex-wrap gap-2">
+                <Button variant="primary" icon="game" onClick={() => run("game.open", String(p().placeId))}>
+                  Open experience
+                </Button>
+              </div>
+            </>
+          )}
+        </Match>
+        <Match when={props.target.kind !== "item" && props.target.kind !== "bundle"}>
+          <PreviewHeader title="Details" onClose={props.onClose} />
+          <span class="text-sm text-fg-muted">Not in the loaded list.</span>
         </Match>
       </Switch>
     </aside>
-  )
-}
-
-function DrawerHeader(props: { title: string; onClose: () => void }) {
-  return (
-    <SectionHeader
-      title={props.title}
-      size="section"
-      actions={<IconButton icon="x" label="Close details" size="sm" variant="ghost" onClick={props.onClose} />}
-    />
-  )
-}
-
-function IdFact(props: { id: number; target: string }) {
-  return (
-    <Fact label="ID">
-      <span class="flex items-center gap-1">
-        {props.id}
-        <IconButton
-          icon="copy"
-          label="Copy ID"
-          size="sm"
-          variant="ghost"
-          onClick={() => run("entity.copy_id", props.target)}
-        />
-      </span>
-    </Fact>
-  )
-}
-
-function Description(props: { text: string }) {
-  return (
-    <Show when={props.text.trim()}>
-      <Clamp lines={8}>
-        <p class="whitespace-pre-line text-sm">{props.text}</p>
-      </Clamp>
-    </Show>
   )
 }
 
@@ -659,94 +745,36 @@ function ItemDetails(props: {
   items: readonly ItemCard[]
   onClose: () => void
 }) {
-  const v = useLive(
-    () => [props.id, props.bundle] as const,
-    ([id, b]) => commands.inventoryInspect(id, b),
-    (): InspectView => ({
-      loading: true,
-      error: null,
-      name: "",
-      description: "",
-      creator: "",
-      creatorId: 0,
-      creatorIsGroup: false,
-      creatorVerified: false,
-      typeName: "",
-      limited: null,
-      priceLabel: "",
-      lowestResale: null,
-      created: "",
-      inCatalog: false,
-    }),
-  )
   const card = () => props.items.find((i) => i.id === props.id && i.bundle === props.bundle)
   const target = () => itemTarget(props.id, props.bundle)
-  const name = () => v.name || card()?.name || ""
   const wear = () => {
     const c = card()
     return c ? props.wardrobe.wearType(c, props.slot) : 0
   }
   const worn = () => props.wardrobe.worn().has(props.id)
   return (
-    <>
-      <DrawerHeader title={name() || "Item"} onClose={props.onClose} />
-      <Thumbnail
-        class="w-full"
-        alt={name()}
-        src={thumbUrl(props.bundle ? "bundle" : "asset", props.id)}
-        fallback="avatar"
-      />
-      <Show when={v.error}>{(e) => <span class="text-sm text-danger">{e()}</span>}</Show>
-      <Show when={!v.loading || v.name} fallback={<Skeleton class="h-32" />}>
-        <Facts>
-          <FactGroup>
-            <Show when={v.creator}>
-              <Fact label="Creator">
-                <span class="flex items-center gap-1">
-                  <TextLink
-                    tone={v.creatorVerified ? "verified" : "name"}
-                    onClick={() => run(v.creatorIsGroup ? "group.open" : "user.open", String(v.creatorId))}
-                  >
-                    {v.creator}
-                  </TextLink>
-                  <Show when={v.creatorVerified}>
-                    <VerifiedBadge />
-                  </Show>
-                </span>
+    <ItemPreview
+      id={props.id}
+      bundle={props.bundle}
+      assetType={card()?.assetType}
+      name={card()?.name}
+      onClose={props.onClose}
+      facts={
+        <>
+          <Show when={card()?.rap}>
+            {(r) => (
+              <Fact label="RAP">
+                <Robux amount={r()} />
               </Fact>
-            </Show>
-            <Show when={v.typeName}>
-              <Fact label="Type">{v.typeName}</Fact>
-            </Show>
-            <IdFact id={props.id} target={target()} />
-            <Show when={v.limited}>{(l) => <Fact label="Limited">{l()}</Fact>}</Show>
-            <Show when={v.priceLabel}>
-              <Fact label="Price">{v.priceLabel}</Fact>
-            </Show>
-            <Show when={v.lowestResale}>
-              {(r) => (
-                <Fact label="Lowest resale">
-                  <Robux amount={r()} />
-                </Fact>
-              )}
-            </Show>
-            <Show when={card()?.rap}>
-              {(r) => (
-                <Fact label="RAP">
-                  <Robux amount={r()} />
-                </Fact>
-              )}
-            </Show>
-            <Show when={card()?.serial}>{(s) => <Fact label="Serial">#{s()}</Fact>}</Show>
-            <Show when={(card()?.copies ?? 1) > 1}>
-              <Fact label="Copies">{card()?.copies}</Fact>
-            </Show>
-            <Show when={Date.parse(v.created) || null}>{(ms) => <Fact label="Created">{date(ms())}</Fact>}</Show>
-          </FactGroup>
-        </Facts>
-        <Description text={v.description} />
-      </Show>
-      <div class="flex flex-wrap gap-2">
+            )}
+          </Show>
+          <Show when={card()?.serial}>{(s) => <Fact label="Serial">#{s()}</Fact>}</Show>
+          <Show when={(card()?.copies ?? 1) > 1}>
+            <Fact label="Copies">{card()?.copies}</Fact>
+          </Show>
+        </>
+      }
+      actions={
         <Show when={wear()}>
           {(t) => (
             <Button
@@ -758,17 +786,14 @@ function ItemDetails(props: {
             </Button>
           )}
         </Show>
-        <Show when={v.inCatalog || props.bundle}>
-          <Button icon="marketplace" onClick={() => run("market.open", target())}>
-            Item page
-          </Button>
-        </Show>
+      }
+      trailing={
         <Show when={props.mine && !props.bundle && !card()?.limited}>
           <Button variant="danger" icon="trash" onClick={() => run("inventory.delete", target(), props.userId)}>
             Delete
           </Button>
         </Show>
-      </div>
-    </>
+      }
+    />
   )
 }

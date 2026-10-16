@@ -1,22 +1,12 @@
 import { Show } from "solid-js"
+import { assetIcon } from "~/lib/asset-icon"
 import { run } from "~/lib/commands/registry"
 import { compact, percent } from "~/lib/format"
 import type { GameCard, ValueTag } from "~/lib/ipc/bindings"
+import { wantsPreview } from "~/lib/item-preview"
 import { gameMenu, itemMenu, itemTarget, joinUser } from "~/lib/menus"
 import { thumbUrl } from "~/lib/thumb"
-import {
-  Badge,
-  Button,
-  ContextMenu,
-  Icon,
-  ListItem,
-  type MenuEntry,
-  Robux,
-  Thumbnail,
-  Tile,
-  Tooltip,
-  VerifiedBadge,
-} from "~/lib/ui"
+import { Badge, Button, ContextMenu, Icon, ListItem, type MenuEntry, Robux, Thumbnail, Tile, Tooltip } from "~/lib/ui"
 import { ValueAmount, ValueMarker } from "~/lib/value-tags"
 
 /** Grid classes for tiles, so every screen's tiles are the same size. `tileGrid` for square
@@ -115,8 +105,6 @@ export interface TileItem {
   rap?: number | null
   /** Rolimons' data, when values are on. */
   values?: ValueTag | null
-  creator?: string
-  creatorVerified?: boolean
 }
 
 const marker = (t: ValueTag | null | undefined) => !!t && (t.projected || !!t.demand || !!t.trend)
@@ -126,12 +114,10 @@ const marker = (t: ValueTag | null | undefined) => !!t && (t.projected || !!t.de
 export function ItemTile(props: {
   item: TileItem
   selected?: boolean
-  onClick?: () => void
+  onClick?: (e: MouseEvent) => void
   showSerial?: boolean
   /** Show recent average price instead of the list price. */
   showRap?: boolean
-  /** Show the creator, with a check when verified, after the price. */
-  showCreator?: boolean
   /** Extra rows at the end of the right-click menu. */
   menu?: MenuEntry[]
   /** See `Tile`'s `fixed`. */
@@ -147,18 +133,10 @@ export function ItemTile(props: {
               {(rap) => <Robux amount={rap()} />}
             </Show>
             <Show when={props.item.values?.value}>{(v) => <ValueAmount amount={v()} compact />}</Show>
-            <Show when={props.showCreator && props.item.creator}>
-              <span class="flex min-w-0 items-center gap-1">
-                <span class="truncate">{props.item.creator}</span>
-                <Show when={props.item.creatorVerified}>
-                  <VerifiedBadge size={12} />
-                </Show>
-              </span>
-            </Show>
           </span>
         }
         src={thumbUrl(props.item.bundle ? "bundle" : "asset", props.item.id)}
-        fallback="avatar"
+        fallback={props.item.bundle ? "avatar" : assetIcon(props.item.assetType)}
         selected={props.selected}
         fixed={props.fixed}
         marker={marker(props.item.values) ? <ValueMarker tag={props.item.values as ValueTag} /> : undefined}
@@ -171,7 +149,10 @@ export function ItemTile(props: {
             <Badge>{`x${props.item.copies}`}</Badge>
           ) : undefined
         }
-        onClick={props.onClick ?? (() => run("market.open", itemTarget(props.item.id, props.item.bundle)))}
+        onClick={
+          props.onClick ??
+          ((e) => run(wantsPreview(e) ? "market.preview" : "market.open", itemTarget(props.item.id, props.item.bundle)))
+        }
       />
     </ContextMenu>
   )

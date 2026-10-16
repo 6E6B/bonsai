@@ -12,6 +12,7 @@ const pages: [RegExp, (id: string) => OpenIn][] = [
   [/^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/(?:groups|communities)\/(\d+)/i, (id) => ({ command: "group.open", arg: id })],
   [/^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/catalog\/(\d+)/i, (id) => ({ command: "market.open", arg: `item:${id}` })],
   [/^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/bundles\/(\d+)/i, (id) => ({ command: "market.open", arg: `bundle:${id}` })],
+  [/^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/game-pass\/(\d+)/i, (id) => ({ command: "market.open", arg: `pass:${id}` })],
 ]
 
 /** Where a Roblox link opens in the app, if it has a screen for it. Only www.roblox.com and

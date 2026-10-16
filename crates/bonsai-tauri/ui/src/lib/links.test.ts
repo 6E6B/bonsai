@@ -119,6 +119,7 @@ describe("openIn", () => {
       arg: "item:1028606",
     })
     expect(openIn("https://www.roblox.com/bundles/192/x")).toEqual({ command: "market.open", arg: "bundle:192" })
+    expect(openIn("https://www.roblox.com/game-pass/9/x")).toEqual({ command: "market.open", arg: "pass:9" })
     expect(openIn("https://www.roblox.com/es/games/1818/x")).toEqual({ command: "game.open", arg: "1818" })
   })
 

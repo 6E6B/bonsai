@@ -15,10 +15,12 @@ import {
 } from "~/lib/commands/registry"
 import { setFormatLocale } from "~/lib/format"
 import { commands } from "~/lib/ipc/bindings"
+import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
+import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { shell, startSync } from "~/lib/store"
 import { activeTab, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
-import { setTheme, showToast, type ThemeMode, useConfirm, useDialog, usePrompt } from "~/lib/ui"
-import { describePath, screens } from "./screens"
+import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
+import { useAppearance } from "./appearance"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
 import { ChallengeDialog } from "./shell/ChallengeDialog"
@@ -60,6 +62,8 @@ export function Layout(props: ParentProps) {
   makeEventListener(window, "resize", () => setWidth(window.innerWidth))
   const [drawerPref, setDrawerPref] = createSignal<boolean | null>(null)
   const [zoom, setZoom] = createSignal(1)
+  /** The item Ctrl+click or `market.preview` shows beside the page. */
+  const [preview, setPreview] = createSignal<{ id: number; bundle: boolean } | null>(null)
   const compact = () => compactPref() ?? width() / zoom() < NARROW
   const drawer = () => drawerPref() ?? false
 
@@ -136,6 +140,13 @@ export function Layout(props: ParentProps) {
     ),
     ...screens.filter((s) => s.command !== "nav.settings").map((s) => handle(s.command, go(s.path))),
     handle("nav.settings", (section) => visitPath(section ? `/settings/${section}` : "/settings")),
+    // The order is saved in rbx-core; the groups that bound a move live in `screens`.
+    ...([-1, 1] as const).map((by) =>
+      handle(by < 0 ? "view.sidebar_up" : "view.sidebar_down", (arg) => {
+        const order = arg ? nudgeScreen(screens, shell.sidebar, arg.trim(), by) : null
+        if (order) void runBackend("view.sidebar_order", order.join(" "))
+      }),
+    ),
     handle("nav.profile", () => shell.active !== null && visitPath(`/users/${shell.active}`)),
     handle("user.open", open("/users")),
     ...(["friends", "followers", "following"] as const).map((list) =>
@@ -147,7 +158,13 @@ export function Layout(props: ParentProps) {
     handle("market.open", (arg) => {
       const t = arg?.trim() ?? ""
       if (t.startsWith("bundle:")) visitPath(`/bundles/${t.slice(7)}`)
+      else if (t.startsWith("pass:")) visitPath(`/passes/${t.slice(5)}`)
       else if (t) visitPath(`/catalog/${t.replace(/^item:/, "")}`)
+    }),
+    handle("market.preview", (arg) => {
+      const t = parseItemTarget(arg)
+      if (t) setPreview(t)
+      else showToast("Preview takes an item ID, item:<id> or bundle:<id>")
     }),
     handle("market.search", (q) =>
       navigate(q?.trim() ? `/marketplace?q=${encodeURIComponent(q.trim())}` : "/marketplace"),
@@ -197,12 +214,6 @@ export function Layout(props: ParentProps) {
     handle("help.shortcuts", () => dialog.show(() => <ShortcutsDialog />, { title: "Keyboard shortcuts", size: "lg" })),
     handle("view.sidebar", () => setCompactPref(!compact())),
     handle("view.drawer", () => setDrawerPref(!drawer())),
-    // Applied here at once, then saved by the backend so the next start uses it.
-    handle("view.theme", (mode) => {
-      if (mode !== "system" && mode !== "light" && mode !== "dark") return showToast("Pick system, dark or light.")
-      setTheme(mode as ThemeMode)
-      void runBackend("view.theme", mode)
-    }),
     handle("view.density", (d) => {
       if (d !== "compact" && d !== "comfortable") return showToast("Pick compact or comfortable.")
       document.documentElement.dataset.density = d
@@ -292,11 +303,11 @@ export function Layout(props: ParentProps) {
       { defer: true },
     ),
   )
-  // Saved theme and density, once at startup.
+  useAppearance()
+  // Saved density and number format, once at startup.
   onMount(async () => {
     if (!isTauri()) return
     const app = await commands.appSettings()
-    setTheme(app.theme as ThemeMode)
     document.documentElement.dataset.density = app.density
     setFormatLocale(app.formatLocale)
   })
@@ -360,6 +371,17 @@ export function Layout(props: ParentProps) {
                 </div>
               </main>
             </div>
+            <Show when={preview()}>
+              {(p) => (
+                <aside
+                  aria-label="Item preview"
+                  data-scroller
+                  class="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-l border-line bg-canvas p-3"
+                >
+                  <ItemPreview id={p().id} bundle={p().bundle} onClose={() => setPreview(null)} />
+                </aside>
+              )}
+            </Show>
             <Show when={drawer()}>
               <Drawer />
             </Show>

@@ -55,17 +55,33 @@ export interface PaletteTab {
   title: string
 }
 
+/** A screen that can sit in the sidebar, for `view.sidebar_*`. */
+export interface PaletteScreen {
+  key: string
+  title: string
+}
+
+/** An installed theme, for `theme.*`. Built-ins can't be deleted, so `theme.delete` skips them. */
+export interface PaletteTheme {
+  id: string
+  name: string
+  builtin: boolean
+}
+
 const COLORS = ["none", "red", "orange", "yellow", "green", "blue", "purple", "pink"]
-const THEMES = ["system", "light", "dark"]
+const MODES = ["system", "light", "dark"]
 
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /** Every command, with one row per choice for arguments that have a short fixed list
- * (accounts, settings sections, colors, themes) and an asking row for typed arguments. */
+ * (accounts, settings sections, colors, modes, themes, tabs, sidebar screens) and an asking row for typed
+ * arguments. */
 export function paletteEntries(
   commands: CommandInfo[],
   accounts: PaletteAccount[],
   tabs: PaletteTab[] = [],
+  screens: PaletteScreen[] = [],
+  themes: PaletteTheme[] = [],
 ): PaletteEntry[] {
   const out: PaletteEntry[] = []
   for (const c of commands) {
@@ -96,11 +112,17 @@ export function paletteEntries(
       case "color":
         for (const v of COLORS) choice(v, titleCase(v))
         break
+      case "mode":
+        for (const v of MODES) choice(v, titleCase(v))
+        break
       case "theme":
-        for (const v of THEMES) choice(v, titleCase(v))
+        for (const t of themes) if (!(c.id === "theme.delete" && t.builtin)) choice(t.id, t.name)
         break
       case "tab":
         for (const t of tabs) choice(t.key, t.title)
+        break
+      case "screen":
+        for (const s of screens) choice(s.key, s.title)
         break
       default:
         out.push({ ...base, key: c.id, title: `${c.title}…`, arg: null, ask: c.arg })
@@ -118,6 +140,8 @@ export function argHint(kind: Arg): string {
       return "Place ID, game link, or a friend"
     case "outfit":
       return "Outfit ID"
+    case "font":
+      return "A Google Fonts name, or Inter, JetBrains Mono or System"
     default:
       return "Type, then press Enter"
   }

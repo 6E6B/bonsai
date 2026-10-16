@@ -53,6 +53,12 @@ pub struct AssetEconomyDetails {
     #[serde(rename = "IsForSale")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_for_sale: Option<bool>,
+    #[serde(rename = "IsPublicDomain")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_public_domain: Option<bool>,
+    #[serde(rename = "MinimumMembershipLevel")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub minimum_membership_level: Option<i32>,
     #[serde(rename = "Name")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,

@@ -99,6 +99,12 @@ pub const ROBLOX_USER_ID: u64 = 1;
 
 /// Whether a name reads as "Roblox" once decoration (symbols, spaces, accents) is dropped and
 /// lookalike letters and digits are folded: "Roblox°°°", "R0BL0X", "Rоblox" with a Cyrillic о.
+/// A creator whose name passes for Roblox but isn't Roblox's account.
+pub(crate) fn fake_roblox(name: &str, id: u64, is_group: bool) -> bool {
+    let official = id == ROBLOX_USER_ID && !is_group;
+    !official && reads_as_roblox(name)
+}
+
 fn reads_as_roblox(name: &str) -> bool {
     let folded: String = name
         .chars()
@@ -183,8 +189,7 @@ impl CatalogItem {
 
     /// Named to pass as Roblox's own account (user 1), like "Roblox°°°" or "R0BL0X".
     pub fn fake_roblox_creator(&self) -> bool {
-        let official = self.creator_id == ROBLOX_USER_ID && !self.creator_is_group;
-        !official && reads_as_roblox(&self.creator)
+        fake_roblox(&self.creator, self.creator_id, self.creator_is_group)
     }
 
     /// "Hat", "Hair", "Body bundle"...
@@ -253,6 +258,7 @@ pub fn asset_type_name(t: i32) -> &'static str {
         2 => "Classic T-shirt",
         3 => "Audio",
         4 => "Mesh",
+        5 => "Script",
         8 => "Hat",
         9 => "Place",
         10 => "Model",
@@ -265,6 +271,7 @@ pub fn asset_type_name(t: i32) -> &'static str {
         21 => "Badge",
         24 => "Animation",
         27..=31 => "Body part",
+        32 => "Package",
         34 => "Pass",
         38 => "Plugin",
         40 => "Mesh part",
@@ -287,6 +294,7 @@ pub fn asset_type_name(t: i32) -> &'static str {
         70 => "Left shoe",
         71 => "Right shoe",
         72 => "Dress or skirt",
+        73 => "Font family",
         76 => "Eyebrows",
         77 => "Eyelashes",
         78 => "Mood",

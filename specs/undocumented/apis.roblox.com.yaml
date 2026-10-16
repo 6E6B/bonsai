@@ -119,6 +119,18 @@ paths:
         - { in: query, name: exclusiveStartId, required: false, type: integer, format: int64 }
       responses:
         "200": { description: OK, schema: { $ref: "#/definitions/UserGamePassesPage" } }
+  /game-passes/v1/game-passes/{gamePassId}/product-info:
+    get:
+      # Captured 2026-10-15 live, signed out (fixture: inventory.json); the site's ItemPurchase
+      # bundle reads it for a pass's name, price and creator on www.roblox.com/game-pass/{id}.
+      # It has no universe or place id.
+      x-captured: "2026-10-15, www.roblox.com/game-pass/{id}"
+      x-rust-name: get_game_pass_product_info
+      summary: A pass's name, description, creator, price and dates.
+      parameters:
+        - { in: path, name: gamePassId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/GamePassProductInfo" } }
   /experience-guidelines-api/experience-guidelines/get-age-recommendation:
     post:
       # Captured 2026-10-12 live (fixture: experience.json). Maturity label on the experience page.
@@ -535,6 +547,25 @@ definitions:
     type: object
     properties:
       funCaptchaPublicKeys: { type: object, additionalProperties: { type: string } }
+  GamePassProductInfo:
+    type: object
+    properties:
+      TargetId: { type: integer, format: int64 }
+      ProductId: { type: integer, format: int64 }
+      Name: { type: string }
+      Description: { type: string }
+      Creator: { $ref: "#/definitions/GamePassProductCreator" }
+      PriceInRobux: { type: integer, format: int64 }
+      IsForSale: { type: boolean }
+      Created: { type: string }
+      Updated: { type: string }
+      Sales: { type: integer, format: int64 }
+  GamePassProductCreator:
+    type: object
+    properties:
+      Id: { type: integer, format: int64 }
+      Name: { type: string }
+      CreatorType: { type: string }
   TransactionTotals:
     type: object
     properties:

@@ -24,10 +24,16 @@ pub enum ArgKind {
     Color,
     /// an outfit of the active account
     Outfit,
-    /// a theme name
+    /// system, dark or light
+    Mode,
+    /// an installed theme
     Theme,
+    /// a Google Fonts family or a bundled font
+    Font,
     /// one of the open tabs
     Tab,
+    /// a screen that can sit in the sidebar
+    Screen,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -198,14 +204,26 @@ commands! {
     GoFriends => "nav.friends", "Go to Friends", ["friends", "connections", "requests", "followers"], None, [Shortcut::seq("G", "F")];
     OpenSettings => "nav.settings", "Settings", ["settings", "preferences", "options"], SettingsSection, [Shortcut::ctrl("Comma")];
     OpenGame => "game.open", "Open experience", ["game", "experience", "place", "open"], Text, [];
-    OpenItem => "market.open", "Open item", ["item", "asset", "bundle", "open"], Text, [];
+    OpenItem => "market.open", "Open item", ["item", "asset", "bundle", "pass", "open"], Text, [];
+    PreviewItem => "market.preview", "Preview item in a side panel", ["item", "asset", "bundle", "preview", "peek", "details", "inspect", "side"], Text, [];
     OpenCommunity => "group.open", "Open community", ["group", "community", "open"], Text, [];
     GoComponents => "nav.components", "Go to Components (UI gallery)", ["components", "gallery", "ui", "design"], None, [];
     GoOverview => "nav.overview", "Go to Overview (console clone test)", ["overview", "console", "clone", "test", "card"], None, [];
 
     ToggleDrawer => "view.drawer", "Toggle friends and chat drawer", ["friends", "chat", "drawer", "panel"], None, [Shortcut::ctrl("Backslash")];
     ToggleSidebar => "view.sidebar", "Collapse or expand the sidebar", ["sidebar", "collapse"], None, [Shortcut::ctrl("B")];
-    SetTheme => "view.theme", "Theme", ["theme", "dark", "light", "system"], Theme, [];
+    ToggleSidebarScreen => "view.sidebar_toggle", "Show or hide in the sidebar", ["sidebar", "hide", "show", "remove", "customize", "screens"], Screen, [];
+    SidebarMoveUp => "view.sidebar_up", "Move up in the sidebar", ["sidebar", "reorder", "order", "customize"], Screen, [];
+    SidebarMoveDown => "view.sidebar_down", "Move down in the sidebar", ["sidebar", "reorder", "order", "customize"], Screen, [];
+    SetSidebarOrder => "view.sidebar_order", "Set sidebar order (screens, in order)", ["sidebar", "reorder", "order", "customize"], Text, [];
+    ResetSidebar => "view.sidebar_reset", "Reset sidebar order and hidden screens", ["sidebar", "reset", "default", "customize"], None, [];
+    SetMode => "view.theme", "Light, dark or follow the system", ["theme", "mode", "dark", "light", "system", "appearance"], Mode, [];
+    ApplyTheme => "theme.apply", "Use theme", ["theme", "color", "colour", "appearance", "skin", "palette"], Theme, [];
+    CycleTheme => "theme.cycle", "Next theme", ["theme", "cycle", "switch", "appearance"], None, [];
+    DeleteTheme => "theme.delete", "Delete theme", ["theme", "remove"], Theme, [];
+    DuplicateTheme => "theme.duplicate", "Duplicate theme", ["theme", "copy", "clone", "new"], Theme, [];
+    SetThemeFont => "theme.font", "Theme font", ["theme", "font", "typeface", "google", "text"], Font, [];
+    SetThemeMonoFont => "theme.mono_font", "Theme code font", ["theme", "font", "mono", "monospace", "code", "google"], Font, [];
     SetDensity => "view.density", "Density (compact or comfortable)", ["density", "compact", "comfortable", "dense", "spacing"], Text, [];
     ZoomIn => "view.zoom_in", "Zoom in", ["scale", "bigger", "font"], None, [Shortcut::ctrl("Plus"), Shortcut::ctrl("Equals")];
     ZoomOut => "view.zoom_out", "Zoom out", ["scale", "smaller", "font"], None, [Shortcut::ctrl("Minus")];

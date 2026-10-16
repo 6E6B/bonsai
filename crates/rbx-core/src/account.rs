@@ -362,6 +362,13 @@ impl Paths {
     pub fn thumbs_dir(&self) -> PathBuf {
         self.cache.join("thumbs")
     }
+    pub fn themes_dir(&self) -> PathBuf {
+        self.config.join("themes")
+    }
+    /// Downloaded Google Fonts. Safe to delete: a theme that uses one downloads it again.
+    pub fn fonts_dir(&self) -> PathBuf {
+        self.cache.join("fonts")
+    }
 }
 
 #[cfg(test)]

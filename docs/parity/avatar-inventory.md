@@ -54,12 +54,13 @@
   - [x] Places / Experiences owned — places the user made only; the other place tabs need a capture (BLOCKERS.md #15)
   - [x] Development Assets (Audio, Decals, Meshes, Models, Plugins, Videos) — from the inventory's own category list
 - [x] **Item Card Details**:
-  - [x] Asset thumbnail, name, creator name, verified badge
+  - [x] Asset thumbnail and name on the tile; creator and verified badge in the inspection drawer
   - [x] Stacked item count badge (e.g. `x4` copies owned)
   - [x] Limited / Limited U serial number badge (`#12` of 500)
   - [x] Copy Asset ID button
 - [x] **Inspection & Actions**:
-  - [x] Quick inspection drawer (description, creator, asset ID, resale price) — click a tile or `inventory.inspect`; assets the catalog doesn't list (decals, audio, models) come from the economy asset details
+  - [x] Click a tile to open its page in a tab (item, bundle, pass, badge's or place's experience); Ctrl+click previews it in the inspection drawer instead
+  - [x] Quick inspection drawer (description, creator, asset ID, resale price) — Ctrl+click a tile, its Inspect menu row or `inventory.inspect`; covers items, bundles, passes, badges and places; assets the catalog doesn't list (decals, audio, models, plugins) come from the economy asset details
   - [x] Direct Wear / Remove button on compatible inventory items — in the drawer and the tile menu, for the active account's own wearable items; worn tiles have a ring
   - [x] Delete asset from inventory (for free items, badges, or decals where supported)
 - [x] **Search & Filtering**:

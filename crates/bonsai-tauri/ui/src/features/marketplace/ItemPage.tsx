@@ -1,5 +1,6 @@
 import { useLocation, useParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { assetIcon } from "~/lib/asset-icon"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
 import { handle, run } from "~/lib/commands/registry"
@@ -54,7 +55,8 @@ const ms = (iso: string) => {
 const emptyPaged = <T,>(): Paged<T> => ({ list: emptyList<T>(), moreKey: "" })
 
 /** One catalog item: picture, price, buy, favorite, wishlist, details and, for limiteds,
- * resellers (each copy buyable), price history and owners. */
+ * resellers (each copy buyable), price history and owners. Assets the catalog doesn't list
+ * (models, decals, audio, plugins, meshes, videos...) show their economy details instead. */
 export default function ItemPage() {
   const params = useParams()
   const location = useLocation()
@@ -83,11 +85,13 @@ export default function ItemPage() {
   })
 
   const info = () => view.info
+  const inCatalog = () => info()?.inCatalog ?? true
   const thumb = () => thumbUrl(bundle() ? "bundle" : "asset", id())
   const dialog = useDialog()
   const buy = (account?: number) => {
     const i = info()
     if (!i) return showToast("Still loading. Try again in a moment.")
+    if (!i.inCatalog) return showToast("This isn't sold in the Marketplace. Open it on the website.")
     if (i.price === null) return showToast("It's not for sale.")
     if (account === undefined && view.owned) return showToast("You already own this.")
     const price = i.price
@@ -119,7 +123,7 @@ export default function ItemPage() {
   const resells = () => Boolean(info()?.collectibleId && info()?.limited)
   const [section, setSection] = createSignal("similar")
   const sections = createMemo(() => [
-    { value: "similar", label: "Similar items" },
+    { value: "similar", label: "Similar items", disabled: !inCatalog() },
     { value: "resellers", label: "Resellers", disabled: !resells() },
     { value: "history", label: "Price history", disabled: !resells() },
     { value: "owners", label: "Owners", disabled: !resells() || bundle() },
@@ -145,7 +149,7 @@ export default function ItemPage() {
               class="w-72 self-start"
               alt={item().name}
               src={thumbUrl(bundle() ? "bundle" : "asset", id(), true)}
-              fallback="avatar"
+              fallback={bundle() ? "avatar" : assetIcon(item().assetType)}
             />
             <div class="flex min-w-64 flex-1 flex-col gap-3">
               <div class="flex flex-col gap-1">
@@ -154,6 +158,9 @@ export default function ItemPage() {
                   <Show when={item().limited}>{(l) => <Badge variant="success">{l()}</Badge>}</Show>
                   <Show when={item().premiumOnly}>
                     <Badge>Premium</Badge>
+                  </Show>
+                  <Show when={item().publicDomain}>
+                    <Badge>Free to take</Badge>
                   </Show>
                 </div>
                 <span class="flex items-center gap-1 text-fg-muted">
@@ -183,23 +190,32 @@ export default function ItemPage() {
                 </Show>
               </Show>
               <div class="flex flex-wrap gap-1.5">
-                <Button
-                  variant="primary"
-                  disabled={item().price === null || view.owned}
-                  onClick={() => run("market.buy", target())}
+                <Show
+                  when={item().inCatalog}
+                  fallback={
+                    <Button icon="external" onClick={() => run("entity.open_website", target())}>
+                      Open on website
+                    </Button>
+                  }
                 >
-                  <Switch>
-                    <Match when={view.owned}>Owned</Match>
-                    <Match when={item().price === 0}>Get</Match>
-                    <Match when>Buy</Match>
-                  </Switch>
-                </Button>
-                <Menu
-                  items={accountItems("market.buy_as")}
-                  disabled={item().price === null || accountItems("market.buy_as").length === 0}
-                >
-                  Buy as…
-                </Menu>
+                  <Button
+                    variant="primary"
+                    disabled={item().price === null || view.owned}
+                    onClick={() => run("market.buy", target())}
+                  >
+                    <Switch>
+                      <Match when={view.owned}>Owned</Match>
+                      <Match when={item().price === 0}>Get</Match>
+                      <Match when>Buy</Match>
+                    </Switch>
+                  </Button>
+                  <Menu
+                    items={accountItems("market.buy_as")}
+                    disabled={item().price === null || accountItems("market.buy_as").length === 0}
+                  >
+                    Buy as…
+                  </Menu>
+                </Show>
                 <ToggleButton
                   icon="star"
                   pressedIcon="star-fill"
@@ -209,14 +225,16 @@ export default function ItemPage() {
                 >
                   Favorite
                 </ToggleButton>
-                <ToggleButton
-                  icon="heart"
-                  pressedIcon="heart-fill"
-                  pressed={view.wishlisted}
-                  onChange={() => run("market.wishlist", target())}
-                >
-                  Wishlist
-                </ToggleButton>
+                <Show when={item().inCatalog}>
+                  <ToggleButton
+                    icon="heart"
+                    pressedIcon="heart-fill"
+                    pressed={view.wishlisted}
+                    onChange={() => run("market.wishlist", target())}
+                  >
+                    Wishlist
+                  </ToggleButton>
+                </Show>
                 <Menu
                   icon="more"
                   label="More"
@@ -238,7 +256,12 @@ export default function ItemPage() {
                 <Show when={item().genres.length > 0}>
                   <Stat label="Genres">{item().genres.join(", ")}</Stat>
                 </Show>
-                <Stat label="Favorites">{compact(item().favorites)}</Stat>
+                <Show when={item().inCatalog}>
+                  <Stat label="Favorites">{compact(item().favorites)}</Stat>
+                </Show>
+                <Show when={item().sales > 0}>
+                  <Stat label="Sales">{compact(item().sales)}</Stat>
+                </Show>
                 <Show when={ms(item().created)}>{(t) => <Stat label="Created">{date(t())}</Stat>}</Show>
                 <Show when={ms(item().updated)}>{(t) => <Stat label="Updated">{date(t())}</Stat>}</Show>
                 <Show when={item().totalQuantity > 0}>
@@ -276,40 +299,42 @@ export default function ItemPage() {
         )}
       </Show>
 
-      <Tabs aria-label="Item sections" items={sections()} value={section()} onChange={setSection}>
-        <TabPanel value="similar">
-          <Show when={bundle() || info()?.assetType}>
-            <Similar id={id()} bundle={bundle()} assetType={info()?.assetType ?? 0} />
-          </Show>
-        </TabPanel>
-        <TabPanel value="resellers">
-          <Show when={info()}>
-            {(i) => (
-              <Show when={i().collectibleId}>
-                {(c) => <Resellers collectibleId={c()} id={id()} bundle={bundle()} name={i().name} thumb={thumb()} />}
-              </Show>
-            )}
-          </Show>
-        </TabPanel>
-        <TabPanel value="history">
-          <Show when={info()}>
-            {(i) => (
-              <Show when={i().collectibleId}>
-                {(c) => (
-                  <PriceHistory
-                    collectibleId={c()}
-                    value={view.value?.tag.value ?? null}
-                    best={i().fromReseller ? i().price : null}
-                  />
-                )}
-              </Show>
-            )}
-          </Show>
-        </TabPanel>
-        <TabPanel value="owners">
-          <Owners assetId={id()} />
-        </TabPanel>
-      </Tabs>
+      <Show when={inCatalog()}>
+        <Tabs aria-label="Item sections" items={sections()} value={section()} onChange={setSection}>
+          <TabPanel value="similar">
+            <Show when={bundle() || info()?.assetType}>
+              <Similar id={id()} bundle={bundle()} assetType={info()?.assetType ?? 0} />
+            </Show>
+          </TabPanel>
+          <TabPanel value="resellers">
+            <Show when={info()}>
+              {(i) => (
+                <Show when={i().collectibleId}>
+                  {(c) => <Resellers collectibleId={c()} id={id()} bundle={bundle()} name={i().name} thumb={thumb()} />}
+                </Show>
+              )}
+            </Show>
+          </TabPanel>
+          <TabPanel value="history">
+            <Show when={info()}>
+              {(i) => (
+                <Show when={i().collectibleId}>
+                  {(c) => (
+                    <PriceHistory
+                      collectibleId={c()}
+                      value={view.value?.tag.value ?? null}
+                      best={i().fromReseller ? i().price : null}
+                    />
+                  )}
+                </Show>
+              )}
+            </Show>
+          </TabPanel>
+          <TabPanel value="owners">
+            <Owners assetId={id()} />
+          </TabPanel>
+        </Tabs>
+      </Show>
     </Page>
   )
 }

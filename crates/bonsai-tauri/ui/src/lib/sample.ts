@@ -114,6 +114,7 @@ export const browserShell: Shell = {
   login: null,
   challenge: null,
   itemValues: false,
+  sidebar: { order: [], hidden: ["messages"] },
 }
 
 /** A sample game as the tile view the backend sends. Universe 0 so no thumbnail is fetched

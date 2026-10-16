@@ -114,8 +114,8 @@
 ## Badges, Favorites & Following
 - [x] Badges earned per user
 - [x] Badges per experience (experience page Badges tab)
-- [x] Favorites per user (profile Favorites tab)
-- [x] Followed experiences per user (Followed tab; Roblox only shows this list for your own accounts)
+- [x] Favorites per user (profile Experiences tab, Favorites list)
+- [x] Followed experiences per user (Experiences tab, Following list; Roblox only shows this list for your own accounts)
 
 ## Search & Command Palette
 - [x] Global Command Bar (`Ctrl+K`) with fuzzy completion

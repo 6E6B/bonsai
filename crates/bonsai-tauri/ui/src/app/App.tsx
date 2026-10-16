@@ -11,6 +11,7 @@ const Profile = lazy(() => import("~/features/profile/Profile"))
 const AvatarEditor = lazy(() => import("~/features/avatar/AvatarEditor"))
 const Marketplace = lazy(() => import("~/features/marketplace/Marketplace"))
 const ItemPage = lazy(() => import("~/features/marketplace/ItemPage"))
+const PassPage = lazy(() => import("~/features/marketplace/PassPage"))
 const Inventory = lazy(() => import("~/features/inventory/Inventory"))
 const Trades = lazy(() => import("~/features/trades/Trades"))
 const Values = lazy(() => import("~/features/values/Values"))
@@ -38,6 +39,7 @@ export function App() {
         <Route path="/marketplace" component={Marketplace} />
         <Route path="/catalog/:id" component={ItemPage} />
         <Route path="/bundles/:id" component={ItemPage} />
+        <Route path="/passes/:id" component={PassPage} />
         <Route path="/inventory/:user?" component={Inventory} />
         <Route path="/trades" component={Trades} />
         <Route path="/values" component={Values} />

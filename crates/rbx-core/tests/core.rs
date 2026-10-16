@@ -1316,6 +1316,15 @@ async fn inventory_passes_badges_places_and_asset_info() {
     assert!(!decal.creator.is_empty() && decal.creator_id > 0 && !decal.creator_is_group);
     assert_eq!(decal.price, None);
     assert!(decal.created.starts_with("2010-12-02"));
+    assert!(decal.public_domain && !decal.premium_only);
+
+    // A pass: its own page reads product info.
+    let pass = poll(|| c.pass_info(1)).await;
+    assert_eq!(pass.name, "Never get banned");
+    assert_eq!((pass.creator.as_str(), pass.creator_is_group), ("user1", false));
+    assert_eq!(pass.product_id, 3_613_243_303);
+    assert_eq!(pass.price, None);
+    assert!(pass.created.starts_with("2017-05-24"));
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -2445,4 +2454,127 @@ async fn transactions_ledger_syncs_backfills_and_sums() {
 
     let csv = rbx_core::transactions::csv(l.rows.iter());
     assert_eq!(csv.lines().count(), 3);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn themes_apply_cycle_delete_and_persist() {
+    use rbx_core::settings::Mode;
+    use rbx_core::themes::{self, Theme};
+    let dir = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(dir.path());
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, Arc::default());
+    let c = &r.core;
+    assert_eq!(c.appearance_theme(themes::Base::Dark).id, "dark");
+
+    let mut mine = Theme::parse(r#"{"schema":1,"id":"mine","base":"light","name":"Mine"}"#).unwrap();
+    c.save_theme(mine.clone()).unwrap();
+    mine.name = "Mine 2".into();
+    c.save_theme(mine.clone()).unwrap();
+    assert!(
+        c.save_theme(Theme {
+            id: "dark".into(),
+            ..mine.clone()
+        })
+        .is_err()
+    );
+
+    // Applying sets the slot for the theme's base and switches to that base.
+    c.apply_theme("mine").unwrap();
+    let a = c.settings().appearance;
+    assert_eq!(
+        (a.mode, a.light.as_str(), a.dark.as_str()),
+        (Mode::Light, "mine", "dark")
+    );
+    assert!(c.apply_theme("nope").is_err());
+
+    // Cycling walks built-ins, then user themes, and wraps.
+    c.cycle_theme();
+    assert_eq!(c.settings().appearance.dark, "dark");
+    assert_eq!(c.settings().appearance.mode, Mode::Dark);
+    c.cycle_theme();
+    assert_eq!(c.settings().appearance.light, "light");
+
+    // Written by the worker; a fresh load sees it.
+    let file = paths.themes_dir().join("mine.json");
+    let start = Instant::now();
+    while themes::Themes::load(&paths.themes_dir())
+        .get("mine")
+        .map(|t| t.name.as_str())
+        != Some("Mine 2")
+    {
+        assert!(start.elapsed() < Duration::from_secs(10), "theme never written");
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+
+    // Deleting puts a slot that used it back on the built-in.
+    c.apply_theme("mine").unwrap();
+    assert!(c.delete_theme("light").is_err());
+    c.delete_theme("mine").unwrap();
+    assert_eq!(c.settings().appearance.light, "light");
+    assert!(c.themes().iter().all(|(t, _)| t.id != "mine"));
+    let start = Instant::now();
+    while file.exists() {
+        assert!(start.elapsed() < Duration::from_secs(10), "theme never deleted");
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn google_font_copies_a_builtin_and_downloads_its_files() {
+    use rbx_core::settings::Mode;
+    use rbx_core::themes::{self, FontSlot};
+    let replay = Replay::from_fixture(&replay::load("fonts")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(dir.path());
+    let r = rig(Base::Replay(replay.server.uri()), dir, Arc::default());
+    let c = &r.core;
+    c.update_settings(|s| s.appearance.mode = Mode::Dark);
+
+    // Bundled fonts need no catalog; unknown names do.
+    assert!(c.set_theme_font(FontSlot::Sans, "Nope Sans").is_err());
+    let catalog = poll(|| c.font_catalog()).await;
+    assert_eq!(catalog[0].family, "Inter");
+    assert!(
+        catalog.iter().all(|f| f.family != "Molle"),
+        "italic-only families are dropped"
+    );
+    assert!(c.set_theme_font(FontSlot::Sans, "Nope Sans").is_err());
+
+    // A built-in theme is copied, and the copy is used.
+    c.set_theme_font(FontSlot::Sans, "space grotesk").unwrap();
+    let shown = c.appearance_theme(themes::Base::Dark);
+    assert_eq!(
+        (shown.id.as_str(), shown.name.as_str()),
+        ("dark-copy", "Dark copy")
+    );
+    assert_eq!(shown.google_font(FontSlot::Sans), Some("Space Grotesk"));
+    assert_eq!(c.appearance_fonts(), vec!["Space Grotesk".to_owned()]);
+    assert!(
+        c.themes()
+            .iter()
+            .any(|(t, b)| t.id == "dark" && *b && t.google_font(FontSlot::Sans).is_none())
+    );
+
+    // The files land on disk, one per weight.
+    let files = poll(|| c.google_font("Space Grotesk")).await;
+    let weights: Vec<u16> = files.files.iter().map(|f| f.weight).collect();
+    assert_eq!(weights, vec![400, 500, 600, 700]);
+    let bytes = std::fs::read(paths.fonts_dir().join("space-grotesk/700.ttf")).unwrap();
+    assert!(bytes.ends_with(b"space-grotesk-700"));
+
+    // Switching back to a bundled font edits the copy in place.
+    c.set_theme_font(FontSlot::Sans, "Inter").unwrap();
+    assert_eq!(c.appearance_theme(themes::Base::Dark).id, "dark-copy");
+    assert!(c.appearance_fonts().is_empty());
+
+    // In System mode the theme the OS shows is changed, and the mode stays.
+    c.update_settings(|s| s.appearance.mode = Mode::System);
+    c.set_system_dark(false);
+    c.set_theme_font(FontSlot::Mono, "System").unwrap();
+    assert_eq!(c.settings().appearance.mode, Mode::System);
+    assert_eq!(c.appearance_theme(themes::Base::Light).id, "light-copy");
+    assert_eq!(c.appearance_theme(themes::Base::Dark).id, "dark-copy");
+
+    let reqs = replay.requests().await;
+    assert!(reqs.iter().all(|q| !q.headers.contains_key("cookie")));
 }

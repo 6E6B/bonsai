@@ -1,4 +1,5 @@
 import { createSignal, For, type ParentProps } from "solid-js"
+import { applyAppearance, DEFAULT_SEEDS, derive, type Mode } from "~/lib/theme"
 import {
   Alert,
   Avatar,
@@ -9,6 +10,7 @@ import {
   Clamp,
   Collapsible,
   type Column,
+  Combobox,
   ContextMenu,
   DataTable,
   Dialog,
@@ -44,13 +46,13 @@ import {
   type StripTab,
   Swatch,
   Switch,
-  setTheme,
   showToast,
   TabPanel,
   TabStrip,
   Tabs,
   TextField,
   TextLink,
+  ThemeCard,
   Thumbnail,
   Tile,
   ToggleButton,
@@ -132,10 +134,25 @@ function Section(props: ParentProps<{ title: string }>) {
 }
 
 /** Dev gallery of our UI components. */
+const galleryThemes = [
+  { name: "Dark", detail: "Bonsai", tokens: derive("dark", DEFAULT_SEEDS.dark) },
+  { name: "Light", detail: "Bonsai", tokens: derive("light", DEFAULT_SEEDS.light) },
+  {
+    name: "Ember",
+    detail: "Warm, rounder",
+    tokens: derive("dark", { ...DEFAULT_SEEDS.dark, background: "#1c1714", accent: "#d9612b", radius: 1.5 }),
+  },
+]
+
+const galleryFonts = ["Inter", "Space Grotesk", "IBM Plex Sans", "Manrope", "Work Sans"]
+
 export default function Components() {
   const [height, setHeight] = createSignal(100)
   const [swatch, setSwatch] = createSignal("var(--color-accent)")
+  const [themeCard, setThemeCard] = createSignal("Dark")
   const [sort, setSort] = createSignal("Popular")
+  const [font, setFont] = createSignal("Inter")
+  const [fontQuery, setFontQuery] = createSignal("")
   const [open, setOpen] = createSignal(false)
   const [emojiOpen, setEmojiOpen] = createSignal(false)
   const [emoji, setEmoji] = createSignal("🙂")
@@ -161,7 +178,7 @@ export default function Components() {
           size="sm"
           options={["system", "dark", "light"]}
           defaultValue="system"
-          onChange={(v) => setTheme(v as "system" | "dark" | "light")}
+          onChange={(v) => applyAppearance(v as Mode)}
         />
       </div>
 
@@ -205,6 +222,21 @@ export default function Components() {
         <span class="text-2xl">{emoji()}</span>
       </Section>
 
+      <Section title="Theme card">
+        <For each={galleryThemes}>
+          {(t) => (
+            <ThemeCard
+              class="w-40"
+              name={t.name}
+              detail={t.detail}
+              tokens={t.tokens}
+              selected={themeCard() === t.name}
+              onClick={() => setThemeCard(t.name)}
+            />
+          )}
+        </For>
+      </Section>
+
       <Section title="Text field">
         <div class="flex w-full max-w-md flex-col gap-4">
           <TextField label="Display name" placeholder="Builderman" description="Shown to other players." />
@@ -219,6 +251,20 @@ export default function Components() {
         <Select size="sm" aria-label="Small" options={["One", "Two"]} placeholder="Small" />
       </Section>
 
+      <Section title="Combobox">
+        <Combobox
+          label="Font"
+          placeholder="Pick a font"
+          searchPlaceholder="Search fonts"
+          options={galleryFonts
+            .filter((f) => f.toLowerCase().includes(fontQuery().toLowerCase()))
+            .map((f) => ({ value: f, label: f, detail: "Sans Serif" }))}
+          value={font()}
+          onSearch={setFontQuery}
+          onChange={setFont}
+        />
+        <Combobox size="sm" aria-label="Loading" options={[]} placeholder="Opens to a loading list" loading />
+      </Section>
       <Section title="Switch and checkbox">
         <Switch defaultChecked>Show online friends first</Switch>
         <Switch disabled>Disabled</Switch>

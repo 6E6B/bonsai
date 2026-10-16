@@ -35,6 +35,12 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
       : { title: "Leave this community?", confirm: "Leave", danger: true },
   "group.kick": () => ({ title: "Remove this member?", confirm: "Remove", danger: true }),
   "group.delete_post": () => ({ title: "Delete this post?", confirm: "Delete", danger: true }),
+  "theme.delete": () => ({
+    title: "Delete this theme?",
+    description: "Export it first if you want to keep a copy.",
+    confirm: "Delete",
+    danger: true,
+  }),
   // Without an argument these open a form first; the form runs them again with one.
   "group.payout": (arg) =>
     arg?.trim()

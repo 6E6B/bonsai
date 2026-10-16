@@ -23,6 +23,9 @@
   - [ ] "Try On" avatar preview toggle
   - [x] Asset metadata: Asset ID, genres, tags, description, created and updated dates
   - [x] Download clothing template (shirts, pants, T-shirts) to the downloads folder, plain or masked to the template regions; in the item page's More menu, item right-click menus and the command bar (not run live yet)
+  - [x] Assets the catalog doesn't list (models, decals, images, audio, meshes, plugins, videos, packages): the item page shows their economy details (creator, type, price or "Free to take", Premium only, sales, created and updated) with an Open on website button; buy, wishlist and similar items are hidden. Thumbnails fall back to a per-type icon
+  - [x] Ctrl+click an item tile anywhere (marketplace, profile, community store, similar items) to preview it in a side panel instead of opening a tab (`market.preview`)
+  - [x] Game pass page (`/passes/<id>`, `market.open pass:<id>`, game-pass links): name, creator, price, description, sales, dates. Roblox doesn't say which experience sells a pass, so buying stays on the website or the experience's Store tab
 - [x] **Limiteds & Resellers**:
   - [x] Resellers list: Seller avatar, username, serial number (#), resale price, Buy button
   - [x] Historical resale price chart: daily average price and copies sold, 7-day average, RAP, Rolimons value and best price lines, crosshair with price and date readout (hover or arrow keys), 7D/30D/90D/1Y/All, linear or log scale, chart or table (`market.history_range`, `market.history_scale`, `market.history_view`)

@@ -17,7 +17,8 @@ import {
   scopes,
 } from "~/lib/commands/palette"
 import { command, commandList, run } from "~/lib/commands/registry"
-import { commands, type RemoteSearch } from "~/lib/ipc/bindings"
+import { commands, type RemoteSearch, type ThemeView } from "~/lib/ipc/bindings"
+import { screenKey, sidebarScreens } from "~/lib/screens"
 import { friends, shell, useLive } from "~/lib/store"
 import { tabLabel, tabs } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
@@ -29,11 +30,18 @@ import { Avatar, Icon, Kbd, SegmentedControl, Spinner, TextField, Thumbnail, use
  * it after you pick them. */
 export function CommandPalette() {
   const dialog = useDialog()
+  const themes = useLive(
+    () => "themes",
+    () => commands.themes(),
+    (): ThemeView[] => [],
+  )
   const entries = createMemo(() =>
     paletteEntries(
       commandList(),
       shell.accounts,
       tabs.tabs.map((t) => ({ key: t.key, title: tabLabel(t.path).title })),
+      sidebarScreens().map((s) => ({ key: screenKey(s), title: s.label })),
+      themes,
     ),
   )
   const people = createMemo(() =>

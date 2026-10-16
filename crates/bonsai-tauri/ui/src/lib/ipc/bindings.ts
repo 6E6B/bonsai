@@ -127,6 +127,7 @@ export const commands = {
 	catalogOptions: () => __TAURI_INVOKE<CatalogOptions>("catalog_options"),
 	catalogSearch: (filter: CatalogFilter) => __TAURI_INVOKE<Paged<ItemCard>>("catalog_search", { filter }),
 	itemPage: (id: Id, bundle: boolean) => __TAURI_INVOKE<ItemView>("item_page", { id, bundle }),
+	passPage: (id: Id) => __TAURI_INVOKE<PassView>("pass_page", { id }),
 	itemResellers: (collectibleId: string) => __TAURI_INVOKE<Paged<ResellerRow>>("item_resellers", { collectibleId }),
 	/**
 	 *  Buys an item from whoever "Buy" sells it for now (`CatalogItem::buy_offer`). Called only from
@@ -255,6 +256,16 @@ export const commands = {
 	myPrivateServers: (tab: string) => __TAURI_INVOKE<List<MyServerRow>>("my_private_servers", { tab }),
 	/**  App preferences, and the disk cache size once measured. */
 	appSettings: () => __TAURI_INVOKE<AppSettings>("app_settings"),
+	/**  Every installed theme: built-ins first, then the user's by name. */
+	themes: () => __TAURI_INVOKE<ThemeView[]>("themes"),
+	appearance: () => __TAURI_INVOKE<AppearanceView>("appearance"),
+	/**  The UI reports whether the OS prefers dark, so System mode knows which theme is on screen. */
+	setSystemDark: (dark: boolean) => __TAURI_INVOKE<void>("set_system_dark", { dark }),
+	/**
+	 *  Families whose name contains `query` (any case), only monospace ones when `mono`. Names that
+	 *  start with the query come first.
+	 */
+	fontCatalog: (query: string, mono: boolean) => __TAURI_INVOKE<FontCatalogView>("font_catalog", { query, mono }),
 	/**  Account PIN of the active account. */
 	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
 	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */
@@ -330,7 +341,10 @@ export type AffiliatesView = {
 
 export type AppSettings = {
 	/**  `system`, `dark` or `light`. */
-	theme: string,
+	mode: string,
+	/**  Theme ids for each base. Always installed themes of that base. */
+	darkTheme: string,
+	lightTheme: string,
 	/**  `comfortable` or `compact`. */
 	density: string,
 	/**  Empty uses the system's `roblox-player:` handler. */
@@ -343,7 +357,18 @@ export type AppSettings = {
 	cacheImages: number | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "theme" | "tab";
+/**  What the window should look like: the mode and the theme for each base. */
+export type AppearanceView = {
+	/**  `system`, `dark` or `light`. */
+	mode: string,
+	/**  Theme documents as JSON. */
+	dark: string,
+	light: string,
+	/**  The Google Fonts the two themes use, to register with the webview as they download. */
+	fonts: FontView[],
+};
+
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen";
 
 export type AuditRow = {
 	actorId: Id,
@@ -653,6 +678,34 @@ export type EventRow = {
 	going: boolean,
 };
 
+/**  Google Fonts families for the font picker. */
+export type FontCatalogView = {
+	/**  Matches for the query, most popular first, at most `FONT_MATCHES`. */
+	fonts: FontInfoView[],
+	loading: boolean,
+	error: string | null,
+};
+
+export type FontFileView = {
+	weight: number,
+	/**  Path under `font://`, like `space-grotesk/400.ttf`. */
+	path: string,
+};
+
+export type FontInfoView = {
+	family: string,
+	category: string,
+};
+
+/**  A Google Fonts family on disk, served over `font://`. */
+export type FontView = {
+	family: string,
+	/**  Empty until downloaded. */
+	files: FontFileView[],
+	loading: boolean,
+	error: string | null,
+};
+
 export type ForumCategoryRow = {
 	id: string,
 	name: string,
@@ -919,6 +972,15 @@ export type ItemInfo = {
 	unitsLeft: number,
 	premiumOnly: boolean,
 	contents: BundlePartView[],
+	/**
+	 *  The Marketplace lists it. Otherwise (models, decals, audio, plugins...) only economy
+	 *  details are known: no buying, wishlist, similar items or tags.
+	 */
+	inCatalog: boolean,
+	/**  Anyone can take a copy, for assets outside the catalog. */
+	publicDomain: boolean,
+	/**  Copies sold or taken, for assets outside the catalog; 0 when unknown. */
+	sales: number,
 };
 
 export type ItemView = {
@@ -1169,6 +1231,22 @@ export type PassCard = {
 	price: number | null,
 };
 
+export type PassInfoView = {
+	id: Id,
+	name: string,
+	description: string,
+	creator: string,
+	creatorId: Id,
+	creatorIsGroup: boolean,
+	price: number | null,
+	/**  "R$ 1,234", "Free" or "Off sale". */
+	priceLabel: string,
+	sales: number,
+	/**  ISO dates; empty when unknown. */
+	created: string,
+	updated: string,
+};
+
 export type PassRow = {
 	id: Id,
 	name: string,
@@ -1176,6 +1254,13 @@ export type PassRow = {
 	/**  None when off sale. */
 	price: number | null,
 	owned: boolean,
+};
+
+/**  A game pass's page. */
+export type PassView = {
+	loading: boolean,
+	error: string | null,
+	info: PassInfoView | null,
 };
 
 export type PayoutRow = {
@@ -1480,6 +1565,8 @@ export type Shell = {
 	challenge: ChallengeView | null,
 	/**  Item values from Rolimons are on. */
 	itemValues: boolean,
+	/**  How the user arranged the sidebar. */
+	sidebar: SidebarView,
 };
 
 export type ShoutView = {
@@ -1497,6 +1584,12 @@ export type SideView = {
 	items: TradeItemView[],
 };
 
+/**  Sidebar order and hidden screens, named by `nav.*` command without the prefix. */
+export type SidebarView = {
+	order: string[],
+	hidden: string[],
+};
+
 export type Sort = {
 	id: string,
 	title: string,
@@ -1512,6 +1605,18 @@ export type SwatchView = {
 	name: string,
 	hex: string,
 	basic: boolean,
+};
+
+/**  An installed theme. The UI reads `doc` with `readTheme` and derives the tokens itself. */
+export type ThemeView = {
+	id: string,
+	name: string,
+	author: string,
+	/**  `dark` or `light`. */
+	base: string,
+	builtin: boolean,
+	/**  The theme document as JSON. */
+	doc: string,
 };
 
 export type Toast = {

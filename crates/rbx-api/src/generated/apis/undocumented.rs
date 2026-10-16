@@ -782,6 +782,57 @@ pub struct GamePass {
     pub updated: Option<String>,
 }
 
+/// `GamePassProductCreator`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct GamePassProductCreator {
+    #[serde(rename = "CreatorType")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub creator_type: Option<String>,
+    #[serde(rename = "Id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+    #[serde(rename = "Name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+}
+
+/// `GamePassProductInfo`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct GamePassProductInfo {
+    #[serde(rename = "Created")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created: Option<String>,
+    #[serde(rename = "Creator")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub creator: Option<GamePassProductCreator>,
+    #[serde(rename = "Description")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(rename = "IsForSale")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_for_sale: Option<bool>,
+    #[serde(rename = "Name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(rename = "PriceInRobux")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub price_in_robux: Option<i64>,
+    #[serde(rename = "ProductId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub product_id: Option<i64>,
+    #[serde(rename = "Sales")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sales: Option<i64>,
+    #[serde(rename = "TargetId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target_id: Option<i64>,
+    #[serde(rename = "Updated")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated: Option<String>,
+}
+
 /// `GamePassPurchaseRequest`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -1649,6 +1700,35 @@ pub fn get_explore_sorts_request(params: &GetExploreSortsParams) -> Result<Reque
 /// Undocumented; captured 2026-10-12, www.roblox.com/charts.
 pub async fn get_explore_sorts(client: &Client, params: &GetExploreSortsParams) -> Result<ExploreSorts> {
     client.send(get_explore_sorts_request(params)?).await?.json()
+}
+
+/// `GET /game-passes/v1/game-passes/{gamePassId}/product-info`
+///
+/// A pass's name, description, creator, price and dates.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/game-pass/{id}.
+pub fn get_game_pass_product_info_request(game_pass_id: i64) -> Result<Request> {
+    let r = Request::new(
+        Method::GET,
+        HOST,
+        format!(
+            "/game-passes/v1/game-passes/{}/product-info",
+            crate::rt::path_value(&game_pass_id)
+        ),
+    );
+    Ok(r)
+}
+
+/// `GET /game-passes/v1/game-passes/{gamePassId}/product-info`
+///
+/// A pass's name, description, creator, price and dates.
+///
+/// Undocumented; captured 2026-10-15, www.roblox.com/game-pass/{id}.
+pub async fn get_game_pass_product_info(client: &Client, game_pass_id: i64) -> Result<GamePassProductInfo> {
+    client
+        .send(get_game_pass_product_info_request(game_pass_id)?)
+        .await?
+        .json()
 }
 
 /// `POST /game-passes/v1/game-passes/{productId}/purchase`

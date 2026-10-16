@@ -453,6 +453,48 @@ async fn transactions_decode_and_page() {
     assert!(second.next_page_cursor.is_none());
 }
 
+/// Google Fonts (third party): the catalog, a family's CSS and its files, with no credentials.
+#[tokio::test]
+async fn google_fonts_catalog_css_and_files() {
+    use fonts_google_com::undocumented as catalog;
+    use fonts_googleapis_com::undocumented as css;
+    let r = Replay::start(&["fonts"]).await;
+    let c = r.client();
+    let list = catalog::get_font_catalog(&c)
+        .await
+        .unwrap()
+        .family_metadata_list
+        .unwrap();
+    let space = list
+        .iter()
+        .find(|f| f.family.as_deref() == Some("Space Grotesk"))
+        .unwrap();
+    assert!(space.fonts.as_ref().unwrap().contains_key("700"));
+    let params = css::GetFontCssParams {
+        family: "Space Grotesk:wght@400;500;600;700".into(),
+    };
+    let body = c
+        .send(css::get_font_css_request(&params).unwrap())
+        .await
+        .unwrap()
+        .body;
+    let body = String::from_utf8(body).unwrap();
+    let url = body
+        .split("url(")
+        .nth(1)
+        .and_then(|s| s.split(')').next())
+        .unwrap()
+        .to_owned();
+    assert!(url.starts_with("https://fonts.gstatic.com/"));
+    let file = c.fetch_font(&url).await.unwrap();
+    assert_eq!(&file[..4], &[0, 1, 0, 0]);
+    assert!(c.fetch_font("https://evil.example/x.ttf").await.is_err());
+    assert!(c.fetch_cdn(&url).await.is_err());
+    for q in r.requests().await {
+        assert!(q.headers.get("cookie").is_none());
+    }
+}
+
 #[tokio::test]
 async fn challenge_hook_answers_and_the_write_is_resent() {
     let r = Replay::start(&["challenge"]).await;

@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Match, on, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
 import { run } from "~/lib/commands/registry"
 import { ago, compact, date, percent } from "~/lib/format"
@@ -57,13 +57,19 @@ const allSections = [
   { value: "about", label: "About" },
   { value: "outfits", label: "Outfits" },
   { value: "connections", label: "Connections" },
-  { value: "creations", label: "Creations" },
-  { value: "favorites", label: "Favorites" },
-  { value: "followed", label: "Followed" },
+  { value: "experiences", label: "Experiences" },
   { value: "badges", label: "Badges" },
   { value: "communities", label: "Communities" },
   { value: "items", label: "Collectibles" },
 ]
+
+const experienceLists = [
+  { value: "creations", label: "Created" },
+  { value: "favorites", label: "Favorites" },
+  { value: "followed", label: "Following" },
+] as const
+type ExperienceList = (typeof experienceLists)[number]["value"]
+const isExperienceList = (v: string): v is ExperienceList => experienceLists.some((l) => l.value === v)
 
 /** A list that has finished loading with nothing in it. Errors keep their tab so they show. */
 const isEmpty = (l: { loading: boolean; error: string | null; items: unknown[] }) =>
@@ -126,6 +132,7 @@ export default function Profile() {
   const [search] = useSearchParams()
   const [section, setSection] = createSignal("about")
   const [people, setPeople] = createSignal<PeopleList>("friends")
+  const [games, setGames] = createSignal<ExperienceList>("creations")
   // `user.friends` and friends link here with `?tab=connections&list=followers`.
   createEffect(
     on([() => search.tab, () => search.list], ([tab, list]) => {
@@ -133,11 +140,16 @@ export default function Profile() {
       if (typeof list === "string" && isPeopleList(list)) setPeople(list)
     }),
   )
+  const gameLists = { creations, favorites, followed }
+  /** Created, favorites and following share one tab; each shows only once it has something. */
+  const shownGameLists = createMemo(() => experienceLists.filter((l) => !isEmpty(gameLists[l.value])))
+  createEffect(() => {
+    const shown = shownGameLists()
+    if (shown.length > 0 && !shown.some((l) => l.value === games())) setGames(shown[0].value)
+  })
   const sections = createMemo(() => {
     const hidden = new Set<string>()
-    if (isEmpty(creations)) hidden.add("creations")
-    if (isEmpty(favorites)) hidden.add("favorites")
-    if (isEmpty(followed)) hidden.add("followed")
+    if (shownGameLists().length === 0) hidden.add("experiences")
     if (isEmpty(badges)) hidden.add("badges")
     if (isEmpty(groups)) hidden.add("communities")
     if (isEmpty(collectibles)) hidden.add("items")
@@ -226,12 +238,30 @@ export default function Profile() {
               <Show
                 when={!view.mine}
                 fallback={
-                  <Button icon="avatar" onClick={() => run("nav.avatar")}>
-                    Edit avatar
-                  </Button>
+                  <>
+                    <Button icon="avatar" onClick={() => run("nav.avatar")}>
+                      Edit avatar
+                    </Button>
+                    <Tooltip content="Inventory">
+                      <IconButton
+                        variant="secondary"
+                        icon="inventory"
+                        label="Inventory"
+                        onClick={() => run("inventory.view", id())}
+                      />
+                    </Tooltip>
+                  </>
                 }
               >
                 <FriendButton status={rel()?.friend ?? "none"} id={id()} />
+                <Tooltip content="Inventory">
+                  <IconButton
+                    variant="secondary"
+                    icon="inventory"
+                    label="Inventory"
+                    onClick={() => run("inventory.view", id())}
+                  />
+                </Tooltip>
                 <Tooltip content="Message">
                   <IconButton
                     variant="secondary"
@@ -351,14 +381,28 @@ export default function Profile() {
         <TabPanel value="connections">
           <Connections userId={userId()} list={people()} onList={setPeople} mine={view.mine} />
         </TabPanel>
-        <TabPanel value="creations">
-          <Creations list={creations} />
-        </TabPanel>
-        <TabPanel value="favorites">
-          <Favorites list={favorites} />
-        </TabPanel>
-        <TabPanel value="followed">
-          <Followed list={followed} />
+        <TabPanel value="experiences" class="flex flex-col gap-3">
+          <Show when={shownGameLists().length > 1}>
+            <SegmentedControl
+              size="sm"
+              class="self-start"
+              aria-label="List"
+              options={shownGameLists()}
+              value={games()}
+              onChange={(v) => isExperienceList(v) && setGames(v)}
+            />
+          </Show>
+          <Switch>
+            <Match when={games() === "creations"}>
+              <Creations list={creations} />
+            </Match>
+            <Match when={games() === "favorites"}>
+              <Favorites list={favorites} />
+            </Match>
+            <Match when={games() === "followed"}>
+              <Followed list={followed} />
+            </Match>
+          </Switch>
         </TabPanel>
         <TabPanel value="badges">
           <Badges list={badges} />
@@ -366,12 +410,7 @@ export default function Profile() {
         <TabPanel value="communities">
           <Groups list={groups} />
         </TabPanel>
-        <TabPanel value="items" class="flex flex-col gap-3">
-          <div class="flex justify-end">
-            <Button icon="inventory" onClick={() => run("inventory.view", id())}>
-              Full inventory
-            </Button>
-          </div>
+        <TabPanel value="items">
           <Collectibles list={collectibles} />
         </TabPanel>
       </Tabs>

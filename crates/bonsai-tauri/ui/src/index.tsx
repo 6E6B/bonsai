@@ -2,9 +2,9 @@
 import { render } from "solid-js/web"
 import "./index.css"
 import { App } from "~/app/App"
-import { setTheme } from "~/lib/ui"
+import { applyAppearance } from "~/lib/theme"
 
-setTheme("system")
+applyAppearance("system")
 
 const root = document.getElementById("root")
 if (root) render(() => <App />, root)
