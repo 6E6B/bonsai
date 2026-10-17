@@ -32,6 +32,8 @@ let cache: {
   date: Intl.DateTimeFormat
   time: Intl.DateTimeFormat
   dateTime: Intl.DateTimeFormat
+  /** For `ago` outside English, which keeps its own short "5m ago". */
+  relative: Intl.RelativeTimeFormat | null
 } | null = null
 
 /** Reads the locale and clock signals, so callers in JSX update when they change. */
@@ -43,13 +45,16 @@ function fmts() {
     const hour12 = c === "auto" ? undefined : c === "12h"
     const day = { month: "short", day: "numeric", year: "numeric" } as const
     const clockOpts = { hour: "numeric", minute: "2-digit", hour12 } as const
+    const full = new Intl.NumberFormat(tag)
+    const english = full.resolvedOptions().locale.split("-")[0] === "en"
     cache = {
       key,
       compact: new Intl.NumberFormat(tag, { notation: "compact", maximumFractionDigits: 1 }),
-      full: new Intl.NumberFormat(tag),
+      full,
       date: new Intl.DateTimeFormat(tag, day),
       time: new Intl.DateTimeFormat(tag, clockOpts),
       dateTime: new Intl.DateTimeFormat(tag, { ...day, ...clockOpts }),
+      relative: english ? null : new Intl.RelativeTimeFormat(tag, { style: "narrow", numeric: "auto" }),
     }
   }
   return cache
@@ -97,18 +102,22 @@ export function dateTime(ms: number): string {
   return fmts().dateTime.format(ms)
 }
 
-/** "now", "5m ago", "3h ago", "2d ago", then the date. With relative times off in Settings,
- * always the date and time. `now` is for tests. */
+/** "now", "5m ago", "3h ago", "2d ago", then the date. Other languages get their own words
+ * ("vor 5 Min."). With relative times off in Settings, always the date and time. `now` is for
+ * tests. */
 export function ago(ms: number, now = Date.now()): string {
   if (!relative()) return dateTime(ms)
+  const rtf = fmts().relative
+  const say = (n: number, unit: "second" | "minute" | "hour" | "day", short: string) =>
+    rtf ? rtf.format(-n, unit) : short
   const s = Math.max(0, Math.round((now - ms) / 1000))
-  if (s < 45) return "now"
+  if (s < 45) return say(0, "second", "now")
   const m = Math.round(s / 60)
-  if (m < 60) return `${m}m ago`
+  if (m < 60) return say(m, "minute", `${m}m ago`)
   const h = Math.round(m / 60)
-  if (h < 24) return `${h}h ago`
+  if (h < 24) return say(h, "hour", `${h}h ago`)
   const d = Math.round(h / 24)
-  if (d < 7) return `${d}d ago`
+  if (d < 7) return say(d, "day", `${d}d ago`)
   return date(ms)
 }
 

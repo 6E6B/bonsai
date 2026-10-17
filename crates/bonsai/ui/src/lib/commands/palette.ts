@@ -99,6 +99,11 @@ function settingRows(c: CommandInfo, prefs: PalettePref[]): PaletteEntry[] {
   return out
 }
 
+/** Typed-argument commands that also do something with no argument, and that row's title. */
+const BARE: Record<string, string> = {
+  "theme.import": "Import theme from a file",
+}
+
 /** Rows for `settings.reset`: everything, then each section that has settings. */
 function resetRows(c: CommandInfo, prefs: PalettePref[]): PaletteEntry[] {
   const words = c.keywords.join(" ")
@@ -169,6 +174,7 @@ export function paletteEntries(
         out.push(...(c.id === "settings.reset" ? resetRows(c, prefs) : settingRows(c, prefs)))
         break
       default:
+        if (c.id in BARE) out.push({ ...base, key: `${c.id}:bare`, title: BARE[c.id], arg: null })
         out.push({ ...base, key: c.id, title: `${c.title}…`, arg: null, ask: c.arg })
     }
   }

@@ -60,6 +60,8 @@ const shellMirror = mirror<Shell>(
     unread: { messages: 0, friendRequests: 0, trades: 0, notifications: 0, chat: 0 },
     login: null,
     challenge: null,
+    themeImport: null,
+    security: null,
     approve: null,
     itemValues: false,
     avatar3d: false,

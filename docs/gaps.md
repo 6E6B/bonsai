@@ -7,9 +7,9 @@ Remove a line when it ships.
 
 - Avatar: reset to default appearance. No reset endpoint in the tracker; capture what the site sends.
 - Home: event cards and banners. `/v1/events/single` and `virtual-events` exist but their response shapes aren't recorded.
-- Settings > Security: change password; 2-Step Verification setup (authenticator, email, passkeys).
-- Settings > Language: app display language. Relative times ("5m ago") are English only.
-- Themes: import and export (`.bonsaitheme` files and share codes); theme hub. See [theming.md](theming.md).
-- Item page: audio player for music and sound effects.
+- Settings > Security: adding passkeys and security keys, and SMS codes. WebAuthn only works on roblox.com, so these link to the site. Untested live: Roblox may want a `secureAuthenticationIntent` on these calls.
+- Settings > Language: app display language. UI text is English only; numbers, dates and relative times follow Settings > General > Number and date format.
+- Themes: theme hub. See [theming.md](theming.md).
+- Plugins: only the groundwork (command effects and tiers, `CommandRef`) is built. See [plugins.md](plugins.md#roadmap).
 - Profile > Creations: a user's models, decals, audio and other assets. No endpoint lists them.
 

@@ -748,7 +748,7 @@
       "module": "auth::v1",
       "path": "/v1/passkey/DeleteCredentialBatch",
       "summary": "Disables a batch of credentials for the specified user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -768,7 +768,7 @@
       "module": "auth::v1",
       "path": "/v1/passkey/ListCredentials",
       "summary": "List a user's registered passkeys.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -1268,7 +1268,7 @@
       "module": "auth::v2",
       "path": "/v2/user/passwords/change",
       "summary": "Changes the password for the authenticated user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6518,7 +6518,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/configuration/authenticator/disable",
       "summary": "Disables two step verification via authenticator for the specified user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6528,7 +6528,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/configuration/authenticator/enable",
       "summary": "Initiates enabling authenticator-based two step verification for the specified user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6538,7 +6538,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/configuration/authenticator/enable-verify",
       "summary": "Finishes enabling authenticator-based two step verification for the specified user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6548,7 +6548,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/configuration/email/disable",
       "summary": "Disables two step verification via email for the specified user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6558,7 +6558,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/configuration/email/enable",
       "summary": "Enables two step verification via email for the specified user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6638,7 +6638,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/recovery-codes",
       "summary": "Gets the current status of recovery codes for a user.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -6658,7 +6658,7 @@
       "module": "twostepverification::v1",
       "path": "/v1/users/{userId}/recovery-codes/regenerate",
       "summary": "Clears any existing recovery codes and generates a new batch of recovery codes.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -7882,5 +7882,5 @@
     }
   ],
   "total": 788,
-  "used": 242
+  "used": 252
 }

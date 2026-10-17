@@ -194,7 +194,7 @@ pub const PREFS: &[Pref] = &[
         "format_locale",
         "general",
         "Number and date format",
-        "Applies to counts, prices and dates.",
+        "Applies to counts, prices, dates and times like \"5m ago\".",
         &["language", "locale", "region", "date", "number"],
         PrefKind::Text {
             placeholder: "System",

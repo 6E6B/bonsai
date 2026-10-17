@@ -283,10 +283,35 @@ export const commands = {
 	 *  Downloads happen on the worker; this only reads what is on disk so far.
 	 */
 	fontFiles: (families: string[]) => __TAURI_INVOKE<FontView[]>("font_files", { families }),
+	/**
+	 *  Installs the theme in the import dialog. `keep_both` matters only when its id is taken;
+	 *  `apply` uses it at once.
+	 */
+	themeImportInstall: (keepBoth: boolean, apply: boolean) => typedError<null, string>(__TAURI_INVOKE("theme_import_install", { keepBoth, apply })),
+	themeImportCancel: () => __TAURI_INVOKE<void>("theme_import_cancel"),
 	/**  Account PIN of the active account. */
 	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
 	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */
 	unlockPin: (pin: string) => typedError<null, string>(__TAURI_INVOKE("unlock_pin", { pin })),
+	/**  Two-step methods, recovery codes and passkeys of the active account. */
+	securityStatus: () => __TAURI_INVOKE<SecurityView>("security_status"),
+	/**  Changes the password of the active account. The result arrives as a toast. */
+	changePassword: (current: string, replacement: string) => typedError<null, string>(__TAURI_INVOKE("change_password", { current, replacement })),
+	/**
+	 *  Turns email codes on or off, or the authenticator app off. Turning the authenticator on
+	 *  takes the setup dialog (`security_open`).
+	 */
+	securitySet: (source: CodeSource, on: boolean, password: string) => typedError<null, string>(__TAURI_INVOKE("security_set", { source, on, password })),
+	/**  Opens the authenticator setup or the recovery codes dialog. Returns the attempt's `seq`. */
+	securityOpen: (task: SecurityTaskView) => typedError<Id, string>(__TAURI_INVOKE("security_open", { task })),
+	/**  The password step of the open dialog. */
+	securityPassword: (seq: Id, password: string) => typedError<null, string>(__TAURI_INVOKE("security_password", { seq, password })),
+	/**  The authenticator code step of the open dialog. */
+	securityCode: (seq: Id, code: string) => typedError<null, string>(__TAURI_INVOKE("security_code", { seq, code })),
+	/**  Closes the dialog. Core forgets the password and setup token. */
+	securityClose: (seq: Id) => __TAURI_INVOKE<void>("security_close", { seq }),
+	/**  Copies what the open dialog shows: the authenticator key, or the recovery codes. */
+	securityCopy: (seq: Id) => typedError<null, string>(__TAURI_INVOKE("security_copy", { seq })),
 	/**  Checks a two-step code. A wrong code shows in the dialog. */
 	challengeSubmitCode: (seq: Id, code: string, remember: boolean) => typedError<null, string>(__TAURI_INVOKE("challenge_submit_code", { seq, code, remember })),
 	/**  Switches between `authenticator` and `email`. Picking `email` sends a new code. */
@@ -638,6 +663,8 @@ export type Choice = {
 	value: string,
 	label: string,
 };
+
+export type CodeSource = "email" | "authenticator";
 
 export type Color = "none" | "red" | "orange" | "yellow" | "green" | "blue" | "purple" | "pink";
 
@@ -1651,6 +1678,37 @@ export type SearchResults = {
 	rows: RemoteRow[],
 };
 
+export type SecurityFlowView = {
+	/**  Identifies this attempt in the dialog's replies. */
+	seq: Id,
+	task: SecurityTaskView,
+	step: SecurityStepView,
+	busy: boolean,
+	error: string | null,
+};
+
+export type SecurityStepView = { step: "password" } | 
+/**  Type `manualKey` into an authenticator app, then enter its code. */
+{ step: "key"; manualKey: string } | 
+/**  Recovery codes to write down; empty when Roblox made none. */
+{ step: "done"; codes: string[] };
+
+export type SecurityTaskView = "authenticator" | "recoveryCodes";
+
+export type SecurityView = {
+	loading: boolean,
+	error: string | null,
+	email: boolean,
+	authenticator: boolean,
+	sms: boolean,
+	securityKey: boolean,
+	/**  Unused recovery codes, when Roblox said. */
+	recoveryCodes: number | null,
+	/**  ISO date the recovery codes were made. */
+	recoveryCreated: string | null,
+	passkeys: string[],
+};
+
 /**  Who saw a user online last. */
 export type SeenBy = "app" | "rolimons";
 
@@ -1739,8 +1797,12 @@ export type Shell = {
 	login: Login | null,
 	/**  A two-step or captcha check holding an action, while it is open. */
 	challenge: ChallengeView | null,
+	/**  A theme waiting in the import dialog. */
+	themeImport: ThemeImportView | null,
 	/**  The "Sign in another device" dialog, once a code was entered. */
 	approve: ApproveView | null,
+	/**  The authenticator setup or recovery codes dialog, while it is open. */
+	security: SecurityFlowView | null,
 	/**  Item values from Rolimons are on. */
 	itemValues: boolean,
 	/**  Avatar viewers open in 3D instead of on the image. */
@@ -1801,6 +1863,18 @@ export type TabView = {
 	/**  An app route like `/games/123`. */
 	path: string,
 	pinned: boolean,
+};
+
+/**  A theme read from a file or a code, waiting in the import dialog. */
+export type ThemeImportView = {
+	/**  The theme document as JSON. The UI reads it with `readTheme` to list what it skips. */
+	doc: string,
+	/**  The file name, or empty for a pasted code. */
+	source: string,
+	/**  The name of the installed theme with the same id, if any. */
+	clash: string | null,
+	/**  That theme is built in, so the import can only sit beside it. */
+	clashBuiltin: boolean,
 };
 
 /**  An installed theme. The UI reads `doc` with `readTheme` and derives the tokens itself. */

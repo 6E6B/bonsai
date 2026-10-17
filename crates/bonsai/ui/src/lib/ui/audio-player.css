@@ -1,0 +1,71 @@
+@layer components {
+  [data-component="audio-player"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 4px 8px 4px 4px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  [data-component="audio-player"] [data-slot="spinner"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+  }
+
+  [data-component="audio-player"] [data-slot="seek"] {
+    flex: 1;
+    min-width: 64px;
+    user-select: none;
+  }
+
+  [data-component="audio-player"] [data-slot="track"] {
+    position: relative;
+    height: 4px;
+    margin: 0 6px;
+    border-radius: var(--radius-full);
+    background: var(--color-control);
+    box-shadow: var(--shadow-well);
+  }
+
+  [data-component="audio-player"] [data-slot="fill"] {
+    position: absolute;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-accent);
+  }
+
+  [data-component="audio-player"] [data-slot="thumb"] {
+    top: -4px;
+    display: block;
+    width: 12px;
+    height: 12px;
+    border: 1px solid color-mix(in srgb, var(--color-knob-edge) 50%, transparent);
+    border-radius: var(--radius-full);
+    background-color: var(--color-knob);
+    background-image: var(--sheen-knob);
+    box-shadow: var(--shadow-knob);
+  }
+
+  [data-component="audio-player"] [data-slot="thumb"]:focus-within {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+
+  [data-component="audio-player"] [data-slot="seek"][data-disabled] [data-slot="thumb"] {
+    visibility: hidden;
+  }
+
+  [data-component="audio-player"] [data-slot="time"],
+  [data-component="audio-player"] [data-slot="error"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}

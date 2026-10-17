@@ -6,12 +6,19 @@
 //! The UI turns seeds into tokens and checks each value against its kind before applying it.
 
 use std::collections::BTreeMap;
+use std::io::{Read, Write};
 use std::path::Path;
+use std::sync::Arc;
 use std::sync::atomic::Ordering;
+use std::time::{Duration, SystemTime};
+
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use crate::core::Inner;
 use crate::settings::{Appearance, Mode};
 use crate::{Cmd, Core};
 
@@ -20,6 +27,10 @@ use crate::{Cmd, Core};
 pub const SCHEMA: u32 = 1;
 
 const MAX_BYTES: usize = 32 * 1024;
+/// Starts every share code. The number is the code format, not the document schema.
+pub const CODE_PREFIX: &str = "bonsai-theme:1:";
+/// What theme files are called when exported.
+pub const FILE_EXT: &str = "bonsaitheme";
 const MAX_TOKENS: usize = 256;
 const MAX_TEXT: usize = 64;
 const MAX_VALUE: usize = 256;
@@ -134,6 +145,41 @@ impl Theme {
 
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(self).unwrap_or_default()
+    }
+
+    /// The theme as one pasteable line: [`CODE_PREFIX`] and the deflated JSON in base64url.
+    pub fn share_code(&self) -> String {
+        let json = serde_json::to_vec(self).unwrap_or_default();
+        let mut z = flate2::write::DeflateEncoder::new(Vec::new(), flate2::Compression::best());
+        // Writing to a Vec can't fail.
+        let _ = z.write_all(&json);
+        let packed = z.finish().unwrap_or_default();
+        format!("{CODE_PREFIX}{}", URL_SAFE_NO_PAD.encode(packed))
+    }
+
+    /// Reads a share code or a theme's JSON, as pasted or read from a `.bonsaitheme` file.
+    pub fn decode(text: &str) -> Result<Theme, String> {
+        let text = text.trim();
+        if let Some(code) = text.strip_prefix(CODE_PREFIX) {
+            // Chat apps wrap long lines; the code has no spaces of its own.
+            let code: String = code.split_whitespace().collect();
+            let packed = URL_SAFE_NO_PAD
+                .decode(code.trim_end_matches('='))
+                .map_err(|_| "That theme code is cut off or mistyped.".to_owned())?;
+            let mut json = String::new();
+            flate2::read::DeflateDecoder::new(packed.as_slice())
+                .take(MAX_BYTES as u64 + 1)
+                .read_to_string(&mut json)
+                .map_err(|_| "That theme code is cut off or mistyped.".to_owned())?;
+            return Theme::parse(&json);
+        }
+        if text.starts_with("bonsai-theme:") {
+            return Err("Made with a newer version of the app.".into());
+        }
+        if text.starts_with('{') {
+            return Theme::parse(text);
+        }
+        Err("Paste a theme code (bonsai-theme:1:…) or pick a .bonsaitheme file.".into())
     }
 
     /// The Google Fonts family a font seed names (`{"google": "Space Grotesk"}`), if any.
@@ -299,6 +345,26 @@ pub fn delete(dir: &Path, id: &str) -> std::io::Result<()> {
     }
 }
 
+/// Makes `<id>.json` match the theme in memory: written if it is there, deleted if not. Writes run
+/// one at a time and read memory under the lock, so quick saves can't land out of order.
+pub(crate) fn write_current(inner: &Inner, id: &str) {
+    static IO: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
+    let _io = IO.lock();
+    let dir = inner.paths.themes_dir();
+    let current = {
+        let t = inner.themes.read();
+        t.get(id).filter(|_| !t.is_builtin(id)).cloned()
+    };
+    let r = match &current {
+        Some(t) => save(&dir, t),
+        None => delete(&dir, id),
+    };
+    if let Err(e) = r {
+        tracing::warn!("writing theme {id}: {e}");
+    }
+    inner.theme_writes.fetch_sub(1, Ordering::AcqRel);
+}
+
 /// A new theme id from its name, like `dark-copy` or `dark-copy-2`.
 fn new_id(name: &str, taken: impl Fn(&str) -> bool) -> String {
     let mut stem: String = name
@@ -353,6 +419,77 @@ impl Appearance {
             Base::Dark => &mut self.dark,
             Base::Light => &mut self.light,
         }
+    }
+}
+
+/// A theme read from a file or a code, shown in the import dialog until installed or cancelled.
+#[derive(Clone, Debug)]
+pub struct PendingImport {
+    pub theme: Theme,
+    /// The file name, or empty for a pasted code.
+    pub source: String,
+    /// The installed theme with the same id, if any: (name, built in).
+    pub clash: Option<(String, bool)>,
+}
+
+/// How to install an import whose id is taken.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OnClash {
+    Replace,
+    KeepBoth,
+}
+
+/// Names, sizes and change times of the theme files: enough to notice an edit.
+fn dir_stamp(dir: &Path) -> Vec<(String, u64, Option<SystemTime>)> {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let mut out: Vec<_> = entries
+        .flatten()
+        .filter(|e| e.path().extension().is_some_and(|x| x == "json"))
+        .filter_map(|e| {
+            let m = e.metadata().ok()?;
+            Some((
+                e.file_name().to_string_lossy().into_owned(),
+                m.len(),
+                m.modified().ok(),
+            ))
+        })
+        .collect();
+    out.sort();
+    out
+}
+
+/// Reloads the themes when a file in the themes folder changes, so a theme edited in a text
+/// editor shows at once. Only reads; the app's own saves come back unchanged.
+pub(crate) async fn watch_loop(inner: Arc<Inner>) {
+    let dir = inner.paths.themes_dir();
+    let mut last = dir_stamp(&dir);
+    let mut tick = tokio::time::interval(Duration::from_secs(2));
+    loop {
+        tick.tick().await;
+        let d = dir.clone();
+        let Ok(stamp) = inner.rt.spawn_blocking(move || dir_stamp(&d)).await else {
+            continue;
+        };
+        if stamp == last {
+            continue;
+        }
+        last = stamp;
+        let d = dir.clone();
+        let Ok(fresh) = inner.rt.spawn_blocking(move || Themes::load(&d)).await else {
+            continue;
+        };
+        // A change still queued for disk would be lost; look again next tick. Saves count
+        // themselves before they touch memory, so this check holds under the lock.
+        let mut themes = inner.themes.write();
+        if inner.theme_writes.load(Ordering::Acquire) > 0 {
+            last.clear();
+            continue;
+        }
+        *themes = fresh;
+        drop(themes);
+        inner.repaint();
     }
 }
 
@@ -442,7 +579,12 @@ impl Core {
 
     /// Adds or replaces a user theme and writes it to disk.
     pub fn save_theme(&self, theme: Theme) -> Result<(), String> {
-        self.inner.themes.write().insert(theme.clone())?;
+        theme.check()?;
+        self.inner.theme_writes.fetch_add(1, Ordering::AcqRel);
+        if let Err(e) = self.inner.themes.write().insert(theme.clone()) {
+            self.inner.theme_writes.fetch_sub(1, Ordering::AcqRel);
+            return Err(e);
+        }
         self.send(Cmd::SaveTheme(Box::new(theme)));
         self.inner.repaint();
         Ok(())
@@ -511,7 +653,14 @@ impl Core {
 
     /// Deletes a user theme. A slot that used it goes back to the built-in for its base.
     pub fn delete_theme(&self, id: &str) -> Result<(), String> {
-        let gone = self.inner.themes.write().remove(id)?;
+        self.inner.theme_writes.fetch_add(1, Ordering::AcqRel);
+        let gone = match self.inner.themes.write().remove(id) {
+            Ok(t) => t,
+            Err(e) => {
+                self.inner.theme_writes.fetch_sub(1, Ordering::AcqRel);
+                return Err(e);
+            }
+        };
         let a = self.inner.settings.read().appearance.clone();
         if a.slot(gone.base) == id {
             self.update_settings(|s| *s.appearance.slot_mut(gone.base) = default_id(gone.base).into());
@@ -519,6 +668,79 @@ impl Core {
         self.send(Cmd::DeleteTheme(gone.id));
         self.inner.repaint();
         Ok(())
+    }
+
+    /// Reads a share code, theme JSON or a path to a theme file and opens the import dialog with
+    /// it. Reads the disk, so call it off the main thread.
+    pub fn stage_theme_import(&self, text: &str) -> Result<(), String> {
+        let text = text.trim();
+        let (theme, source) = if text.starts_with(CODE_PREFIX) || text.starts_with('{') {
+            (Theme::decode(text)?, String::new())
+        } else {
+            let path = Path::new(text);
+            let size = std::fs::metadata(path)
+                .map_err(|_| "Paste a theme code (bonsai-theme:1:…) or pick a .bonsaitheme file.".to_owned())?
+                .len();
+            if size > MAX_BYTES as u64 {
+                return Err("Theme is too large.".into());
+            }
+            let body =
+                std::fs::read_to_string(path).map_err(|e| format!("Could not read the file ({e})."))?;
+            let name = path
+                .file_name()
+                .map(|n| clean_text(&n.to_string_lossy()))
+                .unwrap_or_default();
+            (Theme::decode(&body)?, name)
+        };
+        let clash = self
+            .inner
+            .themes
+            .read()
+            .get(&theme.id)
+            .map(|t| (t.name.clone(), self.inner.themes.read().is_builtin(&t.id)));
+        self.inner.store.write().theme_import = Some(PendingImport { theme, source, clash });
+        self.inner.repaint();
+        Ok(())
+    }
+
+    /// Installs the theme in the import dialog and returns its id. A built-in id always keeps both.
+    pub fn finish_theme_import(&self, on_clash: OnClash) -> Result<String, String> {
+        let Some(p) = self.inner.store.write().theme_import.take() else {
+            return Err("Nothing to import.".into());
+        };
+        let mut t = p.theme;
+        let builtin = self.inner.themes.read().is_builtin(&t.id);
+        if p.clash.is_some() && (builtin || on_clash == OnClash::KeepBoth) {
+            t.id = new_id(&t.name, |x| self.inner.themes.read().get(x).is_some());
+        }
+        let id = t.id.clone();
+        self.save_theme(t)?;
+        Ok(id)
+    }
+
+    pub fn cancel_theme_import(&self) {
+        self.inner.store.write().theme_import = None;
+        self.inner.repaint();
+    }
+
+    /// The theme a command names, or the one on screen when `id` is empty.
+    pub fn theme_or_shown(&self, id: &str) -> Result<Theme, String> {
+        let id = id.trim();
+        if id.is_empty() {
+            return Ok(self.appearance_theme(self.shown_base()));
+        }
+        self.inner
+            .themes
+            .read()
+            .get(id)
+            .cloned()
+            .ok_or_else(|| "No theme with that id.".to_owned())
+    }
+
+    /// Writes a theme as a `.bonsaitheme` file. Writes the disk, so call it off the main thread.
+    pub fn export_theme(&self, id: &str, path: &Path) -> Result<(), String> {
+        let t = self.theme_or_shown(id)?;
+        std::fs::write(path, t.to_json() + "\n").map_err(|e| format!("Could not save the theme ({e})."))
     }
 }
 
@@ -625,6 +847,61 @@ mod tests {
         assert!(Theme::parse(ok).is_ok());
         let nested = r##"{"schema":1,"id":"x","base":"dark","seeds":{"shadow":{"a":{"b":1}}}}"##;
         assert!(Theme::parse(nested).is_err());
+    }
+
+    #[test]
+    fn share_codes_round_trip() {
+        for (t, _) in Themes::default().all() {
+            let code = t.share_code();
+            assert!(code.starts_with(CODE_PREFIX));
+            assert!(code.len() < 1024, "{}: {} bytes", t.id, code.len());
+            assert_eq!(&Theme::decode(&code).unwrap(), t);
+        }
+        // Wrapped by a chat app, with padding someone added.
+        let code = theme("x").share_code();
+        let (a, b) = code.split_at(code.len() / 2);
+        assert_eq!(Theme::decode(&format!("  {a}\n {b}==  ")).unwrap().id, "x");
+    }
+
+    #[test]
+    fn decode_takes_json_and_refuses_the_rest() {
+        assert_eq!(
+            Theme::decode(r##" {"schema":1,"id":"x","base":"dark"} "##)
+                .unwrap()
+                .id,
+            "x"
+        );
+        let cut = &theme("x").share_code()[..30];
+        for (text, err) in [
+            (cut, "That theme code is cut off or mistyped."),
+            ("bonsai-theme:1:!!!", "That theme code is cut off or mistyped."),
+            ("bonsai-theme:2:abc", "Made with a newer version of the app."),
+            (
+                "hello",
+                "Paste a theme code (bonsai-theme:1:…) or pick a .bonsaitheme file.",
+            ),
+        ] {
+            assert_eq!(Theme::decode(text).unwrap_err(), err, "{text}");
+        }
+        // A small code that inflates past the size limit is refused, not read whole.
+        let mut z = flate2::write::DeflateEncoder::new(Vec::new(), flate2::Compression::best());
+        z.write_all(&vec![b' '; MAX_BYTES * 4]).unwrap();
+        let bomb = format!("{CODE_PREFIX}{}", URL_SAFE_NO_PAD.encode(z.finish().unwrap()));
+        assert_eq!(Theme::decode(&bomb).unwrap_err(), "Theme is too large.");
+    }
+
+    #[test]
+    fn dir_stamp_sees_edits() {
+        let d = tempfile::tempdir().unwrap();
+        assert!(dir_stamp(d.path()).is_empty());
+        save(d.path(), &theme("a")).unwrap();
+        std::fs::write(d.path().join("notes.txt"), "x").unwrap();
+        let first = dir_stamp(d.path());
+        assert_eq!(first.len(), 1);
+        let mut t = theme("a");
+        t.name = "Longer name".into();
+        save(d.path(), &t).unwrap();
+        assert_ne!(dir_stamp(d.path()), first);
     }
 
     #[test]

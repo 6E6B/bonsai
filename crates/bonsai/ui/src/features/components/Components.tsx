@@ -2,6 +2,7 @@ import { createSignal, For, type ParentProps } from "solid-js"
 import { applyAppearance, DEFAULT_SEEDS, derive, type Mode } from "~/lib/theme"
 import {
   Alert,
+  AudioPlayer,
   Avatar,
   Badge,
   Button,
@@ -656,6 +657,7 @@ export default function Components() {
         <MediaFrame class="w-64" index={0} count={3} onStep={() => {}} caption="Trailer" captionIcon="video">
           <Thumbnail alt="Media frame" shape="wide" />
         </MediaFrame>
+        <AudioPlayer class="w-72" src="" label="Sound" />
         <Viewport class="w-40" tabindex={0} aria-label="Viewport">
           <span class="absolute right-2 bottom-2">
             <Spinner size="sm" />

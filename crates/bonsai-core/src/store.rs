@@ -434,6 +434,10 @@ pub struct StoreData {
     pub approve: Option<crate::signin::ApprovePrompt>,
     /// A two-step or captcha check waiting for the user (see [`crate::challenge`]).
     pub challenge: Option<crate::challenge::ChallengePrompt>,
+    /// A theme read from a file or a code, waiting for the user to install it.
+    pub theme_import: Option<crate::themes::PendingImport>,
+    /// Turning on the authenticator app or making recovery codes (see [`crate::security`]).
+    pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,
     pub jobs: u32,
     pub offline: bool,

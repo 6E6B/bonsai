@@ -752,3 +752,44 @@ async fn two_step_methods_send_and_verify() {
         Some("verification-token-redacted")
     );
 }
+
+#[tokio::test]
+async fn authenticator_setup_hands_back_a_key_then_recovery_codes() {
+    use twostepverification::v1 as tsv;
+    let r = Replay::start(&["security"]).await;
+    let c = r.client();
+    let pw = || Some("hunter22".to_owned());
+    let codes = tsv::get_users_by_user_id_recovery_codes(&c, 1000001)
+        .await
+        .unwrap();
+    assert_eq!(codes.active_count, Some(0));
+    let keys =
+        auth::v1::post_passkey_list_credentials(&c, &auth::v1::ListPasskeysRequest { all: Some(true) })
+            .await
+            .unwrap();
+    assert_eq!(keys.credentials.unwrap()[0].nickname.as_deref(), Some("Laptop"));
+    let body = tsv::EnableTwoStepVerificationRequest {
+        password: pw(),
+        ..Default::default()
+    };
+    let setup = tsv::post_users_by_user_id_configuration_authenticator_enable(&c, 1000001, &body)
+        .await
+        .unwrap();
+    assert_eq!(setup.manual_entry_key.as_deref(), Some("ABCDEFGHIJKLMNOP"));
+    let verify = |code: &str| tsv::EnableVerifyAuthenticatorRequest {
+        code: Some(code.into()),
+        password: pw(),
+        setup_token: setup.setup_token.clone(),
+        ..Default::default()
+    };
+    let e =
+        tsv::post_users_by_user_id_configuration_authenticator_enable_verify(&c, 1000001, &verify("000000"))
+            .await
+            .unwrap_err();
+    assert_eq!(e.status(), Some(400));
+    let ok =
+        tsv::post_users_by_user_id_configuration_authenticator_enable_verify(&c, 1000001, &verify("123456"))
+            .await
+            .unwrap();
+    assert_eq!(ok.recovery_codes.unwrap().len(), 2);
+}

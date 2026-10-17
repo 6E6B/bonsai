@@ -26,6 +26,8 @@ open = { workspace = true }
 image = { workspace = true }
 url = { workspace = true }
 fastrand = { workspace = true }
+base64 = { workspace = true }
+flate2 = { workspace = true }
 
 [dev-dependencies]
 bonsai-api = { workspace = true, features = ["replay"] }

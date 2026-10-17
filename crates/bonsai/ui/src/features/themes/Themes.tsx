@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, Show } from "solid-js"
+import { createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { menuItem, run } from "~/lib/commands/registry"
 import { type AppSettings, commands, type ThemeView } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
@@ -15,6 +15,7 @@ import {
   ThemeCard,
 } from "~/lib/ui"
 import { changed, drafts } from "./draft"
+import { isThemeCode } from "./import"
 
 /** A row in the grid: an installed theme, or a new one that only exists as a draft. */
 type Row = { id: string; name: string; author: string; base: string; builtin: boolean; onDisk: boolean; theme?: Theme }
@@ -45,6 +46,18 @@ export default function Themes() {
         (!q || r.name.toLowerCase().includes(q) || r.author.toLowerCase().includes(q)),
     )
   })
+
+  // Pasting a theme code anywhere on the page, outside a text field, imports it.
+  const onPaste = (e: ClipboardEvent) => {
+    const t = e.target as HTMLElement | null
+    if (t?.closest("input, textarea, [contenteditable]")) return
+    const text = e.clipboardData?.getData("text/plain") ?? ""
+    if (!isThemeCode(text)) return
+    e.preventDefault()
+    void run("theme.import", text.trim())
+  }
+  document.addEventListener("paste", onPaste)
+  onCleanup(() => document.removeEventListener("paste", onPaste))
 
   const detail = (r: Row) => {
     const d = drafts[r.id]
@@ -80,6 +93,9 @@ export default function Themes() {
               { value: "light", label: "Light" },
             ]}
           />
+          <Button size="sm" icon="download" onClick={() => run("theme.import")}>
+            Import
+          </Button>
           <Button size="sm" variant="primary" icon="plus" onClick={() => run("theme.new")}>
             New
           </Button>
@@ -104,6 +120,9 @@ export default function Themes() {
                     menuItem("theme.edit", { arg: r.id, icon: "edit" }),
                     menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
                     menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
+                    { kind: "separator" },
+                    menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
+                    menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
                     { kind: "separator" },
                     menuItem("theme.delete", {
                       arg: r.id,

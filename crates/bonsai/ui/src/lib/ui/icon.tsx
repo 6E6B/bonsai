@@ -10,6 +10,7 @@ import messagesFill from "@phosphor-icons/core/assets/fill/envelope-simple-fill.
 import settingsFill from "@phosphor-icons/core/assets/fill/gear-six-fill.svg?raw"
 import heartFill from "@phosphor-icons/core/assets/fill/heart-fill.svg?raw"
 import homeFill from "@phosphor-icons/core/assets/fill/house-fill.svg?raw"
+import pause from "@phosphor-icons/core/assets/fill/pause-fill.svg?raw"
 import play from "@phosphor-icons/core/assets/fill/play-fill.svg?raw"
 import pinFill from "@phosphor-icons/core/assets/fill/push-pin-fill.svg?raw"
 import starFill from "@phosphor-icons/core/assets/fill/star-fill.svg?raw"
@@ -173,6 +174,7 @@ const svgs = {
   pin,
   "pin-fill": pinFill,
   play,
+  pause,
   more,
   refresh,
   external,

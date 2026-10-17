@@ -49,6 +49,17 @@ describe("ago", () => {
   it("treats future times as now", () => {
     expect(ago(now + 5000, now)).toBe("now")
   })
+
+  it("uses the format language's own words outside English", () => {
+    const rtf = new Intl.RelativeTimeFormat("de-DE", { style: "narrow", numeric: "auto" })
+    setFormatLocale("de-DE")
+    expect(ago(now - 10_000, now)).toBe(rtf.format(0, "second"))
+    expect(ago(now - 5 * 60_000, now)).toBe(rtf.format(-5, "minute"))
+    expect(ago(now - 2 * 86_400_000, now)).toBe(rtf.format(-2, "day"))
+    setFormatLocale("en-GB")
+    expect(ago(now - 5 * 60_000, now)).toBe("5m ago")
+    setFormatLocale("")
+  })
 })
 
 describe("bytes", () => {

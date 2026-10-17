@@ -452,9 +452,11 @@ dependencies = [
 name = "bonsai-core"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "bonsai-api",
  "directories",
  "fastrand",
+ "flate2",
  "image",
  "keyring",
  "nucleo-matcher",
