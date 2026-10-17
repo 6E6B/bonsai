@@ -234,11 +234,11 @@ pub fn unlock_pin(core: State<'_, Arc<Core>>, pin: String) -> Result<(), String>
     core.unlock_pin(a, &pin)
 }
 
-/// Privacy settings of the active account.
+/// Privacy settings of `account`, or of the active account.
 #[tauri::command]
 #[specta::specta]
-pub fn privacy_settings(core: State<'_, Arc<Core>>) -> List<PrivacyRow> {
-    let Some(a) = core.acting(None) else {
+pub fn privacy_settings(core: State<'_, Arc<Core>>, account: Option<Id>) -> List<PrivacyRow> {
+    let Some(a) = core.acting(account.map(|a| AccountId(a.0))) else {
         return List {
             loading: false,
             ..List::loading()

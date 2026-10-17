@@ -253,8 +253,8 @@ export const commands = {
 	accountInfo: () => __TAURI_INVOKE<AccountInfoView>("account_info"),
 	/**  Signed-in sessions of the active account, current one first. */
 	accountSessions: () => __TAURI_INVOKE<SessionsView>("account_sessions"),
-	/**  Privacy settings of the active account. */
-	privacySettings: () => __TAURI_INVOKE<List<PrivacyRow>>("privacy_settings"),
+	/**  Privacy settings of `account`, or of the active account. */
+	privacySettings: (account: number | null) => __TAURI_INVOKE<List<PrivacyRow>>("privacy_settings", { account }),
 	/**  Private servers of the active account across experiences: `owned` or `invited`. */
 	myPrivateServers: (tab: string) => __TAURI_INVOKE<List<MyServerRow>>("my_private_servers", { tab }),
 	/**  App preferences, and the disk cache size once measured. */

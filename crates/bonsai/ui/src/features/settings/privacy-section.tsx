@@ -2,16 +2,16 @@ import { createMemo, For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { commands, type Person, type PrivacyRow } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
+import { privacyOptions, shownPrivacy, valueLabel } from "~/lib/privacy"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Button, ListItem, Select, SettingRow, SettingsGroup } from "~/lib/ui"
-import { privacyOptions, shownPrivacy, valueLabel } from "./privacy"
 import { WebButton } from "./shared"
 
 export function PrivacySection() {
   const privacy = useLive(
     () => shell.active,
-    () => commands.privacySettings(),
+    () => commands.privacySettings(null),
     emptyList<PrivacyRow>,
   )
   const blocked = useLive(

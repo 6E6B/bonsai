@@ -118,13 +118,15 @@ export function Menu(props: MenuProps) {
 export interface ContextMenuProps extends ParentProps {
   items: MenuEntry[]
   class?: string
+  /** Called when the menu opens or closes, e.g. to load what its entries show. */
+  onOpenChange?: (open: boolean) => void
 }
 
 /** Opens a menu on right-click (or the Menu key) anywhere inside `children`. Everything in it
  * must also be reachable another way: the command bar or a visible button. */
 export function ContextMenu(props: ContextMenuProps): JSX.Element {
   return (
-    <KContextMenu>
+    <KContextMenu onOpenChange={props.onOpenChange}>
       <KContextMenu.Trigger as="div" data-slot="context-trigger" class={props.class}>
         {props.children}
       </KContextMenu.Trigger>

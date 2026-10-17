@@ -1,18 +1,50 @@
-import { For } from "solid-js"
+import { createSignal, For } from "solid-js"
 import { menuItem, run, shortcutOf } from "~/lib/commands/registry"
-import type { Account, Color } from "~/lib/ipc/bindings"
-import { shell } from "~/lib/store"
+import { type Account, type Color, commands, type PrivacyRow } from "~/lib/ipc/bindings"
+import { emptyList } from "~/lib/list-state"
+import { privacyLabels, valueLabel } from "~/lib/privacy"
+import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, ContextMenu, Icon, type MenuEntry, RailItem, useConfirm, usePrompt } from "~/lib/ui"
 
 const colors: Color[] = ["none", "red", "orange", "yellow", "green", "blue", "purple", "pink"]
 const colorName = (c: Color) => (c === "none" ? "No color" : c[0].toUpperCase() + c.slice(1))
+// The privacy settings the menu offers; the rest are in Settings.
+const menuPrivacy = ["whoCanJoinMeInExperiences", "whoCanSeeMyOnlineStatus"]
 
 /** The far-left column: one slot per signed-in account, then "Add account". Right-click an
  * account for its menu; every entry there is also a command. */
 export function AccountRail() {
   const prompt = usePrompt()
   const confirm = useConfirm()
+  // Privacy settings of the account whose menu was opened last, loaded when it opens.
+  const [menuFor, setMenuFor] = createSignal<number | null>(null)
+  const privacy = useLive(
+    menuFor,
+    (id) => (id === null ? Promise.resolve(emptyList<PrivacyRow>()) : commands.privacySettings(id)),
+    emptyList<PrivacyRow>,
+  )
+
+  const privacyMenu = (a: Account, key: string): MenuEntry => {
+    const label = privacyLabels.find(([k]) => k === key)?.[1] ?? key
+    const row = menuFor() === a.id ? privacy.items.find((r) => r.key === key) : undefined
+    if (!row) {
+      return { kind: "submenu", label, items: [{ label: "Loading…", disabled: true, onSelect: () => {} }] }
+    }
+    return {
+      kind: "submenu",
+      label,
+      items: row.options.map((o) =>
+        menuItem("privacy.set", {
+          asAccount: a.id,
+          arg: `${key} ${o.value}`,
+          label: valueLabel(o.value),
+          icon: o.value === row.value ? "check" : undefined,
+          disabled: !o.allowed,
+        }),
+      ),
+    }
+  }
 
   const menu = (a: Account, index: number): MenuEntry[] => {
     const as = { asAccount: a.id }
@@ -23,6 +55,15 @@ export function AccountRail() {
         icon: "user",
         disabled: shell.active === a.id,
       }),
+      { kind: "separator" },
+      menuItem("entity.copy_id", { arg: `user:${a.id}`, label: "Copy user ID", icon: "copy" }),
+      menuItem("account.copy_name", { ...as, label: "Copy username" }),
+      {
+        kind: "submenu",
+        label: "Privacy",
+        icon: "eye",
+        items: menuPrivacy.map((key) => privacyMenu(a, key)),
+      },
       { kind: "separator" },
       {
         label: "Rename…",
@@ -89,7 +130,7 @@ export function AccountRail() {
     >
       <For each={shell.accounts}>
         {(a, i) => (
-          <ContextMenu items={menu(a, i())}>
+          <ContextMenu items={menu(a, i())} onOpenChange={(open) => open && setMenuFor(a.id)}>
             <RailItem
               label={a.unread > 0 ? `${a.label ?? a.displayName} (${a.unread} unread)` : (a.label ?? a.displayName)}
               shortcut={i() < 9 ? shortcutOf(`account.switch_${i() + 1}`) : undefined}

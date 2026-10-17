@@ -274,6 +274,7 @@ commands! {
     SetAccountColor => "account.color", "Set account color tag", ["color", "colour", "tag"], Color, [];
     MoveAccountUp => "account.move_up", "Move account up in the rail", ["reorder", "order"], None, [];
     MoveAccountDown => "account.move_down", "Move account down in the rail", ["reorder", "order"], None, [];
+    CopyAccountName => "account.copy_name", "Copy account username", ["copy", "username", "name"], None, [];
     RemoveAccount => "account.remove", "Remove account from this app", ["delete", "forget", "remove"], Account, [];
     SignOut => "account.sign_out", "Sign out", ["logout", "log out", "sign out"], None, [];
     SignOutOthers => "account.sign_out_others", "Sign out of all other sessions", ["logout", "sessions", "devices", "security"], None, [];

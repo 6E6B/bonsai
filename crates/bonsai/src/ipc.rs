@@ -1136,6 +1136,18 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
         CommandId::SwitchTo7 => switch(nth(6)),
         CommandId::SwitchTo8 => switch(nth(7)),
         CommandId::SwitchTo9 => switch(nth(8)),
+        CommandId::CopyAccountName => {
+            let a = acting()?;
+            let name = core
+                .store()
+                .accounts
+                .accounts
+                .iter()
+                .find(|x| x.id == a)
+                .map(|x| x.name.clone())
+                .ok_or_else(|| "Unknown account.".to_owned())?;
+            copy(&app, &core, name, "Copied username.")
+        }
         CommandId::RemoveAccount => {
             let a = match arg() {
                 Some(a) => AccountId(a.parse().map_err(|_| "bad account id".to_owned())?),
