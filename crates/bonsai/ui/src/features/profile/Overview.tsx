@@ -99,6 +99,7 @@ export function Overview(props: {
               )}
             </Show>
           </Card>
+          <TradingCard view={props.trading} enabled={shell.itemValues} />
           <Show when={props.view.note}>
             {(n) => (
               <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
@@ -147,7 +148,6 @@ export function Overview(props: {
           <Row title="Collectibles" list={props.collectibles} width={TILE} onSeeAll={() => props.onSeeAll("items")}>
             {(i) => <ItemTile item={i} showSerial showRap />}
           </Row>
-          <TradingCard view={props.trading} enabled={shell.itemValues} />
         </div>
 
         <aside class="flex h-fit min-w-0 flex-col gap-4">
