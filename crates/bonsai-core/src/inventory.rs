@@ -293,16 +293,7 @@ impl Core {
         oldest_first: bool,
         more: bool,
     ) -> Res<Page<InvItem>> {
-        self.inner.paged(
-            Key::private(
-                viewer,
-                "inventory",
-                format!("{user_id}:{}:{}", slot.key(), oldest_first),
-            ),
-            LIST_AGE,
-            more,
-            move |f, cursor| async move { inventory_page(&f.client, user_id, slot, oldest_first, cursor).await },
-        )
+        self.inner.inventory(viewer, user_id, slot, oldest_first, more)
     }
 
     /// Every collectible a user owns, with RAP (up to 3,000).
@@ -585,6 +576,29 @@ async fn inventory_page(
                 next: r.next_page_cursor.filter(|c| !c.is_empty()),
             })
         }
+    }
+}
+
+impl crate::core::Inner {
+    /// One list of a user's inventory, newest first unless `oldest_first`.
+    pub(crate) fn inventory(
+        self: &std::sync::Arc<Self>,
+        viewer: AccountId,
+        user_id: u64,
+        slot: InvSlot,
+        oldest_first: bool,
+        more: bool,
+    ) -> Res<Page<InvItem>> {
+        self.paged(
+            Key::private(
+                viewer,
+                "inventory",
+                format!("{user_id}:{}:{}", slot.key(), oldest_first),
+            ),
+            LIST_AGE,
+            more,
+            move |f, cursor| async move { inventory_page(&f.client, user_id, slot, oldest_first, cursor).await },
+        )
     }
 }
 

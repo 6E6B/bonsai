@@ -5,8 +5,10 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use bonsai_api::{Base, RateLimiter};
-use bonsai_core::account::{AccountList, AccountMeta, MemoryCookies};
+use bonsai_api::replay::{Fixture, Interaction, RecordedRequest, RecordedResponse, Replay};
+use bonsai_api::{Base, RateLimiter, Secret};
+use bonsai_core::account::{AccountList, AccountMeta, CookieStore, MemoryCookies};
+use bonsai_core::cache::{Cache, Kind};
 use bonsai_core::commands::{CommandId, PluginCmd, Tier};
 use bonsai_core::launcher::RecordingOpener;
 use bonsai_core::plugins::{PluginInfo, Status};
@@ -193,6 +195,7 @@ fn broken_folders_show_up_failed() {
 }
 
 const ME: AccountId = AccountId(1);
+const COOKIE: &str = "_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_FAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKE";
 
 const RUNS: &str = r#"
 bonsai.command { id = "hello", title = "Say hello", run = function() return { toast = "hi" } end }
@@ -363,4 +366,164 @@ fn commands_are_refused_without_grants_and_time_out() {
             .is_err()
     );
     assert!(ran.lock().is_empty());
+}
+
+const READS: &str = r#"
+bonsai.command { id = "user", title = "User", run = function(ctx)
+  local u = ctx.user(5)
+  return { toast = u.display_name .. " " .. tostring(u.created) .. " " .. tostring(u.friends) }
+end }
+bonsai.command { id = "presence", title = "Presence", run = function(ctx)
+  local p = ctx.presence({ 9 })[1]
+  return { toast = p.status .. " " .. p.location }
+end }
+bonsai.command { id = "friends", title = "Friends", run = function(ctx)
+  return { toast = "friends " .. #ctx.friends() }
+end }
+"#;
+
+fn get(host: &str, path: &str, body: serde_json::Value) -> Interaction {
+    serve("GET", host, path, body)
+}
+
+fn serve(method: &str, host: &str, path: &str, body: serde_json::Value) -> Interaction {
+    Interaction {
+        request: RecordedRequest {
+            method: method.into(),
+            host: host.into(),
+            path: path.into(),
+            ..Default::default()
+        },
+        response: RecordedResponse {
+            status: 200,
+            body,
+            ..Default::default()
+        },
+    }
+}
+
+#[test]
+fn reads_check_grants_and_use_the_cache() {
+    use serde_json::json;
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    // Each answers once, so a second fetch of the user would 404.
+    let fixture = Fixture {
+        source: "synthetic".into(),
+        interactions: vec![
+            get(
+                "users.roblox.com",
+                "/v1/users/5",
+                json!({"id":5,"name":"five","displayName":"Five","created":"2020-01-02T00:00:00Z","hasVerifiedBadge":false,"isBanned":false}),
+            ),
+            get(
+                "friends.roblox.com",
+                "/v1/users/5/friends/count",
+                json!({"count":3}),
+            ),
+            get(
+                "friends.roblox.com",
+                "/v1/users/5/followers/count",
+                json!({"count":4}),
+            ),
+            get(
+                "friends.roblox.com",
+                "/v1/users/5/followings/count",
+                json!({"count":6}),
+            ),
+            serve(
+                "POST",
+                "presence.roblox.com",
+                "/v1/presence/users",
+                json!({"userPresences":[{"userId":9,"userPresenceType":2,"lastLocation":"Somewhere"}]}),
+            ),
+        ],
+        ..Default::default()
+    };
+    let replay = rt.block_on(Replay::from_fixture(&fixture));
+
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(home.path());
+    AccountList {
+        accounts: vec![AccountMeta {
+            id: ME,
+            name: "TestUser".into(),
+            display_name: "Test User".into(),
+            ..Default::default()
+        }],
+        active: Some(ME),
+        previous: None,
+    }
+    .save(&paths.accounts_file())
+    .unwrap();
+    std::fs::create_dir_all(&paths.cache).unwrap();
+    Cache::open(&paths.db_file())
+        .unwrap()
+        .put(Kind::Friends, ME, "friends", &vec![1_u64, 156]);
+    let cookies = Arc::new(MemoryCookies::default());
+    cookies.set(ME, &Secret::new(COOKIE)).unwrap();
+    let core = Core::start(
+        CoreConfig {
+            paths,
+            base: Base::Replay(replay.server.uri()),
+            cookies,
+            opener: Arc::new(RecordingOpener::default()),
+            limiter: Arc::new(RateLimiter::default()),
+            background: false,
+            quick_poll: Duration::from_millis(10),
+        },
+        Arc::new(|| {}),
+    );
+    let dir = src.path().join("reads");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("plugin.toml"),
+        "id = \"reads\"\nname = \"Reads\"\nentry = \"main.luau\"\npermissions = [\"read.public\", \"read.account\"]\n",
+    )
+    .unwrap();
+    std::fs::write(dir.join("main.luau"), READS).unwrap();
+    core.stage_plugin_install(dir.to_str().unwrap(), false).unwrap();
+    core.finish_plugin_install(vec![ME]).unwrap();
+    wait(&core, "the plugin to run", |p| running(p, "reads"));
+    let run = |id: &str| {
+        let c = PluginCmd {
+            plugin: "reads".into(),
+            id: id.into(),
+        };
+        core.run_plugin_command(&c, None, Some(ME), None).unwrap();
+    };
+
+    // The same text replaces its toast, so look for a newer one.
+    let newest = |text: &str| {
+        core.store()
+            .toasts
+            .iter()
+            .filter(|t| t.text.contains(text))
+            .map(|t| t.id)
+            .max()
+            .unwrap_or(0)
+    };
+    const USER: &str = "Reads: Five 1577923200 3";
+    run("user");
+    wait_store(&core, "the user", |_| newest(USER) > 0);
+    let first = newest(USER);
+    run("user");
+    wait_store(&core, "the cached user", |_| newest(USER) > first);
+    run("presence");
+    wait_store(&core, "the presence", |_| {
+        toasted(&core, "Reads: in_game Somewhere")
+    });
+    run("friends");
+    wait_store(&core, "the friends", |_| toasted(&core, "Reads: friends 2"));
+
+    // Without the account, private reads are refused and public ones still work.
+    core.set_plugin_account("reads", ME, false).unwrap();
+    wait(&core, "the grant to go", |p| p[0].accounts.is_empty());
+    run("friends");
+    wait_store(&core, "the refusal", |_| {
+        toasted(&core, "may not use this account")
+    });
+    let before = newest(USER);
+    run("user");
+    wait_store(&core, "the public read", |_| newest(USER) > before);
 }

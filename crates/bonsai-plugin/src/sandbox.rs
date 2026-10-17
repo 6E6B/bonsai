@@ -13,10 +13,14 @@ use mlua::chunk::ChunkMode;
 use mlua::{Function, Lua, LuaOptions, MultiValue, StdLib, Table, Value, VmState};
 
 use crate::manifest::valid_module;
-use crate::{Error, Manifest, is_plugin_id};
+use crate::{Error, Manifest, Permission, is_plugin_id};
 
 /// Most commands a plugin may register.
 const MAX_COMMANDS: usize = 100;
+/// Most reads one handler call may make.
+const MAX_READS: usize = 200;
+/// Most ids in one `ctx.presence` call.
+const MAX_PRESENCE: usize = 100;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {
@@ -43,8 +47,57 @@ impl Default for Limits {
 pub trait Host {
     /// Runs a built-in command now as `account`. `Err` is shown to the plugin as a Luau error.
     fn run(&self, plugin: &str, account: u64, action: &str, arg: Option<&str>) -> Result<(), String>;
+    /// Reads data as `account` (0 for none). The sandbox has checked the manifest asks for
+    /// [`Read::permission`]. `Ok(Null)` reads as `nil`.
+    fn read(&self, plugin: &str, account: u64, read: &Read) -> Result<serde_json::Value, String>;
     /// A line from `print`, for the developer log.
     fn log(&self, plugin: &str, line: &str);
+}
+
+/// A read a plugin asked for through `ctx`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Read {
+    User(u64),
+    /// By place id, like game commands get.
+    Game(u64),
+    Item {
+        id: u64,
+        bundle: bool,
+    },
+    Presence(Vec<u64>),
+    /// The account's friends.
+    Friends,
+    /// Collectibles, or one asset or bundle type. `user` defaults to the account.
+    Inventory {
+        user: Option<u64>,
+        asset_type: Option<i32>,
+        bundle_type: Option<i32>,
+        limit: usize,
+    },
+    Trades {
+        status: TradeStatus,
+        limit: usize,
+    },
+}
+
+impl Read {
+    /// What the manifest needs to ask for to make this read.
+    pub fn permission(&self) -> Permission {
+        match self {
+            Read::User(_) | Read::Game(_) | Read::Item { .. } => Permission::ReadPublic,
+            _ => Permission::ReadAccount,
+        }
+    }
+}
+
+/// Which trades `ctx.trades` lists.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TradeStatus {
+    #[default]
+    Inbound,
+    Outbound,
+    Completed,
+    Inactive,
 }
 
 /// What a command takes, from `arg = "..."` in `bonsai.command`.
@@ -149,6 +202,9 @@ pub struct Plugin {
     handlers: HashMap<String, Function>,
     clock: Rc<Clock>,
     limits: Limits,
+    host: Rc<dyn Host>,
+    /// Reads made in the current call.
+    reads: Rc<Cell<usize>>,
 }
 
 impl Plugin {
@@ -183,7 +239,16 @@ impl Plugin {
 
         let registered = Rc::new(RefCell::new(Vec::<(Command, Function)>::new()));
         let loading = Rc::new(Cell::new(true));
-        install_globals(&lua, &manifest, host, &root, &clock, &registered, &loading).map_err(script)?;
+        install_globals(
+            &lua,
+            &manifest,
+            host.clone(),
+            &root,
+            &clock,
+            &registered,
+            &loading,
+        )
+        .map_err(script)?;
         lua.sandbox(true).map_err(script)?;
 
         let entry = manifest.entry.clone();
@@ -211,6 +276,8 @@ impl Plugin {
             handlers,
             clock,
             limits,
+            host,
+            reads: Rc::default(),
         })
     }
 
@@ -237,6 +304,7 @@ impl Plugin {
             },
         };
         let ctx = self.ctx_table(ctx).map_err(script)?;
+        self.reads.set(0);
         self.clock.start(self.limits.call);
         let ran = f.call::<Value>((ctx, arg));
         self.clock.stop();
@@ -257,9 +325,198 @@ impl Plugin {
                 run.call::<()>((account, id, arg))
             })?;
         t.set("run", bound)?;
+        self.reads_into(&t, account)?;
         t.set_readonly(true);
         Ok(t)
     }
+
+    /// `ctx.user`, `ctx.friends` and the other reads, as `account`.
+    fn reads_into(&self, t: &Table, account: u64) -> mlua::Result<()> {
+        let lua = &self.lua;
+        let read = {
+            let (host, manifest, clock, reads) = (
+                self.host.clone(),
+                self.manifest.clone(),
+                self.clock.clone(),
+                self.reads.clone(),
+            );
+            Rc::new(move |lua: &Lua, r: Read| -> mlua::Result<Value> {
+                let p = r.permission();
+                if !manifest.permissions.contains(&p) {
+                    return Err(mlua::Error::runtime(format!(
+                        "Add \"{}\" to permissions in plugin.toml.",
+                        p.key()
+                    )));
+                }
+                if reads.get() >= MAX_READS {
+                    return Err(mlua::Error::runtime(format!(
+                        "A call can make at most {MAX_READS} reads."
+                    )));
+                }
+                reads.set(reads.get() + 1);
+                let v = clock
+                    .pause(|| host.read(&manifest.id, account, &r))
+                    .map_err(mlua::Error::runtime)?;
+                to_lua(lua, &v)
+            })
+        };
+        macro_rules! def {
+            ($name:literal, $args:ty, $f:expr) => {{
+                let read = read.clone();
+                let parse = $f;
+                t.set(
+                    $name,
+                    lua.create_function(move |lua, args: $args| read(lua, parse(args)?))?,
+                )?;
+            }};
+        }
+        def!("user", Value, |id: Value| -> mlua::Result<Read> {
+            Ok(Read::User(id_arg("ctx.user", &id)?))
+        });
+        def!("game", Value, |id: Value| -> mlua::Result<Read> {
+            Ok(Read::Game(id_arg("ctx.game", &id)?))
+        });
+        def!("item", (Value, Option<String>), |(id, kind): (
+            Value,
+            Option<String>
+        )|
+         -> mlua::Result<Read> {
+            let bundle = match kind.as_deref() {
+                None | Some("asset") => false,
+                Some("bundle") => true,
+                Some(k) => {
+                    return Err(mlua::Error::runtime(format!(
+                        "ctx.item: kind is asset or bundle, not \"{k}\"."
+                    )));
+                }
+            };
+            Ok(Read::Item {
+                id: id_arg("ctx.item", &id)?,
+                bundle,
+            })
+        });
+        def!("presence", Table, |ids: Table| -> mlua::Result<Read> {
+            let mut out = Vec::new();
+            for v in ids.sequence_values::<Value>() {
+                out.push(id_arg("ctx.presence", &v?)?);
+            }
+            if out.len() > MAX_PRESENCE {
+                return Err(mlua::Error::runtime(format!(
+                    "ctx.presence takes at most {MAX_PRESENCE} ids."
+                )));
+            }
+            Ok(Read::Presence(out))
+        });
+        def!("friends", (), |()| -> mlua::Result<Read> { Ok(Read::Friends) });
+        def!(
+            "inventory",
+            Option<Table>,
+            |f: Option<Table>| -> mlua::Result<Read> {
+                let Some(f) = f else {
+                    return Ok(Read::Inventory {
+                        user: None,
+                        asset_type: None,
+                        bundle_type: None,
+                        limit: 100,
+                    });
+                };
+                let user = match f.get::<Value>("user")? {
+                    Value::Nil => None,
+                    v => Some(id_arg("ctx.inventory: user", &v)?),
+                };
+                let asset_type = f.get::<Option<i32>>("asset_type")?;
+                let bundle_type = f.get::<Option<i32>>("bundle_type")?;
+                if asset_type.is_some() && bundle_type.is_some() {
+                    return Err(mlua::Error::runtime(
+                        "ctx.inventory: give asset_type or bundle_type, not both.",
+                    ));
+                }
+                Ok(Read::Inventory {
+                    user,
+                    asset_type,
+                    bundle_type,
+                    limit: limit_arg("ctx.inventory", &f, 100, 1000)?,
+                })
+            }
+        );
+        def!(
+            "trades",
+            Option<Table>,
+            |f: Option<Table>| -> mlua::Result<Read> {
+                let Some(f) = f else {
+                    return Ok(Read::Trades {
+                        status: TradeStatus::Inbound,
+                        limit: 25,
+                    });
+                };
+                let status = match f.get::<Option<String>>("status")?.as_deref() {
+                    None | Some("inbound") => TradeStatus::Inbound,
+                    Some("outbound") => TradeStatus::Outbound,
+                    Some("completed") => TradeStatus::Completed,
+                    Some("inactive") => TradeStatus::Inactive,
+                    Some(s) => {
+                        return Err(mlua::Error::runtime(format!(
+                            "ctx.trades: status is inbound, outbound, completed or inactive, not \"{s}\"."
+                        )));
+                    }
+                };
+                Ok(Read::Trades {
+                    status,
+                    limit: limit_arg("ctx.trades", &f, 25, 100)?,
+                })
+            }
+        );
+        Ok(())
+    }
+}
+
+/// A Roblox id from Luau: a whole number from 1 to 2^53, or a string of one.
+fn id_arg(what: &str, v: &Value) -> mlua::Result<u64> {
+    let n = match v {
+        Value::Integer(n) => Some(*n as f64),
+        Value::Number(n) => Some(*n),
+        Value::String(s) => s.to_str()?.trim().parse::<u64>().ok().map(|n| n as f64),
+        _ => None,
+    };
+    match n {
+        Some(n) if n >= 1.0 && n.fract() == 0.0 && n < (1u64 << 53) as f64 => Ok(n as u64),
+        _ => Err(mlua::Error::runtime(format!("{what} takes an id."))),
+    }
+}
+
+fn limit_arg(what: &str, f: &Table, default: usize, max: usize) -> mlua::Result<usize> {
+    match f.get::<Option<f64>>("limit")? {
+        None => Ok(default),
+        Some(n) if n >= 1.0 && n.fract() == 0.0 && n <= max as f64 => Ok(n as usize),
+        Some(_) => Err(mlua::Error::runtime(format!(
+            "{what}: limit is a whole number from 1 to {max}."
+        ))),
+    }
+}
+
+/// Host data as Luau values: objects and arrays become tables, `null` becomes `nil`.
+fn to_lua(lua: &Lua, v: &serde_json::Value) -> mlua::Result<Value> {
+    use serde_json::Value as J;
+    Ok(match v {
+        J::Null => Value::Nil,
+        J::Bool(b) => Value::Boolean(*b),
+        J::Number(n) => Value::Number(n.as_f64().unwrap_or(0.0)),
+        J::String(s) => Value::String(lua.create_string(s)?),
+        J::Array(a) => {
+            let t = lua.create_table_with_capacity(a.len(), 0)?;
+            for (i, x) in a.iter().enumerate() {
+                t.raw_set(i + 1, to_lua(lua, x)?)?;
+            }
+            Value::Table(t)
+        }
+        J::Object(o) => {
+            let t = lua.create_table_with_capacity(0, o.len())?;
+            for (k, x) in o {
+                t.raw_set(k.as_str(), to_lua(lua, x)?)?;
+            }
+            Value::Table(t)
+        }
+    })
 }
 
 fn install_globals(

@@ -6,13 +6,16 @@ use std::path::Path;
 use std::rc::Rc;
 use std::time::Duration;
 
-use bonsai_plugin::{Action, Arg, Ctx, Error, Host, Limits, Manifest, Outcome, Plugin};
+use bonsai_plugin::{Action, Arg, Ctx, Error, Host, Limits, Manifest, Outcome, Plugin, Read, TradeStatus};
 
 #[derive(Default)]
 struct FakeHost {
     runs: RefCell<Vec<(u64, String, Option<String>)>>,
     logs: RefCell<Vec<String>>,
-    /// How long `run` takes, to check host time isn't counted.
+    reads: RefCell<Vec<(u64, Read)>>,
+    /// What every read returns.
+    data: serde_json::Value,
+    /// How long `run` and `read` take, to check host time isn't counted.
     delay: Duration,
     fail: Option<String>,
 }
@@ -27,6 +30,14 @@ impl Host for FakeHost {
             .borrow_mut()
             .push((account, action.to_owned(), arg.map(str::to_owned)));
         Ok(())
+    }
+    fn read(&self, _plugin: &str, account: u64, read: &Read) -> Result<serde_json::Value, String> {
+        std::thread::sleep(self.delay);
+        if let Some(e) = &self.fail {
+            return Err(e.clone());
+        }
+        self.reads.borrow_mut().push((account, read.clone()));
+        Ok(self.data.clone())
     }
     fn log(&self, _plugin: &str, line: &str) {
         self.logs.borrow_mut().push(line.to_owned());
@@ -67,12 +78,16 @@ fn write(dir: &Path, files: &[(&str, &str)]) {
 }
 
 fn load_with(main: &str, files: &[(&str, &str)], host: FakeHost) -> Fixture {
+    load_manifest(MANIFEST, main, files, host)
+}
+
+fn load_manifest(manifest: &str, main: &str, files: &[(&str, &str)], host: FakeHost) -> Fixture {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().join("test");
     write(&dir, &[("main.luau", main)]);
     write(&dir, files);
     let host = Rc::new(host);
-    let manifest = Manifest::parse(MANIFEST).unwrap();
+    let manifest = Manifest::parse(manifest).unwrap();
     let result = Plugin::load(&dir, manifest, host.clone(), limits());
     Fixture {
         _dir: tmp,
@@ -425,4 +440,141 @@ fn print_goes_to_the_host_log() {
     let f = load_with("print('loaded', 1, nil, true)", &[], FakeHost::default());
     assert!(f.result.is_ok());
     assert_eq!(*f.host.logs.borrow(), vec!["loaded\t1\tnil\ttrue"]);
+}
+
+const READER: &str = r#"
+id = "test"
+entry = "main.luau"
+permissions = ["read.public", "read.account"]
+"#;
+
+/// Runs command `c` with `body` in a plugin that may read, against `host`.
+fn read_with(manifest: &str, body: &str, host: FakeHost) -> (Result<Outcome, Error>, Vec<(u64, Read)>) {
+    let main = format!("bonsai.command {{ id = 'c', title = 'C', run = function(ctx)\n{body}\nend }}");
+    let f = load_manifest(manifest, &main, &[], host);
+    let out = f.result.unwrap().run_command("c", CTX, None);
+    let reads = f.host.reads.borrow().clone();
+    (out, reads)
+}
+
+#[test]
+fn reads_reach_the_host_as_the_account() {
+    let body = r#"
+        ctx.user(1); ctx.game("920587237"); ctx.item(2); ctx.item(3, "bundle")
+        ctx.presence({ 4, 5 }); ctx.friends()
+        ctx.inventory(); ctx.inventory({ user = 6, asset_type = 8, limit = 500 })
+        ctx.trades(); ctx.trades({ status = "completed", limit = 100 })
+    "#;
+    let (out, reads) = read_with(READER, body, FakeHost::default());
+    assert_eq!(out.unwrap(), Outcome::Nothing);
+    let inv = |user, asset_type, limit| Read::Inventory {
+        user,
+        asset_type,
+        bundle_type: None,
+        limit,
+    };
+    let want = vec![
+        Read::User(1),
+        Read::Game(920587237),
+        Read::Item { id: 2, bundle: false },
+        Read::Item { id: 3, bundle: true },
+        Read::Presence(vec![4, 5]),
+        Read::Friends,
+        inv(None, None, 100),
+        inv(Some(6), Some(8), 500),
+        Read::Trades {
+            status: TradeStatus::Inbound,
+            limit: 25,
+        },
+        Read::Trades {
+            status: TradeStatus::Completed,
+            limit: 100,
+        },
+    ];
+    assert_eq!(
+        reads,
+        want.into_iter().map(|r| (CTX.account, r)).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn host_data_becomes_tables() {
+    let host = FakeHost {
+        data: serde_json::json!({ "id": 1, "name": "a", "tags": ["x", "y"], "gone": null, "ok": true }),
+        ..FakeHost::default()
+    };
+    let body = r#"
+        local u = ctx.user(1)
+        assert(u.id == 1 and u.name == "a" and #u.tags == 2 and u.tags[2] == "y")
+        assert(u.gone == nil and u.ok == true)
+        return { toast = u.name }
+    "#;
+    assert_eq!(
+        read_with(READER, body, host).0.unwrap(),
+        Outcome::Toast("a".into())
+    );
+    let (out, _) = read_with(READER, "assert(ctx.user(1) == nil)", FakeHost::default());
+    assert_eq!(out.unwrap(), Outcome::Nothing);
+}
+
+#[test]
+fn reads_need_the_permission_in_the_manifest() {
+    let public_only = r#"
+id = "test"
+entry = "main.luau"
+permissions = ["read.public"]
+"#;
+    let (out, reads) = read_with(public_only, "ctx.user(1); ctx.friends()", FakeHost::default());
+    assert!(script_error(out).contains("\"read.account\""));
+    assert_eq!(reads.len(), 1);
+    let (out, reads) = read_with(MANIFEST, "ctx.item(1)", FakeHost::default());
+    assert!(script_error(out).contains("\"read.public\""));
+    assert!(reads.is_empty());
+}
+
+#[test]
+fn bad_read_args_are_errors() {
+    for (body, want) in [
+        ("ctx.user(0)", "ctx.user takes an id"),
+        ("ctx.user(1.5)", "ctx.user takes an id"),
+        ("ctx.user('abc')", "ctx.user takes an id"),
+        ("ctx.item(1, 'hat')", "kind is asset or bundle"),
+        ("ctx.inventory({ asset_type = 8, bundle_type = 1 })", "not both"),
+        (
+            "ctx.inventory({ limit = 5000 })",
+            "limit is a whole number from 1 to 1000",
+        ),
+        ("ctx.trades({ status = 'mine' })", "status is inbound"),
+    ] {
+        let (out, reads) = read_with(READER, body, FakeHost::default());
+        let err = script_error(out);
+        assert!(err.contains(want), "{body}: {err}");
+        assert!(reads.is_empty(), "{body}");
+    }
+    let many: Vec<String> = (1..=101).map(|i| i.to_string()).collect();
+    let body = format!("ctx.presence({{ {} }})", many.join(", "));
+    assert!(script_error(read_with(READER, &body, FakeHost::default()).0).contains("at most 100 ids"));
+}
+
+#[test]
+fn reads_are_capped_per_call_and_off_the_clock() {
+    let (out, reads) = read_with(READER, "for i = 1, 300 do ctx.user(i) end", FakeHost::default());
+    assert!(script_error(out).contains("at most 200 reads"));
+    assert_eq!(reads.len(), 200);
+    // Three 40 ms reads go past the 50 ms limit, but only Luau time counts.
+    let slow = FakeHost {
+        delay: Duration::from_millis(40),
+        ..FakeHost::default()
+    };
+    let (out, _) = read_with(READER, "for i = 1, 3 do ctx.user(i) end", slow);
+    assert_eq!(out.unwrap(), Outcome::Nothing);
+    let failing = FakeHost {
+        fail: Some("Not signed in.".into()),
+        ..FakeHost::default()
+    };
+    let body = "local ok, e = pcall(ctx.friends); return { toast = tostring(e) }";
+    let Outcome::Toast(t) = read_with(READER, body, failing).0.unwrap() else {
+        panic!("expected a toast");
+    };
+    assert!(t.contains("Not signed in."), "{t}");
 }

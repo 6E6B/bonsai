@@ -771,59 +771,7 @@ impl Core {
 
     /// The item page's details.
     pub fn item(&self, item: ItemRef) -> Res<ItemDetails> {
-        self.inner.res(
-            Key::shared("item", format!("{:?}:{}", item.kind, item.id)),
-            ITEM_AGE,
-            move |f| async move {
-                let p = catalog::undocumented::GetItemDetailsParams {
-                    item_type: item.kind.api_name().into(),
-                };
-                let r = catalog::undocumented::get_item_details(&f.client, item.id as i64, &p).await?;
-                let mut d = ItemDetails::from_api(r)
-                    .ok_or_else(|| Error::Message("This item doesn't exist.".into()))?;
-                if item.kind == ItemKind::Asset
-                    && (d.updated.is_empty() || d.created.is_empty())
-                    && let Ok(eco) =
-                        economy::undocumented::get_asset_economy_details(&f.client, item.id as i64).await
-                {
-                    if d.updated.is_empty() {
-                        d.updated = eco.updated.unwrap_or_default();
-                    }
-                    if d.created.is_empty() {
-                        d.created = eco.created.unwrap_or_default();
-                    }
-                }
-                if d.updated.is_empty() {
-                    d.updated = d.created.clone();
-                }
-                let topic_req = catalog::v1::TopicRequestModel {
-                    gender_type: Some(catalog::v1::TopicRequestModelGenderType::UnknownValue),
-                    input_query: Some(String::new()),
-                    items: Some(vec![catalog::v1::AvatarItem {
-                        item_type: Some(match item.kind {
-                            ItemKind::Asset => catalog::v1::AvatarItemItemType::Asset,
-                            ItemKind::Bundle => catalog::v1::AvatarItemItemType::Bundle,
-                        }),
-                        target_id: Some(item.id as i64),
-                    }]),
-                    max_result: Some(10),
-                    select_topics: Some(Vec::new()),
-                };
-                if let Ok(topics) = catalog::v1::post_topic_get_topics(&f.client, &topic_req).await {
-                    for t in topics.topics.unwrap_or_default() {
-                        if t.original_topic_name.as_deref().unwrap_or("").is_empty()
-                            && let Some(name) = t.display_name
-                        {
-                            let name = name.trim();
-                            if !name.is_empty() && !d.tags.iter().any(|e| e.eq_ignore_ascii_case(name)) {
-                                d.tags.push(name.to_string());
-                            }
-                        }
-                    }
-                }
-                Ok(d)
-            },
-        )
+        self.inner.item(item)
     }
 
     /// Current tile data for a list of items (wishlist, recommendations). Unknown ids drop out.
@@ -1192,6 +1140,65 @@ async fn fetch_items(c: &bonsai_api::Client, items: &[ItemRef]) -> Result<Vec<Ca
     // Keep the caller's order.
     out.sort_by_key(|i| items.iter().position(|r| *r == i.item).unwrap_or(usize::MAX));
     Ok(out)
+}
+
+impl crate::core::Inner {
+    /// The item page's details.
+    pub(crate) fn item(self: &std::sync::Arc<Self>, item: ItemRef) -> Res<ItemDetails> {
+        self.res(
+            Key::shared("item", format!("{:?}:{}", item.kind, item.id)),
+            ITEM_AGE,
+            move |f| async move {
+                let p = catalog::undocumented::GetItemDetailsParams {
+                    item_type: item.kind.api_name().into(),
+                };
+                let r = catalog::undocumented::get_item_details(&f.client, item.id as i64, &p).await?;
+                let mut d = ItemDetails::from_api(r)
+                    .ok_or_else(|| Error::Message("This item doesn't exist.".into()))?;
+                if item.kind == ItemKind::Asset
+                    && (d.updated.is_empty() || d.created.is_empty())
+                    && let Ok(eco) =
+                        economy::undocumented::get_asset_economy_details(&f.client, item.id as i64).await
+                {
+                    if d.updated.is_empty() {
+                        d.updated = eco.updated.unwrap_or_default();
+                    }
+                    if d.created.is_empty() {
+                        d.created = eco.created.unwrap_or_default();
+                    }
+                }
+                if d.updated.is_empty() {
+                    d.updated = d.created.clone();
+                }
+                let topic_req = catalog::v1::TopicRequestModel {
+                    gender_type: Some(catalog::v1::TopicRequestModelGenderType::UnknownValue),
+                    input_query: Some(String::new()),
+                    items: Some(vec![catalog::v1::AvatarItem {
+                        item_type: Some(match item.kind {
+                            ItemKind::Asset => catalog::v1::AvatarItemItemType::Asset,
+                            ItemKind::Bundle => catalog::v1::AvatarItemItemType::Bundle,
+                        }),
+                        target_id: Some(item.id as i64),
+                    }]),
+                    max_result: Some(10),
+                    select_topics: Some(Vec::new()),
+                };
+                if let Ok(topics) = catalog::v1::post_topic_get_topics(&f.client, &topic_req).await {
+                    for t in topics.topics.unwrap_or_default() {
+                        if t.original_topic_name.as_deref().unwrap_or("").is_empty()
+                            && let Some(name) = t.display_name
+                        {
+                            let name = name.trim();
+                            if !name.is_empty() && !d.tags.iter().any(|e| e.eq_ignore_ascii_case(name)) {
+                                d.tags.push(name.to_string());
+                            }
+                        }
+                    }
+                }
+                Ok(d)
+            },
+        )
+    }
 }
 
 #[cfg(test)]

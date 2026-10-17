@@ -367,47 +367,7 @@ fn eligibility_v2(r: trades::v2::CanTradeResponse) -> Eligibility {
 
 impl Core {
     pub fn trades(&self, account: AccountId, b: TradeBox, more: bool) -> Res<Page<TradeRow>> {
-        self.inner.paged(
-            Key::private(account, "trades", b.key()),
-            LIST_AGE,
-            more,
-            move |f, cursor| async move {
-                let p = trades::v1::GetTradesByTradeStatusTypeParams {
-                    limit: Some(25),
-                    cursor,
-                    sort_order: Some(trades::v1::GetTradesByTradeStatusTypeSortOrder::Desc),
-                };
-                let r = trades::v1::get_trades_by_trade_status_type(&f.client, b.api(), &p).await?;
-                let rows: Vec<TradeRow> = r
-                    .data
-                    .unwrap_or_default()
-                    .into_iter()
-                    .filter_map(|t| {
-                        let u = t.user.unwrap_or_default();
-                        Some(TradeRow {
-                            id: t.id? as u64,
-                            partner: u.id.unwrap_or(0).max(0) as u64,
-                            partner_name: u.name.unwrap_or_default(),
-                            partner_display: u.display_name.unwrap_or_default(),
-                            created: t.created.unwrap_or_default(),
-                            expires: t.expiration.unwrap_or_default(),
-                            status: status_text(t.status),
-                            active: t.is_active.unwrap_or(false),
-                        })
-                    })
-                    .collect();
-                f.note_users(rows.iter().filter(|r| r.partner > 0).map(|r| UserInfo {
-                    id: r.partner,
-                    name: r.partner_name.clone(),
-                    display_name: r.partner_display.clone(),
-                    verified: false,
-                }));
-                Ok(Page {
-                    items: rows,
-                    next: r.next_page_cursor.filter(|c| !c.is_empty()),
-                })
-            },
-        )
+        self.inner.trades(account, b, more)
     }
 
     /// One trade, split into what the account gives and gets.
@@ -739,6 +699,57 @@ impl Core {
                     p.items.retain(|t| t.id != trade_id)
                 });
         }
+    }
+}
+
+impl crate::core::Inner {
+    pub(crate) fn trades(
+        self: &std::sync::Arc<Self>,
+        account: AccountId,
+        b: TradeBox,
+        more: bool,
+    ) -> Res<Page<TradeRow>> {
+        self.paged(
+            Key::private(account, "trades", b.key()),
+            LIST_AGE,
+            more,
+            move |f, cursor| async move {
+                let p = trades::v1::GetTradesByTradeStatusTypeParams {
+                    limit: Some(25),
+                    cursor,
+                    sort_order: Some(trades::v1::GetTradesByTradeStatusTypeSortOrder::Desc),
+                };
+                let r = trades::v1::get_trades_by_trade_status_type(&f.client, b.api(), &p).await?;
+                let rows: Vec<TradeRow> = r
+                    .data
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(|t| {
+                        let u = t.user.unwrap_or_default();
+                        Some(TradeRow {
+                            id: t.id? as u64,
+                            partner: u.id.unwrap_or(0).max(0) as u64,
+                            partner_name: u.name.unwrap_or_default(),
+                            partner_display: u.display_name.unwrap_or_default(),
+                            created: t.created.unwrap_or_default(),
+                            expires: t.expiration.unwrap_or_default(),
+                            status: status_text(t.status),
+                            active: t.is_active.unwrap_or(false),
+                        })
+                    })
+                    .collect();
+                f.note_users(rows.iter().filter(|r| r.partner > 0).map(|r| UserInfo {
+                    id: r.partner,
+                    name: r.partner_name.clone(),
+                    display_name: r.partner_display.clone(),
+                    verified: false,
+                }));
+                Ok(Page {
+                    items: rows,
+                    next: r.next_page_cursor.filter(|c| !c.is_empty()),
+                })
+            },
+        )
     }
 }
 

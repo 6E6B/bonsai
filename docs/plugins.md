@@ -137,14 +137,14 @@ commands `plugins.allow_automation` and `plugins.block_automation`.
 
 ```lua
 bonsai.command {
-  id = "unfriend-inactive",
-  title = "Unfriend people offline more than 6 months",
-  keywords = { "friends", "cleanup", "inactive" },
+  id = "unfriend-banned",
+  title = "Unfriend banned accounts",
+  keywords = { "friends", "cleanup", "banned" },
   arg = "none",                 -- none | text | user | game | item | account
   run = function(ctx, arg)
     local out = {}
-    for _, f in ctx.friends(ctx.account) do
-      if f.last_online and ctx.now - f.last_online > 180 * 86400 then
+    for _, f in ctx.friends() do
+      if ctx.user(f.id).banned then
         table.insert(out, { id = "user.unfriend", arg = tostring(f.id) })
       end
     end
@@ -189,6 +189,23 @@ end)
 `ctx.inventory(filter)`, `ctx.trades()`. They read through the cache and the shared rate limiter,
 like the rest of the app. Private reads need `read.account` for `ctx.account`.
 
+| Read | Takes | Returns |
+|---|---|---|
+| `ctx.user(id)` | user id | `id, name, display_name, description, created, verified, banned, friends, followers, following` |
+| `ctx.game(id)` | place id | `universe_id, place_id, name, description, ...`, or nil if there is none |
+| `ctx.item(id, kind)` | asset id, `kind` `"asset"` (default) or `"bundle"` | the item's catalog details |
+| `ctx.presence(ids)` | up to 100 user ids | a list of `id, status, place_id, universe_id, location` |
+| `ctx.friends()` | | a list of `id, name, display_name, status` |
+| `ctx.inventory{user, asset_type, bundle_type, limit}` | all optional; `user` defaults to `ctx.account`, no type means collectibles; `limit` 100, at most 1000 | a list of items |
+| `ctx.trades{status, limit}` | `status` `inbound` (default), `outbound`, `completed` or `inactive`; `limit` 25, at most 100 | a list of trades |
+
+- Fields are snake_case. Dates are unix seconds, like `ctx.now`. Unknown counts are nil.
+  `status` is `offline`, `online`, `in_game`, `in_studio` or `invisible`.
+- `read.public` covers user, game and item; `read.account` the rest, and only for an account
+  the plugin was granted. Ids are whole numbers or numeric strings.
+- A call makes at most 200 reads. Each waits up to 15 s for the network, off the plugin's clock.
+  A read that fails raises an error the plugin can catch with `pcall`.
+
 ## Layout
 
 - `crates/bonsai-plugin`: manifest parsing, the Luau sandbox and a `Host` trait. No network and
@@ -221,7 +238,8 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   outside the folder), that time and memory limits trip, and that undeclared actions are refused.
 - Built: `bonsai.command`, the `ctx` table (`account`, `now`, `run`), returned outcomes, `print`
   to the host log, `require` inside the folder (symlinks out are refused, bytecode isn't
-  loaded). Not yet: `bonsai.on`, `bonsai.every`, `bonsai.store`, reads, and yielding host calls;
+  loaded). Reads came in phase 4. Not yet: `bonsai.on`, `bonsai.every`, `bonsai.store` and
+  yielding host calls;
   host calls block the plugin's thread for now.
 - Errors raised by host functions reach Luau as error objects; plugins `tostring` them.
 
@@ -263,9 +281,14 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
 - Not yet: `ctx.run` inside a command still refuses (automation is phase 6), and plugin
   commands can't be rebound.
 
-### 4. Reads
+### 4. Reads (done)
 
 - The read functions above over the store and cache, with permission checks.
+- Built: see [Reads](#reads). Each read checks, in bonsai-core, that the plugin is running, the
+  permission was agreed to and, for private reads, the account is granted and signed in. Users,
+  items, inventories and trades use the same cached resources as their screens. Games use the
+  store, else load the place. Friends and friends' presence come from the store; presence for
+  anyone else is fetched in chunks of 50 and not stored, so it never fires friend-join alerts.
 
 ### 5. Events, timers, storage and settings
 

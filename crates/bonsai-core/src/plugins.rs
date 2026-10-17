@@ -7,10 +7,10 @@ use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 use std::time::Duration;
 
-use bonsai_plugin::{Ctx, Limits, Outcome, Plugin};
+use bonsai_plugin::{Ctx, Limits, Outcome, Plugin, Read};
 use serde::{Deserialize, Serialize};
 
 use crate::AccountId;
@@ -18,6 +18,8 @@ use crate::commands::{CommandId, Effect, PluginCmd, Registry, Tier};
 use crate::core::{Core, Inner};
 
 pub use bonsai_plugin::{Arg, Command, Manifest, Permission, Refused};
+
+mod reads;
 
 pub const MANIFEST: &str = "plugin.toml";
 /// What one installed plugin may hold, so a stray folder can't fill the disk.
@@ -219,12 +221,19 @@ enum Force<'a> {
     One(&'a str),
 }
 
-/// The plugin side of [`bonsai_plugin::Host`]. Writes aren't wired up yet.
-struct CoreHost;
+/// The plugin side of [`bonsai_plugin::Host`], on the plugin's thread. Writes aren't wired up
+/// yet.
+struct CoreHost {
+    inner: Weak<Inner>,
+}
 
 impl bonsai_plugin::Host for CoreHost {
     fn run(&self, _plugin: &str, _account: u64, _action: &str, _arg: Option<&str>) -> Result<(), String> {
         Err("Plugins can't run actions yet.".into())
+    }
+    fn read(&self, plugin: &str, account: u64, read: &Read) -> Result<serde_json::Value, String> {
+        let inner = self.inner.upgrade().ok_or("Bonsai is closing.")?;
+        inner.plugin_read(plugin, account, read)
     }
     fn log(&self, plugin: &str, line: &str) {
         let line: String = line.chars().take(500).collect();
@@ -475,7 +484,8 @@ impl Inner {
         let spawned = std::thread::Builder::new()
             .name(format!("plugin-{id}"))
             .spawn(move || {
-                let loaded = Plugin::load(&dir, manifest, Rc::new(CoreHost), Limits::default());
+                let host = Rc::new(CoreHost { inner: weak.clone() });
+                let loaded = Plugin::load(&dir, manifest, host, Limits::default());
                 let status = match &loaded {
                     Ok(p) => Status::Running {
                         commands: p.commands().to_vec(),
