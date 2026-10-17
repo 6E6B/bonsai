@@ -60,6 +60,8 @@ pub struct Shell {
     pub login: Option<Login>,
     /// A two-step or captcha check holding an action, while it is open.
     pub challenge: Option<challenge::ChallengeView>,
+    /// A theme waiting in the import dialog.
+    pub theme_import: Option<account::ThemeImportView>,
     /// The "Sign in another device" dialog, once a code was entered.
     pub approve: Option<approve::ApproveView>,
     /// Item values from Rolimons are on.
@@ -1016,6 +1018,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         robux: s.active_data().and_then(|d| d.robux).map(|r| r as f64),
         unread: s.active_data().map(|d| d.unread.into()).unwrap_or_default(),
         challenge: s.challenge.as_ref().map(challenge::view),
+        theme_import: s.theme_import.as_ref().map(account::theme_import_view),
         approve: s.approve.as_ref().map(approve::view),
         login: s.login.as_ref().map(|l| match l {
             LoginState::Browser => Login::Browser,
@@ -2740,6 +2743,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::set_system_dark,
             account::font_catalog,
             account::font_files,
+            account::theme_import_install,
+            account::theme_import_cancel,
             account::pin_status,
             account::unlock_pin,
             challenge::challenge_submit_code,

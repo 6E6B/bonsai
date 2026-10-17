@@ -328,6 +328,9 @@ commands! {
     RedoTheme => "theme.redo", "Redo theme change", ["theme", "redo", "editor"], None, [];
     InspectTheme => "theme.inspect", "Inspect: pick part of the preview to edit its tokens", ["theme", "inspect", "pick", "token", "element", "editor"], None, [];
     FixThemeContrast => "theme.fix_contrast", "Fix low contrast in the theme", ["theme", "contrast", "readable", "accessibility", "fix", "wcag"], None, [];
+    ImportTheme => "theme.import", "Import theme (paste a code or a file path)", ["theme", "import", "install", "add", "load", "file", "code", "paste", "share", "bonsaitheme"], Text, [];
+    ExportTheme => "theme.export", "Save theme to a file", ["theme", "export", "save", "file", "share", "bonsaitheme", "backup"], Theme, [];
+    CopyThemeCode => "theme.copy_code", "Copy theme code", ["theme", "share", "code", "copy", "export", "send"], Theme, [];
     ThemeLivePreview => "theme.live", "Show theme edits across the whole app (on or off)", ["theme", "live", "preview", "apply", "editor"], None, [];
     SetBackground => "view.background", "Set background picture (https link or file path)", ["background", "wallpaper", "picture", "image", "photo", "gif", "url", "link", "appearance"], Text, [];
     PickBackground => "view.background_file", "Choose background picture from files", ["background", "wallpaper", "picture", "image", "photo", "gif", "file", "upload", "appearance"], None, [];

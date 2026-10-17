@@ -2540,6 +2540,52 @@ async fn themes_apply_cycle_delete_and_persist() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn theme_import_export_and_clashes() {
+    use bonsai_core::themes::{OnClash, Theme};
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("out.bonsaitheme");
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, Arc::default());
+    let c = &r.core;
+
+    // A code of a built-in imports as a copy, since built-ins can't be replaced.
+    let ember = c.theme_or_shown("ember").unwrap();
+    c.stage_theme_import(&ember.share_code()).unwrap();
+    let p = c.store().theme_import.clone().unwrap();
+    assert_eq!((p.source.as_str(), p.clash), ("", Some(("Ember".into(), true))));
+    let id = c.finish_theme_import(OnClash::Replace).unwrap();
+    assert_eq!(id, "ember-copy");
+    assert!(c.store().theme_import.is_none());
+    assert!(c.finish_theme_import(OnClash::Replace).is_err());
+
+    // Exported to a file and read back: same id, so it can replace or sit beside it.
+    c.export_theme("ember-copy", &out).unwrap();
+    assert_eq!(
+        Theme::decode(&std::fs::read_to_string(&out).unwrap()).unwrap().id,
+        "ember-copy"
+    );
+    c.stage_theme_import(&out.to_string_lossy()).unwrap();
+    let p = c.store().theme_import.clone().unwrap();
+    assert_eq!(p.source, "out.bonsaitheme");
+    assert_eq!(p.clash, Some(("Ember".into(), false)));
+    assert_eq!(c.finish_theme_import(OnClash::Replace).unwrap(), "ember-copy");
+    c.stage_theme_import(&out.to_string_lossy()).unwrap();
+    assert_eq!(c.finish_theme_import(OnClash::KeepBoth).unwrap(), "ember-copy-2");
+
+    // Cancelling installs nothing; bad input never opens the dialog.
+    c.stage_theme_import(r#"{"schema":1,"id":"fresh","base":"dark"}"#)
+        .unwrap();
+    assert_eq!(c.store().theme_import.as_ref().unwrap().clash, None);
+    c.cancel_theme_import();
+    assert!(c.themes().iter().all(|(t, _)| t.id != "fresh"));
+    assert!(c.stage_theme_import("/no/such/file.bonsaitheme").is_err());
+    assert!(c.stage_theme_import("bonsai-theme:1:zz").is_err());
+    assert!(c.store().theme_import.is_none());
+
+    // With no id, the theme on screen.
+    assert_eq!(c.theme_or_shown("").unwrap().base, c.shown_base());
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn google_font_copies_a_builtin_and_downloads_its_files() {
     use bonsai_core::settings::Mode;
     use bonsai_core::themes::{self, FontSlot};

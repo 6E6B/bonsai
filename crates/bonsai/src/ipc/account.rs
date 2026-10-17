@@ -11,7 +11,7 @@ use bonsai_core::prefs::{self, PrefKind};
 use bonsai_core::settings::{
     Density, Mode, NotifyPrefs, SavedTab, SavedTabs, SidebarPrefs, valid_format_locale,
 };
-use bonsai_core::themes::{Base, FontSlot, Theme};
+use bonsai_core::themes::{Base, FILE_EXT, FontSlot, OnClash, Theme};
 use bonsai_core::{AccountId, Core};
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -486,6 +486,54 @@ pub struct ThemeView {
     pub doc: String,
 }
 
+/// A theme read from a file or a code, waiting in the import dialog.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ThemeImportView {
+    /// The theme document as JSON. The UI reads it with `readTheme` to list what it skips.
+    pub doc: String,
+    /// The file name, or empty for a pasted code.
+    pub source: String,
+    /// The name of the installed theme with the same id, if any.
+    pub clash: Option<String>,
+    /// That theme is built in, so the import can only sit beside it.
+    pub clash_builtin: bool,
+}
+
+pub fn theme_import_view(p: &bonsai_core::themes::PendingImport) -> ThemeImportView {
+    ThemeImportView {
+        doc: p.theme.to_json(),
+        source: p.source.clone(),
+        clash: p.clash.as_ref().map(|c| c.0.clone()),
+        clash_builtin: p.clash.as_ref().is_some_and(|c| c.1),
+    }
+}
+
+/// Installs the theme in the import dialog. `keep_both` matters only when its id is taken;
+/// `apply` uses it at once.
+#[tauri::command]
+#[specta::specta]
+pub fn theme_import_install(core: State<'_, Arc<Core>>, keep_both: bool, apply: bool) -> Result<(), String> {
+    let on_clash = if keep_both {
+        OnClash::KeepBoth
+    } else {
+        OnClash::Replace
+    };
+    let id = core.finish_theme_import(on_clash)?;
+    if apply {
+        core.apply_theme(&id)?;
+    }
+    let name = core.theme_or_shown(&id).map(|t| t.name).unwrap_or(id);
+    core.notice(format!("Installed {name}."), false);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn theme_import_cancel(core: State<'_, Arc<Core>>) {
+    core.cancel_theme_import();
+}
+
 /// What the window should look like: the mode and the theme for each base.
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -718,6 +766,57 @@ fn pick_background(app: &AppHandle) {
     });
 }
 
+/// Reads a theme to import: from `text` (a code, JSON or a path), or from a file the user picks
+/// when it is empty. Off the main thread, since both read the disk or wait on a dialog.
+fn import_theme(app: &AppHandle, text: String) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let text = if text.trim().is_empty() {
+            let mut dialog = rfd::FileDialog::new()
+                .set_title("Import theme")
+                .add_filter("Themes", &[FILE_EXT, "json"]);
+            if let Some(w) = app.get_webview_window("main") {
+                dialog = dialog.set_parent(&w);
+            }
+            let Some(path) = dialog.pick_file() else {
+                return;
+            };
+            path.to_string_lossy().into_owned()
+        } else {
+            text
+        };
+        if let Some(core) = app.try_state::<Arc<Core>>()
+            && let Err(e) = core.stage_theme_import(&text)
+        {
+            core.notice(e, true);
+        }
+    });
+}
+
+/// Asks where to save a theme, then writes it as a `.bonsaitheme` file.
+fn export_theme(app: &AppHandle, theme: Theme) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let mut dialog = rfd::FileDialog::new()
+            .set_title("Save theme")
+            .set_file_name(format!("{}.{FILE_EXT}", theme.id))
+            .add_filter("Themes", &[FILE_EXT]);
+        if let Some(w) = app.get_webview_window("main") {
+            dialog = dialog.set_parent(&w);
+        }
+        let Some(path) = dialog.save_file() else {
+            return;
+        };
+        let Some(core) = app.try_state::<Arc<Core>>() else {
+            return;
+        };
+        match core.export_theme(&theme.id, &path) {
+            Ok(()) => core.notice(format!("Saved {} to {}", theme.name, path.display()), false),
+            Err(e) => core.notice(e, true),
+        }
+    });
+}
+
 /// Asks where to save the settings file, then writes it. The dialog gets its own thread.
 fn export_settings(app: &AppHandle) {
     let app = app.clone();
@@ -874,6 +973,19 @@ pub(super) fn run(
         CommandId::SetThemeMonoFont => core.set_theme_font(FontSlot::Mono, &arg()),
         // The editor sends the whole document; it is checked like an imported one.
         CommandId::SaveTheme => Theme::parse(&arg()).and_then(|t| core.save_theme(t)),
+        CommandId::ImportTheme => {
+            import_theme(app, arg());
+            Ok(())
+        }
+        CommandId::ExportTheme => core.theme_or_shown(&arg()).map(|t| export_theme(app, t)),
+        CommandId::CopyThemeCode => core.theme_or_shown(&arg()).and_then(|t| {
+            super::copy(
+                app,
+                core,
+                t.share_code(),
+                &format!("Copied the code for {}.", t.name),
+            )
+        }),
         CommandId::SetBackground => core.set_background(&arg()),
         CommandId::PickBackground => {
             pick_background(app);

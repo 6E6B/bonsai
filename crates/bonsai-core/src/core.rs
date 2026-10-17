@@ -150,6 +150,8 @@ pub(crate) struct Inner {
     universes_pending: Mutex<HashMap<u64, i64>>,
     /// Last time a rate-limited fire-and-forget call ran, by key (typing status).
     pub(crate) throttle: Mutex<HashMap<String, i64>>,
+    /// Theme files queued to write; the themes watcher waits while any are.
+    pub(crate) theme_writes: std::sync::atomic::AtomicUsize,
     pub(crate) rt: tokio::runtime::Handle,
 }
 
@@ -229,6 +231,7 @@ impl Core {
             users_pending: Mutex::new(Default::default()),
             universes_pending: Mutex::new(HashMap::new()),
             throttle: Mutex::new(HashMap::new()),
+            theme_writes: Default::default(),
             rt: rt.handle().clone(),
         });
         inner.load_clients();
@@ -255,6 +258,7 @@ impl Core {
             rt.spawn(health_loop(inner.clone()));
             rt.spawn(tidy_loop(inner.clone()));
             rt.spawn(crate::chat::realtime_loop(inner.clone()));
+            rt.spawn(crate::themes::watch_loop(inner.clone()));
         }
         let core = Core {
             inner,
@@ -822,21 +826,13 @@ impl Inner {
                 *self.settings.write() = *s;
                 self.repaint();
             }
-            Cmd::SaveTheme(t) => {
-                if let Err(e) = crate::themes::save(&self.paths.themes_dir(), &t) {
-                    tracing::warn!("saving theme {}: {e}", t.id);
-                }
-            }
+            Cmd::SaveTheme(t) => crate::themes::write_current(&self, &t.id),
             Cmd::LoadBackground(src) => self.load_background(src).await,
             Cmd::PruneBackgrounds => {
                 let keep = self.settings.read().appearance.background.clone().map(|b| b.file);
                 crate::backgrounds::prune(&self.paths.backgrounds_dir(), keep.as_deref());
             }
-            Cmd::DeleteTheme(id) => {
-                if let Err(e) = crate::themes::delete(&self.paths.themes_dir(), &id) {
-                    tracing::warn!("deleting theme {id}: {e}");
-                }
-            }
+            Cmd::DeleteTheme(id) => crate::themes::write_current(&self, &id),
         }
         {
             let mut s = self.store.write();

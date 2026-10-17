@@ -179,15 +179,19 @@ One PR per phase.
 - Commands: `theme.new`, `theme.edit`, `theme.rename`. `theme.duplicate` is done (the copy's
   id is `<name>-copy`, or `-copy-N`).
 
-### 4. Import and export
+### 4. Import and export (done)
 
-- `.bonsaitheme` files (the JSON above) and share codes: `bonsai-theme:1:` + base64url of the
-  deflated JSON, usually under 1 KB, pasteable into chat.
-- Import from a file, a pasted code or drag-and-drop shows a preview card with what was skipped
-  and a contrast summary before installing. Same id: replace or keep both.
-- A watcher on the themes folder sends `storeChanged`, so editing a theme file in a text editor
-  updates the app live. It only notifies.
-- Commands: `theme.import`, `theme.export`, `theme.copy_code`.
+- [x] `.bonsaitheme` files (the JSON above) and share codes: `bonsai-theme:1:` + base64url of the
+  raw-deflated JSON, under 1 KB for the built-ins, pasteable into chat. Codes from a newer
+  version are refused with a message; inflating stops at the 64 KB theme limit.
+- [x] Import from a file, a pasted code (palette, or paste on the Themes page) or drag-and-drop
+  stages the theme in `shell.themeImport`. The dialog shows a preview card, what was skipped
+  and a contrast summary before installing. Same id: replace or keep both (a built-in id always
+  installs as a copy).
+- [x] A watcher polls the themes folder every 2 s and reloads it, so editing a theme file in a
+  text editor updates the app live. It never writes. Saves are serialized and always write the
+  current in-memory theme, and the watcher skips a reload while one is queued.
+- [x] Commands: `theme.import` (bare row opens a file picker), `theme.export`, `theme.copy_code`.
 
 ### 5. Inspect and more knobs
 

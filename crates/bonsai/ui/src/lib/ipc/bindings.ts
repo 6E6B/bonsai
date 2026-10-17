@@ -283,6 +283,12 @@ export const commands = {
 	 *  Downloads happen on the worker; this only reads what is on disk so far.
 	 */
 	fontFiles: (families: string[]) => __TAURI_INVOKE<FontView[]>("font_files", { families }),
+	/**
+	 *  Installs the theme in the import dialog. `keep_both` matters only when its id is taken;
+	 *  `apply` uses it at once.
+	 */
+	themeImportInstall: (keepBoth: boolean, apply: boolean) => typedError<null, string>(__TAURI_INVOKE("theme_import_install", { keepBoth, apply })),
+	themeImportCancel: () => __TAURI_INVOKE<void>("theme_import_cancel"),
 	/**  Account PIN of the active account. */
 	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
 	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */
@@ -1739,6 +1745,8 @@ export type Shell = {
 	login: Login | null,
 	/**  A two-step or captcha check holding an action, while it is open. */
 	challenge: ChallengeView | null,
+	/**  A theme waiting in the import dialog. */
+	themeImport: ThemeImportView | null,
 	/**  The "Sign in another device" dialog, once a code was entered. */
 	approve: ApproveView | null,
 	/**  Item values from Rolimons are on. */
@@ -1801,6 +1809,18 @@ export type TabView = {
 	/**  An app route like `/games/123`. */
 	path: string,
 	pinned: boolean,
+};
+
+/**  A theme read from a file or a code, waiting in the import dialog. */
+export type ThemeImportView = {
+	/**  The theme document as JSON. The UI reads it with `readTheme` to list what it skips. */
+	doc: string,
+	/**  The file name, or empty for a pasted code. */
+	source: string,
+	/**  The name of the installed theme with the same id, if any. */
+	clash: string | null,
+	/**  That theme is built in, so the import can only sit beside it. */
+	clashBuiltin: boolean,
 };
 
 /**  An installed theme. The UI reads `doc` with `readTheme` and derives the tokens itself. */

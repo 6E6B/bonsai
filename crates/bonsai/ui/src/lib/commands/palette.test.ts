@@ -38,6 +38,14 @@ describe("paletteEntries", () => {
     ])
   })
 
+  it("adds a row without the argument for commands that take none too", () => {
+    const rows = paletteEntries([cmd("theme.import", "text")], [])
+    expect(rows.map((r) => [r.key, r.arg, r.ask ?? null])).toEqual([
+      ["theme.import:bare", null, null],
+      ["theme.import", null, "text"],
+    ])
+  })
+
   it("lists installed themes, and only user themes to delete", () => {
     const themes = [
       { id: "dark", name: "Dark", builtin: true },

@@ -6,6 +6,7 @@ import { NewChat } from "~/features/chat/NewChat"
 import { CommandPalette } from "~/features/palette/CommandPalette"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
 import { registerThemeCommands } from "~/features/themes/commands"
+import { ImportDialog, useThemeDrop } from "~/features/themes/ImportDialog"
 import {
   commandContext,
   handle,
@@ -287,6 +288,7 @@ export function Layout(props: ParentProps) {
   onCleanup(() => {
     for (const f of off) f()
   })
+  useThemeDrop()
 
   // Every navigation lands in a tab: screens replace the current tab, entities get their own.
   createEffect(on(here, (path) => tabActions.visit(path)))
@@ -403,6 +405,7 @@ export function Layout(props: ParentProps) {
                   <div class="flex h-full flex-col">
                     <ShellAlerts />
                     <ChallengeDialog />
+                    <ImportDialog />
                     <ErrorBoundary
                       fallback={(err) => (
                         <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
