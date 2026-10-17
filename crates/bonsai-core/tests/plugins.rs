@@ -6,10 +6,12 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use bonsai_api::{Base, RateLimiter};
-use bonsai_core::account::MemoryCookies;
+use bonsai_core::account::{AccountList, AccountMeta, MemoryCookies};
+use bonsai_core::commands::{CommandId, PluginCmd, Tier};
 use bonsai_core::launcher::RecordingOpener;
 use bonsai_core::plugins::{PluginInfo, Status};
-use bonsai_core::{Core, CoreConfig, Paths};
+use bonsai_core::{AccountId, Core, CoreConfig, Paths, StoreData};
+use parking_lot::Mutex;
 
 fn start(dir: &Path) -> Core {
     let cfg = CoreConfig {
@@ -188,4 +190,177 @@ fn broken_folders_show_up_failed() {
         assert!(!x.enabled);
     }
     assert!(core.set_plugin_enabled("missing", true).is_err());
+}
+
+const ME: AccountId = AccountId(1);
+
+const RUNS: &str = r#"
+bonsai.command { id = "hello", title = "Say hello", run = function() return { toast = "hi" } end }
+bonsai.command { id = "unfriend", title = "Unfriend", arg = "user", context = "user", run = function(ctx, id)
+  return { actions = { { id = "user.unfriend", arg = tostring(id) } } }
+end }
+bonsai.command { id = "fav", title = "Favorite", run = function()
+  return { actions = { { id = "market.favorite", arg = "item:1" } } }
+end }
+bonsai.command { id = "open", title = "Open", run = function() return { open = { kind = "user", id = 5 } } end }
+bonsai.command { id = "who", title = "Who", run = function(ctx) return { toast = tostring(ctx.account) } end }
+bonsai.command { id = "slow", title = "Slow", run = function() while true do end end }
+"#;
+
+fn wait_store(core: &Core, what: &str, f: impl Fn(&StoreData) -> bool) {
+    let start = Instant::now();
+    while !f(&core.store()) {
+        assert!(
+            start.elapsed() < Duration::from_secs(10),
+            "timed out waiting for {what}; toasts: {:?}",
+            core.store().toasts
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
+fn toasted(core: &Core, text: &str) -> bool {
+    core.store().toasts.iter().any(|t| t.text.contains(text))
+}
+
+type Ran = Arc<Mutex<Vec<(AccountId, CommandId, Option<String>)>>>;
+
+/// A core with one account and the `runs` plugin installed and allowed to use it.
+fn running_plugin(home: &Path, src: &Path) -> (Core, Ran) {
+    AccountList {
+        accounts: vec![AccountMeta {
+            id: ME,
+            name: "TestUser".into(),
+            display_name: "Test User".into(),
+            ..Default::default()
+        }],
+        active: Some(ME),
+        previous: None,
+    }
+    .save(&Paths::in_dir(home).accounts_file())
+    .unwrap();
+    let dir = src.join("runs");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("plugin.toml"),
+        "id = \"runs\"\nname = \"Runs\"\nentry = \"main.luau\"\nactions = [\"user.unfriend\", \"market.favorite\"]\n",
+    )
+    .unwrap();
+    std::fs::write(dir.join("main.luau"), RUNS).unwrap();
+    let core = start(home);
+    let ran: Ran = Arc::default();
+    let r = ran.clone();
+    core.set_plugin_runner(Arc::new(move |a, id, arg| {
+        r.lock().push((a, id, arg));
+        Ok(())
+    }));
+    core.stage_plugin_install(dir.to_str().unwrap(), false).unwrap();
+    core.finish_plugin_install(vec![ME]).unwrap();
+    wait(&core, "the plugin to run", |p| running(p, "runs"));
+    (core, ran)
+}
+
+fn cmd(id: &str) -> PluginCmd {
+    PluginCmd {
+        plugin: "runs".into(),
+        id: id.into(),
+    }
+}
+
+#[test]
+fn commands_toast_open_and_propose_actions() {
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let (core, ran) = running_plugin(home.path(), src.path());
+    let titles: Vec<_> = core
+        .plugin_commands()
+        .iter()
+        .map(|c| c.command.title.clone())
+        .collect();
+    assert!(titles.contains(&"Say hello".to_owned()));
+
+    core.run_plugin_command(&cmd("hello"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the toast", |_| toasted(&core, "Runs: hi"));
+
+    core.run_plugin_command(&cmd("open"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the open", |s| s.plugin_open.is_some());
+    let open = core.store().plugin_open.clone().unwrap();
+    assert_eq!((open.command, open.arg.as_str()), (CommandId::OpenProfile, "5"));
+
+    // Tier 2 waits for the user. The argument comes from the page it ran on.
+    core.run_plugin_command(&cmd("unfriend"), None, Some(ME), Some("user:7"))
+        .unwrap();
+    wait_store(&core, "the action dialog", |s| s.plugin_actions.is_some());
+    let pending = core.store().plugin_actions.clone().unwrap();
+    assert_eq!(pending.account, ME);
+    assert_eq!(pending.actions[0].id, CommandId::Unfriend);
+    assert_eq!(pending.actions[0].arg.as_deref(), Some("7"));
+    assert_eq!(pending.actions[0].tier, Tier::Social);
+    assert!(ran.lock().is_empty());
+    core.confirm_plugin_actions().unwrap();
+    wait_store(&core, "the action to run", |_| {
+        toasted(&core, "Runs: Ran 1 action.")
+    });
+    assert_eq!(ran.lock()[0], (ME, CommandId::Unfriend, Some("7".into())));
+
+    // Cancelling runs nothing.
+    core.run_plugin_command(&cmd("unfriend"), Some("8".into()), Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the action dialog", |s| s.plugin_actions.is_some());
+    core.cancel_plugin_actions();
+    assert!(core.store().plugin_actions.is_none());
+
+    // Tier 1 runs straight away.
+    core.run_plugin_command(&cmd("fav"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the favorite", |_| ran.lock().len() == 2);
+    assert_eq!(
+        ran.lock()[1],
+        (ME, CommandId::FavoriteItem, Some("item:1".into()))
+    );
+    assert!(core.store().plugin_actions.is_none());
+}
+
+#[test]
+fn commands_are_refused_without_grants_and_time_out() {
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let (core, ran) = running_plugin(home.path(), src.path());
+
+    core.run_plugin_command(&cmd("slow"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the timeout", |_| toasted(&core, "Runs: Took longer than"));
+
+    core.run_plugin_command(&cmd("who"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the account", |_| toasted(&core, "Runs: 1"));
+
+    // Without the account it sees 0 and can't act.
+    core.set_plugin_account("runs", ME, false).unwrap();
+    wait(&core, "the grant to go", |p| p[0].accounts.is_empty());
+    core.run_plugin_command(&cmd("who"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "no account", |_| toasted(&core, "Runs: 0"));
+    core.run_plugin_command(&cmd("fav"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the refusal", |_| {
+        toasted(&core, "may not use this account")
+    });
+
+    // A pending batch is checked again when confirmed.
+    core.set_plugin_account("runs", ME, true).unwrap();
+    wait(&core, "the grant", |p| !p[0].accounts.is_empty());
+    core.run_plugin_command(&cmd("unfriend"), Some("9".into()), Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the action dialog", |s| s.plugin_actions.is_some());
+    core.set_plugin_enabled("runs", false).unwrap();
+    wait(&core, "the plugin to stop", |p| p[0].status == Status::Off);
+    assert!(core.confirm_plugin_actions().is_err());
+    assert!(
+        core.run_plugin_command(&cmd("hello"), None, Some(ME), None)
+            .is_err()
+    );
+    assert!(ran.lock().is_empty());
 }

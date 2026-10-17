@@ -1,15 +1,20 @@
-//! Settings > Plugins and the install dialog. See `docs/plugins.md`.
+//! Settings > Plugins, the install and action dialogs, and plugin commands. See
+//! `docs/plugins.md`.
 
 use std::sync::Arc;
 
-use bonsai_core::commands::{CommandId, Registry};
-use bonsai_core::plugins::{PendingInstall, Permission, PluginInfo, Refused, Status, action_tier};
+use bonsai_core::commands::{CommandId, CommandRef, PluginCmd, Registry};
+use bonsai_core::plugins::{
+    Arg, PendingActions, PendingInstall, Permission, PluginCommand, PluginInfo, PluginOpen, Refused, Status,
+    action_tier,
+};
+use bonsai_core::store::StoreData;
 use bonsai_core::{AccountId, Core};
 use serde::Serialize;
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
 
-use super::{Id, Invocation};
+use super::{CommandInfo, Id, Invocation};
 
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -99,6 +104,97 @@ pub struct PluginInstallView {
     pub asks: Asks,
     /// Accounts ticked to start with.
     pub accounts: Vec<Id>,
+}
+
+/// One action in the action dialog.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ProposedView {
+    pub key: String,
+    pub title: String,
+    pub arg: Option<String>,
+    pub tier: u8,
+}
+
+/// Actions a plugin command proposed, for the user to run or cancel.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginActionsView {
+    pub plugin: String,
+    pub plugin_name: String,
+    pub account: Id,
+    /// The account's label or display name.
+    pub account_name: String,
+    pub actions: Vec<ProposedView>,
+}
+
+/// A screen a plugin asked to open, as a built-in command to run once per `seq`.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginOpenView {
+    pub seq: Id,
+    pub command: String,
+    pub arg: String,
+}
+
+pub fn actions_view(p: &PendingActions, s: &StoreData) -> PluginActionsView {
+    let registry = Registry::default();
+    PluginActionsView {
+        plugin: p.plugin.clone(),
+        plugin_name: p.plugin_name.clone(),
+        account: Id(p.account.0),
+        account_name: s
+            .accounts
+            .accounts
+            .iter()
+            .find(|a| a.id == p.account)
+            .map(|a| a.title().to_owned())
+            .unwrap_or_default(),
+        actions: p
+            .actions
+            .iter()
+            .map(|a| ProposedView {
+                key: a.id.key().to_owned(),
+                title: registry.get(a.id).title.to_owned(),
+                arg: a.arg.clone(),
+                tier: a.tier as u8,
+            })
+            .collect(),
+    }
+}
+
+pub fn open_view(o: &PluginOpen) -> PluginOpenView {
+    PluginOpenView {
+        seq: Id(o.seq),
+        command: o.command.key().to_owned(),
+        arg: o.arg.clone(),
+    }
+}
+
+/// A plugin command for the command bar: titled with the plugin's name, never with shortcuts.
+pub fn command_info(c: PluginCommand) -> CommandInfo {
+    let mut keywords = c.command.keywords;
+    keywords.push("plugin".into());
+    keywords.extend(c.plugin_name.split_whitespace().map(str::to_lowercase));
+    CommandInfo {
+        id: CommandRef::Plugin(PluginCmd {
+            plugin: c.plugin,
+            id: c.command.id,
+        })
+        .key(),
+        title: format!("{}: {}", c.plugin_name, c.command.title),
+        keywords,
+        arg: match c.command.arg {
+            Arg::None => super::Arg::None,
+            Arg::User => super::Arg::User,
+            Arg::Account => super::Arg::Account,
+            // Plain ids; the command bar has no game or item picker that gives one.
+            Arg::Text | Arg::Game | Arg::Item => super::Arg::Text,
+        },
+        shortcuts: Vec::new(),
+        rebound: false,
+        context: c.command.context,
+    }
 }
 
 fn permission_label(p: Permission) -> &'static str {
@@ -211,6 +307,19 @@ pub fn plugin_install_finish(core: State<'_, Arc<Core>>, accounts: Vec<Id>) -> R
 #[specta::specta]
 pub fn plugin_install_cancel(core: State<'_, Arc<Core>>) {
     core.cancel_plugin_install();
+}
+
+/// Runs the actions in the action dialog.
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_actions_run(core: State<'_, Arc<Core>>) -> Result<(), String> {
+    core.confirm_plugin_actions()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_actions_cancel(core: State<'_, Arc<Core>>) {
+    core.cancel_plugin_actions();
 }
 
 /// Reads a plugin folder for the install dialog: `path`, or one the user picks when it is

@@ -10,11 +10,11 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
 
-use bonsai_plugin::{Limits, Plugin};
+use bonsai_plugin::{Ctx, Limits, Outcome, Plugin};
 use serde::{Deserialize, Serialize};
 
 use crate::AccountId;
-use crate::commands::{CommandId, Effect, Registry, Tier};
+use crate::commands::{CommandId, Effect, PluginCmd, Registry, Tier};
 use crate::core::{Core, Inner};
 
 pub use bonsai_plugin::{Arg, Command, Manifest, Permission, Refused};
@@ -24,6 +24,14 @@ pub const MANIFEST: &str = "plugin.toml";
 const MAX_FILES: usize = 500;
 const MAX_BYTES: u64 = 20 * 1024 * 1024;
 const MAX_DEPTH: usize = 8;
+/// Most actions one command may propose at once.
+const MAX_ACTIONS: usize = 100;
+/// Calls queued per plugin before more are refused as busy.
+const QUEUE: usize = 8;
+
+/// Runs a built-in command as an account on a plugin's behalf. The shell sets it, since that is
+/// where built-in commands are dispatched; core decides what may run.
+pub type ActionRunner = Arc<dyn Fn(AccountId, CommandId, Option<String>) -> Result<(), String> + Send + Sync>;
 
 /// Why a manifest action is refused, or `None` to allow it: only tier 1 to 3 writes.
 pub fn action_refusal(registry: &Registry, key: &str) -> Option<String> {
@@ -138,6 +146,40 @@ pub struct PendingInstall {
     pub accounts: Vec<AccountId>,
 }
 
+/// A command a running plugin registered, for the command bar and menus.
+#[derive(Clone, Debug)]
+pub struct PluginCommand {
+    pub plugin: String,
+    pub plugin_name: String,
+    pub command: Command,
+}
+
+/// A built-in command a plugin proposed, checked against what the user agreed to.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ProposedAction {
+    pub id: CommandId,
+    pub arg: Option<String>,
+    pub tier: Tier,
+}
+
+/// Actions waiting in the action dialog. They run only when the user confirms, and are checked
+/// again then.
+#[derive(Clone, Debug)]
+pub struct PendingActions {
+    pub plugin: String,
+    pub plugin_name: String,
+    pub account: AccountId,
+    pub actions: Vec<ProposedAction>,
+}
+
+/// A screen a plugin asked to open, as a built-in open command.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PluginOpen {
+    pub seq: u64,
+    pub command: CommandId,
+    pub arg: String,
+}
+
 /// Plugin state in [`Inner`].
 #[derive(Default)]
 pub(crate) struct Plugins {
@@ -145,6 +187,7 @@ pub(crate) struct Plugins {
     saved: SavedFile,
     /// Bumped per worker start, so a load that finishes after a reload is ignored.
     seq: u64,
+    runner: Option<ActionRunner>,
 }
 
 struct Entry {
@@ -157,11 +200,17 @@ struct Entry {
 /// A running plugin's thread. Dropping it stops the thread once the current call ends.
 struct Worker {
     seq: u64,
-    _tx: std::sync::mpsc::Sender<Msg>,
+    tx: std::sync::mpsc::SyncSender<Msg>,
 }
 
-/// Calls to a plugin's thread. None yet: commands run in phase 3.
-enum Msg {}
+/// Calls to a plugin's thread.
+enum Msg {
+    Run {
+        command: String,
+        ctx: Ctx,
+        arg: Option<String>,
+    },
+}
 
 /// What [`Inner::sync_plugins`] should redo even when nothing on disk changed.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -411,6 +460,7 @@ impl Inner {
         drop(old);
         // The watcher calls this every few seconds; only a change repaints.
         if changed {
+            self.store.write().plugin_rev += 1;
             self.repaint();
         }
     }
@@ -419,7 +469,7 @@ impl Inner {
         let Some(manifest) = e.info.manifest.clone() else {
             return;
         };
-        let (tx, rx) = std::sync::mpsc::channel::<Msg>();
+        let (tx, rx) = std::sync::mpsc::sync_channel::<Msg>(QUEUE);
         let weak = Arc::downgrade(self);
         let (id, dir) = (e.info.id.clone(), e.info.dir.clone());
         let spawned = std::thread::Builder::new()
@@ -435,17 +485,24 @@ impl Inner {
                 if let Some(inner) = weak.upgrade() {
                     inner.plugin_loaded(&id, seq, status);
                 }
-                let Ok(_plugin) = loaded else {
+                let Ok(plugin) = loaded else {
                     return;
                 };
                 // Keeps the VM until the plugin is stopped or reloaded, which drops the sender.
-                // Phase 3 loops here over calls.
-                if let Ok(msg) = rx.recv() {
-                    match msg {}
+                while let Ok(msg) = rx.recv() {
+                    match msg {
+                        Msg::Run { command, ctx, arg } => {
+                            let out = plugin.run_command(&command, ctx, arg.as_deref());
+                            let Some(inner) = weak.upgrade() else {
+                                return;
+                            };
+                            inner.plugin_outcome(&id, seq, AccountId(ctx.account), out);
+                        }
+                    }
                 }
             });
         match spawned {
-            Ok(_) => e.worker = Some(Worker { seq, _tx: tx }),
+            Ok(_) => e.worker = Some(Worker { seq, tx }),
             Err(err) => e.info.status = Status::Failed(format!("Can't start: {err}")),
         }
     }
@@ -461,8 +518,168 @@ impl Inner {
             }
             e.info.status = status;
             drop(p);
+            self.store.write().plugin_rev += 1;
             self.repaint();
         }
+    }
+
+    /// The name of the plugin whose worker `seq` is current, or `None` for a stale result.
+    fn plugin_name(&self, id: &str, seq: u64) -> Option<String> {
+        let p = self.plugins.lock();
+        let e = p.entries.iter().find(|e| e.info.id == id)?;
+        e.worker.as_ref().filter(|w| w.seq == seq)?;
+        Some(
+            e.info
+                .manifest
+                .as_ref()
+                .map_or_else(|| id.to_owned(), |m| m.name.clone()),
+        )
+    }
+
+    /// What a plugin command returned. Errors and messages are toasts naming the plugin.
+    fn plugin_outcome(
+        self: &Arc<Self>,
+        id: &str,
+        seq: u64,
+        account: AccountId,
+        out: Result<Outcome, bonsai_plugin::Error>,
+    ) {
+        let Some(name) = self.plugin_name(id, seq) else {
+            return;
+        };
+        let say = |text: &str, error: bool| {
+            let text: String = text.chars().take(300).collect();
+            self.toast(None, format!("{name}: {text}"), error);
+            self.repaint();
+        };
+        match out {
+            Err(e) => say(&e.to_string(), true),
+            Ok(Outcome::Nothing) => {}
+            Ok(Outcome::Toast(t)) => say(&t, false),
+            // Desktop alerts come with `notify` and the notification settings; until then a
+            // returned alert shows as a toast.
+            Ok(Outcome::Alert { title, body, .. }) => say(&format!("{title}. {body}"), false),
+            Ok(Outcome::Open { kind, id }) => match open_command(&kind, id) {
+                Some((command, arg)) => {
+                    let mut s = self.store.write();
+                    let seq = s.plugin_open.as_ref().map_or(0, |o| o.seq) + 1;
+                    s.plugin_open = Some(PluginOpen { seq, command, arg });
+                    drop(s);
+                    self.repaint();
+                }
+                None => say(&format!("Can't open \"{kind}\"."), true),
+            },
+            Ok(Outcome::Actions(list)) => {
+                let list: Vec<(String, Option<String>)> = list.into_iter().map(|a| (a.id, a.arg)).collect();
+                match self.check_actions(id, account, &list) {
+                    Err(e) => say(&e, true),
+                    Ok(actions) if actions.is_empty() => {}
+                    // Tier 1 is harmless and easy to undo; the user just ran the command.
+                    Ok(actions) if actions.iter().all(|a| a.tier == Tier::Harmless) => {
+                        self.run_actions(name.clone(), account, actions);
+                    }
+                    Ok(actions) => {
+                        let mut s = self.store.write();
+                        if s.plugin_actions.is_some() {
+                            drop(s);
+                            say("Another plugin's actions are waiting for you first.", true);
+                            return;
+                        }
+                        s.plugin_actions = Some(PendingActions {
+                            plugin: id.to_owned(),
+                            plugin_name: name.clone(),
+                            account,
+                            actions,
+                        });
+                        drop(s);
+                        self.repaint();
+                    }
+                }
+            }
+        }
+    }
+
+    /// Checks proposed actions against the plugin's grants: it is running, may use `account`,
+    /// and the user agreed to each action, which is a tier 1 to 3 write.
+    fn check_actions(
+        &self,
+        plugin: &str,
+        account: AccountId,
+        list: &[(String, Option<String>)],
+    ) -> Result<Vec<ProposedAction>, String> {
+        if list.len() > MAX_ACTIONS {
+            return Err(format!("Proposed more than {MAX_ACTIONS} actions at once."));
+        }
+        let known = self
+            .store
+            .read()
+            .accounts
+            .accounts
+            .iter()
+            .any(|a| a.id == account);
+        let p = self.plugins.lock();
+        let running = p
+            .entries
+            .iter()
+            .any(|e| e.info.id == plugin && matches!(e.info.status, Status::Running { .. }));
+        if !running {
+            return Err("It isn't running.".into());
+        }
+        let saved = p.saved.plugins.get(plugin);
+        if !known || !saved.is_some_and(|s| s.accounts.contains(&account)) {
+            return Err("It may not use this account. Allow it in Settings > Plugins.".into());
+        }
+        let agreed = saved.map(|s| &s.actions[..]).unwrap_or_default();
+        let registry = Registry::default();
+        list.iter()
+            .map(|(key, arg)| {
+                if let Some(why) = action_refusal(&registry, key) {
+                    return Err(format!("Can't run \"{key}\": {why}"));
+                }
+                if !agreed.contains(key) {
+                    return Err(format!("Isn't allowed to run \"{key}\"."));
+                }
+                let id = CommandId::from_key(key).ok_or_else(|| format!("No command \"{key}\"."))?;
+                let tier = registry
+                    .get(id)
+                    .effect
+                    .tier()
+                    .ok_or_else(|| format!("Can't run \"{key}\"."))?;
+                let arg: Option<String> = arg
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|a| !a.is_empty())
+                    .map(|a| a.chars().take(200).collect());
+                Ok(ProposedAction { id, arg, tier })
+            })
+            .collect()
+    }
+
+    /// Runs checked actions one after another off the caller's thread, then says how it went.
+    fn run_actions(self: &Arc<Self>, name: String, account: AccountId, actions: Vec<ProposedAction>) {
+        let Some(runner) = self.plugins.lock().runner.clone() else {
+            self.toast(None, format!("{name}: Actions can't run here."), true);
+            self.repaint();
+            return;
+        };
+        let inner = self.clone();
+        self.rt.spawn_blocking(move || {
+            let total = actions.len();
+            let mut failed = Vec::new();
+            for a in actions {
+                if let Err(e) = runner(account, a.id, a.arg) {
+                    failed.push(e);
+                }
+            }
+            let ran = total - failed.len();
+            let text = match failed.first() {
+                None if total == 1 => format!("{name}: Ran 1 action."),
+                None => format!("{name}: Ran {total} actions."),
+                Some(e) => format!("{name}: Ran {ran} of {total} actions. {e}"),
+            };
+            inner.toast(Some(account), text, !failed.is_empty());
+            inner.repaint();
+        });
     }
 
     /// Runs disk work for plugins off the caller's thread, one job at a time.
@@ -476,6 +693,18 @@ impl Inner {
             }
         });
     }
+}
+
+/// The built-in command that opens a screen for a returned `open`.
+fn open_command(kind: &str, id: u64) -> Option<(CommandId, String)> {
+    Some(match kind {
+        "user" => (CommandId::OpenProfile, id.to_string()),
+        "game" => (CommandId::OpenGame, id.to_string()),
+        "group" => (CommandId::OpenCommunity, id.to_string()),
+        "item" => (CommandId::OpenItem, format!("item:{id}")),
+        "bundle" => (CommandId::OpenItem, format!("bundle:{id}")),
+        _ => return None,
+    })
 }
 
 /// Loads plugins at start and reloads one when its folder changes, so a plugin edited in a text
@@ -517,16 +746,107 @@ impl Core {
     }
 
     /// Commands of running plugins.
-    pub fn plugin_commands(&self) -> Vec<(String, Command)> {
+    pub fn plugin_commands(&self) -> Vec<PluginCommand> {
         let p = self.inner.plugins.lock();
         p.entries
             .iter()
-            .filter_map(|e| match &e.info.status {
-                Status::Running { commands } => Some((&e.info.id, commands)),
+            .filter_map(|e| match (&e.info.status, &e.info.manifest) {
+                (Status::Running { commands }, Some(m)) => Some((&e.info.id, &m.name, commands)),
                 _ => None,
             })
-            .flat_map(|(id, cmds)| cmds.iter().map(|c| (id.clone(), c.clone())))
+            .flat_map(|(id, name, cmds)| {
+                cmds.iter().map(|c| PluginCommand {
+                    plugin: id.clone(),
+                    plugin_name: name.clone(),
+                    command: c.clone(),
+                })
+            })
             .collect()
+    }
+
+    /// Sets how plugin actions run built-in commands. The shell calls it once at start.
+    pub fn set_plugin_runner(&self, runner: ActionRunner) {
+        self.inner.plugins.lock().runner = Some(runner);
+    }
+
+    /// Runs a plugin command as `account` on the plugin's thread. Returns once it is queued; the
+    /// outcome arrives as a toast, an opened screen or the action dialog. With no `arg`, a
+    /// command that takes a user, game or item uses `context` (`user:1`) when it is one.
+    pub fn run_plugin_command(
+        &self,
+        cmd: &PluginCmd,
+        arg: Option<String>,
+        account: Option<AccountId>,
+        context: Option<&str>,
+    ) -> Result<(), String> {
+        let p = self.inner.plugins.lock();
+        let e = p
+            .entries
+            .iter()
+            .find(|e| e.info.id == cmd.plugin)
+            .ok_or_else(|| format!("No plugin \"{}\".", cmd.plugin))?;
+        let name = e.info.manifest.as_ref().map_or(&e.info.id, |m| &m.name);
+        let (Status::Running { commands }, Some(worker)) = (&e.info.status, &e.worker) else {
+            return Err(format!("{name} isn't running."));
+        };
+        let c = commands
+            .iter()
+            .find(|c| c.id == cmd.id)
+            .ok_or_else(|| format!("{name} has no command \"{}\".", cmd.id))?;
+        let kind = match c.arg {
+            Arg::User => Some("user"),
+            Arg::Game => Some("game"),
+            Arg::Item => Some("item"),
+            _ => None,
+        };
+        let arg = arg.filter(|a| !a.trim().is_empty()).or_else(|| {
+            let (k, id) = context?.split_once(':')?;
+            (Some(k) == kind).then(|| id.to_owned())
+        });
+        // It only learns an account it was allowed to use; otherwise it sees 0.
+        let granted = account.filter(|a| {
+            p.saved
+                .plugins
+                .get(&cmd.plugin)
+                .is_some_and(|s| s.accounts.contains(a))
+        });
+        let msg = Msg::Run {
+            command: cmd.id.clone(),
+            ctx: Ctx {
+                account: granted.map_or(0, |a| a.0),
+                now: crate::cache::now(),
+            },
+            arg,
+        };
+        worker.tx.try_send(msg).map_err(|e| match e {
+            std::sync::mpsc::TrySendError::Full(_) => format!("{name} is busy. Try again in a moment."),
+            std::sync::mpsc::TrySendError::Disconnected(_) => format!("{name} stopped."),
+        })
+    }
+
+    /// Runs the actions in the action dialog, after checking them again.
+    pub fn confirm_plugin_actions(&self) -> Result<(), String> {
+        let Some(pending) = self.inner.store.write().plugin_actions.take() else {
+            return Err("Nothing to run.".into());
+        };
+        self.inner.repaint();
+        let list: Vec<(String, Option<String>)> = pending
+            .actions
+            .iter()
+            .map(|a| (a.id.key().to_owned(), a.arg.clone()))
+            .collect();
+        let actions = self
+            .inner
+            .check_actions(&pending.plugin, pending.account, &list)
+            .map_err(|e| format!("{}: {e}", pending.plugin_name))?;
+        self.inner
+            .run_actions(pending.plugin_name, pending.account, actions);
+        Ok(())
+    }
+
+    pub fn cancel_plugin_actions(&self) {
+        self.inner.store.write().plugin_actions = None;
+        self.inner.repaint();
     }
 
     /// Reads a plugin folder (or its `plugin.toml`) and opens the install dialog. `unpacked`

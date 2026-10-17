@@ -57,6 +57,19 @@ pub fn run() {
             let repaint = notify::spawn(app.handle().clone())?;
             let core = Arc::new(Core::start(CoreConfig::standard(), repaint));
             desktop::start(app.handle(), &core.settings());
+            let handle = app.handle().clone();
+            core.set_plugin_runner(Arc::new(move |account, id, arg| {
+                let core = handle
+                    .try_state::<Arc<Core>>()
+                    .ok_or_else(|| "Not started.".to_owned())?;
+                let inv = ipc::Invocation {
+                    id: id.key().to_owned(),
+                    arg,
+                    as_account: Some(ipc::Id(account.0)),
+                    context: None,
+                };
+                ipc::dispatch(&handle, &core, inv)
+            }));
             app.manage(core);
             eprintln!("PROFILE {:?} setup end", t0.elapsed()); // PROFILE-TMP
             Ok(())

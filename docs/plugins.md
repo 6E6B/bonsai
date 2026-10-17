@@ -211,8 +211,8 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   `lib/commands/confirm.ts` still holds the dialog text for built-in confirms; the effect isn't
   sent to the UI until the action dialog needs it.
 - `CommandRef = Builtin(CommandId) | Plugin(PluginCmd)`. `Registry` holds plugin commands next to
-  the built-in ones and `commands()` returns both. `run_command` refuses plugin keys until
-  phase 3. Plugin commands can't be rebound yet: overrides are still keyed by `CommandId`.
+  the built-in ones and `commands()` returns both. Plugin commands can't be rebound yet:
+  overrides are still keyed by `CommandId`.
 
 ### 1. Sandbox (done)
 
@@ -243,13 +243,25 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
 - `config/plugins.json` holds, per plugin, on/off, the granted accounts and the permissions and
   actions the user agreed to. A manifest that asks for more waits as "Needs review" and doesn't
   start; turning it on opens the dialog listing only what's new.
-- Not yet: plugin commands are listed in Settings but not in the command bar (phase 3), and the
-  host's `run` refuses every action.
 
-### 3. Commands and confirmed actions
+### 3. Commands and confirmed actions (done)
 
 - Plugin commands in the command bar and context menus.
 - The action dialog. Errors and timeouts show a toast naming the plugin.
+- Built: running plugins' commands are listed as "Plugin name: title", with the plugin's name in
+  the keywords. Context menus for users, games, items and communities have a Plugins submenu for
+  commands with that `context`; the arg is the page's id (a place id for games). A command run
+  with no arg takes it from the page context.
+- `ctx.account` is the acting account only if the plugin was granted it, else 0. Each plugin
+  queues at most 8 calls; past that the command toasts that the plugin is busy.
+- Outcomes: `toast` and `alert` show a toast naming the plugin (desktop alerts come with
+  `notify` in phase 5); `open` runs the built-in open command for that kind; `actions` are
+  checked (at most 100, account granted, each action agreed to and tier 1 to 3). All tier 1
+  runs at once; anything higher opens the action dialog, which lists every action with its tier.
+  Confirming checks the batch again, then runs it through the same dispatch as built-in
+  commands and toasts how many ran.
+- Not yet: `ctx.run` inside a command still refuses (automation is phase 6), and plugin
+  commands can't be rebound.
 
 ### 4. Reads
 

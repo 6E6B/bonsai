@@ -1,12 +1,20 @@
-import type { ActionView, PluginState } from "~/lib/ipc/bindings"
+import type { ActionView, CommandInfo, PluginState } from "~/lib/ipc/bindings"
 import type { BadgeVariant } from "~/lib/ui"
 
 /** What each write tier means, for the install dialog and Settings > Plugins. See
  * `docs/plugins.md#tiers`. */
-export const tiers: Record<number, { label: string; description: string }> = {
-  1: { label: "Harmless", description: "Seen only by you and easy to undo." },
-  2: { label: "Social", description: "Other people can see these." },
-  3: { label: "Value", description: "Robux or items can be lost." },
+export const tiers: Record<number, { label: string; description: string; variant: BadgeVariant }> = {
+  1: { label: "Harmless", description: "Seen only by you and easy to undo.", variant: "neutral" },
+  2: { label: "Social", description: "Other people can see these.", variant: "warning" },
+  3: { label: "Value", description: "Robux or items can be lost.", variant: "danger" },
+}
+
+/** What a menu passes as the thing it's about. */
+export type PluginContext = "user" | "game" | "item" | "group"
+
+/** Plugin commands that ask to be in `kind`'s menus, by title. */
+export function pluginCommandsFor(list: CommandInfo[], kind: PluginContext): CommandInfo[] {
+  return list.filter((c) => c.context === kind).sort((a, b) => a.title.localeCompare(b.title))
 }
 
 /** Actions grouped by tier, lowest first, leaving out empty tiers. */

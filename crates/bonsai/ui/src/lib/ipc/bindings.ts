@@ -294,6 +294,9 @@ export const commands = {
 	/**  Installs the plugin in the dialog, allowed to use `accounts`. */
 	pluginInstallFinish: (accounts: Id[]) => typedError<null, string>(__TAURI_INVOKE("plugin_install_finish", { accounts })),
 	pluginInstallCancel: () => __TAURI_INVOKE<void>("plugin_install_cancel"),
+	/**  Runs the actions in the action dialog. */
+	pluginActionsRun: () => typedError<null, string>(__TAURI_INVOKE("plugin_actions_run")),
+	pluginActionsCancel: () => __TAURI_INVOKE<void>("plugin_actions_cancel"),
 	/**  Account PIN of the active account. */
 	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
 	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */
@@ -700,6 +703,8 @@ export type CommandInfo = {
 	shortcuts: Keys[],
 	/**  The user changed the shortcuts from the defaults. */
 	rebound: boolean,
+	/**  For plugin commands: the menus it shows in (`user`, `game`, `item` or `group`). */
+	context: string | null,
 };
 
 /**  A community in search results. */
@@ -1493,6 +1498,16 @@ export type PlaceCard = {
 	price: number | null,
 };
 
+/**  Actions a plugin command proposed, for the user to run or cancel. */
+export type PluginActionsView = {
+	plugin: string,
+	pluginName: string,
+	account: Id,
+	/**  The account's label or display name. */
+	accountName: string,
+	actions: ProposedView[],
+};
+
 /**  A plugin folder waiting in the install dialog. */
 export type PluginInstallView = {
 	id: string,
@@ -1508,6 +1523,13 @@ export type PluginInstallView = {
 	asks: Asks,
 	/**  Accounts ticked to start with. */
 	accounts: Id[],
+};
+
+/**  A screen a plugin asked to open, as a built-in command to run once per `seq`. */
+export type PluginOpenView = {
+	seq: Id,
+	command: string,
+	arg: string,
 };
 
 export type PluginState = "off" | "loading" | "running" | 
@@ -1664,6 +1686,14 @@ export type ProfileView = {
 	/**  What the active account calls them, and its private note about them. */
 	nickname: string | null,
 	note: string | null,
+};
+
+/**  One action in the action dialog. */
+export type ProposedView = {
+	key: string,
+	title: string,
+	arg: string | null,
+	tier: number,
 };
 
 export type RecentView = {
@@ -1877,6 +1907,12 @@ export type Shell = {
 	themeImport: ThemeImportView | null,
 	/**  A plugin folder waiting in the install dialog. */
 	pluginInstall: PluginInstallView | null,
+	/**  Actions a plugin proposed, waiting in the action dialog. */
+	pluginActions: PluginActionsView | null,
+	/**  A screen a plugin asked to open. The UI runs it once per `seq`. */
+	pluginOpen: PluginOpenView | null,
+	/**  Changes when plugin commands do; the UI reloads the command list. */
+	pluginRev: Id,
 	/**  The "Sign in another device" dialog, once a code was entered. */
 	approve: ApproveView | null,
 	/**  The authenticator setup or recovery codes dialog, while it is open. */
