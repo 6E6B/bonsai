@@ -1,0 +1,10 @@
+id = "action-tester"
+name = "Action tester"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["read.public", "read.account"]
+# Tier 1: user.nickname, user.note. Tier 2: user.follow, user.unfollow.
+actions = ["user.nickname", "user.note", "user.follow", "user.unfollow", "user.unfriend"]

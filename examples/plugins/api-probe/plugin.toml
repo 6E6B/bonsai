@@ -1,0 +1,24 @@
+id = "api-probe"
+name = "API probe"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["read.public", "read.account", "notify"]
+actions = []
+
+[[settings]]
+key = "limit"
+title = "Rows to read"
+description = "Limit passed to list reads."
+kind = "range"
+min = 1
+max = 100
+default = 10
+
+[[settings]]
+key = "verbose"
+title = "Verbose toasts"
+kind = "bool"
+default = true
