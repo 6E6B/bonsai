@@ -31,3 +31,11 @@ export const pluginStates: Record<PluginState, { label: string; variant: BadgeVa
   review: { label: "Needs review", variant: "warning" },
   failed: { label: "Failed", variant: "danger" },
 }
+
+/** How long the top bar shows that a plugin wrote, in seconds. */
+export const RECENT_WRITE = 300
+
+/** Whether a plugin write at `at` (unix seconds) is recent enough at `now` (ms) to show. */
+export function wroteRecently(at: number | null, now: number): boolean {
+  return at !== null && now / 1000 - at < RECENT_WRITE
+}

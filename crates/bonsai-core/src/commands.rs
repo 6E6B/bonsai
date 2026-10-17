@@ -388,6 +388,11 @@ commands! {
     GrantPlugin => "plugin.grant", "Let plugin use this account", ["plugin", "account", "allow", "grant", "permission"], Plugin, Local, [];
     RevokePlugin => "plugin.revoke", "Stop plugin using this account", ["plugin", "account", "revoke", "deny", "permission"], Plugin, Local, [];
     SetPluginSetting => "plugin.set", "Change plugin setting (plugin, setting, value; no value resets it)", ["plugin", "setting", "option", "config", "preference"], Text, Local, [];
+    SetPluginCap => "plugin.cap", "Lower a plugin's hourly cap (plugin, action, number)", ["plugin", "cap", "limit", "rate", "hour", "automation"], Text, Local, [];
+    AllowAutomation => "plugins.allow_automation", "Allow plugin automation on this account", ["plugin", "automation", "automate", "unattended", "bot", "allow"], None, Local, [];
+    BlockAutomation => "plugins.block_automation", "Turn off plugin automation on this account", ["plugin", "automation", "automate", "unattended", "bot", "block", "off"], None, Local, [];
+    StopPlugins => "plugins.stop_all", "Stop all plugins", ["plugin", "stop", "kill", "panic", "disable", "halt", "automation"], None, Local, [Shortcut::ctrl_shift("Backspace")];
+    PluginActivity => "plugins.activity", "Show plugin activity", ["plugin", "activity", "log", "history", "automation", "writes"], None, Read, [];
     ThemeLivePreview => "theme.live", "Show theme edits across the whole app (on or off)", ["theme", "live", "preview", "apply", "editor"], None, Local, [];
     SetBackground => "view.background", "Set background picture (https link or file path)", ["background", "wallpaper", "picture", "image", "photo", "gif", "url", "link", "appearance"], Text, Local, [];
     PickBackground => "view.background_file", "Choose background picture from files", ["background", "wallpaper", "picture", "image", "photo", "gif", "file", "upload", "appearance"], None, Local, [];

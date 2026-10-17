@@ -23,6 +23,8 @@ const MAX_READS: usize = 200;
 const MAX_PRESENCE: usize = 100;
 /// Most `ctx.store.set` calls in one handler call; each one writes to disk.
 const MAX_SETS: usize = 100;
+/// Most `ctx.run` calls one call may make.
+const MAX_RUNS: usize = 50;
 /// Most timers a plugin may start, and the shortest and longest gap between runs.
 const MAX_TIMERS: usize = 10;
 const MIN_EVERY: u64 = 60;
@@ -251,6 +253,8 @@ pub struct Plugin {
     reads: Rc<Cell<usize>>,
     /// `ctx.store.set` calls made in the current call.
     sets: Rc<Cell<usize>>,
+    /// `ctx.run` calls made in the current call.
+    runs: Rc<Cell<usize>>,
 }
 
 impl Plugin {
@@ -328,6 +332,7 @@ impl Plugin {
             host,
             reads: Rc::default(),
             sets: Rc::default(),
+            runs: Rc::default(),
         })
     }
 
@@ -371,6 +376,7 @@ impl Plugin {
         let ctx = self.ctx_table(ctx).map_err(script)?;
         self.reads.set(0);
         self.sets.set(0);
+        self.runs.set(0);
         self.clock.start(self.limits.call);
         let ran = f.call::<Value>((ctx, arg));
         self.clock.stop();
@@ -402,9 +408,16 @@ impl Plugin {
         let run: Function = self.lua.named_registry_value("bonsai.run")?;
         // `ctx.run(id, arg)` acts as this context's account.
         let account = ctx.account;
+        let runs = self.runs.clone();
         let bound = self
             .lua
             .create_function(move |_, (id, arg): (String, Option<Value>)| {
+                if runs.get() >= MAX_RUNS {
+                    return Err(mlua::Error::runtime(format!(
+                        "A call can make at most {MAX_RUNS} ctx.run calls."
+                    )));
+                }
+                runs.set(runs.get() + 1);
                 run.call::<()>((account, id, arg))
             })?;
         t.set("run", bound)?;

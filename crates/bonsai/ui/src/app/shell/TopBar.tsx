@@ -1,11 +1,16 @@
+import { createSignal, onCleanup, Show } from "solid-js"
 import { run, shortcutOf } from "~/lib/commands/registry"
+import { wroteRecently } from "~/lib/plugins"
 import { shell } from "~/lib/store"
 import { IconButton, SearchButton, Tooltip } from "~/lib/ui"
 
-/** Above the page: sidebar toggle, the command bar trigger, notifications and the drawer
- * toggle. */
+/** Above the page: sidebar toggle, the command bar trigger, the plugin kill switch while a
+ * plugin has written recently, notifications and the drawer toggle. */
 export function TopBar(props: { drawer: boolean }) {
   const keys = () => shortcutOf("palette.open")?.split("+")
+  const [now, setNow] = createSignal(Date.now())
+  const timer = setInterval(() => setNow(Date.now()), 10_000)
+  onCleanup(() => clearInterval(timer))
   return (
     <header class="flex h-11 shrink-0 items-center gap-2 border-b border-line bg-deep px-3">
       <Tooltip content="Toggle sidebar" keys={[shortcutOf("view.sidebar") ?? ""]} placement="bottom">
@@ -19,6 +24,15 @@ export function TopBar(props: { drawer: boolean }) {
           onClick={() => run("palette.open")}
         />
       </div>
+      <Show when={wroteRecently(shell.pluginWrote, now())}>
+        <Tooltip
+          content="A plugin wrote recently. Click to stop all plugins."
+          keys={[shortcutOf("plugins.stop_all") ?? ""]}
+          placement="bottom"
+        >
+          <IconButton icon="plugin" label="Stop all plugins" variant="danger" onClick={() => run("plugins.stop_all")} />
+        </Tooltip>
+      </Show>
       <Tooltip content={`Notifications (${shell.unread.notifications} unread)`} placement="bottom">
         <IconButton
           icon={shell.unread.notifications > 0 ? "bell-fill" : "bell"}

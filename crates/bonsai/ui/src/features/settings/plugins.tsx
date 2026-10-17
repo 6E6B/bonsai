@@ -1,9 +1,20 @@
 import { For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
-import { commands, type PluginView } from "~/lib/ipc/bindings"
+import { dateTime } from "~/lib/format"
+import { type ActivityView, commands, type Id, type PluginView } from "~/lib/ipc/bindings"
 import { byTier, pluginStates, tiers } from "~/lib/plugins"
 import { shell, useLive } from "~/lib/store"
-import { Alert, Badge, Button, EmptyState, SettingRow, SettingSwitch, SettingsGroup } from "~/lib/ui"
+import {
+  Alert,
+  Badge,
+  Button,
+  type Column,
+  DataTable,
+  EmptyState,
+  SettingRow,
+  SettingSwitch,
+  SettingsGroup,
+} from "~/lib/ui"
 import { PrefControl } from "./prefs"
 
 /** "every 5 min", "every 2 h", "every 90 s". */
@@ -13,12 +24,18 @@ export function every(seconds: number): string {
   return `every ${seconds} s`
 }
 
-/** Installed plugins: on or off, which accounts each may use, reload and remove. */
+/** Installed plugins: on or off, which accounts each may use, automation, caps, reload and
+ * remove, and what they did. */
 export function PluginsSection() {
   const plugins = useLive(
     () => "plugins",
     () => commands.plugins(),
     (): PluginView[] => [],
+  )
+  const automation = useLive(
+    () => "plugin-automation",
+    async () => ({ on: await commands.pluginAutomation() }),
+    () => ({ on: [] as Id[] }),
   )
   return (
     <>
@@ -41,12 +58,97 @@ export function PluginsSection() {
           <EmptyState icon="plugin" title="No plugins" description="Install one from a folder with a plugin.toml." />
         </Show>
       </SettingsGroup>
-      <For each={plugins}>{(p) => <PluginGroup plugin={p} />}</For>
+      <Show when={plugins.length > 0}>
+        <SettingsGroup
+          title="Automation"
+          description="Lets plugins run social actions, like friend requests, without asking each time. Roblox bans accounts for bots and automated trading."
+          actions={
+            <Button size="sm" variant="danger" onClick={() => run("plugins.stop_all")}>
+              Stop all plugins
+            </Button>
+          }
+        >
+          <For each={shell.accounts}>
+            {(acc) => (
+              <SettingSwitch
+                label={`Allow automation on ${acc.label ?? acc.displayName}`}
+                description={`@${acc.name}`}
+                checked={automation.on.includes(acc.id)}
+                onChange={(on) => void run(on ? "plugins.allow_automation" : "plugins.block_automation", null, acc.id)}
+              />
+            )}
+          </For>
+        </SettingsGroup>
+      </Show>
+      <For each={plugins}>{(p) => <PluginGroup plugin={p} automation={automation.on} />}</For>
+      <ActivityGroup />
     </>
   )
 }
 
-function PluginGroup(props: { plugin: PluginView }) {
+const activityColumns: Column<ActivityView>[] = [
+  { key: "at", label: "Time", width: "150px", cell: (a) => dateTime(a.at * 1000) },
+  { key: "plugin", label: "Plugin", width: "minmax(80px, 1fr)", cell: (a) => a.pluginName },
+  { key: "account", label: "Account", width: "minmax(80px, 1fr)", cell: (a) => a.accountName },
+  {
+    key: "action",
+    label: "Action",
+    width: "minmax(140px, 2fr)",
+    cell: (a) => (
+      <span class="truncate" title={a.arg ? `${a.title} ${a.arg}` : a.title}>
+        {a.title}
+        <Show when={a.arg}>{(arg) => <span class="font-mono text-fg-muted">{` ${arg()}`}</span>}</Show>
+      </span>
+    ),
+  },
+  {
+    key: "how",
+    label: "How",
+    width: "90px",
+    cell: (a) => <span class="text-fg-muted">{a.unattended ? "By itself" : "You ran it"}</span>,
+  },
+  {
+    key: "result",
+    label: "Result",
+    width: "minmax(100px, 2fr)",
+    cell: (a) => (
+      <Show when={a.error} fallback={<Badge variant="success">Ran</Badge>}>
+        {(e) => (
+          <span class="truncate text-danger" title={e()}>
+            {e()}
+          </span>
+        )}
+      </Show>
+    ),
+  },
+]
+
+/** Every plugin write, newest first. `plugins.activity` scrolls here. */
+function ActivityGroup() {
+  const activity = useLive(
+    () => "plugin-activity",
+    async () => ({ rows: await commands.pluginActivity() }),
+    () => ({ rows: [] as ActivityView[] }),
+    { keep: true },
+  )
+  return (
+    <div data-setting="activity">
+      <SettingsGroup title="Activity" meta={activity.rows.length} description="What plugins did as your accounts.">
+        <DataTable
+          aria-label="Plugin activity"
+          columns={activityColumns}
+          rows={activity.rows}
+          rowKey={(a) => `${a.at}-${a.pluginName}-${a.account}-${a.command}-${a.arg}-${a.error}`}
+          empty={<EmptyState icon="plugin" title="Nothing yet" description="Plugin writes show up here." />}
+        />
+      </SettingsGroup>
+    </div>
+  )
+}
+
+function PluginGroup(props: { plugin: PluginView; automation: Id[] }) {
+  /** None of the accounts it may use has automation on. */
+  const needsAutomation = () => !props.plugin.accounts.some((a) => props.automation.includes(a))
   const p = () => props.plugin
   const subtitle = () =>
     [p().version && `Version ${p().version}`, p().author && `by ${p().author}`].filter(Boolean).join(", ")
@@ -130,7 +232,37 @@ function PluginGroup(props: { plugin: PluginView }) {
                 <SettingRow
                   label={`Tier ${g.tier} actions, ${tiers[g.tier].label.toLowerCase()}`}
                   description={g.actions.map((x) => x.title).join(", ")}
-                />
+                >
+                  <Show when={g.tier >= 2 && needsAutomation()}>
+                    <Badge variant="neutral">Needs automation</Badge>
+                  </Show>
+                </SettingRow>
+              )}
+            </For>
+            <For each={p().caps}>
+              {(c) => (
+                <SettingRow
+                  label={`${c.title}, most an hour`}
+                  description="Without asking, per account. You can lower it, not raise it."
+                  layout="stacked"
+                  changed={c.value !== c.max}
+                  onReset={() => run("plugin.cap", `${p().id} ${c.key} ${c.max}`)}
+                >
+                  <PrefControl
+                    pref={{
+                      key: c.key,
+                      title: `${c.title}, most an hour`,
+                      kind: "range",
+                      options: [],
+                      min: 0,
+                      max: c.max,
+                      step: 1,
+                      placeholder: "",
+                      value: String(c.value),
+                    }}
+                    onSet={(v) => void run("plugin.cap", `${p().id} ${c.key} ${v}`)}
+                  />
+                </SettingRow>
               )}
             </For>
             <Show when={a().needsAccounts}>

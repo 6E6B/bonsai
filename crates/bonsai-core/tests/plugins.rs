@@ -636,11 +636,11 @@ kind = "bool"
     assert_eq!(alerts[0].title, "Watch: Chat");
     assert_eq!(alerts[0].body, "from 7 in conv-1");
 
-    // The second time it proposes a tier 1 action, which waits in the dialog.
+    // The second time it proposes a tier 1 action, which runs by itself and is logged.
     core.apply_realtime(&chat);
-    wait_store(&core, "the action dialog", |s| s.plugin_actions.is_some());
-    assert!(ran.lock().is_empty());
-    core.cancel_plugin_actions();
+    wait_store(&core, "the action", |_| ran.lock().len() == 1);
+    assert!(core.store().plugin_actions.is_none());
+    assert!(core.plugin_activity(1)[0].unattended);
 
     // Storage is per account, and kept on disk.
     core.run_plugin_command(&cmd("count"), None, Some(ME), None)
@@ -689,4 +689,211 @@ kind = "bool"
     core.remove_plugin("watch").unwrap();
     wait(&core, "the plugin to go", |p| p.is_empty());
     assert!(!home.path().join("config/plugin-data/watch").exists());
+}
+
+const AUTO: &str = r#"
+bonsai.command { id = "run", title = "Run", arg = "text", run = function(ctx, arg)
+  local key, n = string.match(arg, "(%S+) (%d+)")
+  for i = 1, tonumber(n) do ctx.run(key, tostring(i)) end
+  return { toast = "ran " .. n }
+end }
+bonsai.command { id = "batch", title = "Batch", run = function()
+  return { actions = { { id = "user.unfriend", arg = "1" }, { id = "user.unfriend", arg = "2" } } }
+end }
+"#;
+
+/// A core with one account and the `auto` plugin, allowed to use it. Runs go to `runner`.
+fn auto_plugin(home: &Path, src: &Path, runner: bonsai_core::plugins::ActionRunner) -> Core {
+    AccountList {
+        accounts: vec![AccountMeta {
+            id: ME,
+            name: "TestUser".into(),
+            display_name: "Test User".into(),
+            ..Default::default()
+        }],
+        active: Some(ME),
+        previous: None,
+    }
+    .save(&Paths::in_dir(home).accounts_file())
+    .unwrap();
+    let dir = src.join("auto");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("plugin.toml"),
+        "id = \"auto\"\nname = \"Auto\"\nentry = \"main.luau\"\n\
+         actions = [\"market.favorite\", \"user.unfriend\", \"account.remove\"]\n",
+    )
+    .unwrap();
+    std::fs::write(dir.join("main.luau"), AUTO).unwrap();
+    let core = start(home);
+    core.set_plugin_runner(runner);
+    core.stage_plugin_install(dir.to_str().unwrap(), false).unwrap();
+    core.finish_plugin_install(vec![ME]).unwrap();
+    wait(&core, "the plugin to run", |p| running(p, "auto"));
+    core
+}
+
+fn recording(ran: &Ran) -> bonsai_core::plugins::ActionRunner {
+    let r = ran.clone();
+    Arc::new(move |a, id, arg| {
+        r.lock().push((a, id, arg));
+        Ok(())
+    })
+}
+
+fn auto(id: &str) -> PluginCmd {
+    PluginCmd {
+        plugin: "auto".into(),
+        id: id.into(),
+    }
+}
+
+/// Runs `auto: run` with "key n" and waits for its toast.
+fn ctx_run(core: &Core, arg: &str, account: Option<AccountId>, expect: &str) {
+    let ids: Vec<u64> = core.store().toasts.iter().map(|t| t.id).collect();
+    for id in ids {
+        core.dismiss_toast(id);
+    }
+    core.run_plugin_command(&auto("run"), Some(arg.into()), account, None)
+        .unwrap();
+    wait_store(core, expect, |_| toasted(core, expect));
+}
+
+fn last_error(core: &Core) -> Option<String> {
+    core.plugin_activity(1).pop().and_then(|a| a.error)
+}
+
+#[test]
+fn ctx_run_checks_tiers_automation_and_caps() {
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let ran: Ran = Arc::default();
+    let core = auto_plugin(home.path(), src.path(), recording(&ran));
+
+    // Tier 1 runs without a click, and each run is logged.
+    ctx_run(&core, "market.favorite 2", Some(ME), "Auto: ran 2");
+    assert_eq!(ran.lock().len(), 2);
+    let log = core.plugin_activity(10);
+    assert_eq!(log.len(), 2);
+    assert!(
+        log.iter()
+            .all(|a| a.unattended && a.error.is_none() && a.account == ME)
+    );
+    assert_eq!(
+        (log[0].command.as_str(), log[0].arg.as_deref()),
+        ("market.favorite", Some("2"))
+    );
+    assert!(core.store().plugin_wrote.is_some());
+
+    // Tier 2 with automation off.
+    ctx_run(&core, "user.unfriend 1", Some(ME), "Automation is off");
+    assert_eq!(ran.lock().len(), 2);
+    assert!(last_error(&core).unwrap().contains("Automation is off"));
+
+    // Tier 4 never reaches bonsai-core: the manifest refused it at install.
+    ctx_run(&core, "account.remove 1", Some(ME), "account.remove");
+    assert_eq!(ran.lock().len(), 2);
+
+    // Not granted: the plugin sees account 0 and can't act.
+    core.set_plugin_account("auto", ME, false).unwrap();
+    wait(&core, "the grant to go", |p| p[0].accounts.is_empty());
+    ctx_run(&core, "market.favorite 1", Some(ME), "needs an account");
+    assert_eq!(ran.lock().len(), 2);
+    core.set_plugin_account("auto", ME, true).unwrap();
+    wait(&core, "the grant", |p| !p[0].accounts.is_empty());
+
+    // Turning automation on takes the account's name.
+    core.request_automation(ME).unwrap();
+    assert_eq!(core.store().plugin_automation, Some(ME));
+    assert!(core.confirm_automation("Test User").is_err());
+    assert_eq!(core.store().plugin_automation, Some(ME));
+    core.confirm_automation(" testuser ").unwrap();
+    assert_eq!(core.store().plugin_automation, None);
+    assert_eq!(core.plugin_automation(), vec![ME]);
+
+    // The cap stops it; only the user can change it, and only down.
+    core.set_plugin_cap("auto", "user.unfriend", 3).unwrap();
+    assert!(core.set_plugin_cap("auto", "market.favorite", 3).is_err());
+    assert_eq!(core.plugin_caps("auto")[0].value, 3);
+    ctx_run(&core, "user.unfriend 5", Some(ME), "cap of 3");
+    let unfriends = |r: &Ran| r.lock().iter().filter(|x| x.1 == CommandId::Unfriend).count();
+    assert_eq!(unfriends(&ran), 3);
+
+    // A returned batch over the cap waits for the user instead.
+    core.run_plugin_command(&auto("batch"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the action dialog", |s| s.plugin_actions.is_some());
+    core.cancel_plugin_actions();
+    // Under the cap, it runs by itself.
+    core.set_plugin_cap("auto", "user.unfriend", 50).unwrap();
+    assert_eq!(core.plugin_caps("auto")[0].value, 20);
+    core.run_plugin_command(&auto("batch"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the batch", |_| unfriends(&ran) == 5);
+    assert!(core.store().plugin_actions.is_none());
+
+    // Off again, at once.
+    core.block_automation(ME);
+    ctx_run(&core, "user.unfriend 1", Some(ME), "Automation is off");
+    assert_eq!(unfriends(&ran), 5);
+
+    // The log and the caps survive a restart.
+    let logged = core.plugin_activity(100).len();
+    drop(core);
+    let core = start(home.path());
+    wait(&core, "the plugin to start again", |p| running(p, "auto"));
+    assert_eq!(core.plugin_activity(100).len(), logged);
+    assert!(core.plugin_automation().is_empty());
+}
+
+#[test]
+fn stop_all_drops_queued_writes() {
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let ran: Ran = Arc::default();
+    let (go, gate) = std::sync::mpsc::channel::<()>();
+    let gate = Mutex::new(gate);
+    let r = ran.clone();
+    // Each run waits for the test to let it go.
+    let runner: bonsai_core::plugins::ActionRunner = Arc::new(move |a, id, arg| {
+        r.lock().push((a, id, arg));
+        let _ = gate.lock().recv_timeout(Duration::from_secs(10));
+        Ok(())
+    });
+    let core = auto_plugin(home.path(), src.path(), runner);
+
+    // ctx.run: the second call is refused once stopped.
+    core.run_plugin_command(&auto("run"), Some("market.favorite 3".into()), Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the first run", |_| ran.lock().len() == 1);
+    core.stop_plugins();
+    go.send(()).unwrap();
+    wait_store(&core, "the refusal", |_| {
+        last_error(&core).is_some_and(|e| e.contains("isn't running"))
+    });
+    assert_eq!(ran.lock().len(), 1);
+    let p = core.plugins();
+    assert!(!p[0].enabled && p[0].status == Status::Off);
+
+    // A batch running by itself stops between actions.
+    core.request_automation(ME).unwrap();
+    core.confirm_automation("TestUser").unwrap();
+    core.set_plugin_enabled("auto", true).unwrap();
+    wait(&core, "the plugin to run again", |p| running(p, "auto"));
+    core.run_plugin_command(&auto("batch"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the batch to start", |_| ran.lock().len() == 2);
+    core.stop_plugins();
+    go.send(()).unwrap();
+    wait_store(&core, "the rest to drop", |_| {
+        last_error(&core).is_some_and(|e| e == "Stopped.")
+    });
+    assert_eq!(ran.lock().len(), 2);
+    assert!(core.store().plugin_actions.is_none());
+
+    // It stays off after a restart.
+    drop(core);
+    let core = start(home.path());
+    let p = wait(&core, "the plugins to load", |p| !p.is_empty());
+    assert!(!p[0].enabled);
 }

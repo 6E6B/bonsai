@@ -5,6 +5,7 @@ import { createEffect, createSignal, ErrorBoundary, on, onCleanup, onMount, type
 import { NewChat } from "~/features/chat/NewChat"
 import { CommandPalette } from "~/features/palette/CommandPalette"
 import { ActionsDialog } from "~/features/plugins/ActionsDialog"
+import { AutomationDialog } from "~/features/plugins/AutomationDialog"
 import { InstallDialog } from "~/features/plugins/InstallDialog"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
 import { registerThemeCommands } from "~/features/themes/commands"
@@ -202,6 +203,7 @@ export function Layout(props: ParentProps) {
     ),
     ...screens.filter((s) => s.command !== "nav.settings").map((s) => handle(s.command, go(s.path))),
     handle("nav.settings", (section) => visitPath(section ? `/settings/${section}` : "/settings")),
+    handle("plugins.activity", () => visitPath("/settings/plugins/activity")),
     // The order is saved in bonsai-core; the groups that bound a move live in `screens`.
     ...([-1, 1] as const).map((by) =>
       handle(by < 0 ? "view.sidebar_up" : "view.sidebar_down", (arg) => {
@@ -465,6 +467,7 @@ export function Layout(props: ParentProps) {
                     <ImportDialog />
                     <InstallDialog />
                     <ActionsDialog />
+                    <AutomationDialog />
                     <SecurityDialog />
                     <ErrorBoundary
                       fallback={(err) => (

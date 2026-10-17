@@ -72,6 +72,10 @@ pub struct Shell {
     pub plugin_open: Option<plugins::PluginOpenView>,
     /// Changes when plugin commands do; the UI reloads the command list.
     pub plugin_rev: Id,
+    /// The account in the "Allow automation" dialog, while it is open.
+    pub plugin_automation: Option<plugins::AutomationView>,
+    /// When a plugin last wrote, in Unix seconds, for the stop indicator.
+    pub plugin_wrote: Option<Id>,
     /// The "Sign in another device" dialog, once a code was entered.
     pub approve: Option<approve::ApproveView>,
     /// The authenticator setup or recovery codes dialog, while it is open.
@@ -1039,6 +1043,8 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         plugin_actions: s.plugin_actions.as_ref().map(|p| plugins::actions_view(p, &s)),
         plugin_open: s.plugin_open.as_ref().map(plugins::open_view),
         plugin_rev: Id(s.plugin_rev),
+        plugin_automation: s.plugin_automation.map(|a| plugins::automation_view(a, &s)),
+        plugin_wrote: s.plugin_wrote.map(|t| Id(t.max(0) as u64)),
         approve: s.approve.as_ref().map(approve::view),
         security: s.security.as_ref().map(security::view),
         login: s.login.as_ref().map(|l| match l {
@@ -2781,6 +2787,10 @@ pub fn builder() -> Builder<tauri::Wry> {
             plugins::plugin_install_cancel,
             plugins::plugin_actions_run,
             plugins::plugin_actions_cancel,
+            plugins::plugin_automation,
+            plugins::plugin_automation_confirm,
+            plugins::plugin_automation_cancel,
+            plugins::plugin_activity,
             account::pin_status,
             account::unlock_pin,
             security::security_status,

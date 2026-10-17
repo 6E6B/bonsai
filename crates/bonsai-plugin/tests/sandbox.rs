@@ -466,6 +466,21 @@ fn host_errors_reach_the_plugin_and_host_time_is_free() {
 }
 
 #[test]
+fn a_call_runs_at_most_fifty_actions() {
+    let main = r#"bonsai.command { id = "c", title = "C", run = function(ctx)
+        for i = 1, 60 do ctx.run("user.unfriend", i) end
+    end }"#;
+    let f = load_with(main, &[], FakeHost::default());
+    let p = f.result.unwrap();
+    let err = script_error(p.run_command("c", CTX, None));
+    assert!(err.contains("at most 50 ctx.run"), "{err}");
+    assert_eq!(f.host.runs.borrow().len(), 50);
+    // The count starts again on the next call.
+    let _ = p.run_command("c", CTX, None);
+    assert_eq!(f.host.runs.borrow().len(), 100);
+}
+
+#[test]
 fn print_goes_to_the_host_log() {
     let f = load_with("print('loaded', 1, nil, true)", &[], FakeHost::default());
     assert!(f.result.is_ok());

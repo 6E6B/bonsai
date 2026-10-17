@@ -118,6 +118,8 @@ export const browserShell: Shell = {
   pluginActions: null,
   pluginOpen: null,
   pluginRev: 0,
+  pluginAutomation: null,
+  pluginWrote: null,
   security: null,
   approve: null,
   itemValues: false,

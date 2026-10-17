@@ -216,7 +216,8 @@ granted account it happened to; a plugin with no free queue slot misses it.
   once as account 0 with none.
 - From an event or timer, `alert` is a desktop alert (kind "Plugin alerts" in Settings >
   Notifications) when the plugin has `notify` and the account; otherwise a toast. `open` is
-  refused, and every action, even tier 1, waits in the action dialog until automation lands.
+  refused. Actions run by themselves when every one may run unattended (tier 1, or tier 2 with
+  automation on and under the cap); otherwise the batch waits in the action dialog.
 
 ### Storage and settings
 
@@ -325,8 +326,7 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   runs at once; anything higher opens the action dialog, which lists every action with its tier.
   Confirming checks the batch again, then runs it through the same dispatch as built-in
   commands and toasts how many ran.
-- Not yet: `ctx.run` inside a command still refuses (automation is phase 6), and plugin
-  commands can't be rebound.
+- `ctx.run` came in phase 6. Not yet: plugin commands can't be rebound.
 
 ### 4. Reads (done)
 
@@ -351,11 +351,23 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   alerts. Settings > Plugins lists what each plugin listens to, its timers and its settings
   with the same controls as Bonsai's own.
 
-### 6. Automation
+### 6. Automation (done)
 
 - `ctx.run` with tier checks, the per-account automation toggle, rate caps, the activity log and
   the kill switch. Tier 1 and 2 only.
 - Tests for every refusal: not granted, automation off, cap reached, tier 4, plugin stopped.
+- Built: `ctx.run` runs tier 1, and tier 2 when automation is on and under the cap; anything
+  else fails with an error saying why. One call can make at most 50 `ctx.run` calls. Actions
+  returned from events and timers run by themselves under the same rules; anything that can't
+  opens the action dialog. Each unattended run checks that the plugin is running, that
+  automation is still on and that `plugins.stop_all` hasn't run since the call started, so
+  turning either off drops queued writes. The toggle is per account in `config/plugins.json`.
+  `plugins.allow_automation` opens a dialog where the user types the account's name. Caps
+  count successful unattended runs in the last hour; `plugin.cap` lowers one (Settings >
+  Plugins has a slider per tier 2 action). `config/plugin-activity.jsonl` logs every write,
+  confirmed or not, keeping the last hour plus 500 older entries; a refusal repeated within a
+  minute is logged once. The top bar shows a stop button for five minutes after a write.
+  `plugins.stop_all` (Ctrl+Shift+Backspace) turns every plugin off.
 
 ### 7. Budgets
 

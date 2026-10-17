@@ -5,8 +5,8 @@ use std::sync::Arc;
 
 use bonsai_core::commands::{CommandId, CommandRef, PluginCmd, Registry};
 use bonsai_core::plugins::{
-    Arg, PendingActions, PendingInstall, Permission, PluginCommand, PluginInfo, PluginOpen, Refused, Setting,
-    SettingKind, Status, action_tier,
+    Activity, Arg, DEFAULT_CAP, PendingActions, PendingInstall, Permission, PluginCap, PluginCommand,
+    PluginInfo, PluginOpen, Refused, Setting, SettingKind, Status, action_tier,
 };
 use bonsai_core::store::StoreData;
 use bonsai_core::{AccountId, Core};
@@ -87,6 +87,8 @@ pub struct PluginView {
     /// Seconds between runs of each timer, while running.
     pub timers: Vec<u32>,
     pub settings: Vec<PluginSettingView>,
+    /// Hourly caps on tier 2 actions it runs without a click.
+    pub caps: Vec<PluginCapView>,
     pub asks: Option<Asks>,
     /// Accounts it may use.
     pub accounts: Vec<Id>,
@@ -124,6 +126,54 @@ pub struct PluginSettingView {
     /// `on`/`off`, an option value, a number or text.
     pub value: String,
     pub default: String,
+}
+
+/// How often a plugin may run one tier 2 action an hour without a click.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginCapView {
+    pub key: String,
+    pub title: String,
+    pub value: u32,
+    /// The most it can be; the user can only lower it.
+    pub max: u32,
+}
+
+/// One plugin write, or one it tried and was refused.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityView {
+    /// Unix seconds.
+    pub at: Id,
+    pub plugin_name: String,
+    pub account: Id,
+    pub account_name: String,
+    pub command: String,
+    pub title: String,
+    pub arg: Option<String>,
+    /// Ran without a click.
+    pub unattended: bool,
+    /// Why it failed or was refused.
+    pub error: Option<String>,
+}
+
+/// The account in the "Allow automation" dialog.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationView {
+    pub account: Id,
+    /// The username to type.
+    pub name: String,
+    pub display_name: String,
+}
+
+pub fn automation_view(account: AccountId, s: &StoreData) -> AutomationView {
+    let a = s.accounts.accounts.iter().find(|a| a.id == account);
+    AutomationView {
+        account: Id(account.0),
+        name: a.map(|a| a.name.clone()).unwrap_or_default(),
+        display_name: a.map(|a| a.title().to_owned()).unwrap_or_default(),
+    }
 }
 
 /// A plugin folder waiting in the install dialog.
@@ -321,7 +371,16 @@ fn setting_view(s: &Setting, value: &serde_json::Value) -> PluginSettingView {
     v
 }
 
-fn view(p: PluginInfo, settings: Vec<(Setting, serde_json::Value)>) -> PluginView {
+fn cap_view(c: &PluginCap) -> PluginCapView {
+    PluginCapView {
+        key: c.command.key().to_owned(),
+        title: Registry::default().get(c.command).title.to_owned(),
+        value: c.value,
+        max: DEFAULT_CAP,
+    }
+}
+
+fn view(p: PluginInfo, settings: Vec<(Setting, serde_json::Value)>, caps: Vec<PluginCap>) -> PluginView {
     let (state, error, review, commands, listens, timers) = match p.status {
         Status::Off => (
             PluginState::Off,
@@ -385,6 +444,7 @@ fn view(p: PluginInfo, settings: Vec<(Setting, serde_json::Value)>) -> PluginVie
         listens,
         timers,
         settings: settings.iter().map(|(s, v)| setting_view(s, v)).collect(),
+        caps: caps.iter().map(cap_view).collect(),
         asks: m.map(asks),
         accounts: p.accounts.iter().map(|a| Id(a.0)).collect(),
         id: p.id,
@@ -415,7 +475,60 @@ pub fn plugins(core: State<'_, Arc<Core>>) -> Vec<PluginView> {
         .into_iter()
         .map(|p| {
             let settings = core.plugin_settings(&p.id);
-            view(p, settings)
+            let caps = core.plugin_caps(&p.id);
+            view(p, settings, caps)
+        })
+        .collect()
+}
+
+/// Accounts plugins may automate.
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_automation(core: State<'_, Arc<Core>>) -> Vec<Id> {
+    core.plugin_automation().into_iter().map(|a| Id(a.0)).collect()
+}
+
+/// Turns automation on for the account in the dialog, when `typed` is its name.
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_automation_confirm(core: State<'_, Arc<Core>>, typed: String) -> Result<(), String> {
+    core.confirm_automation(&typed)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_automation_cancel(core: State<'_, Arc<Core>>) {
+    core.cancel_automation();
+}
+
+/// Most activity entries sent at once.
+const ACTIVITY: usize = 1000;
+
+/// Plugin writes, newest first.
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_activity(core: State<'_, Arc<Core>>) -> Vec<ActivityView> {
+    let registry = Registry::default();
+    let s = core.store();
+    core.plugin_activity(ACTIVITY)
+        .into_iter()
+        .map(|a: Activity| ActivityView {
+            at: Id(a.at.max(0) as u64),
+            plugin_name: a.plugin_name,
+            account: Id(a.account.0),
+            account_name: s
+                .accounts
+                .accounts
+                .iter()
+                .find(|m| m.id == a.account)
+                .map(|m| m.title().to_owned())
+                .unwrap_or_else(|| a.account.0.to_string()),
+            title: CommandId::from_key(&a.command)
+                .map_or_else(|| a.command.clone(), |c| registry.get(c).title.to_owned()),
+            command: a.command,
+            arg: a.arg,
+            unattended: a.unattended,
+            error: a.error,
         })
         .collect()
 }
@@ -500,6 +613,24 @@ pub fn run(
         CommandId::RemovePlugin => core.remove_plugin(&arg()),
         CommandId::GrantPlugin => acting().and_then(|a| core.set_plugin_account(&arg(), a, true)),
         CommandId::RevokePlugin => acting().and_then(|a| core.set_plugin_account(&arg(), a, false)),
+        CommandId::SetPluginCap => {
+            // "plugin action number"
+            let raw = arg();
+            let mut words = raw.split_whitespace();
+            match (words.next(), words.next(), words.next().map(str::parse::<u32>)) {
+                (Some(plugin), Some(action), Some(Ok(n))) => core.set_plugin_cap(plugin, action, n),
+                _ => Err("Give a plugin, an action and a number.".into()),
+            }
+        }
+        CommandId::AllowAutomation => acting().and_then(|a| core.request_automation(a)),
+        CommandId::BlockAutomation => acting().map(|a| {
+            core.block_automation(a);
+            core.notice("Automation is off for this account.", false);
+        }),
+        CommandId::StopPlugins => {
+            core.stop_plugins();
+            Ok(())
+        }
         CommandId::SetPluginSetting => {
             // "plugin key value"; the value is the rest, spaces and all.
             let raw = inv.arg.as_deref().unwrap_or_default().trim_start();

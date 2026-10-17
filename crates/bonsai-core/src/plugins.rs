@@ -19,9 +19,12 @@ use crate::core::{Core, Inner};
 
 pub use bonsai_plugin::{Arg, Command, Manifest, Permission, Refused, Setting, SettingKind};
 
+mod automation;
 mod events;
 mod reads;
 mod storage;
+
+pub use automation::{Activity, DEFAULT_CAP, PluginCap, unattended_refusal};
 
 pub(crate) use reads::{presence_view, status};
 
@@ -94,6 +97,9 @@ struct Saved {
     /// Values the user changed from the manifest's `[[settings]]` defaults.
     #[serde(default)]
     settings: BTreeMap<String, serde_json::Value>,
+    /// Hourly caps the user lowered, by tier 2 action.
+    #[serde(default)]
+    caps: BTreeMap<String, u32>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -103,6 +109,9 @@ struct SavedFile {
     /// Folders loaded in place with "Load unpacked plugin".
     #[serde(default)]
     unpacked: Vec<PathBuf>,
+    /// Accounts plugins may run tier 2 actions on without a click. Off by default.
+    #[serde(default)]
+    automation: Vec<AccountId>,
 }
 
 impl SavedFile {
@@ -203,6 +212,7 @@ pub(crate) struct Plugins {
     runner: Option<ActionRunner>,
     /// `ctx.store` files read so far.
     data: storage::Data,
+    log: automation::Log,
 }
 
 struct Entry {
@@ -248,15 +258,15 @@ enum Force<'a> {
     One(&'a str),
 }
 
-/// The plugin side of [`bonsai_plugin::Host`], on the plugin's thread. Writes go through
-/// returned actions, not `run`.
+/// The plugin side of [`bonsai_plugin::Host`], on the plugin's thread.
 struct CoreHost {
     inner: Weak<Inner>,
 }
 
 impl bonsai_plugin::Host for CoreHost {
-    fn run(&self, _plugin: &str, _account: u64, _action: &str, _arg: Option<&str>) -> Result<(), String> {
-        Err("Plugins can't run actions yet.".into())
+    fn run(&self, plugin: &str, account: u64, action: &str, arg: Option<&str>) -> Result<(), String> {
+        let inner = self.inner.upgrade().ok_or("Bonsai is closing.")?;
+        inner.plugin_run(plugin, account, action, arg)
     }
     fn read(&self, plugin: &str, account: u64, read: &Read) -> Result<serde_json::Value, String> {
         let inner = self.inner.upgrade().ok_or("Bonsai is closing.")?;
@@ -664,8 +674,9 @@ impl Inner {
     }
 
     /// What a plugin returned. Errors and messages are toasts naming the plugin. From an event
-    /// or timer, an alert is a desktop alert when the plugin may notify, it can't open screens,
-    /// and every action waits in the action dialog.
+    /// or timer, an alert is a desktop alert when the plugin may notify and it can't open
+    /// screens. Returned actions run at once when they all may run unattended (tier 1, or tier 2
+    /// under the cap with automation on); otherwise they wait in the action dialog.
     fn plugin_outcome(
         self: &Arc<Self>,
         id: &str,
@@ -713,11 +724,13 @@ impl Inner {
                 match self.check_actions(id, account, &list) {
                     Err(e) => say(&e, true),
                     Ok(actions) if actions.is_empty() => {}
-                    // Tier 1 is harmless and easy to undo; the user just ran the command.
-                    Ok(actions)
-                        if source == Source::Command && actions.iter().all(|a| a.tier == Tier::Harmless) =>
-                    {
-                        self.run_actions(name.clone(), account, actions);
+                    // Tier 1 is harmless and easy to undo. After a click it counts as the user's.
+                    Ok(actions) if actions.iter().all(|a| a.tier == Tier::Harmless) => {
+                        let unattended = source == Source::Background;
+                        self.run_actions(id, name.clone(), account, actions, unattended);
+                    }
+                    Ok(actions) if self.all_unattended(id, account, &actions) => {
+                        self.run_actions(id, name.clone(), account, actions, true);
                     }
                     Ok(actions) => {
                         let mut s = self.store.write();
@@ -796,21 +809,61 @@ impl Inner {
             .collect()
     }
 
-    /// Runs checked actions one after another off the caller's thread, then says how it went.
-    fn run_actions(self: &Arc<Self>, name: String, account: AccountId, actions: Vec<ProposedAction>) {
-        let Some(runner) = self.plugins.lock().runner.clone() else {
-            self.toast(None, format!("{name}: Actions can't run here."), true);
-            self.repaint();
-            return;
-        };
+    /// Every action may run without a click now, counting the batch against the caps.
+    fn all_unattended(&self, plugin: &str, account: AccountId, actions: &[ProposedAction]) -> bool {
+        let mut seen: std::collections::HashMap<CommandId, u32> = std::collections::HashMap::new();
+        actions.iter().all(|a| {
+            let n = seen.entry(a.id).or_default();
+            let ok = self.may_run_unattended(plugin, account, a, *n).is_ok();
+            *n += 1;
+            ok
+        })
+    }
+
+    /// Runs checked actions one after another off the caller's thread, logs each and then says
+    /// how it went. An unattended batch checks the automation switch and cap before each one;
+    /// the stop button drops the rest.
+    fn run_actions(
+        self: &Arc<Self>,
+        plugin: &str,
+        name: String,
+        account: AccountId,
+        actions: Vec<ProposedAction>,
+        unattended: bool,
+    ) {
+        let epoch = self.plugins.lock().log.stop_gen;
         let inner = self.clone();
+        let plugin = plugin.to_owned();
         self.rt.spawn_blocking(move || {
             let total = actions.len();
             let mut failed = Vec::new();
             for a in actions {
-                if let Err(e) = runner(account, a.id, a.arg) {
-                    failed.push(e);
+                let r = if unattended {
+                    inner.may_run_unattended(&plugin, account, &a, 0)
+                } else {
+                    Ok(())
                 }
+                .and_then(|()| inner.run_one(&plugin, account, &a, unattended, epoch));
+                inner.log_activity(automation::Activity {
+                    at: crate::cache::now(),
+                    plugin: plugin.clone(),
+                    plugin_name: name.clone(),
+                    account,
+                    command: a.id.key().to_owned(),
+                    arg: a.arg.clone(),
+                    unattended,
+                    error: r.as_ref().err().cloned(),
+                });
+                if let Err(e) = r {
+                    let stopped = inner.plugins.lock().log.stop_gen != epoch;
+                    failed.push(e);
+                    if stopped {
+                        break;
+                    }
+                }
+            }
+            if inner.plugins.lock().log.stop_gen != epoch {
+                return;
             }
             let ran = total - failed.len();
             let text = match failed.first() {
@@ -868,6 +921,7 @@ pub(crate) async fn watch_loop(inner: Arc<Inner>) {
 /// Reads `plugins.json` and starts enabled plugins. Called once at start.
 pub(crate) fn load(inner: &Arc<Inner>) {
     inner.plugins.lock().saved = SavedFile::load(&inner.paths.plugins_file());
+    automation::load_log(inner);
     inner.plugin_job(|i| {
         i.sync_plugins(Force::None);
         Ok(())
@@ -980,8 +1034,13 @@ impl Core {
             .inner
             .check_actions(&pending.plugin, pending.account, &list)
             .map_err(|e| format!("{}: {e}", pending.plugin_name))?;
-        self.inner
-            .run_actions(pending.plugin_name, pending.account, actions);
+        self.inner.run_actions(
+            &pending.plugin,
+            pending.plugin_name,
+            pending.account,
+            actions,
+            false,
+        );
         Ok(())
     }
 
@@ -1098,12 +1157,18 @@ impl Core {
                 if pending.unpacked && !p.saved.unpacked.contains(&pending.source) {
                     p.saved.unpacked.push(pending.source.clone());
                 }
-                // Settings survive an update.
+                // Settings and caps survive an update.
                 let settings = p
                     .saved
                     .plugins
                     .get(&m.id)
                     .map(|s| s.settings.clone())
+                    .unwrap_or_default();
+                let caps = p
+                    .saved
+                    .plugins
+                    .get(&m.id)
+                    .map(|s| s.caps.clone())
                     .unwrap_or_default();
                 p.saved.plugins.insert(
                     m.id.clone(),
@@ -1113,6 +1178,7 @@ impl Core {
                         permissions: permission_keys(m),
                         actions: m.actions.clone(),
                         settings,
+                        caps,
                     },
                 );
             }

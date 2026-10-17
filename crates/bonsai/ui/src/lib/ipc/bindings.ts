@@ -297,6 +297,13 @@ export const commands = {
 	/**  Runs the actions in the action dialog. */
 	pluginActionsRun: () => typedError<null, string>(__TAURI_INVOKE("plugin_actions_run")),
 	pluginActionsCancel: () => __TAURI_INVOKE<void>("plugin_actions_cancel"),
+	/**  Accounts plugins may automate. */
+	pluginAutomation: () => __TAURI_INVOKE<Id[]>("plugin_automation"),
+	/**  Turns automation on for the account in the dialog, when `typed` is its name. */
+	pluginAutomationConfirm: (typed: string) => typedError<null, string>(__TAURI_INVOKE("plugin_automation_confirm", { typed })),
+	pluginAutomationCancel: () => __TAURI_INVOKE<void>("plugin_automation_cancel"),
+	/**  Plugin writes, newest first. */
+	pluginActivity: () => __TAURI_INVOKE<ActivityView[]>("plugin_activity"),
 	/**  Account PIN of the active account. */
 	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
 	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */
@@ -404,6 +411,22 @@ export type ActionView = {
 	tier: number,
 };
 
+/**  One plugin write, or one it tried and was refused. */
+export type ActivityView = {
+	/**  Unix seconds. */
+	at: Id,
+	pluginName: string,
+	account: Id,
+	accountName: string,
+	command: string,
+	title: string,
+	arg: string | null,
+	/**  Ran without a click. */
+	unattended: boolean,
+	/**  Why it failed or was refused. */
+	error: string | null,
+};
+
 /**  Allied and enemy communities. */
 export type AffiliatesView = {
 	loading: boolean,
@@ -476,6 +499,14 @@ export type AuditRow = {
 	text: string,
 	/**  ISO date-time. */
 	created: string,
+};
+
+/**  The account in the "Allow automation" dialog. */
+export type AutomationView = {
+	account: Id,
+	/**  The username to type. */
+	name: string,
+	displayName: string,
 };
 
 export type Avatar3dScales = {
@@ -1509,6 +1540,15 @@ export type PluginActionsView = {
 	actions: ProposedView[],
 };
 
+/**  How often a plugin may run one tier 2 action an hour without a click. */
+export type PluginCapView = {
+	key: string,
+	title: string,
+	value: number,
+	/**  The most it can be; the user can only lower it. */
+	max: number,
+};
+
 /**  A plugin folder waiting in the install dialog. */
 export type PluginInstallView = {
 	id: string,
@@ -1580,6 +1620,8 @@ export type PluginView = {
 	/**  Seconds between runs of each timer, while running. */
 	timers: number[],
 	settings: PluginSettingView[],
+	/**  Hourly caps on tier 2 actions it runs without a click. */
+	caps: PluginCapView[],
 	asks: Asks | null,
 	/**  Accounts it may use. */
 	accounts: Id[],
@@ -1942,6 +1984,10 @@ export type Shell = {
 	pluginOpen: PluginOpenView | null,
 	/**  Changes when plugin commands do; the UI reloads the command list. */
 	pluginRev: Id,
+	/**  The account in the "Allow automation" dialog, while it is open. */
+	pluginAutomation: AutomationView | null,
+	/**  When a plugin last wrote, in Unix seconds, for the stop indicator. */
+	pluginWrote: Id | null,
 	/**  The "Sign in another device" dialog, once a code was entered. */
 	approve: ApproveView | null,
 	/**  The authenticator setup or recovery codes dialog, while it is open. */

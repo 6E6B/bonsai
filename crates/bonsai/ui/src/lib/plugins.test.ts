@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { ActionView, CommandInfo } from "~/lib/ipc/bindings"
-import { byTier, pluginCommandsFor } from "./plugins"
+import { byTier, pluginCommandsFor, wroteRecently } from "./plugins"
 
 describe("byTier", () => {
   it("groups actions by tier, lowest first, and skips empty tiers", () => {
@@ -25,5 +25,14 @@ describe("pluginCommandsFor", () => {
     const list = [c("plugin.b.x", "B: x", "user"), c("user.open", "Open", null), c("plugin.a.y", "A: y", "user")]
     expect(pluginCommandsFor(list, "user").map((x) => x.id)).toEqual(["plugin.a.y", "plugin.b.x"])
     expect(pluginCommandsFor(list, "game")).toEqual([])
+  })
+})
+
+describe("wroteRecently", () => {
+  it("shows a write for five minutes", () => {
+    expect(wroteRecently(null, 1_000_000)).toBe(false)
+    expect(wroteRecently(1000, 1_000_000)).toBe(true)
+    expect(wroteRecently(1000, 1_299_000)).toBe(true)
+    expect(wroteRecently(1000, 1_300_000)).toBe(false)
   })
 })
