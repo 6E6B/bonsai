@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  ui:
+    name: UI
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Install
+        working-directory: crates/bonsai/ui
+        run: bun install --frozen-lockfile
+      - name: Typecheck, lint, test
+        working-directory: crates/bonsai/ui
+        run: bun run check
+
+  rust:
+    name: Rust (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-24.04
+          - name: Windows
+            os: windows-latest
+          - name: macOS
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - uses: ./.github/actions/setup
+
+      # tauri::generate_context! embeds ui/dist, so the UI must be built before the shell compiles.
+      - name: Build UI
+        working-directory: crates/bonsai/ui
+        run: bun run build
+
+      - name: Format
+        if: runner.os == 'Linux'
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --locked
+
+      # `cargo test` rewrites bindings.ts; it must match what is committed.
+      - name: Bindings up to date
+        if: runner.os == 'Linux'
+        run: |
+          git diff --exit-code -- crates/bonsai/ui/src/lib/ipc/bindings.ts || {
+            echo "::error::bindings.ts is stale. Run 'cargo test -p bonsai' and commit it."
+            exit 1
+          }
+
+      - name: Generated API code up to date
+        if: runner.os == 'Linux'
+        run: cargo xtask codegen --check
