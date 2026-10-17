@@ -64,6 +64,27 @@ async fn rate_limit_gives_up_with_typed_error() {
 }
 
 #[tokio::test]
+async fn rate_limit_headers_pace_and_time_the_retry() {
+    let r = Replay::start(&["rate_limit_headers"]).await;
+    let c = r
+        .builder(AccountId(1))
+        .retry(bonsai_api::RetryPolicy {
+            max_429: 0,
+            ..Default::default()
+        })
+        .build()
+        .unwrap();
+    users::v1::get_users_by_user_id(&c, 1).await.unwrap();
+    // The first answer used up the window, so the second waits for it to reset.
+    let t = std::time::Instant::now();
+    users::v1::get_users_by_user_id(&c, 1).await.unwrap();
+    assert!(t.elapsed() >= std::time::Duration::from_millis(900));
+    // A 429 without Retry-After waits for the window instead of a guessed backoff.
+    let e = users::v1::get_users_by_user_id(&c, 1).await.unwrap_err();
+    assert!(matches!(e, Error::RateLimited { retry_after_secs: 2 }), "{e:?}");
+}
+
+#[tokio::test]
 async fn server_errors_retry_reads_but_never_writes() {
     let r = Replay::start(&["server_errors"]).await;
     let c = r.client();

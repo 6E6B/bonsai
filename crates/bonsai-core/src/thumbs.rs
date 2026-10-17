@@ -39,6 +39,14 @@ impl ThumbKind {
             ThumbKind::Outfit => "Outfit",
         }
     }
+    /// How long a looked-up URL is trusted. An older one still shows at once and is checked
+    /// again in the background. Avatars change often; icons and item images rarely do.
+    pub fn url_age_secs(self) -> i64 {
+        match self {
+            ThumbKind::Headshot | ThumbKind::Avatar | ThumbKind::Outfit => 24 * 3600,
+            _ => 7 * 24 * 3600,
+        }
+    }
     /// Sizes the API accepts for this type; we use one per kind per use.
     pub fn size(self, large: bool) -> &'static str {
         match (self, large) {
@@ -141,6 +149,16 @@ pub async fn lookup(
         }
     }
     Ok(out)
+}
+
+/// How long to wait before looking a thumbnail up again after `tries` earlier retries, or
+/// `None` to give up. A `Pending` one is still rendering and gets about two minutes; a failed
+/// request gets a few quick tries.
+pub fn retry_delay(tries: u32, failed: bool) -> Option<std::time::Duration> {
+    let limit = if failed { 4 } else { 8 };
+    (tries < limit).then(|| {
+        std::time::Duration::from_millis(1500 << tries.min(5)).min(std::time::Duration::from_secs(30))
+    })
 }
 
 /// Bytes on disk keyed by URL hash. Reads bump a file's modified time, so pruning drops the
@@ -333,6 +351,20 @@ mod tests {
         assert!(b.insert(k(4), 10, 25).is_empty());
         // One image over budget on its own is still kept.
         assert_eq!(b.insert(k(5), 100, 25), vec![k(3), k(4)]);
+    }
+
+    #[test]
+    fn retries_back_off_then_give_up() {
+        use std::time::Duration;
+        let pending: Vec<_> = (0..9).map(|n| retry_delay(n, false)).collect();
+        assert_eq!(pending[0], Some(Duration::from_millis(1500)));
+        assert_eq!(pending[1], Some(Duration::from_secs(3)));
+        assert_eq!(pending[7], Some(Duration::from_secs(30)));
+        assert_eq!(pending[8], None);
+        let total: Duration = pending.iter().flatten().sum();
+        assert!(total > Duration::from_secs(90) && total < Duration::from_secs(180));
+        assert_eq!(retry_delay(3, true), Some(Duration::from_secs(12)));
+        assert_eq!(retry_delay(4, true), None);
     }
 
     #[test]

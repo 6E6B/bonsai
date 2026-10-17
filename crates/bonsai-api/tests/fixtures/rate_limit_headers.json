@@ -1,0 +1,13 @@
+{
+  "captured": "2026-10-17",
+  "source": "synthetic",
+  "note": "x-ratelimit-* headers as Roblox sends them: a success that used the last request of the window, then a 429 with no Retry-After.",
+  "interactions": [
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/1" },
+      "response": { "status": 200, "headers": { "x-ratelimit-limit": "25, 25;w=1, 10000;w=60", "x-ratelimit-remaining": "0", "x-ratelimit-reset": "1" }, "body": { "id": 1, "name": "Roblox", "displayName": "Roblox", "hasVerifiedBadge": true, "isBanned": false, "created": "2006-02-27T21:06:40.3Z" } } },
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/1" },
+      "response": { "status": 200, "headers": { "x-ratelimit-limit": "25, 25;w=1, 10000;w=60", "x-ratelimit-remaining": "24", "x-ratelimit-reset": "1" }, "body": { "id": 1, "name": "Roblox", "displayName": "Roblox", "hasVerifiedBadge": true, "isBanned": false, "created": "2006-02-27T21:06:40.3Z" } } },
+    { "request": { "method": "GET", "host": "users.roblox.com", "path": "/v1/users/1" },
+      "response": { "status": 429, "headers": { "x-ratelimit-limit": "25, 25;w=1, 10000;w=60", "x-ratelimit-remaining": "0", "x-ratelimit-reset": "2" }, "body": { "errors": [ { "code": 0, "message": "Too many requests" } ] } } }
+  ]
+}
