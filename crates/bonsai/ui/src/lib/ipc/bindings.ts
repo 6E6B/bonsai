@@ -289,6 +289,11 @@ export const commands = {
 	 */
 	themeImportInstall: (keepBoth: boolean, apply: boolean) => typedError<null, string>(__TAURI_INVOKE("theme_import_install", { keepBoth, apply })),
 	themeImportCancel: () => __TAURI_INVOKE<void>("theme_import_cancel"),
+	/**  Installed and unpacked plugins. */
+	plugins: () => __TAURI_INVOKE<PluginView[]>("plugins"),
+	/**  Installs the plugin in the dialog, allowed to use `accounts`. */
+	pluginInstallFinish: (accounts: Id[]) => typedError<null, string>(__TAURI_INVOKE("plugin_install_finish", { accounts })),
+	pluginInstallCancel: () => __TAURI_INVOKE<void>("plugin_install_cancel"),
 	/**  Account PIN of the active account. */
 	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
 	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */
@@ -388,6 +393,14 @@ export type AccountTotalsView = {
 	totals: TotalsView,
 };
 
+/**  A built-in command a plugin may run or propose. */
+export type ActionView = {
+	key: string,
+	title: string,
+	/**  1 harmless, 2 social, 3 value. */
+	tier: number,
+};
+
 /**  Allied and enemy communities. */
 export type AffiliatesView = {
 	loading: boolean,
@@ -440,7 +453,16 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin";
+
+/**  What a plugin asks for, shown in Settings and the install dialog. */
+export type Asks = {
+	permissions: PermissionView[],
+	actions: ActionView[],
+	refused: RefusedView[],
+	/**  It needs accounts ticked to do anything per account. */
+	needsAccounts: boolean,
+};
 
 export type AuditRow = {
 	actorId: Id,
@@ -1430,6 +1452,13 @@ export type PayoutRow = {
 	percent: number,
 };
 
+export type PermissionView = {
+	key: string,
+	label: string,
+	/**  Granted per account, so it needs accounts ticked. */
+	perAccount: boolean,
+};
+
 /**  Someone in a people list: a friend request, a follower, a blocked user. */
 export type Person = {
 	id: Id,
@@ -1462,6 +1491,47 @@ export type PlaceCard = {
 	creator: string,
 	/**  Paid access price; `None` when free to play. */
 	price: number | null,
+};
+
+/**  A plugin folder waiting in the install dialog. */
+export type PluginInstallView = {
+	id: string,
+	name: string,
+	version: string,
+	author: string | null,
+	source: string,
+	unpacked: boolean,
+	/**  The installed version it replaces. */
+	replaces: string | null,
+	/**  Permission and action keys not agreed to before. */
+	added: string[],
+	asks: Asks,
+	/**  Accounts ticked to start with. */
+	accounts: Id[],
+};
+
+export type PluginState = "off" | "loading" | "running" | 
+/**  Asks for more than was agreed to. */
+"review" | "failed";
+
+export type PluginView = {
+	id: string,
+	name: string,
+	version: string,
+	author: string | null,
+	/**  The folder, for unpacked plugins. */
+	path: string | null,
+	enabled: boolean,
+	state: PluginState,
+	/**  Why it failed to load. */
+	error: string | null,
+	/**  What it asks for beyond what was agreed to, while in review. */
+	review: string[],
+	/**  Titles of the commands it registered. */
+	commands: string[],
+	asks: Asks | null,
+	/**  Accounts it may use. */
+	accounts: Id[],
 };
 
 /**  A point on a chart: ms since the epoch, value. */
@@ -1603,6 +1673,12 @@ export type RecentView = {
 	outfit: boolean,
 	typeId: number,
 	typeName: string,
+};
+
+/**  Something the manifest asked for that the plugin won't get. */
+export type RefusedView = {
+	what: string,
+	why: string,
 };
 
 export type RelationView = {
@@ -1799,6 +1875,8 @@ export type Shell = {
 	challenge: ChallengeView | null,
 	/**  A theme waiting in the import dialog. */
 	themeImport: ThemeImportView | null,
+	/**  A plugin folder waiting in the install dialog. */
+	pluginInstall: PluginInstallView | null,
 	/**  The "Sign in another device" dialog, once a code was entered. */
 	approve: ApproveView | null,
 	/**  The authenticator setup or recovery codes dialog, while it is open. */

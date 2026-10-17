@@ -36,6 +36,8 @@ pub enum ArgKind {
     Screen,
     /// a setting from [`crate::prefs::PREFS`], then its value
     Setting,
+    /// an installed plugin
+    Plugin,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -376,6 +378,15 @@ commands! {
     ImportTheme => "theme.import", "Import theme (paste a code or a file path)", ["theme", "import", "install", "add", "load", "file", "code", "paste", "share", "bonsaitheme"], Text, Local, [];
     ExportTheme => "theme.export", "Save theme to a file", ["theme", "export", "save", "file", "share", "bonsaitheme", "backup"], Theme, Local, [];
     CopyThemeCode => "theme.copy_code", "Copy theme code", ["theme", "share", "code", "copy", "export", "send"], Theme, Local, [];
+    InstallPlugin => "plugin.install", "Install plugin (a folder path)", ["plugin", "install", "add", "extension", "addon", "luau", "folder"], Text, Local, [];
+    LoadUnpackedPlugin => "plugin.load_unpacked", "Load unpacked plugin for development (a folder path)", ["plugin", "unpacked", "develop", "dev", "load", "folder", "luau"], Text, Local, [];
+    EnablePlugin => "plugin.enable", "Turn on plugin", ["plugin", "enable", "on", "start", "extension"], Plugin, Local, [];
+    DisablePlugin => "plugin.disable", "Turn off plugin", ["plugin", "disable", "off", "stop", "extension"], Plugin, Local, [];
+    ReloadPlugin => "plugin.reload", "Reload plugin", ["plugin", "reload", "restart", "refresh", "develop"], Plugin, Local, [];
+    ReviewPlugin => "plugin.review", "Review plugin permissions", ["plugin", "permissions", "review", "update", "agree"], Plugin, Local, [];
+    RemovePlugin => "plugin.remove", "Remove plugin", ["plugin", "remove", "uninstall", "delete"], Plugin, Local, [];
+    GrantPlugin => "plugin.grant", "Let plugin use this account", ["plugin", "account", "allow", "grant", "permission"], Plugin, Local, [];
+    RevokePlugin => "plugin.revoke", "Stop plugin using this account", ["plugin", "account", "revoke", "deny", "permission"], Plugin, Local, [];
     ThemeLivePreview => "theme.live", "Show theme edits across the whole app (on or off)", ["theme", "live", "preview", "apply", "editor"], None, Local, [];
     SetBackground => "view.background", "Set background picture (https link or file path)", ["background", "wallpaper", "picture", "image", "photo", "gif", "url", "link", "appearance"], Text, Local, [];
     PickBackground => "view.background_file", "Choose background picture from files", ["background", "wallpaper", "picture", "image", "photo", "gif", "file", "upload", "appearance"], None, Local, [];
@@ -646,13 +657,7 @@ impl PluginCmd {
     }
 }
 
-/// Plugin and plugin command ids: lowercase letters, digits and dashes.
-pub fn is_plugin_id(s: &str) -> bool {
-    !s.is_empty()
-        && s.len() <= 64
-        && s.bytes()
-            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
-}
+pub use bonsai_plugin::is_plugin_id;
 
 /// A built-in command or one a plugin added. Both cross IPC as their key.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

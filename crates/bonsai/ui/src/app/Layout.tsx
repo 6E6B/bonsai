@@ -4,6 +4,7 @@ import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, createSignal, ErrorBoundary, on, onCleanup, onMount, type ParentProps, Show } from "solid-js"
 import { NewChat } from "~/features/chat/NewChat"
 import { CommandPalette } from "~/features/palette/CommandPalette"
+import { InstallDialog } from "~/features/plugins/InstallDialog"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
 import { registerThemeCommands } from "~/features/themes/commands"
 import { ImportDialog, useThemeDrop } from "~/features/themes/ImportDialog"
@@ -443,6 +444,7 @@ export function Layout(props: ParentProps) {
                     <ShellAlerts />
                     <ChallengeDialog />
                     <ImportDialog />
+                    <InstallDialog />
                     <SecurityDialog />
                     <ErrorBoundary
                       fallback={(err) => (

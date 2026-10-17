@@ -59,6 +59,28 @@ describe("paletteEntries", () => {
     ])
   })
 
+  it("lists plugins, skipping ones already on or off", () => {
+    const plugins = [
+      { id: "on", name: "On one", enabled: true },
+      { id: "off", name: "Off one", enabled: false },
+    ]
+    const rows = paletteEntries(
+      [cmd("plugin.enable", "plugin"), cmd("plugin.disable", "plugin"), cmd("plugin.reload", "plugin")],
+      [],
+      [],
+      [],
+      [],
+      [],
+      plugins,
+    )
+    expect(rows.map((r) => r.key)).toEqual([
+      "plugin.enable:off",
+      "plugin.disable:on",
+      "plugin.reload:on",
+      "plugin.reload:off",
+    ])
+  })
+
   it("lists accounts for account arguments", () => {
     const rows = paletteEntries(
       [cmd("account.remove", "account")],

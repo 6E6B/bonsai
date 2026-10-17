@@ -114,6 +114,7 @@ export const browserShell: Shell = {
   login: null,
   challenge: null,
   themeImport: null,
+  pluginInstall: null,
   security: null,
   approve: null,
   itemValues: false,

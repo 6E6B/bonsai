@@ -23,6 +23,7 @@ pub mod market;
 pub mod me;
 pub mod messages;
 pub mod people;
+pub mod plugins;
 pub mod prefs;
 pub mod purchase;
 mod remote;

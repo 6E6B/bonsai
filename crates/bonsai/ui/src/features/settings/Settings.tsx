@@ -14,6 +14,7 @@ import { DeveloperSection } from "./developer"
 import { GeneralSection } from "./general"
 import { LayoutSection } from "./layout"
 import { NotificationsSection } from "./notifications"
+import { PluginsSection } from "./plugins"
 import { PrefsProvider, usePrefsSource } from "./prefs"
 import { PrivacySection } from "./privacy-section"
 import { entryPath, searchSettings } from "./search"
@@ -33,6 +34,7 @@ const pages: Record<SettingsSectionId, Component> = {
   shortcuts: ShortcutsSection,
   desktop: DesktopSection,
   accounts: AccountsSection,
+  plugins: PluginsSection,
   data: DataSection,
   developer: DeveloperSection,
 }

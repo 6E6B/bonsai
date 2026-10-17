@@ -10,6 +10,6 @@ Remove a line when it ships.
 - Settings > Security: adding passkeys and security keys, and SMS codes. WebAuthn only works on roblox.com, so these link to the site. Untested live: Roblox may want a `secureAuthenticationIntent` on these calls.
 - Settings > Language: app display language. UI text is English only; numbers, dates and relative times follow Settings > General > Number and date format.
 - Themes: theme hub. See [theming.md](theming.md).
-- Plugins: command tiers and the Luau sandbox (`bonsai-plugin`) are built; nothing loads plugins yet. See [plugins.md](plugins.md#roadmap).
+- Plugins: tiers, the Luau sandbox and install/manage (Settings > Plugins) are built; plugin commands aren't in the command bar and can't run actions yet. See [plugins.md](plugins.md#roadmap).
 - Profile > Creations: a user's models, decals, audio and other assets. No endpoint lists them.
 

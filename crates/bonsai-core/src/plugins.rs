@@ -1,0 +1,816 @@
+//! Installed plugins: one folder each under [`Paths::plugins_dir`](crate::account::Paths), plus
+//! unpacked folders loaded in place for development. Each enabled plugin runs in its own VM on its
+//! own thread. Which plugins are on, which accounts each may use and what the user agreed to are
+//! kept in `plugins.json`. Tier checks live here; see `docs/plugins.md`.
+
+use std::collections::BTreeMap;
+use std::hash::{Hash, Hasher};
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
+use std::sync::Arc;
+use std::time::Duration;
+
+use bonsai_plugin::{Limits, Plugin};
+use serde::{Deserialize, Serialize};
+
+use crate::AccountId;
+use crate::commands::{CommandId, Effect, Registry, Tier};
+use crate::core::{Core, Inner};
+
+pub use bonsai_plugin::{Arg, Command, Manifest, Permission, Refused};
+
+pub const MANIFEST: &str = "plugin.toml";
+/// What one installed plugin may hold, so a stray folder can't fill the disk.
+const MAX_FILES: usize = 500;
+const MAX_BYTES: u64 = 20 * 1024 * 1024;
+const MAX_DEPTH: usize = 8;
+
+/// Why a manifest action is refused, or `None` to allow it: only tier 1 to 3 writes.
+pub fn action_refusal(registry: &Registry, key: &str) -> Option<String> {
+    let Some(id) = CommandId::from_key(key) else {
+        return Some("Not a command in this version of Bonsai.".into());
+    };
+    match registry.get(id).effect {
+        Effect::Read | Effect::Local => Some("Not an action plugins can run.".into()),
+        Effect::Write(Tier::Account) => Some("Account control is never available to plugins.".into()),
+        Effect::Write(_) => None,
+    }
+}
+
+/// Reads `plugin.toml` in `dir` and refuses actions plugins can't have.
+pub fn read_manifest(dir: &Path) -> Result<Manifest, String> {
+    let path = dir.join(MANIFEST);
+    let size = std::fs::metadata(&path)
+        .map_err(|_| format!("No {MANIFEST} in {}.", dir.display()))?
+        .len();
+    if size > 64 * 1024 {
+        return Err(format!("{MANIFEST} is too large."));
+    }
+    let text = std::fs::read_to_string(&path).map_err(|e| format!("Can't read {MANIFEST}: {e}"))?;
+    let mut m = Manifest::parse(&text).map_err(|e| e.to_string())?;
+    let registry = Registry::default();
+    m.refuse_actions(|a| action_refusal(&registry, a));
+    if dir.file_name().and_then(|n| n.to_str()) != Some(m.id.as_str()) {
+        return Err(format!(
+            "The folder must be named \"{}\", after the plugin id.",
+            m.id
+        ));
+    }
+    Ok(m)
+}
+
+/// The tier of an allowed action, for the install dialog.
+pub fn action_tier(key: &str) -> Option<Tier> {
+    CommandId::from_key(key).and_then(|id| Registry::default().get(id).effect.tier())
+}
+
+/// What the user agreed to for one plugin. Unknown fields are ignored.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+struct Saved {
+    #[serde(default)]
+    enabled: bool,
+    /// Accounts it may use.
+    #[serde(default)]
+    accounts: Vec<AccountId>,
+    /// Permissions and actions agreed to. A manifest that asks for more waits for review.
+    #[serde(default)]
+    permissions: Vec<String>,
+    #[serde(default)]
+    actions: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+struct SavedFile {
+    #[serde(default)]
+    plugins: BTreeMap<String, Saved>,
+    /// Folders loaded in place with "Load unpacked plugin".
+    #[serde(default)]
+    unpacked: Vec<PathBuf>,
+}
+
+impl SavedFile {
+    fn load(path: &Path) -> SavedFile {
+        std::fs::read_to_string(path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default()
+    }
+}
+
+/// Where a plugin is in its life.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Status {
+    Off,
+    Loading,
+    Running {
+        commands: Vec<Command>,
+    },
+    /// It asks for more than the user agreed to; listed until they review it.
+    NeedsReview(Vec<String>),
+    Failed(String),
+}
+
+/// One installed or unpacked plugin, for Settings > Plugins.
+#[derive(Clone, Debug)]
+pub struct PluginInfo {
+    /// The folder name, which is the manifest id when the manifest reads.
+    pub id: String,
+    pub dir: PathBuf,
+    pub unpacked: bool,
+    pub manifest: Option<Manifest>,
+    pub enabled: bool,
+    pub accounts: Vec<AccountId>,
+    pub status: Status,
+}
+
+/// A plugin folder picked to install or load, shown in the install dialog until confirmed.
+#[derive(Clone, Debug)]
+pub struct PendingInstall {
+    pub manifest: Manifest,
+    pub source: PathBuf,
+    /// Loaded in place instead of copied.
+    pub unpacked: bool,
+    /// The version it replaces, when it is an update or a review of one already installed.
+    pub replaces: Option<String>,
+    /// Permissions and actions not agreed to before. Everything, for a new plugin.
+    pub added: Vec<String>,
+    /// Accounts ticked to start with: the current grants.
+    pub accounts: Vec<AccountId>,
+}
+
+/// Plugin state in [`Inner`].
+#[derive(Default)]
+pub(crate) struct Plugins {
+    entries: Vec<Entry>,
+    saved: SavedFile,
+    /// Bumped per worker start, so a load that finishes after a reload is ignored.
+    seq: u64,
+}
+
+struct Entry {
+    info: PluginInfo,
+    /// Hash of the folder's file names, sizes and times; a change reloads the plugin.
+    stamp: u64,
+    worker: Option<Worker>,
+}
+
+/// A running plugin's thread. Dropping it stops the thread once the current call ends.
+struct Worker {
+    seq: u64,
+    _tx: std::sync::mpsc::Sender<Msg>,
+}
+
+/// Calls to a plugin's thread. None yet: commands run in phase 3.
+enum Msg {}
+
+/// What [`Inner::sync_plugins`] should redo even when nothing on disk changed.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Force<'a> {
+    None,
+    One(&'a str),
+}
+
+/// The plugin side of [`bonsai_plugin::Host`]. Writes aren't wired up yet.
+struct CoreHost;
+
+impl bonsai_plugin::Host for CoreHost {
+    fn run(&self, _plugin: &str, _account: u64, _action: &str, _arg: Option<&str>) -> Result<(), String> {
+        Err("Plugins can't run actions yet.".into())
+    }
+    fn log(&self, plugin: &str, line: &str) {
+        let line: String = line.chars().take(500).collect();
+        tracing::info!(target: "plugin", "{plugin}: {line}");
+    }
+}
+
+/// Serializes plugin disk work: installs, removes, saves and rescans.
+static IO: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
+
+fn permission_keys(m: &Manifest) -> Vec<String> {
+    m.permissions.iter().map(|p| p.key().to_owned()).collect()
+}
+
+/// What `m` asks for beyond what was agreed to.
+fn asks_more(m: &Manifest, saved: Option<&Saved>) -> Vec<String> {
+    let (perms, acts) = saved.map_or((&[][..], &[][..]), |s| (&s.permissions[..], &s.actions[..]));
+    let mut out: Vec<String> = permission_keys(m)
+        .into_iter()
+        .filter(|p| !perms.contains(p))
+        .collect();
+    out.extend(m.actions.iter().filter(|a| !acts.contains(a)).cloned());
+    out
+}
+
+/// Hashes the names, sizes and change times of a plugin's files, skipping dot files.
+fn stamp(dir: &Path) -> u64 {
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    let mut seen = 0;
+    walk(dir, 0, &mut |rel, meta| {
+        rel.hash(&mut h);
+        meta.len().hash(&mut h);
+        meta.modified().ok().hash(&mut h);
+        seen += 1;
+        seen <= MAX_FILES
+    });
+    h.finish()
+}
+
+/// Calls `f` for each file under `dir` (sorted, dot names and symlinks skipped) until it returns
+/// false.
+fn walk(dir: &Path, depth: usize, f: &mut dyn FnMut(&Path, &std::fs::Metadata) -> bool) -> bool {
+    walk_in(dir, Path::new(""), depth, f)
+}
+
+fn walk_in(
+    root: &Path,
+    rel: &Path,
+    depth: usize,
+    f: &mut dyn FnMut(&Path, &std::fs::Metadata) -> bool,
+) -> bool {
+    let Ok(rd) = std::fs::read_dir(root.join(rel)) else {
+        return true;
+    };
+    let mut entries: Vec<_> = rd.flatten().collect();
+    entries.sort_by_key(|e| e.file_name());
+    for e in entries {
+        let name = e.file_name();
+        if name.to_string_lossy().starts_with('.') {
+            continue;
+        }
+        let Ok(meta) = std::fs::symlink_metadata(e.path()) else {
+            continue;
+        };
+        let path = rel.join(&name);
+        if meta.is_dir() {
+            if depth < MAX_DEPTH && !walk_in(root, &path, depth + 1, f) {
+                return false;
+            }
+        } else if meta.is_file() && !f(&path, &meta) {
+            return false;
+        }
+    }
+    true
+}
+
+/// Copies a plugin folder: files only, no dot files or symlinks, within the size caps.
+fn copy_plugin(from: &Path, to: &Path) -> Result<(), String> {
+    let mut files = Vec::new();
+    let mut bytes = 0;
+    let mut too_big = false;
+    walk(from, 0, &mut |rel, meta| {
+        bytes += meta.len();
+        files.push(rel.to_path_buf());
+        too_big = files.len() > MAX_FILES || bytes > MAX_BYTES;
+        !too_big
+    });
+    if too_big {
+        return Err(format!(
+            "The plugin is too large: at most {MAX_FILES} files and {} MB.",
+            MAX_BYTES / 1024 / 1024
+        ));
+    }
+    let err = |e: std::io::Error| format!("Can't copy the plugin: {e}");
+    for rel in files {
+        let dest = to.join(&rel);
+        if let Some(parent) = dest.parent() {
+            std::fs::create_dir_all(parent).map_err(err)?;
+        }
+        std::fs::copy(from.join(&rel), dest).map_err(err)?;
+    }
+    Ok(())
+}
+
+fn remove_dir(dir: &Path) -> std::io::Result<()> {
+    match std::fs::remove_dir_all(dir) {
+        Err(e) if e.kind() != std::io::ErrorKind::NotFound => Err(e),
+        _ => Ok(()),
+    }
+}
+
+/// A plugin folder read from disk, before it is matched with the running one.
+struct Scanned {
+    info: PluginInfo,
+    stamp: u64,
+}
+
+/// Reads every installed and unpacked plugin. Disk only; touches no state.
+fn scan(dir: &Path, saved: &SavedFile) -> Vec<Scanned> {
+    let mut dirs: Vec<(PathBuf, bool)> = std::fs::read_dir(dir)
+        .map(|rd| {
+            rd.flatten()
+                .filter(|e| !e.file_name().to_string_lossy().starts_with('.'))
+                .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+                .map(|e| (e.path(), false))
+                .collect()
+        })
+        .unwrap_or_default();
+    dirs.sort();
+    dirs.extend(saved.unpacked.iter().map(|p| (p.clone(), true)));
+
+    let mut out: Vec<Scanned> = Vec::new();
+    for (path, unpacked) in dirs {
+        let folder = path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let read = read_manifest(&path);
+        let id = read.as_ref().map(|m| m.id.clone()).unwrap_or(folder);
+        let s = saved.plugins.get(&id);
+        let enabled = s.is_some_and(|s| s.enabled);
+        let taken = out.iter().any(|o| o.info.id == id);
+        let (manifest, status) = match read {
+            _ if taken => (None, Status::Failed("Another plugin has the same id.".into())),
+            Err(e) => (None, Status::Failed(e)),
+            Ok(m) => {
+                let more = asks_more(&m, s);
+                let status = if !enabled {
+                    Status::Off
+                } else if more.is_empty() {
+                    Status::Loading
+                } else {
+                    Status::NeedsReview(more)
+                };
+                (Some(m), status)
+            }
+        };
+        out.push(Scanned {
+            stamp: stamp(&path),
+            info: PluginInfo {
+                id,
+                dir: path,
+                unpacked,
+                manifest,
+                enabled,
+                accounts: s.map(|s| s.accounts.clone()).unwrap_or_default(),
+                status,
+            },
+        });
+    }
+    out
+}
+
+impl Inner {
+    fn save_plugins(&self) {
+        let saved = self.plugins.lock().saved.clone();
+        let path = self.paths.plugins_file();
+        let r = serde_json::to_string_pretty(&saved)
+            .map_err(std::io::Error::other)
+            .and_then(|json| {
+                if let Some(p) = path.parent() {
+                    std::fs::create_dir_all(p)?;
+                }
+                std::fs::write(&path, json)
+            });
+        if let Err(e) = r {
+            tracing::warn!("writing plugins.json: {e}");
+        }
+    }
+
+    /// Rereads plugins from disk and starts, stops or restarts each to match. A plugin whose
+    /// files and settings didn't change keeps running. Blocking; call with [`IO`] held.
+    fn sync_plugins(self: &Arc<Self>, force: Force<'_>) {
+        let saved = self.plugins.lock().saved.clone();
+        let fresh = scan(&self.paths.plugins_dir(), &saved);
+        let mut p = self.plugins.lock();
+        let mut old = std::mem::take(&mut p.entries);
+        let mut changed = false;
+        for s in fresh {
+            let prev = old
+                .iter()
+                .position(|e| e.info.id == s.info.id && e.info.dir == s.info.dir)
+                .map(|i| old.swap_remove(i));
+            // A plugin that failed stays failed until its files change or it is reloaded.
+            let same = prev.as_ref().is_some_and(|e| {
+                e.stamp == s.stamp
+                    && e.info.enabled == s.info.enabled
+                    && e.info.manifest == s.info.manifest
+                    && force != Force::One(&s.info.id)
+            });
+            if let (true, Some(mut e)) = (same, prev) {
+                changed |= e.info.accounts != s.info.accounts;
+                e.info.accounts = s.info.accounts;
+                p.entries.push(e);
+                continue;
+            }
+            changed = true;
+            let mut e = Entry {
+                info: s.info,
+                stamp: s.stamp,
+                worker: None,
+            };
+            if e.info.status == Status::Loading {
+                p.seq += 1;
+                let seq = p.seq;
+                self.start_plugin(&mut e, seq);
+            }
+            p.entries.push(e);
+        }
+        drop(p);
+        // Whatever is left in `old` was removed; dropping it stops its thread.
+        changed |= !old.is_empty();
+        drop(old);
+        // The watcher calls this every few seconds; only a change repaints.
+        if changed {
+            self.repaint();
+        }
+    }
+
+    fn start_plugin(self: &Arc<Self>, e: &mut Entry, seq: u64) {
+        let Some(manifest) = e.info.manifest.clone() else {
+            return;
+        };
+        let (tx, rx) = std::sync::mpsc::channel::<Msg>();
+        let weak = Arc::downgrade(self);
+        let (id, dir) = (e.info.id.clone(), e.info.dir.clone());
+        let spawned = std::thread::Builder::new()
+            .name(format!("plugin-{id}"))
+            .spawn(move || {
+                let loaded = Plugin::load(&dir, manifest, Rc::new(CoreHost), Limits::default());
+                let status = match &loaded {
+                    Ok(p) => Status::Running {
+                        commands: p.commands().to_vec(),
+                    },
+                    Err(e) => Status::Failed(e.to_string()),
+                };
+                if let Some(inner) = weak.upgrade() {
+                    inner.plugin_loaded(&id, seq, status);
+                }
+                let Ok(_plugin) = loaded else {
+                    return;
+                };
+                // Keeps the VM until the plugin is stopped or reloaded, which drops the sender.
+                // Phase 3 loops here over calls.
+                if let Ok(msg) = rx.recv() {
+                    match msg {}
+                }
+            });
+        match spawned {
+            Ok(_) => e.worker = Some(Worker { seq, _tx: tx }),
+            Err(err) => e.info.status = Status::Failed(format!("Can't start: {err}")),
+        }
+    }
+
+    fn plugin_loaded(&self, id: &str, seq: u64, status: Status) {
+        let mut p = self.plugins.lock();
+        let Some(e) = p.entries.iter_mut().find(|e| e.info.id == id) else {
+            return;
+        };
+        if e.worker.as_ref().is_some_and(|w| w.seq == seq) {
+            if matches!(status, Status::Failed(_)) {
+                e.worker = None;
+            }
+            e.info.status = status;
+            drop(p);
+            self.repaint();
+        }
+    }
+
+    /// Runs disk work for plugins off the caller's thread, one job at a time.
+    fn plugin_job(self: &Arc<Self>, job: impl FnOnce(&Arc<Inner>) -> Result<(), String> + Send + 'static) {
+        let inner = self.clone();
+        self.rt.spawn_blocking(move || {
+            let _io = IO.lock();
+            if let Err(e) = job(&inner) {
+                inner.toast(None, e, true);
+                inner.repaint();
+            }
+        });
+    }
+}
+
+/// Loads plugins at start and reloads one when its folder changes, so a plugin edited in a text
+/// editor reloads by itself.
+pub(crate) async fn watch_loop(inner: Arc<Inner>) {
+    let mut tick = tokio::time::interval(Duration::from_secs(2));
+    loop {
+        tick.tick().await;
+        let i = inner.clone();
+        let _ = inner
+            .rt
+            .spawn_blocking(move || {
+                let _io = IO.lock();
+                i.sync_plugins(Force::None);
+            })
+            .await;
+    }
+}
+
+/// Reads `plugins.json` and starts enabled plugins. Called once at start.
+pub(crate) fn load(inner: &Arc<Inner>) {
+    inner.plugins.lock().saved = SavedFile::load(&inner.paths.plugins_file());
+    inner.plugin_job(|i| {
+        i.sync_plugins(Force::None);
+        Ok(())
+    });
+}
+
+impl Core {
+    /// Installed and unpacked plugins in folder order.
+    pub fn plugins(&self) -> Vec<PluginInfo> {
+        self.inner
+            .plugins
+            .lock()
+            .entries
+            .iter()
+            .map(|e| e.info.clone())
+            .collect()
+    }
+
+    /// Commands of running plugins.
+    pub fn plugin_commands(&self) -> Vec<(String, Command)> {
+        let p = self.inner.plugins.lock();
+        p.entries
+            .iter()
+            .filter_map(|e| match &e.info.status {
+                Status::Running { commands } => Some((&e.info.id, commands)),
+                _ => None,
+            })
+            .flat_map(|(id, cmds)| cmds.iter().map(|c| (id.clone(), c.clone())))
+            .collect()
+    }
+
+    /// Reads a plugin folder (or its `plugin.toml`) and opens the install dialog. `unpacked`
+    /// loads it in place for development instead of copying it. Reads the disk, so call it off
+    /// the main thread.
+    pub fn stage_plugin_install(&self, path: &str, unpacked: bool) -> Result<(), String> {
+        let mut dir = PathBuf::from(path.trim());
+        if dir.file_name().is_some_and(|n| n == MANIFEST) {
+            dir.pop();
+        }
+        let dir =
+            std::fs::canonicalize(&dir).map_err(|_| "Pick a plugin folder with a plugin.toml.".to_owned())?;
+        let manifest = read_manifest(&dir)?;
+        let installed = self.inner.paths.plugins_dir();
+        if !unpacked && dir.parent() == std::fs::canonicalize(&installed).ok().as_deref() {
+            return Err("That plugin is already installed.".into());
+        }
+        let p = self.inner.plugins.lock();
+        let current = p.entries.iter().find(|e| e.info.id == manifest.id);
+        let replaces = match current {
+            Some(e) if e.info.unpacked != unpacked || (unpacked && e.info.dir != dir) => {
+                return Err(format!(
+                    "{} is already {}. Remove it first.",
+                    manifest.name,
+                    if e.info.unpacked {
+                        "loaded unpacked"
+                    } else {
+                        "installed"
+                    }
+                ));
+            }
+            Some(e) => Some(
+                e.info
+                    .manifest
+                    .as_ref()
+                    .map(|m| m.version.clone())
+                    .unwrap_or_default(),
+            ),
+            None => None,
+        };
+        let saved = p.saved.plugins.get(&manifest.id);
+        let pending = PendingInstall {
+            added: asks_more(&manifest, saved),
+            accounts: saved.map(|s| s.accounts.clone()).unwrap_or_default(),
+            manifest,
+            source: dir,
+            unpacked,
+            replaces,
+        };
+        drop(p);
+        self.inner.store.write().plugin_install = Some(pending);
+        self.inner.repaint();
+        Ok(())
+    }
+
+    /// Opens the install dialog again for a plugin whose manifest asks for more than was agreed.
+    pub fn review_plugin(&self, id: &str) -> Result<(), String> {
+        let p = self.inner.plugins.lock();
+        let e = p
+            .entries
+            .iter()
+            .find(|e| e.info.id == id)
+            .ok_or_else(|| format!("No plugin \"{id}\"."))?;
+        let manifest = e
+            .info
+            .manifest
+            .clone()
+            .ok_or_else(|| "The plugin doesn't load; fix it first.".to_owned())?;
+        let saved = p.saved.plugins.get(id);
+        let pending = PendingInstall {
+            added: asks_more(&manifest, saved),
+            accounts: e.info.accounts.clone(),
+            replaces: Some(manifest.version.clone()),
+            manifest,
+            source: e.info.dir.clone(),
+            unpacked: e.info.unpacked,
+        };
+        drop(p);
+        self.inner.store.write().plugin_install = Some(pending);
+        self.inner.repaint();
+        Ok(())
+    }
+
+    /// Installs the plugin in the dialog, turned on and allowed to use `accounts`. Copies it in
+    /// the background; errors come back as a toast.
+    pub fn finish_plugin_install(&self, accounts: Vec<AccountId>) -> Result<(), String> {
+        let Some(pending) = self.inner.store.write().plugin_install.take() else {
+            return Err("Nothing to install.".into());
+        };
+        self.inner.repaint();
+        let known: Vec<AccountId> = self.store().accounts.accounts.iter().map(|a| a.id).collect();
+        let accounts: Vec<AccountId> = accounts.into_iter().filter(|a| known.contains(a)).collect();
+        self.inner.plugin_job(move |inner| {
+            let m = &pending.manifest;
+            let target = inner.paths.plugins_dir().join(&m.id);
+            if !pending.unpacked && pending.source != target {
+                let tmp = inner.paths.plugins_dir().join(format!(".{}.new", m.id));
+                remove_dir(&tmp).map_err(|e| e.to_string())?;
+                if let Err(e) = copy_plugin(&pending.source, &tmp) {
+                    let _ = remove_dir(&tmp);
+                    return Err(e);
+                }
+                remove_dir(&target).map_err(|e| format!("Can't replace the old version: {e}"))?;
+                std::fs::rename(&tmp, &target).map_err(|e| format!("Can't install: {e}"))?;
+            }
+            {
+                let mut p = inner.plugins.lock();
+                if pending.unpacked && !p.saved.unpacked.contains(&pending.source) {
+                    p.saved.unpacked.push(pending.source.clone());
+                }
+                p.saved.plugins.insert(
+                    m.id.clone(),
+                    Saved {
+                        enabled: true,
+                        accounts,
+                        permissions: permission_keys(m),
+                        actions: m.actions.clone(),
+                    },
+                );
+            }
+            inner.save_plugins();
+            inner.sync_plugins(Force::One(&m.id));
+            inner.toast(None, format!("Installed {}.", m.name), false);
+            Ok(())
+        });
+        Ok(())
+    }
+
+    pub fn cancel_plugin_install(&self) {
+        self.inner.store.write().plugin_install = None;
+        self.inner.repaint();
+    }
+
+    fn change_plugin(&self, id: &str, f: impl FnOnce(&mut Saved)) -> Result<(), String> {
+        {
+            let mut p = self.inner.plugins.lock();
+            if !p.entries.iter().any(|e| e.info.id == id) {
+                return Err(format!("No plugin \"{id}\"."));
+            }
+            f(p.saved.plugins.entry(id.to_owned()).or_default());
+        }
+        self.inner.plugin_job(|inner| {
+            inner.save_plugins();
+            inner.sync_plugins(Force::None);
+            Ok(())
+        });
+        Ok(())
+    }
+
+    /// Turns a plugin on or off. Off stops its thread and drops its commands.
+    pub fn set_plugin_enabled(&self, id: &str, on: bool) -> Result<(), String> {
+        let unreviewed = {
+            let p = self.inner.plugins.lock();
+            p.entries.iter().any(|e| {
+                e.info.id == id
+                    && e.info
+                        .manifest
+                        .as_ref()
+                        .is_some_and(|m| !asks_more(m, p.saved.plugins.get(id)).is_empty())
+            })
+        };
+        // Never-agreed permissions go through the dialog, not a switch.
+        if on && unreviewed {
+            return self.review_plugin(id);
+        }
+        self.change_plugin(id, |s| s.enabled = on)
+    }
+
+    /// Lets a plugin use an account, or stops it.
+    pub fn set_plugin_account(&self, id: &str, account: AccountId, on: bool) -> Result<(), String> {
+        if !self.store().accounts.accounts.iter().any(|a| a.id == account) {
+            return Err("Pick one of your accounts.".into());
+        }
+        self.change_plugin(id, |s| {
+            s.accounts.retain(|a| *a != account);
+            if on {
+                s.accounts.push(account);
+            }
+        })
+    }
+
+    /// Restarts a plugin from its files.
+    pub fn reload_plugin(&self, id: &str) -> Result<(), String> {
+        if !self.inner.plugins.lock().entries.iter().any(|e| e.info.id == id) {
+            return Err(format!("No plugin \"{id}\"."));
+        }
+        let id = id.to_owned();
+        self.inner.plugin_job(move |inner| {
+            inner.sync_plugins(Force::One(&id));
+            Ok(())
+        });
+        Ok(())
+    }
+
+    /// Uninstalls a plugin: deletes its folder, or forgets an unpacked one without touching it.
+    pub fn remove_plugin(&self, id: &str) -> Result<(), String> {
+        let (dir, unpacked) = {
+            let p = self.inner.plugins.lock();
+            let e = p
+                .entries
+                .iter()
+                .find(|e| e.info.id == id)
+                .ok_or_else(|| format!("No plugin \"{id}\"."))?;
+            (e.info.dir.clone(), e.info.unpacked)
+        };
+        let id = id.to_owned();
+        self.inner.plugin_job(move |inner| {
+            {
+                let mut p = inner.plugins.lock();
+                // Stop it before its files go.
+                p.entries.retain(|e| e.info.id != id);
+                p.saved.plugins.remove(&id);
+                p.saved.unpacked.retain(|d| *d != dir);
+            }
+            inner.repaint();
+            if !unpacked {
+                remove_dir(&dir).map_err(|e| format!("Can't delete the plugin folder: {e}"))?;
+            }
+            inner.save_plugins();
+            inner.sync_plugins(Force::None);
+            Ok(())
+        });
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn manifest(perms: &str, actions: &str) -> Manifest {
+        Manifest::parse(&format!(
+            "id = \"x\"\nentry = \"main.luau\"\npermissions = [{perms}]\nactions = [{actions}]"
+        ))
+        .unwrap()
+    }
+
+    #[test]
+    fn manifest_actions_are_tier_checked() {
+        let r = Registry::default();
+        assert!(action_refusal(&r, "user.unfriend").is_none());
+        assert!(action_refusal(&r, "market.buy").is_none());
+        assert!(action_refusal(&r, "account.remove").is_some());
+        assert!(action_refusal(&r, "theme.apply").is_some());
+        assert!(action_refusal(&r, "nav.home").is_some());
+        assert!(action_refusal(&r, "not.a_command").is_some());
+    }
+
+    #[test]
+    fn asks_more_lists_new_permissions_and_actions() {
+        let m = manifest("\"read.public\", \"notify\"", "\"user.unfriend\"");
+        assert_eq!(
+            asks_more(&m, None),
+            vec!["read.public", "notify", "user.unfriend"]
+        );
+        let agreed = Saved {
+            permissions: vec!["read.public".into()],
+            actions: vec!["user.unfriend".into()],
+            ..Default::default()
+        };
+        assert_eq!(asks_more(&m, Some(&agreed)), vec!["notify"]);
+    }
+
+    #[test]
+    fn copy_skips_dot_files_and_symlinks_and_caps_size() {
+        let src = tempfile::tempdir().unwrap();
+        let dst = tempfile::tempdir().unwrap();
+        std::fs::write(src.path().join("main.luau"), "return 1").unwrap();
+        std::fs::create_dir_all(src.path().join("lib")).unwrap();
+        std::fs::write(src.path().join("lib/util.luau"), "return 2").unwrap();
+        std::fs::create_dir_all(src.path().join(".git")).unwrap();
+        std::fs::write(src.path().join(".git/HEAD"), "x").unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink("/etc/passwd", src.path().join("passwd")).unwrap();
+        let to = dst.path().join("x");
+        copy_plugin(src.path(), &to).unwrap();
+        assert!(to.join("main.luau").is_file());
+        assert!(to.join("lib/util.luau").is_file());
+        assert!(!to.join(".git").exists());
+        assert!(!to.join("passwd").exists());
+
+        for i in 0..=MAX_FILES {
+            std::fs::write(src.path().join(format!("f{i}.luau")), "").unwrap();
+        }
+        assert!(copy_plugin(src.path(), &dst.path().join("y")).is_err());
+    }
+}

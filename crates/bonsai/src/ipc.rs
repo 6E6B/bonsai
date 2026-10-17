@@ -28,6 +28,7 @@ mod communities;
 mod discover;
 mod inbox;
 mod market;
+mod plugins;
 mod security;
 mod trades;
 mod transactions;
@@ -63,6 +64,8 @@ pub struct Shell {
     pub challenge: Option<challenge::ChallengeView>,
     /// A theme waiting in the import dialog.
     pub theme_import: Option<account::ThemeImportView>,
+    /// A plugin folder waiting in the install dialog.
+    pub plugin_install: Option<plugins::PluginInstallView>,
     /// The "Sign in another device" dialog, once a code was entered.
     pub approve: Option<approve::ApproveView>,
     /// The authenticator setup or recovery codes dialog, while it is open.
@@ -275,6 +278,7 @@ pub enum Arg {
     Tab,
     Screen,
     Setting,
+    Plugin,
 }
 
 impl From<ArgKind> for Arg {
@@ -294,6 +298,7 @@ impl From<ArgKind> for Arg {
             ArgKind::Tab => Arg::Tab,
             ArgKind::Screen => Arg::Screen,
             ArgKind::Setting => Arg::Setting,
+            ArgKind::Plugin => Arg::Plugin,
         }
     }
 }
@@ -1022,6 +1027,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         unread: s.active_data().map(|d| d.unread.into()).unwrap_or_default(),
         challenge: s.challenge.as_ref().map(challenge::view),
         theme_import: s.theme_import.as_ref().map(account::theme_import_view),
+        plugin_install: s.plugin_install.as_ref().map(plugins::install_view),
         approve: s.approve.as_ref().map(approve::view),
         security: s.security.as_ref().map(security::view),
         login: s.login.as_ref().map(|l| match l {
@@ -1121,6 +1127,9 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
         return r;
     }
     if let Some(r) = account::run(&app, &core, id, &inv, core.acting(picked)) {
+        return r;
+    }
+    if let Some(r) = plugins::run(&app, &core, id, &inv, core.acting(picked)) {
         return r;
     }
     let move_by = |by: isize| {
@@ -2756,6 +2765,9 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::font_files,
             account::theme_import_install,
             account::theme_import_cancel,
+            plugins::plugins,
+            plugins::plugin_install_finish,
+            plugins::plugin_install_cancel,
             account::pin_status,
             account::unlock_pin,
             security::security_status,

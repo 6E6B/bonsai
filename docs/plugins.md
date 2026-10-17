@@ -197,8 +197,8 @@ like the rest of the app. Private reads need `read.account` for `ctx.account`.
   permission, automation and budget state; the activity log; plugin commands in the registry.
   Tier checks live here, not in the sandbox crate.
 - `bonsai`: IPC views (`PluginInfo`, `PluginActivity`), nothing else.
-- UI: `features/plugins` for Settings > Plugins, the grant, automation and action dialogs, and
-  the activity log.
+- UI: `features/plugins` for the install/review, automation and action dialogs and the activity
+  log; `features/settings/plugins.tsx` for Settings > Plugins; `lib/plugins.ts` for tier labels.
 
 Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
 
@@ -224,16 +224,27 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   loaded). Not yet: `bonsai.on`, `bonsai.every`, `bonsai.store`, reads, and yielding host calls;
   host calls block the plugin's thread for now.
 - Errors raised by host functions reach Luau as error objects; plugins `tostring` them.
-- `is_plugin_id` exists in both `bonsai-plugin` and `bonsai-core`; drop the core copy when core
-  depends on the plugin crate in phase 2.
 
-### 2. Install and manage
+### 2. Install and manage (done)
 
 - Settings > Plugins: list, enable, disable, permissions per account, remove.
 - Install from a folder. "Load unpacked plugin" for development, with reload on change (the
   theme folder watcher is the model).
 - Commands: `plugin.install`, `plugin.enable`, `plugin.disable`, `plugin.remove`,
   `plugin.reload`.
+- Built: also `plugin.load_unpacked`, `plugin.review`, `plugin.grant` and `plugin.revoke` (the
+  last two act on the current account). Install copies the folder (no dot files or symlinks,
+  500 files, 20 MB) through a temp folder; unpacked plugins load in place and are only
+  forgotten on remove. A 2 s watcher hashes each folder and restarts a plugin whose files
+  changed. Each running plugin has its own thread.
+- The install dialog opens from `plugin_install` in the store, like theme import. It lists
+  permissions, actions by tier and what was refused (non-writes, tier 4, unknown keys) before
+  anything is copied.
+- `config/plugins.json` holds, per plugin, on/off, the granted accounts and the permissions and
+  actions the user agreed to. A manifest that asks for more waits as "Needs review" and doesn't
+  start; turning it on opens the dialog listing only what's new.
+- Not yet: plugin commands are listed in Settings but not in the command bar (phase 3), and the
+  host's `run` refuses every action.
 
 ### 3. Commands and confirmed actions
 

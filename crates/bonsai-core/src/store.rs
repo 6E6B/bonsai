@@ -436,6 +436,8 @@ pub struct StoreData {
     pub challenge: Option<crate::challenge::ChallengePrompt>,
     /// A theme read from a file or a code, waiting for the user to install it.
     pub theme_import: Option<crate::themes::PendingImport>,
+    /// A plugin folder waiting in the install dialog.
+    pub plugin_install: Option<crate::plugins::PendingInstall>,
     /// Turning on the authenticator app or making recovery codes (see [`crate::security`]).
     pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,

@@ -61,6 +61,7 @@ const shellMirror = mirror<Shell>(
     login: null,
     challenge: null,
     themeImport: null,
+    pluginInstall: null,
     security: null,
     approve: null,
     itemValues: false,
