@@ -40,12 +40,13 @@ crates/
 
 ### User actions
 
-- No automated purchases, trades, friend requests or messages. Every write is a direct result of a user click or keypress.
+- No automated purchases, trades, friend requests or messages in Bonsai's own code. Every write it makes is a direct result of a user click or keypress.
+- Plugins are the one exception: they may write without a click only through the tiers, per-account automation toggle, caps and activity log in `docs/plugins.md`. Never give plugins tier 4 (account control) or a way around those checks.
 - Every user action goes through the command registry in `bonsai-core` (`commands.rs`). A button, menu item or shortcut that is not also a command in the command bar is a bug.
   - UI code calls `run(id, arg)` from `~/lib/commands/registry`. Never call a write IPC command directly from a component.
   - Exception: steps inside a dialog that a command opened (e.g. `account.add` checking, confirming or cancelling a pasted cookie) may call their IPC commands directly. They are not separate palette entries.
   - Commands that only change UI state (navigation, zoom, sidebar) register a handler with `handle(id, fn)`. Everything else goes to `run_command` in `ipc.rs`.
-- Watchers and background jobs only notify. They never perform a write.
+- Bonsai's own watchers and background jobs only notify. They never perform a write.
 
 ### Accounts and data
 
