@@ -855,12 +855,21 @@ fn run_group(
             copy(app, core, csv, &format!("Copied {rows} members as CSV."))
         }
         C::PayOut => {
+            // A plugin names the community: "group:<id> <user id> <amount>".
+            let (g, arg) = match arg.map(str::trim).and_then(|s| s.strip_prefix("group:")) {
+                Some(rest) => {
+                    let (g, rest) = rest.split_once(' ').unwrap_or((rest, ""));
+                    let g = g.parse::<u64>().map_err(|_| "Which community?".to_owned())?;
+                    (Some(g), Some(rest))
+                }
+                None => (None, arg),
+            };
             let (who, amount) = arg
-                .and_then(|s| s.rsplit_once(' '))
+                .and_then(|s| s.trim().rsplit_once(' '))
                 .and_then(|(who, n)| Some((who.trim().to_owned(), n.trim().parse::<i64>().ok()?)))
                 .filter(|(who, n)| !who.is_empty() && *n > 0)
                 .ok_or_else(|| "Give a member and an amount, like builderman 100.".to_owned())?;
-            let g = group()?;
+            let g = g.map_or_else(group, Ok)?;
             core.with_user(&who, move |c, user| c.pay_out(a, g, user, amount))
         }
         C::SetRecurringPayouts => {

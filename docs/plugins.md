@@ -108,7 +108,7 @@ Every write command in the registry declares a tier. The tier decides how a plug
 |---|---|---|---|
 | **1. Harmless, reversible** | Wear item or outfit, favorite, follow a game, join a game, nickname, note | Runs unattended | Runs unattended |
 | **2. Social, visible to others** | Friend requests, accept, decline, unfriend, block, follow users, messages, chat | User confirms each batch | Runs unattended, under a rate cap |
-| **3. Value can be lost** | Buy, send or accept trades, group payouts, private servers | User confirms each batch | Runs unattended within a budget the user sets; over budget, user confirms |
+| **3. Value can be lost** | Buy, send or accept trades, group payouts, private servers | User confirms each batch | Purchases, payouts and accepting trades run unattended within a budget the user sets; over budget, and everything else, user confirms |
 | **4. Account control** | Password, two-step, sign out, cookie, PIN, email, privacy, removing the account | Never | Never |
 
 Every built-in command declares its effect in the `commands!` macro in `commands.rs`: `Read`
@@ -136,8 +136,12 @@ commands `plugins.allow_automation` and `plugins.block_automation`.
 
 - **Rate caps** per plugin, per account, per tier 2 action (e.g. 20 friend requests an hour). The
   plugin can't raise them; the user can lower them. They sit on top of the shared rate limiter.
-- **Budgets** for tier 3, per plugin and account: Robux per day, and trades per day. Set in the
-  grant dialog, which is its own screen, never a checkbox in a list.
+- **Budgets** for tier 3, per plugin and account: Robux per day, and trades accepted per day.
+  Each counts the last 24 hours. Set with `plugin.budget` (Settings > Plugins > the plugin's
+  "Budget on" row), which opens its own dialog, never a checkbox in a list. Zero, the default,
+  is no budget. Other tier 3 actions (sending or countering trades, deleting items, private
+  server settings, recurring payouts) have no budget and always need the user to confirm.
+  See [Spending Robux](#spending-robux).
 - **Activity log**: every plugin write, with plugin, account, command, argument, time and result.
   Settings > Plugins > Activity, and `plugins.activity` in the command bar.
 - **Kill switch**: a top bar indicator while any plugin has written in the last few minutes. The
@@ -184,6 +188,25 @@ end)
   - `{ open = { kind = "user", id = 1 } }`: open a screen;
   - `{ alert = { title, body, command } }`: a desktop alert, optionally with a button bound to a
     command.
+
+### Spending Robux
+
+A plugin names the most it will pay, not the price. Before it runs, bonsai-core looks the price
+up the same way the item or experience page does, refuses when it is higher, and buys at that
+price; Roblox refuses the purchase if it changed since.
+
+| Action | Plugin argument |
+|---|---|
+| `market.buy`, `market.buy_as` | `item:<id> <most>`, `bundle:<id> <most>` or `<asset id> <most>`. Buys from whoever "Buy" sells it for now. |
+| `market.buy_resale` | The same. Buys the cheapest reseller's copy. |
+| `game.buy_pass` | `<place id> <pass id> <most>` |
+| `game.buy_private_server` | `<place id> <most> <name>` |
+| `group.payout` | `group:<id> <user id> <amount>`, from the community's funds |
+
+Unattended, a batch is checked against the budget at the most each action may cost; the activity
+log records what each one actually spent. Spending counts once the purchase is sent, even if
+Roblox turns it down after. Runs the user confirmed don't count against a budget. Typed in the
+command bar with a price, these ask before buying.
 
 ### Contribution points
 
@@ -369,9 +392,15 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   minute is logged once. The top bar shows a stop button for five minutes after a write.
   `plugins.stop_all` (Ctrl+Shift+Backspace) turns every plugin off.
 
-### 7. Budgets
+### 7. Budgets (done)
 
 - Tier 3 unattended within budgets, after the activity log and kill switch have shipped.
+- Built: see [Limits](#limits) and [Spending Robux](#spending-robux). Budgets live in
+  `config/plugins.json` per plugin and account, survive updates and go when the account is
+  taken away. Tier 3 needs automation on and room in the budget; anything else fails `ctx.run`
+  or opens the action dialog, which shows what each action may cost. Budget checks and the
+  run they allow hold one lock, so two plugins can't spend the same room. The activity log
+  keeps entries a budget counts for a day.
 
 ### 8. Plugin UI (later)
 

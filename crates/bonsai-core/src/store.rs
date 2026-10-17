@@ -448,6 +448,8 @@ pub struct StoreData {
     pub plugin_rev: u64,
     /// The account in the "Allow automation" dialog, while it is open.
     pub plugin_automation: Option<AccountId>,
+    /// The plugin and account in the budget dialog, while it is open.
+    pub plugin_budget: Option<crate::plugins::PendingBudget>,
     /// When a plugin last wrote, in Unix seconds, for the stop indicator.
     pub plugin_wrote: Option<i64>,
     /// Turning on the authenticator app or making recovery codes (see [`crate::security`]).

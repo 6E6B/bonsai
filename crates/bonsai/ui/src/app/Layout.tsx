@@ -6,6 +6,7 @@ import { NewChat } from "~/features/chat/NewChat"
 import { CommandPalette } from "~/features/palette/CommandPalette"
 import { ActionsDialog } from "~/features/plugins/ActionsDialog"
 import { AutomationDialog } from "~/features/plugins/AutomationDialog"
+import { BudgetDialog } from "~/features/plugins/BudgetDialog"
 import { InstallDialog } from "~/features/plugins/InstallDialog"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
 import { registerThemeCommands } from "~/features/themes/commands"
@@ -468,6 +469,7 @@ export function Layout(props: ParentProps) {
                     <InstallDialog />
                     <ActionsDialog />
                     <AutomationDialog />
+                    <BudgetDialog />
                     <SecurityDialog />
                     <ErrorBoundary
                       fallback={(err) => (

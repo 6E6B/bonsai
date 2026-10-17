@@ -1,7 +1,7 @@
 import { For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
-import { dateTime } from "~/lib/format"
-import { type ActivityView, commands, type Id, type PluginView } from "~/lib/ipc/bindings"
+import { dateTime, full } from "~/lib/format"
+import { type ActivityView, commands, type Id, type PluginBudgetView, type PluginView } from "~/lib/ipc/bindings"
 import { byTier, pluginStates, tiers } from "~/lib/plugins"
 import { shell, useLive } from "~/lib/store"
 import {
@@ -61,7 +61,7 @@ export function PluginsSection() {
       <Show when={plugins.length > 0}>
         <SettingsGroup
           title="Automation"
-          description="Lets plugins run social actions, like friend requests, without asking each time. Roblox bans accounts for bots and automated trading."
+          description="Lets plugins run social actions, like friend requests, without asking each time, and spend within the budgets you set. Roblox bans accounts for bots and automated trading."
           actions={
             <Button size="sm" variant="danger" onClick={() => run("plugins.stop_all")}>
               Stop all plugins
@@ -144,6 +144,27 @@ function ActivityGroup() {
       </SettingsGroup>
     </div>
   )
+}
+
+function accountName(id: Id): string {
+  const a = shell.accounts.find((x) => x.id === id)
+  return a ? (a.label ?? a.displayName) : String(id)
+}
+
+/** "R$ 500 a day, R$ 120 spent. 2 trades a day, 1 accepted." or what asks each time. */
+export function budgetText(b: PluginBudgetView): string {
+  const parts: string[] = []
+  if (b.hasRobux)
+    parts.push(
+      b.robux > 0 ? `R$ ${full(b.robux)} a day, R$ ${full(b.spentRobux)} spent.` : "Asks before spending Robux.",
+    )
+  if (b.hasTrades)
+    parts.push(
+      b.trades > 0
+        ? `${b.trades === 1 ? "1 trade" : `${b.trades} trades`} a day, ${b.spentTrades} accepted.`
+        : "Asks before accepting trades.",
+    )
+  return parts.join(" ")
 }
 
 function PluginGroup(props: { plugin: PluginView; automation: Id[] }) {
@@ -262,6 +283,19 @@ function PluginGroup(props: { plugin: PluginView; automation: Id[] }) {
                     }}
                     onSet={(v) => void run("plugin.cap", `${p().id} ${c.key} ${v}`)}
                   />
+                </SettingRow>
+              )}
+            </For>
+            <For each={p().budgets}>
+              {(b) => (
+                <SettingRow
+                  label={`Budget on ${accountName(b.account)}`}
+                  description={budgetText(b)}
+                  changed={b.robux > 0 || b.trades > 0}
+                >
+                  <Button size="sm" onClick={() => run("plugin.budget", p().id, b.account)}>
+                    Change
+                  </Button>
                 </SettingRow>
               )}
             </For>

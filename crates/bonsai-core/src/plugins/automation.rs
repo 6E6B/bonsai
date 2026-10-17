@@ -1,5 +1,6 @@
 //! Plugin writes without a click: `ctx.run`, actions that run unattended, the per-account
-//! automation switch, hourly caps, the activity log and the kill switch. See `docs/plugins.md`.
+//! automation switch, hourly caps, tier 3 budgets, the activity log and the kill switch. See
+//! `docs/plugins.md`.
 
 use std::collections::VecDeque;
 use std::io::Write as _;
@@ -11,13 +12,15 @@ use crate::AccountId;
 use crate::commands::{CommandId, Registry, Tier};
 use crate::core::{Core, Inner};
 
+use super::budget::{Charge, DAY, Spend, Spent, budget_refusal, charge};
 use super::{Force, ProposedAction, Status};
 
 /// Most times a plugin may run one tier 2 action unattended on one account in an hour. The
 /// user may lower it; a plugin can't raise it.
 pub const DEFAULT_CAP: u32 = 20;
 const HOUR: i64 = 3600;
-/// Entries kept beyond the last hour, which caps count from.
+/// Entries kept beyond the last hour, which caps count from. Ones that count against a budget
+/// are kept for a day.
 const KEEP_OLD: usize = 500;
 /// Most entries kept, however recent.
 const KEEP_MAX: usize = 5000;
@@ -44,6 +47,19 @@ pub struct Activity {
     /// Why it failed or was refused; `None` when it ran.
     #[serde(default)]
     pub error: Option<String>,
+    /// What it spent, for actions that spend Robux. A purchase that was sent counts even if
+    /// Roblox turned it down after.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub robux: Option<i64>,
+}
+
+impl Activity {
+    /// It ran without a click and counts against a budget.
+    fn charged(&self) -> bool {
+        self.unattended
+            && self.error.is_none()
+            && (self.robux.is_some_and(|r| r > 0) || self.command == CommandId::AcceptTrade.key())
+    }
 }
 
 /// The activity log in memory, oldest first.
@@ -69,6 +85,20 @@ impl Log {
                     && a.command == command
             })
             .count() as u32
+    }
+
+    /// What `plugin` spent without a click on `account` in the last day.
+    pub(super) fn spent(&self, plugin: &str, account: AccountId, now: i64) -> Spent {
+        let mut spent = Spent::default();
+        for a in self.entries.iter().rev().take_while(|a| a.at > now - DAY) {
+            if a.charged() && a.plugin == plugin && a.account == account {
+                match a.robux {
+                    Some(r) if r > 0 => spent.add(Charge::Robux(r)),
+                    _ => spent.add(Charge::Trade),
+                }
+            }
+        }
+        spent
     }
 
     /// Adds `a` unless it repeats a recent refusal. Returns whether it was added.
@@ -102,29 +132,38 @@ impl Log {
             .take_while(|a| a.at > now - HOUR)
             .count();
         let keep = (recent + KEEP_OLD).min(KEEP_MAX);
-        while self.entries.len() > keep {
-            self.entries.pop_front();
-        }
+        let mut drop = self.entries.len().saturating_sub(keep);
+        // Oldest first, skipping what a budget still counts.
+        self.entries.retain(|a| {
+            if drop == 0 || (a.at > now - DAY && a.charged()) {
+                return true;
+            }
+            drop -= 1;
+            false
+        });
     }
 }
 
 /// Why `tier` can't run without a click, or `None` when it can. `used` counts runs in the last
-/// hour against `cap`.
+/// hour against `cap`. Tier 3 also needs room in its budget; see [`budget_refusal`].
 pub fn unattended_refusal(tier: Tier, automation: bool, used: u32, cap: u32) -> Option<String> {
     match tier {
         Tier::Harmless => None,
-        Tier::Social if !automation => {
+        Tier::Social | Tier::Value if !automation => {
             Some("Automation is off for this account. Turn it on in Settings > Plugins.".into())
         }
         Tier::Social if used >= cap => Some(format!("Reached its cap of {cap} an hour.")),
         Tier::Social => None,
-        Tier::Value => Some("Robux and items need you to confirm each time.".into()),
+        Tier::Value => None,
         Tier::Account => Some("Account control is never available to plugins.".into()),
     }
 }
 
 /// Serializes appends to the log file.
 static FILE: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
+/// Held from the budget check of an unattended tier 3 action until it is logged, so two can't
+/// both fit the same room.
+static SPEND: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
 
 impl Inner {
     fn automation_on(&self, account: AccountId) -> bool {
@@ -141,25 +180,78 @@ impl Inner {
             .map_or(DEFAULT_CAP, |c| (*c).min(DEFAULT_CAP))
     }
 
-    /// Why `a` can't run unattended now, counting `extra` runs not logged yet.
+    /// Why `a` can't run unattended now, counting `extra` runs and `pending` spending not
+    /// logged yet.
     pub(super) fn may_run_unattended(
         &self,
         plugin: &str,
         account: AccountId,
         a: &ProposedAction,
         extra: u32,
+        pending: Spent,
     ) -> Result<(), String> {
         let key = a.id.key();
-        let used = self
-            .plugins
-            .lock()
-            .log
-            .used(plugin, account, key, crate::cache::now());
+        let now = crate::cache::now();
+        let (used, mut spent) = {
+            let p = self.plugins.lock();
+            (
+                p.log.used(plugin, account, key, now),
+                p.log.spent(plugin, account, now),
+            )
+        };
         let cap = self.cap(plugin, key);
-        match unattended_refusal(a.tier, self.automation_on(account), used + extra, cap) {
-            Some(why) => Err(why),
-            None => Ok(()),
+        if let Some(why) = unattended_refusal(a.tier, self.automation_on(account), used + extra, cap) {
+            return Err(why);
         }
+        if a.tier == Tier::Value {
+            spent.robux += pending.robux;
+            spent.trades += pending.trades;
+            if let Some(why) = budget_refusal(charge(a), self.budget(plugin, account), spent) {
+                return Err(why);
+            }
+        }
+        Ok(())
+    }
+
+    /// Runs one checked action and logs it. Unattended, it checks the automation switch, cap
+    /// and budget first. One that spends Robux runs at the price Roblox asks now, when that is
+    /// no more than the most it named. Blocks on price lookups, so not on the main thread.
+    pub(super) fn run_logged(
+        self: &Arc<Self>,
+        plugin: &str,
+        name: &str,
+        account: AccountId,
+        a: &ProposedAction,
+        unattended: bool,
+        epoch: u64,
+    ) -> Result<(), String> {
+        let _spend = (unattended && a.tier == Tier::Value).then(|| SPEND.lock());
+        let r = (|| {
+            if unattended {
+                self.may_run_unattended(plugin, account, a, 0, Spent::default())?;
+            }
+            let (robux, arg) = match Spend::parse(a.id, a.arg.as_deref()) {
+                Some(s) => {
+                    let (price, arg) = self.price(account, &s?)?;
+                    (Some(price), Some(arg))
+                }
+                None => (None, a.arg.clone()),
+            };
+            self.run_one(plugin, account, a, arg, unattended, epoch)?;
+            Ok(robux)
+        })();
+        self.log_activity(Activity {
+            at: crate::cache::now(),
+            plugin: plugin.to_owned(),
+            plugin_name: name.to_owned(),
+            account,
+            command: a.id.key().to_owned(),
+            arg: a.arg.clone(),
+            unattended,
+            error: r.as_ref().err().cloned(),
+            robux: r.as_ref().ok().copied().flatten(),
+        });
+        r.map(|_| ())
     }
 
     /// Records a plugin write. A write that went through lights the stop indicator.
@@ -205,7 +297,7 @@ impl Inner {
         }
     }
 
-    /// `ctx.run(id, arg)`: checks the grants, tier, automation switch and cap, then runs the
+    /// `ctx.run(id, arg)`: checks the grants, tier, automation switch, cap and budget, then runs the
     /// action now as `account`. On the plugin's thread. Never falls back to asking.
     pub(super) fn plugin_run(
         self: &Arc<Self>,
@@ -235,41 +327,36 @@ impl Inner {
         };
         let epoch = self.plugins.lock().log.stop_gen;
         let list = [(key.to_owned(), arg.map(str::to_owned))];
-        let checked = self.check_actions(plugin, account, &list).and_then(|mut a| {
-            let a = a.pop().ok_or_else(|| "Nothing to run.".to_owned())?;
-            self.may_run_unattended(plugin, account, &a, 0)?;
-            Ok(a)
-        });
-        let result = checked
-            .clone()
-            .and_then(|a| self.run_one(plugin, account, &a, true, epoch));
-        let (arg, command) = match &checked {
-            Ok(a) => (a.arg.clone(), a.id.key().to_owned()),
-            Err(_) => (
-                arg.map(|a| a.chars().take(200).collect()),
-                key.chars().take(100).collect(),
-            ),
-        };
-        self.log_activity(Activity {
-            at: crate::cache::now(),
-            plugin: plugin.to_owned(),
-            plugin_name: name,
-            account,
-            command,
-            arg,
-            unattended: true,
-            error: result.as_ref().err().cloned(),
-        });
-        result
+        let checked = self
+            .check_actions(plugin, account, &list)
+            .and_then(|mut a| a.pop().ok_or_else(|| "Nothing to run.".to_owned()));
+        match checked {
+            Ok(a) => self.run_logged(plugin, &name, account, &a, true, epoch),
+            Err(e) => {
+                self.log_activity(Activity {
+                    at: crate::cache::now(),
+                    plugin: plugin.to_owned(),
+                    plugin_name: name,
+                    account,
+                    command: key.chars().take(100).collect(),
+                    arg: arg.map(|a| a.chars().take(200).collect()),
+                    unattended: true,
+                    error: Some(e.clone()),
+                    robux: None,
+                });
+                Err(e)
+            }
+        }
     }
 
-    /// Runs one checked action unless the stop button was pressed since `epoch`, the plugin
-    /// stopped, or (unattended) automation went off. Doesn't log.
-    pub(super) fn run_one(
+    /// Runs one checked action with `arg` unless the stop button was pressed since `epoch`, the
+    /// plugin stopped, or (unattended) automation went off. Doesn't log.
+    fn run_one(
         &self,
         plugin: &str,
         account: AccountId,
         a: &ProposedAction,
+        arg: Option<String>,
         unattended: bool,
         epoch: u64,
     ) -> Result<(), String> {
@@ -290,7 +377,7 @@ impl Inner {
             }
             p.runner.clone().ok_or("Actions can't run here.")?
         };
-        runner(account, a.id, a.arg.clone())
+        runner(account, a.id, arg)
     }
 }
 
@@ -458,7 +545,7 @@ impl Core {
     }
 
     /// Repaints and saves `plugins.json` after a change to what was agreed.
-    fn saved_plugins_changed(&self) {
+    pub(super) fn saved_plugins_changed(&self) {
         self.inner.store.write().plugin_rev += 1;
         self.inner.repaint();
         self.inner.plugin_job(|inner| {
@@ -483,6 +570,7 @@ mod tests {
             arg: None,
             unattended,
             error: error.map(Into::into),
+            robux: None,
         }
     }
 
@@ -500,7 +588,13 @@ mod tests {
                 .unwrap()
                 .contains("cap of 20")
         );
-        assert!(unattended_refusal(Tier::Value, true, 0, 20).is_some());
+        assert!(
+            unattended_refusal(Tier::Value, false, 0, 20)
+                .unwrap()
+                .contains("Automation is off")
+        );
+        // The budget decides the rest.
+        assert_eq!(unattended_refusal(Tier::Value, true, 99, 0), None);
         assert!(
             unattended_refusal(Tier::Account, true, 0, 20)
                 .unwrap()
@@ -544,5 +638,46 @@ mod tests {
         assert_eq!(log.entries.len(), KEEP_OLD + 100);
         log.push(entry(100_000, "x", false, None));
         assert_eq!(log.entries.len(), KEEP_OLD + 1);
+    }
+
+    #[test]
+    fn budgets_count_unattended_spending_in_the_last_day() {
+        let mut log = Log::default();
+        let now = 100_000;
+        let spend = |at, robux, unattended, error: Option<&str>| Activity {
+            robux: Some(robux),
+            ..entry(at, "market.buy", unattended, error)
+        };
+        log.push(spend(now - DAY - 1, 500, true, None));
+        log.push(spend(now - 100, 40, true, None));
+        log.push(spend(now - 90, 30, false, None));
+        log.push(spend(now - 80, 20, true, Some("Failed.")));
+        log.push(entry(now - 70, "trade.accept", true, None));
+        log.push(entry(now - 60, "trade.decline", true, None));
+        assert_eq!(log.spent("p", AccountId(1), now), Spent { robux: 40, trades: 1 });
+        assert_eq!(log.spent("p", AccountId(2), now), Spent::default());
+    }
+
+    #[test]
+    fn trimming_keeps_what_a_budget_counts() {
+        let mut log = Log::default();
+        log.push(Activity {
+            robux: Some(10),
+            ..entry(0, "market.buy", true, None)
+        });
+        log.push(entry(1, "trade.accept", true, None));
+        for i in 0..KEEP_OLD + 10 {
+            log.push(entry(2 + i as i64, "x", false, None));
+        }
+        log.push(entry(DAY - 100, "x", false, None));
+        assert_eq!(log.entries.len(), KEEP_OLD + 1);
+        assert_eq!(
+            log.spent("p", AccountId(1), DAY - 100),
+            Spent { robux: 10, trades: 1 }
+        );
+        // A day on, they go like any other.
+        log.push(entry(DAY + HOUR, "x", false, None));
+        assert_eq!(log.entries.len(), KEEP_OLD + 1);
+        assert_eq!(log.entries[0].command, "trade.accept");
     }
 }

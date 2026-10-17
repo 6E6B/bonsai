@@ -389,6 +389,7 @@ commands! {
     RevokePlugin => "plugin.revoke", "Stop plugin using this account", ["plugin", "account", "revoke", "deny", "permission"], Plugin, Local, [];
     SetPluginSetting => "plugin.set", "Change plugin setting (plugin, setting, value; no value resets it)", ["plugin", "setting", "option", "config", "preference"], Text, Local, [];
     SetPluginCap => "plugin.cap", "Lower a plugin's hourly cap (plugin, action, number)", ["plugin", "cap", "limit", "rate", "hour", "automation"], Text, Local, [];
+    SetPluginBudget => "plugin.budget", "Set a plugin's daily budget on this account", ["plugin", "budget", "robux", "spend", "limit", "day", "trade", "automation"], Plugin, Local, [];
     AllowAutomation => "plugins.allow_automation", "Allow plugin automation on this account", ["plugin", "automation", "automate", "unattended", "bot", "allow"], None, Local, [];
     BlockAutomation => "plugins.block_automation", "Turn off plugin automation on this account", ["plugin", "automation", "automate", "unattended", "bot", "block", "off"], None, Local, [];
     StopPlugins => "plugins.stop_all", "Stop all plugins", ["plugin", "stop", "kill", "panic", "disable", "halt", "automation"], None, Local, [Shortcut::ctrl_shift("Backspace")];

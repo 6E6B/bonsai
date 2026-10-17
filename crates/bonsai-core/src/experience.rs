@@ -230,39 +230,7 @@ impl Core {
 
     /// Passes in the experience's store. Ownership is per account.
     pub fn game_passes(&self, account: AccountId, universe_id: u64, more: bool) -> Res<Page<Pass>> {
-        self.inner.paged(
-            Key::private(account, "game_passes", universe_id),
-            LIST_AGE,
-            more,
-            move |f, cursor| async move {
-                let p = apis::undocumented::GetUniverseGamePassesParams {
-                    pass_view: Some("Full".into()),
-                    page_size: Some(50),
-                    page_token: cursor,
-                };
-                let r =
-                    apis::undocumented::get_universe_game_passes(&f.client, universe_id as i64, &p).await?;
-                Ok(Page {
-                    items: r
-                        .game_passes
-                        .unwrap_or_default()
-                        .into_iter()
-                        .filter_map(|g| {
-                            let for_sale = g.is_for_sale.unwrap_or(false);
-                            Some(Pass {
-                                id: g.id? as u64,
-                                product_id: g.product_id.unwrap_or(0).max(0) as u64,
-                                name: g.display_name.or(g.name).unwrap_or_default(),
-                                description: g.display_description.unwrap_or_default(),
-                                price: g.price.filter(|_| for_sale),
-                                owned: g.is_owned.unwrap_or(false),
-                            })
-                        })
-                        .collect(),
-                    next: r.next_page_token.filter(|t| !t.is_empty()),
-                })
-            },
-        )
+        self.inner.game_passes(account, universe_id, more)
     }
 
     pub fn game_badges(&self, universe_id: u64, more: bool) -> Res<Page<Badge>> {
@@ -458,38 +426,14 @@ impl Core {
         )
     }
 
-    /// Whether you can buy a private server here and for how much. The price is only on the
-    /// site's game page (see specs/undocumented/www.roblox.com.yaml).
+    /// Whether you can buy a private server here and for how much.
     pub fn private_server_offer(
         &self,
         account: AccountId,
         universe_id: u64,
         place_id: u64,
     ) -> Res<PrivateServerOffer> {
-        self.inner.res(
-            Key::private(account, "private_server_offer", universe_id),
-            INFO_AGE,
-            move |f| async move {
-                let c = &f.client;
-                let enabled =
-                    games::v1::get_private_servers_enabled_in_universe_by_universe_id(c, universe_id as i64)
-                        .await?;
-                let enabled = enabled.private_servers_enabled.unwrap_or(false);
-                if !enabled {
-                    return Ok(PrivateServerOffer::default());
-                }
-                let page = c
-                    .send(www::undocumented::page_game_request(place_id as i64)?)
-                    .await?;
-                let html = String::from_utf8_lossy(&page.body);
-                let price = data_attr(&html, "data-private-server-price").and_then(|v| v.parse().ok());
-                Ok(PrivateServerOffer {
-                    enabled,
-                    price,
-                    can_create: data_attr(&html, "data-can-create-server").as_deref() == Some("True"),
-                })
-            },
-        )
+        self.inner.private_server_offer(account, universe_id, place_id)
     }
 
     /// Settings of one of your own private servers.
@@ -1004,6 +948,84 @@ pub(crate) fn data_attr(html: &str, name: &str) -> Option<String> {
     let start = html.find(&pat)? + pat.len();
     let end = html[start..].find('"')? + start;
     Some(html[start..end].to_string())
+}
+
+impl crate::core::Inner {
+    /// Passes in the experience's store. Ownership is per account.
+    pub(crate) fn game_passes(
+        self: &Arc<Self>,
+        account: AccountId,
+        universe_id: u64,
+        more: bool,
+    ) -> Res<Page<Pass>> {
+        self.paged(
+            Key::private(account, "game_passes", universe_id),
+            LIST_AGE,
+            more,
+            move |f, cursor| async move {
+                let p = apis::undocumented::GetUniverseGamePassesParams {
+                    pass_view: Some("Full".into()),
+                    page_size: Some(50),
+                    page_token: cursor,
+                };
+                let r =
+                    apis::undocumented::get_universe_game_passes(&f.client, universe_id as i64, &p).await?;
+                Ok(Page {
+                    items: r
+                        .game_passes
+                        .unwrap_or_default()
+                        .into_iter()
+                        .filter_map(|g| {
+                            let for_sale = g.is_for_sale.unwrap_or(false);
+                            Some(Pass {
+                                id: g.id? as u64,
+                                product_id: g.product_id.unwrap_or(0).max(0) as u64,
+                                name: g.display_name.or(g.name).unwrap_or_default(),
+                                description: g.display_description.unwrap_or_default(),
+                                price: g.price.filter(|_| for_sale),
+                                owned: g.is_owned.unwrap_or(false),
+                            })
+                        })
+                        .collect(),
+                    next: r.next_page_token.filter(|t| !t.is_empty()),
+                })
+            },
+        )
+    }
+
+    /// Whether you can buy a private server here and for how much. The price is only on the
+    /// site's game page (see specs/undocumented/www.roblox.com.yaml).
+    pub(crate) fn private_server_offer(
+        self: &Arc<Self>,
+        account: AccountId,
+        universe_id: u64,
+        place_id: u64,
+    ) -> Res<PrivateServerOffer> {
+        self.res(
+            Key::private(account, "private_server_offer", universe_id),
+            INFO_AGE,
+            move |f| async move {
+                let c = &f.client;
+                let enabled =
+                    games::v1::get_private_servers_enabled_in_universe_by_universe_id(c, universe_id as i64)
+                        .await?;
+                let enabled = enabled.private_servers_enabled.unwrap_or(false);
+                if !enabled {
+                    return Ok(PrivateServerOffer::default());
+                }
+                let page = c
+                    .send(www::undocumented::page_game_request(place_id as i64)?)
+                    .await?;
+                let html = String::from_utf8_lossy(&page.body);
+                let price = data_attr(&html, "data-private-server-price").and_then(|v| v.parse().ok());
+                Ok(PrivateServerOffer {
+                    enabled,
+                    price,
+                    can_create: data_attr(&html, "data-can-create-server").as_deref() == Some("True"),
+                })
+            },
+        )
+    }
 }
 
 #[cfg(test)]

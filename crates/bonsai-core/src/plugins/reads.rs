@@ -113,7 +113,7 @@ impl Inner {
         Ok(())
     }
 
-    fn read_game(&self, place: u64) -> Result<Value, String> {
+    pub(super) fn read_game(&self, place: u64) -> Result<Value, String> {
         let cached = |inner: &Inner| inner.store.read().game_for_place(place).map(game_view);
         if let Some(v) = cached(self) {
             return Ok(v);
@@ -212,7 +212,7 @@ fn timed_out() -> String {
 }
 
 /// Polls a resource until `f` gives data and isn't loading. `None` when it has nothing to give.
-fn wait<T>(f: impl Fn() -> Res<T>) -> Result<Option<Arc<T>>, String> {
+pub(super) fn wait<T>(f: impl Fn() -> Res<T>) -> Result<Option<Arc<T>>, String> {
     let deadline = Instant::now() + WAIT;
     loop {
         let r = f();
@@ -232,7 +232,7 @@ fn wait<T>(f: impl Fn() -> Res<T>) -> Result<Option<Arc<T>>, String> {
 }
 
 /// Up to `limit` rows of a paged resource, asking for more pages while there are any.
-fn pages<T: Clone>(limit: usize, page: impl Fn(bool) -> Res<Page<T>>) -> Result<Vec<T>, String> {
+pub(super) fn pages<T: Clone>(limit: usize, page: impl Fn(bool) -> Res<Page<T>>) -> Result<Vec<T>, String> {
     let Some(mut p) = wait(|| page(false))? else {
         return Ok(Vec::new());
     };
