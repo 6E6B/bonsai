@@ -57,7 +57,7 @@ export function AccountRail() {
       }),
       { kind: "separator" },
       menuItem("entity.copy_id", { arg: `user:${a.id}`, label: "Copy user ID", icon: "copy" }),
-      menuItem("account.copy_name", { ...as, label: "Copy username" }),
+      menuItem("account.copy_name", { ...as, label: "Copy username", icon: "copy" }),
       {
         kind: "submenu",
         label: "Privacy",
