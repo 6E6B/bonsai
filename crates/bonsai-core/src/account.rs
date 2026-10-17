@@ -410,6 +410,22 @@ impl Paths {
     pub fn backgrounds_dir(&self) -> PathBuf {
         self.config.join("backgrounds")
     }
+    /// Installed plugins, one folder each.
+    pub fn plugins_dir(&self) -> PathBuf {
+        self.config.join("plugins")
+    }
+    /// Which plugins are on and what each may use.
+    pub fn plugins_file(&self) -> PathBuf {
+        self.config.join("plugins.json")
+    }
+    /// Every plugin write, one JSON line each.
+    pub fn plugin_activity_file(&self) -> PathBuf {
+        self.config.join("plugin-activity.jsonl")
+    }
+    /// What plugins keep with `ctx.store`: a folder per plugin, a file per account.
+    pub fn plugin_data_dir(&self) -> PathBuf {
+        self.config.join("plugin-data")
+    }
     /// Downloaded Google Fonts. Safe to delete: a theme that uses one downloads it again.
     pub fn fonts_dir(&self) -> PathBuf {
         self.cache.join("fonts")

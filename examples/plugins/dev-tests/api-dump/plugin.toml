@@ -1,0 +1,46 @@
+id = "api-dump"
+name = "API dump"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["read.public", "read.account"]
+actions = []
+
+[[settings]]
+key = "item_kind"
+title = "Item kind"
+kind = "choice"
+options = ["asset", "bundle"]
+default = "asset"
+
+[[settings]]
+key = "inventory"
+title = "Inventory"
+kind = "choice"
+options = [
+  { value = "collectibles", label = "Collectibles" },
+  { value = "8", label = "Hats (8)" },
+  { value = "11", label = "Classic shirts (11)" },
+  { value = "12", label = "Classic pants (12)" },
+  { value = "41", label = "Hair (41)" },
+  { value = "61", label = "Emotes (61)" },
+]
+default = "collectibles"
+
+[[settings]]
+key = "trade_status"
+title = "Trades"
+kind = "choice"
+options = ["inbound", "outbound", "completed", "inactive"]
+default = "inbound"
+
+[[settings]]
+key = "rows"
+title = "Rows"
+description = "How many list rows to include."
+kind = "range"
+min = 1
+max = 8
+default = 3

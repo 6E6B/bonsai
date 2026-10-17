@@ -1,0 +1,25 @@
+id = "trade-guard"
+name = "Trade guard"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["read.public", "read.account", "notify"]
+actions = ["trade.decline"]
+
+[[settings]]
+key = "min_age"
+title = "Flag trade partners younger than"
+description = "In days."
+kind = "range"
+min = 0
+max = 365
+default = 30
+
+[[settings]]
+key = "alert_only"
+title = "Only alert, don't decline"
+description = "Show a desktop alert instead of declining or opening the confirm dialog."
+kind = "bool"
+default = false

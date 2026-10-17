@@ -28,6 +28,7 @@ mod communities;
 mod discover;
 mod inbox;
 mod market;
+mod plugins;
 mod security;
 mod trades;
 mod transactions;
@@ -63,6 +64,18 @@ pub struct Shell {
     pub challenge: Option<challenge::ChallengeView>,
     /// A theme waiting in the import dialog.
     pub theme_import: Option<account::ThemeImportView>,
+    /// A plugin folder waiting in the install dialog.
+    pub plugin_install: Option<plugins::PluginInstallView>,
+    /// Actions a plugin proposed, waiting in the action dialog.
+    pub plugin_actions: Option<plugins::PluginActionsView>,
+    /// A screen a plugin asked to open. The UI runs it once per `seq`.
+    pub plugin_open: Option<plugins::PluginOpenView>,
+    /// Changes when plugin commands do; the UI reloads the command list.
+    pub plugin_rev: Id,
+    /// The account in the "Allow automation" dialog, while it is open.
+    pub plugin_automation: Option<plugins::AutomationView>,
+    /// When a plugin last wrote, in Unix seconds, for the stop indicator.
+    pub plugin_wrote: Option<Id>,
     /// The "Sign in another device" dialog, once a code was entered.
     pub approve: Option<approve::ApproveView>,
     /// The authenticator setup or recovery codes dialog, while it is open.
@@ -256,6 +269,8 @@ pub struct CommandInfo {
     pub shortcuts: Vec<Keys>,
     /// The user changed the shortcuts from the defaults.
     pub rebound: bool,
+    /// For plugin commands: the menus it shows in (`user`, `game`, `item` or `group`).
+    pub context: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Type)]
@@ -275,6 +290,7 @@ pub enum Arg {
     Tab,
     Screen,
     Setting,
+    Plugin,
 }
 
 impl From<ArgKind> for Arg {
@@ -294,6 +310,7 @@ impl From<ArgKind> for Arg {
             ArgKind::Tab => Arg::Tab,
             ArgKind::Screen => Arg::Screen,
             ArgKind::Setting => Arg::Setting,
+            ArgKind::Plugin => Arg::Plugin,
         }
     }
 }
@@ -1022,6 +1039,12 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         unread: s.active_data().map(|d| d.unread.into()).unwrap_or_default(),
         challenge: s.challenge.as_ref().map(challenge::view),
         theme_import: s.theme_import.as_ref().map(account::theme_import_view),
+        plugin_install: s.plugin_install.as_ref().map(plugins::install_view),
+        plugin_actions: s.plugin_actions.as_ref().map(|p| plugins::actions_view(p, &s)),
+        plugin_open: s.plugin_open.as_ref().map(plugins::open_view),
+        plugin_rev: Id(s.plugin_rev),
+        plugin_automation: s.plugin_automation.map(|a| plugins::automation_view(a, &s)),
+        plugin_wrote: s.plugin_wrote.map(|t| Id(t.max(0) as u64)),
         approve: s.approve.as_ref().map(approve::view),
         security: s.security.as_ref().map(security::view),
         login: s.login.as_ref().map(|l| match l {
@@ -1064,15 +1087,9 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
         arg: c.arg.into(),
         shortcuts: registry.shortcuts(c.id).iter().map(Keys::from).collect(),
         rebound: registry.is_rebound(c.id),
+        context: None,
     });
-    let plugin = registry.plugin_commands().iter().map(|c| CommandInfo {
-        id: c.cmd.key(),
-        title: c.title.clone(),
-        keywords: c.keywords.clone(),
-        arg: c.arg.into(),
-        shortcuts: Vec::new(),
-        rebound: false,
-    });
+    let plugin = core.plugin_commands().into_iter().map(plugins::command_info);
     builtin.chain(plugin).collect()
 }
 
@@ -1081,10 +1098,18 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
 #[tauri::command]
 #[specta::specta]
 pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) -> Result<(), String> {
-    let id = match CommandRef::parse(&inv.id) {
-        Some(CommandRef::Builtin(id)) => id,
-        // Plugins don't load yet; see docs/plugins.md.
-        Some(CommandRef::Plugin(_)) | None => return Err(format!("unknown command: {}", inv.id)),
+    if let Some(CommandRef::Plugin(cmd)) = CommandRef::parse(&inv.id) {
+        let picked = inv.as_account.map(|a| AccountId(a.0));
+        return core.run_plugin_command(&cmd, inv.arg, core.acting(picked), inv.context.as_deref());
+    }
+    dispatch(&app, core.inner(), inv)
+}
+
+/// Runs a built-in command. Plugin actions come here too, through the runner set in `lib.rs`,
+/// after bonsai-core checked them.
+pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<(), String> {
+    let Some(CommandRef::Builtin(id)) = CommandRef::parse(&inv.id) else {
+        return Err(format!("unknown command: {}", inv.id));
     };
     let nth = |n: usize| core.store().accounts.accounts.get(n).map(|a| a.id);
     let switch = |target: Option<AccountId>| match target {
@@ -1094,33 +1119,36 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
     let picked = inv.as_account.map(|a| AccountId(a.0));
     let acting = || core.acting(picked).ok_or_else(|| "no account".to_owned());
     let arg = || inv.arg.clone().filter(|a| !a.trim().is_empty());
-    let page = || page_game(&core, inv.context.as_deref());
+    let page = || page_game(core, inv.context.as_deref());
     let pick = |how: ServerPick| {
         let (place, _) = page()?;
         core.join_picked(acting()?, place, how)
     };
-    if let Some(r) = communities::run(&app, &core, id, &inv, core.acting(picked)) {
+    if let Some(r) = communities::run(app, core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = market::run(&core, id, &inv, core.acting(picked)) {
+    if let Some(r) = market::run(core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = trades::run(&app, &core, id, &inv, core.acting(picked)) {
+    if let Some(r) = trades::run(app, core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = transactions::run(&app, &core, id, &inv, core.acting(picked)) {
+    if let Some(r) = transactions::run(app, core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = inbox::run(&core, id, &inv, core.acting(picked)) {
+    if let Some(r) = inbox::run(core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = discover::run(&core, id, &inv, core.acting(picked)) {
+    if let Some(r) = discover::run(core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = avatar::run(&core, id, &inv, core.acting(picked)) {
+    if let Some(r) = avatar::run(core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = account::run(&app, &core, id, &inv, core.acting(picked)) {
+    if let Some(r) = account::run(app, core, id, &inv, core.acting(picked)) {
+        return r;
+    }
+    if let Some(r) = plugins::run(app, core, id, &inv, core.acting(picked)) {
         return r;
     }
     let move_by = |by: isize| {
@@ -1271,24 +1299,24 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
         CommandId::CopyId => {
             let target = arg().or_else(|| inv.context.clone()).unwrap_or_default();
             let id = links::target_id(&target).ok_or_else(|| "Nothing to copy.".to_owned())?;
-            copy(&app, &core, id.to_string(), "Copied ID.")
+            copy(app, core, id.to_string(), "Copied ID.")
         }
         CommandId::CopyLink => {
             let target = arg().or_else(|| inv.context.clone()).unwrap_or_default();
             if let Some(server) = target.trim().strip_prefix("server:") {
                 let link = core.server_link(acting()?, parse_id(Some(server.to_owned()), "server")?)?;
-                return copy(&app, &core, link, "Copied server link.");
+                return copy(app, core, link, "Copied server link.");
             }
             let me = core.acting(picked).map(|a| a.0);
             let url = links::page(&target, me).ok_or_else(|| "No link for this.".to_owned())?;
-            copy(&app, &core, url, "Copied link.")
+            copy(app, core, url, "Copied link.")
         }
         CommandId::CopyServerLink => {
             let (place, _) = page()?;
             let job = arg().ok_or_else(|| "Which server?".to_owned())?;
             copy(
-                &app,
-                &core,
+                app,
+                core,
                 links::server_invite(place, job.trim()),
                 "Copied invite link.",
             )
@@ -1323,21 +1351,19 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
             core.change_server(acting()?, parse_id(arg(), "server")?, ServerChange::NewLink);
             Ok(())
         }
-        CommandId::AddFriend | CommandId::AddFriendAs => {
-            user_action(&core, acting()?, &inv, Core::add_friend)
-        }
-        CommandId::Unfriend => user_action(&core, acting()?, &inv, Core::unfriend),
-        CommandId::AcceptFriend => user_action(&core, acting()?, &inv, Core::accept_friend),
-        CommandId::DeclineFriend => user_action(&core, acting()?, &inv, Core::decline_friend),
+        CommandId::AddFriend | CommandId::AddFriendAs => user_action(core, acting()?, &inv, Core::add_friend),
+        CommandId::Unfriend => user_action(core, acting()?, &inv, Core::unfriend),
+        CommandId::AcceptFriend => user_action(core, acting()?, &inv, Core::accept_friend),
+        CommandId::DeclineFriend => user_action(core, acting()?, &inv, Core::decline_friend),
         CommandId::DeclineAllFriends => {
             core.decline_all_friends(acting()?);
             Ok(())
         }
-        CommandId::Follow => user_action(&core, acting()?, &inv, Core::follow),
-        CommandId::Unfollow => user_action(&core, acting()?, &inv, Core::unfollow),
-        CommandId::Block => user_action(&core, acting()?, &inv, Core::block),
-        CommandId::Unblock => user_action(&core, acting()?, &inv, Core::unblock),
-        CommandId::FindUser => user_action(&core, acting()?, &inv, Core::find_user),
+        CommandId::Follow => user_action(core, acting()?, &inv, Core::follow),
+        CommandId::Unfollow => user_action(core, acting()?, &inv, Core::unfollow),
+        CommandId::Block => user_action(core, acting()?, &inv, Core::block),
+        CommandId::Unblock => user_action(core, acting()?, &inv, Core::unblock),
+        CommandId::FindUser => user_action(core, acting()?, &inv, Core::find_user),
         CommandId::SetNickname | CommandId::SetNote => {
             let a = acting()?;
             let raw = arg().ok_or_else(|| "Which user?".to_owned())?;
@@ -1358,11 +1384,11 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
             })
         }
         CommandId::SearchRoblox => {
-            core.note_search(viewer(&core), &arg().unwrap_or_default());
+            core.note_search(viewer(core), &arg().unwrap_or_default());
             Ok(())
         }
         CommandId::ClearSearchHistory => {
-            core.clear_searches(viewer(&core));
+            core.clear_searches(viewer(core));
             Ok(())
         }
         // The experience page handles this with its selected server; it only lands here without one.
@@ -1375,7 +1401,7 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
         | CommandId::NextSubTab
         | CommandId::PrevSubTab => Ok(()),
         CommandId::LoadMore if inv.context.as_deref().is_some_and(|c| c.starts_with("group:")) => {
-            communities::more(&core, &inv, core.acting(picked))
+            communities::more(core, &inv, core.acting(picked))
         }
         CommandId::LoadMore if inv.context.as_deref().is_some_and(|c| c.starts_with("user:")) => {
             let user = inv
@@ -1384,7 +1410,7 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
                 .and_then(links::target_id)
                 .ok_or_else(|| "Open a profile first.".to_owned())?;
             match arg().as_deref().map(str::trim) {
-                Some("badges") => drop(core.user_badges(viewer(&core), user, true)),
+                Some("badges") => drop(core.user_badges(viewer(core), user, true)),
                 Some("favorites") => drop(core.favorite_games(user, true)),
                 Some("outfits") => drop(core.user_outfits(user, true)),
                 Some("requests") => drop(core.friend_requests(acting()?, true)),
@@ -1402,7 +1428,7 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
         CommandId::LoadMore => {
             let which = arg().ok_or_else(|| "Which list?".to_owned())?;
             let (place, u) = page()?;
-            let a = viewer(&core);
+            let a = viewer(core);
             match which.trim() {
                 "servers" => core.send(Cmd::LoadServers {
                     account: a,
@@ -1422,7 +1448,7 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
             core.start_quick_sign_in();
             Ok(())
         }
-        CommandId::SignInWithBrowser => crate::signin::open(&app, &core),
+        CommandId::SignInWithBrowser => crate::signin::open(app, core),
         CommandId::Quit => {
             app.exit(0);
             Ok(())
@@ -2756,6 +2782,15 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::font_files,
             account::theme_import_install,
             account::theme_import_cancel,
+            plugins::plugins,
+            plugins::plugin_install_finish,
+            plugins::plugin_install_cancel,
+            plugins::plugin_actions_run,
+            plugins::plugin_actions_cancel,
+            plugins::plugin_automation,
+            plugins::plugin_automation_confirm,
+            plugins::plugin_automation_cancel,
+            plugins::plugin_activity,
             account::pin_status,
             account::unlock_pin,
             security::security_status,

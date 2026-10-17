@@ -4,6 +4,9 @@ import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, createSignal, ErrorBoundary, on, onCleanup, onMount, type ParentProps, Show } from "solid-js"
 import { NewChat } from "~/features/chat/NewChat"
 import { CommandPalette } from "~/features/palette/CommandPalette"
+import { ActionsDialog } from "~/features/plugins/ActionsDialog"
+import { AutomationDialog } from "~/features/plugins/AutomationDialog"
+import { InstallDialog } from "~/features/plugins/InstallDialog"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
 import { registerThemeCommands } from "~/features/themes/commands"
 import { ImportDialog, useThemeDrop } from "~/features/themes/ImportDialog"
@@ -11,6 +14,7 @@ import {
   commandContext,
   handle,
   loadCommands,
+  run,
   runBackend,
   setConfirmer,
   shortcutListener,
@@ -199,6 +203,7 @@ export function Layout(props: ParentProps) {
     ),
     ...screens.filter((s) => s.command !== "nav.settings").map((s) => handle(s.command, go(s.path))),
     handle("nav.settings", (section) => visitPath(section ? `/settings/${section}` : "/settings")),
+    handle("plugins.activity", () => visitPath("/settings/plugins/activity")),
     // The order is saved in bonsai-core; the groups that bound a move live in `screens`.
     ...([-1, 1] as const).map((by) =>
       handle(by < 0 ? "view.sidebar_up" : "view.sidebar_down", (arg) => {
@@ -414,6 +419,23 @@ export function Layout(props: ParentProps) {
     }
   })
 
+  // Plugins add and drop commands as they load; the list is otherwise loaded once.
+  createEffect(
+    on(
+      () => shell.pluginRev,
+      () => void loadCommands(),
+      { defer: true },
+    ),
+  )
+  // A plugin command asked to open a screen: run its open command once per request.
+  let opened = shell.pluginOpen?.seq ?? 0
+  createEffect(() => {
+    const o = shell.pluginOpen
+    if (!o || o.seq <= opened) return
+    opened = o.seq
+    void run(o.command, o.arg)
+  })
+
   makeEventListener(window, "keydown", shortcutListener())
 
   onMount(() => {
@@ -443,6 +465,9 @@ export function Layout(props: ParentProps) {
                     <ShellAlerts />
                     <ChallengeDialog />
                     <ImportDialog />
+                    <InstallDialog />
+                    <ActionsDialog />
+                    <AutomationDialog />
                     <SecurityDialog />
                     <ErrorBoundary
                       fallback={(err) => (

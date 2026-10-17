@@ -19,6 +19,7 @@ const cmd = (id: string, arg: CommandInfo["arg"]): CommandInfo => ({
   arg,
   shortcuts: [],
   rebound: false,
+  context: null,
 })
 
 const people = [
@@ -56,6 +57,28 @@ describe("paletteEntries", () => {
       ["theme.apply:dark", "theme.apply: Dark"],
       ["theme.apply:mine", "theme.apply: Mine"],
       ["theme.delete:mine", "theme.delete: Mine"],
+    ])
+  })
+
+  it("lists plugins, skipping ones already on or off", () => {
+    const plugins = [
+      { id: "on", name: "On one", enabled: true },
+      { id: "off", name: "Off one", enabled: false },
+    ]
+    const rows = paletteEntries(
+      [cmd("plugin.enable", "plugin"), cmd("plugin.disable", "plugin"), cmd("plugin.reload", "plugin")],
+      [],
+      [],
+      [],
+      [],
+      [],
+      plugins,
+    )
+    expect(rows.map((r) => r.key)).toEqual([
+      "plugin.enable:off",
+      "plugin.disable:on",
+      "plugin.reload:on",
+      "plugin.reload:off",
     ])
   })
 

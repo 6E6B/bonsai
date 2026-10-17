@@ -1,0 +1,23 @@
+id = "timer-store"
+name = "Timer and storage"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["notify"]
+actions = []
+
+[[settings]]
+key = "mode"
+title = "Tick output"
+kind = "choice"
+options = ["quiet", { value = "toast", label = "Toast" }, { value = "alert", label = "Desktop alert" }]
+default = "quiet"
+
+[[settings]]
+key = "label"
+title = "Label"
+kind = "text"
+placeholder = "tick"
+default = "tick"

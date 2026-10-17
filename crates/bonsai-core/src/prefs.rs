@@ -321,6 +321,14 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "notify.plugins",
+        "notifications",
+        "Plugin alerts",
+        "From plugins you allowed to notify, when something they watch happens.",
+        &["plugin", "extension", "alert"],
+        PrefKind::Bool,
+    ),
+    pref(
         "quiet_hours",
         "notifications",
         "Quiet hours",

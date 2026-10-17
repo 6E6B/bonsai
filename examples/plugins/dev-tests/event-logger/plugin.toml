@@ -1,0 +1,24 @@
+id = "event-logger"
+name = "Event logger"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["read.account", "notify"]
+actions = []
+
+[[settings]]
+key = "alerts"
+title = "Show an alert for each event"
+kind = "bool"
+default = true
+
+[[settings]]
+key = "keep"
+title = "Events to keep"
+kind = "range"
+min = 10
+max = 200
+step = 10
+default = 50

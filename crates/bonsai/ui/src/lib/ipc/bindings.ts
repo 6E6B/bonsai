@@ -289,6 +289,21 @@ export const commands = {
 	 */
 	themeImportInstall: (keepBoth: boolean, apply: boolean) => typedError<null, string>(__TAURI_INVOKE("theme_import_install", { keepBoth, apply })),
 	themeImportCancel: () => __TAURI_INVOKE<void>("theme_import_cancel"),
+	/**  Installed and unpacked plugins. */
+	plugins: () => __TAURI_INVOKE<PluginView[]>("plugins"),
+	/**  Installs the plugin in the dialog, allowed to use `accounts`. */
+	pluginInstallFinish: (accounts: Id[]) => typedError<null, string>(__TAURI_INVOKE("plugin_install_finish", { accounts })),
+	pluginInstallCancel: () => __TAURI_INVOKE<void>("plugin_install_cancel"),
+	/**  Runs the actions in the action dialog. */
+	pluginActionsRun: () => typedError<null, string>(__TAURI_INVOKE("plugin_actions_run")),
+	pluginActionsCancel: () => __TAURI_INVOKE<void>("plugin_actions_cancel"),
+	/**  Accounts plugins may automate. */
+	pluginAutomation: () => __TAURI_INVOKE<Id[]>("plugin_automation"),
+	/**  Turns automation on for the account in the dialog, when `typed` is its name. */
+	pluginAutomationConfirm: (typed: string) => typedError<null, string>(__TAURI_INVOKE("plugin_automation_confirm", { typed })),
+	pluginAutomationCancel: () => __TAURI_INVOKE<void>("plugin_automation_cancel"),
+	/**  Plugin writes, newest first. */
+	pluginActivity: () => __TAURI_INVOKE<ActivityView[]>("plugin_activity"),
 	/**  Account PIN of the active account. */
 	pinStatus: () => __TAURI_INVOKE<PinView>("pin_status"),
 	/**  Unlocks the account PIN. Called from the dialog `account.unlock_pin` opens. */
@@ -388,6 +403,30 @@ export type AccountTotalsView = {
 	totals: TotalsView,
 };
 
+/**  A built-in command a plugin may run or propose. */
+export type ActionView = {
+	key: string,
+	title: string,
+	/**  1 harmless, 2 social, 3 value. */
+	tier: number,
+};
+
+/**  One plugin write, or one it tried and was refused. */
+export type ActivityView = {
+	/**  Unix seconds. */
+	at: Id,
+	pluginName: string,
+	account: Id,
+	accountName: string,
+	command: string,
+	title: string,
+	arg: string | null,
+	/**  Ran without a click. */
+	unattended: boolean,
+	/**  Why it failed or was refused. */
+	error: string | null,
+};
+
 /**  Allied and enemy communities. */
 export type AffiliatesView = {
 	loading: boolean,
@@ -440,7 +479,16 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin";
+
+/**  What a plugin asks for, shown in Settings and the install dialog. */
+export type Asks = {
+	permissions: PermissionView[],
+	actions: ActionView[],
+	refused: RefusedView[],
+	/**  It needs accounts ticked to do anything per account. */
+	needsAccounts: boolean,
+};
 
 export type AuditRow = {
 	actorId: Id,
@@ -451,6 +499,14 @@ export type AuditRow = {
 	text: string,
 	/**  ISO date-time. */
 	created: string,
+};
+
+/**  The account in the "Allow automation" dialog. */
+export type AutomationView = {
+	account: Id,
+	/**  The username to type. */
+	name: string,
+	displayName: string,
 };
 
 export type Avatar3dScales = {
@@ -678,6 +734,8 @@ export type CommandInfo = {
 	shortcuts: Keys[],
 	/**  The user changed the shortcuts from the defaults. */
 	rebound: boolean,
+	/**  For plugin commands: the menus it shows in (`user`, `game`, `item` or `group`). */
+	context: string | null,
 };
 
 /**  A community in search results. */
@@ -1345,6 +1403,7 @@ export type NotifyView = {
 	friendRequests: boolean,
 	experienceUpdates: boolean,
 	sales: boolean,
+	plugins: boolean,
 };
 
 export type OutfitView = {
@@ -1430,6 +1489,13 @@ export type PayoutRow = {
 	percent: number,
 };
 
+export type PermissionView = {
+	key: string,
+	label: string,
+	/**  Granted per account, so it needs accounts ticked. */
+	perAccount: boolean,
+};
+
 /**  Someone in a people list: a friend request, a follower, a blocked user. */
 export type Person = {
 	id: Id,
@@ -1462,6 +1528,103 @@ export type PlaceCard = {
 	creator: string,
 	/**  Paid access price; `None` when free to play. */
 	price: number | null,
+};
+
+/**  Actions a plugin command proposed, for the user to run or cancel. */
+export type PluginActionsView = {
+	plugin: string,
+	pluginName: string,
+	account: Id,
+	/**  The account's label or display name. */
+	accountName: string,
+	actions: ProposedView[],
+};
+
+/**  How often a plugin may run one tier 2 action an hour without a click. */
+export type PluginCapView = {
+	key: string,
+	title: string,
+	value: number,
+	/**  The most it can be; the user can only lower it. */
+	max: number,
+};
+
+/**  A plugin folder waiting in the install dialog. */
+export type PluginInstallView = {
+	id: string,
+	name: string,
+	version: string,
+	author: string | null,
+	source: string,
+	unpacked: boolean,
+	/**  The installed version it replaces. */
+	replaces: string | null,
+	/**  Permission and action keys not agreed to before. */
+	added: string[],
+	asks: Asks,
+	/**  Accounts ticked to start with. */
+	accounts: Id[],
+};
+
+/**  A screen a plugin asked to open, as a built-in command to run once per `seq`. */
+export type PluginOpenView = {
+	seq: Id,
+	command: string,
+	arg: string,
+};
+
+export type PluginOptionView = {
+	value: string,
+	label: string,
+};
+
+export type PluginSettingKind = "bool" | "choice" | "range" | "text";
+
+/**  One of a plugin's `[[settings]]`. Values cross as text, as `plugin.set` takes them. */
+export type PluginSettingView = {
+	key: string,
+	title: string,
+	description: string,
+	kind: PluginSettingKind,
+	options: PluginOptionView[],
+	min: number,
+	max: number,
+	step: number,
+	placeholder: string,
+	/**  `on`/`off`, an option value, a number or text. */
+	value: string,
+	default: string,
+};
+
+export type PluginState = "off" | "loading" | "running" | 
+/**  Asks for more than was agreed to. */
+"review" | "failed";
+
+export type PluginView = {
+	id: string,
+	name: string,
+	version: string,
+	author: string | null,
+	/**  The folder, for unpacked plugins. */
+	path: string | null,
+	enabled: boolean,
+	state: PluginState,
+	/**  Why it failed to load. */
+	error: string | null,
+	/**  What it asks for beyond what was agreed to, while in review. */
+	review: string[],
+	/**  Titles of the commands it registered. */
+	commands: string[],
+	/**  Events it listens to, while running. */
+	listens: string[],
+	/**  Seconds between runs of each timer, while running. */
+	timers: number[],
+	settings: PluginSettingView[],
+	/**  Hourly caps on tier 2 actions it runs without a click. */
+	caps: PluginCapView[],
+	asks: Asks | null,
+	/**  Accounts it may use. */
+	accounts: Id[],
 };
 
 /**  A point on a chart: ms since the epoch, value. */
@@ -1596,6 +1759,14 @@ export type ProfileView = {
 	note: string | null,
 };
 
+/**  One action in the action dialog. */
+export type ProposedView = {
+	key: string,
+	title: string,
+	arg: string | null,
+	tier: number,
+};
+
 export type RecentView = {
 	/**  Outfit ids can pass 2^53. */
 	id: string,
@@ -1603,6 +1774,12 @@ export type RecentView = {
 	outfit: boolean,
 	typeId: number,
 	typeName: string,
+};
+
+/**  Something the manifest asked for that the plugin won't get. */
+export type RefusedView = {
+	what: string,
+	why: string,
 };
 
 export type RelationView = {
@@ -1799,6 +1976,18 @@ export type Shell = {
 	challenge: ChallengeView | null,
 	/**  A theme waiting in the import dialog. */
 	themeImport: ThemeImportView | null,
+	/**  A plugin folder waiting in the install dialog. */
+	pluginInstall: PluginInstallView | null,
+	/**  Actions a plugin proposed, waiting in the action dialog. */
+	pluginActions: PluginActionsView | null,
+	/**  A screen a plugin asked to open. The UI runs it once per `seq`. */
+	pluginOpen: PluginOpenView | null,
+	/**  Changes when plugin commands do; the UI reloads the command list. */
+	pluginRev: Id,
+	/**  The account in the "Allow automation" dialog, while it is open. */
+	pluginAutomation: AutomationView | null,
+	/**  When a plugin last wrote, in Unix seconds, for the stop indicator. */
+	pluginWrote: Id | null,
 	/**  The "Sign in another device" dialog, once a code was entered. */
 	approve: ApproveView | null,
 	/**  The authenticator setup or recovery codes dialog, while it is open. */

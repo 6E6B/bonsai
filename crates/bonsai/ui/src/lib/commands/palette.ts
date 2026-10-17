@@ -68,6 +68,13 @@ export interface PaletteTheme {
   builtin: boolean
 }
 
+/** An installed plugin, for `plugin.*`. */
+export interface PalettePlugin {
+  id: string
+  name: string
+  enabled: boolean
+}
+
 /** A setting, for `settings.set` and `settings.reset`. */
 export type PalettePref = Pick<PrefView, "key" | "section" | "title" | "keywords" | "kind" | "options">
 
@@ -102,6 +109,8 @@ function settingRows(c: CommandInfo, prefs: PalettePref[]): PaletteEntry[] {
 /** Typed-argument commands that also do something with no argument, and that row's title. */
 const BARE: Record<string, string> = {
   "theme.import": "Import theme from a file",
+  "plugin.install": "Install plugin from a folder",
+  "plugin.load_unpacked": "Load unpacked plugin from a folder",
 }
 
 /** Rows for `settings.reset`: everything, then each section that has settings. */
@@ -119,7 +128,7 @@ function resetRows(c: CommandInfo, prefs: PalettePref[]): PaletteEntry[] {
 }
 
 /** Every command, with one row per choice for arguments that have a short fixed list
- * (accounts, settings sections, colors, modes, themes, tabs, sidebar screens, settings) and an
+ * (accounts, settings sections, colors, modes, themes, tabs, sidebar screens, settings, plugins) and an
  * asking row for typed arguments. */
 export function paletteEntries(
   commands: CommandInfo[],
@@ -128,6 +137,7 @@ export function paletteEntries(
   screens: PaletteScreen[] = [],
   themes: PaletteTheme[] = [],
   prefs: PalettePref[] = [],
+  plugins: PalettePlugin[] = [],
 ): PaletteEntry[] {
   const out: PaletteEntry[] = []
   for (const c of commands) {
@@ -163,6 +173,12 @@ export function paletteEntries(
         break
       case "theme":
         for (const t of themes) if (!(c.id === "theme.delete" && t.builtin)) choice(t.id, t.name)
+        break
+      case "plugin":
+        for (const x of plugins) {
+          if ((c.id === "plugin.enable" && x.enabled) || (c.id === "plugin.disable" && !x.enabled)) continue
+          choice(x.id, x.name)
+        }
         break
       case "tab":
         for (const t of tabs) choice(t.key, t.title)

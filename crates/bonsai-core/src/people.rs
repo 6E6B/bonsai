@@ -138,33 +138,7 @@ const RELATION_AGE: i64 = 60;
 impl Core {
     /// Profile header for any user.
     pub fn profile(&self, user_id: u64) -> Res<Profile> {
-        self.inner.res(
-            Key::shared("profile", user_id),
-            PROFILE_AGE,
-            move |f| async move {
-                let id = user_id as i64;
-                let c = &f.client;
-                let (u, fr, fo, fg) = tokio::join!(
-                    users::v1::get_users_by_user_id(c, id),
-                    friends::v1::get_users_by_user_id_friends_count(c, id),
-                    friends::v1::get_users_by_target_user_id_followers_count(c, id),
-                    friends::v1::get_users_by_target_user_id_followings_count(c, id),
-                );
-                let u = u?;
-                Ok(Profile {
-                    id: user_id,
-                    name: u.name.unwrap_or_default(),
-                    display_name: u.display_name.unwrap_or_default(),
-                    description: u.description.unwrap_or_default(),
-                    created: u.created.unwrap_or_default(),
-                    verified: u.has_verified_badge.unwrap_or(false),
-                    banned: u.is_banned.unwrap_or(false),
-                    friends: fr.ok().and_then(|r| r.count).unwrap_or(-1) as i64,
-                    followers: fo.ok().and_then(|r| r.count).unwrap_or(-1),
-                    following: fg.ok().and_then(|r| r.count).unwrap_or(-1),
-                })
-            },
-        )
+        self.inner.profile(user_id)
     }
 
     /// How `account` relates to `user_id` (friend state, follow, block).
@@ -305,49 +279,7 @@ impl Core {
 
     /// Pending friend requests to `account`, newest first.
     pub fn friend_requests(&self, account: AccountId, more: bool) -> Res<Page<FriendRequest>> {
-        self.inner.paged(
-            Key::private(account, "friend_requests", ""),
-            LIST_AGE,
-            more,
-            move |f, cursor| async move {
-                let p = friends::v1::GetMyFriendsRequestsParams {
-                    limit: Some(50),
-                    cursor,
-                    ..Default::default()
-                };
-                let r = friends::v1::get_my_friends_requests(&f.client, &p).await?;
-                let items: Vec<FriendRequest> = r
-                    .data
-                    .unwrap_or_default()
-                    .into_iter()
-                    .filter_map(|x| {
-                        let fr = x.friend_request.unwrap_or_default();
-                        Some(FriendRequest {
-                            user_id: x.id.or(fr.sender_id)? as u64,
-                            name: x.name.unwrap_or_default(),
-                            display_name: x.display_name.unwrap_or_default(),
-                            sent_at: fr.sent_at.unwrap_or_default(),
-                            mutuals: x.mutual_friends_list.unwrap_or_default(),
-                            origin: fr
-                                .origin_source_type
-                                .and_then(|o| o.name())
-                                .map(str::to_string)
-                                .unwrap_or_default(),
-                        })
-                    })
-                    .collect();
-                f.note_users(items.iter().filter(|x| !x.name.is_empty()).map(|x| UserInfo {
-                    id: x.user_id,
-                    name: x.name.clone(),
-                    display_name: x.display_name.clone(),
-                    verified: false,
-                }));
-                Ok(Page {
-                    items,
-                    next: r.next_page_cursor,
-                })
-            },
-        )
+        self.inner.friend_requests(account, more)
     }
 
     /// Friends of any user (ids; names come from [`Core::want_users`]).
@@ -982,6 +914,90 @@ fn whereabouts(name: &str, p: &Presence, game: Option<&str>) -> String {
         PresenceKind::InStudio => format!("{name} is in Studio."),
         PresenceKind::Online => format!("{name} is online, not in an experience."),
         PresenceKind::Offline | PresenceKind::Invisible => format!("{name} is offline."),
+    }
+}
+
+impl crate::core::Inner {
+    /// Pending friend requests to `account`, newest first.
+    pub(crate) fn friend_requests(
+        self: &std::sync::Arc<Self>,
+        account: AccountId,
+        more: bool,
+    ) -> Res<Page<FriendRequest>> {
+        self.paged(
+            Key::private(account, "friend_requests", ""),
+            LIST_AGE,
+            more,
+            move |f, cursor| async move {
+                let p = friends::v1::GetMyFriendsRequestsParams {
+                    limit: Some(50),
+                    cursor,
+                    ..Default::default()
+                };
+                let r = friends::v1::get_my_friends_requests(&f.client, &p).await?;
+                let items: Vec<FriendRequest> = r
+                    .data
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(|x| {
+                        let fr = x.friend_request.unwrap_or_default();
+                        Some(FriendRequest {
+                            user_id: x.id.or(fr.sender_id)? as u64,
+                            name: x.name.unwrap_or_default(),
+                            display_name: x.display_name.unwrap_or_default(),
+                            sent_at: fr.sent_at.unwrap_or_default(),
+                            mutuals: x.mutual_friends_list.unwrap_or_default(),
+                            origin: fr
+                                .origin_source_type
+                                .and_then(|o| o.name())
+                                .map(str::to_string)
+                                .unwrap_or_default(),
+                        })
+                    })
+                    .collect();
+                f.note_users(items.iter().filter(|x| !x.name.is_empty()).map(|x| UserInfo {
+                    id: x.user_id,
+                    name: x.name.clone(),
+                    display_name: x.display_name.clone(),
+                    verified: false,
+                }));
+                Ok(Page {
+                    items,
+                    next: r.next_page_cursor,
+                })
+            },
+        )
+    }
+
+    /// Profile header for any user.
+    pub(crate) fn profile(self: &std::sync::Arc<Self>, user_id: u64) -> Res<Profile> {
+        self.res(
+            Key::shared("profile", user_id),
+            PROFILE_AGE,
+            move |f| async move {
+                let id = user_id as i64;
+                let c = &f.client;
+                let (u, fr, fo, fg) = tokio::join!(
+                    users::v1::get_users_by_user_id(c, id),
+                    friends::v1::get_users_by_user_id_friends_count(c, id),
+                    friends::v1::get_users_by_target_user_id_followers_count(c, id),
+                    friends::v1::get_users_by_target_user_id_followings_count(c, id),
+                );
+                let u = u?;
+                Ok(Profile {
+                    id: user_id,
+                    name: u.name.unwrap_or_default(),
+                    display_name: u.display_name.unwrap_or_default(),
+                    description: u.description.unwrap_or_default(),
+                    created: u.created.unwrap_or_default(),
+                    verified: u.has_verified_badge.unwrap_or(false),
+                    banned: u.is_banned.unwrap_or(false),
+                    friends: fr.ok().and_then(|r| r.count).unwrap_or(-1) as i64,
+                    followers: fo.ok().and_then(|r| r.count).unwrap_or(-1),
+                    following: fg.ok().and_then(|r| r.count).unwrap_or(-1),
+                })
+            },
+        )
     }
 }
 

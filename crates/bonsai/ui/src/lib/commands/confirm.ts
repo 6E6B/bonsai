@@ -65,6 +65,12 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
           confirm: "Reset",
           danger: true,
         },
+  "plugin.remove": () => ({
+    title: "Remove this plugin?",
+    description: "Its folder is deleted. An unpacked plugin is only forgotten; its folder stays.",
+    confirm: "Remove",
+    danger: true,
+  }),
   "theme.delete": () => ({
     title: "Delete this theme?",
     description: "Export it first if you want to keep a copy.",

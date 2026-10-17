@@ -9,6 +9,7 @@ crates/
   bonsai-api/     Roblox API client. The only crate that touches the network.
   bonsai-core/    Domain logic: accounts, store, cache, commands, background jobs.
   bonsai-codegen/ Generates bonsai-api wrappers from specs (`cargo xtask codegen`).
+  bonsai-plugin/  Plugin manifests and the Luau sandbox. No network, no store. See docs/plugins.md.
   bonsai/         Tauri 2 shell. Wires bonsai-core to the UI. No domain logic.
     src/ipc.rs      Typed commands and events (tauri-specta).
     src/notify.rs   Batches store changes into one `storeChanged` event per frame.

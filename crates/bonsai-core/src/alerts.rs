@@ -8,6 +8,7 @@ use std::collections::{HashMap, HashSet};
 
 use bonsai_api::AccountId;
 use bonsai_api::generated::notifications;
+use serde_json::json;
 
 use crate::Core;
 use crate::core::Inner;
@@ -101,6 +102,50 @@ impl Inner {
         for (kind, text) in unread_alerts(&before, &now) {
             self.alert(account, kind, self.account_title(account), text);
         }
+        for (event, a, b) in [
+            ("friend_request", before.friend_requests, now.friend_requests),
+            ("trade", before.trades, now.trades),
+            ("message", before.messages, now.messages),
+        ] {
+            if b > a {
+                self.plugin_event(account, event, json!({ "new": b - a, "total": b }));
+            }
+        }
+    }
+
+    /// Tells plugins about friends whose status changed, as one `presence` event.
+    pub(crate) fn note_presence_changes(
+        &self,
+        account: AccountId,
+        before: &HashMap<u64, Presence>,
+        after: &HashMap<u64, Presence>,
+    ) {
+        if !self.plugins_listen("presence") {
+            return;
+        }
+        let mut changed: Vec<(u64, PresenceKind, &Presence)> = after
+            .iter()
+            .filter(|(id, _)| **id != account.0)
+            .filter_map(|(id, p)| {
+                before
+                    .get(id)
+                    .filter(|b| b.kind != p.kind)
+                    .map(|b| (*id, b.kind, p))
+            })
+            .collect();
+        if changed.is_empty() {
+            return;
+        }
+        changed.sort_unstable_by_key(|(id, ..)| *id);
+        let list: Vec<serde_json::Value> = changed
+            .into_iter()
+            .map(|(id, was, p)| {
+                let mut v = crate::plugins::presence_view(id, p);
+                v["was"] = crate::plugins::status(was).into();
+                v
+            })
+            .collect();
+        self.plugin_event(account, "presence", serde_json::Value::Array(list));
     }
 
     /// A fresh presence map for friends: alert for those who started playing.
@@ -127,10 +172,15 @@ impl Inner {
     }
 
     /// A chat message arrived over realtime.
-    pub(crate) fn note_chat(&self, account: AccountId, sender: u64) {
+    pub(crate) fn note_chat(&self, account: AccountId, sender: u64, conversation: &str) {
         if sender == account.0 {
             return;
         }
+        self.plugin_event(
+            account,
+            "chat",
+            json!({ "from": sender, "conversation": conversation }),
+        );
         let name = self.store.read().user_title(sender);
         self.alert(account, "chats", name, "New chat message");
     }
@@ -138,7 +188,8 @@ impl Inner {
     /// The notification stream changed: read the newest entries and alert for experience
     /// updates not seen before. The first read this run only remembers what is there.
     pub(crate) async fn note_stream(&self, account: AccountId) {
-        if !self.settings.read().notify.experience_updates {
+        let plugins = self.plugins_listen("game_update");
+        if !self.settings.read().notify.experience_updates && !plugins {
             return;
         }
         let Some(c) = self.client(account) else { return };
@@ -166,6 +217,9 @@ impl Inner {
             } else {
                 n.title
             };
+            if plugins {
+                self.plugin_event(account, "game_update", json!({ "title": title, "body": n.body }));
+            }
             self.alert(account, "experience_updates", title, n.body);
         }
     }

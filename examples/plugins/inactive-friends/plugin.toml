@@ -1,0 +1,20 @@
+id = "inactive-friends"
+name = "Inactive friends"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["read.account"]
+# Tier 2: always shown in the confirm dialog unless automation is on. This plugin only proposes.
+actions = ["user.unfriend"]
+
+[[settings]]
+key = "days"
+title = "Inactive after"
+description = "Days since Bonsai last saw them online."
+kind = "range"
+min = 7
+max = 365
+step = 7
+default = 90

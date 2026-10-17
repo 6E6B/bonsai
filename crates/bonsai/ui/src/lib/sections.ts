@@ -22,6 +22,7 @@ export const settingsSections = [
   { value: "shortcuts", label: "Keyboard", icon: "keyboard", group: "app" },
   { value: "desktop", label: "Desktop", icon: "devices", group: "app" },
   { value: "accounts", label: "Accounts on this computer", icon: "friends", group: "app" },
+  { value: "plugins", label: "Plugins", icon: "plugin", group: "app" },
   { value: "data", label: "Data and storage", icon: "database", group: "app" },
   { value: "developer", label: "Developer", icon: "code", group: "app" },
 ] as const satisfies readonly { value: string; label: string; icon: IconName; group: SettingsGroup }[]

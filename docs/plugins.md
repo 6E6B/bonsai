@@ -40,7 +40,9 @@ Plugins are written in [Luau](https://luau.org), embedded with `mlua` (`luau` fe
 
 Each plugin gets its own VM on a plugin worker thread, with:
 
-- a time limit per call (about 50 ms for a command handler, more for handlers that yield);
+- a time limit per call (50 ms for a command handler, 250 ms for loading). Only time in Luau
+  counts; time waiting on the host doesn't. Once tripped, the limit keeps failing until the call
+  ends, so `pcall` can't swallow it;
 - a memory cap (about 32 MB);
 - no `io`, `os`, `debug`, file-based `require`, `getfenv`/`setfenv`, or bytecode loading.
   `require` only resolves modules inside the plugin's own folder.
@@ -65,6 +67,17 @@ permissions = [
   "notify",
 ]
 actions = ["user.unfriend", "user.decline_friend"]   # built-in commands it may run or propose
+
+[[settings]]                   # at most 50; shown under Settings > Plugins > name
+key = "min_age"                # lowercase letters, digits and _, at most 64
+title = "Decline accounts younger than"
+description = "In days."
+kind = "range"                 # bool | choice | range | text
+min = 0                        # range: min, max (default 0..100), step (default 1)
+max = 30
+default = 7                    # else false, the first option, min or ""
+# choice: options = ["quiet", { value = "loud", label = "Loud" }]
+# text: placeholder = "..."
 ```
 
 Reading is tolerant like themes: unknown keys are ignored, an unknown permission or action is
@@ -135,14 +148,14 @@ commands `plugins.allow_automation` and `plugins.block_automation`.
 
 ```lua
 bonsai.command {
-  id = "unfriend-inactive",
-  title = "Unfriend people offline more than 6 months",
-  keywords = { "friends", "cleanup", "inactive" },
+  id = "unfriend-banned",
+  title = "Unfriend banned accounts",
+  keywords = { "friends", "cleanup", "banned" },
   arg = "none",                 -- none | text | user | game | item | account
   run = function(ctx, arg)
     local out = {}
-    for _, f in ctx.friends(ctx.account) do
-      if f.last_online and ctx.now - f.last_online > 180 * 86400 then
+    for _, f in ctx.friends() do
+      if ctx.user(f.id).banned then
         table.insert(out, { id = "user.unfriend", arg = tostring(f.id) })
       end
     end
@@ -150,12 +163,14 @@ bonsai.command {
   end,
 }
 
-bonsai.on("friend_request", function(ctx, req)
-  local user = ctx.user(req.from)
-  if user.created and ctx.now - user.created < 7 * 86400 then
-    -- Tier 2: runs unattended only if automation is on for ctx.account and the plugin is granted
-    -- user.decline_friend there. Otherwise it raises an error the plugin can catch.
-    ctx.run("user.decline_friend", tostring(req.from))
+bonsai.on("friend_request", function(ctx, e)
+  for _, req in ctx.friend_requests{ limit = e.new } do
+    local user = ctx.user(req.id)
+    if user.created and ctx.now - user.created < ctx.settings.min_age * 86400 then
+      -- Tier 2: runs unattended only if automation is on for ctx.account and the plugin is
+      -- granted user.decline_friend there. Otherwise it raises an error the plugin can catch.
+      ctx.run("user.decline_friend", tostring(req.id))
+    end
   end
 end)
 ```
@@ -176,16 +191,69 @@ end)
 |---|---|
 | `bonsai.command` | Registry entry `plugin.<plugin>.<id>`. No default shortcuts; the user binds them. |
 | `context = "user"` etc. on a command | Shown in menus where `commandContext()` matches. |
-| `bonsai.on(event, fn)` | Presence, friend request, trade received, message, game update. Runs per granted account. |
-| `bonsai.every(seconds, fn)` | A timer per granted account, at least 60 s apart. |
-| `settings` in the manifest | Shown under Settings > Plugins > name, with `PrefKind`-style kinds. |
-| `bonsai.store.get/set` | Key-value storage per plugin and **per account**, capped in size. |
+| `bonsai.on(event, fn)` | See [Events](#events). Runs per granted account. |
+| `bonsai.every(seconds, fn)` | A timer, run once per granted account each time. |
+| `[[settings]]` in the manifest | Shown under Settings > Plugins > name; read with `ctx.settings`. |
+| `ctx.store.get/set` | Key-value storage per plugin and **per account**, capped in size. |
+
+### Events
+
+`bonsai.on(event, fn)` and `bonsai.every(seconds, fn)` only work while `main.luau` loads. Events
+need `read.account`, and each plugin listens to an event once. `fn(ctx, payload)` runs as each
+granted account it happened to; a plugin with no free queue slot misses it.
+
+| Event | When | Payload |
+|---|---|---|
+| `presence` | A friends' presence refresh saw statuses change | a list of `id, status, was, place_id, universe_id, location` |
+| `friend_request` | The unread count went up | `new, total` |
+| `trade` | The inbound trade count went up | `new, total` |
+| `message` | The unread message count went up | `new, total` |
+| `chat` | A chat message from someone else arrived | `from, conversation` |
+| `game_update` | A new experience update in the notification stream | `title, body` |
+
+- Timers take whole seconds from 60 to 86400, at most 10 per plugin. The first run is one
+  interval after the plugin starts. Each run calls `fn(ctx)` once per granted, known account, or
+  once as account 0 with none.
+- From an event or timer, `alert` is a desktop alert (kind "Plugin alerts" in Settings >
+  Notifications) when the plugin has `notify` and the account; otherwise a toast. `open` is
+  refused. Actions run by themselves when every one may run unattended (tier 1, or tier 2 with
+  automation on and under the cap); otherwise the batch waits in the action dialog.
+
+### Storage and settings
+
+- `ctx.store.get(key)` and `ctx.store.set(key, value)` keep JSON values (nil, booleans,
+  numbers, strings, lists and string-keyed tables, 16 deep) for `ctx.account`. Keys are 1 to 128
+  bytes; setting nil deletes. Account 0 is the plugin's own storage. At most 100 sets a call and
+  256 KB per account; a full store raises an error. Kept in `config/plugin-data/<plugin>/<account>.json`
+  and deleted with the plugin.
+- `ctx.settings.<key>` is each manifest setting's value: a boolean, an option value, a number or
+  text. It is read-only. The user changes it in Settings > Plugins or with `plugin.set`
+  ("plugin key value"; no value resets it). Values survive updates; an invalid one falls back to
+  the default.
 
 ### Reads
 
 `ctx.user(id)`, `ctx.game(id)`, `ctx.item(id)`, `ctx.presence(ids)`, `ctx.friends()`,
-`ctx.inventory(filter)`, `ctx.trades()`. They read through the cache and the shared rate limiter,
+`ctx.inventory(filter)`, `ctx.trades()`, `ctx.friend_requests()`. They read through the cache and the shared rate limiter,
 like the rest of the app. Private reads need `read.account` for `ctx.account`.
+
+| Read | Takes | Returns |
+|---|---|---|
+| `ctx.user(id)` | user id | `id, name, display_name, description, created, verified, banned, friends, followers, following` |
+| `ctx.game(id)` | place id | `universe_id, place_id, name, description, ...`, or nil if there is none |
+| `ctx.item(id, kind)` | asset id, `kind` `"asset"` (default) or `"bundle"` | the item's catalog details |
+| `ctx.presence(ids)` | up to 100 user ids | a list of `id, status, place_id, universe_id, location` |
+| `ctx.friends()` | | a list of `id, name, display_name, status` |
+| `ctx.inventory{user, asset_type, bundle_type, limit}` | all optional; `user` defaults to `ctx.account`, no type means collectibles; `limit` 100, at most 1000 | a list of items |
+| `ctx.trades{status, limit}` | `status` `inbound` (default), `outbound`, `completed` or `inactive`; `limit` 25, at most 100 | a list of trades |
+| `ctx.friend_requests{limit}` | `limit` 50, at most 500 | a list of `id, name, display_name, sent, mutuals, origin` |
+
+- Fields are snake_case. Dates are unix seconds, like `ctx.now`. Unknown counts are nil.
+  `status` is `offline`, `online`, `in_game`, `in_studio` or `invisible`.
+- `read.public` covers user, game and item; `read.account` the rest, and only for an account
+  the plugin was granted. Ids are whole numbers or numeric strings.
+- A call makes at most 200 reads. Each waits up to 15 s for the network, off the plugin's clock.
+  A read that fails raises an error the plugin can catch with `pcall`.
 
 ## Layout
 
@@ -195,8 +263,8 @@ like the rest of the app. Private reads need `read.account` for `ctx.account`.
   permission, automation and budget state; the activity log; plugin commands in the registry.
   Tier checks live here, not in the sandbox crate.
 - `bonsai`: IPC views (`PluginInfo`, `PluginActivity`), nothing else.
-- UI: `features/plugins` for Settings > Plugins, the grant, automation and action dialogs, and
-  the activity log.
+- UI: `features/plugins` for the install/review, automation and action dialogs and the activity
+  log; `features/settings/plugins.tsx` for Settings > Plugins; `lib/plugins.ts` for tier labels.
 
 Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
 
@@ -209,43 +277,97 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   `lib/commands/confirm.ts` still holds the dialog text for built-in confirms; the effect isn't
   sent to the UI until the action dialog needs it.
 - `CommandRef = Builtin(CommandId) | Plugin(PluginCmd)`. `Registry` holds plugin commands next to
-  the built-in ones and `commands()` returns both. `run_command` refuses plugin keys until
-  phase 3. Plugin commands can't be rebound yet: overrides are still keyed by `CommandId`.
+  the built-in ones and `commands()` returns both. Plugin commands can't be rebound yet:
+  overrides are still keyed by `CommandId`.
 
-### 1. Sandbox
+### 1. Sandbox (done)
 
 - `bonsai-plugin` crate: manifest, VM setup, limits, `Host` trait.
 - Tests that escapes fail (`os`, `io`, `debug`, `getfenv`, `load`, string metatable, `require`
   outside the folder), that time and memory limits trip, and that undeclared actions are refused.
+- Built: `bonsai.command`, the `ctx` table (`account`, `now`, `run`), returned outcomes, `print`
+  to the host log, `require` inside the folder (symlinks out are refused, bytecode isn't
+  loaded). Reads came in phase 4; events, timers, storage and settings in phase 5. Not yet:
+  yielding host calls; host calls block the plugin's thread for now.
+- Errors raised by host functions reach Luau as error objects; plugins `tostring` them.
 
-### 2. Install and manage
+### 2. Install and manage (done)
 
 - Settings > Plugins: list, enable, disable, permissions per account, remove.
 - Install from a folder. "Load unpacked plugin" for development, with reload on change (the
   theme folder watcher is the model).
 - Commands: `plugin.install`, `plugin.enable`, `plugin.disable`, `plugin.remove`,
   `plugin.reload`.
+- Built: also `plugin.load_unpacked`, `plugin.review`, `plugin.grant` and `plugin.revoke` (the
+  last two act on the current account). Install copies the folder (no dot files or symlinks,
+  500 files, 20 MB) through a temp folder; unpacked plugins load in place and are only
+  forgotten on remove. A 2 s watcher hashes each folder and restarts a plugin whose files
+  changed. Each running plugin has its own thread.
+- The install dialog opens from `plugin_install` in the store, like theme import. It lists
+  permissions, actions by tier and what was refused (non-writes, tier 4, unknown keys) before
+  anything is copied.
+- `config/plugins.json` holds, per plugin, on/off, the granted accounts and the permissions and
+  actions the user agreed to. A manifest that asks for more waits as "Needs review" and doesn't
+  start; turning it on opens the dialog listing only what's new.
 
-### 3. Commands and confirmed actions
+### 3. Commands and confirmed actions (done)
 
 - Plugin commands in the command bar and context menus.
 - The action dialog. Errors and timeouts show a toast naming the plugin.
+- Built: running plugins' commands are listed as "Plugin name: title", with the plugin's name in
+  the keywords. Context menus for users, games, items and communities have a Plugins submenu for
+  commands with that `context`; the arg is the page's id (a place id for games). A command run
+  with no arg takes it from the page context.
+- `ctx.account` is the acting account only if the plugin was granted it, else 0. Each plugin
+  queues at most 8 calls; past that the command toasts that the plugin is busy.
+- Outcomes: `toast` and `alert` show a toast naming the plugin (from events and timers, an
+  alert can be a desktop alert; see [Events](#events)); `open` runs the built-in open command for that kind; `actions` are
+  checked (at most 100, account granted, each action agreed to and tier 1 to 3). All tier 1
+  runs at once; anything higher opens the action dialog, which lists every action with its tier.
+  Confirming checks the batch again, then runs it through the same dispatch as built-in
+  commands and toasts how many ran.
+- `ctx.run` came in phase 6. Not yet: plugin commands can't be rebound.
 
-### 4. Reads
+### 4. Reads (done)
 
 - The read functions above over the store and cache, with permission checks.
+- Built: see [Reads](#reads). Each read checks, in bonsai-core, that the plugin is running, the
+  permission was agreed to and, for private reads, the account is granted and signed in. Users,
+  items, inventories and trades use the same cached resources as their screens. Games use the
+  store, else load the place. Friends and friends' presence come from the store; presence for
+  anyone else is fetched in chunks of 50 and not stored, so it never fires friend-join alerts.
 
-### 5. Events, timers, storage and settings
+### 5. Events, timers, storage and settings (done)
 
 - Events and timers per granted account. Alerts through `alerts.rs` and the user's notification
   settings.
 - Per-account storage and manifest settings.
+- Built: see [Events](#events) and [Storage and settings](#storage-and-settings). The watchers
+  that raise Bonsai's own alerts (`note_unread`, `note_chat`, `note_stream`, presence refreshes)
+  also send plugin events; the notification stream is read when a plugin listens to
+  `game_update` even if its alert is off. Events are sent with `try_send` and never wait.
+  Timers run on the plugin's thread between calls. Storage loads lazily on the plugin's thread
+  and writes through a temp file. A new `notify.plugins` kind (on by default) gates plugin
+  alerts. Settings > Plugins lists what each plugin listens to, its timers and its settings
+  with the same controls as Bonsai's own.
 
-### 6. Automation
+### 6. Automation (done)
 
 - `ctx.run` with tier checks, the per-account automation toggle, rate caps, the activity log and
   the kill switch. Tier 1 and 2 only.
 - Tests for every refusal: not granted, automation off, cap reached, tier 4, plugin stopped.
+- Built: `ctx.run` runs tier 1, and tier 2 when automation is on and under the cap; anything
+  else fails with an error saying why. One call can make at most 50 `ctx.run` calls. Actions
+  returned from events and timers run by themselves under the same rules; anything that can't
+  opens the action dialog. Each unattended run checks that the plugin is running, that
+  automation is still on and that `plugins.stop_all` hasn't run since the call started, so
+  turning either off drops queued writes. The toggle is per account in `config/plugins.json`.
+  `plugins.allow_automation` opens a dialog where the user types the account's name. Caps
+  count successful unattended runs in the last hour; `plugin.cap` lowers one (Settings >
+  Plugins has a slider per tier 2 action). `config/plugin-activity.jsonl` logs every write,
+  confirmed or not, keeping the last hour plus 500 older entries; a refusal repeated within a
+  minute is logged once. The top bar shows a stop button for five minutes after a write.
+  `plugins.stop_all` (Ctrl+Shift+Backspace) turns every plugin off.
 
 ### 7. Budgets
 

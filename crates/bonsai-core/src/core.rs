@@ -129,6 +129,7 @@ pub(crate) struct Inner {
     pub(crate) browser_tracker_id: u64,
     pub(crate) settings: RwLock<Settings>,
     pub(crate) themes: RwLock<crate::themes::Themes>,
+    pub(crate) plugins: Mutex<crate::plugins::Plugins>,
     /// Whether the OS prefers dark, as the UI last reported. Picks the theme in System mode.
     pub(crate) system_dark: std::sync::atomic::AtomicBool,
     toast_seq: Mutex<u64>,
@@ -219,6 +220,7 @@ impl Core {
             browser_tracker_id: 100_000_000_000 + fastrand::u64(0..899_999_999_999),
             settings: RwLock::new(settings),
             themes: RwLock::new(themes),
+            plugins: Default::default(),
             system_dark: std::sync::atomic::AtomicBool::new(true),
             toast_seq: Mutex::new(0),
             challenge: Default::default(),
@@ -235,6 +237,7 @@ impl Core {
             rt: rt.handle().clone(),
         });
         inner.load_clients();
+        crate::plugins::load(&inner);
         {
             let weak = Arc::downgrade(&inner);
             inner.limiter.set_on_block(move |host, wait| {
@@ -259,6 +262,7 @@ impl Core {
             rt.spawn(tidy_loop(inner.clone()));
             rt.spawn(crate::chat::realtime_loop(inner.clone()));
             rt.spawn(crate::themes::watch_loop(inner.clone()));
+            rt.spawn(crate::plugins::watch_loop(inner.clone()));
         }
         let core = Core {
             inner,
@@ -1125,6 +1129,7 @@ impl Inner {
             before
         };
         self.note_joins(id, &before, &all);
+        self.note_presence_changes(id, &before, &all);
         self.load_universes(&universes).await;
     }
 

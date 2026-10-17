@@ -1,4 +1,5 @@
-import { menuItem } from "~/lib/commands/registry"
+import { commandList, menuItem } from "~/lib/commands/registry"
+import { type PluginContext, pluginCommandsFor } from "~/lib/plugins"
 import { shell } from "~/lib/store"
 import type { MenuEntry } from "~/lib/ui"
 
@@ -30,6 +31,12 @@ export function accountItems(id: string): MenuEntry[] {
 function joinAs(target: string): MenuEntry[] {
   const items = joinAsItems("game.join_as", target)
   return items.length > 0 ? [{ kind: "submenu", label: "Join as", icon: "user", items }] : []
+}
+
+/** A Plugins submenu with the plugin commands for this kind of thing, or nothing. */
+export function pluginMenu(kind: PluginContext, id: number): MenuEntry[] {
+  const items = pluginCommandsFor(commandList(), kind).map((c) => menuItem(c.id, { arg: String(id) }))
+  return items.length > 0 ? [{ kind: "submenu", label: "Plugins", icon: "plugin", items }] : []
 }
 
 /** Copy and open-in-browser rows, in one submenu so they don't crowd the actions. */
@@ -110,6 +117,7 @@ export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[
     ...(opts.inGame ? [] : [menuItem("user.find", { arg: id, icon: "search", label: "Find server" })]),
     sep,
     { kind: "submenu", label: "Manage", icon: "sliders", items: manage },
+    ...pluginMenu("user", userId),
     shareMenu(target),
   ]
 }
@@ -121,6 +129,7 @@ export function gameMenu(placeId: number): MenuEntry[] {
     menuItem("game.join", { arg: id, icon: "play" }),
     ...joinAs(id),
     sep,
+    ...pluginMenu("game", placeId),
     shareMenu(`game:${id}`),
   ]
 }
@@ -179,6 +188,7 @@ export function itemMenu(itemId: number, bundle = false, assetType?: number, ext
     menuItem("market.favorite", { arg: target, icon: "star", label: "Toggle favorite" }),
     menuItem("market.wishlist", { arg: target, icon: "heart", label: "Toggle wishlist" }),
     ...(bundle ? [] : templateMenu(itemId, assetType)),
+    ...(bundle ? [] : pluginMenu("item", itemId)),
     shareMenu(target),
     ...(extras.danger?.length ? [sep, ...extras.danger] : []),
   ]
@@ -187,8 +197,10 @@ export function itemMenu(itemId: number, bundle = false, assetType?: number, ext
 /** The "more" menu on entity pages. `target` is the page's thing, like `game:1818`. `first`
  * rows go above the rest. */
 export function entityMenu(target: string, first: MenuEntry[] = []): MenuEntry[] {
+  const group = /^group:(\d+)$/.exec(target)
   return [
     ...(first.length > 0 ? [...first, sep] : []),
+    ...(group ? pluginMenu("group", Number(group[1])) : []),
     menuItem("entity.copy_link", { arg: target, icon: "link" }),
     menuItem("entity.copy_id", { arg: target, icon: "copy" }),
     menuItem("entity.open_website", { arg: target, icon: "external" }),

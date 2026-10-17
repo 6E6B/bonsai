@@ -19,6 +19,9 @@ export function NotificationsSection() {
       <SettingsGroup title="Experiences">
         <PrefRow name="notify.experience_updates" />
       </SettingsGroup>
+      <SettingsGroup title="Plugins">
+        <PrefRow name="notify.plugins" />
+      </SettingsGroup>
       <SettingsGroup title="When">
         <PrefRow name="quiet_hours" />
         <Show when={quiet()?.value === "on"}>

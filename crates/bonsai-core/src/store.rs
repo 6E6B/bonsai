@@ -436,6 +436,18 @@ pub struct StoreData {
     pub challenge: Option<crate::challenge::ChallengePrompt>,
     /// A theme read from a file or a code, waiting for the user to install it.
     pub theme_import: Option<crate::themes::PendingImport>,
+    /// A plugin folder waiting in the install dialog.
+    pub plugin_install: Option<crate::plugins::PendingInstall>,
+    /// Actions a plugin command proposed, waiting in the action dialog.
+    pub plugin_actions: Option<crate::plugins::PendingActions>,
+    /// A screen a plugin command asked to open; the UI opens each `seq` once.
+    pub plugin_open: Option<crate::plugins::PluginOpen>,
+    /// Bumped when the set of plugin commands changes, so the UI reloads the command list.
+    pub plugin_rev: u64,
+    /// The account in the "Allow automation" dialog, while it is open.
+    pub plugin_automation: Option<AccountId>,
+    /// When a plugin last wrote, in Unix seconds, for the stop indicator.
+    pub plugin_wrote: Option<i64>,
     /// Turning on the authenticator app or making recovery codes (see [`crate::security`]).
     pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,
