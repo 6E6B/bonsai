@@ -18,6 +18,7 @@ const initialApp = (): AppSettings => ({
     friendRequests: false,
     experienceUpdates: false,
     sales: true,
+    plugins: true,
   },
   cacheData: null,
   cacheImages: null,

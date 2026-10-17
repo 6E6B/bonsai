@@ -2,6 +2,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::path::Path;
 use std::rc::Rc;
 use std::time::Duration;
@@ -18,6 +19,9 @@ struct FakeHost {
     /// How long `run` and `read` take, to check host time isn't counted.
     delay: Duration,
     fail: Option<String>,
+    /// `ctx.store`, by account and key.
+    store: RefCell<HashMap<(u64, String), serde_json::Value>>,
+    settings: serde_json::Map<String, serde_json::Value>,
 }
 
 impl Host for FakeHost {
@@ -41,6 +45,32 @@ impl Host for FakeHost {
     }
     fn log(&self, _plugin: &str, line: &str) {
         self.logs.borrow_mut().push(line.to_owned());
+    }
+    fn store_get(&self, _plugin: &str, account: u64, key: &str) -> Result<serde_json::Value, String> {
+        Ok(self
+            .store
+            .borrow()
+            .get(&(account, key.to_owned()))
+            .cloned()
+            .unwrap_or_default())
+    }
+    fn store_set(
+        &self,
+        _plugin: &str,
+        account: u64,
+        key: &str,
+        value: serde_json::Value,
+    ) -> Result<(), String> {
+        let mut s = self.store.borrow_mut();
+        if value.is_null() {
+            s.remove(&(account, key.to_owned()));
+        } else {
+            s.insert((account, key.to_owned()), value);
+        }
+        Ok(())
+    }
+    fn settings(&self, _plugin: &str) -> serde_json::Map<String, serde_json::Value> {
+        self.settings.clone()
     }
 }
 
@@ -464,6 +494,7 @@ fn reads_reach_the_host_as_the_account() {
         ctx.presence({ 4, 5 }); ctx.friends()
         ctx.inventory(); ctx.inventory({ user = 6, asset_type = 8, limit = 500 })
         ctx.trades(); ctx.trades({ status = "completed", limit = 100 })
+        ctx.friend_requests()
     "#;
     let (out, reads) = read_with(READER, body, FakeHost::default());
     assert_eq!(out.unwrap(), Outcome::Nothing);
@@ -490,6 +521,7 @@ fn reads_reach_the_host_as_the_account() {
             status: TradeStatus::Completed,
             limit: 100,
         },
+        Read::FriendRequests { limit: 50 },
     ];
     assert_eq!(
         reads,
@@ -577,4 +609,170 @@ fn reads_are_capped_per_call_and_off_the_clock() {
         panic!("expected a toast");
     };
     assert!(t.contains("Not signed in."), "{t}");
+}
+
+const LISTENER: &str = r#"
+id = "test"
+entry = "main.luau"
+permissions = ["read.account"]
+actions = ["user.decline_friend"]
+"#;
+
+#[test]
+fn events_and_timers_register_and_run() {
+    let main = r#"
+        bonsai.on("friend_request", function(ctx, req)
+          return { actions = { { id = "user.decline_friend", arg = req.from } } }
+        end)
+        bonsai.on("presence", function(ctx, list) return { toast = list[1].status .. " " .. ctx.account } end)
+        bonsai.every(300, function(ctx) return { toast = "tick " .. ctx.account } end)
+        bonsai.every(60, function(ctx) end)
+    "#;
+    let f = load_manifest(LISTENER, main, &[], FakeHost::default());
+    let p = f.result.unwrap();
+    assert_eq!(p.events(), vec!["friend_request", "presence"]);
+    assert_eq!(
+        p.timers(),
+        vec![Duration::from_secs(300), Duration::from_secs(60)]
+    );
+    assert_eq!(
+        p.run_event("friend_request", CTX, &serde_json::json!({ "from": 156 }))
+            .unwrap(),
+        Outcome::Actions(vec![Action {
+            id: "user.decline_friend".into(),
+            arg: Some("156".into())
+        }])
+    );
+    assert_eq!(
+        p.run_event("presence", CTX, &serde_json::json!([{ "status": "in_game" }]))
+            .unwrap(),
+        Outcome::Toast("in_game 7".into())
+    );
+    assert_eq!(
+        p.run_event("trade", CTX, &serde_json::json!({})).unwrap(),
+        Outcome::Nothing
+    );
+    assert_eq!(p.run_timer(0, CTX).unwrap(), Outcome::Toast("tick 7".into()));
+    assert_eq!(p.run_timer(1, CTX).unwrap(), Outcome::Nothing);
+}
+
+#[test]
+fn bad_events_and_timers_fail_to_load() {
+    for (manifest, main, want) in [
+        (
+            MANIFEST,
+            "bonsai.on('presence', function() end)",
+            "needs \"read.account\"",
+        ),
+        (
+            LISTENER,
+            "bonsai.on('cookie', function() end)",
+            "no event \"cookie\"",
+        ),
+        (
+            LISTENER,
+            "bonsai.on('chat', function() end) bonsai.on('chat', function() end)",
+            "registered twice",
+        ),
+        (LISTENER, "bonsai.every(59, function() end)", "from 60"),
+        (LISTENER, "bonsai.every(90.5, function() end)", "whole seconds"),
+        (
+            LISTENER,
+            "for i = 1, 11 do bonsai.every(60, function() end) end",
+            "at most 10 timers",
+        ),
+    ] {
+        let err = script_error(
+            load_manifest(manifest, main, &[], FakeHost::default())
+                .result
+                .map(|_| ()),
+        );
+        assert!(err.contains(want), "{main}: {err}");
+    }
+    // Registering later, from a handler, is refused.
+    let p = load_manifest(
+        LISTENER,
+        "bonsai.command { id = 'c', title = 'C', run = function() bonsai.every(60, function() end) end }",
+        &[],
+        FakeHost::default(),
+    )
+    .result
+    .unwrap();
+    assert!(script_error(p.run_command("c", CTX, None)).contains("only works while the plugin loads"));
+}
+
+#[test]
+fn store_keeps_values_per_account() {
+    let main = r#"
+        bonsai.command { id = 'put', title = 'Put', run = function(ctx)
+          ctx.store.set("seen", { ids = { 1, 2, 3 }, note = "hi", ok = true, n = 1.5 })
+          ctx.store.set("gone", 1)
+          ctx.store.set("gone", nil)
+        end }
+        bonsai.command { id = 'get', title = 'Get', run = function(ctx)
+          local v = ctx.store.get("seen")
+          if v == nil then return { toast = "none" } end
+          assert(ctx.store.get("gone") == nil)
+          return { toast = v.note .. #v.ids .. v.ids[3] .. tostring(v.ok) .. v.n }
+        end }
+        bonsai.command { id = 'bad', title = 'Bad', arg = 'text', run = function(ctx, what)
+          if what == "fn" then ctx.store.set("x", { f = print }) end
+          if what == "mixed" then ctx.store.set("x", { 1, a = 2 }) end
+          if what == "key" then ctx.store.set(5, 1) end
+          if what == "many" then for i = 1, 101 do ctx.store.set("k" .. i, i) end end
+          if what == "deep" then
+            local t = {}
+            for i = 1, 20 do t = { t } end
+            ctx.store.set("x", t)
+          end
+        end }
+    "#;
+    let f = load_manifest(MANIFEST, main, &[], FakeHost::default());
+    let p = f.result.unwrap();
+    p.run_command("put", CTX, None).unwrap();
+    assert_eq!(
+        p.run_command("get", CTX, None).unwrap(),
+        Outcome::Toast("hi33true1.5".into())
+    );
+    let other = Ctx { account: 8, ..CTX };
+    assert_eq!(
+        p.run_command("get", other, None).unwrap(),
+        Outcome::Toast("none".into())
+    );
+    assert_eq!(
+        f.host.store.borrow().get(&(7, "seen".to_owned())),
+        Some(&serde_json::json!({ "ids": [1, 2, 3], "note": "hi", "ok": true, "n": 1.5 }))
+    );
+    for (what, want) in [
+        ("fn", "can't keep a function"),
+        ("mixed", "keys that aren't strings"),
+        ("key", "keys are strings"),
+        ("many", "at most 100"),
+        ("deep", "nested more than 16"),
+    ] {
+        let err = script_error(p.run_command("bad", CTX, Some(what)));
+        assert!(err.contains(want), "{what}: {err}");
+    }
+}
+
+#[test]
+fn settings_are_read_only_values() {
+    let mut settings = serde_json::Map::new();
+    settings.insert("min_age".into(), serde_json::json!(7));
+    settings.insert("mode".into(), serde_json::json!("loud"));
+    let host = FakeHost {
+        settings,
+        ..FakeHost::default()
+    };
+    let main = r#"
+        bonsai.command { id = 'c', title = 'C', run = function(ctx)
+          local ok = pcall(function() ctx.settings.mode = "quiet" end)
+          return { toast = ctx.settings.mode .. ctx.settings.min_age .. tostring(ok) }
+        end }
+    "#;
+    let p = load_manifest(MANIFEST, main, &[], host).result.unwrap();
+    assert_eq!(
+        p.run_command("c", CTX, None).unwrap(),
+        Outcome::Toast("loud7false".into())
+    );
 }

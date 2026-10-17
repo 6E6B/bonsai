@@ -4,6 +4,14 @@ import { commands, type PluginView } from "~/lib/ipc/bindings"
 import { byTier, pluginStates, tiers } from "~/lib/plugins"
 import { shell, useLive } from "~/lib/store"
 import { Alert, Badge, Button, EmptyState, SettingRow, SettingSwitch, SettingsGroup } from "~/lib/ui"
+import { PrefControl } from "./prefs"
+
+/** "every 5 min", "every 2 h", "every 90 s". */
+export function every(seconds: number): string {
+  if (seconds % 3600 === 0) return `every ${seconds / 3600} h`
+  if (seconds % 60 === 0) return `every ${seconds / 60} min`
+  return `every ${seconds} s`
+}
 
 /** Installed plugins: on or off, which accounts each may use, reload and remove. */
 export function PluginsSection() {
@@ -87,6 +95,25 @@ function PluginGroup(props: { plugin: PluginView }) {
       <Show when={p().commands.length > 0}>
         <SettingRow label="Commands" description={p().commands.join(", ")} />
       </Show>
+      <Show when={p().listens.length > 0 || p().timers.length > 0}>
+        <SettingRow
+          label="Runs by itself"
+          description={[...p().listens.map((e) => `on ${e.replace("_", " ")}`), ...p().timers.map(every)].join(", ")}
+        />
+      </Show>
+      <For each={p().settings}>
+        {(s) => (
+          <SettingRow
+            label={s.title}
+            description={s.description || undefined}
+            layout={s.kind === "range" ? "stacked" : "inline"}
+            changed={s.value !== s.default}
+            onReset={() => run("plugin.set", `${p().id} ${s.key}`)}
+          >
+            <PrefControl pref={s} onSet={(v) => void run("plugin.set", `${p().id} ${s.key} ${v}`)} />
+          </SettingRow>
+        )}
+      </For>
       <Show when={p().asks}>
         {(a) => (
           <>

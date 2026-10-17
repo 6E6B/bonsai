@@ -21,6 +21,24 @@ const MAX_COMMANDS: usize = 100;
 const MAX_READS: usize = 200;
 /// Most ids in one `ctx.presence` call.
 const MAX_PRESENCE: usize = 100;
+/// Most `ctx.store.set` calls in one handler call; each one writes to disk.
+const MAX_SETS: usize = 100;
+/// Most timers a plugin may start, and the shortest and longest gap between runs.
+const MAX_TIMERS: usize = 10;
+const MIN_EVERY: u64 = 60;
+const MAX_EVERY: u64 = 86_400;
+/// How deep a stored table may nest.
+const MAX_DEPTH: usize = 16;
+
+/// What `bonsai.on` can listen for. See `docs/plugins.md#events`.
+pub const EVENTS: [&str; 6] = [
+    "presence",
+    "friend_request",
+    "trade",
+    "message",
+    "chat",
+    "game_update",
+];
 
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {
@@ -52,6 +70,18 @@ pub trait Host {
     fn read(&self, plugin: &str, account: u64, read: &Read) -> Result<serde_json::Value, String>;
     /// A line from `print`, for the developer log.
     fn log(&self, plugin: &str, line: &str);
+    /// The value stored under `key` for `account` (0 for the plugin's own storage), or `Null`.
+    fn store_get(&self, plugin: &str, account: u64, key: &str) -> Result<serde_json::Value, String>;
+    /// Stores `value` under `key`; `Null` removes it. The host caps the size.
+    fn store_set(
+        &self,
+        plugin: &str,
+        account: u64,
+        key: &str,
+        value: serde_json::Value,
+    ) -> Result<(), String>;
+    /// The manifest's settings with the user's values, by key.
+    fn settings(&self, plugin: &str) -> serde_json::Map<String, serde_json::Value>;
 }
 
 /// A read a plugin asked for through `ctx`.
@@ -76,6 +106,10 @@ pub enum Read {
     },
     Trades {
         status: TradeStatus,
+        limit: usize,
+    },
+    /// Friend requests to the account, newest first.
+    FriendRequests {
         limit: usize,
     },
 }
@@ -195,16 +229,28 @@ impl Clock {
     }
 }
 
+/// What the entry module registered while it loaded.
+#[derive(Default)]
+struct Registered {
+    commands: Vec<(Command, Function)>,
+    events: Vec<(String, Function)>,
+    timers: Vec<(Duration, Function)>,
+}
+
 pub struct Plugin {
     lua: Lua,
     manifest: Rc<Manifest>,
     commands: Vec<Command>,
     handlers: HashMap<String, Function>,
+    events: Vec<(String, Function)>,
+    timers: Vec<(Duration, Function)>,
     clock: Rc<Clock>,
     limits: Limits,
     host: Rc<dyn Host>,
     /// Reads made in the current call.
     reads: Rc<Cell<usize>>,
+    /// `ctx.store.set` calls made in the current call.
+    sets: Rc<Cell<usize>>,
 }
 
 impl Plugin {
@@ -237,7 +283,7 @@ impl Plugin {
             _ => Ok(VmState::Continue),
         });
 
-        let registered = Rc::new(RefCell::new(Vec::<(Command, Function)>::new()));
+        let registered = Rc::new(RefCell::new(Registered::default()));
         let loading = Rc::new(Cell::new(true));
         install_globals(
             &lua,
@@ -263,9 +309,10 @@ impl Plugin {
         loading.set(false);
         check(&clock, &lua, limits, limits.load, ran)?;
 
+        let reg = registered.take();
         let mut commands = Vec::new();
         let mut handlers = HashMap::new();
-        for (cmd, f) in registered.take() {
+        for (cmd, f) in reg.commands {
             handlers.insert(cmd.id.clone(), f);
             commands.push(cmd);
         }
@@ -274,10 +321,13 @@ impl Plugin {
             manifest,
             commands,
             handlers,
+            events: reg.events,
+            timers: reg.timers,
             clock,
             limits,
             host,
             reads: Rc::default(),
+            sets: Rc::default(),
         })
     }
 
@@ -287,6 +337,45 @@ impl Plugin {
 
     pub fn commands(&self) -> &[Command] {
         &self.commands
+    }
+
+    /// Events it listens for with `bonsai.on`, from [`EVENTS`].
+    pub fn events(&self) -> Vec<String> {
+        self.events.iter().map(|(e, _)| e.clone()).collect()
+    }
+
+    /// How often each `bonsai.every` timer runs, in the order they were started.
+    pub fn timers(&self) -> Vec<Duration> {
+        self.timers.iter().map(|(d, _)| *d).collect()
+    }
+
+    /// Calls the `bonsai.on(event, fn)` handler with `fn(ctx, payload)`. Nothing happens for an
+    /// event it doesn't listen for.
+    pub fn run_event(&self, event: &str, ctx: Ctx, payload: &serde_json::Value) -> Result<Outcome, Error> {
+        let Some((_, f)) = self.events.iter().find(|(e, _)| e == event) else {
+            return Ok(Outcome::Nothing);
+        };
+        let payload = to_lua(&self.lua, payload).map_err(script)?;
+        self.call(f, ctx, payload)
+    }
+
+    /// Calls timer `index` (from [`Plugin::timers`]) with `fn(ctx)`.
+    pub fn run_timer(&self, index: usize, ctx: Ctx) -> Result<Outcome, Error> {
+        let Some((_, f)) = self.timers.get(index) else {
+            return Ok(Outcome::Nothing);
+        };
+        self.call(f, ctx, Value::Nil)
+    }
+
+    fn call(&self, f: &Function, ctx: Ctx, arg: Value) -> Result<Outcome, Error> {
+        let ctx = self.ctx_table(ctx).map_err(script)?;
+        self.reads.set(0);
+        self.sets.set(0);
+        self.clock.start(self.limits.call);
+        let ran = f.call::<Value>((ctx, arg));
+        self.clock.stop();
+        let value = check(&self.clock, &self.lua, self.limits, self.limits.call, ran)?;
+        outcome(&self.manifest, value)
     }
 
     /// Calls a command's `run(ctx, arg)`.
@@ -303,13 +392,7 @@ impl Plugin {
                 _ => return Err(Error::Script(format!("\"{a}\" isn't an id."))),
             },
         };
-        let ctx = self.ctx_table(ctx).map_err(script)?;
-        self.reads.set(0);
-        self.clock.start(self.limits.call);
-        let ran = f.call::<Value>((ctx, arg));
-        self.clock.stop();
-        let value = check(&self.clock, &self.lua, self.limits, self.limits.call, ran)?;
-        outcome(&self.manifest, value)
+        self.call(f, ctx, arg)
     }
 
     fn ctx_table(&self, ctx: Ctx) -> mlua::Result<Table> {
@@ -326,6 +409,54 @@ impl Plugin {
             })?;
         t.set("run", bound)?;
         self.reads_into(&t, account)?;
+        t.set("store", self.store_table(account)?)?;
+        let settings = self.host.settings(&self.manifest.id);
+        let settings = match to_lua(&self.lua, &serde_json::Value::Object(settings))? {
+            Value::Table(s) => s,
+            _ => self.lua.create_table()?,
+        };
+        settings.set_readonly(true);
+        t.set("settings", settings)?;
+        t.set_readonly(true);
+        Ok(t)
+    }
+
+    /// `ctx.store.get(key)` and `ctx.store.set(key, value)`, for `account`'s storage.
+    fn store_table(&self, account: u64) -> mlua::Result<Table> {
+        let t = self.lua.create_table()?;
+        let (host, id, clock) = (self.host.clone(), self.manifest.id.clone(), self.clock.clone());
+        t.set(
+            "get",
+            self.lua.create_function(move |lua, key: Value| {
+                let key = store_key(&key)?;
+                let v = clock
+                    .pause(|| host.store_get(&id, account, &key))
+                    .map_err(mlua::Error::runtime)?;
+                to_lua(lua, &v)
+            })?,
+        )?;
+        let (host, id, clock, sets) = (
+            self.host.clone(),
+            self.manifest.id.clone(),
+            self.clock.clone(),
+            self.sets.clone(),
+        );
+        t.set(
+            "set",
+            self.lua.create_function(move |_, (key, value): (Value, Value)| {
+                let key = store_key(&key)?;
+                if sets.get() >= MAX_SETS {
+                    return Err(mlua::Error::runtime(format!(
+                        "A call can make at most {MAX_SETS} ctx.store.set calls."
+                    )));
+                }
+                sets.set(sets.get() + 1);
+                let value = from_lua(&value, 0)?;
+                clock
+                    .pause(|| host.store_set(&id, account, &key, value))
+                    .map_err(mlua::Error::runtime)
+            })?,
+        )?;
         t.set_readonly(true);
         Ok(t)
     }
@@ -466,6 +597,17 @@ impl Plugin {
                 })
             }
         );
+        def!(
+            "friend_requests",
+            Option<Table>,
+            |f: Option<Table>| -> mlua::Result<Read> {
+                let limit = match f {
+                    Some(f) => limit_arg("ctx.friend_requests", &f, 50, 500)?,
+                    None => 50,
+                };
+                Ok(Read::FriendRequests { limit })
+            }
+        );
         Ok(())
     }
 }
@@ -492,6 +634,69 @@ fn limit_arg(what: &str, f: &Table, default: usize, max: usize) -> mlua::Result<
             "{what}: limit is a whole number from 1 to {max}."
         ))),
     }
+}
+
+/// A `ctx.store` key: a string of 1 to 128 bytes.
+fn store_key(v: &Value) -> mlua::Result<String> {
+    match v {
+        Value::String(s) => {
+            let s = s.to_str()?.to_owned();
+            if s.is_empty() || s.len() > 128 {
+                return Err(mlua::Error::runtime("ctx.store keys are 1 to 128 bytes."));
+            }
+            Ok(s)
+        }
+        _ => Err(mlua::Error::runtime("ctx.store keys are strings.")),
+    }
+}
+
+/// A Luau value to store: nil, booleans, numbers, strings, and tables of them. A table whose
+/// keys are 1 to n is a list; any other table needs string keys.
+fn from_lua(v: &Value, depth: usize) -> mlua::Result<serde_json::Value> {
+    use serde_json::Value as J;
+    let bad = |what: &str| mlua::Error::runtime(format!("ctx.store can't keep {what}."));
+    Ok(match v {
+        Value::Nil => J::Null,
+        Value::Boolean(b) => J::Bool(*b),
+        Value::Integer(n) => J::from(*n),
+        Value::Number(n) if !n.is_finite() => return Err(bad("nan or infinity")),
+        Value::Number(n) if n.fract() == 0.0 && n.abs() < (1u64 << 53) as f64 => J::from(*n as i64),
+        Value::Number(n) => serde_json::Number::from_f64(*n).map_or(J::Null, J::Number),
+        Value::String(s) => J::String(s.to_str().map_err(|_| bad("text that isn't UTF-8"))?.to_owned()),
+        Value::Table(t) => {
+            if depth >= MAX_DEPTH {
+                return Err(bad(&format!("tables nested more than {MAX_DEPTH} deep")));
+            }
+            let len = t.raw_len();
+            let mut pairs = 0;
+            let mut list = len > 0;
+            for pair in t.pairs::<Value, Value>() {
+                let (k, _) = pair?;
+                pairs += 1;
+                list &= matches!(k, Value::Integer(i) if i >= 1 && i as usize <= len)
+                    || matches!(k, Value::Number(n) if n >= 1.0 && n.fract() == 0.0 && n as usize <= len);
+            }
+            if list && pairs == len {
+                let mut out = Vec::with_capacity(len);
+                for i in 1..=len {
+                    out.push(from_lua(&t.raw_get::<Value>(i)?, depth + 1)?);
+                }
+                J::Array(out)
+            } else {
+                let mut out = serde_json::Map::new();
+                for pair in t.pairs::<Value, Value>() {
+                    let (k, x) = pair?;
+                    let Value::String(k) = k else {
+                        return Err(bad("tables with keys that aren't strings, unless it is a list"));
+                    };
+                    let k = k.to_str().map_err(|_| bad("keys that aren't UTF-8"))?.to_owned();
+                    out.insert(k, from_lua(&x, depth + 1)?);
+                }
+                J::Object(out)
+            }
+        }
+        other => return Err(bad(&format!("a {}", other.type_name()))),
+    })
 }
 
 /// Host data as Luau values: objects and arrays become tables, `null` becomes `nil`.
@@ -525,7 +730,7 @@ fn install_globals(
     host: Rc<dyn Host>,
     root: &Path,
     clock: &Rc<Clock>,
-    registered: &Rc<RefCell<Vec<(Command, Function)>>>,
+    registered: &Rc<RefCell<Registered>>,
     loading: &Rc<Cell<bool>>,
 ) -> mlua::Result<()> {
     let g = lua.globals();
@@ -612,17 +817,17 @@ fn install_globals(
     lua.set_named_registry_value("bonsai.run", run)?;
 
     let bonsai = lua.create_table()?;
-    let (reg, loading) = (registered.clone(), loading.clone());
+    let (reg, l) = (registered.clone(), loading.clone());
     bonsai.set(
         "command",
         lua.create_function(move |_, spec: Table| {
-            if !loading.get() {
+            if !l.get() {
                 return Err(mlua::Error::runtime(
                     "bonsai.command only works while the plugin loads.",
                 ));
             }
             let (cmd, run) = command_spec(&spec)?;
-            let mut reg = reg.borrow_mut();
+            let reg = &mut reg.borrow_mut().commands;
             if reg.len() >= MAX_COMMANDS {
                 return Err(mlua::Error::runtime(format!(
                     "A plugin can have at most {MAX_COMMANDS} commands."
@@ -635,6 +840,61 @@ fn install_globals(
                 )));
             }
             reg.push((cmd, run));
+            Ok(())
+        })?,
+    )?;
+    let (reg, l, m) = (registered.clone(), loading.clone(), manifest.clone());
+    bonsai.set(
+        "on",
+        lua.create_function(move |_, (event, f): (String, Function)| {
+            if !l.get() {
+                return Err(mlua::Error::runtime(
+                    "bonsai.on only works while the plugin loads.",
+                ));
+            }
+            if !EVENTS.contains(&event.as_str()) {
+                return Err(mlua::Error::runtime(format!(
+                    "bonsai.on: no event \"{event}\". Events are {}.",
+                    EVENTS.join(", ")
+                )));
+            }
+            // Events tell what happens on an account, which is private.
+            if !m.has(Permission::ReadAccount) {
+                return Err(mlua::Error::runtime(
+                    "bonsai.on needs \"read.account\" in permissions in plugin.toml.",
+                ));
+            }
+            let events = &mut reg.borrow_mut().events;
+            if events.iter().any(|(e, _)| *e == event) {
+                return Err(mlua::Error::runtime(format!(
+                    "bonsai.on(\"{event}\") is registered twice."
+                )));
+            }
+            events.push((event, f));
+            Ok(())
+        })?,
+    )?;
+    let (reg, l) = (registered.clone(), loading.clone());
+    bonsai.set(
+        "every",
+        lua.create_function(move |_, (seconds, f): (f64, Function)| {
+            if !l.get() {
+                return Err(mlua::Error::runtime(
+                    "bonsai.every only works while the plugin loads.",
+                ));
+            }
+            if !(seconds.fract() == 0.0 && seconds >= MIN_EVERY as f64 && seconds <= MAX_EVERY as f64) {
+                return Err(mlua::Error::runtime(format!(
+                    "bonsai.every takes whole seconds from {MIN_EVERY} to {MAX_EVERY}."
+                )));
+            }
+            let timers = &mut reg.borrow_mut().timers;
+            if timers.len() >= MAX_TIMERS {
+                return Err(mlua::Error::runtime(format!(
+                    "A plugin can have at most {MAX_TIMERS} timers."
+                )));
+            }
+            timers.push((Duration::from_secs(seconds as u64), f));
             Ok(())
         })?,
     )?;
@@ -703,7 +963,7 @@ fn outcome(manifest: &Manifest, value: Value) -> Result<Outcome, Error> {
         Value::Table(t) => t,
         other => {
             return Err(Error::Script(format!(
-                "A command returns nil or a table, not a {}.",
+                "A handler returns nil or a table, not a {}.",
                 other.type_name()
             )));
         }
@@ -752,7 +1012,7 @@ fn outcome(manifest: &Manifest, value: Value) -> Result<Outcome, Error> {
         });
     }
     Err(Error::Script(
-        "A command returns nil or a table with actions, toast, open or alert.".into(),
+        "A handler returns nil or a table with actions, toast, open or alert.".into(),
     ))
 }
 

@@ -17,9 +17,13 @@ use crate::AccountId;
 use crate::commands::{CommandId, Effect, PluginCmd, Registry, Tier};
 use crate::core::{Core, Inner};
 
-pub use bonsai_plugin::{Arg, Command, Manifest, Permission, Refused};
+pub use bonsai_plugin::{Arg, Command, Manifest, Permission, Refused, Setting, SettingKind};
 
+mod events;
 mod reads;
+mod storage;
+
+pub(crate) use reads::{presence_view, status};
 
 pub const MANIFEST: &str = "plugin.toml";
 /// What one installed plugin may hold, so a stray folder can't fill the disk.
@@ -87,6 +91,9 @@ struct Saved {
     permissions: Vec<String>,
     #[serde(default)]
     actions: Vec<String>,
+    /// Values the user changed from the manifest's `[[settings]]` defaults.
+    #[serde(default)]
+    settings: BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -114,6 +121,10 @@ pub enum Status {
     Loading,
     Running {
         commands: Vec<Command>,
+        /// Events it listens to.
+        events: Vec<String>,
+        /// Seconds between runs of each timer.
+        timers: Vec<u64>,
     },
     /// It asks for more than the user agreed to; listed until they review it.
     NeedsReview(Vec<String>),
@@ -190,6 +201,8 @@ pub(crate) struct Plugins {
     /// Bumped per worker start, so a load that finishes after a reload is ignored.
     seq: u64,
     runner: Option<ActionRunner>,
+    /// `ctx.store` files read so far.
+    data: storage::Data,
 }
 
 struct Entry {
@@ -212,6 +225,20 @@ enum Msg {
         ctx: Ctx,
         arg: Option<String>,
     },
+    Event {
+        event: &'static str,
+        ctx: Ctx,
+        payload: serde_json::Value,
+    },
+}
+
+/// What a plugin ran when it returned an outcome.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Source {
+    /// The user ran one of its commands.
+    Command,
+    /// An event or timer, with nobody watching.
+    Background,
 }
 
 /// What [`Inner::sync_plugins`] should redo even when nothing on disk changed.
@@ -221,8 +248,8 @@ enum Force<'a> {
     One(&'a str),
 }
 
-/// The plugin side of [`bonsai_plugin::Host`], on the plugin's thread. Writes aren't wired up
-/// yet.
+/// The plugin side of [`bonsai_plugin::Host`], on the plugin's thread. Writes go through
+/// returned actions, not `run`.
 struct CoreHost {
     inner: Weak<Inner>,
 }
@@ -239,6 +266,49 @@ impl bonsai_plugin::Host for CoreHost {
         let line: String = line.chars().take(500).collect();
         tracing::info!(target: "plugin", "{plugin}: {line}");
     }
+    fn store_get(&self, plugin: &str, account: u64, key: &str) -> Result<serde_json::Value, String> {
+        let inner = self.inner.upgrade().ok_or("Bonsai is closing.")?;
+        inner.plugin_store_get(plugin, account, key)
+    }
+    fn store_set(
+        &self,
+        plugin: &str,
+        account: u64,
+        key: &str,
+        value: serde_json::Value,
+    ) -> Result<(), String> {
+        let inner = self.inner.upgrade().ok_or("Bonsai is closing.")?;
+        inner.plugin_store_set(plugin, account, key, value)
+    }
+    fn settings(&self, plugin: &str) -> serde_json::Map<String, serde_json::Value> {
+        let Some(inner) = self.inner.upgrade() else {
+            return serde_json::Map::new();
+        };
+        let p = inner.plugins.lock();
+        let Some(m) = p
+            .entries
+            .iter()
+            .find(|e| e.info.id == plugin)
+            .and_then(|e| e.info.manifest.as_ref())
+        else {
+            return serde_json::Map::new();
+        };
+        setting_values(m, p.saved.plugins.get(plugin))
+    }
+}
+
+/// Each manifest setting's value: the saved one when it is still valid, else the default.
+fn setting_values(m: &Manifest, saved: Option<&Saved>) -> serde_json::Map<String, serde_json::Value> {
+    m.settings
+        .iter()
+        .map(|s| {
+            let v = saved
+                .and_then(|x| x.settings.get(&s.key))
+                .filter(|v| s.valid(v))
+                .unwrap_or(&s.default);
+            (s.key.clone(), v.clone())
+        })
+        .collect()
 }
 
 /// Serializes plugin disk work: installs, removes, saves and rescans.
@@ -489,6 +559,8 @@ impl Inner {
                 let status = match &loaded {
                     Ok(p) => Status::Running {
                         commands: p.commands().to_vec(),
+                        events: p.events(),
+                        timers: p.timers().iter().map(Duration::as_secs).collect(),
                     },
                     Err(e) => Status::Failed(e.to_string()),
                 };
@@ -498,17 +570,62 @@ impl Inner {
                 let Ok(plugin) = loaded else {
                     return;
                 };
+                // The first run of each timer is one interval after the plugin starts.
+                let start = std::time::Instant::now();
+                let mut due: Vec<std::time::Instant> = plugin.timers().iter().map(|d| start + *d).collect();
                 // Keeps the VM until the plugin is stopped or reloaded, which drops the sender.
-                while let Ok(msg) = rx.recv() {
-                    match msg {
-                        Msg::Run { command, ctx, arg } => {
-                            let out = plugin.run_command(&command, ctx, arg.as_deref());
-                            let Some(inner) = weak.upgrade() else {
-                                return;
-                            };
-                            inner.plugin_outcome(&id, seq, AccountId(ctx.account), out);
+                loop {
+                    let next = due.iter().copied().enumerate().min_by_key(|(_, t)| *t);
+                    let msg = match next {
+                        None => rx.recv().map_err(|_| ()),
+                        Some((i, t)) => {
+                            match rx.recv_timeout(t.saturating_duration_since(std::time::Instant::now())) {
+                                Ok(m) => Ok(m),
+                                Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => Err(()),
+                                Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                                    due[i] = std::time::Instant::now() + plugin.timers()[i];
+                                    let Some(inner) = weak.upgrade() else {
+                                        return;
+                                    };
+                                    let Some(accounts) = inner.timer_accounts(&id, seq) else {
+                                        return;
+                                    };
+                                    drop(inner);
+                                    for account in accounts {
+                                        let ctx = Ctx {
+                                            account: account.0,
+                                            now: crate::cache::now(),
+                                        };
+                                        let out = plugin.run_timer(i, ctx);
+                                        let Some(inner) = weak.upgrade() else {
+                                            return;
+                                        };
+                                        inner.plugin_outcome(&id, seq, account, Source::Background, out);
+                                    }
+                                    continue;
+                                }
+                            }
                         }
-                    }
+                    };
+                    let Ok(msg) = msg else {
+                        return;
+                    };
+                    let (account, source, out) = match msg {
+                        Msg::Run { command, ctx, arg } => (
+                            ctx.account,
+                            Source::Command,
+                            plugin.run_command(&command, ctx, arg.as_deref()),
+                        ),
+                        Msg::Event { event, ctx, payload } => (
+                            ctx.account,
+                            Source::Background,
+                            plugin.run_event(event, ctx, &payload),
+                        ),
+                    };
+                    let Some(inner) = weak.upgrade() else {
+                        return;
+                    };
+                    inner.plugin_outcome(&id, seq, AccountId(account), source, out);
                 }
             });
         match spawned {
@@ -546,12 +663,15 @@ impl Inner {
         )
     }
 
-    /// What a plugin command returned. Errors and messages are toasts naming the plugin.
+    /// What a plugin returned. Errors and messages are toasts naming the plugin. From an event
+    /// or timer, an alert is a desktop alert when the plugin may notify, it can't open screens,
+    /// and every action waits in the action dialog.
     fn plugin_outcome(
         self: &Arc<Self>,
         id: &str,
         seq: u64,
         account: AccountId,
+        source: Source,
         out: Result<Outcome, bonsai_plugin::Error>,
     ) {
         let Some(name) = self.plugin_name(id, seq) else {
@@ -566,9 +686,18 @@ impl Inner {
             Err(e) => say(&e.to_string(), true),
             Ok(Outcome::Nothing) => {}
             Ok(Outcome::Toast(t)) => say(&t, false),
-            // Desktop alerts come with `notify` and the notification settings; until then a
-            // returned alert shows as a toast.
-            Ok(Outcome::Alert { title, body, .. }) => say(&format!("{title}. {body}"), false),
+            Ok(Outcome::Alert { title, body, .. }) => {
+                if source == Source::Background && account.0 != 0 && self.may_notify(id, account) {
+                    let title: String = format!("{name}: {title}").chars().take(120).collect();
+                    let body: String = body.chars().take(300).collect();
+                    self.alert(account, "plugins", title, body);
+                } else {
+                    say(&format!("{title}. {body}"), false);
+                }
+            }
+            Ok(Outcome::Open { .. }) if source == Source::Background => {
+                say("Only commands can open screens.", true);
+            }
             Ok(Outcome::Open { kind, id }) => match open_command(&kind, id) {
                 Some((command, arg)) => {
                     let mut s = self.store.write();
@@ -585,7 +714,9 @@ impl Inner {
                     Err(e) => say(&e, true),
                     Ok(actions) if actions.is_empty() => {}
                     // Tier 1 is harmless and easy to undo; the user just ran the command.
-                    Ok(actions) if actions.iter().all(|a| a.tier == Tier::Harmless) => {
+                    Ok(actions)
+                        if source == Source::Command && actions.iter().all(|a| a.tier == Tier::Harmless) =>
+                    {
                         self.run_actions(name.clone(), account, actions);
                     }
                     Ok(actions) => {
@@ -761,7 +892,7 @@ impl Core {
         p.entries
             .iter()
             .filter_map(|e| match (&e.info.status, &e.info.manifest) {
-                (Status::Running { commands }, Some(m)) => Some((&e.info.id, &m.name, commands)),
+                (Status::Running { commands, .. }, Some(m)) => Some((&e.info.id, &m.name, commands)),
                 _ => None,
             })
             .flat_map(|(id, name, cmds)| {
@@ -796,7 +927,7 @@ impl Core {
             .find(|e| e.info.id == cmd.plugin)
             .ok_or_else(|| format!("No plugin \"{}\".", cmd.plugin))?;
         let name = e.info.manifest.as_ref().map_or(&e.info.id, |m| &m.name);
-        let (Status::Running { commands }, Some(worker)) = (&e.info.status, &e.worker) else {
+        let (Status::Running { commands, .. }, Some(worker)) = (&e.info.status, &e.worker) else {
             return Err(format!("{name} isn't running."));
         };
         let c = commands
@@ -967,6 +1098,13 @@ impl Core {
                 if pending.unpacked && !p.saved.unpacked.contains(&pending.source) {
                     p.saved.unpacked.push(pending.source.clone());
                 }
+                // Settings survive an update.
+                let settings = p
+                    .saved
+                    .plugins
+                    .get(&m.id)
+                    .map(|s| s.settings.clone())
+                    .unwrap_or_default();
                 p.saved.plugins.insert(
                     m.id.clone(),
                     Saved {
@@ -974,6 +1112,7 @@ impl Core {
                         accounts,
                         permissions: permission_keys(m),
                         actions: m.actions.clone(),
+                        settings,
                     },
                 );
             }
@@ -1038,6 +1177,71 @@ impl Core {
         })
     }
 
+    /// Changes one of a plugin's `[[settings]]`. Empty text puts back the default.
+    pub fn set_plugin_setting(&self, id: &str, key: &str, text: &str) -> Result<(), String> {
+        let value = {
+            let p = self.inner.plugins.lock();
+            let e = p
+                .entries
+                .iter()
+                .find(|e| e.info.id == id)
+                .ok_or_else(|| format!("No plugin \"{id}\"."))?;
+            let m = e
+                .info
+                .manifest
+                .as_ref()
+                .ok_or_else(|| "The plugin doesn't load; fix it first.".to_owned())?;
+            let s = m
+                .settings
+                .iter()
+                .find(|s| s.key == key)
+                .ok_or_else(|| format!("{} has no setting \"{key}\".", m.name))?;
+            if text.trim().is_empty() {
+                None
+            } else {
+                Some(s.parse(text)?)
+            }
+        };
+        {
+            let mut p = self.inner.plugins.lock();
+            let saved = p.saved.plugins.entry(id.to_owned()).or_default();
+            match value {
+                Some(v) => saved.settings.insert(key.to_owned(), v),
+                None => saved.settings.remove(key),
+            };
+        }
+        self.inner.store.write().plugin_rev += 1;
+        self.inner.repaint();
+        self.inner.plugin_job(|inner| {
+            inner.save_plugins();
+            Ok(())
+        });
+        Ok(())
+    }
+
+    /// Each setting of a plugin with its current value.
+    pub fn plugin_settings(&self, id: &str) -> Vec<(bonsai_plugin::Setting, serde_json::Value)> {
+        let p = self.inner.plugins.lock();
+        let Some(m) = p
+            .entries
+            .iter()
+            .find(|e| e.info.id == id)
+            .and_then(|e| e.info.manifest.as_ref())
+        else {
+            return Vec::new();
+        };
+        let mut values = setting_values(m, p.saved.plugins.get(id));
+        m.settings
+            .iter()
+            .map(|s| {
+                (
+                    s.clone(),
+                    values.remove(&s.key).unwrap_or(serde_json::Value::Null),
+                )
+            })
+            .collect()
+    }
+
     /// Restarts a plugin from its files.
     pub fn reload_plugin(&self, id: &str) -> Result<(), String> {
         if !self.inner.plugins.lock().entries.iter().any(|e| e.info.id == id) {
@@ -1075,6 +1279,9 @@ impl Core {
             if !unpacked {
                 remove_dir(&dir).map_err(|e| format!("Can't delete the plugin folder: {e}"))?;
             }
+            inner
+                .drop_plugin_data(&id)
+                .map_err(|e| format!("Can't delete the plugin's data: {e}"))?;
             inner.save_plugins();
             inner.sync_plugins(Force::None);
             Ok(())

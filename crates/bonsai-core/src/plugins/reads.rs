@@ -15,7 +15,7 @@ use crate::core::Inner;
 use crate::fmt::parse_iso;
 use crate::inventory::{InvItem, InvSlot};
 use crate::market::{CatalogItem, ItemDetails, ItemKind, ItemRef, Limited};
-use crate::people::Profile;
+use crate::people::{FriendRequest, Profile};
 use crate::res::{Page, Res};
 use crate::store::{GameInfo, Presence, PresenceKind};
 use crate::trades::{TradeBox, TradeRow};
@@ -74,6 +74,10 @@ impl Inner {
                 };
                 let rows = pages(*limit, |more| self.trades(account, b, more))?;
                 Ok(Value::Array(rows.iter().map(trade_view).collect()))
+            }
+            Read::FriendRequests { limit } => {
+                let rows = pages(*limit, |more| self.friend_requests(account, more))?;
+                Ok(Value::Array(rows.iter().map(request_view).collect()))
             }
         }
     }
@@ -255,7 +259,7 @@ fn count(n: i64) -> Option<i64> {
     (n >= 0).then_some(n)
 }
 
-fn status(k: PresenceKind) -> &'static str {
+pub(crate) fn status(k: PresenceKind) -> &'static str {
     match k {
         PresenceKind::Offline => "offline",
         PresenceKind::Online => "online",
@@ -355,7 +359,18 @@ fn item_view(d: &ItemDetails) -> Value {
     Value::Object(m)
 }
 
-fn presence_view(id: u64, p: &Presence) -> Value {
+fn request_view(r: &FriendRequest) -> Value {
+    json!({
+        "id": r.user_id,
+        "name": r.name,
+        "display_name": r.display_name,
+        "sent": time(&r.sent_at),
+        "mutuals": r.mutuals,
+        "origin": r.origin,
+    })
+}
+
+pub(crate) fn presence_view(id: u64, p: &Presence) -> Value {
     json!({
         "id": id,
         "status": status(p.kind),

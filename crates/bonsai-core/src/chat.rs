@@ -696,7 +696,7 @@ impl Inner {
                         {
                             m.remove(&sender);
                         }
-                        self.note_chat(acc, sender);
+                        self.note_chat(acc, sender, &conv);
                     }
                     self.res.invalidate(acc, "chat_conversations");
                     self.res.invalidate(acc, "chat_messages");

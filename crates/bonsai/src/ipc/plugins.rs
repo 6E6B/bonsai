@@ -5,8 +5,8 @@ use std::sync::Arc;
 
 use bonsai_core::commands::{CommandId, CommandRef, PluginCmd, Registry};
 use bonsai_core::plugins::{
-    Arg, PendingActions, PendingInstall, Permission, PluginCommand, PluginInfo, PluginOpen, Refused, Status,
-    action_tier,
+    Arg, PendingActions, PendingInstall, Permission, PluginCommand, PluginInfo, PluginOpen, Refused, Setting,
+    SettingKind, Status, action_tier,
 };
 use bonsai_core::store::StoreData;
 use bonsai_core::{AccountId, Core};
@@ -82,9 +82,48 @@ pub struct PluginView {
     pub review: Vec<String>,
     /// Titles of the commands it registered.
     pub commands: Vec<String>,
+    /// Events it listens to, while running.
+    pub listens: Vec<String>,
+    /// Seconds between runs of each timer, while running.
+    pub timers: Vec<u32>,
+    pub settings: Vec<PluginSettingView>,
     pub asks: Option<Asks>,
     /// Accounts it may use.
     pub accounts: Vec<Id>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum PluginSettingKind {
+    Bool,
+    Choice,
+    Range,
+    Text,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginOptionView {
+    pub value: String,
+    pub label: String,
+}
+
+/// One of a plugin's `[[settings]]`. Values cross as text, as `plugin.set` takes them.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginSettingView {
+    pub key: String,
+    pub title: String,
+    pub description: String,
+    pub kind: PluginSettingKind,
+    pub options: Vec<PluginOptionView>,
+    pub min: i32,
+    pub max: i32,
+    pub step: i32,
+    pub placeholder: String,
+    /// `on`/`off`, an option value, a number or text.
+    pub value: String,
+    pub default: String,
 }
 
 /// A plugin folder waiting in the install dialog.
@@ -243,18 +282,94 @@ fn refused(r: &Refused) -> RefusedView {
     }
 }
 
-fn view(p: PluginInfo) -> PluginView {
-    let (state, error, review, commands) = match p.status {
-        Status::Off => (PluginState::Off, None, Vec::new(), Vec::new()),
-        Status::Loading => (PluginState::Loading, None, Vec::new(), Vec::new()),
-        Status::Running { commands } => (
+fn setting_view(s: &Setting, value: &serde_json::Value) -> PluginSettingView {
+    let mut v = PluginSettingView {
+        key: s.key.clone(),
+        title: s.title.clone(),
+        description: s.description.clone(),
+        kind: PluginSettingKind::Bool,
+        options: Vec::new(),
+        min: 0,
+        max: 0,
+        step: 1,
+        placeholder: String::new(),
+        value: Setting::text(value),
+        default: Setting::text(&s.default),
+    };
+    match &s.kind {
+        SettingKind::Bool => {}
+        SettingKind::Choice(options) => {
+            v.kind = PluginSettingKind::Choice;
+            v.options = options
+                .iter()
+                .map(|(value, label)| PluginOptionView {
+                    value: value.clone(),
+                    label: label.clone(),
+                })
+                .collect();
+        }
+        SettingKind::Range { min, max, step } => {
+            v.kind = PluginSettingKind::Range;
+            let small = |n: i64| n.clamp(i32::MIN.into(), i32::MAX.into()) as i32;
+            (v.min, v.max, v.step) = (small(*min), small(*max), small(*step));
+        }
+        SettingKind::Text { placeholder } => {
+            v.kind = PluginSettingKind::Text;
+            v.placeholder = placeholder.clone();
+        }
+    }
+    v
+}
+
+fn view(p: PluginInfo, settings: Vec<(Setting, serde_json::Value)>) -> PluginView {
+    let (state, error, review, commands, listens, timers) = match p.status {
+        Status::Off => (
+            PluginState::Off,
+            None,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        ),
+        Status::Loading => (
+            PluginState::Loading,
+            None,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        ),
+        Status::Running {
+            commands,
+            events,
+            timers,
+        } => (
             PluginState::Running,
             None,
             Vec::new(),
             commands.into_iter().map(|c| c.title).collect(),
+            events,
+            timers
+                .into_iter()
+                .map(|t| t.min(u32::MAX.into()) as u32)
+                .collect(),
         ),
-        Status::NeedsReview(more) => (PluginState::Review, None, more, Vec::new()),
-        Status::Failed(e) => (PluginState::Failed, Some(e), Vec::new(), Vec::new()),
+        Status::NeedsReview(more) => (
+            PluginState::Review,
+            None,
+            more,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        ),
+        Status::Failed(e) => (
+            PluginState::Failed,
+            Some(e),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        ),
     };
     let m = p.manifest.as_ref();
     PluginView {
@@ -267,6 +382,9 @@ fn view(p: PluginInfo) -> PluginView {
         error,
         review,
         commands,
+        listens,
+        timers,
+        settings: settings.iter().map(|(s, v)| setting_view(s, v)).collect(),
         asks: m.map(asks),
         accounts: p.accounts.iter().map(|a| Id(a.0)).collect(),
         id: p.id,
@@ -293,7 +411,13 @@ pub fn install_view(p: &PendingInstall) -> PluginInstallView {
 #[tauri::command]
 #[specta::specta]
 pub fn plugins(core: State<'_, Arc<Core>>) -> Vec<PluginView> {
-    core.plugins().into_iter().map(view).collect()
+    core.plugins()
+        .into_iter()
+        .map(|p| {
+            let settings = core.plugin_settings(&p.id);
+            view(p, settings)
+        })
+        .collect()
 }
 
 /// Installs the plugin in the dialog, allowed to use `accounts`.
@@ -376,6 +500,18 @@ pub fn run(
         CommandId::RemovePlugin => core.remove_plugin(&arg()),
         CommandId::GrantPlugin => acting().and_then(|a| core.set_plugin_account(&arg(), a, true)),
         CommandId::RevokePlugin => acting().and_then(|a| core.set_plugin_account(&arg(), a, false)),
+        CommandId::SetPluginSetting => {
+            // "plugin key value"; the value is the rest, spaces and all.
+            let raw = inv.arg.as_deref().unwrap_or_default().trim_start();
+            let (plugin, rest) = raw.split_once(' ').unwrap_or((raw, ""));
+            let rest = rest.trim_start();
+            let (key, value) = rest.split_once(' ').unwrap_or((rest, ""));
+            if key.is_empty() {
+                Err("Give a plugin, a setting and a value.".into())
+            } else {
+                core.set_plugin_setting(plugin, key.trim(), value)
+            }
+        }
         _ => return None,
     })
 }

@@ -1372,6 +1372,7 @@ export type NotifyView = {
 	friendRequests: boolean,
 	experienceUpdates: boolean,
 	sales: boolean,
+	plugins: boolean,
 };
 
 export type OutfitView = {
@@ -1532,6 +1533,29 @@ export type PluginOpenView = {
 	arg: string,
 };
 
+export type PluginOptionView = {
+	value: string,
+	label: string,
+};
+
+export type PluginSettingKind = "bool" | "choice" | "range" | "text";
+
+/**  One of a plugin's `[[settings]]`. Values cross as text, as `plugin.set` takes them. */
+export type PluginSettingView = {
+	key: string,
+	title: string,
+	description: string,
+	kind: PluginSettingKind,
+	options: PluginOptionView[],
+	min: number,
+	max: number,
+	step: number,
+	placeholder: string,
+	/**  `on`/`off`, an option value, a number or text. */
+	value: string,
+	default: string,
+};
+
 export type PluginState = "off" | "loading" | "running" | 
 /**  Asks for more than was agreed to. */
 "review" | "failed";
@@ -1551,6 +1575,11 @@ export type PluginView = {
 	review: string[],
 	/**  Titles of the commands it registered. */
 	commands: string[],
+	/**  Events it listens to, while running. */
+	listens: string[],
+	/**  Seconds between runs of each timer, while running. */
+	timers: number[],
+	settings: PluginSettingView[],
 	asks: Asks | null,
 	/**  Accounts it may use. */
 	accounts: Id[],

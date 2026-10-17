@@ -387,6 +387,7 @@ commands! {
     RemovePlugin => "plugin.remove", "Remove plugin", ["plugin", "remove", "uninstall", "delete"], Plugin, Local, [];
     GrantPlugin => "plugin.grant", "Let plugin use this account", ["plugin", "account", "allow", "grant", "permission"], Plugin, Local, [];
     RevokePlugin => "plugin.revoke", "Stop plugin using this account", ["plugin", "account", "revoke", "deny", "permission"], Plugin, Local, [];
+    SetPluginSetting => "plugin.set", "Change plugin setting (plugin, setting, value; no value resets it)", ["plugin", "setting", "option", "config", "preference"], Text, Local, [];
     ThemeLivePreview => "theme.live", "Show theme edits across the whole app (on or off)", ["theme", "live", "preview", "apply", "editor"], None, Local, [];
     SetBackground => "view.background", "Set background picture (https link or file path)", ["background", "wallpaper", "picture", "image", "photo", "gif", "url", "link", "appearance"], Text, Local, [];
     PickBackground => "view.background_file", "Choose background picture from files", ["background", "wallpaper", "picture", "image", "photo", "gif", "file", "upload", "appearance"], None, Local, [];
@@ -578,7 +579,7 @@ commands! {
     Refresh => "view.refresh", "Refresh", ["reload"], None, Read, [Shortcut::key("F5")];
     SetPlayerCommand => "app.player_command", "Set how Roblox is launched (empty for the default)", ["launch", "player", "sober", "flatpak", "wine", "command"], Text, Local, [];
     SetFormatLocale => "app.format_locale", "Set number and date format (e.g. de-DE; empty for the system's)", ["language", "locale", "region", "format", "date", "number"], Text, Local, [];
-    SetNotify => "app.notify", "Turn a notification kind on or off (friend_joins, trades, chats, friend_requests, experience_updates, sales)", ["notifications", "alerts", "desktop", "mute", "sales"], Text, Local, [];
+    SetNotify => "app.notify", "Turn a notification kind on or off (friend_joins, trades, chats, friend_requests, experience_updates, sales, plugins)", ["notifications", "alerts", "desktop", "mute", "sales"], Text, Local, [];
     SetSetting => "settings.set", "Change a setting", ["setting", "preference", "option", "change", "turn on", "turn off"], Setting, Local, [];
     ResetSettings => "settings.reset", "Reset settings to their defaults", ["reset", "default", "restore", "settings"], Setting, Local, [];
     SetShortcut => "shortcuts.set", "Change a command's shortcut", ["shortcut", "keybinding", "hotkey", "rebind", "keys"], Text, Local, [];

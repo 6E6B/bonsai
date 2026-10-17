@@ -5,8 +5,8 @@
 mod manifest;
 mod sandbox;
 
-pub use manifest::{Manifest, Permission, Refused};
-pub use sandbox::{Action, Arg, Command, Ctx, Host, Limits, Outcome, Plugin, Read, TradeStatus};
+pub use manifest::{Manifest, Permission, Refused, Setting, SettingKind};
+pub use sandbox::{Action, Arg, Command, Ctx, EVENTS, Host, Limits, Outcome, Plugin, Read, TradeStatus};
 
 /// The plugin API version this build provides. A manifest asking for a newer one is refused.
 pub const API_VERSION: u32 = 1;

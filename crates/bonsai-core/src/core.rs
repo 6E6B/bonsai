@@ -1129,6 +1129,7 @@ impl Inner {
             before
         };
         self.note_joins(id, &before, &all);
+        self.note_presence_changes(id, &before, &all);
         self.load_universes(&universes).await;
     }
 

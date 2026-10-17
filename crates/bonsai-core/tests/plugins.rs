@@ -91,7 +91,7 @@ fn install_run_disable_remove() {
     assert!(core.store().plugin_install.is_none());
 
     let p = wait(&core, "the plugin to run", |p| running(p, "hello"));
-    let Some(Status::Running { commands }) = status(&p, "hello") else {
+    let Some(Status::Running { commands, .. }) = status(&p, "hello") else {
         unreachable!()
     };
     assert_eq!(commands[0].title, "Say hello");
@@ -526,4 +526,167 @@ fn reads_check_grants_and_use_the_cache() {
     let before = newest(USER);
     run("user");
     wait_store(&core, "the public read", |_| newest(USER) > before);
+}
+
+const WATCH: &str = r#"
+bonsai.on("chat", function(ctx, e)
+  local n = (ctx.store.get("chats") or 0) + 1
+  ctx.store.set("chats", n)
+  if n == 1 then
+    return { alert = { title = "Chat", body = "from " .. tostring(e.from) .. " in " .. e.conversation } }
+  end
+  -- Even tier 1 waits for the user when nobody ran a command.
+  return { actions = { { id = "market.favorite", arg = "item:1" } } }
+end)
+bonsai.command { id = "count", title = "Count", run = function(ctx)
+  return { toast = tostring(ctx.store.get("chats")) .. " " .. ctx.settings.greeting .. " " .. tostring(ctx.settings.loud) }
+end }
+bonsai.command { id = "own", title = "Own", run = function(ctx)
+  return { toast = "own " .. tostring(ctx.store.get("chats")) }
+end }
+"#;
+
+#[test]
+fn events_storage_and_settings() {
+    use bonsai_api::realtime::Event;
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    AccountList {
+        accounts: vec![AccountMeta {
+            id: ME,
+            name: "TestUser".into(),
+            display_name: "Test User".into(),
+            ..Default::default()
+        }],
+        active: Some(ME),
+        previous: None,
+    }
+    .save(&Paths::in_dir(home.path()).accounts_file())
+    .unwrap();
+    let dir = src.path().join("watch");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("plugin.toml"),
+        r#"id = "watch"
+name = "Watch"
+entry = "main.luau"
+permissions = ["read.account", "notify"]
+actions = ["market.favorite"]
+
+[[settings]]
+key = "greeting"
+kind = "text"
+default = "hi"
+
+[[settings]]
+key = "loud"
+kind = "bool"
+"#,
+    )
+    .unwrap();
+    std::fs::write(dir.join("main.luau"), WATCH).unwrap();
+    let core = start(home.path());
+    let ran: Ran = Arc::default();
+    let r = ran.clone();
+    core.set_plugin_runner(Arc::new(move |a, id, arg| {
+        r.lock().push((a, id, arg));
+        Ok(())
+    }));
+    core.stage_plugin_install(dir.to_str().unwrap(), false).unwrap();
+    core.finish_plugin_install(vec![ME]).unwrap();
+    let p = wait(&core, "the plugin to run", |p| running(p, "watch"));
+    let Some(Status::Running { events, timers, .. }) = status(&p, "watch") else {
+        unreachable!()
+    };
+    assert_eq!(
+        (events.as_slice(), timers.as_slice()),
+        (&["chat".to_owned()][..], &[][..])
+    );
+    let cmd = |id: &str| PluginCmd {
+        plugin: "watch".into(),
+        id: id.into(),
+    };
+
+    // A chat message reaches the plugin, which keeps a count and raises a desktop alert.
+    let chat = Event {
+        account: ME,
+        namespace: "ChatNotifications".into(),
+        detail: serde_json::json!({"Type": "NewMessage", "ConversationId": "conv-1", "SenderUserId": 7}),
+    };
+    core.apply_realtime(&chat);
+    let start = Instant::now();
+    let alerts = loop {
+        // Bonsai's own chat alert comes too.
+        let a: Vec<_> = core
+            .take_alerts()
+            .into_iter()
+            .filter(|a| a.kind == "plugins")
+            .collect();
+        if !a.is_empty() {
+            break a;
+        }
+        assert!(
+            start.elapsed() < Duration::from_secs(10),
+            "no alert; toasts: {:?}",
+            core.store().toasts
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    };
+    assert_eq!(alerts[0].kind, "plugins");
+    assert_eq!(alerts[0].title, "Watch: Chat");
+    assert_eq!(alerts[0].body, "from 7 in conv-1");
+
+    // The second time it proposes a tier 1 action, which waits in the dialog.
+    core.apply_realtime(&chat);
+    wait_store(&core, "the action dialog", |s| s.plugin_actions.is_some());
+    assert!(ran.lock().is_empty());
+    core.cancel_plugin_actions();
+
+    // Storage is per account, and kept on disk.
+    core.run_plugin_command(&cmd("count"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the count", |_| toasted(&core, "Watch: 2 hi false"));
+    let file = home.path().join("config/plugin-data/watch/1.json");
+    assert!(std::fs::read_to_string(&file).unwrap().contains("\"chats\":2"));
+    core.run_plugin_command(&cmd("own"), None, None, None).unwrap();
+    wait_store(&core, "its own storage", |_| toasted(&core, "Watch: own nil"));
+
+    // Settings come from the manifest until changed, and reset with no value.
+    assert!(core.set_plugin_setting("watch", "loud", "maybe").is_err());
+    assert!(core.set_plugin_setting("watch", "nope", "on").is_err());
+    core.set_plugin_setting("watch", "greeting", "hello there")
+        .unwrap();
+    core.set_plugin_setting("watch", "loud", "on").unwrap();
+    let values: Vec<_> = core
+        .plugin_settings("watch")
+        .into_iter()
+        .map(|(s, v)| (s.key, v))
+        .collect();
+    assert_eq!(
+        values,
+        vec![
+            ("greeting".to_owned(), serde_json::json!("hello there")),
+            ("loud".to_owned(), serde_json::json!(true))
+        ]
+    );
+    core.run_plugin_command(&cmd("count"), None, Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the new settings", |_| {
+        toasted(&core, "Watch: 2 hello there true")
+    });
+    core.set_plugin_setting("watch", "greeting", "").unwrap();
+    assert_eq!(core.plugin_settings("watch")[0].1, serde_json::json!("hi"));
+
+    // Without the account it hears nothing.
+    core.set_plugin_account("watch", ME, false).unwrap();
+    wait(&core, "the grant to go", |p| p[0].accounts.is_empty());
+    core.apply_realtime(&chat);
+    std::thread::sleep(Duration::from_millis(200));
+    assert!(!core.take_alerts().iter().any(|a| a.kind == "plugins"));
+    assert!(core.store().plugin_actions.is_none());
+
+    // Removing it deletes what it kept.
+    core.remove_plugin("watch").unwrap();
+    wait(&core, "the plugin to go", |p| p.is_empty());
+    assert!(!home.path().join("config/plugin-data/watch").exists());
 }

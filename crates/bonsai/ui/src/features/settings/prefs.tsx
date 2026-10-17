@@ -24,7 +24,7 @@ export const usePref = (key: string) => {
   return () => prefs.find((p) => p.key === key)
 }
 
-const set = (key: string, value: string) => run("settings.set", `${key} ${value}`)
+const setPref = (key: string, value: string) => run("settings.set", `${key} ${value}`)
 
 /** One setting from bonsai-core's list: its title, description, a control for its kind, and a
  * reset button while it differs from the default. Pass children to use another control. */
@@ -50,8 +50,14 @@ export function PrefRow(props: { name: string; description?: JSX.Element; childr
   )
 }
 
-function PrefControl(props: { pref: PrefView }) {
+/** What a control needs from a setting: a pref, or a plugin's own setting. */
+type Control = Pick<PrefView, "key" | "title" | "kind" | "options" | "min" | "max" | "step" | "placeholder" | "value">
+
+/** The control for one setting's kind. `onSet` gets the new value as text; prefs default to
+ * `settings.set`. */
+export function PrefControl(props: { pref: Control; onSet?: (value: string) => void }) {
   const p = () => props.pref
+  const set = (_key: string, value: string) => (props.onSet ? props.onSet(value) : setPref(p().key, value))
   /** Text being typed; saved on Enter or when the field loses focus. */
   const [draft, setDraft] = createSignal<string>()
   const commit = () => {
