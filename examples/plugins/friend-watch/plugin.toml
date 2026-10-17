@@ -1,0 +1,16 @@
+id = "friend-watch"
+name = "Friend watch"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["read.public", "read.account", "notify"]
+actions = []
+
+[[settings]]
+key = "only_in_game"
+title = "Only alert when they join a game"
+description = "Skip plain online/offline changes."
+kind = "bool"
+default = false
