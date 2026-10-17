@@ -74,6 +74,8 @@ pub struct Shell {
     pub plugin_rev: Id,
     /// The account in the "Allow automation" dialog, while it is open.
     pub plugin_automation: Option<plugins::AutomationView>,
+    /// The plugin and account in the budget dialog.
+    pub plugin_budget: Option<plugins::BudgetDialogView>,
     /// When a plugin last wrote, in Unix seconds, for the stop indicator.
     pub plugin_wrote: Option<Id>,
     /// The "Sign in another device" dialog, once a code was entered.
@@ -1050,6 +1052,10 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         plugin_open: s.plugin_open.as_ref().map(plugins::open_view),
         plugin_rev: Id(s.plugin_rev),
         plugin_automation: s.plugin_automation.map(|a| plugins::automation_view(a, &s)),
+        plugin_budget: s
+            .plugin_budget
+            .as_ref()
+            .map(|b| plugins::budget_dialog_view(b, &s)),
         plugin_wrote: s.plugin_wrote.map(|t| Id(t.max(0) as u64)),
         approve: s.approve.as_ref().map(approve::view),
         security: s.security.as_ref().map(security::view),
@@ -1194,7 +1200,7 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 .find(|x| x.id == a)
                 .map(|x| x.name.clone())
                 .ok_or_else(|| "Unknown account.".to_owned())?;
-            copy(&app, &core, name, "Copied username.")
+            copy(app, core, name, "Copied username.")
         }
         CommandId::RemoveAccount => {
             let a = match arg() {
@@ -1327,7 +1333,19 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 "Copied invite link.",
             )
         }
-        CommandId::BuyPrivateServer => Err("Open an experience first.".to_owned()),
+        // From a plugin: "place price name", at the price it looked up. On the experience page
+        // the UI handles it with a dialog that shows the price.
+        CommandId::BuyPrivateServer => {
+            let a = arg().ok_or_else(|| "Open an experience first.".to_owned())?;
+            let mut words = a.split_whitespace();
+            let place = words.next().and_then(|w| w.parse().ok());
+            let price = words.next().and_then(|w| w.parse().ok());
+            let name = words.collect::<Vec<_>>().join(" ");
+            match (place, price) {
+                (Some(place), Some(price)) => buy_server_as(core, acting()?, place, &name, price),
+                _ => Err("Give a place, a price and a name.".to_owned()),
+            }
+        }
         CommandId::RenamePrivateServer => {
             let a = arg().ok_or_else(|| "Which server, and what name?".to_owned())?;
             let (server, name) = a
@@ -1448,8 +1466,18 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
             }
             Ok(())
         }
-        // The experience page handles this with a confirm dialog that shows the price.
-        CommandId::BuyPass => Err("Open the experience to buy a pass.".to_owned()),
+        // The experience page handles this with a confirm dialog that shows the price. From a
+        // plugin: "place pass price", at the price it looked up.
+        CommandId::BuyPass => {
+            let a = arg().ok_or_else(|| "Open the experience to buy a pass.".to_owned())?;
+            let n: Vec<u64> = a.split_whitespace().filter_map(|w| w.parse().ok()).collect();
+            match n[..] {
+                [place, pass, price] if a.split_whitespace().count() == 3 => {
+                    buy_pass_as(core, acting()?, place, pass, price)
+                }
+                _ => Err("Give a place, a pass and a price.".to_owned()),
+            }
+        }
         CommandId::QuickSignIn => {
             core.start_quick_sign_in();
             Ok(())
@@ -2518,12 +2546,17 @@ pub fn buy_private_server(
     let account = core
         .acting(None)
         .ok_or_else(|| "Add an account first.".to_owned())?;
-    let u = universe_of(&core, place_id.0).ok_or_else(|| "Still loading this experience.".to_owned())?;
+    buy_server_as(&core, account, place_id.0, &name, price.into())
+}
+
+fn buy_server_as(core: &Core, account: AccountId, place: u64, name: &str, price: u64) -> Result<(), String> {
+    let u = universe_of(core, place).ok_or_else(|| "Still loading this experience.".to_owned())?;
     let name = name.trim();
     if name.is_empty() {
         return Err("Give it a name.".to_owned());
     }
-    core.buy_private_server(account, u, name.to_owned(), price.into());
+    let price = i64::try_from(price).map_err(|_| "That price is too high.".to_owned())?;
+    core.buy_private_server(account, u, name.to_owned(), price);
     Ok(())
 }
 
@@ -2535,7 +2568,12 @@ pub fn buy_pass(core: State<'_, Arc<Core>>, place_id: Id, pass_id: Id, price: u3
     let account = core
         .acting(None)
         .ok_or_else(|| "Add an account first.".to_owned())?;
-    let u = universe_of(&core, place_id.0).ok_or_else(|| "Still loading this experience.".to_owned())?;
+    buy_pass_as(&core, account, place_id.0, pass_id.0, price.into())
+}
+
+fn buy_pass_as(core: &Core, account: AccountId, place: u64, pass: u64, price: u64) -> Result<(), String> {
+    let price = i64::try_from(price).map_err(|_| "That price is too high.".to_owned())?;
+    let u = universe_of(core, place).ok_or_else(|| "Still loading this experience.".to_owned())?;
     let passes = core
         .game_passes(account, u, false)
         .data
@@ -2543,18 +2581,18 @@ pub fn buy_pass(core: State<'_, Arc<Core>>, place_id: Id, pass_id: Id, price: u3
     let p = passes
         .items
         .iter()
-        .find(|p| p.id == pass_id.0)
+        .find(|p| p.id == pass)
         .ok_or_else(|| "That pass isn't in this store.".to_owned())?;
     if p.owned {
         return Err("You already own this pass.".to_owned());
     }
-    if p.price != Some(price.into()) {
+    if p.price != Some(price) {
         return Err("The price changed. Look again before buying.".to_owned());
     }
     if p.product_id == 0 {
         return Err("This pass can only be bought on the website.".to_owned());
     }
-    core.buy_pass(account, p.product_id, p.name.clone(), price.into());
+    core.buy_pass(account, p.product_id, p.name.clone(), price);
     Ok(())
 }
 
@@ -2796,6 +2834,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             plugins::plugin_automation,
             plugins::plugin_automation_confirm,
             plugins::plugin_automation_cancel,
+            plugins::plugin_budget_save,
+            plugins::plugin_budget_cancel,
             plugins::plugin_activity,
             account::pin_status,
             account::unlock_pin,

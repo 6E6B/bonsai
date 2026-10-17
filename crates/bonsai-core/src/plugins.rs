@@ -20,11 +20,13 @@ use crate::core::{Core, Inner};
 pub use bonsai_plugin::{Arg, Command, Manifest, Permission, Refused, Setting, SettingKind};
 
 mod automation;
+mod budget;
 mod events;
 mod reads;
 mod storage;
 
 pub use automation::{Activity, DEFAULT_CAP, PluginCap, unattended_refusal};
+pub use budget::{Budget, Charge, PendingBudget, PluginBudget, Spent, budget_refusal, cost_label};
 
 pub(crate) use reads::{presence_view, status};
 
@@ -100,6 +102,9 @@ struct Saved {
     /// Hourly caps the user lowered, by tier 2 action.
     #[serde(default)]
     caps: BTreeMap<String, u32>,
+    /// What it may spend a day without a click, by account. See `budget.rs`.
+    #[serde(default)]
+    budgets: BTreeMap<AccountId, budget::Budget>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -804,25 +809,33 @@ impl Inner {
                     .map(str::trim)
                     .filter(|a| !a.is_empty())
                     .map(|a| a.chars().take(200).collect());
+                if let Some(Err(e)) = budget::Spend::parse(id, arg.as_deref()) {
+                    return Err(format!("Can't run \"{key}\": {e}"));
+                }
                 Ok(ProposedAction { id, arg, tier })
             })
             .collect()
     }
 
-    /// Every action may run without a click now, counting the batch against the caps.
+    /// Every action may run without a click now, counting the batch against the caps and
+    /// budgets. Purchases count at the most they may cost.
     fn all_unattended(&self, plugin: &str, account: AccountId, actions: &[ProposedAction]) -> bool {
         let mut seen: std::collections::HashMap<CommandId, u32> = std::collections::HashMap::new();
+        let mut pending = budget::Spent::default();
         actions.iter().all(|a| {
             let n = seen.entry(a.id).or_default();
-            let ok = self.may_run_unattended(plugin, account, a, *n).is_ok();
+            let ok = self.may_run_unattended(plugin, account, a, *n, pending).is_ok();
             *n += 1;
+            if let Some(c) = budget::charge(a) {
+                pending.add(c);
+            }
             ok
         })
     }
 
     /// Runs checked actions one after another off the caller's thread, logs each and then says
-    /// how it went. An unattended batch checks the automation switch and cap before each one;
-    /// the stop button drops the rest.
+    /// how it went. An unattended batch checks the automation switch, cap and budget before each
+    /// one; the stop button drops the rest.
     fn run_actions(
         self: &Arc<Self>,
         plugin: &str,
@@ -838,22 +851,7 @@ impl Inner {
             let total = actions.len();
             let mut failed = Vec::new();
             for a in actions {
-                let r = if unattended {
-                    inner.may_run_unattended(&plugin, account, &a, 0)
-                } else {
-                    Ok(())
-                }
-                .and_then(|()| inner.run_one(&plugin, account, &a, unattended, epoch));
-                inner.log_activity(automation::Activity {
-                    at: crate::cache::now(),
-                    plugin: plugin.clone(),
-                    plugin_name: name.clone(),
-                    account,
-                    command: a.id.key().to_owned(),
-                    arg: a.arg.clone(),
-                    unattended,
-                    error: r.as_ref().err().cloned(),
-                });
+                let r = inner.run_logged(&plugin, &name, account, &a, unattended, epoch);
                 if let Err(e) = r {
                     let stopped = inner.plugins.lock().log.stop_gen != epoch;
                     failed.push(e);
@@ -1157,7 +1155,7 @@ impl Core {
                 if pending.unpacked && !p.saved.unpacked.contains(&pending.source) {
                     p.saved.unpacked.push(pending.source.clone());
                 }
-                // Settings and caps survive an update.
+                // Settings, caps and budgets survive an update.
                 let settings = p
                     .saved
                     .plugins
@@ -1170,6 +1168,13 @@ impl Core {
                     .get(&m.id)
                     .map(|s| s.caps.clone())
                     .unwrap_or_default();
+                let mut budgets = p
+                    .saved
+                    .plugins
+                    .get(&m.id)
+                    .map(|s| s.budgets.clone())
+                    .unwrap_or_default();
+                budgets.retain(|a, _| accounts.contains(a));
                 p.saved.plugins.insert(
                     m.id.clone(),
                     Saved {
@@ -1179,6 +1184,7 @@ impl Core {
                         actions: m.actions.clone(),
                         settings,
                         caps,
+                        budgets,
                     },
                 );
             }
@@ -1239,6 +1245,8 @@ impl Core {
             s.accounts.retain(|a| *a != account);
             if on {
                 s.accounts.push(account);
+            } else {
+                s.budgets.remove(&account);
             }
         })
     }

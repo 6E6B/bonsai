@@ -1,3 +1,4 @@
+import { full } from "~/lib/format"
 import { settingsSections } from "~/lib/sections"
 import type { ConfirmOptions } from "~/lib/ui"
 
@@ -87,6 +88,13 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
           danger: true,
         }
       : null,
+  // With a price in the argument (the form plugins use) these buy at once, so ask first. Without
+  // one, the item or experience page opens its own dialog with the price.
+  "market.buy": (arg) => buyAt(arg, /^(\S+) (\d+)$/),
+  "market.buy_as": (arg) => buyAt(arg, /^(\S+) (\d+)$/),
+  "market.buy_resale": (arg) => buyAt(arg, /^(\S+) (\d+)$/),
+  "game.buy_pass": (arg) => buyAt(arg, /^(\d+ \d+) (\d+)$/),
+  "game.buy_private_server": (arg) => buyAt(arg, /^(\d+) (\d+) \S/, "Buy this private server"),
   "group.recurring_payouts": (arg) =>
     arg?.trim()
       ? arg.trim().toLowerCase() === "none"
@@ -141,4 +149,16 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
     confirm: "Remove",
     danger: true,
   }),
+}
+
+/** "Buy for R$ 50?" when `arg` matches `form`, whose second group is the price, else null. */
+export function buyAt(arg: string | null, form: RegExp, what = "Buy"): ConfirmOptions | null {
+  const price = arg?.trim().replace(/\s+/g, " ").match(form)?.[2]
+  if (!price) return null
+  return {
+    title: `${what} for R$ ${full(Number(price))}?`,
+    description: "The Robux leave this account. This can't be undone.",
+    confirm: "Buy",
+    danger: true,
+  }
 }

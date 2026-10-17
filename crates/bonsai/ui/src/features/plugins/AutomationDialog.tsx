@@ -43,8 +43,8 @@ export function AutomationDialog() {
           >
             <Alert variant="danger" title="Roblox bans accounts for bots and automated trading.">
               Plugins will be able to send friend requests, follow, block and chat as @{p().name} without asking you
-              each time, up to each plugin's hourly cap. Turn it off here or stop every plugin at once with Stop all
-              plugins.
+              each time, up to each plugin's hourly cap. They can also spend Robux and accept trades, but only within a
+              daily budget you set for each plugin. Turn it off here or stop every plugin at once with Stop all plugins.
             </Alert>
             <TextField
               label={`Type ${p().name} to confirm`}

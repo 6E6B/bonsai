@@ -302,6 +302,9 @@ export const commands = {
 	/**  Turns automation on for the account in the dialog, when `typed` is its name. */
 	pluginAutomationConfirm: (typed: string) => typedError<null, string>(__TAURI_INVOKE("plugin_automation_confirm", { typed })),
 	pluginAutomationCancel: () => __TAURI_INVOKE<void>("plugin_automation_cancel"),
+	/**  Saves the budget in the budget dialog. Zero turns it off. */
+	pluginBudgetSave: (robux: number, trades: number) => typedError<null, string>(__TAURI_INVOKE("plugin_budget_save", { robux, trades })),
+	pluginBudgetCancel: () => __TAURI_INVOKE<void>("plugin_budget_cancel"),
 	/**  Plugin writes, newest first. */
 	pluginActivity: () => __TAURI_INVOKE<ActivityView[]>("plugin_activity"),
 	/**  Account PIN of the active account. */
@@ -425,6 +428,8 @@ export type ActivityView = {
 	unattended: boolean,
 	/**  Why it failed or was refused. */
 	error: string | null,
+	/**  What it spent, for actions that spend Robux. */
+	robux: Id | null,
 };
 
 /**  Allied and enemy communities. */
@@ -591,6 +596,14 @@ export type BadgeRow = {
 	awarded: number,
 	/**  ISO date the active account earned it. */
 	earned: string | null,
+};
+
+/**  The budget dialog's plugin and account. */
+export type BudgetDialogView = {
+	plugin: string,
+	pluginName: string,
+	accountName: string,
+	budget: PluginBudgetView,
 };
 
 export type BundlePartView = {
@@ -1540,6 +1553,21 @@ export type PluginActionsView = {
 	actions: ProposedView[],
 };
 
+/**
+ *  What a plugin may spend on one account a day without a click, and what it spent in the last
+ *  24 hours. Zero is no budget: it asks each time.
+ */
+export type PluginBudgetView = {
+	account: Id,
+	robux: number,
+	trades: number,
+	spentRobux: Id,
+	spentTrades: number,
+	/**  It may run actions that spend Robux, or accept trades. */
+	hasRobux: boolean,
+	hasTrades: boolean,
+};
+
 /**  How often a plugin may run one tier 2 action an hour without a click. */
 export type PluginCapView = {
 	key: string,
@@ -1622,6 +1650,11 @@ export type PluginView = {
 	settings: PluginSettingView[],
 	/**  Hourly caps on tier 2 actions it runs without a click. */
 	caps: PluginCapView[],
+	/**
+	 *  Daily budgets for tier 3 actions it runs without a click, by account it may use. Empty
+	 *  when it has no actions a budget covers.
+	 */
+	budgets: PluginBudgetView[],
 	asks: Asks | null,
 	/**  Accounts it may use. */
 	accounts: Id[],
@@ -1765,6 +1798,8 @@ export type ProposedView = {
 	title: string,
 	arg: string | null,
 	tier: number,
+	/**  What it may cost: "Up to R$ 50", "R$ 100" or "1 trade". */
+	cost: string | null,
 };
 
 export type RecentView = {
@@ -1986,6 +2021,8 @@ export type Shell = {
 	pluginRev: Id,
 	/**  The account in the "Allow automation" dialog, while it is open. */
 	pluginAutomation: AutomationView | null,
+	/**  The plugin and account in the budget dialog. */
+	pluginBudget: BudgetDialogView | null,
 	/**  When a plugin last wrote, in Unix seconds, for the stop indicator. */
 	pluginWrote: Id | null,
 	/**  The "Sign in another device" dialog, once a code was entered. */

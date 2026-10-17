@@ -1171,15 +1171,29 @@ pub fn buy_item(
     } else {
         ItemRef::asset(id.0)
     };
+    buy_now(&core, account, item, price.into(), false)
+}
+
+/// Buys `item` at `price` as `account`: from whoever "Buy" sells it for now, or with `resale`
+/// the cheapest reseller. Nothing is bought if that isn't the price now.
+fn buy_now(core: &Core, account: AccountId, item: ItemRef, price: i64, resale: bool) -> Result<(), String> {
     let d = core
         .item(item)
         .data
         .ok_or_else(|| "Still loading. Try again in a moment.".to_owned())?;
-    let (seller, now) = d
-        .card
-        .buy_offer()
-        .ok_or_else(|| "It's not for sale.".to_owned())?;
-    if now != i64::from(price) {
+    let (seller, now) = if resale {
+        let p = d
+            .card
+            .lowest_resale
+            .filter(|p| *p > 0 && d.card.limited.resellable())
+            .ok_or_else(|| "Nobody is selling this right now.".to_owned())?;
+        (Seller::Cheapest, p)
+    } else {
+        d.card
+            .buy_offer()
+            .ok_or_else(|| "It's not for sale.".to_owned())?
+    };
+    if now != price {
         return Err("The price changed. Look again before buying.".to_owned());
     }
     if d.card.collectible_id.is_empty() {
@@ -1236,23 +1250,25 @@ pub fn buy_resale(
 /// The item a command is about: `item:<id>`, `bundle:<id>` or a bare asset id in the argument,
 /// else the page it ran from.
 fn target(inv: &Invocation) -> Result<ItemRef, String> {
-    let parse = |s: &str| -> Option<ItemRef> {
-        let s = s.trim();
-        if let Some(id) = s.strip_prefix("bundle:") {
-            return id.parse().ok().map(ItemRef::bundle);
-        }
-        s.strip_prefix("item:")
-            .unwrap_or(s)
-            .parse()
-            .ok()
-            .map(ItemRef::asset)
-    };
     inv.arg
         .as_deref()
         .filter(|a| !a.trim().is_empty())
-        .and_then(parse)
-        .or_else(|| inv.context.as_deref().and_then(parse))
+        .and_then(parse_item)
+        .or_else(|| inv.context.as_deref().and_then(parse_item))
         .ok_or_else(|| "Open an item first.".to_owned())
+}
+
+/// `item:<id>`, `bundle:<id>` or a bare asset id.
+fn parse_item(s: &str) -> Option<ItemRef> {
+    let s = s.trim();
+    if let Some(id) = s.strip_prefix("bundle:") {
+        return id.parse().ok().map(ItemRef::bundle);
+    }
+    s.strip_prefix("item:")
+        .unwrap_or(s)
+        .parse()
+        .ok()
+        .map(ItemRef::asset)
 }
 
 /// Runs a `market.*` or `inventory.*` command, or a `list.more` for one of this module's lists.
@@ -1269,7 +1285,18 @@ pub(super) fn run(
         C::SearchMarketplace => Err("Open the Marketplace to search.".to_owned()),
         C::ViewInventory => Err("Open Inventory first.".to_owned()),
         // The item page handles these with a confirm dialog that shows the price.
-        C::BuyItem | C::BuyItemAs | C::BuyResale => Err("Open the item to buy it.".to_owned()),
+        // From a plugin: "item:<id> <price>", at the price it looked up.
+        C::BuyItem | C::BuyItemAs | C::BuyResale => (|| {
+            let a = inv.arg.as_deref().unwrap_or_default();
+            let (item, price) = match a.split_whitespace().collect::<Vec<_>>()[..] {
+                [item, price] => (parse_item(item), price.parse::<u32>().ok()),
+                _ => (None, None),
+            };
+            let (Some(item), Some(price)) = (item, price) else {
+                return Err("Open the item to buy it.".to_owned());
+            };
+            buy_now(core, need()?, item, price.into(), id == C::BuyResale)
+        })(),
         C::FavoriteItem => (|| {
             let a = need()?;
             let item = target(inv)?;

@@ -5,8 +5,9 @@ use std::sync::Arc;
 
 use bonsai_core::commands::{CommandId, CommandRef, PluginCmd, Registry};
 use bonsai_core::plugins::{
-    Activity, Arg, DEFAULT_CAP, PendingActions, PendingInstall, Permission, PluginCap, PluginCommand,
-    PluginInfo, PluginOpen, Refused, Setting, SettingKind, Status, action_tier,
+    Activity, Arg, DEFAULT_CAP, PendingActions, PendingBudget, PendingInstall, Permission, PluginBudget,
+    PluginCap, PluginCommand, PluginInfo, PluginOpen, Refused, Setting, SettingKind, Status, action_tier,
+    cost_label,
 };
 use bonsai_core::store::StoreData;
 use bonsai_core::{AccountId, Core};
@@ -89,6 +90,9 @@ pub struct PluginView {
     pub settings: Vec<PluginSettingView>,
     /// Hourly caps on tier 2 actions it runs without a click.
     pub caps: Vec<PluginCapView>,
+    /// Daily budgets for tier 3 actions it runs without a click, by account it may use. Empty
+    /// when it has no actions a budget covers.
+    pub budgets: Vec<PluginBudgetView>,
     pub asks: Option<Asks>,
     /// Accounts it may use.
     pub accounts: Vec<Id>,
@@ -139,6 +143,58 @@ pub struct PluginCapView {
     pub max: u32,
 }
 
+/// What a plugin may spend on one account a day without a click, and what it spent in the last
+/// 24 hours. Zero is no budget: it asks each time.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginBudgetView {
+    pub account: Id,
+    pub robux: u32,
+    pub trades: u32,
+    pub spent_robux: Id,
+    pub spent_trades: u32,
+    /// It may run actions that spend Robux, or accept trades.
+    pub has_robux: bool,
+    pub has_trades: bool,
+}
+
+/// The budget dialog's plugin and account.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BudgetDialogView {
+    pub plugin: String,
+    pub plugin_name: String,
+    pub account_name: String,
+    pub budget: PluginBudgetView,
+}
+
+fn budget_view(b: &PluginBudget) -> PluginBudgetView {
+    PluginBudgetView {
+        account: Id(b.account.0),
+        robux: b.budget.robux,
+        trades: b.budget.trades,
+        spent_robux: Id(b.spent.robux.max(0) as u64),
+        spent_trades: b.spent.trades,
+        has_robux: b.robux,
+        has_trades: b.trades,
+    }
+}
+
+pub fn budget_dialog_view(p: &PendingBudget, s: &StoreData) -> BudgetDialogView {
+    BudgetDialogView {
+        plugin: p.plugin.clone(),
+        plugin_name: p.plugin_name.clone(),
+        account_name: s
+            .accounts
+            .accounts
+            .iter()
+            .find(|a| a.id == p.current.account)
+            .map(|a| a.title().to_owned())
+            .unwrap_or_default(),
+        budget: budget_view(&p.current),
+    }
+}
+
 /// One plugin write, or one it tried and was refused.
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -155,6 +211,8 @@ pub struct ActivityView {
     pub unattended: bool,
     /// Why it failed or was refused.
     pub error: Option<String>,
+    /// What it spent, for actions that spend Robux.
+    pub robux: Option<Id>,
 }
 
 /// The account in the "Allow automation" dialog.
@@ -203,6 +261,8 @@ pub struct ProposedView {
     pub title: String,
     pub arg: Option<String>,
     pub tier: u8,
+    /// What it may cost: "Up to R$ 50", "R$ 100" or "1 trade".
+    pub cost: Option<String>,
 }
 
 /// Actions a plugin command proposed, for the user to run or cancel.
@@ -247,6 +307,7 @@ pub fn actions_view(p: &PendingActions, s: &StoreData) -> PluginActionsView {
                 title: registry.get(a.id).title.to_owned(),
                 arg: a.arg.clone(),
                 tier: a.tier as u8,
+                cost: cost_label(a),
             })
             .collect(),
     }
@@ -380,7 +441,12 @@ fn cap_view(c: &PluginCap) -> PluginCapView {
     }
 }
 
-fn view(p: PluginInfo, settings: Vec<(Setting, serde_json::Value)>, caps: Vec<PluginCap>) -> PluginView {
+fn view(
+    p: PluginInfo,
+    settings: Vec<(Setting, serde_json::Value)>,
+    caps: Vec<PluginCap>,
+    budgets: Vec<PluginBudget>,
+) -> PluginView {
     let (state, error, review, commands, listens, timers) = match p.status {
         Status::Off => (
             PluginState::Off,
@@ -445,6 +511,7 @@ fn view(p: PluginInfo, settings: Vec<(Setting, serde_json::Value)>, caps: Vec<Pl
         timers,
         settings: settings.iter().map(|(s, v)| setting_view(s, v)).collect(),
         caps: caps.iter().map(cap_view).collect(),
+        budgets: budgets.iter().map(budget_view).collect(),
         asks: m.map(asks),
         accounts: p.accounts.iter().map(|a| Id(a.0)).collect(),
         id: p.id,
@@ -476,7 +543,8 @@ pub fn plugins(core: State<'_, Arc<Core>>) -> Vec<PluginView> {
         .map(|p| {
             let settings = core.plugin_settings(&p.id);
             let caps = core.plugin_caps(&p.id);
-            view(p, settings, caps)
+            let budgets = core.plugin_budgets(&p.id);
+            view(p, settings, caps, budgets)
         })
         .collect()
 }
@@ -499,6 +567,19 @@ pub fn plugin_automation_confirm(core: State<'_, Arc<Core>>, typed: String) -> R
 #[specta::specta]
 pub fn plugin_automation_cancel(core: State<'_, Arc<Core>>) {
     core.cancel_automation();
+}
+
+/// Saves the budget in the budget dialog. Zero turns it off.
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_budget_save(core: State<'_, Arc<Core>>, robux: u32, trades: u32) -> Result<(), String> {
+    core.save_budget(robux, trades)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_budget_cancel(core: State<'_, Arc<Core>>) {
+    core.cancel_budget();
 }
 
 /// Most activity entries sent at once.
@@ -529,6 +610,7 @@ pub fn plugin_activity(core: State<'_, Arc<Core>>) -> Vec<ActivityView> {
             arg: a.arg,
             unattended: a.unattended,
             error: a.error,
+            robux: a.robux.map(|r| Id(r.max(0) as u64)),
         })
         .collect()
 }
@@ -622,6 +704,7 @@ pub fn run(
                 _ => Err("Give a plugin, an action and a number.".into()),
             }
         }
+        CommandId::SetPluginBudget => acting().and_then(|a| core.request_budget(&arg(), a)),
         CommandId::AllowAutomation => acting().and_then(|a| core.request_automation(a)),
         CommandId::BlockAutomation => acting().map(|a| {
             core.block_automation(a);

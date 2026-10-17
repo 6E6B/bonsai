@@ -48,6 +48,7 @@ export function ActionsDialog() {
                     <Badge variant={tiers[a.tier]?.variant ?? "neutral"}>{tiers[a.tier]?.label ?? a.tier}</Badge>
                     <span class="min-w-0 flex-1 truncate">{a.title}</span>
                     <Show when={a.arg}>{(arg) => <span class="font-mono text-fg-muted">{arg()}</span>}</Show>
+                    <Show when={a.cost}>{(c) => <Badge variant="warning">{c()}</Badge>}</Show>
                   </li>
                 )}
               </For>

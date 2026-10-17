@@ -897,3 +897,198 @@ fn stop_all_drops_queued_writes() {
     let p = wait(&core, "the plugins to load", |p| !p.is_empty());
     assert!(!p[0].enabled);
 }
+
+const BUDGET: &str = r#"
+bonsai.command { id = "run", title = "Run", arg = "text", run = function(ctx, arg)
+  local key, rest = string.match(arg, "(%S+) ?(.*)")
+  ctx.run(key, rest)
+  return { toast = "ran" }
+end }
+bonsai.command { id = "batch", title = "Batch", arg = "text", run = function(ctx, arg)
+  local actions = {}
+  for a in string.gmatch(arg, "[^;]+") do
+    local key, rest = string.match(a, "(%S+) (.*)")
+    table.insert(actions, { id = key, arg = rest })
+  end
+  return { actions = actions }
+end }
+"#;
+
+#[test]
+fn tier_3_runs_within_its_budget_at_todays_price() {
+    use serde_json::json;
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let details = |id: u64, body: serde_json::Value| {
+        get(
+            "catalog.roblox.com",
+            &format!("/v1/catalog/items/{id}/details"),
+            body,
+        )
+    };
+    let fixture = Fixture {
+        source: "synthetic".into(),
+        interactions: vec![
+            details(
+                2,
+                json!({"id":2,"itemType":"Asset","assetType":8,"name":"Hat","collectibleItemId":"c2","price":50,"isOffSale":false,"itemRestrictions":[],"itemCreatedUtc":"2020-01-01T00:00:00Z"}),
+            ),
+            details(
+                3,
+                json!({"id":3,"itemType":"Asset","assetType":8,"name":"Old hat","collectibleItemId":"c3","price":0,"isOffSale":true,"itemRestrictions":["Limited"],"lowestResalePrice":900,"hasResellers":true,"itemCreatedUtc":"2008-01-01T00:00:00Z"}),
+            ),
+        ],
+        ..Default::default()
+    };
+    let replay = rt.block_on(Replay::from_fixture(&fixture));
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(home.path());
+    AccountList {
+        accounts: vec![AccountMeta {
+            id: ME,
+            name: "TestUser".into(),
+            ..Default::default()
+        }],
+        active: Some(ME),
+        previous: None,
+    }
+    .save(&paths.accounts_file())
+    .unwrap();
+    let core = Core::start(
+        CoreConfig {
+            paths,
+            base: Base::Replay(replay.server.uri()),
+            cookies: Arc::new(MemoryCookies::default()),
+            opener: Arc::new(RecordingOpener::default()),
+            limiter: Arc::new(RateLimiter::default()),
+            background: false,
+            quick_poll: Duration::from_millis(10),
+        },
+        Arc::new(|| {}),
+    );
+    let ran: Ran = Arc::default();
+    core.set_plugin_runner(recording(&ran));
+    let dir = src.path().join("budget");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("plugin.toml"),
+        "id = \"budget\"\nname = \"Budget\"\nentry = \"main.luau\"\n\
+         actions = [\"market.buy\", \"market.buy_resale\", \"trade.accept\", \"group.payout\", \"inventory.delete\"]\n",
+    )
+    .unwrap();
+    std::fs::write(dir.join("main.luau"), BUDGET).unwrap();
+    core.stage_plugin_install(dir.to_str().unwrap(), false).unwrap();
+    core.finish_plugin_install(vec![ME]).unwrap();
+    wait(&core, "the plugin to run", |p| running(p, "budget"));
+    let c = |id: &str| PluginCmd {
+        plugin: "budget".into(),
+        id: id.into(),
+    };
+    let run = |arg: &str, expect: &str| {
+        let ids: Vec<u64> = core.store().toasts.iter().map(|t| t.id).collect();
+        for id in ids {
+            core.dismiss_toast(id);
+        }
+        core.run_plugin_command(&c("run"), Some(arg.into()), Some(ME), None)
+            .unwrap();
+        wait_store(&core, expect, |_| toasted(&core, expect));
+    };
+    let last = || ran.lock().last().map(|r| (r.1, r.2.clone().unwrap_or_default()));
+
+    // Tier 3 needs automation on, then a budget.
+    run("trade.accept 1", "Automation is off");
+    core.request_automation(ME).unwrap();
+    core.confirm_automation("TestUser").unwrap();
+    run("trade.accept 1", "no trade budget");
+    run("group.payout group:7 156 10", "no Robux budget");
+    assert!(ran.lock().is_empty());
+
+    // The user sets one.
+    assert!(core.request_budget("nope", ME).is_err());
+    core.request_budget("budget", ME).unwrap();
+    let pending = core.store().plugin_budget.clone().unwrap();
+    assert!(pending.current.robux && pending.current.trades);
+    core.save_budget(100, 2).unwrap();
+    assert!(core.store().plugin_budget.is_none());
+    let b = &core.plugin_budgets("budget")[0];
+    assert_eq!((b.budget.robux, b.budget.trades), (100, 2));
+
+    // Trades count one each.
+    run("trade.accept 1", "Budget: ran");
+    run("trade.accept 2", "Budget: ran");
+    run("trade.accept 3", "budget of 2 trades a day");
+    assert_eq!(ran.lock().len(), 2);
+
+    // Robux count what was spent.
+    run("group.payout group:7 156 60", "Budget: ran");
+    assert_eq!(last(), Some((CommandId::PayOut, "group:7 156 60".into())));
+    run("group.payout group:7 156 50", "budget of R$ 100 a day");
+
+    // A purchase runs at the price asked now, only when that is no more than it named.
+    run("market.buy item:2 40", "more than the R$ 40");
+    assert_eq!(ran.lock().len(), 3);
+    run("market.buy item:2", "the most to pay");
+    core.request_budget("budget", ME).unwrap();
+    core.save_budget(1000, 2).unwrap();
+    run("market.buy item:2 60", "Budget: ran");
+    assert_eq!(last(), Some((CommandId::BuyItem, "item:2 50".into())));
+    assert_eq!(core.plugin_activity(1)[0].robux, Some(50));
+    run("market.buy_resale item:3 900", "Over its budget");
+    assert_eq!(ran.lock().len(), 4);
+    assert_eq!(
+        core.plugin_budgets("budget")[0].spent,
+        bonsai_core::plugins::Spent {
+            robux: 110,
+            trades: 2
+        }
+    );
+
+    // What no budget covers asks each time.
+    run("inventory.delete 5", "confirm each time");
+
+    // A batch counts at the most each may cost. Over budget, it waits for the user.
+    core.request_budget("budget", ME).unwrap();
+    core.save_budget(2000, 2).unwrap();
+    core.run_plugin_command(
+        &c("batch"),
+        Some("market.buy_resale item:3 950;market.buy item:2 950".into()),
+        Some(ME),
+        None,
+    )
+    .unwrap();
+    wait_store(&core, "the action dialog", |s| s.plugin_actions.is_some());
+    let costs: Vec<_> = core
+        .store()
+        .plugin_actions
+        .as_ref()
+        .unwrap()
+        .actions
+        .iter()
+        .map(bonsai_core::plugins::cost_label)
+        .collect();
+    assert_eq!(
+        costs,
+        vec![Some("Up to R$ 950".into()), Some("Up to R$ 950".into())]
+    );
+    // Confirmed, they run at today's prices and don't count.
+    core.confirm_plugin_actions().unwrap();
+    wait_store(&core, "the batch", |_| ran.lock().len() == 6);
+    assert_eq!(last(), Some((CommandId::BuyItem, "item:2 50".into())));
+    assert_eq!(ran.lock()[4].2.as_deref(), Some("item:3 900"));
+    assert_eq!(core.plugin_budgets("budget")[0].spent.robux, 110);
+    // Within it, a batch runs by itself.
+    core.run_plugin_command(&c("batch"), Some("market.buy item:2 50".into()), Some(ME), None)
+        .unwrap();
+    wait_store(&core, "the unattended batch", |_| ran.lock().len() == 7);
+    assert!(core.store().plugin_actions.is_none());
+    assert_eq!(core.plugin_budgets("budget")[0].spent.robux, 160);
+
+    // Taking the account away drops its budget.
+    core.set_plugin_account("budget", ME, false).unwrap();
+    assert!(core.plugin_budgets("budget").is_empty());
+    core.set_plugin_account("budget", ME, true).unwrap();
+    assert_eq!(
+        core.plugin_budgets("budget")[0].budget,
+        bonsai_core::plugins::Budget::default()
+    );
+}

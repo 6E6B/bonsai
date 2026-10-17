@@ -10,6 +10,6 @@ Remove a line when it ships.
 - Settings > Security: adding passkeys and security keys, and SMS codes. WebAuthn only works on roblox.com, so these link to the site. Untested live: Roblox may want a `secureAuthenticationIntent` on these calls.
 - Settings > Language: app display language. UI text is English only; numbers, dates and relative times follow Settings > General > Number and date format.
 - Themes: theme hub. See [theming.md](theming.md).
-- Plugins: tiers, the Luau sandbox and install/manage (Settings > Plugins), plugin commands in the command bar and context menus, confirmed actions, reads (users, games, items, presence, friends, friend requests, inventory, trades), events, timers, per-account storage, manifest settings and automation (`ctx.run`, the per-account toggle, rate caps, the activity log and the kill switch) are built; tier 3 budgets aren't yet. See [plugins.md](plugins.md#roadmap).
+- Plugins: tiers, the Luau sandbox and install/manage (Settings > Plugins), plugin commands in the command bar and context menus, confirmed actions, reads (users, games, items, presence, friends, friend requests, inventory, trades), events, timers, per-account storage, manifest settings, automation (`ctx.run`, the per-account toggle, rate caps, the activity log and the kill switch) and tier 3 budgets (Robux and trades per day, with purchases at the price looked up before they run) are built. See [plugins.md](plugins.md#roadmap).
 - Profile > Creations: a user's models, decals, audio and other assets. No endpoint lists them.
 
