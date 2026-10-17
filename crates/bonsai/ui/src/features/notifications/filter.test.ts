@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { categoryArg, shownNotifications } from "./filter"
+import { categoryArg, openCommand, shownNotifications } from "./filter"
 
 const items = [
   { id: "a", read: false, category: "friends" },
@@ -23,5 +23,21 @@ describe("categoryArg", () => {
     expect(categoryArg("Friends ", ["friends"])).toBe("friends")
     expect(categoryArg("nope", ["friends"])).toBe("")
     expect(categoryArg(undefined, ["friends"])).toBe("")
+  })
+})
+
+describe("openCommand", () => {
+  const n = { id: "1", link: null, userId: null, category: "trades" }
+  it("prefers the link, then the person", () => {
+    expect(openCommand({ ...n, link: "https://www.roblox.com/x", userId: 5 })).toEqual([
+      "entity.open_website",
+      "https://www.roblox.com/x",
+    ])
+    expect(openCommand({ ...n, userId: 5 })).toEqual(["user.open", "5"])
+  })
+  it("opens a screen only for the app's own entries", () => {
+    expect(openCommand(n)).toBeNull()
+    expect(openCommand({ ...n, id: "app:1:0" })).toEqual(["nav.trades"])
+    expect(openCommand({ ...n, id: "app:1:0", category: "account" })).toEqual(["nav.transactions"])
   })
 })

@@ -100,6 +100,10 @@ impl Inner {
         let before = self.alerts.lock().unread.insert(account, now);
         let Some(before) = before else { return };
         for (kind, text) in unread_alerts(&before, &now) {
+            // Roblox's stream has friend requests but not trade offers.
+            if kind == "trades" {
+                self.note(account, "trades", "Trade offers", text.clone(), None);
+            }
             self.alert(account, kind, self.account_title(account), text);
         }
         for (event, a, b) in [

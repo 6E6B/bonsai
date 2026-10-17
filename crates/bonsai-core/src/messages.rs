@@ -290,6 +290,7 @@ impl Core {
 
     /// Clear the notification badge (what opening the bell does on the site).
     pub fn clear_notifications(&self, account: AccountId) {
+        self.mark_feed_read(account);
         if let Some(d) = self.inner.store.write().data.get_mut(&account) {
             d.unread.notifications = 0;
         }

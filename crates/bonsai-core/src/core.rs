@@ -620,6 +620,11 @@ fn warm_store(cache: &Cache, s: &mut StoreData) {
         if let Some(u) = cache.get::<HashMap<u64, i64>>(Kind::Local, id, crate::seen::UNFRIENDED) {
             d.unfriended = u.value;
         }
+        if let Some(f) =
+            cache.get::<Vec<crate::messages::StreamNotification>>(Kind::Local, id, crate::feed::FEED)
+        {
+            d.feed = f.value;
+        }
         if let Some(h) = cache.get::<Vec<HomeSort>>(Kind::Home, id, "sorts") {
             d.home = Loadable::cached(h.value, h.fetched_at);
         }

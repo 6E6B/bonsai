@@ -89,6 +89,7 @@ impl Inner {
         for id in gone {
             let name = self.store.read().user_title(id);
             self.toast(Some(account), format!("{name} is no longer your friend."), false);
+            self.note(account, "friends", name, "Removed you as a friend", Some(id));
         }
     }
 

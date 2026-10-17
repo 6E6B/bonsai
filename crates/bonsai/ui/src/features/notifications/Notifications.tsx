@@ -8,7 +8,7 @@ import { emptyList, ListState } from "~/lib/list-state"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Button, Icon, ListItem, Page, SegmentedControl, Select } from "~/lib/ui"
-import { categoryArg, shownNotifications } from "./filter"
+import { categoryArg, openCommand, shownNotifications } from "./filter"
 
 const ms = (iso: string) => {
   const t = Date.parse(iso)
@@ -46,8 +46,8 @@ export default function Notifications() {
   const shown = createMemo(() => shownNotifications(res.list.items, { view: view(), category: category() }))
   const openAt = (i: number) => {
     const n = shown()[i]
-    if (n?.link) void run("entity.open_website", n.link)
-    else if (n?.userId) void run("user.open", String(n.userId))
+    const c = n && openCommand(n)
+    if (c) void run(...c)
   }
   // Rows shown in full, by notification id.
   const [open, setOpen] = createStore<Record<string, boolean>>({})
