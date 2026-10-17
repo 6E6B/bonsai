@@ -15,6 +15,9 @@ bonsai.command {
 		local list = watchlist(ctx)
 		local id = tostring(arg)
 		local u = ctx.user(id)
+		if not u then
+			return { toast = "No such user" }
+		end
 		list[id] = u.display_name or u.name
 		ctx.store.set("watch", list)
 		return { toast = "Watching " .. tostring(list[id]) }
@@ -29,9 +32,11 @@ bonsai.command {
 	context = "user",
 	run = function(ctx, arg)
 		local list = watchlist(ctx)
-		list[tostring(arg)] = nil
+		local id = tostring(arg)
+		local name = list[id] or id
+		list[id] = nil
 		ctx.store.set("watch", list)
-		return { toast = "No longer watching " .. tostring(arg) }
+		return { toast = "No longer watching " .. tostring(name) }
 	end,
 }
 

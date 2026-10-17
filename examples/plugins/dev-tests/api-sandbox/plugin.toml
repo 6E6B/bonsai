@@ -1,0 +1,38 @@
+id = "api-sandbox"
+name = "API sandbox"
+version = "0.1.0"
+author = "bonsai"
+entry = "main.luau"
+bonsai = 1
+
+permissions = ["notify"]
+actions = []
+
+[[settings]]
+key = "choice"
+title = "Choice"
+kind = "choice"
+options = ["quiet", { value = "loud", label = "Loud" }]
+default = "quiet"
+
+[[settings]]
+key = "flag"
+title = "Flag"
+kind = "bool"
+default = true
+
+[[settings]]
+key = "days"
+title = "Range"
+kind = "range"
+min = 0
+max = 30
+step = 5
+default = 10
+
+[[settings]]
+key = "note"
+title = "Text"
+kind = "text"
+placeholder = "note"
+default = "hello"

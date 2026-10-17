@@ -791,3 +791,68 @@ fn settings_are_read_only_values() {
         Outcome::Toast("loud7false".into())
     );
 }
+
+fn example_dirs(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
+    for entry in std::fs::read_dir(dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.join("plugin.toml").is_file() {
+            out.push(path);
+        } else if path.is_dir() {
+            example_dirs(&path, out);
+        }
+    }
+}
+
+#[test]
+fn example_plugins_load() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/plugins");
+    let mut dirs = Vec::new();
+    example_dirs(&root, &mut dirs);
+    assert!(
+        dirs.len() >= 8,
+        "expected the sample plugins, found {}",
+        dirs.len()
+    );
+    for dir in dirs {
+        let text = std::fs::read_to_string(dir.join("plugin.toml")).unwrap();
+        let manifest = Manifest::parse(&text).unwrap();
+        let mut settings = serde_json::Map::new();
+        for s in &manifest.settings {
+            settings.insert(s.key.clone(), s.default.clone());
+        }
+        let host = Rc::new(FakeHost {
+            settings,
+            data: serde_json::json!({ "id": 1, "name": "Roblox" }),
+            ..FakeHost::default()
+        });
+        let plugin = Plugin::load(&dir, manifest, host, Limits::default()).unwrap_or_else(|e| {
+            panic!("{} failed to load: {e}", dir.display());
+        });
+        let id = plugin.manifest().id.clone();
+        if id == "api-sandbox" {
+            assert_eq!(
+                plugin.run_command("store", CTX, None).unwrap(),
+                Outcome::Toast("store round-trip ok".into())
+            );
+            let late = plugin.run_command("late", CTX, None).unwrap();
+            let Outcome::Toast(msg) = late else {
+                panic!("{late:?}")
+            };
+            assert!(msg.contains("only works while the plugin loads"), "{msg}");
+        }
+        if id == "api-dump" {
+            let err = plugin.run_command("errors", CTX, None).unwrap();
+            let Outcome::Toast(msg) = err else {
+                panic!("{err:?}")
+            };
+            assert!(msg.contains("takes an id"), "{msg}");
+            assert!(msg.contains("asset or bundle"), "{msg}");
+            let ctx = plugin.run_command("context", CTX, None).unwrap();
+            let Outcome::Toast(msg) = ctx else {
+                panic!("{ctx:?}")
+            };
+            assert!(msg.contains("ctx.account = 7"), "{msg}");
+            assert!(msg.contains("ctx.plugin = \"api-dump\""), "{msg}");
+        }
+    }
+}

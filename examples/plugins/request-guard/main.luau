@@ -32,21 +32,28 @@ local function suspicious(ctx)
 	return out
 end
 
-bonsai.on("friend_request", function(ctx, e)
+bonsai.on("friend_request", function(ctx, _)
 	local hits = suspicious(ctx)
 	if #hits == 0 then
 		return
 	end
+	if ctx.settings.alert_only then
+		local lines = {}
+		for _, h in ipairs(hits) do
+			table.insert(lines, (h.req.name or h.req.id) .. ": " .. h.reason)
+		end
+		return {
+			alert = {
+				title = #hits .. " suspicious friend request(s)",
+				body = table.concat(lines, "\n"),
+			},
+		}
+	end
 	local actions = {}
-	local lines = {}
 	for _, h in ipairs(hits) do
 		table.insert(actions, { id = "user.decline_friend", arg = tostring(h.req.id) })
-		table.insert(lines, (h.req.name or h.req.id) .. ": " .. h.reason)
 	end
-	return {
-		actions = actions,
-		alert = { title = #hits .. " suspicious friend request(s)", body = table.concat(lines, "\n") },
-	}
+	return { actions = actions }
 end)
 
 bonsai.command {

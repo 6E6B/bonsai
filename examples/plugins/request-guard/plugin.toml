@@ -30,3 +30,11 @@ key = "decline_banned"
 title = "Decline banned accounts"
 kind = "bool"
 default = true
+
+[[settings]]
+key = "alert_only"
+title = "Only alert, don't decline"
+description = "Show a desktop alert instead of declining or opening the confirm dialog."
+kind = "bool"
+default = false
+

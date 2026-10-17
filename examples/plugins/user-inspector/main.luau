@@ -22,6 +22,9 @@ bonsai.command {
 	context = "user",
 	run = function(ctx, arg)
 		local u = ctx.user(arg)
+		if not u then
+			return { toast = "No such user" }
+		end
 		local flags = {}
 		if u.banned then
 			table.insert(flags, "BANNED")
