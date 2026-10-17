@@ -52,11 +52,13 @@ runs:
         fi
         rustc --version
 
-    # A tag's cache can't be restored by any later run, so tags don't save one.
+    # A tag's cache can't be restored by any later run, so tags don't save one. A failed test
+    # still leaves a good build, so failed jobs save too.
     - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       with:
         key: ${{ inputs.cache-key }}
         save-if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        cache-on-failure: true
 
     - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       with:
