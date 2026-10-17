@@ -1,0 +1,218 @@
+{
+  "captured": "2026-10-16",
+  "source": "synthetic",
+  "note": "Settings > Security, shaped from the tracker specs: two-step configuration, recovery code status, passkeys, turning on the authenticator (a wrong code, then a right one), new recovery codes, a password change, turning off email codes and removing a passkey. Keys and codes are made up.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "twostepverification.roblox.com",
+        "path": "/v1/users/1000001/configuration"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "primaryMediaType": 0,
+          "methods": [
+            {
+              "mediaType": 0,
+              "enabled": true,
+              "updated": "2026-01-02T03:04:05Z"
+            },
+            {
+              "mediaType": 2,
+              "enabled": false
+            },
+            {
+              "mediaType": 99,
+              "enabled": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "twostepverification.roblox.com",
+        "path": "/v1/users/1000001/recovery-codes"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "activeCount": 0,
+          "created": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "auth.roblox.com",
+        "path": "/v1/passkey/ListCredentials",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "credentials": [
+            {
+              "nickname": "Laptop"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "twostepverification.roblox.com",
+        "path": "/v1/users/1000001/configuration/authenticator/enable",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "manualEntryKey": "ABCDEFGHIJKLMNOP",
+          "qrCodeImageUrl": "",
+          "setupToken": "setup-token-redacted"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "twostepverification.roblox.com",
+        "path": "/v1/users/1000001/configuration/authenticator/enable-verify",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "Invalid two step verification code."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "twostepverification.roblox.com",
+        "path": "/v1/users/1000001/configuration/authenticator/enable-verify",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "recoveryCodes": [
+            "1111 2222",
+            "3333 4444"
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "twostepverification.roblox.com",
+        "path": "/v1/users/1000001/recovery-codes/regenerate",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "recoveryCodes": [
+            "5555 6666",
+            "7777 8888"
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "auth.roblox.com",
+        "path": "/v2/user/passwords/change",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "twostepverification.roblox.com",
+        "path": "/v1/users/1000001/configuration/email/disable",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "auth.roblox.com",
+        "path": "/v1/passkey/DeleteCredentialBatch",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    }
+  ]
+}

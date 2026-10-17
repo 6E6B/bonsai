@@ -25,6 +25,12 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
     confirm: "Sign out others",
     danger: true,
   }),
+  "security.remove_passkey": (arg) => ({
+    title: arg ? `Remove the passkey "${arg}"?` : "Remove this passkey?",
+    description: "You can't sign in with it any more. Adding it back needs the website.",
+    confirm: "Remove",
+    danger: true,
+  }),
   "friends.decline_all": () => ({
     title: "Ignore all friend requests?",
     confirm: "Ignore all",

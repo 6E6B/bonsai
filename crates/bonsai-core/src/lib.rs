@@ -29,6 +29,7 @@ mod remote;
 pub mod res;
 pub mod resolve;
 pub mod search;
+pub mod security;
 pub mod seen;
 pub mod settings;
 pub mod signin;

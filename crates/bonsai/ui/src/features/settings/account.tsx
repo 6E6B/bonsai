@@ -1,7 +1,7 @@
 import { createSignal, For, onCleanup, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { countdown, date } from "~/lib/format"
-import { type AccountInfoView, commands, type PinView, type SessionsView } from "~/lib/ipc/bindings"
+import { type AccountInfoView, commands, type PinView, type SecurityView, type SessionsView } from "~/lib/ipc/bindings"
 import { shell, useLive } from "~/lib/store"
 import { Badge, Button, SettingRow, SettingsGroup, Skeleton, usePrompt } from "~/lib/ui"
 import { Verified, WebButton } from "./shared"
@@ -154,14 +154,10 @@ export function SecuritySection() {
   return (
     <>
       <SettingsGroup title="Signing in" description="Saved on Roblox for this account.">
-        <SettingRow label="Password">
-          <WebButton label="Change on website" />
-        </SettingRow>
-        <SettingRow
-          label="Two-step verification"
-          description="Ask for a code from your authenticator app when signing in."
-        >
-          <WebButton />
+        <SettingRow label="Password" description="Changing it signs out every other session.">
+          <Button size="sm" icon="lock" disabled={!activeAccount()} onClick={() => run("security.change_password")}>
+            Change
+          </Button>
         </SettingRow>
         <SettingRow label="Account PIN" description={pinText()}>
           <Show when={pin.enabled}>
@@ -186,6 +182,7 @@ export function SecuritySection() {
           </Button>
         </SettingRow>
       </SettingsGroup>
+      <TwoStepGroup />
       <SettingsGroup
         title="Signed-in sessions"
         meta={sessions.sessions.length || undefined}
@@ -217,5 +214,90 @@ export function SecuritySection() {
         </Show>
       </SettingsGroup>
     </>
+  )
+}
+
+/** Two-step methods, recovery codes and passkeys. Changes ask for the password in a dialog. */
+function TwoStepGroup() {
+  const sec = useLive(
+    () => shell.active,
+    () => commands.securityStatus(),
+    (): SecurityView => ({
+      loading: true,
+      error: null,
+      email: false,
+      authenticator: false,
+      sms: false,
+      securityKey: false,
+      recoveryCodes: null,
+      recoveryCreated: null,
+      passkeys: [],
+    }),
+  )
+  const state = (on: boolean) => {
+    if (sec.loading) return "Checking…"
+    return on ? "On" : "Off"
+  }
+  const onOff = (on: boolean, cmd: string) => (
+    <Show
+      when={on}
+      fallback={
+        <Button size="sm" disabled={sec.loading || !activeAccount()} onClick={() => run(`${cmd}_on`)}>
+          Turn on
+        </Button>
+      }
+    >
+      <Button size="sm" variant="danger" disabled={!activeAccount()} onClick={() => run(`${cmd}_off`)}>
+        Turn off
+      </Button>
+    </Show>
+  )
+  const codes = () => {
+    const n = sec.recoveryCodes
+    if (n === null) return "Codes that sign you in once each if you lose your device."
+    const made = sec.recoveryCreated ? `, made ${date(Date.parse(sec.recoveryCreated))}` : ""
+    return `${n} unused${made}.`
+  }
+  return (
+    <SettingsGroup
+      title="Two-step verification"
+      description={sec.error ?? "Ask for a code as well as the password when signing in."}
+    >
+      <SettingRow label="Authenticator app" description={state(sec.authenticator)}>
+        {onOff(sec.authenticator, "security.authenticator")}
+      </SettingRow>
+      <SettingRow label="Email codes" description={state(sec.email)}>
+        {onOff(sec.email, "security.email_codes")}
+      </SettingRow>
+      <Show when={sec.sms || sec.securityKey}>
+        <SettingRow
+          label={sec.sms ? "Text message codes" : "Security keys"}
+          description="On. Change it on the website."
+        >
+          <WebButton />
+        </SettingRow>
+      </Show>
+      <SettingRow label="Recovery codes" description={codes()}>
+        <Button
+          size="sm"
+          disabled={!activeAccount() || !(sec.authenticator || sec.email)}
+          onClick={() => run("security.recovery_codes")}
+        >
+          Make new
+        </Button>
+      </SettingRow>
+      <For each={sec.passkeys}>
+        {(name) => (
+          <SettingRow label={name} description="Passkey">
+            <Button size="sm" variant="danger" onClick={() => run("security.remove_passkey", name)}>
+              Remove
+            </Button>
+          </SettingRow>
+        )}
+      </For>
+      <SettingRow label="Passkeys" description="Adding one needs the browser. Remove them here.">
+        <WebButton label="Add on website" />
+      </SettingRow>
+    </SettingsGroup>
   )
 }

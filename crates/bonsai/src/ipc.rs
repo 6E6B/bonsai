@@ -28,6 +28,7 @@ mod communities;
 mod discover;
 mod inbox;
 mod market;
+mod security;
 mod trades;
 mod transactions;
 
@@ -64,6 +65,8 @@ pub struct Shell {
     pub theme_import: Option<account::ThemeImportView>,
     /// The "Sign in another device" dialog, once a code was entered.
     pub approve: Option<approve::ApproveView>,
+    /// The authenticator setup or recovery codes dialog, while it is open.
+    pub security: Option<security::SecurityFlowView>,
     /// Item values from Rolimons are on.
     pub item_values: bool,
     /// Avatar viewers open in 3D instead of on the image.
@@ -1020,6 +1023,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         challenge: s.challenge.as_ref().map(challenge::view),
         theme_import: s.theme_import.as_ref().map(account::theme_import_view),
         approve: s.approve.as_ref().map(approve::view),
+        security: s.security.as_ref().map(security::view),
         login: s.login.as_ref().map(|l| match l {
             LoginState::Browser => Login::Browser,
             LoginState::QuickStarting => Login::QuickStarting,
@@ -2747,6 +2751,14 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::theme_import_cancel,
             account::pin_status,
             account::unlock_pin,
+            security::security_status,
+            security::change_password,
+            security::security_set,
+            security::security_open,
+            security::security_password,
+            security::security_code,
+            security::security_close,
+            security::security_copy,
             challenge::challenge_submit_code,
             challenge::challenge_use_method,
             challenge::challenge_cancel,

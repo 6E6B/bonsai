@@ -1159,6 +1159,14 @@ pub(super) fn run(
         CommandId::LockPin => acting().map(|a| core.lock_pin(a)),
         // The settings screen asks for the PIN and calls `unlock_pin`.
         CommandId::UnlockPin => Err("Open Settings to enter the PIN.".into()),
+        // These ask for the password in a dialog, which calls the `security_*` commands.
+        CommandId::ChangePassword
+        | CommandId::AuthenticatorOn
+        | CommandId::AuthenticatorOff
+        | CommandId::EmailCodesOn
+        | CommandId::EmailCodesOff
+        | CommandId::RecoveryCodes => Err("Open Settings > Security to enter your password.".into()),
+        CommandId::RemovePasskey => acting().and_then(|a| core.remove_passkey(a, &arg())),
         // The dialog takes the code and calls `approve_enter`.
         CommandId::ApproveCode => Err("Open the command bar to enter the code.".into()),
         CommandId::ExportSettings => {

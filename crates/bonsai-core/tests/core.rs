@@ -2722,3 +2722,88 @@ async fn premium_plan_and_renewal() {
     assert_eq!(plan.renews.as_deref(), Some("2026-11-01T00:00:00Z"));
     assert_eq!(plan.expires.as_deref(), Some("2026-12-01T00:00:00Z"));
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn security_reads_methods_and_walks_the_two_step_dialogs() {
+    use bonsai_core::security::{SecurityStep, SecurityTask};
+    let replay = Replay::from_fixture(&replay::load("security")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let info = poll(|| r.core.security(ME)).await;
+    assert!(info.email && !info.authenticator && !info.sms);
+    assert_eq!(info.recovery_codes, Some(0));
+    assert_eq!(info.passkeys, vec!["Laptop".to_owned()]);
+
+    // Authenticator: password, then a wrong code, then the right one.
+    let seq = r.core.security_open(ME, SecurityTask::Authenticator).unwrap();
+    assert!(
+        r.core.security_code(seq, "123456").is_err(),
+        "code before the key"
+    );
+    r.core.security_password(seq, "hunter22").unwrap();
+    let step = |s: &StoreData| {
+        s.security
+            .as_ref()
+            .map(|f| (f.step.clone(), f.busy, f.error.clone()))
+    };
+    wait_for(&r.core, "key", |s| {
+        matches!(step(s), Some((SecurityStep::Key { .. }, false, _)))
+    })
+    .await;
+    assert_eq!(
+        step(&r.core.store()).unwrap().0,
+        SecurityStep::Key {
+            manual_key: "ABCDEFGHIJKLMNOP".into()
+        }
+    );
+    assert!(r.core.security_code(seq, "12345").is_err());
+    r.core.security_code(seq, "000 000").unwrap();
+    wait_for(&r.core, "wrong code", |s| {
+        matches!(step(s), Some((_, false, Some(_))))
+    })
+    .await;
+    r.core.security_code(seq, "123456").unwrap();
+    wait_for(&r.core, "done", |s| {
+        matches!(step(s), Some((SecurityStep::Done { .. }, ..)))
+    })
+    .await;
+    assert_eq!(
+        step(&r.core.store()).unwrap().0,
+        SecurityStep::Done {
+            codes: vec!["1111 2222".into(), "3333 4444".into()]
+        }
+    );
+    r.core.security_close(seq);
+    assert!(r.core.store().security.is_none());
+
+    // New recovery codes; a stale dialog can't answer.
+    let seq2 = r.core.security_open(ME, SecurityTask::RecoveryCodes).unwrap();
+    assert!(r.core.security_password(seq, "hunter22").is_err());
+    r.core.security_password(seq2, "hunter22").unwrap();
+    wait_for(
+        &r.core,
+        "codes",
+        |s| matches!(step(s), Some((SecurityStep::Done { codes, .. }, ..)) if codes.len() == 2),
+    )
+    .await;
+    r.core.security_close(seq2);
+
+    // Quick changes report with toasts.
+    assert!(r.core.change_password(ME, "hunter22", "short").is_err());
+    assert!(r.core.change_password(ME, "hunter22", "hunter22").is_err());
+    r.core.change_password(ME, "hunter22", "correct horse").unwrap();
+    let toast = |text: &'static str| move |s: &StoreData| s.toasts.iter().any(|t| t.text == text);
+    wait_for(
+        &r.core,
+        "password",
+        toast("Password changed. Other sessions were signed out."),
+    )
+    .await;
+    r.core.set_email_codes(ME, false, "correct horse").unwrap();
+    wait_for(&r.core, "email off", toast("Email codes are off.")).await;
+    assert!(r.core.remove_passkey(ME, "  ").is_err());
+    r.core.remove_passkey(ME, "Laptop").unwrap();
+    wait_for(&r.core, "passkey", toast("Passkey removed.")).await;
+    assert!(r.core.store().toasts.iter().all(|t| !t.error));
+}

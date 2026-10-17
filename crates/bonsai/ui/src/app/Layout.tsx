@@ -31,6 +31,7 @@ import { Backdrop } from "./shell/Backdrop"
 import { ChallengeDialog } from "./shell/ChallengeDialog"
 import { Drawer } from "./shell/Drawer"
 import { PinForm } from "./shell/PinForm"
+import { ChangePasswordForm, PasswordForm, SecurityDialog } from "./shell/SecurityForms"
 import { ShellAlerts } from "./shell/ShellAlerts"
 import { Sidebar } from "./shell/Sidebar"
 import { StatusBar } from "./shell/StatusBar"
@@ -159,6 +160,42 @@ export function Layout(props: ParentProps) {
     }),
     handle("account.unlock_pin", () =>
       dialog.show(() => <PinForm onDone={() => dialog.close()} />, { title: "Unlock account PIN", size: "sm" }),
+    ),
+    handle("security.change_password", () =>
+      dialog.show(() => <ChangePasswordForm onDone={() => dialog.close()} />, { title: "Change password", size: "sm" }),
+    ),
+    ...(
+      [
+        ["security.email_codes_on", "Turn on email codes", "email", true, "Turn on"],
+        ["security.email_codes_off", "Turn off email codes", "email", false, "Turn off"],
+        ["security.authenticator_off", "Turn off authenticator app codes", "authenticator", false, "Turn off"],
+      ] as const
+    ).map(([id, title, source, on, confirm]) =>
+      handle(id, () =>
+        dialog.show(
+          () => (
+            <PasswordForm
+              description="Roblox asks for it before changing two-step verification."
+              confirm={confirm}
+              danger={!on}
+              submit={(pw) => commands.securitySet(source, on, pw)}
+              onDone={() => dialog.close()}
+            />
+          ),
+          { title, size: "sm" },
+        ),
+      ),
+    ),
+    ...(
+      [
+        ["security.authenticator_on", "authenticator"],
+        ["security.recovery_codes", "recoveryCodes"],
+      ] as const
+    ).map(([id, task]) =>
+      handle(id, async () => {
+        const r = await commands.securityOpen(task)
+        if (r.status === "error") showToast({ title: r.error, variant: "error" })
+      }),
     ),
     ...screens.filter((s) => s.command !== "nav.settings").map((s) => handle(s.command, go(s.path))),
     handle("nav.settings", (section) => visitPath(section ? `/settings/${section}` : "/settings")),
@@ -406,6 +443,7 @@ export function Layout(props: ParentProps) {
                     <ShellAlerts />
                     <ChallengeDialog />
                     <ImportDialog />
+                    <SecurityDialog />
                     <ErrorBoundary
                       fallback={(err) => (
                         <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">

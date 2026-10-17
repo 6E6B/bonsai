@@ -280,6 +280,13 @@ commands! {
     SignOutOthers => "account.sign_out_others", "Sign out of all other sessions", ["logout", "sessions", "devices", "security"], None, [];
     UnlockPin => "account.unlock_pin", "Unlock account PIN", ["pin", "unlock", "parental", "settings"], None, [];
     LockPin => "account.lock_pin", "Lock account PIN", ["pin", "lock", "parental"], None, [];
+    ChangePassword => "security.change_password", "Change password", ["password", "security", "sign in"], None, [];
+    AuthenticatorOn => "security.authenticator_on", "Turn on authenticator app codes", ["two-step", "2sv", "2fa", "totp", "authenticator", "security"], None, [];
+    AuthenticatorOff => "security.authenticator_off", "Turn off authenticator app codes", ["two-step", "2sv", "2fa", "totp", "authenticator", "security"], None, [];
+    EmailCodesOn => "security.email_codes_on", "Turn on email codes", ["two-step", "2sv", "2fa", "email", "security"], None, [];
+    EmailCodesOff => "security.email_codes_off", "Turn off email codes", ["two-step", "2sv", "2fa", "email", "security"], None, [];
+    RecoveryCodes => "security.recovery_codes", "Make new recovery codes", ["two-step", "2sv", "backup codes", "recovery", "security"], None, [];
+    RemovePasskey => "security.remove_passkey", "Remove a passkey (name)", ["passkey", "security key", "webauthn", "security"], Text, [];
     SetDisplayName => "account.display_name", "Change display name", ["display name", "nickname", "name"], Text, [];
     SetPrivacy => "privacy.set", "Change a privacy setting (setting, then value)", ["privacy", "who can", "inventory", "trade", "chat", "join"], Text, [];
     ReplaceCookie => "account.replace_cookie", "Paste a new cookie for this account", ["expired", "session", "cookie"], None, [];
