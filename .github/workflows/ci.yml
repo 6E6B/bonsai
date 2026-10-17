@@ -42,8 +42,39 @@ jobs:
         working-directory: crates/bonsai/ui
         run: bun run check
 
-  rust:
-    name: Rust (${{ matrix.name }})
+  # Clippy and tests each compile the workspace, so they run as parallel jobs. Clippy runs on Linux
+  # only: little code is platform-specific, and the test jobs fail on any rustc warning.
+  lint:
+    name: Rust lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: lint
+          fast-deps: true
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      # tauri::generate_context! embeds ui/dist, so the UI must be built before the shell compiles.
+      - name: Build UI
+        working-directory: crates/bonsai/ui
+        run: bun run build
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Generated API code up to date
+        run: cargo xtask codegen --check
+
+  test:
+    name: Rust test (${{ matrix.name }})
     strategy:
       fail-fast: false
       matrix:
@@ -55,26 +86,22 @@ jobs:
           - name: macOS
             os: macos-latest
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 45
+    env:
+      RUSTFLAGS: -D warnings
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
           persist-credentials: false
 
       - uses: ./.github/actions/setup
+        with:
+          cache-key: test
+          fast-deps: true
 
-      - name: Format
-        if: runner.os == 'Linux'
-        run: cargo fmt --all --check
-
-      # tauri::generate_context! embeds ui/dist, so the UI must be built before the shell compiles.
       - name: Build UI
         working-directory: crates/bonsai/ui
         run: bun run build
-
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
       - name: Test
         run: cargo test --workspace --locked
@@ -87,7 +114,3 @@ jobs:
             echo "::error::bindings.ts is stale. Run 'cargo test -p bonsai' and commit it."
             exit 1
           }
-
-      - name: Generated API code up to date
-        if: runner.os == 'Linux'
-        run: cargo xtask codegen --check

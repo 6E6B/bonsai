@@ -8,6 +8,9 @@ inputs:
   cache-key:
     description: Extra key for the Rust cache, so jobs with different builds don't share one.
     default: ""
+  fast-deps:
+    description: Build dependencies without optimization. Halves a clean build; the tests run as fast.
+    default: "false"
 
 runs:
   using: composite
@@ -24,21 +27,36 @@ runs:
           libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
           libxdo-dev libdbus-1-dev libssl-dev
 
+    # Builds are IO-bound on Windows. A ReFS Dev Drive mounted at target/, skipped by Defender, is
+    # much faster than the NTFS system disk, and the cache action needs no other paths changed.
+    - name: Mount Dev Drive at target/
+      if: runner.os == 'Windows'
+      uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
+      with:
+        drive-size: 12GB
+        mount-path: target
+        trusted-dev-drive: true
+
     # Installs the toolchain from rust-toolchain.toml.
     - name: Install Rust
       shell: bash
       env:
         RUST_TARGETS: ${{ inputs.rust-targets }}
+        FAST_DEPS: ${{ inputs.fast-deps }}
       run: |
         rustup toolchain install
         if [ -n "$RUST_TARGETS" ]; then rustup target add $RUST_TARGETS; fi
+        # Cargo's user config overrides the [profile] in Cargo.toml.
+        if [ "$FAST_DEPS" = true ]; then
+          printf '[profile.dev.package."*"]\nopt-level = 0\n' >> "${CARGO_HOME:-$HOME/.cargo}/config.toml"
+        fi
         rustc --version
 
-    # Caches from other branches and tags can't be restored elsewhere, so only main saves one.
+    # A tag's cache can't be restored by any later run, so tags don't save one.
     - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       with:
         key: ${{ inputs.cache-key }}
-        save-if: ${{ github.ref == 'refs/heads/main' }}
+        save-if: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
     - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       with:
