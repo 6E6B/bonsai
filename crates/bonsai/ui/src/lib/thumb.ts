@@ -26,3 +26,10 @@ export function backgroundUrl(file: string) {
   if (!isTauri()) return undefined
   return convertFileSrc(file, "bg")
 }
+
+/** URL for an asset's file, served by the `rbxasset://` protocol (crates/bonsai/src/asset.rs)
+ * and fetched as `account`. Use it as an `<audio src>`. Undefined outside the app. */
+export function assetFileUrl(account: number, id: number) {
+  if (!isTauri()) return undefined
+  return convertFileSrc(`${account}.${id}`, "rbxasset")
+}

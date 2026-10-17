@@ -1,6 +1,7 @@
 // Every shared UI component. Feature code imports from "~/lib/ui" only.
 // README.md lists what each one is for.
 export { Alert, type AlertProps, type AlertVariant } from "./alert"
+export { type AudioControl, AudioPlayer, type AudioPlayerProps } from "./audio-player"
 export { Avatar, type AvatarProps, type Presence } from "./avatar"
 export { Badge, type BadgeProps, type BadgeVariant } from "./badge"
 export {

@@ -445,6 +445,7 @@ commands! {
     PriceHistoryRange => "market.history_range", "Set the price history range (7d, 30d, 90d, 1y, all; no argument cycles)", ["price history", "chart", "range", "rap", "sales", "limited"], Text, [];
     PriceHistoryZoom => "market.history_zoom", "Zoom the price history chart (in, out, reset)", ["price history", "chart", "zoom", "pan", "limited"], Text, [];
     TryOn => "market.try_on", "Try on this item in 3D", ["try on", "preview", "wear", "fit", "3d", "avatar"], None, [];
+    PlayAudio => "market.play_audio", "Play or pause this sound", ["play", "pause", "audio", "sound", "music", "listen"], None, [];
     PriceHistoryScale => "market.history_scale", "Show the price history on a log or linear scale (log, linear; no argument toggles)", ["price history", "chart", "log", "scale", "limited"], Text, [];
     PriceHistoryView => "market.history_view", "Show price history as a chart or a table (chart, table; no argument toggles)", ["price history", "chart", "table", "sales", "limited"], Text, [];
     SearchAuditLog => "group.audit_search", "Search the community audit log", ["audit", "log", "search", "performer", "community", "group"], Text, [];

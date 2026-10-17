@@ -1,5 +1,6 @@
 //! `rbxasset://` serves Roblox asset files (models, meshes, textures, animations) to the 3D
-//! avatar viewer. `bonsai-core` fetches and caches them; the webview never touches the network.
+//! avatar viewer, and sound files to the item page's audio player. `bonsai-core` fetches and
+//! caches them; the webview never touches the network.
 //!
 //! URL path: `/<account>.<asset id>`, with optional query `f=<Roblox-AssetFormat>` and
 //! `r=<contentRepresentationPriorityList, base64url>`. The UI builds it in
@@ -33,7 +34,7 @@ pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, r
     tauri::async_runtime::spawn(async move {
         let r = match file.await {
             Ok(Some(bytes)) => Response::builder()
-                .header(header::CONTENT_TYPE, "application/octet-stream")
+                .header(header::CONTENT_TYPE, content_type(&bytes))
                 // Assets don't change under the same id and variant.
                 .header(header::CACHE_CONTROL, "max-age=3600")
                 .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
@@ -62,6 +63,18 @@ fn parse(path: &str, query: &str) -> Option<(AccountId, AssetReq)> {
     req.is_valid().then_some((account, req))
 }
 
+/// Audio files get their real type so `<audio>` plays them; everything else is opaque bytes.
+fn content_type(bytes: &[u8]) -> &'static str {
+    match bytes {
+        [b'O', b'g', b'g', b'S', ..] => "audio/ogg",
+        [b'I', b'D', b'3', ..] => "audio/mpeg",
+        [0xFF, b, ..] if b & 0xE0 == 0xE0 => "audio/mpeg",
+        [b'f', b'L', b'a', b'C', ..] => "audio/flac",
+        [b'R', b'I', b'F', b'F', _, _, _, _, b'W', b'A', b'V', b'E', ..] => "audio/wav",
+        _ => "application/octet-stream",
+    }
+}
+
 fn status(code: StatusCode) -> Response<Vec<u8>> {
     let mut r = Response::new(Vec::new());
     *r.status_mut() = code;
@@ -85,5 +98,15 @@ mod tests {
         assert!(parse("/x.1", "").is_none());
         assert!(parse("/7.1", "f=a%20b").is_none());
         assert!(parse("/7.1", "zzz=1").is_none());
+    }
+
+    #[test]
+    fn sniffs_audio() {
+        assert_eq!(content_type(b"OggS\0\x02"), "audio/ogg");
+        assert_eq!(content_type(b"ID3\x04"), "audio/mpeg");
+        assert_eq!(content_type(&[0xFF, 0xFB, 0x90]), "audio/mpeg");
+        assert_eq!(content_type(b"RIFF\0\0\0\0WAVEfmt "), "audio/wav");
+        assert_eq!(content_type(b"<roblox!"), "application/octet-stream");
+        assert_eq!(content_type(b""), "application/octet-stream");
     }
 }

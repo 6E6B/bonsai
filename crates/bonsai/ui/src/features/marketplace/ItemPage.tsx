@@ -21,9 +21,11 @@ import { emptyList, ListState } from "~/lib/list-state"
 import { accountItems, entityMenu, itemTarget, templateItems } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
-import { thumbUrl } from "~/lib/thumb"
+import { assetFileUrl, thumbUrl } from "~/lib/thumb"
 import { ItemTile, tileGrid } from "~/lib/tiles"
 import {
+  type AudioControl,
+  AudioPlayer,
   Badge,
   Button,
   Card,
@@ -139,6 +141,16 @@ export default function ItemPage() {
       if (shell.active === null && !trying()) return showToast("Sign in to try items on.")
       show3d()
       setTrying((t) => !t)
+    }),
+  )
+  // Audio plays from the asset file, fetched by core as the active account.
+  const AUDIO = 3
+  const sound = () => (!bundle() && info()?.assetType === AUDIO ? assetFileUrl(shell.active ?? 0, id()) : undefined)
+  let player: AudioControl | undefined
+  onCleanup(
+    handle("market.play_audio", () => {
+      if (!sound() || !player) return showToast("This isn't a sound.")
+      player.toggle()
     }),
   )
   // Non-limited UGC can also carry a collectibleId; only limiteds and collectibles have copies.
@@ -294,6 +306,18 @@ export default function ItemPage() {
                   items={entityMenu(target(), item().bundle ? [] : templateItems(item().id, item().assetType))}
                 />
               </div>
+              <Show when={sound()} keyed>
+                {(src) => (
+                  <AudioPlayer
+                    class="max-w-md"
+                    src={src}
+                    label={item().name}
+                    ref={(c) => {
+                      player = c
+                    }}
+                  />
+                )}
+              </Show>
               <Show when={view.ownedBy.length > 0}>
                 <span class="flex items-center gap-1.5 text-sm text-fg-muted">
                   <Icon name="check" size={14} /> Owned by {view.ownedBy.join(", ")}
