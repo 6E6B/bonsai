@@ -18,6 +18,7 @@ todo = "warn"
 [workspace.dependencies]
 bonsai-api = { path = "crates/bonsai-api" }
 bonsai-core = { path = "crates/bonsai-core" }
+bonsai-plugin = { path = "crates/bonsai-plugin" }
 
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "json", "form", "multipart", "http2", "charset", "gzip", "brotli"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
@@ -63,6 +64,10 @@ specta-typescript = "0.0.12"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
 wiremock = "0.6"
 tempfile = "3"
+# Plugin runtime: Luau has a sandbox mode, interrupts for time limits and a memory cap.
+mlua = { version = "=0.12.2", features = ["luau"] }
+# plugin.toml manifests.
+toml = { version = "1.1", default-features = false, features = ["std", "serde", "parse"] }
 
 [profile.dev]
 debug = "line-tables-only"

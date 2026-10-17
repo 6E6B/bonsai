@@ -40,7 +40,9 @@ Plugins are written in [Luau](https://luau.org), embedded with `mlua` (`luau` fe
 
 Each plugin gets its own VM on a plugin worker thread, with:
 
-- a time limit per call (about 50 ms for a command handler, more for handlers that yield);
+- a time limit per call (50 ms for a command handler, 250 ms for loading). Only time in Luau
+  counts; time waiting on the host doesn't. Once tripped, the limit keeps failing until the call
+  ends, so `pcall` can't swallow it;
 - a memory cap (about 32 MB);
 - no `io`, `os`, `debug`, file-based `require`, `getfenv`/`setfenv`, or bytecode loading.
   `require` only resolves modules inside the plugin's own folder.
@@ -212,11 +214,18 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   the built-in ones and `commands()` returns both. `run_command` refuses plugin keys until
   phase 3. Plugin commands can't be rebound yet: overrides are still keyed by `CommandId`.
 
-### 1. Sandbox
+### 1. Sandbox (done)
 
 - `bonsai-plugin` crate: manifest, VM setup, limits, `Host` trait.
 - Tests that escapes fail (`os`, `io`, `debug`, `getfenv`, `load`, string metatable, `require`
   outside the folder), that time and memory limits trip, and that undeclared actions are refused.
+- Built: `bonsai.command`, the `ctx` table (`account`, `now`, `run`), returned outcomes, `print`
+  to the host log, `require` inside the folder (symlinks out are refused, bytecode isn't
+  loaded). Not yet: `bonsai.on`, `bonsai.every`, `bonsai.store`, reads, and yielding host calls;
+  host calls block the plugin's thread for now.
+- Errors raised by host functions reach Luau as error objects; plugins `tostring` them.
+- `is_plugin_id` exists in both `bonsai-plugin` and `bonsai-core`; drop the core copy when core
+  depends on the plugin crate in phase 2.
 
 ### 2. Install and manage
 
