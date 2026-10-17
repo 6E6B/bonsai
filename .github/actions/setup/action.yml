@@ -27,16 +27,20 @@ runs:
     # Installs the toolchain from rust-toolchain.toml.
     - name: Install Rust
       shell: bash
+      env:
+        RUST_TARGETS: ${{ inputs.rust-targets }}
       run: |
         rustup toolchain install
-        if [ -n "${{ inputs.rust-targets }}" ]; then rustup target add ${{ inputs.rust-targets }}; fi
+        if [ -n "$RUST_TARGETS" ]; then rustup target add $RUST_TARGETS; fi
         rustc --version
 
-    - uses: Swatinem/rust-cache@v2
+    # Caches from other branches and tags can't be restored elsewhere, so only main saves one.
+    - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       with:
         key: ${{ inputs.cache-key }}
+        save-if: ${{ github.ref == 'refs/heads/main' }}
 
-    - uses: oven-sh/setup-bun@v2
+    - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       with:
         bun-version: 1.4.2
 

@@ -1,0 +1,12 @@
+# Keeps the SHA-pinned actions current. The cooldown matches bunfig.toml's 14-day minimum age.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directories: ["/", "/.github/actions/setup"]
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    groups:
+      actions:
+        patterns: ["*"]
