@@ -1467,9 +1467,6 @@ impl Inner {
     }
 }
 
-/// How long a looked-up thumbnail URL is trusted. An older one still shows at once and is
-/// checked again in the background.
-const THUMB_URL_AGE: i64 = 24 * 3600;
 /// Encoded thumbnails kept in memory. Older ones load again from disk when asked for.
 const THUMB_MEMORY_BYTES: usize = 64 << 20;
 
@@ -1478,8 +1475,21 @@ fn cached_thumb_url(inner: &Inner, k: &ThumbKey) -> Option<(String, bool)> {
     let c = inner
         .cache
         .get::<String>(Kind::ThumbUrl, AccountId::ANONYMOUS, &k.request_id())?;
-    let fresh = c.is_fresh(THUMB_URL_AGE);
+    let fresh = c.is_fresh(k.kind.url_age_secs());
     inner.disk.has(&c.value).then_some((c.value, fresh))
+}
+
+/// Who looks thumbnails up: the first signed-in account, since Roblox allows a signed-in user
+/// more than an anonymous IP. The images are public, so the cache stays shared.
+fn thumb_client(inner: &Inner) -> Client {
+    let s = inner.store.read();
+    let clients = inner.clients.read();
+    clients
+        .iter()
+        .filter(|(id, _)| s.data.get(id).is_some_and(|d| d.session == SessionState::Ok))
+        .min_by_key(|(id, _)| **id)
+        .map(|(_, c)| c.clone())
+        .unwrap_or_else(|| inner.anon.clone())
 }
 
 async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKey>) {
@@ -1487,13 +1497,21 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
     // Keys already shown from a stale cached URL and waiting to be checked again. A failed
     // check leaves the shown image alone.
     let mut stale: HashSet<ThumbKey> = HashSet::new();
+    // Keys to look up again, by when. One queue, so retries that fall due together go out in
+    // one request.
+    let mut later: HashMap<ThumbKey, tokio::time::Instant> = HashMap::new();
+    let mut tries: HashMap<ThumbKey, u32> = HashMap::new();
     loop {
         // Collect what arrives within one frame.
         let mut incoming = Vec::new();
         if pending.is_empty() {
-            match rx.recv().await {
-                Some(k) => incoming.push(k),
-                None => return,
+            let next = later.values().min().copied();
+            tokio::select! {
+                k = rx.recv() => match k {
+                    Some(k) => incoming.push(k),
+                    None => return,
+                },
+                _ = tokio::time::sleep_until(next.unwrap_or_else(tokio::time::Instant::now)), if next.is_some() => {}
             }
         }
         let deadline = tokio::time::Instant::now() + Duration::from_millis(16);
@@ -1503,6 +1521,8 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
         incoming.sort();
         incoming.dedup();
         for k in incoming {
+            later.remove(&k);
+            tries.remove(&k);
             if let Some((url, fresh)) = cached_thumb_url(&inner, &k) {
                 let inner = inner.clone();
                 tokio::spawn(async move { fetch_image(&inner, k, &url).await });
@@ -1513,14 +1533,29 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
             }
             pending.push(k);
         }
+        let now = tokio::time::Instant::now();
+        later.retain(|k, due| {
+            let ready = *due <= now;
+            if ready {
+                pending.push(*k);
+            }
+            !ready
+        });
         pending.sort();
         pending.dedup();
         if pending.is_empty() {
             continue;
         }
         let batch: Vec<ThumbKey> = pending.drain(..pending.len().min(100)).collect();
-        let mut retry = Vec::new();
-        match thumbs::lookup(&inner.anon, &batch).await {
+        // Retry these, counting a try (`true`), or after `wait` without counting one.
+        let mut again: Vec<(ThumbKey, bool)> = Vec::new();
+        let mut wait = None;
+        let client = thumb_client(&inner);
+        let mut res = thumbs::lookup(&client, &batch).await;
+        if matches!(res, Err(Error::Unauthorized)) && client.signed_in() {
+            res = thumbs::lookup(&inner.anon, &batch).await;
+        }
+        match res {
             Ok(found) => {
                 let mut done = HashSet::new();
                 for (k, url, unavailable) in found {
@@ -1529,6 +1564,7 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
                     let id = k.request_id();
                     match url {
                         Some(url) => {
+                            tries.remove(&k);
                             let prev = inner
                                 .cache
                                 .get::<String>(Kind::ThumbUrl, AccountId::ANONYMOUS, &id);
@@ -1541,30 +1577,50 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
                             tokio::spawn(async move { fetch_image(&inner, k, &url).await });
                         }
                         None if unavailable => {
+                            tries.remove(&k);
                             inner.cache.delete(Kind::ThumbUrl, AccountId::ANONYMOUS, &id);
                             inner.store.write().thumbs.insert(k, ThumbState::Unavailable);
                         }
                         None if was_stale => {}
-                        None => retry.push(k),
+                        // `Pending`: Roblox is still rendering.
+                        None => again.push((k, false)),
                     }
                 }
                 for k in batch.iter().filter(|k| !done.contains(k)) {
+                    tries.remove(k);
                     if !stale.remove(k) {
                         inner.store.write().thumbs.insert(*k, ThumbState::Unavailable);
                     }
                 }
             }
-            Err(_) => retry.extend(batch.into_iter().filter(|k| !stale.remove(k))),
-        }
-        if !retry.is_empty() {
-            // `Pending`: Roblox is still rendering. Poll again shortly.
-            let tx = inner.thumb_tx.clone();
-            tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_millis(1500)).await;
-                for k in retry {
-                    let _ = tx.send(k);
+            Err(e) => {
+                // The limiter already holds the host this long; asking sooner only waits.
+                if let Error::RateLimited { retry_after_secs } = e {
+                    wait = Some(Duration::from_secs(retry_after_secs));
                 }
-            });
+                again.extend(batch.into_iter().filter(|k| !stale.remove(k)).map(|k| (k, true)));
+            }
+        }
+        let now = tokio::time::Instant::now();
+        for (k, failed) in again {
+            let delay = match wait {
+                Some(w) => Some(w),
+                None => {
+                    let n = tries.entry(k).or_default();
+                    let d = thumbs::retry_delay(*n, failed);
+                    *n += 1;
+                    d
+                }
+            };
+            match delay {
+                Some(d) => {
+                    later.insert(k, now + d);
+                }
+                None => {
+                    tries.remove(&k);
+                    inner.store.write().thumbs.insert(k, ThumbState::Unavailable);
+                }
+            }
         }
         inner.repaint();
     }

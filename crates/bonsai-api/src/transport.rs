@@ -1,5 +1,6 @@
 //! Hand-written HTTP transport: one [`Client`] per account, CSRF retry, challenge errors,
-//! shared per-host and per-route rate limits, `Retry-After`, and backoff with jitter.
+//! shared per-host and per-route rate limits paced by the `x-ratelimit-*` headers Roblox sends,
+//! `Retry-After`, and backoff with jitter.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -212,6 +213,26 @@ impl RateLimiter {
         let wait = self.reserve(host);
         if !wait.is_zero() {
             tokio::time::sleep(wait).await;
+        }
+    }
+
+    /// A response said `remaining` requests are left on its tightest window, which resets in
+    /// `reset`. This only ever slows the bucket down: a bucket covers a whole host, and the
+    /// server may count some of its endpoints apart.
+    pub fn observe(&self, host: &str, remaining: u64, reset: Duration) {
+        let (_, burst) = self.limits(host);
+        let now = Instant::now();
+        let mut map = self.buckets.lock();
+        let b = map.entry(host.to_string()).or_insert(Bucket {
+            tokens: burst,
+            last: now,
+            blocked_until: None,
+        });
+        if remaining == 0 {
+            let until = now + reset;
+            b.blocked_until = Some(b.blocked_until.map_or(until, |u| u.max(until)));
+        } else {
+            b.tokens = b.tokens.min(remaining as f64);
         }
     }
 
@@ -467,6 +488,10 @@ impl Client {
             if let Some(h) = &self.inner.on_response {
                 h(&req, &response, csrf_sent);
             }
+            let quota = if roblox { quota(&response.headers) } else { None };
+            if let Some((remaining, reset)) = quota {
+                self.inner.limiter.observe(&bucket, remaining, reset);
+            }
 
             if let Some(ch) = challenge_from(&response.headers) {
                 let hook =
@@ -495,7 +520,16 @@ impl Client {
                 continue;
             }
             if status == 429 {
-                let wait = retry_after(&response.headers).unwrap_or_else(|| {
+                tracing::debug!(
+                    host = req.host,
+                    path = %req.path,
+                    limit = response.header("x-ratelimit-limit").unwrap_or("-"),
+                    remaining = response.header("x-ratelimit-remaining").unwrap_or("-"),
+                    reset = response.header("x-ratelimit-reset").unwrap_or("-"),
+                    "429"
+                );
+                let reset = quota.map(|q| q.1).filter(|d| !d.is_zero());
+                let wait = retry_after(&response.headers).or(reset).unwrap_or_else(|| {
                     if strict {
                         STRICT_BLOCK
                     } else {
@@ -788,6 +822,18 @@ fn retry_after(h: &HeaderMap) -> Option<Duration> {
     v.trim().parse::<u64>().ok().map(Duration::from_secs)
 }
 
+/// Longest `x-ratelimit-reset` we believe. Roblox's windows are a minute at most; anything far
+/// past that is more likely a timestamp than a duration.
+const MAX_RESET: Duration = Duration::from_secs(300);
+
+/// `(remaining, reset)` from Roblox's `x-ratelimit-remaining` and `x-ratelimit-reset`, which
+/// describe the window closest to running out (`x-ratelimit-limit: 25, 25;w=1, 10000;w=60`).
+fn quota(h: &HeaderMap) -> Option<(u64, Duration)> {
+    let num = |n: &str| -> Option<u64> { h.get(n)?.to_str().ok()?.split(',').next()?.trim().parse().ok() };
+    let reset = Duration::from_secs(num("x-ratelimit-reset")?);
+    (reset <= MAX_RESET).then_some((num("x-ratelimit-remaining")?, reset))
+}
+
 fn challenge_from(h: &HeaderMap) -> Option<Challenge> {
     let get = |n: &str| h.get(n).and_then(|v| v.to_str().ok()).map(str::to_string);
     let id = get("rblx-challenge-id")?;
@@ -834,6 +880,37 @@ mod tests {
         assert!(l.reserve("b").is_zero());
         l.block("b", Duration::from_secs(5));
         assert!(l.reserve("b") >= Duration::from_secs(4));
+    }
+
+    #[test]
+    fn quota_headers_slow_the_bucket() {
+        let l = RateLimiter::new(10.0, 10.0);
+        l.observe("a", 1, Duration::from_secs(1));
+        assert!(l.reserve("a").is_zero());
+        assert!(!l.reserve("a").is_zero());
+        l.observe("b", 0, Duration::from_secs(5));
+        assert!(l.reserve("b") >= Duration::from_secs(4));
+        // Plenty left never speeds a bucket past its own limit.
+        l.observe("c", 1000, Duration::from_secs(1));
+        for _ in 0..10 {
+            assert!(l.reserve("c").is_zero());
+        }
+        assert!(!l.reserve("c").is_zero());
+    }
+
+    #[test]
+    fn parses_quota_headers() {
+        let mut h = HeaderMap::new();
+        assert_eq!(quota(&h), None);
+        h.insert(
+            "x-ratelimit-limit",
+            HeaderValue::from_static("25, 25;w=1, 10000;w=60"),
+        );
+        h.insert("x-ratelimit-remaining", HeaderValue::from_static("24"));
+        h.insert("x-ratelimit-reset", HeaderValue::from_static("1"));
+        assert_eq!(quota(&h), Some((24, Duration::from_secs(1))));
+        h.insert("x-ratelimit-reset", HeaderValue::from_static("1760000000"));
+        assert_eq!(quota(&h), None);
     }
 
     #[test]
