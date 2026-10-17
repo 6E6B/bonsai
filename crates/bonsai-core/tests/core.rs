@@ -465,6 +465,12 @@ async fn friend_missing_from_a_fresh_list_is_reported() {
     assert_eq!(d.friends.data.as_deref(), Some(&[1_u64][..]));
     assert!(d.unfriended.contains_key(&156));
     assert!(!d.unfriended.contains_key(&1));
+    assert!(
+        d.feed
+            .iter()
+            .any(|n| n.user_id == Some(156) && n.category == "friends" && !n.read),
+        "listed with notifications"
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]

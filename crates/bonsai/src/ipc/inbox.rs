@@ -131,7 +131,7 @@ pub fn notifications(core: State<'_, Arc<Core>>) -> Paged<NotificationRow> {
         };
     };
     Paged {
-        list: List::paged(core.notifications(a, false), |n| NotificationRow {
+        list: List::paged(core.notification_feed(a), |n| NotificationRow {
             id: n.id.clone(),
             title: n.title.clone(),
             body: n.body.clone(),

@@ -254,6 +254,8 @@ pub struct AccountData {
     pub unfriended: HashMap<u64, i64>,
     /// Friends this account removed, until the friends list stops showing them.
     pub removed_by_me: std::collections::HashSet<u64>,
+    /// The app's own notifications, newest first. Local; see [`crate::feed`].
+    pub feed: Vec<crate::messages::StreamNotification>,
     pub home: Loadable<Vec<HomeSort>>,
     pub recent: Vec<u64>,
     pub favorites: Loadable<Vec<u64>>,

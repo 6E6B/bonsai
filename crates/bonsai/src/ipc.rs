@@ -962,10 +962,9 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                     .data
                     .get(&a.id)
                     .map_or(Session::Unknown, |d| (&d.session).into()),
-                unread: s
-                    .data
-                    .get(&a.id)
-                    .map_or(0, |d| d.unread.total().clamp(0, u32::MAX as i64) as u32),
+                unread: s.data.get(&a.id).map_or(0, |d| {
+                    (d.unread.total() + bonsai_core::feed::unread(&d.feed)).clamp(0, u32::MAX as i64) as u32
+                }),
             })
             .collect(),
         active: s.accounts.active.map(|a| Id(a.0)),
@@ -1014,7 +1013,14 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
             }
         },
         robux: s.active_data().and_then(|d| d.robux).map(|r| r as f64),
-        unread: s.active_data().map(|d| d.unread.into()).unwrap_or_default(),
+        unread: s
+            .active_data()
+            .map(|d| {
+                let mut u = d.unread;
+                u.notifications += bonsai_core::feed::unread(&d.feed);
+                u.into()
+            })
+            .unwrap_or_default(),
         challenge: s.challenge.as_ref().map(challenge::view),
         approve: s.approve.as_ref().map(approve::view),
         login: s.login.as_ref().map(|l| match l {
