@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use bonsai_core::commands::{ArgKind, CommandId, Registry, Shortcut};
+use bonsai_core::commands::{ArgKind, CommandId, CommandRef, Registry, Shortcut};
 use bonsai_core::discover::CONTINUE_TOPIC;
 use bonsai_core::experience::ServerChange;
 use bonsai_core::launcher::JoinTarget;
@@ -1057,18 +1057,23 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
 pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
     let mut registry = Registry::default();
     registry.load_overrides(core.settings().shortcuts);
-    registry
-        .all()
-        .iter()
-        .map(|c| CommandInfo {
-            id: c.id.key().to_owned(),
-            title: c.title.to_owned(),
-            keywords: c.keywords.iter().map(|k| (*k).to_owned()).collect(),
-            arg: c.arg.into(),
-            shortcuts: registry.shortcuts(c.id).iter().map(Keys::from).collect(),
-            rebound: registry.is_rebound(c.id),
-        })
-        .collect()
+    let builtin = registry.all().iter().map(|c| CommandInfo {
+        id: c.id.key().to_owned(),
+        title: c.title.to_owned(),
+        keywords: c.keywords.iter().map(|k| (*k).to_owned()).collect(),
+        arg: c.arg.into(),
+        shortcuts: registry.shortcuts(c.id).iter().map(Keys::from).collect(),
+        rebound: registry.is_rebound(c.id),
+    });
+    let plugin = registry.plugin_commands().iter().map(|c| CommandInfo {
+        id: c.cmd.key(),
+        title: c.title.clone(),
+        keywords: c.keywords.clone(),
+        arg: c.arg.into(),
+        shortcuts: Vec::new(),
+        rebound: false,
+    });
+    builtin.chain(plugin).collect()
 }
 
 /// Runs a command that needs the backend. Commands that only change UI state (navigation,
@@ -1076,8 +1081,10 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
 #[tauri::command]
 #[specta::specta]
 pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) -> Result<(), String> {
-    let Some(id) = CommandId::ALL.iter().copied().find(|c| c.key() == inv.id) else {
-        return Err(format!("unknown command: {}", inv.id));
+    let id = match CommandRef::parse(&inv.id) {
+        Some(CommandRef::Builtin(id)) => id,
+        // Plugins don't load yet; see docs/plugins.md.
+        Some(CommandRef::Plugin(_)) | None => return Err(format!("unknown command: {}", inv.id)),
     };
     let nth = |n: usize| core.store().accounts.accounts.get(n).map(|a| a.id);
     let switch = |target: Option<AccountId>| match target {

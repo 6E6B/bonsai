@@ -1036,11 +1036,7 @@ pub(super) fn run(
             let a = arg();
             let a = a.trim();
             let (key, keys) = a.split_once(char::is_whitespace).unwrap_or((a, ""));
-            let id = CommandId::ALL
-                .iter()
-                .copied()
-                .find(|c| c.key() == key)
-                .ok_or_else(|| format!("\"{key}\" isn't a command."))?;
+            let id = CommandId::from_key(key).ok_or_else(|| format!("\"{key}\" isn't a command."))?;
             let shortcut = match keys.trim() {
                 "" => None,
                 k => Some(Shortcut::parse(k)?),
@@ -1064,7 +1060,7 @@ pub(super) fn run(
                     core.update_settings(|s| s.shortcuts.clear());
                     Ok(())
                 }
-                key => match CommandId::ALL.iter().copied().find(|c| c.key() == key) {
+                key => match CommandId::from_key(key) {
                     Some(id) => {
                         core.update_settings(|s| {
                             s.shortcuts.remove(&id);

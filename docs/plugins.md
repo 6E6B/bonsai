@@ -98,6 +98,13 @@ Every write command in the registry declares a tier. The tier decides how a plug
 | **3. Value can be lost** | Buy, send or accept trades, group payouts, private servers | User confirms each batch | Runs unattended within a budget the user sets; over budget, user confirms |
 | **4. Account control** | Password, two-step, sign out, cookie, PIN, email, privacy, removing the account | Never | Never |
 
+Every built-in command declares its effect in the `commands!` macro in `commands.rs`: `Read`
+(opens, shows or copies), `Local` (this app's settings, themes, layout, tabs, account labels) or
+`Write(tier)`. Per-account data kept on this computer, like nicknames, notes, pinned chats and the
+wishlist, counts as a write. A manifest may list only tier 1 to 3 writes in `actions`; `Read` and
+`Local` commands are refused there, since plugins have reads and `open` for the first, and the
+second includes launching programs and reading files. Display name is tier 2.
+
 "User confirms" means the action dialog: it lists every proposed action with its account, title
 and argument, and the user runs all or cancels.
 
@@ -195,13 +202,15 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
 
 ## Roadmap
 
-### 0. Groundwork
+### 0. Groundwork (done)
 
 - Every command declares an effect in the `commands!` macro: `Read`, `Local` or `Write(tier)`.
-  The action dialog and tier checks need it, and it can replace the hand-kept list in
-  `lib/commands/confirm.ts`. A test fails if a write command has no tier.
-- `CommandId` is a fixed enum. Add `CommandRef = Builtin(CommandId) | Plugin(PluginCmd)` and
-  return both from `commands()`. Ids already cross IPC as strings.
+  Tests pin account control to tier 4 and the main value and social writes to their tiers.
+  `lib/commands/confirm.ts` still holds the dialog text for built-in confirms; the effect isn't
+  sent to the UI until the action dialog needs it.
+- `CommandRef = Builtin(CommandId) | Plugin(PluginCmd)`. `Registry` holds plugin commands next to
+  the built-in ones and `commands()` returns both. `run_command` refuses plugin keys until
+  phase 3. Plugin commands can't be rebound yet: overrides are still keyed by `CommandId`.
 
 ### 1. Sandbox
 

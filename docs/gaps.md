@@ -10,6 +10,6 @@ Remove a line when it ships.
 - Settings > Security: adding passkeys and security keys, and SMS codes. WebAuthn only works on roblox.com, so these link to the site. Untested live: Roblox may want a `secureAuthenticationIntent` on these calls.
 - Settings > Language: app display language. UI text is English only; numbers, dates and relative times follow Settings > General > Number and date format.
 - Themes: theme hub. See [theming.md](theming.md).
-- Plugins: not started. See [plugins.md](plugins.md).
+- Plugins: only the groundwork (command effects and tiers, `CommandRef`) is built. See [plugins.md](plugins.md#roadmap).
 - Profile > Creations: a user's models, decals, audio and other assets. No endpoint lists them.
 
