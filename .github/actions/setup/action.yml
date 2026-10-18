@@ -1,5 +1,5 @@
 name: Setup
-description: System libraries, the pinned Rust toolchain, bun and UI dependencies.
+description: System libraries, the pinned Rust toolchain, and optionally bun and UI dependencies.
 
 inputs:
   rust-targets:
@@ -11,6 +11,9 @@ inputs:
   fast-deps:
     description: Build dependencies without optimization. Halves a clean build; the tests run as fast.
     default: "false"
+  bun:
+    description: Install bun and the UI dependencies. Only `tauri build` needs them.
+    default: "true"
 
 runs:
   using: composite
@@ -52,19 +55,23 @@ runs:
         fi
         rustc --version
 
-    # A tag's cache can't be restored by any later run, so tags don't save one. A failed test
+    # Only main saves. Every branch can restore main's cache, and the cache holds dependencies
+    # only (workspace crates are rebuilt anyway), so a branch's own cache rarely helps. Branch
+    # caches fill the 10 GB repo quota and evict main's, forcing cold builds. A failed test
     # still leaves a good build, so failed jobs save too.
     - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       with:
         key: ${{ inputs.cache-key }}
-        save-if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        save-if: ${{ github.ref == 'refs/heads/main' }}
         cache-on-failure: true
 
-    - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+    - if: inputs.bun == 'true'
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       with:
         bun-version: 1.4.2
 
     - name: Install UI dependencies
+      if: inputs.bun == 'true'
       shell: bash
       working-directory: crates/bonsai/ui
       run: bun install --frozen-lockfile

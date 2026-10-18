@@ -113,7 +113,7 @@ fn install_run_disable_remove() {
 
     core.remove_plugin("hello").unwrap();
     wait(&core, "the plugin to go", |p| p.is_empty());
-    assert!(!installed.exists());
+    wait_gone(&installed);
     // The source folder is untouched.
     assert!(dir.join("main.luau").is_file());
 }
@@ -217,6 +217,19 @@ fn wait_store(core: &Core, what: &str, f: impl Fn(&StoreData) -> bool) {
             start.elapsed() < Duration::from_secs(10),
             "timed out waiting for {what}; toasts: {:?}",
             core.store().toasts
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
+/// The plugin leaves the list before its files are deleted, and deleting is slow on Windows.
+fn wait_gone(path: &Path) {
+    let start = Instant::now();
+    while path.exists() {
+        assert!(
+            start.elapsed() < Duration::from_secs(10),
+            "timed out waiting for {} to be deleted",
+            path.display()
         );
         std::thread::sleep(Duration::from_millis(20));
     }
@@ -688,7 +701,7 @@ kind = "bool"
     // Removing it deletes what it kept.
     core.remove_plugin("watch").unwrap();
     wait(&core, "the plugin to go", |p| p.is_empty());
-    assert!(!home.path().join("config/plugin-data/watch").exists());
+    wait_gone(&home.path().join("config/plugin-data/watch"));
 }
 
 const AUTO: &str = r#"
