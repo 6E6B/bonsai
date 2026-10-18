@@ -34,6 +34,7 @@ import {
   Robux,
   SegmentedControl,
   Skeleton,
+  showToast,
   TabPanel,
   Tabs,
   TextField,
@@ -43,7 +44,7 @@ import {
   VerifiedBadge,
   VirtualGrid,
 } from "~/lib/ui"
-import { VALUES_SOURCE } from "~/lib/values"
+import { rolimonsFailed, VALUES_SOURCE } from "~/lib/values"
 import { Outfits } from "./Outfits"
 import { BadgeTile, Overview } from "./Overview"
 
@@ -112,6 +113,14 @@ export default function Profile() {
     userId,
     commands.profileTrading,
     (): TraderView => ({ enabled: false, loading: true, error: null, stats: null }),
+  )
+  createEffect(
+    on(
+      () => rolimonsFailed(trading.enabled, trading.error, trading.stats !== null),
+      (failed) => {
+        if (failed) showToast({ title: "Failed to get Rolimons data", variant: "error" })
+      },
+    ),
   )
   /** Their limiteds' worth for the header, when Rolimons has one. */
   const worth = () => {
