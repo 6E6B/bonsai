@@ -187,7 +187,70 @@ end)
   - `{ toast = "..." }`;
   - `{ open = { kind = "user", id = 1 } }`: open a screen;
   - `{ alert = { title, body, command } }`: a desktop alert, optionally with a button bound to a
-    command.
+    command;
+  - `{ view = ... }`: a view, from a command (see [Views](#views));
+  - `{ close = true }`: close the view, from its `event` function.
+
+### Views
+
+A command can return `{ view = tree }` to open a dialog drawn with Bonsai's own components, so
+it follows the theme and the keyboard. Plugins never send HTML or script. The dialog is titled
+"Plugin name: command title".
+
+```lua
+local ui = bonsai.ui
+
+local function draw(ctx, min)
+  local rows = {}
+  for _, item in ctx.inventory{ limit = 200 } do
+    if (item.rap or 0) >= min then
+      table.insert(rows, { item.name, item.rap })
+    end
+  end
+  return ui.column {
+    ui.row {
+      ui.input { key = "min", label = "Minimum RAP", value = min, action = "filter" },
+      ui.button { label = "Filter", action = "filter", style = "primary" },
+    },
+    ui.table { columns = { "Item", { label = "RAP", align = "end" } }, rows = rows },
+  }
+end
+
+bonsai.command {
+  id = "rap",
+  title = "Items by RAP",
+  run = function(ctx) return { view = draw(ctx, 0) } end,
+  event = function(ctx, e)        -- e.action, e.values.<input key>, e.row
+    return { view = draw(ctx, tonumber(e.values.min) or 0) }
+  end,
+}
+```
+
+| Part | Fields |
+|---|---|
+| `ui.text(s)` or `ui.text { s, muted, mono }` | A paragraph. A plain string in a tree is text too. |
+| `ui.heading(s)` | A small heading. |
+| `ui.row { ... }`, `ui.column { ... }` | Children side by side (wrapping) or one under another. |
+| `ui.stat { label, value }` | A label over a value. |
+| `ui.table { columns, rows, action }` | `columns` are labels or `{ label, align = "end" }`; `rows` are lists of cells. With `action`, picking a row sends it with `e.row`, from 1. |
+| `ui.input { key, label, value, placeholder, action }` | A text field. Its text comes back as `e.values[key]`; Enter sends `action`. |
+| `ui.button { label, action, style }` | `style` is `default`, `primary` or `danger`. |
+
+- Cells and stat values are text or numbers; numbers show in the user's number format.
+- Actions and input keys are lowercase letters, digits, `_` and `-`. Input keys are unique in
+  a view.
+- A view has at most 500 parts, nests 8 deep, and a table has 1 to 12 columns and 500 rows.
+  Texts are cut at 2000 characters, labels at 120 and cells at 200.
+- A button, Enter in an input or a picked row calls the command's `event(ctx, e)` as the account
+  the view opened for (0 if the plugin may no longer use it), with every input's text. The view
+  waits while the plugin works. It answers with `{ view = ... }` to redraw, `{ close = true }`,
+  nil to leave it as is, or any other outcome: `actions` go through the action dialog as from a
+  command, and `open` closes the view first. Errors show in the view.
+- Text the user typed survives a redraw unless the plugin changed that input's `value`.
+- One view is open at a time; a new one replaces it. Stopping or reloading the plugin closes it.
+- Views only open from commands. From an event or timer, `view` is refused like `open`.
+- Inside a view, its buttons aren't commands of their own: the view is a dialog a command
+  opened, like the install dialog.
 
 ### Spending Robux
 
@@ -212,7 +275,8 @@ command bar with a price, these ask before buying.
 
 | Point | Host side |
 |---|---|
-| `bonsai.command` | Registry entry `plugin.<plugin>.<id>`. No default shortcuts; the user binds them. |
+| `bonsai.command` | Registry entry `plugin.<plugin>.<id>`. No default shortcuts; the user binds them in Settings > Shortcuts or with `shortcuts.set`. |
+| `event = fn` on a command | Gets what the user does in the command's [view](#views). |
 | `context = "user"` etc. on a command | Shown in menus where `commandContext()` matches. |
 | `bonsai.on(event, fn)` | See [Events](#events). Runs per granted account. |
 | `bonsai.every(seconds, fn)` | A timer, run once per granted account each time. |
@@ -286,10 +350,31 @@ like the rest of the app. Private reads need `read.account` for `ctx.account`.
   permission, automation and budget state; the activity log; plugin commands in the registry.
   Tier checks live here, not in the sandbox crate.
 - `bonsai`: IPC views (`PluginInfo`, `PluginActivity`), nothing else.
-- UI: `features/plugins` for the install/review, automation and action dialogs and the activity
-  log; `features/settings/plugins.tsx` for Settings > Plugins; `lib/plugins.ts` for tier labels.
+- UI: `features/plugins` for the install/review, automation, action and view dialogs and the
+  activity log; `features/settings/plugins.tsx` for Settings > Plugins; `lib/plugins.ts` for tier
+  labels.
 
-Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
+Plugins live in `Paths::plugins_dir()`, one folder each, like themes. Packages are unpacked into
+`plugins/.staging` while their install dialog is open.
+
+## Packages
+
+A `.bonsaiplugin` file is a zip of the plugin folder, `plugin.toml` at the top (or inside one
+folder named anything). `plugin.install` takes one, a folder or a folder's `plugin.toml`; with
+no path it asks for a package or a `plugin.toml`. `plugin.pack` (Settings > Plugins > Pack on
+unpacked plugins) writes one.
+
+- The install dialog shows the manifest, permissions and the **content hash** before anything
+  is copied. The hash is SHA-256 over each file in path order: its path with `/` between
+  parts, a zero byte, its length as 8 little-endian bytes and its contents. Dot files are left
+  out, so a folder and a package of it hash the same, and authors can publish the hash next to
+  the file. Settings > Plugins shows the hash of what was installed.
+- Reading refuses absolute paths, `..`, backslashes, drive letters, symlinks, encrypted
+  entries and anything past the install caps (500 files, 20 MB unpacked, counted while
+  inflating, not from the headers), and skips dot files. Only stored and deflated entries
+  are read.
+- Packing writes files in path order with fixed times, so the same folder packs to the same
+  bytes.
 
 ## Roadmap
 
@@ -300,8 +385,7 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   `lib/commands/confirm.ts` still holds the dialog text for built-in confirms; the effect isn't
   sent to the UI until the action dialog needs it.
 - `CommandRef = Builtin(CommandId) | Plugin(PluginCmd)`. `Registry` holds plugin commands next to
-  the built-in ones and `commands()` returns both. Plugin commands can't be rebound yet:
-  overrides are still keyed by `CommandId`.
+  the built-in ones and `commands()` returns both. Plugin shortcuts came in phase 3.
 
 ### 1. Sandbox (done)
 
@@ -349,7 +433,13 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   runs at once; anything higher opens the action dialog, which lists every action with its tier.
   Confirming checks the batch again, then runs it through the same dispatch as built-in
   commands and toasts how many ran.
-- `ctx.run` came in phase 6. Not yet: plugin commands can't be rebound.
+- `ctx.run` came in phase 6.
+- Plugin commands can be given shortcuts like built-in ones (Settings > Shortcuts, under
+  Plugins, or `shortcuts.set plugin.<plugin>.<id> Ctrl+J`). They are kept in
+  `plugin_shortcuts` in the settings, by command key, so they survive turning the plugin off
+  and come back with it; removing the plugin drops them. Binding one takes it from any built-in
+  or plugin command it clashes with, and the other way round. Only commands of running plugins
+  can be bound; `shortcuts.reset` clears any.
 
 ### 4. Reads (done)
 
@@ -402,13 +492,19 @@ Plugins live in `Paths::plugins_dir()`, one folder each, like themes.
   run they allow hold one lock, so two plugins can't spend the same room. The activity log
   keeps entries a budget counts for a day.
 
-### 8. Plugin UI (later)
+### 8. Plugin UI (done)
 
-Not now. When it comes back: plugins return a tree of our components (row, column, table, stat,
-input, button) and get events back, so they follow the theme and the keyboard. Raw HTML in an
-iframe stays out unless that proves too narrow.
+- Plugins return a tree of our components (row, column, table, stat, input, button) and get
+  events back, so they follow the theme and the keyboard. Raw HTML in an iframe stays out unless
+  that proves too narrow.
+- Built: see [Views](#views). Also text and heading parts. The tree is parsed and capped in
+  `bonsai-plugin` (`view.rs`); bonsai-core keeps the open view in the store and sends events to
+  the plugin's thread like command calls; the shell sends only the view's title and state with
+  `storeChanged`, and the dialog fetches the tree with `plugin_view` when it changes.
 
 ### 9. Network
+
+Not now: plugins make no outside requests.
 
 Most plugins people want (value lists, trade calculators, Discord pings) need outside data.
 
@@ -422,6 +518,9 @@ That needs the rule amended.
 - `.bonsaiplugin` files (a zip) with a content hash. Install shows the manifest and permissions
   first.
 - The hub is shared with the theme hub in [theming.md](theming.md#6-hub).
+- Built: packages; see [Packages](#packages). The zip reader and writer are ours (in
+  `plugins/package.rs`, over `flate2`, already a dependency) rather than a zip crate. Not yet:
+  the hub, which waits on the theme hub and outside requests.
 
 ## Not doing
 

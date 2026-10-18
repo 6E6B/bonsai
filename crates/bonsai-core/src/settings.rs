@@ -1,6 +1,6 @@
 //! App settings (no secrets) and per-account UI state.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 
 use bonsai_api::AccountId;
@@ -316,6 +316,8 @@ pub struct Settings {
     pub format_locale: String,
     pub notify: NotifyPrefs,
     pub shortcuts: HashMap<CommandId, Vec<Shortcut>>,
+    /// Shortcuts the user gave plugin commands, by command key (`plugin.<plugin>.<id>`).
+    pub plugin_shortcuts: BTreeMap<String, Vec<Shortcut>>,
     /// Off by default: show limited item values from Rolimons (a third-party site) next to RAP.
     pub item_values: bool,
     pub sidebar: SidebarPrefs,
@@ -463,6 +465,7 @@ impl Default for Settings {
             format_locale: String::new(),
             notify: NotifyPrefs::default(),
             shortcuts: HashMap::new(),
+            plugin_shortcuts: BTreeMap::new(),
             item_values: false,
             sidebar: SidebarPrefs::default(),
             avatar_3d: false,

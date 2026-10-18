@@ -670,6 +670,18 @@ pub fn import(s: &mut Settings, text: &str) -> Result<usize, String> {
         s.shortcuts = new.shortcuts;
         changed += 1;
     }
+    let mut plugin_shortcuts = new.plugin_shortcuts;
+    plugin_shortcuts.retain(|k, v| {
+        !v.is_empty()
+            && matches!(
+                crate::commands::CommandRef::parse(k),
+                Some(crate::commands::CommandRef::Plugin(_))
+            )
+    });
+    if s.plugin_shortcuts != plugin_shortcuts {
+        s.plugin_shortcuts = plugin_shortcuts;
+        changed += 1;
+    }
     let mut sidebar = SidebarPrefs::default();
     let order_ok = sidebar
         .set_order(new.sidebar.order.iter().map(String::as_str))
@@ -797,12 +809,20 @@ mod tests {
         apply(&mut a, "cache_days 7").unwrap();
         apply(&mut a, "player_command evil {uri}").unwrap();
         a.sidebar.set_hidden("trades", true).unwrap();
+        let ctrl_j = vec![crate::commands::Shortcut::ctrl("J")];
+        a.plugin_shortcuts.insert("plugin.x.hello".into(), ctrl_j.clone());
+        a.plugin_shortcuts.insert("nav.home".into(), ctrl_j.clone());
         let file = export(&a);
         assert!(!file.contains("evil"));
 
         let mut b = Settings::default();
         apply(&mut b, "player_command mine {uri}").unwrap();
-        assert_eq!(import(&mut b, &file), Ok(3));
+        assert_eq!(import(&mut b, &file), Ok(4));
+        // Only plugin command keys are kept.
+        assert_eq!(
+            b.plugin_shortcuts.keys().collect::<Vec<_>>(),
+            vec!["plugin.x.hello"]
+        );
         assert_eq!(b.density, Density::Compact);
         assert_eq!(b.cache_days, 7);
         assert!(b.sidebar.is_hidden("trades"));

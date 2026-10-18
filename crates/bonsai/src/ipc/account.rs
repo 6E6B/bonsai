@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use bonsai_core::commands::{CommandId, Registry, Shortcut};
+use bonsai_core::commands::{CommandId, CommandRef, Registry, Shortcut};
 use bonsai_core::experience::ServerChange;
 use bonsai_core::me::ServersTab;
 use bonsai_core::prefs::{self, PrefKind};
@@ -924,6 +924,20 @@ fn two(inv: &Invocation, what: &str) -> Result<(String, String), String> {
         .ok_or_else(|| format!("Give {what}."))
 }
 
+/// The command `shortcuts.set` binds: a built-in one, or a command of a running plugin.
+fn shortcut_target(core: &Core, key: &str) -> Result<CommandRef, String> {
+    let target = CommandRef::parse(key).ok_or_else(|| format!("\"{key}\" isn't a command."))?;
+    if let CommandRef::Plugin(p) = &target
+        && !core
+            .plugin_commands()
+            .iter()
+            .any(|c| c.plugin == p.plugin && c.command.id == p.id)
+    {
+        return Err(format!("\"{key}\" isn't a command of a running plugin."));
+    }
+    Ok(target)
+}
+
 /// Settings commands and `list.more` for private servers. `None` for other commands.
 pub(super) fn run(
     app: &AppHandle,
@@ -1038,18 +1052,31 @@ pub(super) fn run(
             let a = arg();
             let a = a.trim();
             let (key, keys) = a.split_once(char::is_whitespace).unwrap_or((a, ""));
-            let id = CommandId::from_key(key).ok_or_else(|| format!("\"{key}\" isn't a command."))?;
+            let target = shortcut_target(core, key)?;
             let shortcut = match keys.trim() {
                 "" => None,
                 k => Some(Shortcut::parse(k)?),
             };
             let mut registry = Registry::default();
-            registry.load_overrides(core.settings().shortcuts);
-            let taken = registry.assign(id, shortcut);
+            let settings = core.settings();
+            registry.load_overrides(settings.shortcuts);
+            registry.load_plugin_shortcuts(settings.plugin_shortcuts);
+            let taken = registry.assign(&target, shortcut);
             let overrides = registry.overrides().clone();
-            core.update_settings(|s| s.shortcuts = overrides);
+            let plugin_shortcuts = registry.plugin_shortcuts().clone();
+            core.update_settings(|s| {
+                s.shortcuts = overrides;
+                s.plugin_shortcuts = plugin_shortcuts;
+            });
             if let Some(first) = taken.first() {
-                let title = registry.get(*first).title;
+                let title = match first {
+                    CommandRef::Builtin(id) => registry.get(*id).title.to_owned(),
+                    CommandRef::Plugin(p) => core
+                        .plugin_commands()
+                        .into_iter()
+                        .find(|c| c.plugin == p.plugin && c.command.id == p.id)
+                        .map_or_else(|| p.key(), |c| format!("{}: {}", c.plugin_name, c.command.title)),
+                };
                 core.notice(format!("Removed it from \"{title}\"."), false);
             }
             Ok(())
@@ -1059,13 +1086,23 @@ pub(super) fn run(
             let a = arg();
             match a.trim() {
                 "" => {
-                    core.update_settings(|s| s.shortcuts.clear());
+                    core.update_settings(|s| {
+                        s.shortcuts.clear();
+                        s.plugin_shortcuts.clear();
+                    });
                     Ok(())
                 }
-                key => match CommandId::from_key(key) {
-                    Some(id) => {
+                // A plugin's binding can be cleared while the plugin is off.
+                key => match CommandRef::parse(key) {
+                    Some(CommandRef::Builtin(id)) => {
                         core.update_settings(|s| {
                             s.shortcuts.remove(&id);
+                        });
+                        Ok(())
+                    }
+                    Some(CommandRef::Plugin(p)) => {
+                        core.update_settings(|s| {
+                            s.plugin_shortcuts.remove(&p.key());
                         });
                         Ok(())
                     }

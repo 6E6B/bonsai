@@ -6,6 +6,7 @@ describe("groupOf", () => {
     expect(groupOf("nav.home")).toBe("Go to")
     expect(groupOf("friends.decline_all")).toBe("People")
     expect(groupOf("weird.thing")).toBe("Other")
+    expect(groupOf("plugin.friend-cleanup.unfriend-banned")).toBe("Plugins")
   })
 
   it("lists each section once", () => {

@@ -7,7 +7,10 @@ use std::path::Path;
 use std::rc::Rc;
 use std::time::Duration;
 
-use bonsai_plugin::{Action, Arg, Ctx, Error, Host, Limits, Manifest, Outcome, Plugin, Read, TradeStatus};
+use bonsai_plugin::{
+    Action, Arg, ButtonStyle, Cell, Ctx, Error, Host, Limits, Manifest, Node, Outcome, Plugin, Read,
+    TableColumn, TradeStatus, ViewEvent,
+};
 
 #[derive(Default)]
 struct FakeHost {
@@ -225,6 +228,168 @@ fn other_outcomes() {
 }
 
 #[test]
+fn views_are_trees_of_our_parts() {
+    let out = run(r#"
+        local ui = bonsai.ui
+        return { view = ui.column {
+          ui.heading("Summary"),
+          ui.text { "fine print", muted = true },
+          "plain",
+          ui.row {
+            ui.stat { label = "RAP", value = 1500 },
+            ui.stat { label = "Name", value = "Dominus" },
+          },
+          ui.table {
+            columns = { "Item", { label = "RAP", align = "end" } },
+            rows = { { "Hat", 10 }, { "Face" } },
+            action = "pick",
+          },
+          ui.input { key = "min", label = "Min", value = 5, placeholder = "0", action = "go" },
+          ui.button { label = "Go", action = "go", style = "primary" },
+        } }
+    "#)
+    .unwrap();
+    let text = |t: &str, muted| Node::Text {
+        text: t.into(),
+        muted,
+        mono: false,
+    };
+    assert_eq!(
+        out,
+        Outcome::View(Node::Column(vec![
+            Node::Heading("Summary".into()),
+            text("fine print", true),
+            text("plain", false),
+            Node::Row(vec![
+                Node::Stat {
+                    label: "RAP".into(),
+                    value: Cell::Number(1500.0)
+                },
+                Node::Stat {
+                    label: "Name".into(),
+                    value: Cell::Text("Dominus".into())
+                },
+            ]),
+            Node::Table {
+                columns: vec![
+                    TableColumn {
+                        label: "Item".into(),
+                        end: false
+                    },
+                    TableColumn {
+                        label: "RAP".into(),
+                        end: true
+                    },
+                ],
+                rows: vec![
+                    vec![Cell::Text("Hat".into()), Cell::Number(10.0)],
+                    vec![Cell::Text("Face".into()), Cell::Text(String::new())],
+                ],
+                action: Some("pick".into()),
+            },
+            Node::Input {
+                key: "min".into(),
+                label: "Min".into(),
+                value: "5".into(),
+                placeholder: "0".into(),
+                action: Some("go".into()),
+            },
+            Node::Button {
+                label: "Go".into(),
+                action: "go".into(),
+                style: ButtonStyle::Primary,
+            },
+        ]))
+    );
+    assert_eq!(run("return { close = true }").unwrap(), Outcome::Close);
+}
+
+#[test]
+fn bad_views_are_errors() {
+    for (body, msg) in [
+        ("return { view = 5 }", "each part is a table"),
+        ("return { view = { type = 'iframe' } }", "no part \"iframe\""),
+        ("return { view = {} }", "has no type"),
+        (
+            "return { view = bonsai.ui.button { label = 'x' } }",
+            "needs an action",
+        ),
+        (
+            "return { view = bonsai.ui.button { label = 'x', action = 'Bad Action' } }",
+            "lowercase",
+        ),
+        (
+            "return { view = bonsai.ui.button { label = 'x', action = 'a', style = 'red' } }",
+            "style",
+        ),
+        (
+            "return { view = bonsai.ui.table { rows = {} } }",
+            "1 to 12 columns",
+        ),
+        (
+            "return { view = bonsai.ui.row { bonsai.ui.input { key = 'a' }, bonsai.ui.input { key = 'a' } } }",
+            "two inputs",
+        ),
+        (
+            "local v = 'x' for i = 1, 10 do v = bonsai.ui.row { v } end return { view = v }",
+            "nest",
+        ),
+        (
+            "local t = {} for i = 1, 501 do t[i] = 'x' end return { view = bonsai.ui.column(t) }",
+            "at most 500 parts",
+        ),
+        (
+            "local r = {} for i = 1, 501 do r[i] = { i } end return { view = bonsai.ui.table { columns = { 'n' }, rows = r } }",
+            "at most 500 rows",
+        ),
+    ] {
+        let e = script_error(run(body));
+        assert!(e.contains(msg), "{body}: {e}");
+    }
+}
+
+#[test]
+fn view_events_reach_the_command() {
+    let p = load(
+        r#"
+        local seen = 0
+        bonsai.command {
+          id = "v",
+          title = "View",
+          run = function(ctx) return { view = "count " .. seen } end,
+          event = function(ctx, e)
+            seen += 1
+            if e.action == "close" then return { close = true } end
+            return { view = string.format("%s %s %s %d %d", e.action, e.values.min or "-", tostring(e.row), seen, ctx.account) }
+          end,
+        }
+        bonsai.command { id = "plain", title = "Plain", run = function() end }
+        "#,
+    )
+    .unwrap();
+    let text = |t: &str| {
+        Outcome::View(Node::Text {
+            text: t.into(),
+            muted: false,
+            mono: false,
+        })
+    };
+    assert_eq!(p.run_command("v", CTX, None).unwrap(), text("count 0"));
+    let e = ViewEvent {
+        action: "go".into(),
+        values: vec![("min".into(), "12".into())],
+        row: Some(3),
+    };
+    assert_eq!(p.run_view_event("v", CTX, &e).unwrap(), text("go 12 3 1 7"));
+    let close = ViewEvent {
+        action: "close".into(),
+        ..ViewEvent::default()
+    };
+    assert_eq!(p.run_view_event("v", CTX, &close).unwrap(), Outcome::Close);
+    assert!(script_error(p.run_view_event("plain", CTX, &e)).contains("no event function"));
+}
+
+#[test]
 fn bad_registrations_fail_to_load() {
     for main in [
         "bonsai.command { id = 'Bad', title = 'x', run = function() end }",
@@ -385,6 +550,13 @@ fn time_limit_trips_even_if_caught() {
         p.run_command("c", CTX, None).unwrap(),
         Outcome::Toast("ok".into())
     );
+}
+
+#[test]
+fn reading_the_result_stays_on_the_clock() {
+    // `outcome` reads fields through metamethods, which run plugin code.
+    let r = run("return setmetatable({}, { __index = function() while true do end end })");
+    assert!(matches!(r, Err(Error::Timeout(_))), "{r:?}");
 }
 
 #[test]

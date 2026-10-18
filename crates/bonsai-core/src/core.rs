@@ -93,7 +93,9 @@ pub enum Cmd {
         account: AccountId,
         query: String,
     },
-    SetSettings(Box<Settings>),
+    /// Saves the settings and applies the launch command. `update_settings` has already
+    /// changed them in memory.
+    SetSettings,
     /// Writes a user theme to the themes folder.
     SaveTheme(Box<crate::themes::Theme>),
     DeleteTheme(String),
@@ -531,12 +533,8 @@ impl Core {
     }
 
     pub fn update_settings(&self, f: impl FnOnce(&mut Settings)) {
-        let s = {
-            let mut s = self.inner.settings.write();
-            f(&mut s);
-            s.clone()
-        };
-        self.send(Cmd::SetSettings(Box::new(s)));
+        f(&mut self.inner.settings.write());
+        self.send(Cmd::SetSettings);
     }
 
     /// Deletes cached data past the limits in Settings > Data now, in the background, instead
@@ -825,14 +823,18 @@ impl Inner {
             Cmd::Launch { account, target } => self.launch(account, target).await,
             Cmd::Search { account, query } => self.remote_search(account, query).await,
             Cmd::LoadHome(account) => self.load_home(account).await,
-            Cmd::SetSettings(s) => {
+            Cmd::SetSettings => {
+                // Commands run side by side, so two quick changes can arrive in either order.
+                // Saving whatever is current, one save at a time, keeps the newest.
+                static SAVING: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
+                let _saving = SAVING.lock();
+                let s = self.settings.read().clone();
                 if let Err(e) = s.save(&self.paths.settings_file()) {
                     tracing::warn!("saving settings: {e}");
                 }
                 *self.opener.write() = Arc::new(launcher::SystemOpener {
                     command: s.player_command.clone(),
                 });
-                *self.settings.write() = *s;
                 self.repaint();
             }
             Cmd::SaveTheme(t) => crate::themes::write_current(&self, &t.id),

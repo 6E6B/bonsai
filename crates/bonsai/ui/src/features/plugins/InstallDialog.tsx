@@ -6,9 +6,9 @@ import { shell } from "~/lib/store"
 import { Alert, Button, Checkbox, Dialog, Fact, Facts } from "~/lib/ui"
 
 /**
- * A plugin folder before it is installed or loaded: what it asks for, what it won't get, and
- * which accounts it may use. Opens by itself from `shell.pluginInstall`, which `plugin.install`,
- * `plugin.load_unpacked` and `plugin.review` set.
+ * A plugin folder or `.bonsaiplugin` package before it is installed or loaded: its content hash,
+ * what it asks for, what it won't get, and which accounts it may use. Opens by itself from
+ * `shell.pluginInstall`, which `plugin.install`, `plugin.load_unpacked` and `plugin.review` set.
  */
 export function InstallDialog() {
   const pending = () => shell.pluginInstall
@@ -55,7 +55,14 @@ export function InstallDialog() {
               <Fact label="Version">{p().version || "Not given"}</Fact>
               <Show when={p().replaces}>{(v) => <Fact label="Installed">{v() || "Not given"}</Fact>}</Show>
               <Fact label="Author">{p().author || "Not given"}</Fact>
-              <Fact label="From">{p().source}</Fact>
+              <Fact label="From">{p().package ? "A .bonsaiplugin package" : p().source}</Fact>
+              <Show when={p().hash}>
+                {(h) => (
+                  <Fact label="SHA-256">
+                    <span class="break-all font-mono">{h()}</span>
+                  </Fact>
+                )}
+              </Show>
               <Show when={p().unpacked}>
                 <Fact label="Loads">In place, and reloads when its files change</Fact>
               </Show>
