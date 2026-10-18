@@ -1,52 +1,77 @@
-# Bonsai
+<div align="center">
 
-Portable Rust backend for the Bonsai desktop client (built with Tauri).
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/bonsai-banner-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/images/bonsai-banner-light.png">
+  <img src="docs/images/bonsai-banner-light.png" width="100%" alt="Bonsai: A keyboard-first desktop client for Roblox.">
+</picture>
 
-## Structure
+**A fast, keyboard-first desktop client for Roblox, built for people with more than one account.**
 
-```
-bonsai/
-├── crates/
-│   ├── bonsai-api/        # Roblox API client (REST & SignalR WebSocket, rate limiting, auth)
-│   ├── bonsai-core/       # Domain engine (StoreData, multi-account sessions, cache, launcher, commands)
-│   ├── bonsai/            # Tauri shell + SolidJS UI (ui/)
-│   └── bonsai-codegen/    # Generator xtask converting OpenAPI/Swagger specs to Rust API wrappers
-├── specs/                 # Custom Swagger 2.0 specs for undocumented Roblox endpoints
-├── vendor/                # roblox-api-tracker submodule/specs
-├── .cargo/                # Cargo aliases (e.g. `cargo xtask codegen`)
-└── Cargo.toml             # Clean workspace manifest containing the backend crates
-```
+[![Rust](https://github.com/6E6B/bonsai/actions/workflows/rust.yml/badge.svg)](https://github.com/6E6B/bonsai/actions/workflows/rust.yml)
+[![UI](https://github.com/6E6B/bonsai/actions/workflows/ui.yml/badge.svg)](https://github.com/6E6B/bonsai/actions/workflows/ui.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
-## Useful Commands
+[Releases](https://github.com/6E6B/bonsai/releases) · [Features](docs/features.md) · [Install](#install) · [Plugins](docs/plugins.md) · [Building](#building) · [Architecture](AGENTS.md)
 
-- **Check build**: `cargo check`
-- **Run tests**: `cargo nextest run --workspace --locked`
-- **Run doctests**: `cargo test --workspace --locked --doc`
-- **Regenerate API wrappers**: `cargo xtask codegen`
+</div>
 
-Install [cargo-nextest](https://nexte.st/docs/installation/) 0.9.148 to match CI. The source-install option is `cargo install cargo-nextest --version 0.9.148 --locked`. Nextest runs the existing Rust tests; doctests still use Cargo. `cargo test --workspace --locked` remains available without nextest.
+![Bonsai home screen](docs/images/hero.png)
 
-## Desktop app
+*Demo screenshots use Shedletsky's public profile. Activity and trades are illustrative.*
 
-The UI is a Tauri 2 shell (`crates/bonsai`) around a SolidJS app (`crates/bonsai/ui`). Install [bun](https://bun.sh), then:
+Bonsai replaces the Roblox website. It does nearly everything the site does: games and servers,
+the avatar editor, the Marketplace, inventory, trades, chat and messages, friends, communities,
+transactions, and account and security settings. The few things it doesn't do yet are listed in
+[docs/gaps.md](docs/gaps.md).
+
+It also keeps several accounts signed in at once, and every action can be run from the keyboard
+through a command bar (`Ctrl+K`). [docs/features.md](docs/features.md) lists what it adds beyond the site.
+
+<p>
+  <img src="docs/images/command-bar.png" width="49%" alt="Command bar">
+  <img src="docs/images/trades.png" width="49%" alt="Trade screen">
+</p>
+
+<p>
+  <img src="docs/images/profile.png" width="49%" alt="Shedletsky profile overview">
+  <img src="docs/images/game.png" width="49%" alt="Giant Robot Island experience page">
+</p>
+
+Themes and plugins are covered in [docs/theming.md](docs/theming.md) and [docs/plugins.md](docs/plugins.md).
+
+## Security
+
+- `.ROBLOSECURITY` cookies are stored in the OS keychain. They are not saved in plain text, logged, or sent to the UI.
+- Network requests are made only by the Rust backend. Cookies are sent only to Roblox.
+- Bonsai makes no purchases, trades, messages or friend requests on its own. Every write comes from a click or keypress.
+- Plugins can't read cookies and need permission per account.
+
+## Install
+
+Installers are on the [Releases](https://github.com/6E6B/bonsai/releases) page: `.exe` and `.msi`
+for Windows, `.dmg` for macOS, and `.deb`, `.rpm` and `.AppImage` for Linux.
+
+Builds are not code-signed. On Windows, SmartScreen asks for confirmation (More info → Run anyway).
+On macOS, right-click the app and choose Open the first time.
+
+To launch games through [Sober](https://sober.vinegarhq.org) on Linux, set the launch command in Settings → General.
+
+## Building
+
+Requires [Rust](https://rustup.rs), [bun](https://bun.sh) and the
+[Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS.
 
 ```sh
-cd crates/bonsai/ui
+git clone --recursive https://github.com/6E6B/bonsai
+cd bonsai/crates/bonsai/ui
 bun install
-bun run app      # desktop app with hot reload
-bun run check    # typecheck, lint, tests
+bun run app
 ```
 
-See [`AGENTS.md`](AGENTS.md) for the architecture and rules.
-
-## CI and releases
-
-`.github/workflows/ui.yml` runs `bun run check` and `bun run build` on PRs and pushes to `main` that touch `crates/bonsai/ui/`.
-
-`.github/workflows/rust.yml` runs on PRs and pushes to `main` that touch anything else: `cargo nextest run --workspace --locked --profile ci` and `cargo test --workspace --locked --doc` on Linux, Windows and macOS, and on Linux `cargo fmt`, `cargo clippy` and checks that `bindings.ts` and generated API code are up to date.
-
-`.github/workflows/release.yml` builds installers: `.deb`, `.AppImage` and `.rpm` on Linux, NSIS `.exe` and `.msi` on Windows, and a universal `.dmg` on macOS. Run it by hand from the Actions tab to get them as artifacts, or push a tag matching the workspace version (`git tag v0.1.0 && git push origin v0.1.0`) to also create a draft GitHub release. Builds are not code-signed yet.
+See [AGENTS.md](AGENTS.md) for the code layout and contribution rules.
 
 ## License
 
-GPL-3.0-only. See [`LICENSE`](LICENSE).
+[GPL-3.0](LICENSE). Not affiliated with Roblox Corporation.
