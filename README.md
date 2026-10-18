@@ -27,6 +27,11 @@ through a command bar (`Ctrl+K`). [docs/features.md](docs/features.md) lists wha
   <img src="docs/images/trades.png" width="49%" alt="Trade screen">
 </p>
 
+<p>
+  <img src="docs/images/profile.png" width="49%" alt="Shedletsky profile overview">
+  <img src="docs/images/game.png" width="49%" alt="Giant Robot Island experience page">
+</p>
+
 Themes and plugins are covered in [docs/theming.md](docs/theming.md) and [docs/plugins.md](docs/plugins.md).
 
 ## Security
