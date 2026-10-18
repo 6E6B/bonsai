@@ -273,6 +273,8 @@ export const commands = {
 	saveTabs: (tabs: TabView[], active: number) => __TAURI_INVOKE<void>("save_tabs", { tabs, active }),
 	/**  Every installed theme: built-ins first, then the user's by name. */
 	themes: () => __TAURI_INVOKE<ThemeView[]>("themes"),
+	hubCatalog: (query: string) => typedError<HubView, string>(__TAURI_INVOKE("hub_catalog", { query })),
+	hubHistory: (target: string) => typedError<HubHistory, string>(__TAURI_INVOKE("hub_history", { target })),
 	appearance: () => __TAURI_INVOKE<AppearanceView>("appearance"),
 	/**  The UI reports whether the OS prefers dark, so System mode knows which theme is on screen. */
 	setSystemDark: (dark: boolean) => __TAURI_INVOKE<void>("set_system_dark", { dark }),
@@ -1085,6 +1087,58 @@ export type Home = {
 	/**  Experiences this account favorited. */
 	favorites: GameCard[],
 	sorts: Sort[],
+};
+
+export type HubEntry = {
+	id: string,
+	kind: string,
+	ownerId: string,
+	name: string,
+	description: string,
+	tags: string[],
+	base: string | null,
+	version: string,
+	sha256: string,
+	document: string | null,
+	permissions: string[],
+	apiVersion: number | null,
+	size: Id,
+};
+
+export type HubHistory = {
+	loading: boolean,
+	error: string | null,
+	versions: HubVersion[],
+};
+
+export type HubSubmission = {
+	id: string,
+	kind: string,
+	entryId: string,
+	version: string,
+	status: string,
+	reason: string | null,
+};
+
+export type HubVersion = {
+	version: string,
+	sha256: string,
+	createdAt: Id,
+	permissions: string[],
+};
+
+export type HubView = {
+	configured: boolean,
+	loading: boolean,
+	busy: boolean,
+	signingIn: boolean,
+	error: string | null,
+	userId: string | null,
+	userName: string | null,
+	items: HubEntry[],
+	nextOffset: number | null,
+	submissions: HubSubmission[],
+	revoked: string[],
 };
 
 /**

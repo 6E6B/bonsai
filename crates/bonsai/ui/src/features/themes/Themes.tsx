@@ -93,6 +93,9 @@ export default function Themes() {
               { value: "light", label: "Light" },
             ]}
           />
+          <Button size="sm" onClick={() => run("nav.hub")}>
+            Browse hub
+          </Button>
           <Button size="sm" icon="download" onClick={() => run("theme.import")}>
             Import
           </Button>
@@ -122,6 +125,11 @@ export default function Themes() {
                     menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
                     { kind: "separator" },
                     menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
+                    menuItem("hub.publish", {
+                      arg: JSON.stringify({ kind: "themes", id: r.id }),
+                      label: "Publish to hub",
+                      disabled: r.builtin || !r.onDisk,
+                    }),
                     menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
                     { kind: "separator" },
                     menuItem("theme.delete", {

@@ -33,8 +33,8 @@ crates/
 
 ### Network and secrets
 
-- No network calls outside `crates/bonsai-api`. The webview never fetches anything remote: no CDNs, no Google Fonts, no Roblox image URLs. The CSP in `tauri.conf.json` enforces this; don't loosen it.
-- No hardcoded endpoint URLs outside generated code and `specs/undocumented/`.
+- No network calls outside `crates/bonsai-api` (Roblox) and `crates/bonsai-hub-api` (Bonsai hub, with the same shared machine rate limiter and no Roblox credentials). The webview never fetches anything remote: no CDNs, no Google Fonts, no Roblox image URLs. The CSP in `tauri.conf.json` enforces this; don't loosen it.
+- No hardcoded Roblox endpoint URLs outside generated code and `specs/undocumented/`. Hub routes belong only to `bonsai-hub-api`, following `docs/hub-openapi.json`; its origin is configured by the Rust host.
 - Never edit files under `crates/bonsai-api/src/generated/`. Change the spec or the generator and rerun `cargo xtask codegen`.
 - Never log, print, commit or write to disk a `.ROBLOSECURITY` cookie, auth ticket or CSRF token. Redact them in `Debug` impls. Never send one to the UI.
 - Never auto-solve captchas or bypass a challenge. Surface it to the user.

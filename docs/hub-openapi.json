@@ -1,0 +1,2311 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Bonsai Hub API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8787",
+      "description": "Local development only"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Storage health and contract version",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/themes": {
+      "get": {
+        "summary": "Browse approved, listed releases",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "default": "",
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 24,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "default": "updated",
+              "type": "string",
+              "enum": [
+                "updated",
+                "name"
+              ]
+            }
+          },
+          {
+            "name": "base",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "dark",
+                "light"
+              ]
+            }
+          },
+          {
+            "name": "apiVersion",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Publish immutable theme release",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThemeRelease"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/themes/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get an approved release",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        },
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Owner lists or unlists content",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "listed"
+                ],
+                "properties": {
+                  "listed": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Owner soft-deletes content permanently",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/themes/{id}/versions": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Approved release history (latest 100)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/themes/{id}/report": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "summary": "Report content for moderation",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/plugins": {
+      "get": {
+        "summary": "Browse approved, listed releases",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "default": "",
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 24,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "default": "updated",
+              "type": "string",
+              "enum": [
+                "updated",
+                "name"
+              ]
+            }
+          },
+          {
+            "name": "base",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "dark",
+                "light"
+              ]
+            }
+          },
+          {
+            "name": "apiVersion",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Submit plugin for moderation",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Bonsai-Metadata",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Percent-encoded JSON Metadata."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "maxLength": 8388608
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/plugins/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get an approved release",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        },
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Owner lists or unlists content",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "listed"
+                ],
+                "properties": {
+                  "listed": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Owner soft-deletes content permanently",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/plugins/{id}/versions": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Approved release history (latest 100)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/plugins/{id}/report": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "summary": "Report content for moderation",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/plugins/{id}/download/{version}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "version",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Download approved package; rechecks moderation on each request",
+        "responses": {
+          "200": {
+            "description": "Exact archive bytes",
+            "headers": {
+              "X-Content-SHA256": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pending, rejected, revoked, unlisted, deleted or missing"
+          }
+        }
+      }
+    },
+    "/v1/revocations": {
+      "get": {
+        "summary": "All revoked plugin versions and archive hashes",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/auth/start": {
+      "post": {
+        "summary": "Begin system-browser PKCE authorization",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "challenge"
+                ],
+                "properties": {
+                  "challenge": {
+                    "type": "string",
+                    "minLength": 43,
+                    "maxLength": 43
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authorizationUrl": {
+                      "type": "string"
+                    },
+                    "pollToken": {
+                      "type": "string"
+                    },
+                    "expiresIn": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/auth/callback": {
+      "get": {
+        "summary": "One-time provider state callback",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        },
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/auth/exchange": {
+      "post": {
+        "summary": "Poll and claim a session once with PKCE verifier",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pollToken",
+                  "verifier"
+                ],
+                "properties": {
+                  "pollToken": {
+                    "type": "string"
+                  },
+                  "verifier": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "summary": "Current Bonsai user",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "summary": "Revoke current session",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/account/submissions": {
+      "get": {
+        "summary": "Publisher submission status, latest 100",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/admin/submissions": {
+      "get": {
+        "summary": "Admin pending review queue",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/admin/reports": {
+      "get": {
+        "summary": "Admin content reports",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    },
+    "/v1/admin/releases/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "summary": "Admin approval, rejection or revocation with audit reason",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action",
+                  "reason"
+                ],
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "approve",
+                      "reject",
+                      "revoke"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Pending OAuth authorization"
+          },
+          "204": {
+            "description": "Completed"
+          },
+          "304": {
+            "description": "ETag matches"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Missing or expired session"
+          },
+          "403": {
+            "description": "Ownership or role check failed"
+          },
+          "404": {
+            "description": "Not visible or unavailable"
+          },
+          "409": {
+            "description": "Immutable version exists or invalid transition"
+          },
+          "413": {
+            "description": "Request exceeds limits"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bonsai session only. Never a Roblox cookie."
+      }
+    },
+    "schemas": {
+      "Theme": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "number",
+            "const": 1
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "author": {
+            "default": "",
+            "type": "string",
+            "maxLength": 64
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?$"
+          },
+          "base": {
+            "type": "string",
+            "enum": [
+              "dark",
+              "light"
+            ]
+          },
+          "seeds": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            },
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 256,
+                      "pattern": "^[A-Za-z0-9 #.,()-]*$"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "pattern": "^[A-Za-z0-9 #.,()-]*$"
+                  },
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 256,
+                        "pattern": "^[A-Za-z0-9 #.,()-]*$"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "tokens": {
+            "default": {},
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 256,
+              "pattern": "^[A-Za-z0-9 #.,()-]*$"
+            }
+          }
+        },
+        "required": [
+          "schema",
+          "id",
+          "name",
+          "author",
+          "version",
+          "base",
+          "seeds",
+          "tokens"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeRelease": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "tags": {
+            "default": [],
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]{1,24}$"
+            }
+          },
+          "document": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "author": {
+                "default": "",
+                "type": "string",
+                "maxLength": 64
+              },
+              "version": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?$"
+              },
+              "base": {
+                "type": "string",
+                "enum": [
+                  "dark",
+                  "light"
+                ]
+              },
+              "seeds": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                },
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9 #.,()-]*$"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "pattern": "^[A-Za-z0-9 #.,()-]*$"
+                      },
+                      "additionalProperties": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 256,
+                            "pattern": "^[A-Za-z0-9 #.,()-]*$"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "tokens": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 256,
+                  "pattern": "^[A-Za-z0-9 #.,()-]*$"
+                }
+              }
+            },
+            "required": [
+              "schema",
+              "id",
+              "name",
+              "author",
+              "version",
+              "base",
+              "seeds",
+              "tokens"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "tags",
+          "document"
+        ],
+        "additionalProperties": false
+      },
+      "Metadata": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "tags": {
+            "default": [],
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]{1,24}$"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "tags"
+        ],
+        "additionalProperties": false
+      },
+      "Entry": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "ownerId",
+          "name",
+          "description",
+          "tags",
+          "version",
+          "sha256",
+          "permissions",
+          "size"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "themes",
+              "plugins"
+            ]
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "base": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "dark",
+              "light",
+              null
+            ]
+          },
+          "updatedAt": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "document": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Exact UTF-8 JSON bytes used for SHA-256; themes only."
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "apiVersion": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "size": {
+            "type": "integer"
+          },
+          "releaseId": {
+            "type": "string"
+          }
+        }
+      },
+      "Page": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextOffset"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Entry"
+            }
+          },
+          "nextOffset": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

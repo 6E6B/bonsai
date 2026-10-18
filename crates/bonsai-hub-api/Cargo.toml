@@ -1,0 +1,19 @@
+[package]
+name = "bonsai-hub-api"
+description = "Cookie-free Bonsai hub transport and v1 contract"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+[lints]
+workspace = true
+[dependencies]
+bonsai-api.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+url.workspace = true
+sha2.workspace = true
+[dev-dependencies]
+wiremock.workspace = true
+tokio.workspace = true

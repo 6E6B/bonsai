@@ -250,6 +250,8 @@ pub enum Effect {
     Local,
     /// Acts as an account, on Roblox or in its per-account data here.
     Write(Tier),
+    /// Acts as the independent Bonsai publisher. Never available to plugins.
+    Hub,
 }
 
 impl Effect {
@@ -257,7 +259,7 @@ impl Effect {
     pub fn tier(self) -> Option<Tier> {
         match self {
             Effect::Write(t) => Some(t),
-            Effect::Read | Effect::Local => None,
+            Effect::Read | Effect::Local | Effect::Hub => None,
         }
     }
 }
@@ -350,6 +352,20 @@ commands! {
     OpenCommunity => "group.open", "Open community", ["group", "community", "open"], Text, Read, [];
     GoComponents => "nav.components", "Go to Components (UI gallery)", ["components", "gallery", "ui", "design"], None, Read, [];
     GoOverview => "nav.overview", "Go to Overview (console clone test)", ["overview", "console", "clone", "test", "card"], None, Read, [];
+    GoHub => "nav.hub", "Go to Theme and Plugin Hub", ["hub", "themes", "plugins", "browse", "community"], None, Read, [];
+    HubRefresh => "hub.refresh", "Refresh hub", ["hub", "reload", "search"], None, Read, [];
+    HubDetails => "hub.details", "View hub release details", ["hub", "release", "permissions"], Text, Read, [];
+    HubPublish => "hub.publish", "Publish to hub", ["hub", "publish", "theme", "plugin", "upload"], Text, Local, [];
+    HubPublishTheme => "hub.publish_theme", "Publish theme release", ["hub", "theme", "release"], Text, Hub, [];
+    HubPublishPlugin => "hub.publish_plugin", "Submit plugin release for review", ["hub", "plugin", "review"], Text, Hub, [];
+    HubInstall => "hub.install", "Review hub installation or update", ["hub", "install", "update", "download"], Text, Local, [];
+    HubSignIn => "hub.sign_in", "Sign into Bonsai Hub with GitHub", ["hub", "account", "oauth", "publisher", "github"], None, Hub, [];
+    HubSignOut => "hub.sign_out", "Sign out of Bonsai Hub", ["hub", "logout", "session"], None, Hub, [];
+    HubSubmissions => "hub.submissions", "Refresh your hub submissions", ["hub", "pending", "status", "moderation"], None, Read, [];
+    HubDelete => "hub.delete", "Delete your hub content", ["hub", "delete", "publisher"], Text, Hub, [];
+    HubUnlist => "hub.unlist", "Unlist your hub content", ["hub", "unlist", "publisher"], Text, Hub, [];
+    HubReport => "hub.report", "Report hub content", ["hub", "report", "moderation", "abuse"], Text, Hub, [];
+    HubRevocations => "hub.revocations", "Check installed plugins for revocations", ["hub", "plugin", "revoked", "security"], None, Read, [];
     GoThemes => "nav.themes", "Go to Themes", ["themes", "appearance", "colors", "palette", "editor", "customize"], None, Read, [Shortcut::seq("G", "E")];
 
     ToggleDrawer => "view.drawer", "Toggle friends and chat drawer", ["friends", "chat", "drawer", "panel"], None, Local, [Shortcut::ctrl("Backslash")];

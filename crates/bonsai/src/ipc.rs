@@ -26,6 +26,7 @@ mod avatar;
 mod challenge;
 mod communities;
 mod discover;
+mod hub;
 mod inbox;
 mod market;
 mod plugins;
@@ -1174,6 +1175,9 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         return r;
     }
     if let Some(r) = account::run(app, core, id, &inv, core.acting(picked)) {
+        return r;
+    }
+    if let Some(r) = hub::run(core, id, &inv) {
         return r;
     }
     if let Some(r) = plugins::run(app, core, id, &inv, core.acting(picked)) {
@@ -2844,6 +2848,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::start_tabs,
             account::save_tabs,
             account::themes,
+            hub::hub_catalog,
+            hub::hub_history,
             account::appearance,
             account::set_system_dark,
             account::font_catalog,

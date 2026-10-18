@@ -10,6 +10,8 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+bonsai-hub-api.workspace = true
+rustls.workspace = true
 bonsai-api = { workspace = true }
 bonsai-plugin = { workspace = true }
 serde = { workspace = true }
