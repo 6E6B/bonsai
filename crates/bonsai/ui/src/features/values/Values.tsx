@@ -19,15 +19,23 @@ import {
   Robux,
   SegmentedControl,
   Select,
-  showToast,
   Skeleton,
   Stat,
   Switch,
+  showToast,
   TextField,
   Thumbnail,
 } from "~/lib/ui"
 import { DemandPips, TrendMark, useValuesRefresh, ValueAmount, ValueFlags } from "~/lib/value-tags"
-import { rapGap, rolimonsFailed, shapeValues, VALUES_SOURCE, type ValueShow, type ValueSort, versionLabel } from "~/lib/values"
+import {
+  rapGap,
+  rolimonsFailed,
+  shapeValues,
+  VALUES_SOURCE,
+  type ValueShow,
+  type ValueSort,
+  versionLabel,
+} from "~/lib/values"
 
 const versions = [
   { value: "all", label: "All" },
