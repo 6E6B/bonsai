@@ -15,6 +15,7 @@ mod desktop;
 mod font;
 pub mod ipc;
 mod notify;
+mod schemes;
 mod signin;
 mod thumb;
 
@@ -56,6 +57,11 @@ pub fn run() {
             builder.mount_events(app);
             let repaint = notify::spawn(app.handle().clone())?;
             let core = Arc::new(Core::start(CoreConfig::standard(), repaint));
+            if let Some(w) = app.get_webview_window("main")
+                && let Err(e) = schemes::allow(&w)
+            {
+                tracing::warn!("could not allow the app's schemes: {e}");
+            }
             desktop::start(app.handle(), &core.settings());
             let handle = app.handle().clone();
             core.set_plugin_runner(Arc::new(move |account, id, arg| {
