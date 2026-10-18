@@ -446,7 +446,11 @@ export function Layout(props: ParentProps) {
   })
 
   return (
-    <div class="flex h-full min-h-0 flex-col bg-deep text-fg">
+    <div
+      data-window-corner="all"
+      data-status-bar={shell.look.statusBar ? "" : undefined}
+      class="flex h-full min-h-0 flex-col bg-deep text-fg"
+    >
       <TitleBar />
       <div class="flex min-h-0 flex-1">
         <AccountRail />
@@ -457,7 +461,8 @@ export function Layout(props: ParentProps) {
             <div ref={column} class="relative isolate flex min-w-0 flex-1 flex-col">
               <Backdrop background={appearance.background} strip={strip()} />
               <TabBar />
-              <div class="flex min-h-0 flex-1">
+              {/* Its last panel (page, preview or drawer) takes the bottom-right corner. */}
+              <div data-window-corner="bottom-right-last" class="flex min-h-0 flex-1">
                 <main
                   ref={main}
                   data-scroller

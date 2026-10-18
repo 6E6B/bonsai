@@ -31,21 +31,39 @@
     scrollbar-width: thin;
   }
 
-  /* Rounded window corners on Linux (`app/frame.ts`). Only the app and the dialog backdrop,
-   * the one layer that covers the whole window, are rounded: clipping the whole page costs a
-   * mask on every repaint in WebKitGTK. */
+  /* Rounded window corners on Linux (`app/frame.ts`). Nothing clips the page: each element
+   * that paints into a corner rounds that corner (`data-window-corner` in the shell). The
+   * bottom corners belong to the status bar, or without it to the rail and the last panel. */
   :root[data-frame="rounded"],
   :root[data-frame="rounded"] body {
     background: transparent;
   }
 
-  :root[data-frame="rounded"] #root {
-    border-radius: var(--window-radius);
-    overflow: hidden;
-  }
-
+  :root[data-frame="rounded"] [data-window-corner="all"],
   :root[data-frame="rounded"] [data-component="dialog-overlay"] {
     border-radius: var(--window-radius);
+  }
+
+  :root[data-frame="rounded"] [data-window-corner="top"] {
+    border-top-left-radius: var(--window-radius);
+    border-top-right-radius: var(--window-radius);
+  }
+
+  :root[data-frame="rounded"] [data-window-corner="bottom"] {
+    border-bottom-left-radius: var(--window-radius);
+    border-bottom-right-radius: var(--window-radius);
+  }
+
+  :root[data-frame="rounded"] [data-window-corner="all"]:not([data-status-bar]) [data-window-corner="bottom-left"] {
+    border-bottom-left-radius: var(--window-radius);
+  }
+
+  :root[data-frame="rounded"] [data-window-corner="all"]:not([data-status-bar]) [data-window-corner="bottom-right"],
+  :root[data-frame="rounded"]
+    [data-window-corner="all"]:not([data-status-bar])
+    [data-window-corner="bottom-right-last"]
+    > :last-child {
+    border-bottom-right-radius: var(--window-radius);
   }
 
   /* `scrollbar-width` is not inherited; every scroller gets the thin one. */
