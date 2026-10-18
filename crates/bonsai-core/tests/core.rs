@@ -2928,3 +2928,23 @@ async fn security_reads_methods_and_walks_the_two_step_dialogs() {
     wait_for(&r.core, "passkey", toast("Passkey removed.")).await;
     assert!(r.core.store().toasts.iter().all(|t| !t.error));
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn quick_settings_changes_keep_the_newest() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = Paths::in_dir(dir.path()).settings_file();
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, Arc::default());
+    // Saves run side by side; an older one finishing last must not win.
+    for days in 1..=50 {
+        r.core.update_settings(|s| s.cache_days = days);
+    }
+    assert_eq!(r.core.settings().cache_days, 50);
+    let start = Instant::now();
+    while bonsai_core::settings::Settings::load(&file).cache_days != 50 {
+        assert!(start.elapsed() < Duration::from_secs(10), "not saved");
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    assert_eq!(r.core.settings().cache_days, 50);
+    assert_eq!(bonsai_core::settings::Settings::load(&file).cache_days, 50);
+}
