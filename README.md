@@ -1,12 +1,17 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/bonsai-banner-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/images/bonsai-banner-light.png">
-  <img src="docs/images/bonsai-banner-light.png" width="100%" alt="Bonsai: A keyboard-first desktop client for Roblox.">
-</picture>
+<img src="crates/bonsai/icons/128x128.png" width="96" alt="Bonsai icon">
 
-[Releases](https://github.com/6E6B/bonsai/releases) · Windows, macOS, Linux
+# Bonsai
+
+**A fast, keyboard-first desktop client for Roblox, built for people with more than one account.**
+
+[![Rust](https://github.com/6E6B/bonsai/actions/workflows/rust.yml/badge.svg)](https://github.com/6E6B/bonsai/actions/workflows/rust.yml)
+[![UI](https://github.com/6E6B/bonsai/actions/workflows/ui.yml/badge.svg)](https://github.com/6E6B/bonsai/actions/workflows/ui.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+
+[Releases](https://github.com/6E6B/bonsai/releases) · [Features](docs/features.md) · [Install](#install) · [Plugins](docs/plugins.md) · [Building](#building) · [Architecture](AGENTS.md)
 
 </div>
 
