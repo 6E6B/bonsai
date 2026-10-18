@@ -400,6 +400,7 @@ name = "bonsai"
 version = "0.1.0"
 dependencies = [
  "bonsai-core",
+ "gtk",
  "rfd",
  "serde",
  "serde_json",

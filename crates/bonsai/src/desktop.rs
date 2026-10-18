@@ -25,17 +25,15 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
     )
 }
 
-/// At startup: the tray and login item as set, and the window hidden when started at login
-/// with "Start in the tray".
+/// At startup: the tray and login item as set, and the window shown unless started at login
+/// with "Start in the tray". The window is created hidden (see `frame.rs`).
 pub fn start(app: &AppHandle, s: &Settings) {
     sync(app, s);
     let at_login = std::env::args().any(|a| a == LOGIN_ARG);
-    if at_login
-        && s.tray
-        && s.start_hidden
+    if !(at_login && s.tray && s.start_hidden)
         && let Some(w) = app.get_webview_window("main")
     {
-        let _ = w.hide();
+        let _ = w.show();
     }
 }
 

@@ -49,6 +49,8 @@ sha2 = "0.11"
 open = "5"
 tauri = { version = "2.12", features = ["tray-icon"] }
 tauri-build = { version = "2.5", features = [] }
+# Linux window frame (src/frame.rs). Same version Tauri uses.
+gtk = "=0.18.2"
 # Lets the dev server page load our schemes (src/schemes.rs). Same version wry uses.
 webkit2gtk = { version = "=2.0.2", features = ["v2_34"] }
 # Copy link, Copy ID, CSV exports. Written from Rust, so the webview gets no clipboard permission.

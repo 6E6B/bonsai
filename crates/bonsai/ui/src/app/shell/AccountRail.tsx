@@ -126,6 +126,7 @@ export function AccountRail() {
   return (
     <nav
       aria-label="Accounts"
+      data-window-corner="bottom-left"
       class="flex w-16 shrink-0 flex-col items-stretch gap-1 overflow-y-auto border-r border-line bg-deep py-2"
     >
       <For each={shell.accounts}>

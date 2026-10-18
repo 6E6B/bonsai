@@ -29,6 +29,7 @@ import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/t
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
+import { useWindowFrame } from "./frame"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
 import { ApproveCode } from "./shell/ApproveCode"
@@ -389,6 +390,7 @@ export function Layout(props: ParentProps) {
     ),
   )
   const appearance = useAppearance()
+  useWindowFrame(zoom)
   // Display settings, applied whenever they change.
   createEffect(() => {
     const root = document.documentElement.dataset
@@ -444,7 +446,11 @@ export function Layout(props: ParentProps) {
   })
 
   return (
-    <div class="flex h-full min-h-0 flex-col bg-deep text-fg">
+    <div
+      data-window-corner="all"
+      data-status-bar={shell.look.statusBar ? "" : undefined}
+      class="flex h-full min-h-0 flex-col bg-deep text-fg"
+    >
       <TitleBar />
       <div class="flex min-h-0 flex-1">
         <AccountRail />
@@ -455,7 +461,8 @@ export function Layout(props: ParentProps) {
             <div ref={column} class="relative isolate flex min-w-0 flex-1 flex-col">
               <Backdrop background={appearance.background} strip={strip()} />
               <TabBar />
-              <div class="flex min-h-0 flex-1">
+              {/* Its last panel (page, preview or drawer) takes the bottom-right corner. */}
+              <div data-window-corner="bottom-right-last" class="flex min-h-0 flex-1">
                 <main
                   ref={main}
                   data-scroller
