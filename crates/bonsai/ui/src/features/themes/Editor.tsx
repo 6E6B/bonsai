@@ -9,6 +9,7 @@ import { setTabTitle } from "~/lib/tabs"
 import {
   type Base,
   type Check,
+  EFFECTS,
   FONTS,
   type FontSeed,
   fontLabel,
@@ -25,6 +26,7 @@ import {
   type Tokens,
   tokenValue,
 } from "~/lib/theme"
+import { BACKGROUND_DEFAULTS, validBackgroundUrl } from "~/lib/theme/theme"
 import {
   Alert,
   Badge,
@@ -40,12 +42,9 @@ import {
   Select,
   Skeleton,
   Slider,
-  Split,
-  Switch,
   TabPanel,
   Tabs,
   TextField,
-  ToggleButton,
 } from "~/lib/ui"
 import {
   changed,
@@ -54,20 +53,16 @@ import {
   dropDraft,
   edit,
   endGroup,
-  inspecting,
-  liveDraft,
   pin,
   putDraft,
   setActiveDraft,
   setInfo,
-  setInspecting,
   setSeed,
   startDraft,
   unpin,
   unsaved,
   update,
 } from "./draft"
-import { Preview } from "./Preview"
 
 type Section = "seeds" | "tokens" | "checks"
 
@@ -95,7 +90,6 @@ export default function Editor() {
   )
   const leave = (x: string) => {
     setActiveDraft(undefined)
-    setInspecting(false)
     // An untouched draft goes; one with changes stays, listed on the Themes screen as unsaved.
     const d = drafts[x]
     if (d && !changed(d)) dropDraft(x)
@@ -139,7 +133,6 @@ function Workbench(props: { id: string; draft: Draft }) {
   const checks = createMemo(() => runChecks(tokens()))
   const failing = () => checks().filter((c) => !c.ok).length
   const [section, setSection] = createSignal<Section>("seeds")
-  const [view, setView] = createSignal<"app" | "parts">("app")
   /** The token whose editor is open in the Tokens list. */
   const [open, setOpen] = createSignal<string>()
   /** Tokens picked with Inspect; the Tokens list shows only these while set. */
@@ -188,7 +181,6 @@ function Workbench(props: { id: string; draft: Draft }) {
     if (mod && key === "s") id = "theme.save"
     else if (mod && !typing && key === "z") id = e.shiftKey ? "theme.redo" : "theme.undo"
     else if (mod && !typing && key === "y") id = "theme.redo"
-    else if (key === "escape" && inspecting()) id = "theme.inspect"
     if (!id) return
     e.preventDefault()
     e.stopPropagation()
@@ -220,18 +212,6 @@ function Workbench(props: { id: string; draft: Draft }) {
           disabled={props.draft.future.length === 0}
           onClick={() => run("theme.redo")}
         />
-        <ToggleButton
-          size="sm"
-          icon="inspect"
-          pressed={inspecting()}
-          onChange={() => run("theme.inspect")}
-          label="Inspect"
-        >
-          Inspect
-        </ToggleButton>
-        <Switch checked={liveDraft() === props.id} onChange={() => run("theme.live")}>
-          Show in app
-        </Switch>
         <Button size="sm" variant="ghost" disabled={!changed(props.draft)} onClick={() => run("theme.revert")}>
           Revert
         </Button>
@@ -260,8 +240,8 @@ function Workbench(props: { id: string; draft: Draft }) {
           </Alert>
         )}
       </Show>
-      <Split>
-        <Pane side class="w-80 gap-3">
+      <Pane class="gap-3">
+        <div class="w-full max-w-3xl">
           <Tabs aria-label="Editor" items={items()} value={section()} onChange={(v) => setSection(v as Section)}>
             <TabPanel value="seeds">
               <SeedsPanel draft={props.draft} edit={edit} fontStatus={fontStatus} />
@@ -281,37 +261,8 @@ function Workbench(props: { id: string; draft: Draft }) {
               <ChecksPanel checks={checks()} tokens={tokens()} onShow={showToken} />
             </TabPanel>
           </Tabs>
-        </Pane>
-        <Pane class="gap-3">
-          <div class="flex items-center gap-2">
-            <SegmentedControl
-              size="sm"
-              aria-label="Preview"
-              value={view()}
-              onChange={(v) => setView(v as "app" | "parts")}
-              options={[
-                { value: "app", label: "App" },
-                { value: "parts", label: "Popovers and badges" },
-              ]}
-            />
-            <Show when={inspecting()}>
-              <span class="text-fg-muted text-sm">Click part of the preview to see its tokens. Esc stops.</span>
-            </Show>
-          </div>
-          <Preview
-            tokens={tokens()}
-            base={props.draft.theme.base}
-            view={view()}
-            inspecting={inspecting()}
-            onPick={(names) => {
-              setPicked(names)
-              setOpen(names[0])
-              setSection("tokens")
-              setInspecting(false)
-            }}
-          />
-        </Pane>
-      </Split>
+        </div>
+      </Pane>
     </div>
   )
 }
@@ -418,6 +369,8 @@ function SeedsPanel(props: { draft: Draft; edit: Edit; fontStatus: (s: FontSeed<
         </For>
       </div>
 
+      <BackgroundFields draft={props.draft} edit={props.edit} />
+
       <SectionHeader title="Shape" size="group" />
       {num("contrast", "Surface contrast", 3)}
       {num("radius", "Corner radius", 4)}
@@ -443,6 +396,104 @@ function SeedsPanel(props: { draft: Draft; edit: Edit; fontStatus: (s: FontSeed<
       />
       <Show when={props.fontStatus(seeds().mono)}>{(s) => <span class="text-fg-muted text-xs">{s()}</span>}</Show>
     </div>
+  )
+}
+
+/** The portable background is part of the draft, including undo/redo and live preview. */
+function BackgroundFields(props: { draft: Draft; edit: Edit }) {
+  const [url, setUrl] = createSignal("")
+  const [error, setError] = createSignal<string>()
+  let pending: ReturnType<typeof setTimeout> | undefined
+  onCleanup(() => clearTimeout(pending))
+  createEffect(
+    on(
+      () => props.draft.theme.background?.url ?? "",
+      (value) => {
+        setUrl(value)
+        setError(undefined)
+      },
+    ),
+  )
+  const change = (value: string) => {
+    setUrl(value)
+    const link = value.trim()
+    if (link && !validBackgroundUrl(link)) {
+      setError("Use an external https image link.")
+      return
+    }
+    setError(undefined)
+    props.edit((d) =>
+      edit(
+        d,
+        {
+          ...d.theme,
+          background: link ? { ...(d.theme.background ?? BACKGROUND_DEFAULTS), url: link } : undefined,
+        },
+        "background.url",
+      ),
+    )
+  }
+  return (
+    <>
+      <SectionHeader title="Background picture" size="group" />
+      <TextField
+        size="sm"
+        label="Image URL"
+        placeholder="https://example.com/background.webp"
+        value={url()}
+        error={error()}
+        onChange={(value) => {
+          setUrl(value)
+          clearTimeout(pending)
+          pending = setTimeout(() => change(value), 400)
+        }}
+        onBlur={() => {
+          clearTimeout(pending)
+          change(url())
+          props.edit(endGroup)
+        }}
+      />
+      <Show when={props.draft.theme.background}>
+        {(background) => (
+          <>
+            <Button size="sm" variant="ghost" onClick={() => change("")}>
+              Remove picture
+            </Button>
+            <For
+              each={[
+                { key: "image" as const, label: "Picture strength", max: 100, step: 5, unit: "%" },
+                { key: "panels" as const, label: "Page opacity", max: 100, step: 5, unit: "%" },
+                ...EFFECTS,
+              ]}
+            >
+              {(level) => (
+                <Slider
+                  label={level.label}
+                  min={0}
+                  max={level.max}
+                  step={level.step}
+                  value={background()[level.key]}
+                  format={(v) => `${v}${level.unit}`}
+                  onChange={(value) =>
+                    props.edit((d) =>
+                      edit(
+                        d,
+                        {
+                          ...d.theme,
+                          background: { ...background(), [level.key]: value },
+                        },
+                        `background.${level.key}`,
+                      ),
+                    )
+                  }
+                  onChangeEnd={() => props.edit(endGroup)}
+                />
+              )}
+            </For>
+          </>
+        )}
+      </Show>
+    </>
   )
 }
 

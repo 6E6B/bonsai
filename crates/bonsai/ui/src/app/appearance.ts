@@ -10,6 +10,7 @@ import {
   setAccentTag,
   setSeeThrough,
   settleBackdrop,
+  shownBackground,
   withDraft,
 } from "~/lib/theme"
 
@@ -31,7 +32,10 @@ export function useAppearance() {
   )
   createEffect(() => registerFonts(a.fonts))
   createEffect(() => settleBackdrop(a.background))
-  createEffect(() => setSeeThrough(a.background ? withDraft(a.background).panels / 100 : undefined))
+  createEffect(() => {
+    const b = shownBackground()
+    setSeeThrough(b ? withDraft(b).panels / 100 : undefined)
+  })
   // "Account color as accent": the active account's tag, unless it has none.
   createEffect(() => {
     const color = shell.look.accountAccent ? shell.accounts.find((x) => x.id === shell.active)?.color : undefined

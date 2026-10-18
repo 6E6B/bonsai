@@ -1,49 +1,33 @@
-//! The app background: a picture the user picks from disk or links to, shown behind every page.
-//! It is copied (or downloaded through `bonsai-api`) into `Paths::backgrounds_dir()` under a name
-//! made from its contents, so the original can move and the webview loads it over `bg://`.
+//! Theme backgrounds: external HTTPS links downloaded without credentials through `bonsai-api`.
+//! Images are cached locally and served through `bg://`.
 //! Only PNG, JPEG, GIF and WebP files are kept, checked by their header.
 
-use std::path::{Path, PathBuf};
-
 use crate::Core;
-use crate::core::{Cmd, Inner};
 use crate::settings::Background;
 use sha2::{Digest, Sha256};
 
 /// Large enough for a long GIF; small enough to keep the webview happy.
 pub const MAX_BYTES: usize = 32 << 20;
-const EXTS: [&str; 4] = ["png", "jpg", "gif", "webp"];
-
-/// Where a new background comes from.
-#[derive(Clone, Debug)]
-pub enum Source {
-    File(PathBuf),
-    /// An `https://` link.
-    Url(String),
+/// The external link in a bg protocol request. URL parsing stays in core.
+pub fn url_from_query(query: &str) -> Option<String> {
+    url::form_urlencoded::parse(query.as_bytes())
+        .find(|(key, _)| key == "url")
+        .map(|(_, value)| value.into_owned())
 }
 
-impl Source {
-    /// A pasted link or path. Quotes around it (as file managers copy paths) are dropped.
-    pub fn parse(s: &str) -> Result<Source, String> {
-        let s = s.trim().trim_matches(['"', '\'']);
-        if s.is_empty() {
-            return Err("Give a link or a file path.".into());
-        }
-        if s.starts_with("https://") {
-            return Ok(Source::Url(s.to_owned()));
-        }
-        if s.starts_with("http://") {
-            return Err("Use an https link.".into());
-        }
-        let path = match url::Url::parse(s) {
-            Ok(u) if u.scheme() == "file" => u.to_file_path().map_err(|_| "Not a file path.".to_owned())?,
-            _ => PathBuf::from(s),
-        };
-        if !path.is_absolute() {
-            return Err("Give the full path to the file.".into());
-        }
-        Ok(Source::File(path))
+/// Theme backgrounds must remain portable: only external HTTPS URLs, never local files or data.
+pub fn validate_url(value: &str) -> Result<(), String> {
+    let url = url::Url::parse(value).map_err(|_| "Use an external https image link.".to_owned())?;
+    if !value.starts_with("https://")
+        || value.len() > 4096
+        || url.scheme() != "https"
+        || url.host_str().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+    {
+        return Err("Use an external https image link.".into());
     }
+    Ok(())
 }
 
 /// The file extension for an image by its header, or None when it isn't one we show.
@@ -61,20 +45,7 @@ pub fn image_ext(b: &[u8]) -> Option<&'static str> {
     }
 }
 
-/// Whether `name` is a file this module writes (`<16 hex>.<ext>`), so `bg://` can serve it
-/// without leaving the folder.
-pub fn valid_file(name: &str) -> bool {
-    let Some((stem, ext)) = name.split_once('.') else {
-        return false;
-    };
-    stem.len() == 16
-        && stem
-            .bytes()
-            .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase())
-        && EXTS.contains(&ext)
-}
-
-/// The Content-Type for a file name from [`valid_file`].
+/// The Content-Type for an image extension.
 pub fn content_type(name: &str) -> &'static str {
     match name.rsplit_once('.').map(|(_, e)| e) {
         Some("png") => "image/png",
@@ -84,133 +55,99 @@ pub fn content_type(name: &str) -> &'static str {
     }
 }
 
-/// Checks the bytes and writes them under their content name. Returns that name.
-pub fn save(dir: &Path, bytes: &[u8]) -> Result<String, String> {
-    if bytes.len() > MAX_BYTES {
-        return Err(format!("The image is over {} MB.", MAX_BYTES >> 20));
-    }
-    let ext = image_ext(bytes).ok_or("That isn't a PNG, JPEG, GIF or WebP image.")?;
-    let hash = Sha256::digest(bytes);
-    let stem: String = hash[..8].iter().map(|b| format!("{b:02x}")).collect();
-    let name = format!("{stem}.{ext}");
-    let fail = |_| "Couldn't save the image.".to_owned();
-    std::fs::create_dir_all(dir).map_err(fail)?;
-    let path = dir.join(&name);
-    let tmp = path.with_extension("tmp");
-    std::fs::write(&tmp, bytes).map_err(fail)?;
-    std::fs::rename(tmp, path).map_err(fail)?;
-    Ok(name)
-}
-
-/// Deletes every picture in `dir` except `keep`.
-pub fn prune(dir: &Path, keep: Option<&str>) {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return;
-    };
-    for e in entries.flatten() {
-        let name = e.file_name();
-        let name = name.to_string_lossy();
-        if Some(name.as_ref()) != keep && (valid_file(&name) || name.ends_with(".tmp")) {
-            let _ = std::fs::remove_file(e.path());
-        }
-    }
-}
-
-async fn read(inner: &Inner, src: Source) -> Result<Vec<u8>, String> {
-    match src {
-        Source::File(path) => tokio::task::spawn_blocking(move || {
-            let size = std::fs::metadata(&path)
-                .map_err(|_| "Couldn't open that file.".to_owned())?
-                .len();
-            if size > MAX_BYTES as u64 {
-                return Err(format!("The image is over {} MB.", MAX_BYTES >> 20));
-            }
-            std::fs::read(&path).map_err(|_| "Couldn't read that file.".to_owned())
-        })
-        .await
-        .unwrap_or_else(|_| Err("Couldn't read that file.".into())),
-        Source::Url(url) => inner
-            .anon
-            .fetch_user_image(&url, MAX_BYTES)
-            .await
-            .map_err(|e| format!("Couldn't download the image: {}", e.user_message())),
-    }
-}
-
-impl Inner {
-    pub(crate) async fn load_background(&self, src: Source) {
-        let dir = self.paths.backgrounds_dir();
-        let saved = match read(self, src).await {
-            Ok(bytes) => tokio::task::spawn_blocking(move || save(&dir, &bytes))
-                .await
-                .unwrap_or_else(|_| Err("Couldn't save the image.".into())),
-            Err(e) => Err(e),
-        };
-        let file = match saved {
-            Ok(f) => f,
-            Err(e) => {
-                self.toast(None, e, true);
-                return;
-            }
-        };
-        let s = {
-            let mut s = self.settings.write();
-            let old = s.appearance.background.take().unwrap_or_default();
-            s.appearance.background = Some(Background { file, ..old });
-            s.clone()
-        };
-        if let Err(e) = s.save(&self.paths.settings_file()) {
-            tracing::warn!("saving settings: {e}");
-        }
-        let keep = s.appearance.background.map(|b| b.file);
-        prune(&self.paths.backgrounds_dir(), keep.as_deref());
-    }
-}
-
 impl Core {
-    /// Shows a picture behind the app, from a full file path or an https link. Copying or
-    /// downloading happens on the worker; a failure shows as a toast.
-    pub fn set_background(&self, source: &str) -> Result<(), String> {
-        let src = Source::parse(source)?;
-        if matches!(src, Source::Url(_)) {
-            self.notice("Downloading the background…", false);
+    /// Fetches an image without credentials, caching it locally for offline reuse. Called only
+    /// from the async bg protocol; the webview never contacts the external image host.
+    pub async fn background_image(&self, url: &str) -> Result<(Vec<u8>, &'static str), String> {
+        validate_url(url)?;
+        let hash = Sha256::digest(url.as_bytes());
+        let key: String = hash.iter().map(|b| format!("{b:02x}")).collect();
+        let path = self.paths().backgrounds_dir().join(format!("{key}.image"));
+        let cached = path.clone();
+        if let Ok(Ok(bytes)) = tokio::task::spawn_blocking(move || std::fs::read(cached)).await
+            && bytes.len() <= MAX_BYTES
+            && let Some(ext) = image_ext(&bytes)
+        {
+            return Ok((bytes, content_type(&format!("image.{ext}"))));
         }
-        self.send(Cmd::LoadBackground(src));
+        let bytes = self
+            .inner
+            .anon
+            .fetch_user_image(url, MAX_BYTES)
+            .await
+            .map_err(|e| format!("Couldn't download the image: {}", e.user_message()))?;
+        let ext = image_ext(&bytes).ok_or("That isn't a PNG, JPEG, GIF or WebP image.")?;
+        let cached = bytes.clone();
+        let _ = tokio::task::spawn_blocking(move || {
+            if let Some(dir) = path.parent() {
+                std::fs::create_dir_all(dir)?;
+            }
+            // Concurrent requests write identical content, each through its own temporary file.
+            let tmp = path.with_extension(format!("{}.tmp", fastrand::u64(..)));
+            std::fs::write(&tmp, cached)?;
+            std::fs::rename(tmp, path)
+        })
+        .await;
+        Ok((bytes, content_type(&format!("image.{ext}"))))
+    }
+
+    /// Edits the current theme, copying a built-in first, while preserving System mode.
+    fn edit_background(&self, edit: impl FnOnce(&mut Option<Background>)) -> Result<(), String> {
+        let mut theme = self.appearance_theme(self.shown_base());
+        if self.inner.themes.read().is_builtin(&theme.id) {
+            let id = self.duplicate_theme(&theme.id)?;
+            theme = self.theme_or_shown(&id)?;
+        }
+        edit(&mut theme.background);
+        let (id, base) = (theme.id.clone(), theme.base);
+        self.save_theme(theme)?;
+        self.update_settings(|s| match base {
+            crate::themes::Base::Dark => s.appearance.dark = id,
+            crate::themes::Base::Light => s.appearance.light = id,
+        });
         Ok(())
     }
 
-    /// Takes the background picture away and deletes its copy.
-    pub fn clear_background(&self) {
-        self.update_settings(|s| s.appearance.background = None);
-        self.send(Cmd::PruneBackgrounds);
+    pub fn set_background(&self, source: &str) -> Result<(), String> {
+        let url = source.trim();
+        validate_url(url)?;
+        self.edit_background(|background| {
+            let old = background.take().unwrap_or_default();
+            *background = Some(Background {
+                url: url.to_owned(),
+                ..old
+            });
+        })
     }
 
-    /// Sets one level of the picture, as `"<name> <number>"`: `image` and `panels` (0–100),
-    /// or an effect (see [`Background::LEVELS`]). Out of range values are clamped.
+    pub fn clear_background(&self) -> Result<(), String> {
+        if self.appearance_theme(self.shown_base()).background.is_none() {
+            return Ok(());
+        }
+        self.edit_background(|background| *background = None)
+    }
+
     pub fn set_background_level(&self, arg: &str) -> Result<(), String> {
         let (name, n) = parse_level(arg)?;
-        if self.settings().appearance.background.is_none() {
+        if self.appearance_theme(self.shown_base()).background.is_none() {
             return Err("Set a background picture first.".into());
         }
-        self.update_settings(|s| {
-            if let Some(slot) = s.appearance.background.as_mut().and_then(|b| b.level_mut(name)) {
+        self.edit_background(|background| {
+            if let Some(slot) = background.as_mut().and_then(|b| b.level_mut(name)) {
                 *slot = n;
             }
-        });
-        Ok(())
+        })
     }
 
-    /// Turns off blur, dim, tint and the other effects on the background picture.
     pub fn reset_background_effects(&self) -> Result<(), String> {
-        if self.settings().appearance.background.is_none() {
+        if self.appearance_theme(self.shown_base()).background.is_none() {
             return Err("Set a background picture first.".into());
         }
-        self.update_settings(|s| {
-            if let Some(b) = &mut s.appearance.background {
+        self.edit_background(|background| {
+            if let Some(b) = background {
                 b.reset_effects();
             }
-        });
-        Ok(())
+        })
     }
 }
 
@@ -263,47 +200,27 @@ mod tests {
     }
 
     #[test]
-    fn file_names() {
-        assert!(valid_file("0123456789abcdef.gif"));
-        assert!(!valid_file("0123456789ABCDEF.gif"));
-        assert!(!valid_file("0123456789abcdef.svg"));
-        assert!(!valid_file("../23456789abcdef.png"));
-        assert!(!valid_file("0123456789abcdef.png.tmp"));
-        assert!(!valid_file("abc.png"));
+    fn protocol_query_preserves_image_query_parameters() {
+        assert_eq!(
+            url_from_query("url=https%3A%2F%2Fexample.com%2Fa.png%3Fx%3D1%26y%3Dtwo%2Bthree").as_deref(),
+            Some("https://example.com/a.png?x=1&y=two+three")
+        );
+        assert!(url_from_query("file=local.png").is_none());
     }
 
     #[test]
     fn parses_sources() {
-        assert!(matches!(
-            Source::parse(" https://x.example/a.gif "),
-            Ok(Source::Url(_))
-        ));
-        assert!(Source::parse("http://x.example/a.gif").is_err());
-        assert!(Source::parse("pics/a.png").is_err());
-        assert!(Source::parse("").is_err());
-        #[cfg(unix)]
-        {
-            assert!(
-                matches!(Source::parse("'/home/a/b c.png'"), Ok(Source::File(p)) if p == Path::new("/home/a/b c.png"))
-            );
-            assert!(
-                matches!(Source::parse("file:///home/a/b%20c.png"), Ok(Source::File(p)) if p == Path::new("/home/a/b c.png"))
-            );
+        assert!(validate_url("https://x.example/a.gif?x=1&y=2").is_ok());
+        for value in [
+            "http://x.example/a.gif",
+            "pics/a.png",
+            "",
+            "/home/a.png",
+            "file:///a.png",
+            "data:image/png;base64,abc",
+            "https://user:pass@example.com/a",
+        ] {
+            assert!(validate_url(value).is_err(), "{value}");
         }
-    }
-
-    #[test]
-    fn saves_by_content_and_prunes_the_rest() {
-        let dir = tempfile::tempdir().unwrap();
-        let a = save(dir.path(), b"GIF89a-one").unwrap();
-        let b = save(dir.path(), b"\x89PNG\r\n\x1a\ntwo").unwrap();
-        assert!(valid_file(&a) && a.ends_with(".gif"));
-        assert_eq!(save(dir.path(), b"GIF89a-one").unwrap(), a);
-        assert!(save(dir.path(), b"not an image").is_err());
-        std::fs::write(dir.path().join("keep.txt"), "x").unwrap();
-        prune(dir.path(), Some(&b));
-        assert!(!dir.path().join(&a).exists());
-        assert!(dir.path().join(&b).exists());
-        assert!(dir.path().join("keep.txt").exists());
     }
 }

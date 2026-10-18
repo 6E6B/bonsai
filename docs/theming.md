@@ -6,7 +6,7 @@ from strangers. This is the design and the roadmap. What's still missing is in [
 ## Principles
 
 - **A theme is data, never code.** Hex colors, px lengths, shadow layers and font names. No raw
-  CSS, no URLs. Imported and hub themes can't run anything or reach the network on their own. A
+  CSS or code. Background URLs load through the core image cache without credentials. A
   Google Fonts family is only a name; `bonsai-core` downloads it (see [Fonts](#fonts)).
 - **Three colors make a theme.** A dozen seeds derive every token; single tokens can be pinned
   after that.
@@ -116,19 +116,17 @@ Jakarta Sans. The font of a theme in use downloads the first time it is applied.
 
 ## Background picture
 
-Settings > Appearance > Background puts a picture or GIF behind the page area. It belongs to the
-appearance settings, not to a theme, so it stays when the theme changes. The sidebar, title bar
-and menus stay opaque.
+Settings > Appearance > Background changes the current theme's picture or GIF. Its link and
+effects are included in theme exports, share codes and hub releases. The sidebar, title bar
+and menus stay opaque. Editing a built-in creates a user copy first.
 
-- **Source.** `view.background_file` opens the system file picker (`rfd` over the XDG desktop
-  portal, from Rust; the webview gets no file access). `view.background` takes an https link or a
-  full path. Links download through `bonsai-api` (`Client::fetch_user_image`: https only, no
-  cookies, shared rate limiter, at most 32 MB).
-- **Storage.** PNG, JPEG, GIF and WebP only, checked by header. The file is saved as
-  `<config>/backgrounds/<hash>.<ext>` and older ones are deleted (`bonsai-core/src/backgrounds.rs`).
-  `view.background_clear` removes it.
-- **Webview.** Served over the local `bg:` scheme (added to `img-src`); `bg://` refuses any name
-  that isn't `<16 hex>.<ext>`.
+- **Source.** `view.background` takes an external HTTPS image link. Local files and data URLs
+  are refused. Downloads use `bonsai-api` (`Client::fetch_user_image`: no cookies, shared rate
+  limiter, at most 32 MB).
+- **Storage.** PNG, JPEG, GIF and WebP only, checked by header. Images are cached locally by URL
+  for offline reuse; only the URL and effects travel with the theme. `view.background_clear`
+  removes the picture from the current theme.
+- **Webview.** The local `bg:` scheme serves validated HTTPS links through the core cache.
 - **See-through.** `view.background_level` sets `image` (picture opacity) and `panels` (opacity
   of `color-canvas` and `color-surface`, 0–100). `lib/theme/backdrop.ts` rewrites those two
   tokens with alpha; the picture sits on `--backdrop-base`, the opaque canvas.
@@ -170,8 +168,8 @@ One PR per phase.
 
 - `ColorPicker` in `lib/ui` on Kobalte `ColorArea`, `ColorSlider` and `ColorField` (in
   `@kobalte/core` 0.13 already), added to the gallery.
-- Left: seeds, then all tokens grouped by the registry, searchable, with a reset dot on pinned
-  ones. Right: a live preview of real components, and an "Apply to app while editing" switch.
+- Seeds, background links and effects, then all tokens grouped by the registry, searchable,
+  with a reset dot on pinned ones. The active draft previews across the app automatically.
 - When a seed changes, tokens pinned only because the theme was duplicated from a built-in are
   released, so changing the accent of a copy of Light changes its hover too.
 - Contrast warnings for the pairs that matter (text on each surface, text on fills), each with a
@@ -195,8 +193,6 @@ One PR per phase.
 
 ### 5. Inspect and more knobs
 
-- `theme.inspect`: click any element; its `data-component` / `data-slot` maps to the tokens it
-  uses, which open in the editor.
 - Type scale and density as seeds. Maybe a per-account theme override, to tell alts apart at a
   glance.
 
@@ -217,3 +213,17 @@ ownership and immutable release versions. See [hub.md](hub.md) for local setup a
 - **Font files inside themes.** A theme names a Google family; each machine downloads it.
 - **Theming the sheens, motion or density.** Sheens are tuned for every theme alike; density and
   motion are settings.
+
+## Theme backgrounds and live editing
+
+A theme can include `background`: an object containing `url` (an external HTTPS image link),
+`image`, `panels`, `blur`, `dim`, `saturation`, `tint`, `vignette`, `scanlines` and `grain`.
+Backgrounds travel with exports, share codes and hub releases. Image bytes are never uploaded.
+Each installation downloads the link without credentials through the existing image transport,
+checks the format and 32 MB size limit, and caches it for offline reuse. The CSP is unchanged.
+Local files and embedded data URLs are refused. Existing global local-file backgrounds must be
+replaced with an external link. Themes without a background display no picture.
+
+The editor previews its active draft across the app, including its base, picture and effects.
+Leaving the editor restores the saved appearance; Save keeps edits in the theme, and Apply
+selects it. There is no separate preview panel or live-preview toggle.

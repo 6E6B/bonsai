@@ -1,7 +1,7 @@
 /**
  * The theme document: what is saved, exported, shared as a code and (later) published to a hub.
  * It is data only: hex colors, px lengths, shadow layers, bundled font ids and Google Fonts family
- * names. No raw CSS, no URLs, no code, so imported themes are harmless.
+ * names. Background images use validated external HTTPS links; themes contain no raw CSS or code.
  */
 import { parseHex } from "./color"
 import {
@@ -28,9 +28,68 @@ export type Theme = {
   author: string
   version: string
   base: Base
+  background?: ThemeBackground
   seeds: Seeds
   /** Exact values that win over the seeds, keyed by token name. */
   tokens: Tokens
+}
+
+export type ThemeBackground = {
+  url: string
+  image: number
+  panels: number
+  blur: number
+  dim: number
+  saturation: number
+  tint: number
+  vignette: number
+  scanlines: number
+  grain: number
+}
+
+export const BACKGROUND_DEFAULTS = {
+  image: 70,
+  panels: 75,
+  blur: 0,
+  dim: 0,
+  saturation: 100,
+  tint: 0,
+  vignette: 0,
+  scanlines: 0,
+  grain: 0,
+}
+
+export function validBackgroundUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return (
+      value.startsWith("https://") &&
+      value.length <= 4096 &&
+      url.protocol === "https:" &&
+      !!url.hostname &&
+      !url.username &&
+      !url.password
+    )
+  } catch {
+    return false
+  }
+}
+
+function readBackground(raw: unknown): ThemeBackground | undefined {
+  if (raw === undefined || raw === null) return undefined
+  if (!isObject(raw) || typeof raw.url !== "string" || !validBackgroundUrl(raw.url))
+    throw new Error("Use an external https image link.")
+  const levels = { ...BACKGROUND_DEFAULTS }
+  for (const key of Object.keys(levels) as (keyof typeof levels)[]) {
+    const value = raw[key]
+    const max = key === "blur" ? 40 : key === "saturation" ? 200 : 100
+    if (value !== undefined) {
+      if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > max)
+        throw new Error(`Background ${key} is out of range.`)
+      levels[key] = value
+    }
+  }
+  return { url: raw.url, ...levels }
 }
 
 export type ReadResult = { ok: true; theme: Theme; problems: string[] } | { ok: false; error: string }
@@ -136,6 +195,12 @@ export function readTheme(input: unknown): ReadResult {
   if (typeof input.id !== "string" || !ID.test(input.id)) return { ok: false, error: "Theme has no valid id." }
   if (input.base !== "dark" && input.base !== "light") return { ok: false, error: "Theme base must be dark or light." }
 
+  let background: ThemeBackground | undefined
+  try {
+    background = readBackground(input.background)
+  } catch (error) {
+    return { ok: false, error: String((error as Error).message) }
+  }
   const problems: string[] = []
   const base: Base = input.base
   const tokens: Tokens = {}
@@ -156,6 +221,7 @@ export function readTheme(input: unknown): ReadResult {
       author: text(input.author, ""),
       version: text(input.version, "1.0.0") || "1.0.0",
       base,
+      ...(background ? { background } : {}),
       seeds: readSeeds(input.seeds, base, problems),
       tokens,
     },

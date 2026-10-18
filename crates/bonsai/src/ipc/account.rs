@@ -555,7 +555,7 @@ pub struct AppearanceView {
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BackgroundView {
-    /// File name under `bg://`.
+    /// External HTTPS URL, loaded through `bg://`.
     pub file: String,
     /// How strongly the picture shows, 0–100.
     pub image: u8,
@@ -608,18 +608,21 @@ pub fn appearance(core: State<'_, Arc<Core>>) -> AppearanceView {
             .into_iter()
             .map(|family| font_view(&core, family))
             .collect(),
-        background: core.settings().appearance.background.map(|b| BackgroundView {
-            file: b.file,
-            image: b.image,
-            panels: b.panels,
-            blur: b.blur,
-            dim: b.dim,
-            saturation: b.saturation,
-            tint: b.tint,
-            vignette: b.vignette,
-            scanlines: b.scanlines,
-            grain: b.grain,
-        }),
+        background: core
+            .appearance_theme(core.shown_base())
+            .background
+            .map(|b| BackgroundView {
+                file: b.url,
+                image: b.image,
+                panels: b.panels,
+                blur: b.blur,
+                dim: b.dim,
+                saturation: b.saturation,
+                tint: b.tint,
+                vignette: b.vignette,
+                scanlines: b.scanlines,
+                grain: b.grain,
+            }),
     }
 }
 
@@ -742,30 +745,6 @@ fn servers_tab(s: &str) -> ServersTab {
     } else {
         ServersTab::Owned
     }
-}
-
-/// Opens the system file picker (XDG desktop portal, or zenity without one) for a background
-/// picture.
-fn pick_background(app: &AppHandle) {
-    let app = app.clone();
-    // The dialog blocks until the user answers, so it gets its own thread.
-    std::thread::spawn(move || {
-        let mut dialog = rfd::FileDialog::new()
-            .set_title("Background picture")
-            .add_filter("Images", &["png", "jpg", "jpeg", "gif", "webp"]);
-        let window = app.get_webview_window("main");
-        if let Some(w) = &window {
-            dialog = dialog.set_parent(w);
-        }
-        let Some(path) = dialog.pick_file() else {
-            return;
-        };
-        if let Some(core) = app.try_state::<Arc<Core>>()
-            && let Err(e) = core.set_background(&path.to_string_lossy())
-        {
-            core.notice(e, true);
-        }
-    });
 }
 
 /// Reads a theme to import: from `text` (a code, JSON or a path), or from a file the user picks
@@ -1003,14 +982,7 @@ pub(super) fn run(
             )
         }),
         CommandId::SetBackground => core.set_background(&arg()),
-        CommandId::PickBackground => {
-            pick_background(app);
-            Ok(())
-        }
-        CommandId::ClearBackground => {
-            core.clear_background();
-            Ok(())
-        }
+        CommandId::ClearBackground => core.clear_background(),
         CommandId::SetBackgroundLevel => core.set_background_level(&arg()),
         CommandId::ResetBackgroundEffects => core.reset_background_effects(),
         CommandId::SetSetting => {

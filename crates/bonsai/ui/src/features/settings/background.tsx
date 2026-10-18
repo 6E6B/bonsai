@@ -5,7 +5,7 @@ import { backgroundUrl } from "~/lib/thumb"
 import { Button, SettingRow, SettingsGroup, Slider, usePrompt } from "~/lib/ui"
 import { useAppearance } from "./shared"
 
-/** A picture or GIF behind every page, from a file or a link. The page and cards turn
+/** A picture or GIF behind every page, from an HTTPS link. The page and cards turn
  * see-through over it; the window chrome and menus stay as the theme draws them. */
 export function BackgroundSection() {
   const appearance = useAppearance()
@@ -37,14 +37,11 @@ export function BackgroundSection() {
   )
   return (
     <>
-      <SettingsGroup title="Picture" description="Saved on this computer for every account.">
+      <SettingsGroup title="Picture" description="Saved with the current theme and included when shared.">
         <SettingRow label="Picture" description="PNG, JPEG, GIF or WebP, up to 32 MB. Shows behind every page.">
           <Show when={appearance.background && backgroundUrl(appearance.background.file)}>
             {(src) => <img src={src()} alt="" class="h-8 w-14 rounded-sm border border-line object-cover" />}
           </Show>
-          <Button size="sm" icon="image" onClick={() => run("view.background_file")}>
-            Choose file
-          </Button>
           <Button size="sm" icon="link" onClick={fromLink}>
             From link
           </Button>
