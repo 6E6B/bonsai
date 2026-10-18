@@ -7,7 +7,10 @@ import { Badge, Divider, Robux, Spinner, TextLink } from "~/lib/ui"
 export function StatusBar(props: { zoom: number }) {
   const active = () => shell.accounts.find((a) => a.id === shell.active)
   return (
-    <footer class="flex h-7 shrink-0 items-center gap-3 border-t border-line bg-deep px-3 text-sm text-fg-muted">
+    <footer
+      data-window-corner="bottom"
+      class="flex h-7 shrink-0 items-center gap-3 border-t border-line bg-deep px-3 text-sm text-fg-muted"
+    >
       <Show when={active()} fallback={<span>No account</span>}>
         {(a) => (
           <>

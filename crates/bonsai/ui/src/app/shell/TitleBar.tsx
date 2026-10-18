@@ -11,7 +11,11 @@ export function TitleBar() {
   // The workspace version from Cargo.toml. Not available under `bun run dev` in a browser.
   const [version] = createResource(() => (isTauri() ? getVersion() : Promise.resolve("")))
   return (
-    <header data-tauri-drag-region class="flex h-8 shrink-0 items-center border-b border-line bg-deep">
+    <header
+      data-tauri-drag-region
+      data-window-corner="top"
+      class="flex h-8 shrink-0 items-center border-b border-line bg-deep"
+    >
       <span data-tauri-drag-region class="flex flex-1 select-none items-baseline gap-1.5 px-3 text-sm">
         <span data-tauri-drag-region class="font-semibold text-fg">
           Bonsai

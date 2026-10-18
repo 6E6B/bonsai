@@ -7,11 +7,12 @@ import { commands, events } from "~/lib/ipc/bindings"
  * maximized or tiled. Call once from the layout with the UI zoom, which scales the radius. */
 export function useWindowFrame(zoom: () => number) {
   const [radius, setRadius] = createSignal(0)
-  onMount(async () => {
+  onMount(() => {
     if (!isTauri()) return
-    const off = await events.windowFrame.listen((e) => setRadius(e.payload.radius))
-    onCleanup(off)
-    setRadius((await commands.windowFrame()).radius)
+    // Registered before any await, so it stays owned by the layout.
+    const off = events.windowFrame.listen((e) => setRadius(e.payload.radius))
+    onCleanup(() => void off.then((f) => f()))
+    void commands.windowFrame().then((f) => setRadius(f.radius))
   })
   createEffect(() => {
     const root = document.documentElement
