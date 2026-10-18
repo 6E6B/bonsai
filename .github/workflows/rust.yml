@@ -112,10 +112,20 @@ jobs:
       - name: Stub UI build
         run: mkdir -p crates/bonsai/ui/dist && echo '<!doctype html>' > crates/bonsai/ui/dist/index.html
 
-      - name: Test
-        run: cargo test --workspace --locked
+      - name: Install nextest
+        uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-nextest@0.9.148
+          fallback: none
 
-      # `cargo test` rewrites bindings.ts; it must match what is committed.
+      - name: Test
+        run: cargo nextest run --workspace --locked --profile ci
+
+      # Nextest does not run doctests.
+      - name: Doctests
+        run: cargo test --workspace --locked --doc
+
+      # The export_bindings test rewrites bindings.ts; it must match what is committed.
       - name: Bindings up to date
         if: runner.os == 'Linux'
         run: |

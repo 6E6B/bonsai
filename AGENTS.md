@@ -127,7 +127,7 @@ Run from `crates/bonsai/ui/`:
 | `bun run fix` | Apply Biome fixes |
 | `bun run tauri build` | Release build and installers |
 
-Run from the repo root: `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`.
+Run from the repo root: `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo nextest run --workspace --locked` and `cargo test --workspace --locked --doc`.
 
 ## Platform notes
 
@@ -137,7 +137,7 @@ Run from the repo root: `cargo fmt`, `cargo clippy --workspace --all-targets -- 
 
 ## Definition of done
 
-- `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace` pass.
+- `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo nextest run --workspace --locked` and `cargo test --workspace --locked --doc` pass.
 - `bun run check` passes in `crates/bonsai/ui`.
 - `bindings.ts` is regenerated and committed if IPC types changed.
 - `docs/gaps.md` is updated if you closed or found a gap.
