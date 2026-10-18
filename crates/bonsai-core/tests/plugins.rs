@@ -111,8 +111,17 @@ fn install_run_disable_remove() {
     });
     assert!(core.plugin_commands().is_empty());
 
+    // Shortcuts given to its commands go when it is removed; others stay.
+    core.update_settings(|s| {
+        for key in ["plugin.hello.hello", "plugin.hellothere.x"] {
+            s.plugin_shortcuts
+                .insert(key.into(), vec![bonsai_core::commands::Shortcut::ctrl("J")]);
+        }
+    });
     core.remove_plugin("hello").unwrap();
     wait(&core, "the plugin to go", |p| p.is_empty());
+    let kept: Vec<String> = core.settings().plugin_shortcuts.into_keys().collect();
+    assert_eq!(kept, vec!["plugin.hellothere.x"]);
     wait_gone(&installed);
     // The source folder is untouched.
     assert!(dir.join("main.luau").is_file());

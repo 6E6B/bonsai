@@ -275,7 +275,7 @@ command bar with a price, these ask before buying.
 
 | Point | Host side |
 |---|---|
-| `bonsai.command` | Registry entry `plugin.<plugin>.<id>`. No default shortcuts; the user binds them. |
+| `bonsai.command` | Registry entry `plugin.<plugin>.<id>`. No default shortcuts; the user binds them in Settings > Shortcuts or with `shortcuts.set`. |
 | `event = fn` on a command | Gets what the user does in the command's [view](#views). |
 | `context = "user"` etc. on a command | Shown in menus where `commandContext()` matches. |
 | `bonsai.on(event, fn)` | See [Events](#events). Runs per granted account. |
@@ -385,8 +385,7 @@ unpacked plugins) writes one.
   `lib/commands/confirm.ts` still holds the dialog text for built-in confirms; the effect isn't
   sent to the UI until the action dialog needs it.
 - `CommandRef = Builtin(CommandId) | Plugin(PluginCmd)`. `Registry` holds plugin commands next to
-  the built-in ones and `commands()` returns both. Plugin commands can't be rebound yet:
-  overrides are still keyed by `CommandId`.
+  the built-in ones and `commands()` returns both. Plugin shortcuts came in phase 3.
 
 ### 1. Sandbox (done)
 
@@ -434,7 +433,13 @@ unpacked plugins) writes one.
   runs at once; anything higher opens the action dialog, which lists every action with its tier.
   Confirming checks the batch again, then runs it through the same dispatch as built-in
   commands and toasts how many ran.
-- `ctx.run` came in phase 6. Not yet: plugin commands can't be rebound.
+- `ctx.run` came in phase 6.
+- Plugin commands can be given shortcuts like built-in ones (Settings > Shortcuts, under
+  Plugins, or `shortcuts.set plugin.<plugin>.<id> Ctrl+J`). They are kept in
+  `plugin_shortcuts` in the settings, by command key, so they survive turning the plugin off
+  and come back with it; removing the plugin drops them. Binding one takes it from any built-in
+  or plugin command it clashes with, and the other way round. Only commands of running plugins
+  can be bound; `shortcuts.reset` clears any.
 
 ### 4. Reads (done)
 

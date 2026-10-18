@@ -21,6 +21,8 @@ const groups: [string, string][] = [
   ["notifications", "Chat and messages"],
   ["group", "Communities"],
   ["entity", "Anything"],
+  ["plugin", "Plugins"],
+  ["plugins", "Plugins"],
 ]
 
 export const groupOrder = [...new Set(groups.map(([, g]) => g))]

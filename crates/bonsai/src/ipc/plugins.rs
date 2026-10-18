@@ -501,17 +501,18 @@ pub fn open_view(o: &PluginOpen) -> PluginOpenView {
     }
 }
 
-/// A plugin command for the command bar: titled with the plugin's name, never with shortcuts.
-pub fn command_info(c: PluginCommand) -> CommandInfo {
+/// A plugin command for the command bar, titled with the plugin's name. It has no shortcuts
+/// until the user gives it some.
+pub fn command_info(c: PluginCommand, registry: &Registry) -> CommandInfo {
     let mut keywords = c.command.keywords;
     keywords.push("plugin".into());
     keywords.extend(c.plugin_name.split_whitespace().map(str::to_lowercase));
+    let cmd = CommandRef::Plugin(PluginCmd {
+        plugin: c.plugin,
+        id: c.command.id,
+    });
     CommandInfo {
-        id: CommandRef::Plugin(PluginCmd {
-            plugin: c.plugin,
-            id: c.command.id,
-        })
-        .key(),
+        id: cmd.key(),
         title: format!("{}: {}", c.plugin_name, c.command.title),
         keywords,
         arg: match c.command.arg {
@@ -521,8 +522,12 @@ pub fn command_info(c: PluginCommand) -> CommandInfo {
             // Plain ids; the command bar has no game or item picker that gives one.
             Arg::Text | Arg::Game | Arg::Item => super::Arg::Text,
         },
-        shortcuts: Vec::new(),
-        rebound: false,
+        shortcuts: registry
+            .shortcuts_of(&cmd)
+            .iter()
+            .map(super::Keys::from)
+            .collect(),
+        rebound: registry.is_rebound_ref(&cmd),
         context: c.command.context,
     }
 }

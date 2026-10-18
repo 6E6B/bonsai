@@ -2,7 +2,7 @@
 //! the command bar all dispatch through [`Invocation`]s of these ids. A button without a
 //! command is a bug.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
 
@@ -712,6 +712,9 @@ pub struct Registry {
     commands: Vec<Command>,
     plugins: Vec<PluginCommand>,
     overrides: HashMap<CommandId, Vec<Shortcut>>,
+    /// Shortcuts the user gave plugin commands, by key. They have none by default. Kept while
+    /// the plugin is off, so they come back with it.
+    plugin_shortcuts: BTreeMap<String, Vec<Shortcut>>,
 }
 
 impl Default for Registry {
@@ -720,6 +723,7 @@ impl Default for Registry {
             commands: build(),
             plugins: Vec::new(),
             overrides: HashMap::new(),
+            plugin_shortcuts: BTreeMap::new(),
         }
     }
 }
@@ -785,37 +789,93 @@ impl Registry {
         self.overrides.contains_key(&id)
     }
 
-    /// Gives `id` this one shortcut, or none, and takes it off any other command it clashes
-    /// with (see [`Shortcut::clashes`]). Returns the commands it was taken from.
-    pub fn assign(&mut self, id: CommandId, shortcut: Option<Shortcut>) -> Vec<CommandId> {
+    pub fn plugin_shortcuts(&self) -> &BTreeMap<String, Vec<Shortcut>> {
+        &self.plugin_shortcuts
+    }
+
+    pub fn load_plugin_shortcuts(&mut self, s: BTreeMap<String, Vec<Shortcut>>) {
+        self.plugin_shortcuts = s;
+    }
+
+    /// The shortcuts of a built-in or plugin command.
+    pub fn shortcuts_of(&self, c: &CommandRef) -> &[Shortcut] {
+        match c {
+            CommandRef::Builtin(id) => self.shortcuts(*id),
+            CommandRef::Plugin(p) => self
+                .plugin_shortcuts
+                .get(&p.key())
+                .map(Vec::as_slice)
+                .unwrap_or_default(),
+        }
+    }
+
+    /// True when the user changed the command's shortcuts. A plugin command has none until
+    /// they give it one.
+    pub fn is_rebound_ref(&self, c: &CommandRef) -> bool {
+        match c {
+            CommandRef::Builtin(id) => self.is_rebound(*id),
+            CommandRef::Plugin(p) => self.plugin_shortcuts.contains_key(&p.key()),
+        }
+    }
+
+    /// Gives a command this one shortcut, or none, and takes it off any other command it
+    /// clashes with (see [`Shortcut::clashes`]), built-in or plugin. Returns the commands it was
+    /// taken from.
+    pub fn assign(&mut self, target: &CommandRef, shortcut: Option<Shortcut>) -> Vec<CommandRef> {
         let mut taken = Vec::new();
         if let Some(s) = &shortcut {
-            for other in CommandId::ALL.iter().copied().filter(|o| *o != id) {
+            for other in CommandId::ALL.iter().copied() {
+                if *target == CommandRef::Builtin(other) {
+                    continue;
+                }
                 let had = self.shortcuts(other);
                 if had.iter().any(|x| x.clashes(s)) {
                     let kept = had.iter().filter(|x| !x.clashes(s)).cloned().collect();
                     self.overrides.insert(other, kept);
-                    taken.push(other);
+                    taken.push(CommandRef::Builtin(other));
+                }
+            }
+            let key = target.key();
+            for (other, had) in self.plugin_shortcuts.iter_mut() {
+                if *other != key && had.iter().any(|x| x.clashes(s)) {
+                    had.retain(|x| !x.clashes(s));
+                    taken.extend(CommandRef::parse(other));
                 }
             }
         }
-        self.overrides.insert(id, shortcut.into_iter().collect());
+        match target {
+            CommandRef::Builtin(id) => {
+                self.overrides.insert(*id, shortcut.into_iter().collect());
+            }
+            CommandRef::Plugin(p) => {
+                self.plugin_shortcuts
+                    .insert(p.key(), shortcut.into_iter().collect());
+            }
+        }
         self.tidy();
         taken
     }
 
-    /// Puts back the default shortcuts of `id`, or of every command.
-    pub fn reset(&mut self, id: Option<CommandId>) {
-        match id {
-            Some(id) => {
-                self.overrides.remove(&id);
+    /// Puts back the default shortcuts of a command, or of every command. Plugin commands go
+    /// back to none.
+    pub fn reset(&mut self, target: Option<&CommandRef>) {
+        match target {
+            Some(CommandRef::Builtin(id)) => {
+                self.overrides.remove(id);
             }
-            None => self.overrides.clear(),
+            Some(CommandRef::Plugin(p)) => {
+                self.plugin_shortcuts.remove(&p.key());
+            }
+            None => {
+                self.overrides.clear();
+                self.plugin_shortcuts.clear();
+            }
         }
     }
 
     /// Drops rebindings that match the defaults again.
     fn tidy(&mut self) {
+        self.plugin_shortcuts.retain(|_, list| !list.is_empty());
         let commands = &self.commands;
         self.overrides.retain(|id, list| {
             commands
@@ -997,18 +1057,53 @@ mod tests {
     #[test]
     fn assign_takes_clashing_shortcuts() {
         let mut r = Registry::default();
-        let taken = r.assign(CommandId::Quit, Some(Shortcut::ctrl("K")));
-        assert_eq!(taken, vec![CommandId::OpenCommandBar]);
+        let quit = CommandRef::Builtin(CommandId::Quit);
+        let taken = r.assign(&quit, Some(Shortcut::ctrl("K")));
+        assert_eq!(taken, vec![CommandRef::Builtin(CommandId::OpenCommandBar)]);
         assert!(
             !r.shortcuts(CommandId::OpenCommandBar)
                 .contains(&Shortcut::ctrl("K"))
         );
         assert_eq!(r.bound_to(&Shortcut::ctrl("K")), vec![CommandId::Quit]);
         // Back to its own default: the rebinding is dropped.
-        r.assign(CommandId::Quit, Some(Shortcut::ctrl("Q")));
+        r.assign(&quit, Some(Shortcut::ctrl("Q")));
         assert!(!r.is_rebound(CommandId::Quit));
         r.reset(None);
         assert_eq!(r.bound_to(&Shortcut::ctrl("K")), vec![CommandId::OpenCommandBar]);
+    }
+
+    #[test]
+    fn plugin_commands_can_be_rebound() {
+        let mut r = Registry::default();
+        let hello = CommandRef::parse("plugin.x.hello").unwrap();
+        let other = CommandRef::parse("plugin.y.other").unwrap();
+        assert!(r.shortcuts_of(&hello).is_empty());
+        assert!(!r.is_rebound_ref(&hello));
+
+        // Taking a built-in shortcut takes it from the built-in command.
+        let taken = r.assign(&hello, Some(Shortcut::ctrl("K")));
+        assert_eq!(taken, vec![CommandRef::Builtin(CommandId::OpenCommandBar)]);
+        assert_eq!(r.shortcuts_of(&hello), &[Shortcut::ctrl("K")]);
+        assert!(r.is_rebound_ref(&hello));
+        assert!(r.bound_to(&Shortcut::ctrl("K")).is_empty());
+
+        // And the other way round, and between plugins.
+        r.assign(&other, Some(Shortcut::seq("G", "X")));
+        assert!(r.assign(&hello, Some(Shortcut::key("G"))).contains(&other));
+        assert!(!r.is_rebound_ref(&other), "an emptied binding is dropped");
+        let taken = r.assign(&CommandRef::Builtin(CommandId::Quit), Some(Shortcut::key("G")));
+        assert!(taken.contains(&hello));
+        assert!(r.plugin_shortcuts().is_empty());
+
+        r.assign(&hello, Some(Shortcut::ctrl("J")));
+        r.assign(&hello, None);
+        assert!(!r.is_rebound_ref(&hello));
+        r.assign(&hello, Some(Shortcut::ctrl("J")));
+        r.reset(Some(&hello));
+        assert!(r.shortcuts_of(&hello).is_empty());
+        r.assign(&hello, Some(Shortcut::ctrl("J")));
+        r.reset(None);
+        assert!(r.plugin_shortcuts().is_empty());
     }
 
     #[test]

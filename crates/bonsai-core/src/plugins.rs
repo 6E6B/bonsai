@@ -1675,6 +1675,9 @@ impl Core {
                 .ok_or_else(|| format!("No plugin \"{id}\"."))?;
             (e.info.dir.clone(), e.info.unpacked)
         };
+        // Its commands' shortcuts go with it.
+        let prefix = format!("plugin.{id}.");
+        self.update_settings(|s| s.plugin_shortcuts.retain(|k, _| !k.starts_with(&prefix)));
         let id = id.to_owned();
         self.inner.plugin_job(move |inner| {
             {

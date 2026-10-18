@@ -1102,7 +1102,9 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
 #[specta::specta]
 pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
     let mut registry = Registry::default();
-    registry.load_overrides(core.settings().shortcuts);
+    let settings = core.settings();
+    registry.load_overrides(settings.shortcuts);
+    registry.load_plugin_shortcuts(settings.plugin_shortcuts);
     let builtin = registry.all().iter().map(|c| CommandInfo {
         id: c.id.key().to_owned(),
         title: c.title.to_owned(),
@@ -1112,7 +1114,10 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
         rebound: registry.is_rebound(c.id),
         context: None,
     });
-    let plugin = core.plugin_commands().into_iter().map(plugins::command_info);
+    let plugin = core
+        .plugin_commands()
+        .into_iter()
+        .map(|c| plugins::command_info(c, &registry));
     builtin.chain(plugin).collect()
 }
 
