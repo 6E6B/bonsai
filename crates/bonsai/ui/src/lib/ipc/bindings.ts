@@ -13,6 +13,7 @@ export const commands = {
 	 */
 	runCommand: (inv: Invocation) => typedError<null, string>(__TAURI_INVOKE("run_command", { inv })),
 	dismissToast: (id: Id) => __TAURI_INVOKE<void>("dismiss_toast", { id }),
+	windowFrame: () => __TAURI_INVOKE<WindowFrame>("window_frame"),
 	friends: (filter: string) => __TAURI_INVOKE<Friends>("friends", { filter }),
 	home: () => __TAURI_INVOKE<Home>("home"),
 	game: (placeId: Id) => __TAURI_INVOKE<Game>("game", { placeId }),
@@ -358,6 +359,7 @@ export const commands = {
 /** Events */
 export const events = {
 	storeChanged: makeEvent<StoreChanged>("store-changed"),
+	windowFrame: makeEvent<WindowFrame>("window-frame"),
 };
 
 /* Types */
@@ -2380,6 +2382,15 @@ export type VoiceView = {
 export type WardrobeSection = {
 	name: string,
 	slots: Choice[],
+};
+
+/**  The main window's corners. Sent when they change; `window_frame` reads them at startup. */
+export type WindowFrame = {
+	/**
+	 *  Radius in CSS px the UI clips itself to. 0 when the window is square (the frame is
+	 *  off, or the window is maximized, tiled or fullscreen).
+	 */
+	radius: number,
 };
 
 export type WornView = {

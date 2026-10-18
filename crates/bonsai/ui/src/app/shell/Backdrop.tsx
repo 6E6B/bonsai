@@ -19,6 +19,7 @@ export function Backdrop(props: { background: BackgroundView | null; strip?: HTM
           <div
             ref={setBox}
             aria-hidden="true"
+            data-window-corner="bottom-right"
             class="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
             style={{ "background-color": "var(--backdrop-base)", "clip-path": clip() }}
           >

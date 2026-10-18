@@ -49,6 +49,8 @@ sha2 = "0.11"
 open = "5"
 tauri = { version = "2.12", features = ["tray-icon"] }
 tauri-build = { version = "2.5", features = [] }
+# Linux window frame (src/frame.rs). Same version Tauri uses.
+gtk = "=0.18.2"
 # Copy link, Copy ID, CSV exports. Written from Rust, so the webview gets no clipboard permission.
 tauri-plugin-autostart = "=2.7.0"
 tauri-plugin-clipboard-manager = "=2.4.0"
