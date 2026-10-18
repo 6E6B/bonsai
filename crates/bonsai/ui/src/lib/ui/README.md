@@ -37,11 +37,11 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `TextField` | Text input, search-as-you-type filters, the chat composer. |
 | `Select` | One of many options, or options that need a label (privacy, genre, sort with long names). |
 | `Combobox` | One of a long list the backend searches as you type: the theme font picker. A button that opens a search field over the list; the search never replaces the value. `onSearch` gets the text ("" on open). If `onChange` resolves to false, the button goes back. |
-| `Checkbox` | Independent filters ("Hide full") and bulk selection in lists. |
+| `Checkbox` | Independent filters ("Hide full") and bulk selection in lists. `indeterminate` for a "Select all" over a partly picked list. |
 | `Switch` | A setting that takes effect at once. `layout="row"` puts the label first and the switch at the far end, for settings lists. |
 | `RadioGroup` | One of a few options in a settings form, where all should be visible. |
 | `EmojiPicker` | A smiley button that opens a searchable emoji grid: the chat composer. Controlled `open` so a command can open it. The set is bundled. | Picking from a short list of options (use `Select`). |
-| `Slider` | A number in a range: avatar scales. Commit in `onChangeEnd`, not `onChange`. |
+| `Slider` | A number in a range: avatar scales. Commit in `onChangeEnd`, not `onChange`. `marks` for ticks per step or labeled stops, `resetValue` for double-click and Delete to reset. |
 | `ColorPicker` | Edits one color: area, hue and opacity sliders, hex field. The theme editor. Group undo on `onChangeEnd`. |
 | `Swatch` | A pickable color chip whose color comes from data: body colors. |
 

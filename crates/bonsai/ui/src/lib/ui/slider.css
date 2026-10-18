@@ -26,6 +26,28 @@
     border-radius: var(--radius-full);
     background: var(--color-control);
     box-shadow: var(--shadow-well);
+    touch-action: none;
+  }
+
+  [data-component="slider"]:not([data-disabled]) [data-slot="track"] {
+    cursor: pointer;
+  }
+
+  /* Hit area: the visible track is 4px, but a press anywhere in a 20px band, and over the thumb's
+   * overhang at either end, lands on it. */
+  [data-component="slider"] [data-slot="track"]::before {
+    content: "";
+    position: absolute;
+    inset: -8px -6px;
+  }
+
+  /* The thumb and fill glide to a clicked spot or a key step, but follow the pointer exactly while
+   * dragging. Kobalte positions them with `left` and `right`. */
+  [data-component="slider"] [data-slot="thumb"],
+  [data-component="slider"] [data-slot="fill"] {
+    transition-property: left, right, scale, box-shadow;
+    transition-duration: var(--duration);
+    transition-timing-function: var(--ease);
   }
 
   [data-component="slider"] [data-slot="fill"] {
@@ -33,6 +55,23 @@
     height: 100%;
     border-radius: inherit;
     background: var(--color-accent);
+    pointer-events: none;
+  }
+
+  [data-component="slider"] [data-slot="tick"] {
+    position: absolute;
+    top: 50%;
+    width: 2px;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background: var(--color-fg-faint);
+    translate: -50% -50%;
+    pointer-events: none;
+    transition: background-color var(--duration) var(--ease);
+  }
+
+  [data-component="slider"] [data-slot="tick"][data-active] {
+    background: color-mix(in srgb, var(--color-on-accent) 60%, transparent);
   }
 
   [data-component="slider"] [data-slot="thumb"] {
@@ -44,12 +83,76 @@
     border-radius: var(--radius-full);
     background-color: var(--color-knob);
     background-image: var(--sheen-knob);
-    box-shadow: var(--shadow-knob);
+    box-shadow:
+      var(--shadow-knob),
+      0 0 0 0 var(--color-accent-soft);
   }
 
-  [data-component="slider"] [data-slot="thumb"]:focus-within {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 1px;
+  [data-component="slider"]:not([data-disabled]) [data-slot="thumb"] {
+    cursor: grab;
+  }
+
+  /* Hit area for the thumb: 24px around a 12px knob. */
+  [data-component="slider"] [data-slot="thumb"]::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: var(--radius-full);
+  }
+
+  [data-component="slider"][data-dragging] [data-slot="thumb"],
+  [data-component="slider"][data-dragging] [data-slot="fill"] {
+    transition-property: scale, box-shadow;
+  }
+
+  /* Halo on hover, larger while pressed or dragging. */
+  [data-component="slider"]:not([data-disabled]) [data-slot="track"]:hover [data-slot="thumb"] {
+    box-shadow:
+      var(--shadow-knob),
+      0 0 0 4px var(--color-accent-soft);
+  }
+
+  [data-component="slider"]:not([data-disabled]) [data-slot="track"] [data-slot="thumb"]:active,
+  [data-component="slider"][data-dragging]:not([data-disabled]) [data-slot="track"] [data-slot="thumb"] {
+    cursor: grabbing;
+    scale: 1.15;
+    box-shadow:
+      var(--shadow-knob),
+      0 0 0 6px var(--color-accent-soft);
+  }
+
+  /* The focus ring comes from base.css. A press focuses the thumb too, so hide it until a key. */
+  [data-component="slider"][data-pointer] [data-slot="thumb"]:focus-visible {
+    outline: none;
+  }
+
+  [data-component="slider"][data-dragging] {
+    cursor: grabbing;
+  }
+
+  [data-component="slider"] [data-slot="marks"] {
+    position: relative;
+    height: var(--text-xs--line-height);
+    margin: 0 6px;
+    font-size: var(--text-xs);
+    color: var(--color-fg-faint);
+  }
+
+  [data-component="slider"] [data-slot="mark-label"] {
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    transition: color var(--duration) var(--ease);
+  }
+
+  [data-component="slider"]:not([data-disabled]) [data-slot="mark-label"] {
+    cursor: pointer;
+  }
+
+  [data-component="slider"]:not([data-disabled]) [data-slot="mark-label"]:hover,
+  [data-component="slider"] [data-slot="mark-label"][data-active] {
+    color: var(--color-fg);
   }
 
   [data-component="slider"][data-disabled] {
