@@ -1,5 +1,3 @@
-# macOS minutes bill at 10x and Windows at 2x on private repos, so PRs run Linux only. Windows and
-# macOS run after a merge to main, or on any branch by hand (Actions > Rust > Run workflow).
 name: Rust
 
 on:
@@ -22,7 +20,6 @@ on:
       - "!**.md"
       - "!docs/**"
       - "!LICENSE"
-      # The UI workflow covers the UI. Rust only writes bindings.ts.
       - "!crates/bonsai/ui/**"
       - "crates/bonsai/ui/src/lib/ipc/bindings.ts"
       - "!.github/workflows/ui.yml"
@@ -30,10 +27,10 @@ on:
       - "!.github/dependabot.yml"
   workflow_dispatch:
 
-# A new push cancels the old run, on main too: the next run tests a superset of it.
+# A new push to a PR cancels its old run. Runs on main always finish.
 concurrency:
   group: rust-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -48,14 +45,12 @@ env:
   # No debug info: smaller caches and faster links. Backtraces still show function names.
   CARGO_PROFILE_DEV_DEBUG: 0
   RUST_BACKTRACE: 1
-  # Set for every cargo step in a job, so they share one build and one cache key.
-  RUSTFLAGS: -D warnings
 
 jobs:
-  # One job, not separate lint and test jobs: each job pays for its own runner setup, system
-  # packages and cache restore.
-  linux:
-    name: Linux
+  # Clippy and tests each compile the workspace, so they run as parallel jobs. Clippy runs on Linux
+  # only: little code is platform-specific, and the test jobs fail on any rustc warning.
+  lint:
+    name: Rust lint
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -67,7 +62,7 @@ jobs:
       - id: setup
         uses: ./.github/actions/setup
         with:
-          cache-key: linux
+          cache-key: lint
           fast-deps: true
           bun: false
 
@@ -75,7 +70,7 @@ jobs:
       - name: Stub UI build
         run: mkdir -p crates/bonsai/ui/dist && echo '<!doctype html>' > crates/bonsai/ui/dist/index.html
 
-      # The checks below run even if an earlier one failed, so one push reports every failure.
+      # Each check runs even if an earlier one failed, so one push reports every failure.
       - name: Format
         run: cargo fmt --all --check
 
@@ -87,37 +82,22 @@ jobs:
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
-      - id: test
-        name: Test
-        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
-        run: cargo test --workspace --locked
-
-      # `cargo test` rewrites bindings.ts; it must match what is committed.
-      - name: Bindings up to date
-        if: ${{ !cancelled() && steps.test.outcome == 'success' }}
-        run: |
-          git diff --exit-code -- crates/bonsai/ui/src/lib/ipc/bindings.ts || {
-            echo "::error::bindings.ts is stale. Run 'cargo test -p bonsai' and commit it."
-            exit 1
-          }
-
-  # Skipped on PRs, and when Linux fails: most failures are not platform-specific.
-  platforms:
-    name: ${{ matrix.name }}
-    needs: linux
-    if: github.event_name != 'pull_request'
+  test:
+    name: Rust test (${{ matrix.name }})
     strategy:
       fail-fast: false
       matrix:
         include:
+          - name: Linux
+            os: ubuntu-24.04
           - name: Windows
             os: windows-latest
-            timeout: 30
           - name: macOS
             os: macos-latest
-            timeout: 20
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ matrix.timeout }}
+    timeout-minutes: 30
+    env:
+      RUSTFLAGS: -D warnings
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -134,3 +114,12 @@ jobs:
 
       - name: Test
         run: cargo test --workspace --locked
+
+      # `cargo test` rewrites bindings.ts; it must match what is committed.
+      - name: Bindings up to date
+        if: runner.os == 'Linux'
+        run: |
+          git diff --exit-code -- crates/bonsai/ui/src/lib/ipc/bindings.ts || {
+            echo "::error::bindings.ts is stale. Run 'cargo test -p bonsai' and commit it."
+            exit 1
+          }
