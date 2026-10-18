@@ -12,6 +12,8 @@
 
 ![Bonsai home screen](docs/images/hero.png)
 
+*Demo screenshots use Shedletsky's public profile. Activity and trades are illustrative.*
+
 Bonsai replaces the Roblox website. It does nearly everything the site does: games and servers,
 the avatar editor, the Marketplace, inventory, trades, chat and messages, friends, communities,
 transactions, and account and security settings. The few things it doesn't do yet are listed in
