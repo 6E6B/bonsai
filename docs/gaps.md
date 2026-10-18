@@ -15,3 +15,5 @@ Remove a line when it ships.
 - Plugins: tiers, the Luau sandbox and install/manage (Settings > Plugins), plugin commands in the command bar and context menus, confirmed actions, reads (users, games, items, presence, friends, friend requests, inventory, trades), events, timers, per-account storage, manifest settings, automation (`ctx.run`, the per-account toggle, rate caps, the activity log and the kill switch), tier 3 budgets (Robux and trades per day, with purchases at the price looked up before they run), views (component trees with events back) and `.bonsaiplugin` packages with a content hash are built. The hub connects to `https://hub.6e6b.dev` by default (see [hub.md](hub.md)); outside network access for plugins is not built. See [plugins.md](plugins.md#roadmap).
 - Profile > Creations: a user's models, decals, audio and other assets. No endpoint lists them.
 
+
+Theme backgrounds now travel as external HTTPS links and effects with theme exports and hub releases. The editor previews drafts directly in the app.

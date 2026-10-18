@@ -12,15 +12,11 @@ import {
   drafts,
   edit,
   fixContrast,
-  inspecting,
-  liveDraft,
   newId,
   plain,
   putDraft,
   redo,
   setInfo,
-  setInspecting,
-  setLiveDraft,
   startDraft,
   undo,
   update,
@@ -128,10 +124,6 @@ export function registerThemeCommands(opts: {
       onActive((id) => update(id, redo)),
     ),
     handle(
-      "theme.inspect",
-      onActive(() => setInspecting(!inspecting())),
-    ),
-    handle(
       "theme.fix_contrast",
       onActive((id) => {
         const d = drafts[id]
@@ -139,16 +131,6 @@ export function registerThemeCommands(opts: {
         if (r.fixed > 0) update(id, () => r.draft)
         if (r.failing > 0) showToast(`${r.failing} pairs still fail. Change the colors behind them.`)
         else if (r.fixed === 0) showToast("Everything passes already.")
-      }),
-    ),
-    handle(
-      "theme.live",
-      onActive(async (id) => {
-        if (liveDraft() === id) return setLiveDraft(undefined)
-        setLiveDraft(id)
-        const app = await commands.appSettings()
-        const base = drafts[id]?.theme.base
-        if (base && shownBase(app.mode as Mode) !== base) showToast(`Shows when the app is in ${base} mode.`)
       }),
     ),
   ]

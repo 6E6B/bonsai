@@ -20,11 +20,11 @@ export function thumbUrl(kind: ThumbKind, id: number | string, large = false) {
   return convertFileSrc(`${kind}.${id}.${large ? "l" : "s"}`, "thumb")
 }
 
-/** URL for the background picture, a file name from `AppearanceView.background`, served by the
+/** URL for the background picture, an external HTTPS link loaded locally through the
  * `bg://` protocol (crates/bonsai/src/bg.rs). Undefined outside the app. */
 export function backgroundUrl(file: string) {
   if (!isTauri()) return undefined
-  return convertFileSrc(file, "bg")
+  return `${convertFileSrc("image", "bg")}?url=${encodeURIComponent(file)}`
 }
 
 /** URL for an asset's file, served by the `rbxasset://` protocol (crates/bonsai/src/asset.rs)

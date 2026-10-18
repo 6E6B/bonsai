@@ -29,6 +29,7 @@ import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { shell, startSync } from "~/lib/store"
 import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
+import { shownBackground } from "~/lib/theme"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
@@ -393,7 +394,7 @@ export function Layout(props: ParentProps) {
       { defer: true },
     ),
   )
-  const appearance = useAppearance()
+  useAppearance()
   useWindowFrame(zoom)
   // Display settings, applied whenever they change.
   createEffect(() => {
@@ -463,7 +464,7 @@ export function Layout(props: ParentProps) {
           <div class="flex min-h-0 flex-1">
             <Sidebar compact={compact()} />
             <div ref={column} class="relative isolate flex min-w-0 flex-1 flex-col">
-              <Backdrop background={appearance.background} strip={strip()} />
+              <Backdrop background={shownBackground()} strip={strip()} />
               <TabBar />
               {/* Its last panel (page, preview or drawer) takes the bottom-right corner. */}
               <div data-window-corner="bottom-right-last" class="flex min-h-0 flex-1">

@@ -41,16 +41,14 @@ pub struct Appearance {
     pub mode: Mode,
     pub dark: String,
     pub light: String,
-    /// A picture behind every page, under whichever theme is on.
-    pub background: Option<Background>,
 }
 
 /// A picture shown behind the app. Pages and panels turn see-through over it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Background {
-    /// File name in `Paths::backgrounds_dir()` (see [`crate::backgrounds::valid_file`]).
-    pub file: String,
+    /// External HTTPS image URL. Image bytes stay in the local cache.
+    pub url: String,
     /// How strongly the picture shows through the theme's background, 0–100.
     pub image: u8,
     /// How opaque pages and panels stay over the picture, 0–100.
@@ -98,7 +96,7 @@ impl Background {
     /// Turns every effect off, keeping the picture and its strength.
     pub fn reset_effects(&mut self) {
         *self = Background {
-            file: std::mem::take(&mut self.file),
+            url: std::mem::take(&mut self.url),
             image: self.image,
             panels: self.panels,
             ..Background::default()
@@ -109,7 +107,7 @@ impl Background {
 impl Default for Background {
     fn default() -> Self {
         Background {
-            file: String::new(),
+            url: String::new(),
             image: 70,
             panels: 75,
             blur: 0,
@@ -129,7 +127,6 @@ impl Default for Appearance {
             mode: Mode::System,
             dark: "dark".into(),
             light: "light".into(),
-            background: None,
         }
     }
 }
@@ -707,15 +704,16 @@ mod tests {
 
     #[test]
     fn background_effects() {
-        let mut b: Background = serde_json::from_str(r#"{"file":"a.png","image":40}"#).unwrap();
+        let mut b: Background =
+            serde_json::from_str(r#"{"url":"https://example.com/a.png","image":40}"#).unwrap();
         assert_eq!((b.image, b.panels, b.saturation, b.blur), (40, 75, 100, 0));
         *b.level_mut("blur").unwrap() = 12;
         *b.level_mut("saturation").unwrap() = 0;
         assert!(b.level_mut("nope").is_none());
         b.reset_effects();
         assert_eq!(
-            (b.file.as_str(), b.image, b.blur, b.saturation),
-            ("a.png", 40, 0, 100)
+            (b.url.as_str(), b.image, b.blur, b.saturation),
+            ("https://example.com/a.png", 40, 0, 100)
         );
         for (name, _) in Background::LEVELS {
             assert!(b.level_mut(name).is_some(), "{name}");

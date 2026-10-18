@@ -181,27 +181,18 @@ const root = createRoot(() => {
   const [drafts, setDrafts] = createStore<Record<string, Draft>>({})
   /** The draft whose editor is showing; the editor commands act on it. */
   const [active, setActive] = createSignal<string>()
-  /** The draft shown across the app in place of its base's saved theme. */
-  const [live, setLive] = createSignal<string>()
-  /** Whether clicking in the preview picks tokens. */
-  const [inspecting, setInspecting] = createSignal(false)
   createEffect(() => {
-    const id = live()
+    const id = active()
     const d = id ? drafts[id] : undefined
     // Reading the whole draft tracks every change to it, and hands over a plain copy.
     previewTheme(d ? (JSON.parse(JSON.stringify(d.theme)) as Theme) : undefined)
   })
-  return { drafts, setDrafts, active, setActive, live, setLive, inspecting, setInspecting }
+  return { drafts, setDrafts, active, setActive }
 })
 
 export const drafts = root.drafts
 export const activeDraft = root.active
 export const setActiveDraft = root.setActive
-export const liveDraft = root.live
-export const setLiveDraft = root.setLive
-export const inspecting = root.inspecting
-export const setInspecting = root.setInspecting
-
 /** Applies a pure change to a draft. */
 export function update(id: string, f: (d: Draft) => Draft) {
   const d = drafts[id]
@@ -215,7 +206,6 @@ export function putDraft(d: Draft) {
 }
 
 export function dropDraft(id: string) {
-  if (root.live() === id) root.setLive(undefined)
   root.setDrafts(
     produce((s) => {
       delete s[id]

@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::core::Inner;
-use crate::settings::{Appearance, Mode};
+use crate::settings::{Appearance, Background, Mode};
 use crate::{Cmd, Core};
 
 /// Bump when the document changes shape in a way older apps can't read. Matches `SCHEMA` in
@@ -62,6 +62,9 @@ pub struct Theme {
     #[serde(default)]
     pub version: String,
     pub base: Base,
+    /// Portable background URL and effects, included in exports and hub releases.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub background: Option<Background>,
     /// Inputs the UI derives every token from. Opaque here beyond their shape.
     #[serde(default)]
     pub seeds: Map<String, Value>,
@@ -133,6 +136,15 @@ impl Theme {
         }
         if !valid_id(&self.id) {
             return Err("Theme has no valid id.".into());
+        }
+        if let Some(background) = &self.background {
+            crate::backgrounds::validate_url(&background.url)?;
+            let mut levels = background.clone();
+            for (name, max) in Background::LEVELS {
+                if levels.level_mut(name).is_some_and(|v| *v > max) {
+                    return Err(format!("Background {name} is out of range."));
+                }
+            }
         }
         if self.tokens.len() > MAX_TOKENS || !self.tokens.iter().all(|(k, v)| valid_id(k) && valid_value(v)) {
             return Err("Theme has values that aren't colors, sizes or fonts.".into());
@@ -529,7 +541,9 @@ impl Core {
 
     /// The UI reports the OS preference, so System mode knows which theme is on screen.
     pub fn set_system_dark(&self, dark: bool) {
-        self.inner.system_dark.store(dark, Ordering::Relaxed);
+        if self.inner.system_dark.swap(dark, Ordering::Relaxed) != dark {
+            self.inner.repaint();
+        }
     }
 
     /// The base on screen: the mode's, or in System mode the OS's.
@@ -847,6 +861,20 @@ mod tests {
         assert!(Theme::parse(ok).is_ok());
         let nested = r##"{"schema":1,"id":"x","base":"dark","seeds":{"shadow":{"a":{"b":1}}}}"##;
         assert!(Theme::parse(nested).is_err());
+    }
+
+    #[test]
+    fn backgrounds_require_external_links_and_bounded_effects() {
+        for background in [
+            r#"{"url":"file:///tmp/a.png"}"#,
+            r#"{"url":"data:image/png;base64,abc"}"#,
+            r#"{"url":"https://example.com/a.png","blur":41}"#,
+            r#"{"url":"https://example.com/a.png","image":101}"#,
+            r#"{"file":"local.png"}"#,
+        ] {
+            let json = format!(r#"{{"schema":1,"id":"test","base":"dark","background":{background}}}"#);
+            assert!(Theme::parse(&json).is_err(), "{background}");
+        }
     }
 
     #[test]

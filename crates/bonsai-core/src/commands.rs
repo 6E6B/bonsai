@@ -389,7 +389,6 @@ commands! {
     RevertTheme => "theme.revert", "Discard unsaved theme changes", ["theme", "discard", "revert", "reset", "editor"], None, Local, [];
     UndoTheme => "theme.undo", "Undo theme change", ["theme", "undo", "editor"], None, Local, [];
     RedoTheme => "theme.redo", "Redo theme change", ["theme", "redo", "editor"], None, Local, [];
-    InspectTheme => "theme.inspect", "Inspect: pick part of the preview to edit its tokens", ["theme", "inspect", "pick", "token", "element", "editor"], None, Local, [];
     FixThemeContrast => "theme.fix_contrast", "Fix low contrast in the theme", ["theme", "contrast", "readable", "accessibility", "fix", "wcag"], None, Local, [];
     ImportTheme => "theme.import", "Import theme (paste a code or a file path)", ["theme", "import", "install", "add", "load", "file", "code", "paste", "share", "bonsaitheme"], Text, Local, [];
     ExportTheme => "theme.export", "Save theme to a file", ["theme", "export", "save", "file", "share", "bonsaitheme", "backup"], Theme, Local, [];
@@ -411,9 +410,7 @@ commands! {
     BlockAutomation => "plugins.block_automation", "Turn off plugin automation on this account", ["plugin", "automation", "automate", "unattended", "bot", "block", "off"], None, Local, [];
     StopPlugins => "plugins.stop_all", "Stop all plugins", ["plugin", "stop", "kill", "panic", "disable", "halt", "automation"], None, Local, [Shortcut::ctrl_shift("Backspace")];
     PluginActivity => "plugins.activity", "Show plugin activity", ["plugin", "activity", "log", "history", "automation", "writes"], None, Read, [];
-    ThemeLivePreview => "theme.live", "Show theme edits across the whole app (on or off)", ["theme", "live", "preview", "apply", "editor"], None, Local, [];
-    SetBackground => "view.background", "Set background picture (https link or file path)", ["background", "wallpaper", "picture", "image", "photo", "gif", "url", "link", "appearance"], Text, Local, [];
-    PickBackground => "view.background_file", "Choose background picture from files", ["background", "wallpaper", "picture", "image", "photo", "gif", "file", "upload", "appearance"], None, Local, [];
+    SetBackground => "view.background", "Set background picture (HTTPS image link)", ["background", "wallpaper", "picture", "image", "photo", "gif", "url", "link", "appearance"], Text, Local, [];
     ClearBackground => "view.background_clear", "Remove background picture", ["background", "wallpaper", "picture", "remove", "clear", "appearance"], None, Local, [];
     SetBackgroundLevel => "view.background_level", "Background level (image, panels, blur, dim, saturation, tint, vignette, scanlines or grain, then a number)", ["background", "wallpaper", "opacity", "transparency", "see-through", "fade", "blur", "dim", "saturation", "tint", "vignette", "scanlines", "crt", "grain", "noise", "effect", "appearance"], Text, Local, [];
     ResetBackgroundEffects => "view.background_effects_reset", "Reset background effects", ["background", "wallpaper", "effects", "blur", "scanlines", "reset", "clear", "appearance"], None, Local, [];

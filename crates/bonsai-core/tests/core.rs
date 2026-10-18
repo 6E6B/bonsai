@@ -2948,3 +2948,48 @@ async fn quick_settings_changes_keep_the_newest() {
     assert_eq!(r.core.settings().cache_days, 50);
     assert_eq!(bonsai_core::settings::Settings::load(&file).cache_days, 50);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn backgrounds_belong_to_the_theme_and_share_without_files() {
+    use bonsai_core::themes::{self, Theme};
+    let r = rig(
+        Base::Replay("http://127.0.0.1:9".into()),
+        tempfile::tempdir().unwrap(),
+        Arc::default(),
+    );
+    let c = &r.core;
+    assert!(c.set_background("/tmp/image.png").is_err());
+    c.set_background("https://example.com/wallpaper.png?size=large")
+        .unwrap();
+    c.set_background_level("blur 12").unwrap();
+    let theme = c.appearance_theme(c.shown_base());
+    assert_ne!(theme.id, "dark");
+    assert_eq!(theme.background.as_ref().unwrap().blur, 12);
+    assert_eq!(Theme::decode(&theme.share_code()).unwrap(), theme);
+    assert!(!theme.to_json().contains("\"file\""));
+    c.apply_theme("light").unwrap();
+    assert!(c.appearance_theme(themes::Base::Light).background.is_none());
+    c.apply_theme(&theme.id).unwrap();
+    assert_eq!(c.appearance_theme(c.shown_base()).background, theme.background);
+    c.clear_background().unwrap();
+    assert!(c.appearance_theme(c.shown_base()).background.is_none());
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn theme_background_download_is_cached_for_offline_reuse() {
+    let replay = Replay::start(&["background_image"]).await;
+    let r = rig(
+        Base::Replay(replay.server.uri()),
+        tempfile::tempdir().unwrap(),
+        Arc::default(),
+    );
+    let url = "https://images.example.com/cat.gif";
+    let (bytes, mime) = r.core.background_image(url).await.unwrap();
+    assert_eq!(bytes, b"GIF89a-background");
+    assert_eq!(mime, "image/gif");
+    drop(replay);
+    let (cached, cached_mime) = r.core.background_image(url).await.unwrap();
+    assert_eq!(cached, bytes);
+    assert_eq!(cached_mime, mime);
+    assert!(r.core.background_image("file:///tmp/a.png").await.is_err());
+}

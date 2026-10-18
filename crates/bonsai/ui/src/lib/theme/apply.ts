@@ -4,12 +4,16 @@
  * app changes in one frame. `data-theme` and `color-scheme` follow the theme's base, so native
  * controls and scrollbars match. With no theme for a base, `theme.css` alone styles it.
  */
+import { createSignal } from "solid-js"
+import type { BackgroundView } from "~/lib/ipc/bindings"
 import { seeThrough } from "./backdrop"
 import { BLACK, mix, onFill, parseHex, toHex, WHITE, withAlpha } from "./color"
 import type { Base } from "./derive"
 import { resolve, type Theme } from "./theme"
 
 export type Mode = "system" | "dark" | "light"
+
+export const [shownBackground, setShownBackground] = createSignal<BackgroundView | null>(null)
 
 let mode: Mode = "system"
 let themes: Partial<Record<Base, Theme>> = {}
@@ -28,11 +32,13 @@ function base(): Base {
 }
 
 function paint() {
-  const b = base()
+  const b = draft?.base ?? base()
   const root = document.documentElement
   root.dataset.theme = b
   root.style.colorScheme = b
-  const theme = draft?.base === b ? draft : themes[b]
+  const theme = draft ?? themes[b]
+  const bg = theme?.background
+  setShownBackground(bg ? { ...bg, file: bg.url } : null)
   const tokens = theme ? resolve(theme) : {}
   if (panels !== undefined) Object.assign(tokens, seeThrough(tokens, panels))
   for (const name of set) if (!(name in tokens)) root.style.removeProperty(`--${name}`)
@@ -65,7 +71,7 @@ export function applyAppearance(next: Mode, byBase: Partial<Record<Base, Theme>>
 }
 
 /** Shows `theme` across the app in place of the saved theme for its base, or stops when
- * undefined. The theme editor's "Apply to app" switch uses it. */
+ * undefined. The active theme editor uses it automatically. */
 export function previewTheme(theme: Theme | undefined) {
   draft = theme
   paint()
