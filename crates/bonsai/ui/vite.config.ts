@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url"
 import tailwindcss from "@tailwindcss/vite"
 import solid from "vite-plugin-solid"
 import { defineConfig } from "vitest/config"
@@ -7,7 +8,8 @@ const host = process.env.TAURI_DEV_HOST
 export default defineConfig({
   plugins: [solid(), tailwindcss()],
   resolve: {
-    alias: { "~": new URL("./src", import.meta.url).pathname },
+    // Not URL.pathname: on Windows that is "/D:/...", which resolves to "D:\D:\...".
+    alias: { "~": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   // Tauri expects a fixed port and prints its own errors.
   clearScreen: false,

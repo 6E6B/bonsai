@@ -34,9 +34,8 @@ anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 parking_lot = "0.12"
-crossbeam-channel = "0.5"
 fastrand = "2"
-base64 = "0.22"
+base64 = "0.23"
 # Raw deflate for theme share codes. Already in the tree through reqwest.
 flate2 = "1.1"
 url = "2"

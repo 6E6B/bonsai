@@ -36,6 +36,12 @@ bun run check    # typecheck, lint, tests
 
 See [`AGENTS.md`](AGENTS.md) for the architecture and rules.
 
+## CI and releases
+
+`.github/workflows/ci.yml` runs on every PR and push to `main`: `bun run check`, `cargo test` on Linux, Windows and macOS, and on Linux `cargo fmt`, `cargo clippy` and checks that `bindings.ts` and generated API code are up to date.
+
+`.github/workflows/release.yml` builds installers: `.deb`, `.AppImage` and `.rpm` on Linux, NSIS `.exe` and `.msi` on Windows, and a universal `.dmg` on macOS. Run it by hand from the Actions tab to get them as artifacts, or push a tag matching the workspace version (`git tag v0.1.0 && git push origin v0.1.0`) to also create a draft GitHub release. Builds are not code-signed yet.
+
 ## License
 
 GPL-3.0-only. See [`LICENSE`](LICENSE).

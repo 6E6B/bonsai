@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+  pull_request:
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+  workflow_dispatch:
+
+# A new push to a PR cancels its old run. Runs on main always finish.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  # No debug info: smaller caches and faster links. Backtraces still show function names.
+  CARGO_PROFILE_DEV_DEBUG: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  ui:
+    name: UI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - name: Install
+        working-directory: crates/bonsai/ui
+        run: bun install --frozen-lockfile
+      - name: Typecheck, lint, test
+        working-directory: crates/bonsai/ui
+        run: bun run check
+
+  # Clippy and tests each compile the workspace, so they run as parallel jobs. Clippy runs on Linux
+  # only: little code is platform-specific, and the test jobs fail on any rustc warning.
+  lint:
+    name: Rust lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: lint
+          fast-deps: true
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      # tauri::generate_context! embeds ui/dist, so the UI must be built before the shell compiles.
+      - name: Build UI
+        working-directory: crates/bonsai/ui
+        run: bun run build
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Generated API code up to date
+        run: cargo xtask codegen --check
+
+  test:
+    name: Rust test (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-24.04
+          - name: Windows
+            os: windows-latest
+          - name: macOS
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: test
+          fast-deps: true
+
+      - name: Build UI
+        working-directory: crates/bonsai/ui
+        run: bun run build
+
+      - name: Test
+        run: cargo test --workspace --locked
+
+      # `cargo test` rewrites bindings.ts; it must match what is committed.
+      - name: Bindings up to date
+        if: runner.os == 'Linux'
+        run: |
+          git diff --exit-code -- crates/bonsai/ui/src/lib/ipc/bindings.ts || {
+            echo "::error::bindings.ts is stale. Run 'cargo test -p bonsai' and commit it."
+            exit 1
+          }

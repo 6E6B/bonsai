@@ -1,0 +1,70 @@
+name: Setup
+description: System libraries, the pinned Rust toolchain, bun and UI dependencies.
+
+inputs:
+  rust-targets:
+    description: Extra rustup targets, space separated.
+    default: ""
+  cache-key:
+    description: Extra key for the Rust cache, so jobs with different builds don't share one.
+    default: ""
+  fast-deps:
+    description: Build dependencies without optimization. Halves a clean build; the tests run as fast.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    # Tauri 2 on Linux: WebKitGTK, the tray (appindicator), muda's accelerators (xdo) and tao's D-Bus.
+    # file and xdg-utils are used by the AppImage bundler.
+    - name: Install Linux libraries
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential pkg-config file xdg-utils patchelf \
+          libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
+          libxdo-dev libdbus-1-dev libssl-dev
+
+    # Builds are IO-bound on Windows. A ReFS Dev Drive mounted at target/, skipped by Defender, is
+    # much faster than the NTFS system disk, and the cache action needs no other paths changed.
+    - name: Mount Dev Drive at target/
+      if: runner.os == 'Windows'
+      uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
+      with:
+        drive-size: 12GB
+        mount-path: target
+        trusted-dev-drive: true
+
+    # Installs the toolchain from rust-toolchain.toml.
+    - name: Install Rust
+      shell: bash
+      env:
+        RUST_TARGETS: ${{ inputs.rust-targets }}
+        FAST_DEPS: ${{ inputs.fast-deps }}
+      run: |
+        rustup toolchain install
+        if [ -n "$RUST_TARGETS" ]; then rustup target add $RUST_TARGETS; fi
+        # Cargo's user config overrides the [profile] in Cargo.toml.
+        if [ "$FAST_DEPS" = true ]; then
+          printf '[profile.dev.package."*"]\nopt-level = 0\n' >> "${CARGO_HOME:-$HOME/.cargo}/config.toml"
+        fi
+        rustc --version
+
+    # A tag's cache can't be restored by any later run, so tags don't save one. A failed test
+    # still leaves a good build, so failed jobs save too.
+    - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      with:
+        key: ${{ inputs.cache-key }}
+        save-if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        cache-on-failure: true
+
+    - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version: 1.4.2
+
+    - name: Install UI dependencies
+      shell: bash
+      working-directory: crates/bonsai/ui
+      run: bun install --frozen-lockfile
