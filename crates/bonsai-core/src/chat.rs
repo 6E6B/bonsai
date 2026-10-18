@@ -124,6 +124,42 @@ pub struct ChatSettings {
     pub max_title: usize,
 }
 
+impl From<apis::undocumented::ChatSettings> for ChatSettings {
+    fn from(r: apis::undocumented::ChatSettings) -> Self {
+        let on = |s: &Option<String>| s.as_deref().is_none_or(|v| v != "disabled");
+        Self {
+            enabled: r.is_chat_enabled.unwrap_or(true) && on(&r.is_chat_enabled_by_privacy_setting),
+            group_enabled: on(&r.is_group_chat_enabled_by_privacy_setting),
+            max_title: r.max_conversation_title_length.unwrap_or(150).max(1) as usize,
+        }
+    }
+}
+
+impl ChatSettings {
+    fn validate_new(&self, group: bool, name: Option<&str>) -> Result<(), String> {
+        if !self.enabled {
+            return Err("Chat is off for this account.".into());
+        }
+        if group && !self.group_enabled {
+            return Err("Group chat is off for this account.".into());
+        }
+        if group {
+            self.validate_title(name.unwrap_or_default())?;
+        }
+        Ok(())
+    }
+
+    fn validate_title(&self, name: &str) -> Result<(), String> {
+        if name.encode_utf16().count() > self.max_title {
+            return Err(format!(
+                "Group names can be at most {} characters.",
+                self.max_title
+            ));
+        }
+        Ok(())
+    }
+}
+
 fn conversation(c: apis::undocumented::ChatConversation) -> Option<Conversation> {
     let mut names: Vec<(u64, String)> = c
         .user_data
@@ -295,12 +331,7 @@ impl Core {
             SETTINGS_AGE,
             move |f| async move {
                 let r = apis::undocumented::get_chat_settings(&f.client).await?;
-                let on = |s: &Option<String>| s.as_deref().is_none_or(|v| v != "disabled");
-                Ok(ChatSettings {
-                    enabled: r.is_chat_enabled.unwrap_or(true) && on(&r.is_chat_enabled_by_privacy_setting),
-                    group_enabled: on(&r.is_group_chat_enabled_by_privacy_setting),
-                    max_title: r.max_conversation_title_length.unwrap_or(150).max(1) as usize,
-                })
+                Ok(ChatSettings::from(r))
             },
         )
     }
@@ -488,6 +519,18 @@ impl Core {
             return;
         }
         let group = users.len() > 1;
+        let name = name.map(|n| n.trim().to_string());
+        let settings = self
+            .inner
+            .res
+            .snapshot::<ChatSettings>(&Key::private(account, "chat_settings", ""))
+            .and_then(|r| r.data);
+        if let Some(settings) = &settings
+            && let Err(error) = settings.validate_new(group, name.as_deref())
+        {
+            self.notice(&error, true);
+            return;
+        }
         let inner = self.inner.clone();
         self.inner.mutate(
             account,
@@ -495,6 +538,13 @@ impl Core {
             "",
             &["chat_conversations"],
             move |f| async move {
+                let settings = match settings {
+                    Some(s) => (*s).clone(),
+                    None => ChatSettings::from(apis::undocumented::get_chat_settings(&f.client).await?),
+                };
+                settings
+                    .validate_new(group, name.as_deref())
+                    .map_err(Error::Message)?;
                 let body = apis::undocumented::ChatCreateRequest {
                     conversations: Some(vec![apis::undocumented::ChatNewConversation {
                         type_: Some(if group { "group" } else { "one_to_one" }.into()),
@@ -538,7 +588,21 @@ impl Core {
     }
 
     pub fn rename_chat(&self, account: AccountId, conversation: &str, name: &str) {
+        if !self.require_group(account, conversation, false) {
+            return;
+        }
         let (conv, name) = (conversation.to_string(), name.trim().to_string());
+        let settings = self
+            .inner
+            .res
+            .snapshot::<ChatSettings>(&Key::private(account, "chat_settings", ""))
+            .and_then(|r| r.data);
+        if let Some(settings) = &settings
+            && let Err(error) = settings.validate_title(&name)
+        {
+            self.notice(&error, true);
+            return;
+        }
         let n = name.clone();
         self.patch_conversation(account, conversation, |c| c.name = n.clone());
         self.inner.mutate(
@@ -547,6 +611,11 @@ impl Core {
             "Renamed",
             &["chat_conversations"],
             move |f| async move {
+                let settings = match settings {
+                    Some(s) => (*s).clone(),
+                    None => ChatSettings::from(apis::undocumented::get_chat_settings(&f.client).await?),
+                };
+                settings.validate_title(&name).map_err(Error::Message)?;
                 let body = apis::undocumented::ChatUpdateRequest {
                     conversations: Some(vec![apis::undocumented::ChatRename {
                         id: Some(conv),
@@ -563,15 +632,22 @@ impl Core {
         if users.is_empty() {
             return;
         }
-        self.chat_users(account, conversation, users, true);
+        if self.require_group(account, conversation, false) {
+            self.chat_users(account, conversation, users, true);
+        }
     }
 
     pub fn remove_from_chat(&self, account: AccountId, conversation: &str, user: u64) {
-        self.chat_users(account, conversation, vec![user], false);
+        if self.require_group(account, conversation, user != account.0) {
+            self.chat_users(account, conversation, vec![user], false);
+        }
     }
 
     /// Leave a group chat (remove yourself).
     pub fn leave_chat(&self, account: AccountId, conversation: &str) {
+        if !self.require_group(account, conversation, false) {
+            return;
+        }
         self.inner
             .res
             .update::<Page<Conversation>>(&Key::private(account, "chat_conversations", ""), |p| {
@@ -609,6 +685,27 @@ impl Core {
                 Ok(())
             },
         );
+    }
+
+    /// Group management commands must not mutate a direct message.
+    fn require_group(&self, account: AccountId, id: &str, owner: bool) -> bool {
+        let conversation = self
+            .conversations(account, false)
+            .data
+            .and_then(|p| p.items.iter().find(|c| c.id == id).cloned());
+        let error = match conversation {
+            None => Some("Wait for the conversation to load."),
+            Some(c) if c.kind != ConvKind::Group => Some("Open a group chat first."),
+            Some(c) if owner && c.created_by != account.0 => {
+                Some("Only the group creator can remove people.")
+            }
+            _ => None,
+        };
+        if let Some(error) = error {
+            self.notice(error, true);
+            return false;
+        }
+        true
     }
 
     fn patch_conversation(&self, account: AccountId, id: &str, f: impl FnOnce(&mut Conversation)) {
@@ -847,6 +944,25 @@ mod tests {
             names: others.iter().map(|(i, n)| (*i, n.to_string())).collect(),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn group_permissions_and_title_limits() {
+        let mut settings = ChatSettings {
+            enabled: true,
+            group_enabled: false,
+            max_title: 4,
+        };
+        assert!(settings.validate_new(false, None).is_ok());
+        assert!(settings.validate_new(true, Some("team")).is_err());
+        settings.group_enabled = true;
+        assert!(settings.validate_new(true, Some("team")).is_ok());
+        assert!(settings.validate_new(true, None).is_ok());
+        assert!(settings.validate_title("long name").is_err());
+        assert!(settings.validate_title("🌲🌲").is_ok());
+        assert!(settings.validate_title("🌲🌲🌲").is_err());
+        settings.enabled = false;
+        assert!(settings.validate_new(false, None).is_err());
     }
 
     #[test]

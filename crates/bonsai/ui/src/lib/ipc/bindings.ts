@@ -205,6 +205,8 @@ export const commands = {
 	/**  Conversations, pinned first, then newest activity. */
 	chatList: () => __TAURI_INVOKE<Paged<ConversationRow>>("chat_list"),
 	chatView: (conversation: string) => __TAURI_INVOKE<ChatView>("chat_view", { conversation }),
+	/**  Account-specific permissions and limits for the new chat dialog. */
+	chatOptions: () => __TAURI_INVOKE<ChatOptions>("chat_options"),
 	/**  A conversation the chat screen should open, once (after starting a chat). */
 	takeChatFocus: () => __TAURI_INVOKE<string | null>("take_chat_focus"),
 	/**
@@ -702,6 +704,14 @@ export type ChatLine = {
 	note: string,
 	/**  Sent from here and refused; `chat.resend` or `chat.discard` it. */
 	failed: boolean,
+};
+
+export type ChatOptions = {
+	loading: boolean,
+	error: string | null,
+	enabled: boolean,
+	groupEnabled: boolean,
+	maxTitle: number,
 };
 
 export type ChatPerson = {

@@ -768,6 +768,46 @@ async fn messages() {
     );
 }
 
+/// Chat smoke test with no messages, read receipts, membership changes or other writes.
+#[tokio::test]
+async fn group_chat_reads() {
+    let l = live().await;
+    let settings = apis::undocumented::get_chat_settings(&l.client).await.unwrap();
+    assert!(
+        settings
+            .max_conversation_title_length
+            .is_none_or(|limit| limit > 0)
+    );
+    let conversations = apis::undocumented::get_chat_conversations(
+        &l.client,
+        &apis::undocumented::GetChatConversationsParams {
+            include_user_data: Some(true),
+            cursor: None,
+            page_size: Some(30),
+        },
+    )
+    .await
+    .unwrap();
+    if let Some(group) = conversations
+        .conversations
+        .unwrap_or_default()
+        .into_iter()
+        .find(|c| c.type_.as_deref() == Some("group"))
+    {
+        let id = group.id.expect("group conversation id");
+        apis::undocumented::get_chat_messages(
+            &l.client,
+            &apis::undocumented::GetChatMessagesParams {
+                conversation_id: id,
+                cursor: None,
+                page_size: Some(30),
+            },
+        )
+        .await
+        .unwrap();
+    }
+}
+
 /// The notification stream's entries, for the category classifier.
 #[tokio::test]
 async fn notification_stream() {

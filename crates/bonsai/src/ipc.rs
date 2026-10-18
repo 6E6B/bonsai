@@ -2810,6 +2810,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             inbox::notification_categories,
             inbox::chat_list,
             inbox::chat_view,
+            inbox::chat_options,
             inbox::take_chat_focus,
             inbox::linked_game,
             inbox::mark_chat_read,

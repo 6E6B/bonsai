@@ -1,12 +1,24 @@
-import { createMemo, createSignal, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js"
 import { commands } from "~/lib/ipc/bindings"
-import { friends } from "~/lib/store"
+import { friends, shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Button, Checkbox, ListItem, showToast, TextField } from "~/lib/ui"
 
 /** Pick friends to chat with; more than one makes a group, which can have a name. Opened by
  * `chat.new_group`. */
 export function NewChat(props: { onDone: (started: boolean) => void }) {
+  const options = useLive(
+    () => shell.active,
+    commands.chatOptions,
+    () => ({ loading: true, error: null as string | null, enabled: false, groupEnabled: false, maxTitle: 150 }),
+  )
+  createEffect(
+    on(
+      () => shell.active,
+      () => props.onDone(false),
+      { defer: true },
+    ),
+  )
   const [query, setQuery] = createSignal("")
   const [picked, setPicked] = createSignal<number[]>([])
   const [name, setName] = createSignal("")
@@ -19,6 +31,7 @@ export function NewChat(props: { onDone: (started: boolean) => void }) {
   })
   const toggle = (id: number) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
   const start = async () => {
+    if (busy() || !options.enabled || (picked().length > 1 && !options.groupEnabled)) return
     setBusy(true)
     const r = await commands.startChat(picked(), picked().length > 1 && name().trim() ? name().trim() : null)
     setBusy(false)
@@ -33,6 +46,16 @@ export function NewChat(props: { onDone: (started: boolean) => void }) {
         if (picked().length > 0) void start()
       }}
     >
+      <Show when={options.error || !options.enabled || !options.groupEnabled}>
+        <p class="text-sm text-fg-muted">
+          {options.error ??
+            (options.loading
+              ? "Loading chat settings…"
+              : !options.enabled
+                ? "Chat is off for this account."
+                : "Group chat is off for this account.")}
+        </p>
+      </Show>
       <TextField
         icon="search"
         aria-label="Find friends"
@@ -47,27 +70,42 @@ export function NewChat(props: { onDone: (started: boolean) => void }) {
             <ListItem
               leading={
                 <span class="flex items-center gap-3">
-                  <Checkbox hideLabel checked={picked().includes(f.id)} onChange={() => toggle(f.id)}>
-                    Pick {f.displayName}
-                  </Checkbox>
                   <Avatar name={f.displayName} presence={f.presence} src={thumbUrl("headshot", f.id)} />
                 </span>
               }
-              title={f.displayName}
+              title={
+                <Checkbox
+                  checked={picked().includes(f.id)}
+                  disabled={
+                    busy() ||
+                    !options.enabled ||
+                    (!options.groupEnabled && picked().length > 0 && !picked().includes(f.id))
+                  }
+                  onChange={() => toggle(f.id)}
+                >
+                  {f.displayName}
+                </Checkbox>
+              }
               subtitle={`@${f.name}`}
-              onClick={() => toggle(f.id)}
             />
           )}
         </For>
       </div>
       <Show when={picked().length > 1}>
-        <TextField label="Group name (optional)" value={name()} onChange={setName} />
+        <TextField label="Group name (optional)" maxLength={options.maxTitle} value={name()} onChange={setName} />
       </Show>
+      <span class="text-xs text-fg-muted">{picked().length} selected</span>
       <div class="flex justify-end gap-2">
         <Button variant="ghost" type="button" onClick={() => props.onDone(false)}>
           Cancel
         </Button>
-        <Button variant="primary" type="submit" disabled={busy() || picked().length === 0}>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={
+            busy() || picked().length === 0 || !options.enabled || (picked().length > 1 && !options.groupEnabled)
+          }
+        >
           <Show when={picked().length > 1} fallback="Chat">
             Start group of {picked().length + 1}
           </Show>
