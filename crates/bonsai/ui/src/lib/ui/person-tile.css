@@ -50,10 +50,6 @@
     font-weight: 500;
   }
 
-  [data-component="person-tile"] [data-slot="name"][data-verified] [data-slot="name-text"] {
-    color: var(--color-verified);
-  }
-
   [data-component="person-tile"] [data-slot="name-text"],
   [data-component="person-tile"] [data-slot="username"] {
     overflow: hidden;
@@ -65,5 +61,9 @@
     width: 100%;
     color: var(--color-fg-muted);
     font-size: var(--text-xs);
+  }
+
+  [data-component="person-tile"] [data-slot="name"][data-verified] [data-slot="name-text"] {
+    color: var(--color-verified);
   }
 }

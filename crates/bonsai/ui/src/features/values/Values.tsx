@@ -1,4 +1,4 @@
-import { createMemo, createResource, createSignal, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createResource, createSignal, on, onCleanup, Show } from "solid-js"
 import { useListCursor } from "~/lib/commands/hooks"
 import { run } from "~/lib/commands/registry"
 import { ago, full } from "~/lib/format"
@@ -22,11 +22,20 @@ import {
   Skeleton,
   Stat,
   Switch,
+  showToast,
   TextField,
   Thumbnail,
 } from "~/lib/ui"
 import { DemandPips, TrendMark, useValuesRefresh, ValueAmount, ValueFlags } from "~/lib/value-tags"
-import { rapGap, shapeValues, VALUES_SOURCE, type ValueShow, type ValueSort, versionLabel } from "~/lib/values"
+import {
+  rapGap,
+  rolimonsFailed,
+  shapeValues,
+  VALUES_SOURCE,
+  type ValueShow,
+  type ValueSort,
+  versionLabel,
+} from "~/lib/values"
 
 const versions = [
   { value: "all", label: "All" },
@@ -65,6 +74,14 @@ export default function Values() {
     () => (status.enabled ? status.fetchedAt : null),
     () => commands.valuesTable(),
   )
+  createEffect(
+    on(
+      () => rolimonsFailed(status.enabled, status.error, status.count > 0),
+      (failed) => {
+        if (failed) showToast({ title: "Failed to get Rolimons data", variant: "error" })
+      },
+    ),
+  )
   const [now, setNow] = createSignal(Date.now())
   const clock = setInterval(() => setNow(Date.now()), 15_000)
   onCleanup(() => clearInterval(clock))
@@ -101,10 +118,8 @@ export default function Values() {
           </EmptyState>
         }
       >
-        <Show when={status.error && !table()?.length}>
-          <Alert variant="danger" title={`Couldn't load values from ${VALUES_SOURCE}`}>
-            {status.error}
-          </Alert>
+        <Show when={rolimonsFailed(status.enabled, status.error, status.count > 0)}>
+          <Alert variant="danger" title={`Couldn't load values from ${VALUES_SOURCE}`} />
         </Show>
         <Show
           when={table()?.length}

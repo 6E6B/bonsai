@@ -51,7 +51,7 @@ export function TradingCard(props: { view: TraderView; enabled: boolean }) {
           when={props.view.stats}
           fallback={
             <Show when={props.view.error} fallback={<Skeleton class="h-12 w-full rounded-md" />}>
-              {(e) => <span class="text-sm text-fg-muted">{e()}</span>}
+              <span class="text-sm text-fg-muted">Trading data unavailable.</span>
             </Show>
           }
         >

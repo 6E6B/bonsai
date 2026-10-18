@@ -4,6 +4,11 @@ import type { IconName } from "~/lib/ui"
 /** Named next to every value. Values are a third party's opinion, not Roblox data. */
 export const VALUES_SOURCE = "Rolimons"
 
+/** A failed fetch only needs a toast when no cached Rolimons data can be shown. */
+export function rolimonsFailed(enabled: boolean, error: string | null, hasData: boolean): boolean {
+  return enabled && error !== null && !hasData
+}
+
 /** How often a screen showing values asks for fresh ones. The backend refetches at this age. */
 export const VALUES_REFRESH_MS = 120_000
 
