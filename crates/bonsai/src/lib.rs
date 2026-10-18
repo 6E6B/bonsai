@@ -16,6 +16,7 @@ mod font;
 mod frame;
 pub mod ipc;
 mod notify;
+mod schemes;
 mod signin;
 mod thumb;
 
@@ -59,10 +60,13 @@ pub fn run() {
             let core = Arc::new(Core::start(CoreConfig::standard(), repaint));
             app.manage(frame::Frame::default());
             // The window starts hidden so the frame can be set up before it is realized.
-            if let Some(w) = app.get_webview_window("main")
-                && let Err(e) = frame::init(&w)
-            {
-                tracing::warn!("could not set up the window frame: {e}");
+            if let Some(w) = app.get_webview_window("main") {
+                if let Err(e) = schemes::allow(&w) {
+                    tracing::warn!("could not allow the app's schemes: {e}");
+                }
+                if let Err(e) = frame::init(&w) {
+                    tracing::warn!("could not set up the window frame: {e}");
+                }
             }
             desktop::start(app.handle(), &core.settings());
             let handle = app.handle().clone();

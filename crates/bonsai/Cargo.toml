@@ -38,3 +38,4 @@ time = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = { workspace = true }
+webkit2gtk = { workspace = true }
