@@ -154,7 +154,11 @@ export default function Messages() {
         />
         <Show when={selecting()}>
           <div class="flex flex-wrap items-center gap-2 px-2 py-1">
-            <Checkbox checked={allTicked()} onChange={() => run("message.select_all")}>
+            <Checkbox
+              checked={allTicked()}
+              indeterminate={ticked().length > 0 && !allTicked()}
+              onChange={() => run("message.select_all")}
+            >
               {ticked().length > 0 ? `${ticked().length} selected` : "Select all"}
             </Checkbox>
             <div class="ml-auto flex gap-1.5">

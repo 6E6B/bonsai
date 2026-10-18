@@ -136,7 +136,9 @@
     --control-lg: 32px;
 
     --duration: 120ms;
+    --duration-slow: 200ms; /* drawn marks: the checkbox check */
     --ease: cubic-bezier(0.2, 0, 0, 1);
+    --ease-draw: cubic-bezier(0.4, 0, 0.2, 1); /* a stroke drawing in, Material's standard curve */
 
     /* Sheens: gradients laid over a fill to light it from above. Same in both themes. */
     --sheen: linear-gradient(180deg, #ffffff33 0%, #ffffff00 100%); /* primary button */

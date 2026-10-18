@@ -6,6 +6,7 @@
   }
 
   [data-component="checkbox"] [data-slot="box"] {
+    position: relative;
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
@@ -19,23 +20,53 @@
     color: var(--color-on-accent);
     transition:
       background-color var(--duration) var(--ease),
-      box-shadow var(--duration) var(--ease);
+      box-shadow var(--duration) var(--ease),
+      transform var(--duration) var(--ease);
   }
 
-  [data-component="checkbox"]:hover:not([data-disabled]) [data-slot="box"]:not([data-checked]) {
-    background-image: linear-gradient(var(--color-hover), var(--color-hover)), var(--sheen-soft);
+  [data-component="checkbox"]:not([data-disabled]) [data-slot="box"],
+  [data-component="checkbox"]:not([data-disabled]) [data-slot="label"] {
+    cursor: pointer;
   }
 
-  [data-component="checkbox"] [data-slot="box"][data-checked] {
+  /* State layer: a soft square behind the box on hover and press. It also widens the click target
+   * to 28px, since clicks on a pseudo-element land on the box. */
+  [data-component="checkbox"] [data-slot="box"]::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-hover);
+    opacity: 0;
+    transform: scale(0.6);
+    transition:
+      opacity var(--duration) var(--ease),
+      transform var(--duration) var(--ease);
+  }
+
+  [data-component="checkbox"]:hover:not([data-disabled]) [data-slot="box"]::before {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  [data-component="checkbox"]:active:not([data-disabled]) [data-slot="box"]::before {
+    background-color: var(--color-active);
+  }
+
+  [data-component="checkbox"]:active:not([data-disabled]) [data-slot="box"] {
+    transform: scale(0.88);
+  }
+
+  [data-component="checkbox"] [data-slot="box"]:is([data-checked], [data-indeterminate]) {
     background-color: var(--color-accent);
     background-image: var(--sheen-track-on);
   }
 
-  [data-component="checkbox"]:hover:not([data-disabled]) [data-slot="box"][data-checked] {
+  [data-component="checkbox"]:hover:not([data-disabled]) [data-slot="box"]:is([data-checked], [data-indeterminate]) {
     background-image: linear-gradient(var(--color-hover-on-fill), var(--color-hover-on-fill)), var(--sheen-track-on);
   }
 
-  [data-component="checkbox"] [data-slot="input"]:focus-visible + [data-slot="box"] {
+  [data-component="checkbox"]:not([data-pointer]) [data-slot="input"]:focus-visible + [data-slot="box"] {
     outline: 2px solid var(--color-focus);
     outline-offset: 1px;
   }
@@ -43,6 +74,30 @@
   [data-component="checkbox"] [data-slot="indicator"] {
     display: inline-flex;
     filter: drop-shadow(var(--text-shadow-fill));
+  }
+
+  [data-component="checkbox"] [data-slot="indicator"] svg {
+    display: block;
+    overflow: visible;
+  }
+
+  /* Each mark is a stroke one unit long (pathLength="1"). Offset 1 hides it; 0 draws it in.
+   * Unchecking erases it faster than checking draws it. */
+  [data-component="checkbox"] [data-slot="indicator"] path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset var(--duration) var(--ease);
+  }
+
+  [data-component="checkbox"] [data-slot="indicator"][data-checked]:not([data-indeterminate]) [data-slot="check"],
+  [data-component="checkbox"] [data-slot="indicator"][data-indeterminate] [data-slot="dash"] {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset var(--duration-slow) var(--ease-draw) calc(var(--duration) / 2);
   }
 
   [data-component="checkbox"] [data-slot="text"] {

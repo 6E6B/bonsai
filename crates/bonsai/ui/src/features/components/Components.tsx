@@ -156,6 +156,8 @@ const galleryFonts = ["Inter", "Space Grotesk", "IBM Plex Sans", "Manrope", "Wor
 
 export default function Components() {
   const [height, setHeight] = createSignal(100)
+  const [volume, setVolume] = createSignal(60)
+  const [quality, setQuality] = createSignal(1)
   const [swatch, setSwatch] = createSignal("var(--color-accent)")
   const [picked, setPicked] = createSignal("#3d7dff")
   const [tint, setTint] = createSignal("#3d7dff33")
@@ -283,6 +285,8 @@ export default function Components() {
         </Switch>
         <Checkbox defaultChecked>Remember me</Checkbox>
         <Checkbox description="Only for this account.">Hide offline</Checkbox>
+        <Checkbox indeterminate>Some selected</Checkbox>
+        <Checkbox disabled>Disabled</Checkbox>
       </Section>
 
       <Section title="Slider and swatch">
@@ -294,6 +298,32 @@ export default function Components() {
           max={105}
           onChange={setHeight}
           format={(v) => `${v}%`}
+          resetValue={100}
+        />
+        <Slider
+          class="w-56"
+          label="Volume"
+          value={volume()}
+          min={0}
+          max={100}
+          step={10}
+          marks
+          onChange={setVolume}
+          format={(v) => `${v}%`}
+        />
+        <Slider
+          class="w-56"
+          label="Quality"
+          value={quality()}
+          min={0}
+          max={2}
+          marks={[
+            { value: 0, label: "Low" },
+            { value: 1, label: "Medium" },
+            { value: 2, label: "High" },
+          ]}
+          onChange={setQuality}
+          format={(v) => ["Low", "Medium", "High"][v] ?? String(v)}
         />
         <For each={["var(--color-accent)", "var(--color-warning)", "var(--color-danger)"]}>
           {(c) => <Swatch color={c} label={c} selected={swatch() === c} onClick={() => setSwatch(c)} />}
