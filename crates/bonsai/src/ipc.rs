@@ -86,6 +86,8 @@ pub struct Shell {
     pub plugin_budget: Option<plugins::BudgetDialogView>,
     /// When a plugin last wrote, in Unix seconds, for the stop indicator.
     pub plugin_wrote: Option<Id>,
+    /// A plugin's view, while its dialog is open.
+    pub plugin_view: Option<plugins::PluginViewHead>,
     /// The "Sign in another device" dialog, once a code was entered.
     pub approve: Option<approve::ApproveView>,
     /// The authenticator setup or recovery codes dialog, while it is open.
@@ -1065,6 +1067,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
             .as_ref()
             .map(|b| plugins::budget_dialog_view(b, &s)),
         plugin_wrote: s.plugin_wrote.map(|t| Id(t.max(0) as u64)),
+        plugin_view: s.plugin_view.as_ref().map(plugins::view_head),
         approve: s.approve.as_ref().map(approve::view),
         security: s.security.as_ref().map(security::view),
         login: s.login.as_ref().map(|l| match l {
@@ -2847,6 +2850,9 @@ pub fn builder() -> Builder<tauri::Wry> {
             plugins::plugin_install_cancel,
             plugins::plugin_actions_run,
             plugins::plugin_actions_cancel,
+            plugins::plugin_view,
+            plugins::plugin_view_event,
+            plugins::plugin_view_close,
             plugins::plugin_automation,
             plugins::plugin_automation_confirm,
             plugins::plugin_automation_cancel,

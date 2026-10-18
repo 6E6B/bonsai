@@ -188,6 +188,11 @@ function PluginGroup(props: { plugin: PluginView; automation: Id[] }) {
           <Button size="sm" icon="refresh" onClick={() => run("plugin.reload", p().id)}>
             Reload
           </Button>
+          <Show when={p().path}>
+            <Button size="sm" onClick={() => run("plugin.pack", p().id)}>
+              Pack
+            </Button>
+          </Show>
           <Button size="sm" variant="danger" onClick={() => run("plugin.remove", p().id)}>
             Remove
           </Button>
@@ -217,6 +222,9 @@ function PluginGroup(props: { plugin: PluginView; automation: Id[] }) {
       </Show>
       <Show when={p().commands.length > 0}>
         <SettingRow label="Commands" description={p().commands.join(", ")} />
+      </Show>
+      <Show when={p().hash}>
+        {(h) => <SettingRow label="SHA-256" description={<span class="break-all font-mono">{h()}</span>} />}
       </Show>
       <Show when={p().listens.length > 0 || p().timers.length > 0}>
         <SettingRow

@@ -1105,3 +1105,141 @@ fn tier_3_runs_within_its_budget_at_todays_price() {
         bonsai_core::plugins::Budget::default()
     );
 }
+
+const VIEWS: &str = r#"
+local ui = bonsai.ui
+local function draw(min)
+  return ui.column {
+    ui.input { key = "min", label = "Min", value = min, action = "go" },
+    ui.button { label = "Go", action = "go", style = "primary" },
+    ui.table { columns = { "N" }, rows = { { 1 }, { 2 } }, action = "pick" },
+  }
+end
+bonsai.command {
+  id = "view",
+  title = "Show view",
+  run = function() return { view = draw("0") } end,
+  event = function(ctx, e)
+    if e.action == "boom" then error("boom") end
+    if e.action == "close" then return { close = true } end
+    if e.action == "pick" then return { view = ui.text("row " .. e.row) } end
+    return { view = draw(e.values.min) }
+  end,
+}
+"#;
+
+fn view_text(core: &Core) -> String {
+    format!("{:?}", core.store().plugin_view.as_ref().map(|v| &v.root))
+}
+
+#[test]
+fn views_open_redraw_and_close() {
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let dir = plugin(src.path(), "views", "", VIEWS);
+    let core = start(home.path());
+    core.stage_plugin_install(dir.to_str().unwrap(), false).unwrap();
+    core.finish_plugin_install(Vec::new()).unwrap();
+    wait(&core, "the plugin to run", |p| running(p, "views"));
+    let view = PluginCmd {
+        plugin: "views".into(),
+        id: "view".into(),
+    };
+
+    core.run_plugin_command(&view, None, None, None).unwrap();
+    wait_store(&core, "the view", |s| s.plugin_view.is_some());
+    let open = core.store().plugin_view.clone().unwrap();
+    assert_eq!(
+        (open.title.as_str(), open.plugin_name.as_str()),
+        ("Show view", "Test views")
+    );
+    assert_eq!(open.rev, 0);
+    assert!(view_text(&core).contains("value: \"0\""));
+
+    // An event redraws it with what was typed.
+    core.plugin_view_event(open.seq, "go", vec![("min".into(), "15".into())], None)
+        .unwrap();
+    wait_store(&core, "the redraw", |s| {
+        s.plugin_view.as_ref().is_some_and(|v| v.rev == 1)
+    });
+    assert!(view_text(&core).contains("value: \"15\""));
+    assert!(!core.store().plugin_view.clone().unwrap().busy);
+    core.plugin_view_event(open.seq, "pick", Vec::new(), Some(2))
+        .unwrap();
+    wait_store(&core, "the row", |_| view_text(&core).contains("row 2"));
+
+    // Errors stay in the view instead of a toast.
+    core.plugin_view_event(open.seq, "boom", Vec::new(), None)
+        .unwrap();
+    wait_store(&core, "the error", |s| {
+        s.plugin_view
+            .as_ref()
+            .is_some_and(|v| v.error.as_deref().is_some_and(|e| e.contains("boom")))
+    });
+    assert!(
+        core.plugin_view_event(open.seq + 1, "go", Vec::new(), None)
+            .is_err()
+    );
+    assert!(
+        core.plugin_view_event(open.seq, "Not An Action", Vec::new(), None)
+            .is_err()
+    );
+
+    core.plugin_view_event(open.seq, "close", Vec::new(), None)
+        .unwrap();
+    wait_store(&core, "the view to close", |s| s.plugin_view.is_none());
+
+    // A reload closes the view it drew.
+    core.run_plugin_command(&view, None, None, None).unwrap();
+    wait_store(&core, "the view", |s| s.plugin_view.is_some());
+    assert!(core.store().plugin_view.clone().unwrap().seq > open.seq);
+    core.reload_plugin("views").unwrap();
+    wait_store(&core, "the view to close", |s| s.plugin_view.is_none());
+}
+
+#[test]
+fn packages_install_with_their_hash() {
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let dir = plugin(src.path(), "packed", "", MAIN);
+    let core = start(home.path());
+    core.stage_plugin_install(dir.to_str().unwrap(), true).unwrap();
+    assert_eq!(core.store().plugin_install.clone().unwrap().hash, None);
+    core.finish_plugin_install(Vec::new()).unwrap();
+    wait(&core, "the plugin to run", |p| running(p, "packed"));
+
+    let pkg = src.path().join("out");
+    let hash = core.pack_plugin("packed", &pkg).unwrap();
+    let pkg = src.path().join("out.bonsaiplugin");
+    assert!(pkg.is_file());
+    assert_eq!(hash.len(), 64);
+    core.remove_plugin("packed").unwrap();
+    wait(&core, "the plugin to go", |p| p.is_empty());
+
+    // Cancelling deletes what was unpacked.
+    let staging = home.path().join("config/plugins/.staging");
+    core.stage_plugin_install(pkg.to_str().unwrap(), false).unwrap();
+    let pending = core.store().plugin_install.clone().unwrap();
+    assert_eq!(pending.hash.as_deref(), Some(hash.as_str()));
+    assert!(pending.staged.as_ref().is_some_and(|d| d.is_dir()));
+    core.cancel_plugin_install();
+    wait_gone(pending.staged.as_ref().unwrap());
+
+    core.stage_plugin_install(pkg.to_str().unwrap(), false).unwrap();
+    assert!(core.stage_plugin_install(pkg.to_str().unwrap(), true).is_err());
+    core.finish_plugin_install(Vec::new()).unwrap();
+    let p = wait(&core, "the package to run", |p| running(p, "packed"));
+    assert_eq!(p[0].hash.as_deref(), Some(hash.as_str()));
+    assert!(!p[0].unpacked);
+    assert!(home.path().join("config/plugins/packed/main.luau").is_file());
+    wait_gone(&staging.join(&hash[..16]));
+
+    // A folder install gets the same hash as its package.
+    let again = tempfile::tempdir().unwrap();
+    let copy = plugin(again.path(), "packed", "", MAIN);
+    core.stage_plugin_install(copy.to_str().unwrap(), false).unwrap();
+    assert_eq!(
+        core.store().plugin_install.clone().unwrap().hash.as_deref(),
+        Some(hash.as_str())
+    );
+}

@@ -378,12 +378,13 @@ commands! {
     ImportTheme => "theme.import", "Import theme (paste a code or a file path)", ["theme", "import", "install", "add", "load", "file", "code", "paste", "share", "bonsaitheme"], Text, Local, [];
     ExportTheme => "theme.export", "Save theme to a file", ["theme", "export", "save", "file", "share", "bonsaitheme", "backup"], Theme, Local, [];
     CopyThemeCode => "theme.copy_code", "Copy theme code", ["theme", "share", "code", "copy", "export", "send"], Theme, Local, [];
-    InstallPlugin => "plugin.install", "Install plugin (a folder path)", ["plugin", "install", "add", "extension", "addon", "luau", "folder"], Text, Local, [];
+    InstallPlugin => "plugin.install", "Install plugin (a .bonsaiplugin file or folder path)", ["plugin", "install", "add", "extension", "addon", "luau", "folder", "package", "bonsaiplugin"], Text, Local, [];
     LoadUnpackedPlugin => "plugin.load_unpacked", "Load unpacked plugin for development (a folder path)", ["plugin", "unpacked", "develop", "dev", "load", "folder", "luau"], Text, Local, [];
     EnablePlugin => "plugin.enable", "Turn on plugin", ["plugin", "enable", "on", "start", "extension"], Plugin, Local, [];
     DisablePlugin => "plugin.disable", "Turn off plugin", ["plugin", "disable", "off", "stop", "extension"], Plugin, Local, [];
     ReloadPlugin => "plugin.reload", "Reload plugin", ["plugin", "reload", "restart", "refresh", "develop"], Plugin, Local, [];
     ReviewPlugin => "plugin.review", "Review plugin permissions", ["plugin", "permissions", "review", "update", "agree"], Plugin, Local, [];
+    PackPlugin => "plugin.pack", "Pack plugin into a .bonsaiplugin file", ["plugin", "pack", "package", "export", "share", "zip", "bonsaiplugin", "develop"], Plugin, Local, [];
     RemovePlugin => "plugin.remove", "Remove plugin", ["plugin", "remove", "uninstall", "delete"], Plugin, Local, [];
     GrantPlugin => "plugin.grant", "Let plugin use this account", ["plugin", "account", "allow", "grant", "permission"], Plugin, Local, [];
     RevokePlugin => "plugin.revoke", "Stop plugin using this account", ["plugin", "account", "revoke", "deny", "permission"], Plugin, Local, [];

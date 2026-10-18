@@ -538,6 +538,7 @@ impl Core {
         {
             let mut s = self.inner.store.write();
             s.plugin_actions = None;
+            s.plugin_view = None;
             s.plugin_wrote = None;
         }
         self.inner.toast(None, "Stopped all plugins.", false);

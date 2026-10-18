@@ -10,23 +10,27 @@ use std::rc::Rc;
 use std::sync::{Arc, Weak};
 use std::time::Duration;
 
-use bonsai_plugin::{Ctx, Limits, Outcome, Plugin, Read};
+use bonsai_plugin::{Ctx, Limits, Outcome, Plugin, Read, ViewEvent};
 use serde::{Deserialize, Serialize};
 
 use crate::AccountId;
 use crate::commands::{CommandId, Effect, PluginCmd, Registry, Tier};
 use crate::core::{Core, Inner};
 
-pub use bonsai_plugin::{Arg, Command, Manifest, Permission, Refused, Setting, SettingKind};
+pub use bonsai_plugin::{
+    Arg, ButtonStyle, Cell, Command, Manifest, Node, Permission, Refused, Setting, SettingKind, TableColumn,
+};
 
 mod automation;
 mod budget;
 mod events;
+mod package;
 mod reads;
 mod storage;
 
 pub use automation::{Activity, DEFAULT_CAP, PluginCap, unattended_refusal};
 pub use budget::{Budget, Charge, PendingBudget, PluginBudget, Spent, budget_refusal, cost_label};
+pub use package::{EXTENSION as PACKAGE_EXTENSION, is_package};
 
 pub(crate) use reads::{presence_view, status};
 
@@ -39,6 +43,12 @@ const MAX_DEPTH: usize = 8;
 const MAX_ACTIONS: usize = 100;
 /// Calls queued per plugin before more are refused as busy.
 const QUEUE: usize = 8;
+/// Most inputs a view event sends back, and the longest value of each.
+const MAX_VIEW_VALUES: usize = 100;
+const MAX_VIEW_VALUE: usize = 500;
+/// Where packages are unpacked while their install dialog is open. A dot folder, so the scan
+/// skips it.
+const STAGING: &str = ".staging";
 
 /// Runs a built-in command as an account on a plugin's behalf. The shell sets it, since that is
 /// where built-in commands are dispatched; core decides what may run.
@@ -105,6 +115,9 @@ struct Saved {
     /// What it may spend a day without a click, by account. See `budget.rs`.
     #[serde(default)]
     budgets: BTreeMap<AccountId, budget::Budget>,
+    /// Content hash of the files installed, from the package or folder they came from.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    hash: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -156,6 +169,8 @@ pub struct PluginInfo {
     pub enabled: bool,
     pub accounts: Vec<AccountId>,
     pub status: Status,
+    /// Content hash of what was installed. `None` for unpacked plugins.
+    pub hash: Option<String>,
 }
 
 /// A plugin folder picked to install or load, shown in the install dialog until confirmed.
@@ -171,6 +186,10 @@ pub struct PendingInstall {
     pub added: Vec<String>,
     /// Accounts ticked to start with: the current grants.
     pub accounts: Vec<AccountId>,
+    /// Content hash of the files it would install, for comparing with what the author published.
+    pub hash: Option<String>,
+    /// The folder a package was unpacked into, deleted once the dialog closes.
+    pub staged: Option<PathBuf>,
 }
 
 /// A command a running plugin registered, for the command bar and menus.
@@ -205,6 +224,30 @@ pub struct PluginOpen {
     pub seq: u64,
     pub command: CommandId,
     pub arg: String,
+}
+
+/// A plugin's view, shown in a dialog until closed. Its command's `event` function gets what
+/// the user does in it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct OpenView {
+    /// Which view this is; each one opened gets a new one.
+    pub seq: u64,
+    /// Bumped each time the plugin redraws it.
+    pub rev: u64,
+    pub plugin: String,
+    pub plugin_name: String,
+    /// The plugin command that opened it.
+    pub command: String,
+    pub title: String,
+    /// The account it acts as, or 0.
+    pub account: AccountId,
+    pub root: Node,
+    /// An event is with the plugin; the view waits for it.
+    pub busy: bool,
+    /// Why the last event failed.
+    pub error: Option<String>,
+    /// The plugin worker that drew it. A restarted plugin closes it.
+    worker: u64,
 }
 
 /// Plugin state in [`Inner`].
@@ -245,13 +288,22 @@ enum Msg {
         ctx: Ctx,
         payload: serde_json::Value,
     },
+    View {
+        command: String,
+        /// The view's seq.
+        view: u64,
+        ctx: Ctx,
+        event: ViewEvent,
+    },
 }
 
 /// What a plugin ran when it returned an outcome.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 enum Source {
-    /// The user ran one of its commands.
-    Command,
+    /// The user ran this command.
+    Command(String),
+    /// The user did something in view `seq`.
+    View(u64),
     /// An event or timer, with nobody watching.
     Background,
 }
@@ -486,6 +538,7 @@ fn scan(dir: &Path, saved: &SavedFile) -> Vec<Scanned> {
                 enabled,
                 accounts: s.map(|s| s.accounts.clone()).unwrap_or_default(),
                 status,
+                hash: s.and_then(|s| s.hash.clone()).filter(|_| !unpacked),
             },
         });
     }
@@ -557,6 +610,8 @@ impl Inner {
             self.store.write().plugin_rev += 1;
             self.repaint();
         }
+        // Also after a stop or remove, which change entries before this runs.
+        self.close_stale_view();
     }
 
     fn start_plugin(self: &Arc<Self>, e: &mut Entry, seq: u64) {
@@ -628,8 +683,18 @@ impl Inner {
                     let (account, source, out) = match msg {
                         Msg::Run { command, ctx, arg } => (
                             ctx.account,
-                            Source::Command,
+                            Source::Command(command.clone()),
                             plugin.run_command(&command, ctx, arg.as_deref()),
+                        ),
+                        Msg::View {
+                            command,
+                            view,
+                            ctx,
+                            event,
+                        } => (
+                            ctx.account,
+                            Source::View(view),
+                            plugin.run_view_event(&command, ctx, &event),
                         ),
                         Msg::Event { event, ctx, payload } => (
                             ctx.account,
@@ -662,6 +727,7 @@ impl Inner {
             drop(p);
             self.store.write().plugin_rev += 1;
             self.repaint();
+            self.close_stale_view();
         }
     }
 
@@ -698,8 +764,43 @@ impl Inner {
             self.toast(None, format!("{name}: {text}"), error);
             self.repaint();
         };
+        // The view this answers, while it is still open.
+        let view = match source {
+            Source::View(v) => {
+                let mut s = self.store.write();
+                match s.plugin_view.as_mut().filter(|o| o.seq == v) {
+                    Some(o) => {
+                        o.busy = false;
+                        o.error = None;
+                        drop(s);
+                        self.repaint();
+                        Some(v)
+                    }
+                    None => None,
+                }
+            }
+            _ => None,
+        };
         match out {
+            // A view shows its own errors.
+            Err(e) if view.is_some() => self.update_view(view, |o| {
+                o.error = Some(e.to_string().chars().take(300).collect());
+            }),
             Err(e) => say(&e.to_string(), true),
+            Ok(Outcome::View(root)) => match &source {
+                Source::Background => say("Only commands can open views.", true),
+                Source::View(_) => self.update_view(view, |o| {
+                    o.root = root;
+                    o.rev += 1;
+                }),
+                Source::Command(command) => self.open_view(id, seq, &name, command, account, root),
+            },
+            Ok(Outcome::Close) => {
+                if view.is_some() {
+                    self.store.write().plugin_view = None;
+                    self.repaint();
+                }
+            }
             Ok(Outcome::Nothing) => {}
             Ok(Outcome::Toast(t)) => say(&t, false),
             Ok(Outcome::Alert { title, body, .. }) => {
@@ -717,6 +818,10 @@ impl Inner {
             Ok(Outcome::Open { kind, id }) => match open_command(&kind, id) {
                 Some((command, arg)) => {
                     let mut s = self.store.write();
+                    // The screen opens behind it otherwise.
+                    if view.is_some() {
+                        s.plugin_view = None;
+                    }
                     let seq = s.plugin_open.as_ref().map_or(0, |o| o.seq) + 1;
                     s.plugin_open = Some(PluginOpen { seq, command, arg });
                     drop(s);
@@ -755,6 +860,80 @@ impl Inner {
                     }
                 }
             }
+        }
+    }
+
+    /// Opens a view from what command `command` returned, in place of any open view.
+    fn open_view(
+        &self,
+        plugin: &str,
+        worker: u64,
+        name: &str,
+        command: &str,
+        account: AccountId,
+        root: Node,
+    ) {
+        let title = {
+            let p = self.plugins.lock();
+            p.entries
+                .iter()
+                .find(|e| e.info.id == plugin)
+                .and_then(|e| match &e.info.status {
+                    Status::Running { commands, .. } => commands.iter().find(|c| c.id == command),
+                    _ => None,
+                })
+                .map_or_else(|| command.to_owned(), |c| c.title.clone())
+        };
+        let mut s = self.store.write();
+        s.plugin_view_seq += 1;
+        let seq = s.plugin_view_seq;
+        s.plugin_view = Some(OpenView {
+            seq,
+            rev: 0,
+            plugin: plugin.to_owned(),
+            plugin_name: name.to_owned(),
+            command: command.to_owned(),
+            title,
+            account,
+            root,
+            busy: false,
+            error: None,
+            worker,
+        });
+        drop(s);
+        self.repaint();
+    }
+
+    /// Changes view `seq` if it is still open.
+    fn update_view(&self, seq: Option<u64>, f: impl FnOnce(&mut OpenView)) {
+        let mut s = self.store.write();
+        let Some(o) = s.plugin_view.as_mut().filter(|o| Some(o.seq) == seq) else {
+            return;
+        };
+        f(o);
+        drop(s);
+        self.repaint();
+    }
+
+    /// Closes the open view when its plugin stopped or restarted since it drew it.
+    fn close_stale_view(&self) {
+        let open = self
+            .store
+            .read()
+            .plugin_view
+            .as_ref()
+            .map(|o| (o.plugin.clone(), o.worker));
+        let Some((plugin, worker)) = open else {
+            return;
+        };
+        let alive = self.plugins.lock().entries.iter().any(|e| {
+            e.info.id == plugin
+                && matches!(e.info.status, Status::Running { .. })
+                && e.worker.as_ref().is_some_and(|w| w.seq == worker)
+        });
+        if !alive {
+            self.store.write().plugin_view = None;
+            self.repaint();
         }
     }
 
@@ -921,6 +1100,8 @@ pub(crate) fn load(inner: &Arc<Inner>) {
     inner.plugins.lock().saved = SavedFile::load(&inner.paths.plugins_file());
     automation::load_log(inner);
     inner.plugin_job(|i| {
+        // Packages left unpacked by a dialog that was open when Bonsai closed.
+        let _ = remove_dir(&i.paths.plugins_dir().join(STAGING));
         i.sync_plugins(Force::None);
         Ok(())
     });
@@ -1052,11 +1233,42 @@ impl Core {
     /// the main thread.
     pub fn stage_plugin_install(&self, path: &str, unpacked: bool) -> Result<(), String> {
         let mut dir = PathBuf::from(path.trim());
+        if package::is_package(&dir) {
+            if unpacked {
+                return Err("Load unpacked takes a folder. Install the package instead.".into());
+            }
+            let staging = self.inner.paths.plugins_dir().join(STAGING);
+            let (dir, hash) = package::unpack(&dir, &staging)?;
+            let staged = dir.parent().map(Path::to_path_buf);
+            let r = self.stage_dir(dir, false, Some(hash), staged.clone());
+            if r.is_err()
+                && let Some(s) = staged
+            {
+                let _ = remove_dir(&s);
+            }
+            return r;
+        }
         if dir.file_name().is_some_and(|n| n == MANIFEST) {
             dir.pop();
         }
-        let dir =
-            std::fs::canonicalize(&dir).map_err(|_| "Pick a plugin folder with a plugin.toml.".to_owned())?;
+        let dir = std::fs::canonicalize(&dir)
+            .map_err(|_| "Pick a plugin package or a folder with a plugin.toml.".to_owned())?;
+        // Unpacked plugins change as they are edited, so only installs get a hash.
+        let hash = if unpacked {
+            None
+        } else {
+            Some(package::content_hash(&package::read_folder(&dir)?))
+        };
+        self.stage_dir(dir, unpacked, hash, None)
+    }
+
+    fn stage_dir(
+        &self,
+        dir: PathBuf,
+        unpacked: bool,
+        hash: Option<String>,
+        staged: Option<PathBuf>,
+    ) -> Result<(), String> {
         let manifest = read_manifest(&dir)?;
         let installed = self.inner.paths.plugins_dir();
         if !unpacked && dir.parent() == std::fs::canonicalize(&installed).ok().as_deref() {
@@ -1093,9 +1305,16 @@ impl Core {
             source: dir,
             unpacked,
             replaces,
+            hash,
+            staged,
         };
         drop(p);
-        self.inner.store.write().plugin_install = Some(pending);
+        let new = pending.staged.clone();
+        let old = self.inner.store.write().plugin_install.replace(pending);
+        // Staging the same package again reuses its folder.
+        if let Some(dir) = old.and_then(|o| o.staged).filter(|d| Some(d) != new.as_ref()) {
+            let _ = remove_dir(&dir);
+        }
         self.inner.repaint();
         Ok(())
     }
@@ -1121,6 +1340,8 @@ impl Core {
             manifest,
             source: e.info.dir.clone(),
             unpacked: e.info.unpacked,
+            hash: e.info.hash.clone(),
+            staged: None,
         };
         drop(p);
         self.inner.store.write().plugin_install = Some(pending);
@@ -1140,16 +1361,23 @@ impl Core {
         self.inner.plugin_job(move |inner| {
             let m = &pending.manifest;
             let target = inner.paths.plugins_dir().join(&m.id);
-            if !pending.unpacked && pending.source != target {
-                let tmp = inner.paths.plugins_dir().join(format!(".{}.new", m.id));
-                remove_dir(&tmp).map_err(|e| e.to_string())?;
-                if let Err(e) = copy_plugin(&pending.source, &tmp) {
-                    let _ = remove_dir(&tmp);
-                    return Err(e);
+            let copied = (|| {
+                if !pending.unpacked && pending.source != target {
+                    let tmp = inner.paths.plugins_dir().join(format!(".{}.new", m.id));
+                    remove_dir(&tmp).map_err(|e| e.to_string())?;
+                    if let Err(e) = copy_plugin(&pending.source, &tmp) {
+                        let _ = remove_dir(&tmp);
+                        return Err(e);
+                    }
+                    remove_dir(&target).map_err(|e| format!("Can't replace the old version: {e}"))?;
+                    std::fs::rename(&tmp, &target).map_err(|e| format!("Can't install: {e}"))?;
                 }
-                remove_dir(&target).map_err(|e| format!("Can't replace the old version: {e}"))?;
-                std::fs::rename(&tmp, &target).map_err(|e| format!("Can't install: {e}"))?;
+                Ok(())
+            })();
+            if let Some(dir) = &pending.staged {
+                let _ = remove_dir(dir);
             }
+            copied?;
             {
                 let mut p = inner.plugins.lock();
                 if pending.unpacked && !p.saved.unpacked.contains(&pending.source) {
@@ -1185,6 +1413,7 @@ impl Core {
                         settings,
                         caps,
                         budgets,
+                        hash: pending.hash.clone().filter(|_| !pending.unpacked),
                     },
                 );
             }
@@ -1197,8 +1426,114 @@ impl Core {
     }
 
     pub fn cancel_plugin_install(&self) {
-        self.inner.store.write().plugin_install = None;
+        let old = self.inner.store.write().plugin_install.take();
         self.inner.repaint();
+        if let Some(dir) = old.and_then(|o| o.staged) {
+            self.inner
+                .plugin_job(move |_| remove_dir(&dir).map_err(|e| e.to_string()));
+        }
+    }
+
+    /// Sends what the user did in the open view to its command's `event` function. The view
+    /// waits until the plugin answers.
+    pub fn plugin_view_event(
+        &self,
+        seq: u64,
+        action: &str,
+        values: Vec<(String, String)>,
+        row: Option<usize>,
+    ) -> Result<(), String> {
+        if !bonsai_plugin::is_action(action) {
+            return Err(format!("\"{action}\" isn't an action."));
+        }
+        if values.len() > MAX_VIEW_VALUES {
+            return Err("Too many inputs.".into());
+        }
+        let values: Vec<(String, String)> = values
+            .into_iter()
+            .filter(|(k, _)| bonsai_plugin::is_action(k))
+            .map(|(k, v)| (k, v.chars().take(MAX_VIEW_VALUE).collect()))
+            .collect();
+        let view = self
+            .inner
+            .store
+            .read()
+            .plugin_view
+            .clone()
+            .filter(|o| o.seq == seq)
+            .ok_or("That view is closed.")?;
+        if view.busy {
+            return Err(format!("{} is still working.", view.plugin_name));
+        }
+        {
+            let p = self.inner.plugins.lock();
+            let worker = p
+                .entries
+                .iter()
+                .find(|e| e.info.id == view.plugin)
+                .and_then(|e| e.worker.as_ref())
+                .filter(|w| w.seq == view.worker)
+                .ok_or_else(|| format!("{} stopped.", view.plugin_name))?;
+            // An account taken away since the view opened isn't used.
+            let account = Some(view.account).filter(|a| {
+                p.saved
+                    .plugins
+                    .get(&view.plugin)
+                    .is_some_and(|s| s.accounts.contains(a))
+            });
+            let msg = Msg::View {
+                command: view.command.clone(),
+                view: seq,
+                ctx: Ctx {
+                    account: account.map_or(0, |a| a.0),
+                    now: crate::cache::now(),
+                },
+                event: ViewEvent {
+                    action: action.to_owned(),
+                    values,
+                    row: row.filter(|r| *r >= 1 && *r <= bonsai_plugin::MAX_ROWS),
+                },
+            };
+            worker.tx.try_send(msg).map_err(|e| match e {
+                std::sync::mpsc::TrySendError::Full(_) => {
+                    format!("{} is busy. Try again in a moment.", view.plugin_name)
+                }
+                std::sync::mpsc::TrySendError::Disconnected(_) => format!("{} stopped.", view.plugin_name),
+            })?;
+        }
+        self.inner.update_view(Some(seq), |o| {
+            o.busy = true;
+            o.error = None;
+        });
+        Ok(())
+    }
+
+    pub fn close_plugin_view(&self) {
+        self.inner.store.write().plugin_view = None;
+        self.inner.repaint();
+    }
+
+    /// Packs an installed or unpacked plugin into a `.bonsaiplugin` file at `dest`. Returns the
+    /// content hash. Reads and writes the disk, so call it off the main thread.
+    pub fn pack_plugin(&self, id: &str, dest: &Path) -> Result<String, String> {
+        let dir = {
+            let p = self.inner.plugins.lock();
+            let e = p
+                .entries
+                .iter()
+                .find(|e| e.info.id == id)
+                .ok_or_else(|| format!("No plugin \"{id}\"."))?;
+            if e.info.manifest.is_none() {
+                return Err("The plugin doesn't load; fix it first.".into());
+            }
+            e.info.dir.clone()
+        };
+        let mut dest = dest.to_path_buf();
+        if !package::is_package(&dest) {
+            dest.set_extension(package::EXTENSION);
+        }
+        let _io = IO.lock();
+        package::pack(&dir, &dest)
     }
 
     fn change_plugin(&self, id: &str, f: impl FnOnce(&mut Saved)) -> Result<(), String> {

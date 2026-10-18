@@ -5,13 +5,13 @@ use std::sync::Arc;
 
 use bonsai_core::commands::{CommandId, CommandRef, PluginCmd, Registry};
 use bonsai_core::plugins::{
-    Activity, Arg, DEFAULT_CAP, PendingActions, PendingBudget, PendingInstall, Permission, PluginBudget,
-    PluginCap, PluginCommand, PluginInfo, PluginOpen, Refused, Setting, SettingKind, Status, action_tier,
-    cost_label,
+    Activity, Arg, ButtonStyle, Cell, DEFAULT_CAP, Node, OpenView, PACKAGE_EXTENSION, PendingActions,
+    PendingBudget, PendingInstall, Permission, PluginBudget, PluginCap, PluginCommand, PluginInfo,
+    PluginOpen, Refused, Setting, SettingKind, Status, action_tier, cost_label,
 };
 use bonsai_core::store::StoreData;
 use bonsai_core::{AccountId, Core};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
 
@@ -96,6 +96,8 @@ pub struct PluginView {
     pub asks: Option<Asks>,
     /// Accounts it may use.
     pub accounts: Vec<Id>,
+    /// SHA-256 of the files installed, as hex. None for unpacked plugins.
+    pub hash: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Type)]
@@ -251,6 +253,10 @@ pub struct PluginInstallView {
     pub asks: Asks,
     /// Accounts ticked to start with.
     pub accounts: Vec<Id>,
+    /// SHA-256 of the files it would install, as hex, to compare with what the author published.
+    pub hash: Option<String>,
+    /// It came from a `.bonsaiplugin` package.
+    pub package: bool,
 }
 
 /// One action in the action dialog.
@@ -284,6 +290,180 @@ pub struct PluginOpenView {
     pub seq: Id,
     pub command: String,
     pub arg: String,
+}
+
+/// The open plugin view, for the shell. The tree itself comes from `plugin_view`, fetched when
+/// `rev` changes.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginViewHead {
+    pub seq: Id,
+    pub rev: Id,
+    pub plugin_name: String,
+    pub title: String,
+    /// The plugin is handling an event; controls wait.
+    pub busy: bool,
+    pub error: Option<String>,
+}
+
+pub fn view_head(o: &OpenView) -> PluginViewHead {
+    PluginViewHead {
+        seq: Id(o.seq),
+        rev: Id(o.rev),
+        plugin_name: o.plugin_name.clone(),
+        title: o.title.clone(),
+        busy: o.busy,
+        error: o.error.clone(),
+    }
+}
+
+/// A table cell or stat value. Numbers are shown in the user's number format.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(untagged)]
+pub enum ViewCell {
+    Text(String),
+    Number(f64),
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ViewColumn {
+    pub label: String,
+    /// Right-aligned.
+    pub end: bool,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum ViewButtonStyle {
+    Default,
+    Primary,
+    Danger,
+}
+
+/// One part of a plugin view. See `docs/plugins.md#views`.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum ViewNode {
+    Text {
+        text: String,
+        muted: bool,
+        mono: bool,
+    },
+    Heading {
+        text: String,
+    },
+    Row {
+        children: Vec<ViewNode>,
+    },
+    Column {
+        children: Vec<ViewNode>,
+    },
+    Stat {
+        label: String,
+        value: ViewCell,
+    },
+    Table {
+        columns: Vec<ViewColumn>,
+        rows: Vec<Vec<ViewCell>>,
+        /// Sent with the row number when a row is picked.
+        action: Option<String>,
+    },
+    Input {
+        key: String,
+        label: String,
+        value: String,
+        placeholder: String,
+        /// Sent when Enter is pressed in it.
+        action: Option<String>,
+    },
+    Button {
+        label: String,
+        action: String,
+        style: ViewButtonStyle,
+    },
+}
+
+fn cell_view(c: &Cell) -> ViewCell {
+    match c {
+        Cell::Text(t) => ViewCell::Text(t.clone()),
+        Cell::Number(n) => ViewCell::Number(*n),
+    }
+}
+
+fn node_view(n: &Node) -> ViewNode {
+    match n {
+        Node::Text { text, muted, mono } => ViewNode::Text {
+            text: text.clone(),
+            muted: *muted,
+            mono: *mono,
+        },
+        Node::Heading(text) => ViewNode::Heading { text: text.clone() },
+        Node::Row(c) => ViewNode::Row {
+            children: c.iter().map(node_view).collect(),
+        },
+        Node::Column(c) => ViewNode::Column {
+            children: c.iter().map(node_view).collect(),
+        },
+        Node::Stat { label, value } => ViewNode::Stat {
+            label: label.clone(),
+            value: cell_view(value),
+        },
+        Node::Table {
+            columns,
+            rows,
+            action,
+        } => ViewNode::Table {
+            columns: columns
+                .iter()
+                .map(|c| ViewColumn {
+                    label: c.label.clone(),
+                    end: c.end,
+                })
+                .collect(),
+            rows: rows.iter().map(|r| r.iter().map(cell_view).collect()).collect(),
+            action: action.clone(),
+        },
+        Node::Input {
+            key,
+            label,
+            value,
+            placeholder,
+            action,
+        } => ViewNode::Input {
+            key: key.clone(),
+            label: label.clone(),
+            value: value.clone(),
+            placeholder: placeholder.clone(),
+            action: action.clone(),
+        },
+        Node::Button { label, action, style } => ViewNode::Button {
+            label: label.clone(),
+            action: action.clone(),
+            style: match style {
+                ButtonStyle::Default => ViewButtonStyle::Default,
+                ButtonStyle::Primary => ViewButtonStyle::Primary,
+                ButtonStyle::Danger => ViewButtonStyle::Danger,
+            },
+        },
+    }
+}
+
+/// The open view's tree.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginViewBody {
+    pub seq: Id,
+    pub rev: Id,
+    pub root: ViewNode,
+}
+
+/// One input's text, sent back with a view event.
+#[derive(Clone, Debug, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ViewValue {
+    pub key: String,
+    pub value: String,
 }
 
 pub fn actions_view(p: &PendingActions, s: &StoreData) -> PluginActionsView {
@@ -514,6 +694,7 @@ fn view(
         budgets: budgets.iter().map(budget_view).collect(),
         asks: m.map(asks),
         accounts: p.accounts.iter().map(|a| Id(a.0)).collect(),
+        hash: p.hash,
         id: p.id,
     }
 }
@@ -531,6 +712,8 @@ pub fn install_view(p: &PendingInstall) -> PluginInstallView {
         added: p.added.clone(),
         asks: asks(m),
         accounts: p.accounts.iter().map(|a| Id(a.0)).collect(),
+        hash: p.hash.clone(),
+        package: p.staged.is_some(),
     }
 }
 
@@ -628,6 +811,44 @@ pub fn plugin_install_cancel(core: State<'_, Arc<Core>>) {
     core.cancel_plugin_install();
 }
 
+/// The open plugin view's tree, or none when it is closed.
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_view(core: State<'_, Arc<Core>>) -> Option<PluginViewBody> {
+    let s = core.store();
+    let o = s.plugin_view.as_ref()?;
+    Some(PluginViewBody {
+        seq: Id(o.seq),
+        rev: Id(o.rev),
+        root: node_view(&o.root),
+    })
+}
+
+/// Sends a button press, Enter in an input or a picked table row to the plugin, with every
+/// input's text. `row` counts from 1.
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_view_event(
+    core: State<'_, Arc<Core>>,
+    seq: Id,
+    action: String,
+    values: Vec<ViewValue>,
+    row: Option<u32>,
+) -> Result<(), String> {
+    core.plugin_view_event(
+        seq.0,
+        &action,
+        values.into_iter().map(|v| (v.key, v.value)).collect(),
+        row.map(|r| r as usize),
+    )
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn plugin_view_close(core: State<'_, Arc<Core>>) {
+    core.close_plugin_view();
+}
+
 /// Runs the actions in the action dialog.
 #[tauri::command]
 #[specta::specta]
@@ -647,18 +868,23 @@ fn stage(app: &AppHandle, path: String, unpacked: bool) {
     let app = app.clone();
     std::thread::spawn(move || {
         let path = if path.trim().is_empty() {
-            let mut dialog = rfd::FileDialog::new().set_title(if unpacked {
-                "Load unpacked plugin"
-            } else {
-                "Install plugin"
-            });
+            let mut dialog = rfd::FileDialog::new();
             if let Some(w) = app.get_webview_window("main") {
                 dialog = dialog.set_parent(&w);
             }
-            let Some(dir) = dialog.pick_folder() else {
+            // A package, or a folder's plugin.toml; a picker can't take both files and folders.
+            let picked = if unpacked {
+                dialog.set_title("Load unpacked plugin").pick_folder()
+            } else {
+                dialog
+                    .set_title("Install plugin")
+                    .add_filter("Bonsai plugins", &[PACKAGE_EXTENSION, "toml"])
+                    .pick_file()
+            };
+            let Some(picked) = picked else {
                 return;
             };
-            dir.to_string_lossy().into_owned()
+            picked.to_string_lossy().into_owned()
         } else {
             path
         };
@@ -666,6 +892,30 @@ fn stage(app: &AppHandle, path: String, unpacked: bool) {
             && let Err(e) = core.stage_plugin_install(&path, unpacked)
         {
             core.notice(e, true);
+        }
+    });
+}
+
+/// Asks where to save a plugin's package, then writes it.
+fn pack(app: &AppHandle, id: String) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let mut dialog = rfd::FileDialog::new()
+            .set_title("Pack plugin")
+            .set_file_name(format!("{id}.{PACKAGE_EXTENSION}"))
+            .add_filter("Bonsai plugins", &[PACKAGE_EXTENSION]);
+        if let Some(w) = app.get_webview_window("main") {
+            dialog = dialog.set_parent(&w);
+        }
+        let Some(path) = dialog.save_file() else {
+            return;
+        };
+        let Some(core) = app.try_state::<Arc<Core>>() else {
+            return;
+        };
+        match core.pack_plugin(&id, &path) {
+            Ok(hash) => core.notice(format!("Packed to {}. SHA-256 {hash}", path.display()), false),
+            Err(e) => core.notice(e, true),
         }
     });
 }
@@ -692,6 +942,15 @@ pub fn run(
         CommandId::DisablePlugin => core.set_plugin_enabled(&arg(), false),
         CommandId::ReloadPlugin => core.reload_plugin(&arg()),
         CommandId::ReviewPlugin => core.review_plugin(&arg()),
+        CommandId::PackPlugin => {
+            let id = arg();
+            if core.plugins().iter().any(|p| p.id == id) {
+                pack(app, id);
+                Ok(())
+            } else {
+                Err(format!("No plugin \"{id}\"."))
+            }
+        }
         CommandId::RemovePlugin => core.remove_plugin(&arg()),
         CommandId::GrantPlugin => acting().and_then(|a| core.set_plugin_account(&arg(), a, true)),
         CommandId::RevokePlugin => acting().and_then(|a| core.set_plugin_account(&arg(), a, false)),

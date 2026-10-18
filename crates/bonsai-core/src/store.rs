@@ -452,6 +452,10 @@ pub struct StoreData {
     pub plugin_budget: Option<crate::plugins::PendingBudget>,
     /// When a plugin last wrote, in Unix seconds, for the stop indicator.
     pub plugin_wrote: Option<i64>,
+    /// A plugin's view, while its dialog is open.
+    pub plugin_view: Option<crate::plugins::OpenView>,
+    /// The last view seq handed out.
+    pub plugin_view_seq: u64,
     /// Turning on the authenticator app or making recovery codes (see [`crate::security`]).
     pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,

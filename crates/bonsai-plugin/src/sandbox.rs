@@ -13,6 +13,7 @@ use mlua::chunk::ChunkMode;
 use mlua::{Function, Lua, LuaOptions, MultiValue, StdLib, Table, Value, VmState};
 
 use crate::manifest::valid_module;
+use crate::view::{self, Node, ViewEvent};
 use crate::{Error, Manifest, Permission, is_plugin_id};
 
 /// Most commands a plugin may register.
@@ -188,7 +189,7 @@ pub struct Action {
 }
 
 /// What a handler returned.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Outcome {
     Nothing,
     /// To run, after the user confirms the ones that need it.
@@ -203,6 +204,10 @@ pub enum Outcome {
         body: String,
         command: Option<String>,
     },
+    /// A view to show, or to redraw the one this command shows.
+    View(Node),
+    /// Close the view this command shows.
+    Close,
 }
 
 /// A deadline the interrupt checks. Host calls push it back by however long they took.
@@ -234,7 +239,8 @@ impl Clock {
 /// What the entry module registered while it loaded.
 #[derive(Default)]
 struct Registered {
-    commands: Vec<(Command, Function)>,
+    /// Each command with its `run` and, when it has views, its `event` function.
+    commands: Vec<(Command, Function, Option<Function>)>,
     events: Vec<(String, Function)>,
     timers: Vec<(Duration, Function)>,
 }
@@ -244,6 +250,8 @@ pub struct Plugin {
     manifest: Rc<Manifest>,
     commands: Vec<Command>,
     handlers: HashMap<String, Function>,
+    /// Each command's `event(ctx, e)`, for its views.
+    view_handlers: HashMap<String, Function>,
     events: Vec<(String, Function)>,
     timers: Vec<(Duration, Function)>,
     clock: Rc<Clock>,
@@ -316,8 +324,12 @@ impl Plugin {
         let reg = registered.take();
         let mut commands = Vec::new();
         let mut handlers = HashMap::new();
-        for (cmd, f) in reg.commands {
+        let mut view_handlers = HashMap::new();
+        for (cmd, f, event) in reg.commands {
             handlers.insert(cmd.id.clone(), f);
+            if let Some(e) = event {
+                view_handlers.insert(cmd.id.clone(), e);
+            }
             commands.push(cmd);
         }
         Ok(Plugin {
@@ -325,6 +337,7 @@ impl Plugin {
             manifest,
             commands,
             handlers,
+            view_handlers,
             events: reg.events,
             timers: reg.timers,
             clock,
@@ -378,10 +391,10 @@ impl Plugin {
         self.sets.set(0);
         self.runs.set(0);
         self.clock.start(self.limits.call);
-        let ran = f.call::<Value>((ctx, arg));
+        // Reading the result can run the plugin's metamethods, so it stays on the clock.
+        let ran = f.call::<Value>((ctx, arg)).map(|v| outcome(&self.manifest, v));
         self.clock.stop();
-        let value = check(&self.clock, &self.lua, self.limits, self.limits.call, ran)?;
-        outcome(&self.manifest, value)
+        check(&self.clock, &self.lua, self.limits, self.limits.call, ran)?
     }
 
     /// Calls a command's `run(ctx, arg)`.
@@ -399,6 +412,15 @@ impl Plugin {
             },
         };
         self.call(f, ctx, arg)
+    }
+
+    /// Calls a command's `event(ctx, e)` for something the user did in its view.
+    pub fn run_view_event(&self, id: &str, ctx: Ctx, event: &ViewEvent) -> Result<Outcome, Error> {
+        let Some(f) = self.view_handlers.get(id) else {
+            return Err(Error::Script(format!("Command \"{id}\" has no event function.")));
+        };
+        let e = view::event_table(&self.lua, event).map_err(script)?;
+        self.call(f, ctx, Value::Table(e))
     }
 
     fn ctx_table(&self, ctx: Ctx) -> mlua::Result<Table> {
@@ -839,20 +861,20 @@ fn install_globals(
                     "bonsai.command only works while the plugin loads.",
                 ));
             }
-            let (cmd, run) = command_spec(&spec)?;
+            let (cmd, run, event) = command_spec(&spec)?;
             let reg = &mut reg.borrow_mut().commands;
             if reg.len() >= MAX_COMMANDS {
                 return Err(mlua::Error::runtime(format!(
                     "A plugin can have at most {MAX_COMMANDS} commands."
                 )));
             }
-            if reg.iter().any(|(c, _)| c.id == cmd.id) {
+            if reg.iter().any(|(c, _, _)| c.id == cmd.id) {
                 return Err(mlua::Error::runtime(format!(
                     "Command \"{}\" is registered twice.",
                     cmd.id
                 )));
             }
-            reg.push((cmd, run));
+            reg.push((cmd, run, event));
             Ok(())
         })?,
     )?;
@@ -911,13 +933,14 @@ fn install_globals(
             Ok(())
         })?,
     )?;
+    bonsai.set("ui", view::ui_table(lua)?)?;
     bonsai.set("api", crate::API_VERSION)?;
     bonsai.set("id", manifest.id.as_str())?;
     g.raw_set("bonsai", bonsai)?;
     Ok(())
 }
 
-fn command_spec(spec: &Table) -> mlua::Result<(Command, Function)> {
+fn command_spec(spec: &Table) -> mlua::Result<(Command, Function, Option<Function>)> {
     let id: String = spec.get("id")?;
     if !is_plugin_id(&id) {
         return Err(mlua::Error::runtime(format!(
@@ -957,6 +980,7 @@ fn command_spec(spec: &Table) -> mlua::Result<(Command, Function)> {
     let run: Function = spec
         .get::<Option<Function>>("run")?
         .ok_or_else(|| mlua::Error::runtime(format!("Command \"{id}\" has no run function.")))?;
+    let event = spec.get::<Option<Function>>("event")?;
     Ok((
         Command {
             id,
@@ -966,6 +990,7 @@ fn command_spec(spec: &Table) -> mlua::Result<(Command, Function)> {
             context,
         },
         run,
+        event,
     ))
 }
 
@@ -1024,8 +1049,15 @@ fn outcome(manifest: &Manifest, value: Value) -> Result<Outcome, Error> {
             command: a.get("command").map_err(script)?,
         });
     }
+    match get("view")? {
+        Value::Nil => {}
+        v => return Ok(Outcome::View(view::parse(&v).map_err(script)?)),
+    }
+    if get("close")? == Value::Boolean(true) {
+        return Ok(Outcome::Close);
+    }
     Err(Error::Script(
-        "A handler returns nil or a table with actions, toast, open or alert.".into(),
+        "A handler returns nil or a table with actions, toast, open, alert, view or close.".into(),
     ))
 }
 

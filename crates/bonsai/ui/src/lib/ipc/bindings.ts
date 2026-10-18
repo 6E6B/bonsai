@@ -300,6 +300,18 @@ export const commands = {
 	/**  Runs the actions in the action dialog. */
 	pluginActionsRun: () => typedError<null, string>(__TAURI_INVOKE("plugin_actions_run")),
 	pluginActionsCancel: () => __TAURI_INVOKE<void>("plugin_actions_cancel"),
+	/**  The open plugin view's tree, or none when it is closed. */
+	pluginView: () => __TAURI_INVOKE<{
+	seq: Id,
+	rev: Id,
+	root: ViewNode,
+} | null>("plugin_view"),
+	/**
+	 *  Sends a button press, Enter in an input or a picked table row to the plugin, with every
+	 *  input's text. `row` counts from 1.
+	 */
+	pluginViewEvent: (seq: Id, action: string, values: ViewValue[], row: number | null) => typedError<null, string>(__TAURI_INVOKE("plugin_view_event", { seq, action, values, row })),
+	pluginViewClose: () => __TAURI_INVOKE<void>("plugin_view_close"),
 	/**  Accounts plugins may automate. */
 	pluginAutomation: () => __TAURI_INVOKE<Id[]>("plugin_automation"),
 	/**  Turns automation on for the account in the dialog, when `typed` is its name. */
@@ -1604,6 +1616,10 @@ export type PluginInstallView = {
 	asks: Asks,
 	/**  Accounts ticked to start with. */
 	accounts: Id[],
+	/**  SHA-256 of the files it would install, as hex, to compare with what the author published. */
+	hash: string | null,
+	/**  It came from a `.bonsaiplugin` package. */
+	package: boolean,
 };
 
 /**  A screen a plugin asked to open, as a built-in command to run once per `seq`. */
@@ -1670,6 +1686,29 @@ export type PluginView = {
 	asks: Asks | null,
 	/**  Accounts it may use. */
 	accounts: Id[],
+	/**  SHA-256 of the files installed, as hex. None for unpacked plugins. */
+	hash: string | null,
+};
+
+/**  The open view's tree. */
+export type PluginViewBody = {
+	seq: Id,
+	rev: Id,
+	root: ViewNode,
+};
+
+/**
+ *  The open plugin view, for the shell. The tree itself comes from `plugin_view`, fetched when
+ *  `rev` changes.
+ */
+export type PluginViewHead = {
+	seq: Id,
+	rev: Id,
+	pluginName: string,
+	title: string,
+	/**  The plugin is handling an event; controls wait. */
+	busy: boolean,
+	error: string | null,
 };
 
 /**  A point on a chart: ms since the epoch, value. */
@@ -2037,6 +2076,8 @@ export type Shell = {
 	pluginBudget: BudgetDialogView | null,
 	/**  When a plugin last wrote, in Unix seconds, for the stop indicator. */
 	pluginWrote: Id | null,
+	/**  A plugin's view, while its dialog is open. */
+	pluginView: PluginViewHead | null,
 	/**  The "Sign in another device" dialog, once a code was entered. */
 	approve: ApproveView | null,
 	/**  The authenticator setup or recovery codes dialog, while it is open. */
@@ -2377,6 +2418,30 @@ export type ValuesStatus = {
 	/**  ms since the epoch; `None` before the first load. */
 	fetchedAt: number | null,
 	count: number,
+};
+
+export type ViewButtonStyle = "default" | "primary" | "danger";
+
+/**  A table cell or stat value. Numbers are shown in the user's number format. */
+export type ViewCell = string | number | null;
+
+export type ViewColumn = {
+	label: string,
+	/**  Right-aligned. */
+	end: boolean,
+};
+
+/**  One part of a plugin view. See `docs/plugins.md#views`. */
+export type ViewNode = { type: "text"; text: string; muted: boolean; mono: boolean } | { type: "heading"; text: string } | { type: "row"; children: ViewNode[] } | { type: "column"; children: ViewNode[] } | { type: "stat"; label: string; value: ViewCell } | { type: "table"; columns: ViewColumn[]; rows: ViewCell[][]; 
+/**  Sent with the row number when a row is picked. */
+action: string | null } | { type: "input"; key: string; label: string; value: string; placeholder: string; 
+/**  Sent when Enter is pressed in it. */
+action: string | null } | { type: "button"; label: string; action: string; style: ViewButtonStyle };
+
+/**  One input's text, sent back with a view event. */
+export type ViewValue = {
+	key: string,
+	value: string,
 };
 
 export type VoiceView = {
