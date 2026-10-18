@@ -1679,6 +1679,121 @@ async fn chat_conversations_send_typing_and_manage() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn group_chat_creation_deduplicates_people_and_keeps_accounts_separate() {
+    let replay = Replay::from_fixture(&replay::load("chat")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let _ = poll(|| c.chat_settings(ME)).await;
+    c.start_chat(
+        ME,
+        vec![ME.0, 0, 2_000_001, 2_000_002, 2_000_001],
+        Some("  Squad  ".into()),
+    );
+    wait_for(c, "group focus", |s| {
+        s.account_data(ME).is_some_and(|d| d.chat_focus.is_some())
+    })
+    .await;
+    assert!(c.take_chat_focus(AccountId(9_000_001)).is_none());
+    assert_eq!(c.take_chat_focus(ME).as_deref(), Some("conv-3"));
+    let requests = replay.requests().await;
+    let create = requests
+        .iter()
+        .find(|q| q.url.path().ends_with("/create-conversations") && q.headers.contains_key("x-csrf-token"))
+        .unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&create.body).unwrap();
+    assert_eq!(body["conversations"][0]["type"], "group");
+    assert_eq!(body["conversations"][0]["name"], "Squad");
+    assert_eq!(
+        body["conversations"][0]["participant_user_ids"],
+        serde_json::json!([2_000_001, 2_000_002])
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn group_chat_creation_checks_privacy_before_writing_without_cached_settings() {
+    let mut fixture = replay::load("chat");
+    for interaction in &mut fixture.interactions {
+        if interaction.request.path.ends_with("/metadata") {
+            interaction.response.body["isGroupChatEnabledByPrivacySetting"] = serde_json::json!("disabled");
+        }
+    }
+    let replay = Replay::from_fixture(&fixture).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    r.core.start_chat(ME, vec![2_000_001, 2_000_002], None);
+    wait_for(&r.core, "privacy error", |s| {
+        s.toasts
+            .iter()
+            .any(|t| t.error && t.text.contains("Group chat is off"))
+    })
+    .await;
+    assert!(r.core.take_chat_focus(ME).is_none());
+    assert!(replay.requests().await.iter().all(|r| r.method == "GET"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn leaving_a_group_removes_only_the_acting_account() {
+    let replay = Replay::from_fixture(&replay::load("chat")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let _ = poll(|| r.core.conversations(ME, false)).await;
+    r.core.leave_chat(ME, "conv-2");
+    assert!(
+        r.core
+            .conversations(ME, false)
+            .data
+            .unwrap()
+            .items
+            .iter()
+            .all(|c| c.id != "conv-2")
+    );
+    wait_for(&r.core, "left group", |s| {
+        s.toasts.iter().any(|t| t.text == "You left the chat")
+    })
+    .await;
+    let requests = replay.requests().await;
+    let remove = requests
+        .iter()
+        .find(|q| q.url.path().ends_with("/remove-users") && q.headers.contains_key("x-csrf-token"))
+        .unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&remove.body).unwrap();
+    assert_eq!(body["conversation_id"], "conv-2");
+    assert_eq!(body["user_ids"], serde_json::json!([ME.0]));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn group_chat_management_rejects_direct_messages_and_non_owner_removal() {
+    let mut fixture = replay::load("chat");
+    for interaction in &mut fixture.interactions {
+        if interaction.request.path.ends_with("/get-user-conversations") {
+            interaction.response.body["conversations"][1]["created_by"] = serde_json::json!(2_000_001);
+        }
+    }
+    let replay = Replay::from_fixture(&fixture).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let _ = poll(|| c.conversations(ME, false)).await;
+    c.rename_chat(ME, "conv-1", "Oops");
+    c.add_to_chat(ME, "conv-1", vec![2_000_002]);
+    c.leave_chat(ME, "conv-1");
+    c.remove_from_chat(ME, "conv-2", 2_000_002);
+    assert!(
+        c.store()
+            .toasts
+            .iter()
+            .any(|t| t.text == "Only the group creator can remove people.")
+    );
+    assert_eq!(c.conversations(ME, false).data.unwrap().items.len(), 2);
+    assert!(replay.requests().await.iter().all(|r| r.method == "GET"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn communities_member_admin_forums_and_public_pages() {
     use bonsai_core::communities::{Affiliation, Setting};
     let mut f = replay::load("communities");

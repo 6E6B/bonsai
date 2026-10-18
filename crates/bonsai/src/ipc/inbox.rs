@@ -177,6 +177,8 @@ fn conversation_row(c: &Conversation, me: u64, pinned: &[String]) -> Conversatio
             .map(|m| {
                 if m.sender == me && !m.system {
                     format!("You: {}", m.text)
+                } else if c.kind == ConvKind::Group && !m.system {
+                    format!("{}: {}", c.name_of(m.sender).unwrap_or("Someone"), m.text)
                 } else {
                     m.text.clone()
                 }
@@ -353,6 +355,31 @@ pub fn chat_view(core: State<'_, Arc<Core>>, conversation: String) -> ChatView {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatOptions {
+    pub loading: bool,
+    pub error: Option<String>,
+    pub enabled: bool,
+    pub group_enabled: bool,
+    pub max_title: u32,
+}
+
+/// Account-specific permissions and limits for the new chat dialog.
+#[tauri::command]
+#[specta::specta]
+pub fn chat_options(core: State<'_, Arc<Core>>) -> ChatOptions {
+    let settings = core.acting(None).map(|a| core.chat_settings(a));
+    let data = settings.as_ref().and_then(|s| s.data.as_deref());
+    ChatOptions {
+        loading: settings.as_ref().is_some_and(|s| s.loading),
+        error: settings.as_ref().and_then(|s| s.error.clone()),
+        enabled: data.is_some_and(|s| s.enabled),
+        group_enabled: data.is_some_and(|s| s.enabled && s.group_enabled),
+        max_title: data.map_or(150, |s| s.max_title as u32),
+    }
+}
+
 /// A conversation the chat screen should open, once (after starting a chat).
 #[tauri::command]
 #[specta::specta]
@@ -500,6 +527,7 @@ pub(super) fn run(
         })(),
         // Handled by the Messages screen, which owns the selection.
         C::SelectAllMessages => Err("Open Messages first.".to_owned()),
+        C::ChatMembers => Err("Open a group chat first.".to_owned()),
         C::ChatEmoji => Err("Open a conversation first.".to_owned()),
         C::ShareExperience => (|| {
             let a = need()?;
@@ -595,4 +623,32 @@ pub(super) fn run(
         }
         _ => return None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bonsai_core::chat::ChatMessage;
+
+    #[test]
+    #[allow(clippy::unwrap_used)]
+    fn group_preview_identifies_the_sender() {
+        let mut c = Conversation {
+            kind: ConvKind::Group,
+            names: vec![(2, "Ann".into())],
+            last: Some(ChatMessage {
+                sender: 2,
+                text: "hello".into(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        assert_eq!(conversation_row(&c, 1, &[]).last, "Ann: hello");
+        assert_eq!(conversation_row(&c, 2, &[]).last, "You: hello");
+        c.last.as_mut().unwrap().system = true;
+        assert_eq!(conversation_row(&c, 1, &[]).last, "hello");
+        c.last.as_mut().unwrap().system = false;
+        c.kind = ConvKind::OneToOne;
+        assert_eq!(conversation_row(&c, 1, &[]).last, "hello");
+    }
 }

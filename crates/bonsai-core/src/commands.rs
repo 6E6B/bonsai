@@ -532,6 +532,7 @@ commands! {
     SendChat => "chat.send", "Send chat message", ["send", "say"], Text, Write(Social), [];
     ResendChat => "chat.resend", "Send a failed chat message again", ["resend", "retry", "failed", "chat"], Text, Write(Social), [];
     DiscardChat => "chat.discard", "Discard a failed chat message", ["discard", "delete", "failed", "chat"], Text, Write(Harmless), [];
+    ChatMembers => "chat.members", "View chat members", ["members", "participants", "people", "group"], None, Read, [];
     RenameChat => "chat.rename", "Rename this group chat", ["rename", "title", "chat"], Text, Write(Social), [];
     AddToChat => "chat.add_people", "Add people to this chat", ["add", "invite", "chat"], User, Write(Social), [];
     RemoveFromChat => "chat.remove_person", "Remove someone from this chat", ["remove", "kick", "chat"], User, Write(Social), [];

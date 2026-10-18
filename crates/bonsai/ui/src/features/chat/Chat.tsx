@@ -26,6 +26,7 @@ import {
   Split,
   showToast,
   TextField,
+  useDialog,
   usePrompt,
 } from "~/lib/ui"
 import { dayLabel, filterConversations, startsDay } from "./timeline"
@@ -92,10 +93,11 @@ export default function Chat() {
 
   const prompt = usePrompt()
   onCleanup(
-    handle("chat.rename", async (name) => {
-      const n =
-        name ?? (await prompt({ title: "Rename chat", label: "Name", initial: open()?.title, submit: "Rename" }))
-      if (n?.trim()) void runBackend("chat.rename", n)
+    handle("chat.leave", async () => {
+      if (await runBackend("chat.leave")) {
+        setOpenId(null)
+        setCursor(0)
+      }
     }),
   )
   onCleanup(
@@ -241,6 +243,62 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
     })
   }
   const prompt = usePrompt()
+  const dialog = useDialog()
+  let membersOpen = false
+  const closeMembers = () => {
+    if (membersOpen) dialog.close()
+  }
+  createEffect(on(() => [shell.active, props.id], closeMembers, { defer: true }))
+  onCleanup(closeMembers)
+  onCleanup(
+    handle("chat.rename", async (name) => {
+      const n =
+        name ??
+        (await prompt({
+          title: "Rename chat",
+          label: "Name",
+          initial: info()?.title,
+          submit: "Rename",
+          maxLength: view.maxTitle,
+        }))
+      if (n?.trim()) void runBackend("chat.rename", n)
+    }),
+  )
+  onCleanup(
+    handle("chat.members", () => {
+      if (!group()) return showToast("Open a group chat first.")
+      dialog.show(
+        () => (
+          <div class="flex max-h-80 flex-col overflow-y-auto p-3">
+            <ListItem
+              title="You"
+              leading={<Avatar name="You" src={shell.active ? thumbUrl("headshot", shell.active) : undefined} />}
+            />
+            <For each={view.people}>
+              {(person) => (
+                <ListItem
+                  title={person.name}
+                  leading={<Avatar name={person.name} src={thumbUrl("headshot", person.id)} />}
+                  onClick={() => {
+                    dialog.close()
+                    void run("user.open", String(person.id))
+                  }}
+                />
+              )}
+            </For>
+          </div>
+        ),
+        {
+          title: "Group members",
+          size: "sm",
+          onClose: () => {
+            membersOpen = false
+          },
+        },
+      )
+      membersOpen = true
+    }),
+  )
   const writable = () => {
     if (view.blocked) showToast(view.blocked)
     return !view.blocked
@@ -278,6 +336,7 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
     menuItem("chat.pin", { icon: "pin", label: info()?.pinned ? "Unpin" : "Pin" }),
     ...(group()
       ? [
+          menuItem("chat.members", { icon: "user" }),
           menuItem("chat.rename", { icon: "edit" }),
           menuItem("chat.add_people", { icon: "user-plus" }),
           ...(view.owner && view.people.length > 0
@@ -327,11 +386,18 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                 </Show>
               }
             >
-              {view.people.length + 1} people
+              <Show when={view.typing.length > 0} fallback={`${view.people.length + 1} people`}>
+                {view.typing.join(", ")} typing…
+              </Show>
             </Show>
           </span>
         </div>
         <div class="ml-auto flex items-center gap-1">
+          <Show when={group()}>
+            <Button size="sm" variant="ghost" icon="user" onClick={() => run("chat.members")}>
+              Members
+            </Button>
+          </Show>
           <Show when={friend()?.presence === "game" && friend()}>
             {(f) => (
               <Button size="sm" variant="primary" icon="play" onClick={() => run("game.join", joinUser(f().id))}>
@@ -394,6 +460,15 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                             </span>
                           </Show>
                           <div class="flex min-w-0 flex-col gap-1" classList={{ "items-end": l.mine }}>
+                            <Show
+                              when={
+                                group() &&
+                                !l.mine &&
+                                (i() === 0 || view.lines[i() - 1]?.senderId !== l.senderId || newDay())
+                              }
+                            >
+                              <span class="text-xs font-medium text-fg-muted">{l.sender}</span>
+                            </Show>
                             <Show when={!bare()}>
                               <div
                                 class="whitespace-pre-wrap break-words rounded-lg px-3 py-1.5"
