@@ -31,6 +31,17 @@
     scrollbar-width: thin;
   }
 
+  /* Rounded window corners on Linux (`app/frame.ts`). The page is clipped as a whole, so
+   * popovers and dialog backdrops stay inside the corners too. */
+  :root[data-frame="rounded"],
+  :root[data-frame="rounded"] body {
+    background: transparent;
+  }
+
+  :root[data-frame="rounded"] body {
+    clip-path: inset(0 round var(--window-radius));
+  }
+
   /* `scrollbar-width` is not inherited; every scroller gets the thin one. */
   * {
     scrollbar-width: thin;

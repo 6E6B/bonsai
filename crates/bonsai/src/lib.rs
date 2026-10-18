@@ -13,6 +13,7 @@ mod bg;
 mod captcha;
 mod desktop;
 mod font;
+mod frame;
 pub mod ipc;
 mod notify;
 mod signin;
@@ -56,6 +57,13 @@ pub fn run() {
             builder.mount_events(app);
             let repaint = notify::spawn(app.handle().clone())?;
             let core = Arc::new(Core::start(CoreConfig::standard(), repaint));
+            app.manage(frame::Frame::default());
+            // The window starts hidden so the frame can be set up before it is realized.
+            if let Some(w) = app.get_webview_window("main")
+                && let Err(e) = frame::init(&w)
+            {
+                tracing::warn!("could not set up the window frame: {e}");
+            }
             desktop::start(app.handle(), &core.settings());
             let handle = app.handle().clone();
             core.set_plugin_runner(Arc::new(move |account, id, arg| {

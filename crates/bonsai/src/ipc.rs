@@ -44,6 +44,14 @@ pub struct Id(#[specta(type = specta_typescript::Number)] pub u64);
 #[derive(Clone, Debug, Serialize, Deserialize, Type, Event)]
 pub struct StoreChanged;
 
+/// The main window's corners. Sent when they change; `window_frame` reads them at startup.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Type, Event)]
+pub struct WindowFrame {
+    /// Radius in CSS px the UI clips itself to. 0 when the window is square (the frame is
+    /// off, or the window is maximized, tiled or fullscreen).
+    pub radius: u32,
+}
+
 /// Shell state every screen needs: accounts, toasts, connectivity.
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -2703,6 +2711,12 @@ pub fn dismiss_toast(core: State<'_, Arc<Core>>, id: Id) {
     core.dismiss_toast(id.0);
 }
 
+#[tauri::command]
+#[specta::specta]
+pub fn window_frame(frame: State<'_, crate::frame::Frame>) -> WindowFrame {
+    frame.get()
+}
+
 pub fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .commands(collect_commands![
@@ -2710,6 +2724,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             commands,
             run_command,
             dismiss_toast,
+            window_frame,
             friends,
             home,
             game,
@@ -2858,7 +2873,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             confirm_login,
             cancel_login
         ])
-        .events(collect_events![StoreChanged])
+        .events(collect_events![StoreChanged, WindowFrame])
 }
 
 pub const BINDINGS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/ui/src/lib/ipc/bindings.ts");
