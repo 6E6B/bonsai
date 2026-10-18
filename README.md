@@ -6,8 +6,6 @@
   <img src="docs/images/bonsai-banner-light.png" width="100%" alt="Bonsai: A keyboard-first desktop client for Roblox.">
 </picture>
 
-# Bonsai
-
 **A fast, keyboard-first desktop client for Roblox, built for people with more than one account.**
 
 [![Rust](https://github.com/6E6B/bonsai/actions/workflows/rust.yml/badge.svg)](https://github.com/6E6B/bonsai/actions/workflows/rust.yml)
