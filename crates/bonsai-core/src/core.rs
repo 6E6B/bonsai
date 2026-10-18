@@ -108,6 +108,7 @@ pub enum Cmd {
 }
 
 pub(crate) struct Inner {
+    pub(crate) hub: crate::hub::Hub,
     pub(crate) store: Arc<RwLock<StoreData>>,
     pub(crate) cache: Cache,
     pub(crate) disk: DiskCache,
@@ -202,6 +203,7 @@ impl Core {
         };
         warm_store(&cache, &mut store);
         let inner = Arc::new(Inner {
+            hub: crate::hub::Hub::new(cfg.limiter.clone()),
             store: Arc::new(RwLock::new(store)),
             disk: DiskCache::new(&cfg.paths.thumbs_dir()),
             cache,
@@ -265,6 +267,7 @@ impl Core {
             rt.spawn(crate::chat::realtime_loop(inner.clone()));
             rt.spawn(crate::themes::watch_loop(inner.clone()));
             rt.spawn(crate::plugins::watch_loop(inner.clone()));
+            rt.spawn(crate::hub::revocation_loop(inner.clone()));
         }
         let core = Core {
             inner,

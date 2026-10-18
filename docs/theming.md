@@ -205,9 +205,11 @@ One PR per phase.
 The document is hub-ready: `id` + `version` for updates, a content hash for integrity, `author`
 becomes an account id, and previews draw from tokens so no images are uploaded.
 
-**Decide first:** `AGENTS.md` makes `bonsai-api` the only crate that touches the network, and it is
-the Roblox client. The hub needs a sibling crate (e.g. `hub-api`) under the same rules (no
-secrets in logs, shared rate limits) or an amended rule.
+The hub implementation uses `crates/bonsai-hub-api`, an explicitly permitted sibling
+transport with the machine's shared rate limiter and no Roblox cookies. The webview still has
+no remote network access. Settings and the Themes page link to `/hub`; installs reuse the theme
+import preview and conflict dialog. Publishing uses saved user themes, verified hub publisher
+ownership and immutable release versions. See [hub.md](hub.md) for local setup and release gates.
 
 ## Not doing
 

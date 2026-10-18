@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "@solidjs/router"
 import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, createSignal, ErrorBoundary, on, onCleanup, onMount, type ParentProps, Show } from "solid-js"
 import { NewChat } from "~/features/chat/NewChat"
+import { HubDialogs } from "~/features/hub/Dialogs"
 import { CommandPalette } from "~/features/palette/CommandPalette"
 import { ActionsDialog } from "~/features/plugins/ActionsDialog"
 import { AutomationDialog } from "~/features/plugins/AutomationDialog"
@@ -22,6 +23,7 @@ import {
   shortcutListener,
 } from "~/lib/commands/registry"
 import { setClockFormat, setFormatLocale, setRelativeDates } from "~/lib/format"
+import { registerHubCommands } from "~/lib/hub"
 import { commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
@@ -328,6 +330,7 @@ export function Layout(props: ParentProps) {
       "tab.reopen",
       onTab(() => tabActions.reopen()),
     ),
+    ...registerHubCommands(),
     ...registerThemeCommands({ visit: visitPath, prompt }),
   ]
   onCleanup(() => {
@@ -473,6 +476,7 @@ export function Layout(props: ParentProps) {
                   <div class="flex h-full flex-col">
                     <ShellAlerts />
                     <ChallengeDialog />
+                    <HubDialogs />
                     <ImportDialog />
                     <InstallDialog />
                     <ViewDialog />

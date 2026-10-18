@@ -48,3 +48,5 @@ pub use crate::core::{Cmd, Core, CoreConfig, Repaint};
 pub use account::{AccountMeta, ColorTag, Paths};
 pub use bonsai_api::{AccountId, Secret};
 pub use store::StoreData;
+
+pub mod hub;

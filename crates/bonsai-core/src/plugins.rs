@@ -60,7 +60,7 @@ pub fn action_refusal(registry: &Registry, key: &str) -> Option<String> {
         return Some("Not a command in this version of Bonsai.".into());
     };
     match registry.get(id).effect {
-        Effect::Read | Effect::Local => Some("Not an action plugins can run.".into()),
+        Effect::Read | Effect::Local | Effect::Hub => Some("Not an action plugins can run.".into()),
         Effect::Write(Tier::Account) => Some("Account control is never available to plugins.".into()),
         Effect::Write(_) => None,
     }
@@ -130,9 +130,30 @@ struct SavedFile {
     /// Accounts plugins may run tier 2 actions on without a click. Off by default.
     #[serde(default)]
     automation: Vec<AccountId>,
+    /// Known revoked hub releases. Retained offline and across reinstall attempts.
+    #[serde(default)]
+    revoked: BTreeMap<String, Vec<String>>,
 }
 
 impl SavedFile {
+    fn is_revoked(&self, manifest: &Manifest) -> bool {
+        self.revoked
+            .get(&manifest.id)
+            .is_some_and(|versions| versions.contains(&manifest.version))
+    }
+
+    fn remember_revocations(&mut self, releases: &[bonsai_hub_api::Revocation]) {
+        for release in releases {
+            if release.id.is_empty() || release.version.is_empty() {
+                continue;
+            }
+            let versions = self.revoked.entry(release.id.clone()).or_default();
+            if !versions.contains(&release.version) {
+                versions.push(release.version.clone());
+            }
+        }
+    }
+
     fn load(path: &Path) -> SavedFile {
         std::fs::read_to_string(path)
             .ok()
@@ -511,14 +532,19 @@ fn scan(dir: &Path, saved: &SavedFile) -> Vec<Scanned> {
         let read = read_manifest(&path);
         let id = read.as_ref().map(|m| m.id.clone()).unwrap_or(folder);
         let s = saved.plugins.get(&id);
-        let enabled = s.is_some_and(|s| s.enabled);
+        let enabled = s.is_some_and(|s| s.enabled) && !read.as_ref().is_ok_and(|m| saved.is_revoked(m));
         let taken = out.iter().any(|o| o.info.id == id);
         let (manifest, status) = match read {
             _ if taken => (None, Status::Failed("Another plugin has the same id.".into())),
             Err(e) => (None, Status::Failed(e)),
             Ok(m) => {
                 let more = asks_more(&m, s);
-                let status = if !enabled {
+                let status = if saved.is_revoked(&m) {
+                    Status::Failed(format!(
+                        "{} {} was revoked by the hub and cannot run. Install a newer reviewed release.",
+                        m.id, m.version
+                    ))
+                } else if !enabled {
                     Status::Off
                 } else if more.is_empty() {
                     Status::Loading
@@ -546,19 +572,32 @@ fn scan(dir: &Path, saved: &SavedFile) -> Vec<Scanned> {
 }
 
 impl Inner {
-    fn save_plugins(&self) {
+    pub(crate) fn revoked_plugin_warnings(&self) -> Vec<String> {
+        let p = self.plugins.lock();
+        p.entries.iter().filter_map(|e| {
+            let m = e.info.manifest.as_ref()?;
+            p.saved.is_revoked(m).then(|| format!("{} {} was revoked and is blocked from running. Install a newer reviewed release in Settings > Plugins.", m.id, m.version))
+        }).collect()
+    }
+
+    fn persist_plugins(&self) -> Result<(), String> {
         let saved = self.plugins.lock().saved.clone();
         let path = self.paths.plugins_file();
-        let r = serde_json::to_string_pretty(&saved)
-            .map_err(std::io::Error::other)
-            .and_then(|json| {
-                if let Some(p) = path.parent() {
-                    std::fs::create_dir_all(p)?;
-                }
-                std::fs::write(&path, json)
-            });
-        if let Err(e) = r {
-            tracing::warn!("writing plugins.json: {e}");
+        let json = serde_json::to_string_pretty(&saved).map_err(|e| e.to_string())?;
+        let write = || -> std::io::Result<()> {
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let temporary = path.with_extension("json.new");
+            std::fs::write(&temporary, json)?;
+            std::fs::rename(temporary, &path)
+        };
+        write().map_err(|e| format!("Could not save plugin settings: {e}"))
+    }
+
+    fn save_plugins(&self) {
+        if let Err(e) = self.persist_plugins() {
+            tracing::warn!("{e}");
         }
     }
 
@@ -580,6 +619,7 @@ impl Inner {
                 e.stamp == s.stamp
                     && e.info.enabled == s.info.enabled
                     && e.info.manifest == s.info.manifest
+                    && (!matches!(&s.info.status, Status::Failed(_)) || e.info.status == s.info.status)
                     && force != Force::One(&s.info.id)
             });
             if let (true, Some(mut e)) = (same, prev) {
@@ -1095,6 +1135,38 @@ pub(crate) async fn watch_loop(inner: Arc<Inner>) {
     }
 }
 
+/// Applies verified hub revocations under the same disk lock as installation/reload.
+pub(crate) async fn enforce_revocations(
+    inner: Arc<Inner>,
+    releases: Vec<bonsai_hub_api::Revocation>,
+) -> Result<(), String> {
+    let rt = inner.rt.clone();
+    rt.spawn_blocking(move || {
+        let _io = IO.lock();
+        let stopped: Vec<String> = {
+            let mut p = inner.plugins.lock();
+            p.saved.remember_revocations(&releases);
+            p.entries
+                .iter()
+                .filter_map(|e| {
+                    let m = e.info.manifest.as_ref()?;
+                    (e.info.enabled && p.saved.is_revoked(m))
+                        .then(|| format!("Blocked revoked plugin {} {}.", m.id, m.version))
+                })
+                .collect()
+        };
+        let persisted = inner.persist_plugins();
+        // Stop revoked workers even when the disk cannot persist the cache.
+        inner.sync_plugins(Force::None);
+        for message in stopped {
+            inner.toast(None, message, true);
+        }
+        persisted
+    })
+    .await
+    .map_err(|_| "Could not apply plugin revocations.".to_owned())?
+}
+
 /// Reads `plugins.json` and starts enabled plugins. Called once at start.
 pub(crate) fn load(inner: &Arc<Inner>) {
     inner.plugins.lock().saved = SavedFile::load(&inner.paths.plugins_file());
@@ -1360,6 +1432,12 @@ impl Core {
         let accounts: Vec<AccountId> = accounts.into_iter().filter(|a| known.contains(a)).collect();
         self.inner.plugin_job(move |inner| {
             let m = &pending.manifest;
+            if inner.plugins.lock().saved.is_revoked(m) {
+                if let Some(dir) = &pending.staged {
+                    let _ = remove_dir(dir);
+                }
+                return Err("This plugin release was revoked and cannot be installed.".into());
+            }
             let target = inner.paths.plugins_dir().join(&m.id);
             let copied = (|| {
                 if !pending.unpacked && pending.source != target {
@@ -1556,6 +1634,13 @@ impl Core {
     pub fn set_plugin_enabled(&self, id: &str, on: bool) -> Result<(), String> {
         let unreviewed = {
             let p = self.inner.plugins.lock();
+            if on
+                && p.entries.iter().any(|e| {
+                    e.info.id == id && e.info.manifest.as_ref().is_some_and(|m| p.saved.is_revoked(m))
+                })
+            {
+                return Err("This plugin release was revoked and cannot run.".into());
+            }
             p.entries.iter().any(|e| {
                 e.info.id == id
                     && e.info
@@ -1711,6 +1796,131 @@ mod tests {
             "id = \"x\"\nentry = \"main.luau\"\npermissions = [{perms}]\nactions = [{actions}]"
         ))
         .unwrap()
+    }
+
+    #[test]
+    fn revocations_are_version_scoped_and_survive_empty_refresh() {
+        let mut saved = SavedFile::default();
+        let mut m = manifest("", "");
+        m.version = "1.0.0".into();
+        let release = bonsai_hub_api::Revocation {
+            id: m.id.clone(),
+            version: m.version.clone(),
+            sha256: String::new(),
+        };
+        saved.remember_revocations(&[release.clone(), release]);
+        saved.remember_revocations(&[]);
+        assert!(saved.is_revoked(&m));
+        assert_eq!(saved.revoked[&m.id].len(), 1);
+        let mut newer = m.clone();
+        newer.version = "2.0.0".into();
+        assert!(!saved.is_revoked(&newer));
+        let restored: SavedFile = serde_json::from_str(&serde_json::to_string(&saved).unwrap()).unwrap();
+        assert!(restored.is_revoked(&m));
+    }
+
+    #[test]
+    fn revoked_running_plugin_stops_and_stays_blocked_after_restart() {
+        use crate::{CoreConfig, Paths, account::MemoryCookies, launcher::RecordingOpener};
+        let home = tempfile::tempdir().unwrap();
+        let paths = Paths::in_dir(home.path());
+        let dir = paths.plugins_dir().join("revoked-test");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join(MANIFEST),
+            "id = \"revoked-test\"\nversion = \"1.0.0\"\nentry = \"main.luau\"",
+        )
+        .unwrap();
+        std::fs::write(dir.join("main.luau"), "bonsai.command { id = 'hello', title = 'Hello', run = function() return { toast = 'hello' } end }").unwrap();
+        let mut saved = SavedFile::default();
+        saved.plugins.insert(
+            "revoked-test".into(),
+            Saved {
+                enabled: true,
+                ..Default::default()
+            },
+        );
+        std::fs::write(paths.plugins_file(), serde_json::to_string(&saved).unwrap()).unwrap();
+        let start = || {
+            Core::start(
+                CoreConfig {
+                    paths: Paths::in_dir(home.path()),
+                    base: bonsai_api::Base::Replay("http://127.0.0.1:9".into()),
+                    cookies: Arc::new(MemoryCookies::default()),
+                    opener: Arc::new(RecordingOpener::default()),
+                    limiter: Arc::new(bonsai_api::RateLimiter::default()),
+                    background: false,
+                    quick_poll: Duration::from_secs(5),
+                },
+                Arc::new(|| {}),
+            )
+        };
+        let core = start();
+        let wait_for = |core: &Core, running: bool| {
+            let since = std::time::Instant::now();
+            loop {
+                if core.plugins().iter().any(|p| {
+                    if running {
+                        matches!(p.status, Status::Running { .. })
+                    } else {
+                        matches!(&p.status, Status::Failed(e) if e.contains("revoked")) && !p.enabled
+                    }
+                }) {
+                    break;
+                }
+                assert!(
+                    since.elapsed() < Duration::from_secs(5),
+                    "plugin status did not change"
+                );
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        };
+        wait_for(&core, true);
+        assert!(!core.plugin_commands().is_empty());
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(enforce_revocations(
+            core.inner.clone(),
+            vec![bonsai_hub_api::Revocation {
+                id: "revoked-test".into(),
+                version: "1.0.0".into(),
+                sha256: String::new(),
+            }],
+        ))
+        .unwrap();
+        wait_for(&core, false);
+        assert!(core.plugin_commands().is_empty());
+        assert!(core.set_plugin_enabled("revoked-test", true).is_err());
+        core.reload_plugin("revoked-test").unwrap();
+        wait_for(&core, false);
+        drop(core);
+        let core = start();
+        wait_for(&core, false);
+        assert!(core.set_plugin_enabled("revoked-test", true).is_err());
+        // The same local install dialog cannot bypass the cached deny list.
+        let source = tempfile::tempdir().unwrap();
+        let reinstall = source.path().join("revoked-test");
+        copy_plugin(&dir, &reinstall).unwrap();
+        core.stage_plugin_install(reinstall.to_str().unwrap(), false)
+            .unwrap();
+        core.finish_plugin_install(Vec::new()).unwrap();
+        let since = std::time::Instant::now();
+        while !core
+            .store()
+            .toasts
+            .iter()
+            .any(|t| t.text.contains("cannot be installed"))
+        {
+            assert!(since.elapsed() < Duration::from_secs(5));
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        wait_for(&core, false);
+        // A new version can run with the existing granted permissions.
+        let text = std::fs::read_to_string(dir.join(MANIFEST))
+            .unwrap()
+            .replace("1.0.0", "1.0.1");
+        std::fs::write(dir.join(MANIFEST), text).unwrap();
+        core.reload_plugin("revoked-test").unwrap();
+        wait_for(&core, true);
     }
 
     #[test]

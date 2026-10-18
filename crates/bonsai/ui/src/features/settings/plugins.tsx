@@ -45,6 +45,12 @@ export function PluginsSection() {
         description="Plugins run in a sandbox with no access to your cookies, files or the network."
         actions={
           <>
+            <Button size="sm" onClick={() => run("nav.hub")}>
+              Browse hub
+            </Button>
+            <Button size="sm" onClick={() => run("hub.publish", JSON.stringify({ kind: "plugins" }))}>
+              Publish to hub
+            </Button>
             <Button size="sm" icon="plus" onClick={() => run("plugin.install")}>
               Install from folder
             </Button>

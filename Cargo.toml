@@ -17,6 +17,7 @@ todo = "warn"
 
 [workspace.dependencies]
 bonsai-api = { path = "crates/bonsai-api" }
+bonsai-hub-api = { path = "crates/bonsai-hub-api" }
 bonsai-core = { path = "crates/bonsai-core" }
 bonsai-plugin = { path = "crates/bonsai-plugin" }
 
