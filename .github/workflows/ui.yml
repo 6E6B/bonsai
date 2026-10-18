@@ -1,0 +1,44 @@
+name: UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/bonsai/ui/**"
+      - "!**.md"
+      - ".github/workflows/ui.yml"
+  pull_request:
+    paths:
+      - "crates/bonsai/ui/**"
+      - "!**.md"
+      - ".github/workflows/ui.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ui-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ui:
+    name: UI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: crates/bonsai/ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Typecheck, lint, test
+        run: bun run check
+      - name: Build
+        run: bun run build

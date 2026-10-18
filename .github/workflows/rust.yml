@@ -1,0 +1,136 @@
+# macOS minutes bill at 10x and Windows at 2x on private repos, so PRs run Linux only. Windows and
+# macOS run after a merge to main, or on any branch by hand (Actions > Rust > Run workflow).
+name: Rust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**"
+      - "!**.md"
+      - "!docs/**"
+      - "!LICENSE"
+      # The UI workflow covers the UI. Rust only writes bindings.ts.
+      - "!crates/bonsai/ui/**"
+      - "crates/bonsai/ui/src/lib/ipc/bindings.ts"
+      - "!.github/workflows/ui.yml"
+      - "!.github/workflows/release.yml"
+      - "!.github/dependabot.yml"
+  pull_request:
+    paths:
+      - "**"
+      - "!**.md"
+      - "!docs/**"
+      - "!LICENSE"
+      # The UI workflow covers the UI. Rust only writes bindings.ts.
+      - "!crates/bonsai/ui/**"
+      - "crates/bonsai/ui/src/lib/ipc/bindings.ts"
+      - "!.github/workflows/ui.yml"
+      - "!.github/workflows/release.yml"
+      - "!.github/dependabot.yml"
+  workflow_dispatch:
+
+# A new push cancels the old run, on main too: the next run tests a superset of it.
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  # No debug info: smaller caches and faster links. Backtraces still show function names.
+  CARGO_PROFILE_DEV_DEBUG: 0
+  RUST_BACKTRACE: 1
+  # Set for every cargo step in a job, so they share one build and one cache key.
+  RUSTFLAGS: -D warnings
+
+jobs:
+  # One job, not separate lint and test jobs: each job pays for its own runner setup, system
+  # packages and cache restore.
+  linux:
+    name: Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - id: setup
+        uses: ./.github/actions/setup
+        with:
+          cache-key: linux
+          fast-deps: true
+          bun: false
+
+      # tauri::generate_context! needs ui/dist to exist. The UI workflow builds the real one.
+      - name: Stub UI build
+        run: mkdir -p crates/bonsai/ui/dist && echo '<!doctype html>' > crates/bonsai/ui/dist/index.html
+
+      # The checks below run even if an earlier one failed, so one push reports every failure.
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Generated API code up to date
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: cargo xtask codegen --check
+
+      - name: Clippy
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - id: test
+        name: Test
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        run: cargo test --workspace --locked
+
+      # `cargo test` rewrites bindings.ts; it must match what is committed.
+      - name: Bindings up to date
+        if: ${{ !cancelled() && steps.test.outcome == 'success' }}
+        run: |
+          git diff --exit-code -- crates/bonsai/ui/src/lib/ipc/bindings.ts || {
+            echo "::error::bindings.ts is stale. Run 'cargo test -p bonsai' and commit it."
+            exit 1
+          }
+
+  # Skipped on PRs, and when Linux fails: most failures are not platform-specific.
+  platforms:
+    name: ${{ matrix.name }}
+    needs: linux
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            timeout: 30
+          - name: macOS
+            os: macos-latest
+            timeout: 20
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ matrix.timeout }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: test
+          fast-deps: true
+          bun: false
+
+      - name: Stub UI build
+        run: mkdir -p crates/bonsai/ui/dist && echo '<!doctype html>' > crates/bonsai/ui/dist/index.html
+
+      - name: Test
+        run: cargo test --workspace --locked
