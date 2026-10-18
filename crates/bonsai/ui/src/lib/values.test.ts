@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { ValueRow, ValueTag } from "~/lib/ipc/bindings"
-import { demandLevel, hasTag, rapGap, shapeValues, type ValueFilter, worth } from "./values"
+import { demandLevel, hasTag, rapGap, rolimonsFailed, shapeValues, type ValueFilter, worth } from "./values"
 
 const tag = (t: Partial<ValueTag> = {}): ValueTag => ({
   value: null,
@@ -26,6 +26,13 @@ const all: ValueFilter = { query: "", version: "all", show: "all", sort: "worth"
 const ids = (r: ValueRow[]) => r.map((x) => x.id)
 
 describe("values", () => {
+  it("only reports a Rolimons failure when enabled and no data is available", () => {
+    expect(rolimonsFailed(true, "Cloudflare returned HTML", false)).toBe(true)
+    expect(rolimonsFailed(true, "Cloudflare returned HTML", true)).toBe(false)
+    expect(rolimonsFailed(true, null, false)).toBe(false)
+    expect(rolimonsFailed(false, "Cloudflare returned HTML", false)).toBe(false)
+  })
+
   it("worth is the value, else RAP", () => {
     expect(worth(tag({ value: 10 }), 5)).toBe(10)
     expect(worth(tag(), 5)).toBe(5)
