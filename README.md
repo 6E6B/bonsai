@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="crates/bonsai/icons/128x128.png" width="80" alt="">
-
-# Bonsai
-
-Desktop client for Roblox.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/bonsai-banner-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/images/bonsai-banner-light.png">
+  <img src="docs/images/bonsai-banner-light.png" width="100%" alt="Bonsai: A keyboard-first desktop client for Roblox.">
+</picture>
 
 [Releases](https://github.com/6E6B/bonsai/releases) · Windows, macOS, Linux
 
