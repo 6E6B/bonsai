@@ -31,15 +31,21 @@
     scrollbar-width: thin;
   }
 
-  /* Rounded window corners on Linux (`app/frame.ts`). The page is clipped as a whole, so
-   * popovers and dialog backdrops stay inside the corners too. */
+  /* Rounded window corners on Linux (`app/frame.ts`). Only the app and the dialog backdrop,
+   * the one layer that covers the whole window, are rounded: clipping the whole page costs a
+   * mask on every repaint in WebKitGTK. */
   :root[data-frame="rounded"],
   :root[data-frame="rounded"] body {
     background: transparent;
   }
 
-  :root[data-frame="rounded"] body {
-    clip-path: inset(0 round var(--window-radius));
+  :root[data-frame="rounded"] #root {
+    border-radius: var(--window-radius);
+    overflow: hidden;
+  }
+
+  :root[data-frame="rounded"] [data-component="dialog-overlay"] {
+    border-radius: var(--window-radius);
   }
 
   /* `scrollbar-width` is not inherited; every scroller gets the thin one. */
