@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "tauri": "cd .. && tauri",
     "app": "cd .. && tauri dev",
+    "icons": "bun scripts/generate-icons.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "fix": "biome check --write .",
