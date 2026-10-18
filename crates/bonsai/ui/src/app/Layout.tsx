@@ -29,6 +29,7 @@ import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/t
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
+import { useWindowFrame } from "./frame"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
 import { ApproveCode } from "./shell/ApproveCode"
@@ -389,6 +390,7 @@ export function Layout(props: ParentProps) {
     ),
   )
   const appearance = useAppearance()
+  useWindowFrame(zoom)
   // Display settings, applied whenever they change.
   createEffect(() => {
     const root = document.documentElement.dataset
