@@ -87,7 +87,7 @@ export const DEFAULT_SEEDS: Record<Base, Seeds> = {
   dark: {
     background: "#1a1a1a",
     foreground: "#fafafa",
-    accent: "#3d7dff",
+    accent: "#4ace51",
     success: "#3fbf7f",
     warning: "#e8a23a",
     danger: "#ef5a5a",
@@ -100,7 +100,7 @@ export const DEFAULT_SEEDS: Record<Base, Seeds> = {
   light: {
     background: "#ffffff",
     foreground: "#161616",
-    accent: "#2563eb",
+    accent: "#4ace51",
     success: "#16803c",
     warning: "#b25e09",
     danger: "#d92d2d",

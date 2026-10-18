@@ -40,13 +40,13 @@
   --color-line-strong: #ffffff33;
 
   /* ── Accent and state ── */
-  --color-accent: #3d7dff;
-  --color-accent-hover: #5a91ff;
-  --color-accent-soft: #3d7dff29;
+  --color-accent: #4ace51;
+  --color-accent-hover: #65d56b;
+  --color-accent-soft: #4ace5129;
   --color-verified: #4d94ff; /* verified names; same blue as the fill in assets/verified-badge.svg */
-  --color-on-accent: #ffffff; /* text on accent, danger and success fills */
-  --color-contrast: #3d7dff; /* primary button fill, lit by --sheen; the accent unless a theme overrides it */
-  --color-focus: #5a91ff;
+  --color-on-accent: #000000; /* text on accent, danger and success fills */
+  --color-contrast: #4ace51; /* primary button fill, lit by --sheen; the accent unless a theme overrides it */
+  --color-focus: #65d56b;
   --color-success: #3fbf7f;
   --color-success-soft: #3fbf7f24;
   --color-warning: #e8a23a;
@@ -174,12 +174,12 @@
     --color-line: #0000001a;
     --color-line-strong: #00000033;
 
-    --color-accent: #2563eb;
-    --color-accent-hover: #1d4fd8;
-    --color-accent-soft: #2563eb1f;
-    --color-on-accent: #ffffff;
-    --color-contrast: #2563eb;
-    --color-focus: #2563eb;
+    --color-accent: #4ace51;
+    --color-accent-hover: #3faf45;
+    --color-accent-soft: #4ace511f;
+    --color-on-accent: #000000;
+    --color-contrast: #4ace51;
+    --color-focus: #4ace51;
     --color-success: #16803c;
     --color-success-soft: #16803c1a;
     --color-warning: #b25e09;

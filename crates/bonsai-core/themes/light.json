@@ -6,5 +6,5 @@
   "version": "1.0.0",
   "base": "light",
   "seeds": { "font": "inter" },
-  "tokens": { "color-accent-hover": "#1d4fd8", "color-danger-hover": "#c22424" }
+  "tokens": { "color-danger-hover": "#c22424" }
 }
