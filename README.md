@@ -20,8 +20,11 @@ bonsai/
 ## Useful Commands
 
 - **Check build**: `cargo check`
-- **Run tests**: `cargo test`
+- **Run tests**: `cargo nextest run --workspace --locked`
+- **Run doctests**: `cargo test --workspace --locked --doc`
 - **Regenerate API wrappers**: `cargo xtask codegen`
+
+Install [cargo-nextest](https://nexte.st/docs/installation/) 0.9.148 to match CI. The source-install option is `cargo install cargo-nextest --version 0.9.148 --locked`. Nextest runs the existing Rust tests; doctests still use Cargo. `cargo test --workspace --locked` remains available without nextest.
 
 ## Desktop app
 
@@ -40,7 +43,7 @@ See [`AGENTS.md`](AGENTS.md) for the architecture and rules.
 
 `.github/workflows/ui.yml` runs `bun run check` and `bun run build` on PRs and pushes to `main` that touch `crates/bonsai/ui/`.
 
-`.github/workflows/rust.yml` runs on PRs and pushes to `main` that touch anything else: `cargo test` on Linux, Windows and macOS, and on Linux `cargo fmt`, `cargo clippy` and checks that `bindings.ts` and generated API code are up to date.
+`.github/workflows/rust.yml` runs on PRs and pushes to `main` that touch anything else: `cargo nextest run --workspace --locked --profile ci` and `cargo test --workspace --locked --doc` on Linux, Windows and macOS, and on Linux `cargo fmt`, `cargo clippy` and checks that `bindings.ts` and generated API code are up to date.
 
 `.github/workflows/release.yml` builds installers: `.deb`, `.AppImage` and `.rpm` on Linux, NSIS `.exe` and `.msi` on Windows, and a universal `.dmg` on macOS. Run it by hand from the Actions tab to get them as artifacts, or push a tag matching the workspace version (`git tag v0.1.0 && git push origin v0.1.0`) to also create a draft GitHub release. Builds are not code-signed yet.
 
