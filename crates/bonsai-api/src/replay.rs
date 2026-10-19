@@ -95,7 +95,7 @@ impl Replay {
         let server = MockServer::start().await;
         for name in names {
             for i in load(name).interactions {
-                mount(&server, &i).await;
+                mount(&server, &i, false).await;
             }
         }
         Replay { server }
@@ -104,9 +104,15 @@ impl Replay {
     pub async fn from_fixture(f: &Fixture) -> Replay {
         let server = MockServer::start().await;
         for i in &f.interactions {
-            mount(&server, i).await;
+            mount(&server, i, false).await;
         }
         Replay { server }
+    }
+
+    /// Keep answering one interaction, ahead of the fixture's one-shot responses.
+    /// Useful for a pending state that must last until the test performs an action.
+    pub async fn repeat(&self, interaction: &Interaction) {
+        mount(&self.server, interaction, true).await;
     }
 
     /// A client builder pointed at this server, with fast retries.
@@ -146,7 +152,7 @@ impl wiremock::Match for HasQuery {
     }
 }
 
-async fn mount(server: &MockServer, i: &Interaction) {
+async fn mount(server: &MockServer, i: &Interaction, repeat: bool) {
     let r = &i.request;
     // Like Roblox: a write without a CSRF token gets 403 plus a token, whatever order
     // concurrent requests arrive in. Lower priority than recorded interactions.
@@ -194,7 +200,12 @@ async fn mount(server: &MockServer, i: &Interaction) {
         Value::String(s) if !json => t = t.set_body_string(s.clone()),
         b => t = t.set_body_json(b),
     }
-    m.respond_with(t).up_to_n_times(1).mount(server).await;
+    let mock = m.respond_with(t);
+    if repeat {
+        mock.with_priority(1).mount(server).await;
+    } else {
+        mock.up_to_n_times(1).mount(server).await;
+    }
 }
 
 const CSRF_PLACEHOLDER: &str = "csrf-token-redacted";
