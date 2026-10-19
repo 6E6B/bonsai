@@ -4,18 +4,19 @@ import { runBackend } from "~/lib/commands/registry"
 import { Button } from "~/lib/ui"
 import inviteCode from "../../../../../../discord-invite.txt?raw"
 
-/** The bundled invite code is shared with the native Discord launcher. */
+/** The bundled invite code is shared with the browser and clipboard actions. */
 const available = /^[A-Za-z0-9_-]+$/.test(inviteCode.trim())
+type InviteAction = "help.discord_browser" | "help.discord_copy"
 
 export function DiscordDialog() {
-  const [opening, setOpening] = createSignal(false)
-  const open = async (browser: boolean) => {
-    if (opening() || !available || !isTauri()) return
-    setOpening(true)
+  const [pending, setPending] = createSignal<InviteAction | null>(null)
+  const act = async (id: InviteAction) => {
+    if (pending() || !available || !isTauri()) return
+    setPending(id)
     try {
-      await runBackend(browser ? "help.discord_browser" : "help.discord_open")
+      await runBackend(id)
     } finally {
-      setOpening(false)
+      setPending(null)
     }
   }
   return (
@@ -25,17 +26,23 @@ export function DiscordDialog() {
         <p class="text-xs text-fg-muted">Invite coming soon.</p>
       </Show>
       <div class="flex items-center justify-end gap-2">
-        <Button variant="ghost" size="sm" disabled={!available || opening()} onClick={() => void open(true)}>
-          Open in browser
+        <Button
+          variant="ghost"
+          icon="copy"
+          disabled={!available || pending() !== null}
+          loading={pending() === "help.discord_copy"}
+          onClick={() => void act("help.discord_copy")}
+        >
+          Copy invite
         </Button>
         <Button
           variant="primary"
-          icon="discord"
-          disabled={!available}
-          loading={opening()}
-          onClick={() => void open(false)}
+          icon="external"
+          disabled={!available || pending() !== null}
+          loading={pending() === "help.discord_browser"}
+          onClick={() => void act("help.discord_browser")}
         >
-          Join Discord
+          Open in browser
         </Button>
       </div>
     </div>
