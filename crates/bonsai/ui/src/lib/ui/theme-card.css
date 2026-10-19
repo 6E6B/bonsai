@@ -1,5 +1,11 @@
 @layer components {
   [data-component="theme-card"] {
+    position: relative;
+    min-width: 0;
+  }
+
+  [data-component="theme-card"] > [data-slot="trigger"] {
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -14,21 +20,17 @@
     cursor: default;
   }
 
-  /* The preview's own tokens are set inline, so everything below draws in that theme. */
+  /* Keep the frame in the host theme. Only the miniature window receives preview tokens. */
   [data-component="theme-card"] [data-slot="preview"] {
     display: flex;
-    height: 84px;
+    height: 112px;
     margin-bottom: 4px;
     overflow: hidden;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-lg);
     background: var(--color-canvas);
-    box-shadow: var(--shadow-raised);
+    box-shadow: var(--shadow-media);
     font-family: var(--font-sans);
-  }
-
-  [data-component="theme-card"]:hover [data-slot="preview"] {
-    border-color: var(--color-line-strong);
   }
 
   [data-component="theme-card"][data-selected] [data-slot="preview"] {
@@ -36,13 +38,29 @@
     outline-offset: 1px;
   }
 
-  [data-component="theme-card"]:focus-visible {
+  [data-component="theme-card"] > [data-slot="trigger"]:focus-visible {
     outline: none;
   }
 
-  [data-component="theme-card"]:focus-visible [data-slot="preview"] {
+  [data-component="theme-card"] > [data-slot="trigger"]:focus-visible [data-slot="preview"] {
     outline: 2px solid var(--color-focus);
     outline-offset: 1px;
+  }
+
+  [data-component="theme-card"] [data-slot="window"] {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    background: var(--color-canvas);
+    font-family: var(--font-sans);
+  }
+
+  [data-component="theme-card"] > [data-slot="actions"] {
+    position: absolute;
+    inset-inline-end: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
   }
 
   [data-component="theme-card"] [data-slot="side"] {
@@ -148,5 +166,13 @@
     line-height: var(--text-xs--line-height);
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  [data-component="theme-card"] > [data-slot="trigger"]:hover [data-slot="preview"] {
+    border-color: var(--color-line-strong);
+  }
+
+  [data-component="theme-card"][data-has-actions] [data-slot="name"],
+  [data-component="theme-card"][data-has-actions] [data-slot="detail"] {
+    padding-inline-end: var(--control-sm);
   }
 }

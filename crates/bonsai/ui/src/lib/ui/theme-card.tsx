@@ -1,4 +1,4 @@
-import { type JSX, Show } from "solid-js"
+import { children, type JSX, Show } from "solid-js"
 
 export interface ThemeCardProps {
   name: string
@@ -8,6 +8,8 @@ export interface ThemeCardProps {
   tokens: Record<string, string>
   selected?: boolean
   onClick?: () => void
+  /** Optional controls beside the caption, outside the theme selection button. */
+  actions?: JSX.Element
   class?: string
 }
 
@@ -16,44 +18,55 @@ export interface ThemeCardProps {
  * preview as custom properties, so the preview uses the same token names as the app.
  */
 export function ThemeCard(props: ThemeCardProps) {
+  const actions = children(() => props.actions)
   const vars = (): JSX.CSSProperties => {
     const out: JSX.CSSProperties = {}
     for (const [name, value] of Object.entries(props.tokens)) out[`--${name}`] = value
     return out
   }
   return (
-    <button
-      type="button"
+    <div
       data-component="theme-card"
       class={props.class}
-      aria-pressed={props.selected ?? false}
       data-selected={props.selected ? "" : undefined}
-      onClick={() => props.onClick?.()}
+      data-has-actions={actions() ? "" : undefined}
     >
-      <span data-slot="preview" style={vars()} aria-hidden="true">
-        <span data-slot="side">
-          <span data-slot="dot" data-tone="accent" />
-          <span data-slot="dot" />
-          <span data-slot="dot" />
-        </span>
-        <span data-slot="canvas">
-          <span data-slot="panel">
-            <span data-slot="line" />
-            <span data-slot="line" data-tone="muted" />
-            <span data-slot="row">
-              <span data-slot="fill" />
-              <span data-slot="control" />
-              <span data-slot="dot" data-tone="success" />
-              <span data-slot="dot" data-tone="warning" />
-              <span data-slot="dot" data-tone="danger" />
+      <button
+        type="button"
+        data-slot="trigger"
+        aria-pressed={props.selected ?? false}
+        onClick={() => props.onClick?.()}
+      >
+        <span data-slot="preview" aria-hidden="true">
+          <span data-slot="window" style={vars()}>
+            <span data-slot="side">
+              <span data-slot="dot" data-tone="accent" />
+              <span data-slot="dot" />
+              <span data-slot="dot" />
+            </span>
+            <span data-slot="canvas">
+              <span data-slot="panel">
+                <span data-slot="line" />
+                <span data-slot="line" data-tone="muted" />
+                <span data-slot="row">
+                  <span data-slot="fill" />
+                  <span data-slot="control" />
+                  <span data-slot="dot" data-tone="success" />
+                  <span data-slot="dot" data-tone="warning" />
+                  <span data-slot="dot" data-tone="danger" />
+                </span>
+              </span>
             </span>
           </span>
         </span>
-      </span>
-      <span data-slot="name">{props.name}</span>
-      <Show when={props.detail}>
-        <span data-slot="detail">{props.detail}</span>
+        <span data-slot="name">{props.name}</span>
+        <Show when={props.detail}>
+          <span data-slot="detail">{props.detail}</span>
+        </Show>
+      </button>
+      <Show when={actions()}>
+        <span data-slot="actions">{actions()}</span>
       </Show>
-    </button>
+    </div>
   )
 }

@@ -244,6 +244,14 @@ export default function Components() {
               detail={t.detail}
               tokens={t.tokens}
               selected={themeCard() === t.name}
+              actions={
+                <IconButton
+                  size="sm"
+                  icon="edit"
+                  label={`Edit ${t.name}`}
+                  onClick={() => showToast(`Edit ${t.name}`)}
+                />
+              }
               onClick={() => setThemeCard(t.name)}
             />
           )}
