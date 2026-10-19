@@ -1,4 +1,4 @@
-//! WebKitGTK 2.54 refuses to show `thumb:`, `bg:` and the other custom-scheme URLs on an
+//! WebKitGTK 2.54 refuses to show `thumb:`, `bg:`, `wikiimg:` and the other custom-scheme URLs on an
 //! `http:` page ("Unsafe attempt to load URL ... Domains, protocols and ports must match"), so
 //! under `tauri dev`, where the page comes from the Vite server, no image loads. Built apps load
 //! from `tauri://localhost` and are not affected. Putting the schemes on the webview's CORS
@@ -16,6 +16,7 @@ pub fn allow(w: &WebviewWindow) -> Result<(), String> {
             crate::bg::SCHEME,
             crate::asset::SCHEME,
             crate::font::SCHEME,
+            crate::wikiimg::SCHEME,
         ]
         .iter()
         .map(|s| format!("{s}://*/*"))

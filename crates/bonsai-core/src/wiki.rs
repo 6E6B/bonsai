@@ -3,20 +3,30 @@
 //! until the user turns it on, and every article shows its source and license (CC BY-SA).
 //!
 //! The page's HTML is parsed here and only plain text with `[[Title|label]]` links leaves this
-//! module, so no markup, scripts, styles or remote images from Fandom ever reach the webview.
+//! module, so no markup, scripts or styles from Fandom ever reach the webview. Images leave as
+//! paths on Fandom's image host, which the app serves over its own protocol after fetching
+//! them here ([`Core::wiki_image`]); the webview never loads them from Fandom.
 //! The request goes out with the anonymous client, and the transport never sends Roblox
 //! credentials to a non-Roblox host anyway.
+//!
+//! Experiences with a wiki of their own on Fandom (jailbreak.fandom.com) are read the same way.
+//! Their articles are titled the way MediaWiki links between wikis, `w:c:jailbreak:Torpedo`,
+//! and `w:c:jailbreak:` is that wiki's main page.
 
 use std::collections::BTreeSet;
 
 use bonsai_api::Error;
+/// The Roblox Wiki's name on Fandom; other wikis are named by their subdomain.
+pub use bonsai_api::fandom::ROBLOX;
+use bonsai_api::fandom::{self as wikis, IMAGE_HOST};
 use bonsai_api::generated::roblox_fandom_com::undocumented as fandom;
 use dom_query::{Document, NodeRef};
 use serde::{Deserialize, Serialize};
 
-use crate::Core;
 use crate::res::{Key, Res};
 use crate::resolve::{Pasted, resolve};
+use crate::{Core, thumbs};
+use tokio::sync::oneshot;
 
 /// Shown under every article.
 pub const SOURCE: &str = "Roblox Wiki";
@@ -35,6 +45,12 @@ pub const PLAYER: &str = "Player:";
 /// Main, Catalog (112) and Player (114), from the wiki's `meta=siteinfo` on 2026-10-19. Talk,
 /// user, blog and template pages are left out of search.
 const SEARCH_NAMESPACES: &str = "0|112|114";
+/// Other wikis: articles only.
+const OTHER_NAMESPACES: &str = "0";
+/// How a title names an article on another wiki: `w:c:jailbreak:Torpedo`.
+pub const OTHER_WIKI: &str = "w:c:";
+/// Smaller images are icons beside text, not pictures.
+const MIN_IMAGE: u32 = 40;
 
 /// One block of article text. Text is plain with `[[Title]]` or `[[Title|label]]` links to
 /// other articles on the same wiki.
@@ -56,6 +72,34 @@ pub enum Block {
     Note {
         text: String,
     },
+    /// A picture with its caption, or a gallery of them.
+    Images {
+        images: Vec<Image>,
+    },
+}
+
+/// A picture in an article.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Image {
+    /// Path and query on [`IMAGE_HOST`], without the leading `/`.
+    pub src: String,
+    /// With links, like block text.
+    pub caption: String,
+    /// The size the article shows it at; 0 when it didn't say.
+    pub width: u32,
+    pub height: u32,
+}
+
+/// Another Fandom wiki a notice in the article points to as the place to read more, like the
+/// Roblox Wiki's "This experience has a dedicated wiki" box.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct OtherWiki {
+    /// Its subdomain: `jailbreak`.
+    pub wiki: String,
+    /// What the link calls it: "Jailbreak Wiki".
+    pub name: String,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -93,8 +137,12 @@ pub enum RobloxRef {
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Article {
-    /// After redirects: what the wiki calls the page.
+    /// After redirects: what the wiki calls the page, `w:c:<wiki>:` first on another wiki.
     pub title: String,
+    /// The wiki's name when it isn't the Roblox Wiki ("Jailbreak Wiki").
+    pub site: String,
+    /// The wiki's main page.
+    pub main: bool,
     pub revision: u64,
     /// Text before the first heading.
     pub lead: Vec<Block>,
@@ -108,6 +156,13 @@ pub struct Article {
     /// Usernames the infobox links by name (`users/profile?username=`), lowercase. Player
     /// articles link profiles this way rather than by id.
     pub usernames: Vec<String>,
+    /// The infobox picture.
+    pub image: Option<Image>,
+    /// Other Fandom wikis the article sends readers to, such as an experience's own.
+    pub wikis: Vec<OtherWiki>,
+    /// Every link to another site in the text, as written there (`[[https://…|label]]`).
+    /// Only these open from the article ([`Core::open_wiki_link`]).
+    pub links: Vec<String>,
 }
 
 impl Article {
@@ -225,9 +280,32 @@ pub fn is_about(article: &Article, about: &About) -> bool {
     }
 }
 
+/// The wiki a title is on and the title there: `w:c:jailbreak:Torpedo` → (`jailbreak`,
+/// `Torpedo`), `Catalog:Dominus Infernus` → (`roblox`, the same).
+pub fn split_title(title: &str) -> (&str, &str) {
+    if let Some(rest) = title.strip_prefix(OTHER_WIKI)
+        && let Some((wiki, t)) = rest.split_once(':')
+        && wikis::valid_wiki(wiki)
+    {
+        return (wiki, t.trim());
+    }
+    (ROBLOX, title)
+}
+
+/// The other way round: `w:c:jailbreak:Torpedo`, or the bare title on the Roblox Wiki.
+pub fn join_title(wiki: &str, title: &str) -> String {
+    if wiki == ROBLOX {
+        title.to_owned()
+    } else {
+        format!("{OTHER_WIKI}{wiki}:{title}")
+    }
+}
+
 /// `item`, `game`, `player` or `page`, from the title alone.
 pub fn kind_of(title: &str) -> &'static str {
-    if title.starts_with(CATALOG) {
+    if split_title(title).0 != ROBLOX {
+        "page"
+    } else if title.starts_with(CATALOG) {
         "item"
     } else if let Some(rest) = title.strip_prefix(PLAYER) {
         if rest.contains('/') { "game" } else { "player" }
@@ -240,7 +318,9 @@ pub fn kind_of(title: &str) -> &'static str {
 
 /// The article's address on the site.
 pub fn site_url(title: &str) -> String {
-    format!("https://{}/wiki/{}", fandom::HOST, path_title(title))
+    let (wiki, t) = split_title(title);
+    let host = wikis::host(wiki).unwrap_or(fandom::HOST);
+    format!("https://{host}/wiki/{}", path_title(t))
 }
 
 /// A title as MediaWiki puts it in a path: underscores for spaces, the rest percent-encoded.
@@ -303,25 +383,33 @@ impl Core {
         last
     }
 
-    /// Search results for `query` among articles and items, best match first.
-    pub fn wiki_search(&self, query: &str) -> Res<Vec<Hit>> {
+    /// Search results for `query` on `wiki` (`roblox` for the Roblox Wiki, where items and
+    /// players are searched too), best match first.
+    pub fn wiki_search(&self, wiki: &str, query: &str) -> Res<Vec<Hit>> {
         let q = query.split_whitespace().collect::<Vec<_>>().join(" ");
-        if !self.wiki_enabled() || q.is_empty() {
+        let wiki = if wiki.is_empty() { ROBLOX } else { wiki }.to_owned();
+        if !self.wiki_enabled() || q.is_empty() || wikis::host(&wiki).is_none() {
             return Res::default();
         }
         self.inner.res(
-            Key::shared("wiki_search", q.to_lowercase()),
+            Key::shared("wiki_search", format!("{wiki}:{}", q.to_lowercase())),
             SEARCH_AGE,
             move |f| async move {
-                let r = fandom::action_api(
+                let namespaces = if wiki == ROBLOX {
+                    SEARCH_NAMESPACES
+                } else {
+                    OTHER_NAMESPACES
+                };
+                let r = wikis::action_api_on(
                     &f.client,
+                    &wiki,
                     &fandom::ActionApiParams {
                         action: "query".into(),
                         format: "json".into(),
                         formatversion: Some("2".into()),
                         list: Some("search".into()),
                         srsearch: Some(q),
-                        srnamespace: Some(SEARCH_NAMESPACES.into()),
+                        srnamespace: Some(namespaces.into()),
                         srlimit: Some(SEARCH_LIMIT),
                         srprop: Some("snippet|timestamp".into()),
                         ..Default::default()
@@ -331,29 +419,139 @@ impl Core {
                 if let Some(e) = r.error {
                     return Err(api_error(e));
                 }
-                Ok(hits(r.query.and_then(|q| q.search).unwrap_or_default()))
+                Ok(hits(&wiki, r.query.and_then(|q| q.search).unwrap_or_default()))
             },
         )
     }
 
     /// Opens the article on the wiki's site in the browser. Built here from the wiki's host,
-    /// so the opener only ever gets a link to that one site.
+    /// so the opener only ever gets a link to a Fandom wiki.
     pub fn open_wiki_site(&self, title: &str) -> Result<(), String> {
         if title.trim().is_empty() {
             return Err("Which article?".into());
         }
         self.open_built_link(&site_url(title))
     }
+
+    /// Opens `url`, a link in the text of the article called `title`, in the browser. Only
+    /// links the saved article has open, so the UI can't open just any address.
+    pub fn open_wiki_link(&self, title: &str, url: &str) -> Result<(), String> {
+        let page = self.wiki_page(title);
+        let known = page
+            .data
+            .as_ref()
+            .and_then(|p| p.article.as_ref())
+            .is_some_and(|a| a.links.iter().any(|l| l == url));
+        if !known {
+            return Err("That link isn't in the article.".into());
+        }
+        self.open_built_link(url)
+    }
+
+    /// An article picture's bytes, from disk or Fandom, for the `wikiimg://` protocol. `src` is
+    /// an [`Image::src`]. `None` while the wiki is off or when Fandom won't serve it.
+    pub fn wiki_image(&self, src: &str) -> oneshot::Receiver<Option<thumbs::Image>> {
+        let (tx, rx) = oneshot::channel();
+        let url = image_url(src).filter(|_| self.wiki_enabled());
+        let inner = self.inner.clone();
+        self.inner.rt.spawn(async move {
+            let Some(url) = url else {
+                let _ = tx.send(None);
+                return;
+            };
+            let bytes = match inner.disk.get(&url) {
+                Some(b) => Some(b),
+                None => match inner.anon.fetch_wiki_image(&url).await {
+                    Ok(b) => {
+                        inner.disk.put(&url, &b);
+                        Some(b)
+                    }
+                    Err(e) => {
+                        tracing::debug!("wiki image: {e}");
+                        None
+                    }
+                },
+            };
+            let _ = tx.send(bytes.and_then(sniff_image));
+        });
+        rx
+    }
+}
+
+/// The address of an [`Image::src`] on Fandom's image host. `None` for anything that would
+/// leave that host.
+pub fn image_url(src: &str) -> Option<String> {
+    if src.is_empty()
+        || src.starts_with('/')
+        || src.contains("..")
+        || src.contains(['\\', '@', '#'])
+        || src.chars().any(|c| c.is_whitespace() || c.is_control())
+    {
+        return None;
+    }
+    let url = format!("https://{IMAGE_HOST}/{src}");
+    let parsed = url::Url::parse(&url).ok()?;
+    (parsed.host_str() == Some(IMAGE_HOST) && parsed.port().is_none()).then_some(url)
+}
+
+/// Like [`thumbs::sniff`], with GIFs too: wikis have animated ones.
+fn sniff_image(bytes: Vec<u8>) -> Option<thumbs::Image> {
+    match image::guess_format(&bytes).ok()? {
+        image::ImageFormat::Gif => Some(thumbs::Image {
+            mime: "image/gif",
+            bytes,
+        }),
+        _ => thumbs::sniff(bytes),
+    }
 }
 
 async fn fetch_page(client: &bonsai_api::Client, title: &str) -> Result<Page, Error> {
-    let r = fandom::action_api(
+    let (wiki, local) = split_title(title);
+    // Another wiki: its name for the byline, and its main page when no title is given.
+    let (site, page, mainpage) = if wiki == ROBLOX {
+        (String::new(), local.to_owned(), String::new())
+    } else {
+        let r = wikis::action_api_on(
+            client,
+            wiki,
+            &fandom::ActionApiParams {
+                action: "query".into(),
+                format: "json".into(),
+                formatversion: Some("2".into()),
+                meta: Some("siteinfo".into()),
+                siprop: Some("general".into()),
+                ..Default::default()
+            },
+        )
+        .await;
+        // Fandom answers 404 for a wiki that doesn't exist.
+        let r = match r {
+            Err(Error::Status { status: 404, .. }) => return Ok(Page::default()),
+            r => r?,
+        };
+        if let Some(e) = r.error {
+            return Err(api_error(e));
+        }
+        let g = r.query.and_then(|q| q.general).unwrap_or_default();
+        let main = g.mainpage.unwrap_or_default();
+        let page = if local.is_empty() {
+            main.clone()
+        } else {
+            local.to_owned()
+        };
+        if page.is_empty() {
+            return Ok(Page::default());
+        }
+        (g.sitename.unwrap_or_default(), page, main)
+    };
+    let r = wikis::action_api_on(
         client,
+        wiki,
         &fandom::ActionApiParams {
             action: "parse".into(),
             format: "json".into(),
             formatversion: Some("2".into()),
-            page: Some(title.to_owned()),
+            page: Some(page.clone()),
             prop: Some("text|categories|revid|displaytitle".into()),
             redirects: Some("1".into()),
             disableeditsection: Some("1".into()),
@@ -379,8 +577,11 @@ async fn fetch_page(client: &bonsai_api::Client, title: &str) -> Result<Page, Er
         .filter_map(|c| c.category)
         .map(|c| c.replace('_', " "))
         .collect();
-    let mut a = parse_html(&p.text.unwrap_or_default());
-    a.title = p.title.unwrap_or_else(|| title.to_owned());
+    let mut a = parse_html_on(wiki, &p.text.unwrap_or_default());
+    let found = p.title.unwrap_or(page);
+    a.main = !mainpage.is_empty() && found == mainpage;
+    a.title = join_title(wiki, &found);
+    a.site = site;
     a.revision = p.revid.unwrap_or(0).max(0) as u64;
     a.categories = categories;
     Ok(Page { article: Some(a) })
@@ -393,12 +594,18 @@ fn api_error(e: fandom::ActionError) -> Error {
     ))
 }
 
-/// Keeps articles, items and players, in case the wiki returns other pages anyway.
-fn hits(raw: Vec<fandom::SearchHit>) -> Vec<Hit> {
+/// Keeps articles (and on the Roblox Wiki items and players), in case the wiki returns other
+/// pages anyway.
+fn hits(wiki: &str, raw: Vec<fandom::SearchHit>) -> Vec<Hit> {
     raw.into_iter()
         .filter_map(|h| {
             let title = h.title?;
-            if !matches!(h.ns, Some(0 | 112 | 114)) {
+            let ok = match h.ns {
+                Some(0) => true,
+                Some(112 | 114) => wiki == ROBLOX,
+                _ => false,
+            };
+            if !ok {
                 return None;
             }
             Some(Hit {
@@ -408,7 +615,7 @@ fn hits(raw: Vec<fandom::SearchHit>) -> Vec<Hit> {
                         .text(),
                 ),
                 edited: h.timestamp.unwrap_or_default(),
-                title,
+                title: join_title(wiki, &title),
             })
         })
         .collect()
@@ -501,13 +708,27 @@ fn squash(s: &str) -> String {
     s.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// `[[Title|label]]` → `label`, `[[Title]]` → `Title`.
+/// `[[Title|label]]` → `label`, `[[Title]]` → `Title`. A label may end in `]` ("[VIP]"), so a
+/// link ends at the last of a run of `]`.
 fn strip_links(s: &str) -> String {
     let mut out = String::new();
     let mut rest = s;
     while let Some(i) = rest.find("[[") {
         out.push_str(&rest[..i]);
-        let Some(j) = rest[i..].find("]]") else { break };
+        let mut end = None;
+        let mut from = i + 2;
+        while let Some(k) = rest[from..].find("]]") {
+            let k = from + k;
+            if !rest[k + 2..].starts_with(']') {
+                end = Some(k - i);
+                break;
+            }
+            from = k + 1;
+        }
+        let Some(j) = end else {
+            out.push_str(&rest[i..]);
+            return out;
+        };
         let inner = &rest[i + 2..i + j];
         out.push_str(inner.split_once('|').map_or(inner, |(_, l)| l));
         rest = &rest[i + j + 2..];
@@ -521,45 +742,58 @@ fn escape(s: &str) -> String {
     s.replace("[[", "[ [").replace("]]", "] ]")
 }
 
-/// The article an `href` points to on this wiki, as a title. `None` for other sites, red
-/// links, files, categories, user and talk pages.
-fn wiki_title(href: &str) -> Option<String> {
-    let rest = href
-        .strip_prefix(&format!("https://{}", fandom::HOST))
-        .or_else(|| href.strip_prefix(&format!("//{}", fandom::HOST)))
-        .unwrap_or(href);
-    let path = rest.strip_prefix("/wiki/")?;
+/// Namespaces that aren't articles. Links to them are kept as plain text.
+const NOT_ARTICLES: &[&str] = &[
+    "file",
+    "image",
+    "category",
+    "template",
+    "user",
+    "user talk",
+    "talk",
+    "special",
+    "help",
+    "forum",
+    "message wall",
+    "board",
+    "thread",
+    "blog",
+    "user blog",
+    "module",
+    "mediawiki",
+];
+
+/// The article an `href` points to, as a title ([`join_title`]): on `wiki` for a link within
+/// the page's wiki, or on another Fandom wiki. `None` for other sites, files, categories, user
+/// and talk pages.
+fn wiki_title(wiki: &str, href: &str) -> Option<String> {
+    let (on, path) = match href.strip_prefix("/wiki/") {
+        Some(p) => (wiki.to_owned(), p),
+        None => {
+            let rest = href
+                .strip_prefix("https:")
+                .or_else(|| href.strip_prefix("http:"))
+                .unwrap_or(href)
+                .strip_prefix("//")?;
+            let (host, path) = rest.split_once('/')?;
+            let on = wikis::wiki_of(&host.to_ascii_lowercase())?.to_owned();
+            (on, path.strip_prefix("wiki/")?)
+        }
+    };
     let path = path.split(['#', '?']).next()?;
     let title = percent_decode(path).replace('_', " ");
     let title = title.trim();
-    let ns = title.split_once(':').map(|(n, _)| n.to_ascii_lowercase());
-    if let Some(ns) = ns
-        && ns != "catalog"
-        && [
-            "file",
-            "image",
-            "category",
-            "template",
-            "user",
-            "user talk",
-            "talk",
-            "special",
-            "help",
-            "forum",
-            "message wall",
-            "board",
-            "thread",
-            "blog",
-            "user blog",
-            "module",
-            "mediawiki",
-            "roblox wiki",
-        ]
-        .contains(&ns.as_str())
-    {
+    if let Some((ns, _)) = title.split_once(':') {
+        let ns = ns.to_ascii_lowercase();
+        if NOT_ARTICLES.contains(&ns.as_str()) || (on == ROBLOX && ns == "roblox wiki") {
+            return None;
+        }
+    }
+    // Another wiki's bare address is its main page; the Roblox Wiki's isn't worth a link.
+    if title.is_empty() && on == ROBLOX {
         return None;
     }
-    (!title.is_empty()).then(|| title.to_owned())
+    Some(join_title(&on, title))
 }
 
 fn percent_decode(s: &str) -> String {
@@ -591,10 +825,65 @@ fn roblox_ref(href: &str) -> Option<RobloxRef> {
     }
 }
 
-/// Collects inline text with links, and the Roblox pages linked on the way.
-struct Inline<'r> {
+/// How the text links a Roblox page Bonsai can open: `@item:31101391`.
+fn roblox_link(r: RobloxRef) -> String {
+    match r {
+        RobloxRef::Item(id) => format!("@item:{id}"),
+        RobloxRef::Bundle(id) => format!("@bundle:{id}"),
+        RobloxRef::Game(id) => format!("@game:{id}"),
+        RobloxRef::User(id) => format!("@user:{id}"),
+        RobloxRef::Group(id) => format!("@group:{id}"),
+    }
+}
+
+/// A link to another site as the text keeps it: http(s) only, with no sign-in part, and with
+/// the characters that would end a `[[link|label]]` escaped.
+fn web_url(href: &str) -> Option<String> {
+    let u = url::Url::parse(href.trim()).ok()?;
+    if !matches!(u.scheme(), "http" | "https")
+        || u.host_str().is_none()
+        || !u.username().is_empty()
+        || u.password().is_some()
+    {
+        return None;
+    }
+    Some(
+        u.as_str()
+            .replace('|', "%7C")
+            .replace('[', "%5B")
+            .replace(']', "%5D"),
+    )
+}
+
+/// What a link shows when the article gives only its address: `https://www.example.com/a/` →
+/// `example.com/a`, cut short past 48 characters.
+fn short_url(u: &str) -> String {
+    let s = u.split_once("://").map_or(u, |(_, r)| r);
+    let s = s.strip_prefix("www.").unwrap_or(s).trim_end_matches('/');
+    if s.chars().count() <= 48 {
+        return s.to_owned();
+    }
+    let cut: String = s.chars().take(47).collect();
+    format!("{cut}…")
+}
+
+/// What parsing collects besides the text.
+#[derive(Default)]
+struct Cx {
+    /// The wiki the page is on.
+    wiki: String,
+    refs: Vec<RobloxRef>,
+    links: Vec<String>,
+    wikis: Vec<OtherWiki>,
+    /// Inside a notice box, where an article names the wiki to read more on. Elsewhere, links
+    /// to other wikis are just mentions (a main page's list of sister wikis).
+    in_note: bool,
+}
+
+/// Collects inline text with links, and the Roblox pages and other sites linked on the way.
+struct Inline<'c> {
     out: String,
-    refs: &'r mut Vec<RobloxRef>,
+    cx: &'c mut Cx,
 }
 
 impl Inline<'_> {
@@ -608,20 +897,7 @@ impl Inline<'_> {
         }
         match tag(n).as_str() {
             "br" => self.out.push(' '),
-            "a" => {
-                let href = n.attr("href").map(|h| h.to_string()).unwrap_or_default();
-                let label = squash(&n.text());
-                if let Some(r) = roblox_ref(&href) {
-                    self.refs.push(r);
-                }
-                match wiki_title(&href).filter(|_| !n.has_class("new") && !label.is_empty()) {
-                    Some(t) if t == label => self.out.push_str(&format!("[[{t}]]")),
-                    Some(t) => self
-                        .out
-                        .push_str(&format!("[[{t}|{}]]", escape(&label).replace('|', "/"))),
-                    None => self.out.push_str(&escape(&label)),
-                }
-            }
+            "a" => self.link(n),
             t => {
                 // Blocks inside inline text (a notice's header and body) stay apart.
                 let block = BLOCK_TAGS.contains(&t);
@@ -637,23 +913,65 @@ impl Inline<'_> {
             }
         }
     }
+
+    fn link(&mut self, n: &NodeRef) {
+        let href = n.attr("href").map(|h| h.to_string()).unwrap_or_default();
+        let label = squash(&n.text());
+        let roblox = roblox_ref(&href);
+        if let Some(r) = roblox {
+            self.cx.refs.push(r);
+        }
+        if label.is_empty() {
+            return;
+        }
+        let shown = escape(&label).replace('|', "/");
+        // Red links point at pages nobody wrote yet.
+        let article = wiki_title(&self.cx.wiki, &href).filter(|_| !n.has_class("new"));
+        if let Some(t) = article {
+            let (wiki, local) = split_title(&t);
+            let names_wiki = self.cx.in_note && local.is_empty() && wiki != self.cx.wiki;
+            if names_wiki && wiki != "community" && !self.cx.wikis.iter().any(|w| w.wiki == wiki) {
+                self.cx.wikis.push(OtherWiki {
+                    wiki: wiki.to_owned(),
+                    name: strip_links(&label),
+                });
+            }
+            if t == label {
+                self.out.push_str(&format!("[[{t}]]"));
+            } else {
+                self.out.push_str(&format!("[[{t}|{shown}]]"));
+            }
+        } else if let Some(r) = roblox {
+            self.out.push_str(&format!("[[{}|{shown}]]", roblox_link(r)));
+        } else if let Some(u) = web_url(&href) {
+            let shown = if label.starts_with("http://") || label.starts_with("https://") {
+                escape(&short_url(&u)).replace('|', "/")
+            } else {
+                shown
+            };
+            self.out.push_str(&format!("[[{u}|{shown}]]"));
+            self.cx.links.push(u);
+        } else {
+            self.out.push_str(&escape(&label));
+        }
+    }
 }
 
-fn inline(n: &NodeRef, refs: &mut Vec<RobloxRef>) -> String {
+fn inline(n: &NodeRef, cx: &mut Cx) -> String {
     let mut i = Inline {
         out: String::new(),
-        refs,
+        cx,
     };
     i.node(n);
     squash(&i.out)
 }
 
 /// Inline text of a list item without its nested lists, which become items of their own.
-fn list_items(n: &NodeRef, depth: usize, refs: &mut Vec<RobloxRef>, items: &mut Vec<String>) {
+fn list_items(n: &NodeRef, depth: usize, cx: &mut Cx, items: &mut Vec<String>) {
     for li in n.element_children().into_iter().filter(|c| tag(c) == "li") {
         let mut own = Inline {
             out: String::new(),
-            refs,
+            cx,
         };
         let mut nested = Vec::new();
         for c in li.children_it(false) {
@@ -668,15 +986,90 @@ fn list_items(n: &NodeRef, depth: usize, refs: &mut Vec<RobloxRef>, items: &mut 
             items.push(format!("{}{text}", "– ".repeat(depth)));
         }
         for l in nested {
-            list_items(&l, depth + 1, refs, items);
+            list_items(&l, depth + 1, cx, items);
         }
     }
+}
+
+/// A figure with a picture, a gallery, or an old-style `div.thumb`.
+fn is_picture(n: &NodeRef) -> bool {
+    n.is_element()
+        && (tag(n) == "figure"
+            || ["thumb", "gallery", "wikia-gallery"]
+                .iter()
+                .any(|c| n.has_class(c)))
+        && !n.has_class("video-thumbnail")
+        && !n
+            .attr("style")
+            .is_some_and(|s| s.replace(' ', "").contains("display:none"))
+}
+
+/// The first picture in `n` on Fandom's image host, with the size the article shows it at.
+/// Lazy-loaded images keep their address in `data-src`.
+fn image_of(n: &NodeRef) -> Option<(String, u32, u32)> {
+    for img in n.descendants_it().filter(|d| tag(d) == "img") {
+        let Some(src) = img
+            .attr("data-src")
+            .filter(|s| !s.is_empty())
+            .or_else(|| img.attr("src"))
+        else {
+            continue;
+        };
+        let Ok(u) = url::Url::parse(&src) else { continue };
+        if u.scheme() != "https" || u.host_str() != Some(IMAGE_HOST) || u.port().is_some() {
+            continue;
+        }
+        let size = |a: &str| img.attr(a).and_then(|v| v.parse::<u32>().ok()).unwrap_or(0);
+        let (w, h) = (size("width"), size("height"));
+        if (w > 0 && w < MIN_IMAGE) || (h > 0 && h < MIN_IMAGE) {
+            continue;
+        }
+        let path = &u[url::Position::BeforePath..];
+        return Some((sharper(path.trim_start_matches('/')), w, h));
+    }
+    None
+}
+
+/// Asks for twice the width the article shows, so pictures stay sharp on high-density screens.
+/// Fandom never scales up, so a small original comes back as it is.
+fn sharper(src: &str) -> String {
+    const SCALE: &str = "/scale-to-width-down/";
+    let Some(i) = src.find(SCALE) else {
+        return src.to_owned();
+    };
+    let rest = &src[i + SCALE.len()..];
+    let end = rest.find(|c: char| !c.is_ascii_digit()).unwrap_or(rest.len());
+    match rest[..end].parse::<u32>() {
+        Ok(w) => format!("{}{SCALE}{}{}", &src[..i], (w * 2).min(1600), &rest[end..]),
+        Err(_) => src.to_owned(),
+    }
+}
+
+/// The picture in `n` with its caption.
+fn picture(n: &NodeRef, cx: &mut Cx) -> Option<Image> {
+    let (src, width, height) = image_of(n)?;
+    let caption = n
+        .descendants_it()
+        .find(|d| {
+            tag(d) == "figcaption"
+                || ["thumbcaption", "lightbox-caption", "gallerytext", "pi-caption"]
+                    .iter()
+                    .any(|c| d.has_class(c))
+        })
+        .map(|c| inline(&c, cx))
+        .unwrap_or_default();
+    Some(Image {
+        src,
+        caption,
+        width,
+        height,
+    })
 }
 
 struct Builder {
     lead: Vec<Block>,
     sections: Vec<Section>,
-    refs: Vec<RobloxRef>,
+    cx: Cx,
     pending: String,
 }
 
@@ -705,7 +1098,7 @@ impl Builder {
             })
             .map(|i| i.to_string())
             .unwrap_or_default();
-        let title = inline(n, &mut self.refs);
+        let title = inline(n, &mut self.cx);
         if title.is_empty() {
             return;
         }
@@ -734,7 +1127,7 @@ impl Builder {
                 .filter(|c| matches!(tag(c).as_str(), "td" | "th"))
                 .collect();
             let all_head = cells.iter().all(|c| tag(c) == "th");
-            let texts: Vec<String> = cells.iter().map(|c| inline(c, &mut self.refs)).collect();
+            let texts: Vec<String> = cells.iter().map(|c| inline(c, &mut self.cx)).collect();
             if texts.iter().all(String::is_empty) {
                 continue;
             }
@@ -749,10 +1142,31 @@ impl Builder {
         }
     }
 
+    /// A figure or a gallery: one block of pictures.
+    fn pictures(&mut self, n: &NodeRef) {
+        let items: Vec<NodeRef> = n
+            .descendants_it()
+            .filter(|d| d.has_class("wikia-gallery-item") || d.has_class("gallerybox"))
+            .collect();
+        let images: Vec<Image> = if items.is_empty() {
+            picture(n, &mut self.cx).into_iter().collect()
+        } else {
+            items.iter().filter_map(|i| picture(i, &mut self.cx)).collect()
+        };
+        if !images.is_empty() {
+            self.push(Block::Images { images });
+        }
+    }
+
     fn block(&mut self, n: &NodeRef) {
         for c in n.children_it(false) {
             if c.is_text() {
                 self.pending.push_str(&escape(&c.text()));
+                continue;
+            }
+            if is_picture(&c) {
+                self.flush();
+                self.pictures(&c);
                 continue;
             }
             if skipped(&c) {
@@ -762,7 +1176,7 @@ impl Builder {
             if !BLOCK_TAGS.contains(&t.as_str()) {
                 let mut i = Inline {
                     out: std::mem::take(&mut self.pending),
-                    refs: &mut self.refs,
+                    cx: &mut self.cx,
                 };
                 i.node(&c);
                 self.pending = i.out;
@@ -773,14 +1187,14 @@ impl Builder {
                 "h1" => {}
                 "h2" | "h3" | "h4" | "h5" | "h6" => self.heading(&c, t[1..].parse().unwrap_or(2)),
                 "p" | "dt" | "dd" | "pre" | "summary" => {
-                    let text = inline(&c, &mut self.refs);
+                    let text = inline(&c, &mut self.cx);
                     if !text.is_empty() {
                         self.push(Block::P { text });
                     }
                 }
                 "ul" | "ol" => {
                     let mut items = Vec::new();
-                    list_items(&c, 0, &mut self.refs, &mut items);
+                    list_items(&c, 0, &mut self.cx, &mut items);
                     if !items.is_empty() {
                         self.push(Block::List {
                             ordered: t == "ol",
@@ -798,23 +1212,30 @@ impl Builder {
     }
 
     fn note(&mut self, n: &NodeRef) {
-        let text = inline(n, &mut self.refs);
+        self.cx.in_note = true;
+        let text = inline(n, &mut self.cx);
+        self.cx.in_note = false;
         if !text.is_empty() {
             self.push(Block::Note { text });
         }
     }
 }
 
-/// Fandom's portable infobox (`aside.portable-infobox`), or a classic `table.infobox`.
-fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
+/// Fandom's portable infobox (`aside.portable-infobox`), or a classic `table.infobox`: its
+/// title, rows and picture.
+fn infobox(doc: &Document, cx: &mut Cx) -> (String, Vec<Fact>, Option<Image>) {
     let mut facts = Vec::new();
     let aside = doc.select("aside.portable-infobox").first();
     if let Some(a) = aside.nodes().first() {
         let title = a
             .descendants_it()
             .find(|d| d.has_class("pi-title"))
-            .map(|t| inline(&t, refs))
+            .map(|t| strip_links(&inline(&t, cx)))
             .unwrap_or_default();
+        let image = a
+            .descendants_it()
+            .find(|d| d.has_class("pi-image") || d.has_class("pi-image-collection"))
+            .and_then(|f| picture(&f, cx));
         for d in a.descendants_it() {
             if d.has_class("pi-data") {
                 let label = d.descendants_it().find(|x| x.has_class("pi-data-label"));
@@ -822,15 +1243,15 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
                 if let Some(v) = value {
                     facts.push(Fact {
                         key: d.attr("data-source").map(|s| s.to_string()).unwrap_or_default(),
-                        label: label.map(|l| strip_links(&inline(&l, refs))).unwrap_or_default(),
-                        value: inline(&v, refs),
+                        label: label.map(|l| strip_links(&inline(&l, cx))).unwrap_or_default(),
+                        value: inline(&v, cx),
                     });
                 }
             } else if d.has_class("pi-horizontal-group") && tag(&d) == "table" {
                 let labels: Vec<String> = d
                     .descendants_it()
                     .filter(|x| tag(x) == "th" && x.has_class("pi-horizontal-group-item"))
-                    .map(|x| strip_links(&inline(&x, refs)))
+                    .map(|x| strip_links(&inline(&x, cx)))
                     .collect();
                 let values: Vec<NodeRef> = d
                     .descendants_it()
@@ -840,7 +1261,7 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
                     facts.push(Fact {
                         key: v.attr("data-source").map(|s| s.to_string()).unwrap_or_default(),
                         label: labels.get(i).cloned().unwrap_or_default(),
-                        value: inline(v, refs),
+                        value: inline(v, cx),
                     });
                 }
             } else if d.has_class("pi-smart-data-value") {
@@ -851,12 +1272,12 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
                         x.has_class("pi-smart-data-label")
                             && x.attr("data-source").is_some_and(|s| *s == *key)
                     })
-                    .map(|l| strip_links(&inline(&l, refs)))
+                    .map(|l| strip_links(&inline(&l, cx)))
                     .unwrap_or_default();
                 facts.push(Fact {
                     key,
                     label,
-                    value: inline(&d, refs),
+                    value: inline(&d, cx),
                 });
             }
         }
@@ -864,10 +1285,12 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
         for f in facts.iter_mut().filter(|f| f.label.is_empty()) {
             f.label = label_of(&f.key);
         }
-        return (title, facts);
+        return (title, facts, image);
     }
     let table = doc.select("table.infobox").first();
+    let mut image = None;
     if let Some(t) = table.nodes().first() {
+        image = picture(t, cx);
         for tr in t.descendants_it().filter(|d| tag(d) == "tr") {
             let cells = tr.element_children();
             if let [th, td] = cells.as_slice()
@@ -876,13 +1299,13 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
                 facts.push(Fact {
                     key: String::new(),
                     label: squash(&th.text()),
-                    value: inline(td, refs),
+                    value: inline(td, cx),
                 });
             }
         }
         facts.retain(|f| !f.value.is_empty());
     }
-    (String::new(), facts)
+    (String::new(), facts, image)
 }
 
 /// A label for an infobox row the template left unlabelled, from its field: `last_updated` →
@@ -917,24 +1340,33 @@ fn infobox_usernames(doc: &Document) -> Vec<String> {
     out
 }
 
-/// Turns MediaWiki's rendered HTML into blocks. Title, revision and categories come from the
-/// rest of the response.
+/// Turns the Roblox Wiki's rendered HTML into blocks. Title, revision and categories come from
+/// the rest of the response.
 pub fn parse_html(html: &str) -> Article {
+    parse_html_on(ROBLOX, html)
+}
+
+/// [`parse_html`] for a page on `wiki`, so its links stay on that wiki.
+pub fn parse_html_on(wiki: &str, html: &str) -> Article {
     let doc = Document::from(html);
-    let mut refs = Vec::new();
-    let (infobox_title, infobox) = infobox(&doc, &mut refs);
+    let mut cx = Cx {
+        wiki: wiki.to_owned(),
+        ..Default::default()
+    };
+    // Infobox links say best what the article is about, so they go first; body links follow.
+    let (infobox_title, infobox, image) = infobox(&doc, &mut cx);
     let output = doc.select(".mw-parser-output").first();
     let root = output.nodes().first().cloned().unwrap_or_else(|| doc.root());
     let mut b = Builder {
         lead: Vec::new(),
         sections: Vec::new(),
-        refs: Vec::new(),
+        cx,
         pending: String::new(),
     };
     b.block(&root);
     b.flush();
     // An empty section stays when one of its subsections has text ("History" over "Release
-    // history"); empty ones without, like a gallery's, go.
+    // history"); empty ones without go.
     let n = b.sections.len();
     let mut keep = vec![false; n];
     for i in (0..n).rev() {
@@ -949,10 +1381,16 @@ pub fn parse_html(html: &str) -> Article {
         i += 1;
         keep[i - 1]
     });
-    // Infobox links say best what the article is about; body links follow.
-    refs.append(&mut b.refs);
+    let Cx {
+        mut refs,
+        mut links,
+        wikis,
+        ..
+    } = b.cx;
     let mut seen = BTreeSet::new();
     refs.retain(|r| seen.insert(*r));
+    let mut seen = BTreeSet::new();
+    links.retain(|l| seen.insert(l.clone()));
     Article {
         lead: b.lead,
         sections: b.sections,
@@ -960,6 +1398,9 @@ pub fn parse_html(html: &str) -> Article {
         infobox,
         roblox: refs,
         usernames: infobox_usernames(&doc),
+        image,
+        wikis,
+        links,
         ..Default::default()
     }
 }
@@ -1005,7 +1446,7 @@ mod tests {
             facts,
             [
                 ("creator", "Creator", "[[Roblox (user)|Roblox]]"),
-                ("id", "ID", "31101391"),
+                ("id", "ID", "[[@item:31101391|31101391]]"),
                 ("price", "Price", "Offsale"),
                 ("type", "Type", "Hat"),
             ]
@@ -1045,10 +1486,10 @@ mod tests {
                 items: vec![
                     "It was sold in 2010.".into(),
                     "– For [[Robux]].".into(),
-                    "builderman owns one.".into()
+                    "[[@user:156|builderman]] owns one.".into()
                 ]
             },
-            "red links and outside links are plain text"
+            "red links are plain text; Roblox links open in Bonsai"
         );
         assert_eq!(
             trivia[1],
@@ -1232,16 +1673,38 @@ mod tests {
 
     #[test]
     fn links_and_urls() {
+        let t = |href| wiki_title(ROBLOX, href);
         assert_eq!(
-            wiki_title("/wiki/Catalog:Dominus_Infernus#Trivia").as_deref(),
+            t("/wiki/Catalog:Dominus_Infernus#Trivia").as_deref(),
             Some("Catalog:Dominus Infernus")
         );
         assert_eq!(
-            wiki_title("https://roblox.fandom.com/wiki/Caf%C3%A9").as_deref(),
+            t("https://roblox.fandom.com/wiki/Caf%C3%A9").as_deref(),
             Some("Café")
         );
-        assert_eq!(wiki_title("/wiki/User:Someone"), None);
-        assert_eq!(wiki_title("https://example.com/wiki/X"), None);
+        assert_eq!(t("/wiki/User:Someone"), None);
+        assert_eq!(t("https://example.com/wiki/X"), None);
+        assert_eq!(t("https://roblox.fandom.com/wiki/"), None);
+        // Another wiki: its articles, and its bare address for the main page.
+        assert_eq!(
+            t("https://jailbreak.fandom.com/wiki/Torero").as_deref(),
+            Some("w:c:jailbreak:Torero")
+        );
+        assert_eq!(
+            t("https://jailbreak.fandom.com/wiki/").as_deref(),
+            Some("w:c:jailbreak:")
+        );
+        assert_eq!(t("https://jailbreak.fandom.com/es/wiki/Torero"), None);
+        assert_eq!(t("https://evil.com@jailbreak.fandom.com/wiki/X"), None);
+        // On that wiki, its own links stay there and the Roblox Wiki's go back.
+        assert_eq!(
+            wiki_title("jailbreak", "/wiki/Jailbreak_Wiki:Home").as_deref(),
+            Some("w:c:jailbreak:Jailbreak Wiki:Home")
+        );
+        assert_eq!(
+            wiki_title("jailbreak", "https://roblox.fandom.com/wiki/Badimo").as_deref(),
+            Some("Badimo")
+        );
         assert_eq!(
             site_url("Catalog:Dominus Infernus"),
             "https://roblox.fandom.com/wiki/Catalog:Dominus_Infernus"
@@ -1250,6 +1713,167 @@ mod tests {
             site_url("Café & more?"),
             "https://roblox.fandom.com/wiki/Caf%C3%A9_%26_more%3F"
         );
+        assert_eq!(
+            site_url("w:c:jailbreak:Torero"),
+            "https://jailbreak.fandom.com/wiki/Torero"
+        );
+        assert_eq!(site_url("w:c:jailbreak:"), "https://jailbreak.fandom.com/wiki/");
+        assert_eq!(split_title("w:c:jailbreak:Torero"), ("jailbreak", "Torero"));
+        assert_eq!(split_title("w:c:Bad Wiki:X"), (ROBLOX, "w:c:Bad Wiki:X"));
+        assert_eq!(join_title("jailbreak", "Torero"), "w:c:jailbreak:Torero");
+        assert_eq!(join_title(ROBLOX, "Badimo"), "Badimo");
+        assert_eq!(kind_of("w:c:jailbreak:Torero"), "page");
+        assert_eq!(
+            web_url("https://example.com/a|b[c]").as_deref(),
+            Some("https://example.com/a%7Cb%5Bc%5D")
+        );
+        for bad in [
+            "javascript:alert(1)",
+            "/wiki/X",
+            "#cite",
+            "ftp://x.com/",
+            "https://u:p@x.com/",
+        ] {
+            assert_eq!(web_url(bad), None, "{bad}");
+        }
+        assert_eq!(short_url("https://www.example.com/a/"), "example.com/a");
+        assert_eq!(
+            short_url("https://web.archive.org/web/20190804181502/https://blog.roblox.com/x"),
+            "web.archive.org/web/20190804181502/https://blog…"
+        );
+    }
+
+    #[test]
+    fn external_roblox_and_other_wiki_links() {
+        let a = parse_html(
+            r#"<div class="mw-parser-output">
+<div class="mbox"><div class="mbox__content__header"><a href="https://jailbreak.fandom.com/wiki/" class="extiw" title="w:c:jailbreak">Jailbreak Wiki</a></div><div class="mbox__content__text">This experience has <a href="https://jailbreak.fandom.com/wiki/" class="extiw" title="w:c:jailbreak">a dedicated wiki project</a>.</div></div>
+<p>Play <a class="external text" href="https://www.roblox.com/games/606849621">Jailbreak</a>, read <a class="external free" href="https://blog.roblox.com/2017/08/jailbreak-roblox-success-story/">https://blog.roblox.com/2017/08/jailbreak-roblox-success-story/</a> or buy <a class="external text" href="https://www.roblox.com/game-pass/2296901/VIP">Very Important Player [VIP]</a>.</p>
+<p>Other wikis: <a href="https://adoptme.fandom.com/wiki/" class="extiw">Adopt Me!</a></p>
+</div>"#,
+        );
+        assert_eq!(
+            a.lead[0],
+            Block::Note {
+                text: "[[w:c:jailbreak:|Jailbreak Wiki]] This experience has [[w:c:jailbreak:|a dedicated wiki project]].".into()
+            }
+        );
+        assert_eq!(
+            a.lead[1],
+            Block::P {
+                text: "Play [[@game:606849621|Jailbreak]], read [[https://blog.roblox.com/2017/08/jailbreak-roblox-success-story/|blog.roblox.com/2017/08/jailbreak-roblox-succes…]] or buy [[https://www.roblox.com/game-pass/2296901/VIP|Very Important Player [VIP]]]."
+                    .into()
+            }
+        );
+        // Only the notice names the experience's own wiki; a list of others is a mention.
+        assert_eq!(
+            a.wikis,
+            [OtherWiki {
+                wiki: "jailbreak".into(),
+                name: "Jailbreak Wiki".into()
+            }]
+        );
+        assert_eq!(
+            a.links,
+            [
+                "https://blog.roblox.com/2017/08/jailbreak-roblox-success-story/",
+                "https://www.roblox.com/game-pass/2296901/VIP"
+            ]
+        );
+    }
+
+    #[test]
+    fn pictures_and_galleries() {
+        let a = parse_html(
+            r#"<div class="mw-parser-output">
+<aside class="portable-infobox"><h2 class="pi-item pi-title">Builderman</h2><div class="pi-image-collection wds-tabber"><div class="wds-tabs__wrapper"><ul class="wds-tabs"><li><span class="wds-tabs__tab-label">Current</span></li></ul></div><div class="wds-tab__content wds-is-current"><figure class="pi-item pi-image"><a href="https://static.wikia.nocookie.net/roblox/images/a/a9/B.png/revision/latest?cb=1" class="image image-thumbnail"><img src="https://static.wikia.nocookie.net/roblox/images/a/a9/B.png/revision/latest/scale-to-width-down/268?cb=1" width="268" height="268"></a><figcaption class="pi-item-spacer pi-caption">Current avatar</figcaption></figure></div></div></aside>
+<p>Text.</p>
+<figure class="thumb show-info-icon" typeof="mw:File/Thumb"><a href="https://static.wikia.nocookie.net/roblox/images/e/e9/Book.jpeg/revision/latest?cb=2" class="mw-file-description image"><img alt="A figure." src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="180" height="234" class="thumbimage lazyload" data-src="https://static.wikia.nocookie.net/roblox/images/e/e9/Book.jpeg/revision/latest/scale-to-width-down/180?cb=2" /></a><figcaption>A figure in the <a href="/wiki/Roblox_toys">toys</a> line.</figcaption></figure>
+<div id="gallery-1" class="wikia-gallery"><div class="wikia-gallery-item"><div class="thumb"><div class="gallery-image-wrapper"><a class="image lightbox" href="/wiki/File:A.png"><img src="https://static.wikia.nocookie.net/roblox/images/1/1a/A%2C_2026.png/revision/latest/scale-to-width-down/120?cb=3" width="120" height="120"></a></div></div><div class="lightbox-caption">2026</div></div><div class="wikia-gallery-item"><div class="thumb"><img src="https://evil.example/x.png" width="120" height="120"></div><div class="lightbox-caption">Elsewhere</div></div><div class="wikia-gallery-item"><img src="https://static.wikia.nocookie.net/roblox/images/b/b2/C.png/revision/latest?cb=4" width="120" height="90"><div class="lightbox-caption">Original</div></div></div>
+<p>An icon <span typeof="mw:File"><img src="https://static.wikia.nocookie.net/roblox/images/r/r1/Robux.png/revision/latest/scale-to-width-down/16?cb=5" width="16" height="16"></span> in text.</p>
+</div>"#,
+        );
+        assert_eq!(
+            a.image,
+            Some(Image {
+                src: "roblox/images/a/a9/B.png/revision/latest/scale-to-width-down/536?cb=1".into(),
+                caption: "Current avatar".into(),
+                width: 268,
+                height: 268,
+            })
+        );
+        assert_eq!(a.lead.len(), 4, "{:?}", a.lead);
+        assert_eq!(
+            a.lead[1],
+            Block::Images {
+                images: vec![Image {
+                    src: "roblox/images/e/e9/Book.jpeg/revision/latest/scale-to-width-down/360?cb=2".into(),
+                    caption: "A figure in the [[Roblox toys|toys]] line.".into(),
+                    width: 180,
+                    height: 234,
+                }]
+            }
+        );
+        let Block::Images { images } = &a.lead[2] else {
+            panic!("{:?}", a.lead[2])
+        };
+        // Pictures from anywhere but Fandom's image host are left out.
+        let srcs: Vec<_> = images
+            .iter()
+            .map(|i| (i.src.as_str(), i.caption.as_str()))
+            .collect();
+        assert_eq!(
+            srcs,
+            [
+                (
+                    "roblox/images/1/1a/A%2C_2026.png/revision/latest/scale-to-width-down/240?cb=3",
+                    "2026"
+                ),
+                ("roblox/images/b/b2/C.png/revision/latest?cb=4", "Original")
+            ]
+        );
+        // Icons inside text stay out.
+        assert_eq!(
+            a.lead[3],
+            Block::P {
+                text: "An icon in text.".into()
+            }
+        );
+    }
+
+    #[test]
+    fn strips_links_with_brackets_in_labels() {
+        assert_eq!(strip_links("[[A|Player [VIP]]] and [[B]]"), "Player [VIP] and B");
+        assert_eq!(strip_links("[[A|x]] [[broken"), "x [[broken");
+    }
+
+    #[test]
+    fn image_paths_stay_on_the_image_host() {
+        assert_eq!(
+            image_url("roblox/images/a/a9/B%2C_2026.png/revision/latest?cb=1").as_deref(),
+            Some("https://static.wikia.nocookie.net/roblox/images/a/a9/B%2C_2026.png/revision/latest?cb=1")
+        );
+        for bad in [
+            "",
+            "/evil.com/x.png",
+            "@evil.com/x.png",
+            "../x.png",
+            "roblox/../../x",
+            "a b.png",
+            "x\\y.png",
+            "x.png#frag",
+        ] {
+            assert_eq!(image_url(bad), None, "{bad}");
+        }
+        assert_eq!(
+            sharper("a/scale-to-width-down/120?cb=1"),
+            "a/scale-to-width-down/240?cb=1"
+        );
+        assert_eq!(
+            sharper("a/scale-to-width-down/1200"),
+            "a/scale-to-width-down/1600"
+        );
+        assert_eq!(sharper("a/revision/latest?cb=1"), "a/revision/latest?cb=1");
     }
 
     #[test]
@@ -1273,9 +1897,13 @@ mod tests {
                 ..Default::default()
             },
         ];
-        let h = hits(raw);
+        let h = hits(ROBLOX, raw.clone());
         assert_eq!(h.len(), 2);
         assert_eq!(h[0].snippet, "The Dominus series");
         assert_eq!(h[1].title, "Catalog:Dominus Infernus");
+        // Another wiki has no Catalog; its titles say which wiki they are on.
+        let h = hits("jailbreak", raw);
+        assert_eq!(h.len(), 1);
+        assert_eq!(h[0].title, "w:c:jailbreak:Dominus");
     }
 }

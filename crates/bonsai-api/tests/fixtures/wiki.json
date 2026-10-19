@@ -1,7 +1,7 @@
 {
   "captured": "2026-10-19",
   "source": "live",
-  "note": "roblox.fandom.com/api.php with format=json&formatversion=2, as Bonsai sends it. Usernames in the article are replaced (SampleCreator, SampleOwner). Fandom's search returns no snippets and no searchinfo.",
+  "note": "roblox.fandom.com/api.php with format=json&formatversion=2, as Bonsai sends it. Usernames in the article are replaced (SampleCreator, SampleOwner). Fandom's search returns no snippets and no searchinfo. The jailbreak.fandom.com entries are the Jailbreak Wiki, an experience's own wiki on Fandom, with the same API (siteinfo trimmed to the fields Bonsai reads; the modeler's username replaced with SampleModeler).",
   "interactions": [
     {
       "request": {
@@ -477,6 +477,502 @@
                 "pageid": 528493,
                 "snippet": "",
                 "timestamp": "2026-03-11T21:25:56Z"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "jailbreak.fandom.com",
+        "path": "/api.php",
+        "query": {
+          "action": "query",
+          "meta": "siteinfo",
+          "siprop": "general"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "batchcomplete": true,
+          "query": {
+            "general": {
+              "mainpage": "Jailbreak Wiki:Home",
+              "base": "https://jailbreak.fandom.com/wiki/Jailbreak_Wiki:Home",
+              "sitename": "Jailbreak Wiki",
+              "lang": "en",
+              "server": "https://jailbreak.fandom.com",
+              "articlepath": "/wiki/$1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "jailbreak.fandom.com",
+        "path": "/api.php",
+        "query": {
+          "action": "parse",
+          "page": "Torero"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "parse": {
+            "title": "Torero",
+            "pageid": 134132,
+            "revid": 331260,
+            "redirects": [],
+            "text": "<div class=\"mw-content-ltr mw-parser-output\" lang=\"en\" dir=\"ltr\"><div class=\"two-tone-border\"><div style=\"display: flex; align-items= center;\">\n</div>\n<div><center style=\"margin-bottom: -18px;\"><b>Unobtainable Notice</b></center>\n<br /><center>This is limited-edition content that can no longer be obtained outside of <a href=\"/wiki/Trading\" title=\"Trading\">trading</a>.<center style=\"margin-top:8px;\"><i>Became unobtainable on: <b>September 12, 2021</b></i></center></center></div></div><p><i>Not to be confused with the similarly named seasonal hypercar, the <a href=\"/wiki/Torpedo\" title=\"Torpedo\">Torpedo</a>.</i>\n</p><aside role=\"region\" class=\"portable-infobox pi-background pi-border-color pi-theme-wikia pi-layout-default\">\n<h2 class=\"pi-item pi-item-spacing pi-title pi-secondary-background\" data-source=\"Name\">Torero</h2>\n\n<figure class=\"pi-item pi-image\" data-source=\"Image\">\n\t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/7/7d/ToreroHD.png/revision/latest?cb=20220218223550\" class=\"image image-thumbnail\" title=\"ToreroHD\">\n\t\t<img src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/7/7d/ToreroHD.png/revision/latest/scale-to-width-down/268?cb=20220218223550\" srcset=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/7/7d/ToreroHD.png/revision/latest/scale-to-width-down/268?cb=20220218223550 1x, https://static.wikia.nocookie.net/rblx-jailbreak/images/7/7d/ToreroHD.png/revision/latest/scale-to-width-down/536?cb=20220218223550 2x\" class=\"pi-image-thumbnail\" data-relevant=\"1\" alt=\"ToreroHD\" width=\"270\" height=\"136\" data-image-key=\"ToreroHD.png\" data-image-name=\"ToreroHD.png\" />\n\t\t\n\t</a>\n\t\n</figure>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"AKA\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Also called</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">Lamborghini Countach</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Modeler\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Modeled by</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">SampleModeler</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Vehicle Type\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Vehicle type</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">Vintage supercar</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Capacity\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Capacity</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">2</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Price\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Price</h3>\n\t\n\t<div class=\"pi-data-value pi-font\"><span style=\"color:Red\">Unobtainable</span> - previously <span typeof=\"mw:File\"><a href=\"/wiki/Cash\" title=\"Cash\"><img alt=\"Cash Icon\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/4/46/Cash_Icon.png/revision/latest/scale-to-width-down/21?cb=20220307090616\" decoding=\"async\" loading=\"lazy\" width=\"21\" height=\"21\" class=\"mw-file-element\" data-image-name=\"Cash Icon.png\" data-image-key=\"Cash_Icon.png\" data-relevant=\"1\" /></a></span>599,000</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Locations\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Location(s)</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">None (previously on a platform in the <a href=\"/wiki/River\" title=\"River\">River</a>, near the <a href=\"/wiki/Cheater_Island\" title=\"Cheater Island\">Cheater Island</a>)</div>\n</div>\n<section class=\"pi-item pi-group pi-border-color pi-collapse pi-collapse-open\">\n\t<h2 class=\"pi-item pi-header pi-secondary-font pi-item-spacing pi-secondary-background\">Other Info</h2>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Release Date\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Release date</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">September 3, 2021 (Day 4 of the <i><a href=\"/wiki/Update_Log\" title=\"Update Log\">5 Days of Vehicles Event 2021</a></i>)</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Retirement date\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Retirement date</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">September 12, 2021</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Can Equip Spoiler?\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Spoiler</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">Equippable</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Default License Plate\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">License plate</h3>\n\t\n\t<div class=\"pi-data-value pi-font\">WEDGE</div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Default Spawn Color(s)\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Spawn color(s)</h3>\n\t\n\t<div class=\"pi-data-value pi-font\"><ul><li>Body Color: White</li><li>Interior Main: Matte</li><li>Interior Detail: Tan</li></ul></div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Successor\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Successor</h3>\n\t\n\t<div class=\"pi-data-value pi-font\"><a href=\"/wiki/Snake\" title=\"Snake\">Snake</a></div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Predecessor\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Predecessor</h3>\n\t\n\t<div class=\"pi-data-value pi-font\"><a href=\"/wiki/Agent\" title=\"Agent\">Agent</a></div>\n</div>\n\n<div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"Competitors\">\n\t\n\t\t<h3 class=\"pi-data-label pi-secondary-font\">Competitor(s)</h3>\n\t\n\t<div class=\"pi-data-value pi-font\"><a href=\"/wiki/Stormrider\" title=\"Stormrider\">Stormrider</a></div>\n</div>\n\n</section>\n</aside>\n\n<p class=\"mw-empty-elt\"></p><p>The <b>Torero</b> is one of the limited-time <a href=\"/wiki/Vehicles\" title=\"Vehicles\">vehicles</a> in <i>Jailbreak</i>. Added on September 3, 2021, it is the fourth vehicle added in the <i><a href=\"/wiki/Update_Log\" title=\"Update Log\">5 Days of Vehicles Update 2021</a></i>.\n</p><p>Unlike other vehicles introduced in the update, it was available only for a limited time of nine days and became unobtainable on September 12, 2021.<sup id=\"cite&#95;ref-1\" class=\"reference\"><a href=\"#cite_note-1\"><span class=\"cite-bracket\">&#91;</span>1<span class=\"cite-bracket\">&#93;</span></a></sup> It costed <span typeof=\"mw:File\"><a href=\"/wiki/Cash\" title=\"Cash\"><img alt=\"Cash Icon\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"21\" height=\"21\" class=\"mw-file-element lazyload\" data-image-name=\"Cash Icon.png\" data-image-key=\"Cash_Icon.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/4/46/Cash_Icon.png/revision/latest/scale-to-width-down/21?cb=20220307090616\" /></a></span>599,000.\n</p>\n<div id=\"toc\" class=\"toc\" role=\"navigation\" aria-labelledby=\"mw-toc-heading\"><input type=\"checkbox\" role=\"button\" id=\"toctogglecheckbox\" class=\"toctogglecheckbox\" style=\"display:none\" /><div class=\"toctitle\" lang=\"en\" dir=\"ltr\"><h2 id=\"mw-toc-heading\">Contents</h2><span class=\"toctogglespan\"><label class=\"toctogglelabel\" for=\"toctogglecheckbox\"></label></span></div>\n<ul>\n<li class=\"toclevel-1 tocsection-1\"><a href=\"#Overview\"><span class=\"tocnumber\">1</span> <span class=\"toctext\">Overview</span></a></li>\n<li class=\"toclevel-1 tocsection-2\"><a href=\"#Performance\"><span class=\"tocnumber\">2</span> <span class=\"toctext\">Performance</span></a></li>\n<li class=\"toclevel-1 tocsection-3\"><a href=\"#Gallery\"><span class=\"tocnumber\">3</span> <span class=\"toctext\">Gallery</span></a></li>\n<li class=\"toclevel-1 tocsection-4\"><a href=\"#Trivia\"><span class=\"tocnumber\">4</span> <span class=\"toctext\">Trivia</span></a>\n<ul>\n<li class=\"toclevel-2 tocsection-5\"><a href=\"#Miscellaneous_Trivia\"><span class=\"tocnumber\">4.1</span> <span class=\"toctext\">Miscellaneous Trivia</span></a></li>\n</ul>\n</li>\n<li class=\"toclevel-1\"><a href=\"#References\"><span class=\"tocnumber\">5</span> <span class=\"toctext\">References</span></a></li>\n</ul>\n</div>\n\n<h2><span class=\"mw-headline\" id=\"Overview\">Overview</span></h2>\n<p>Based off the <i><a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://en.wikipedia.org/wiki/Lamborghini_Countach\">1980s Lamborghini Countach</a></i>, the <b>Torero</b> spawned on a platform placed on the <a href=\"/wiki/River\" title=\"River\">River</a>, located near the <a href=\"/wiki/Cheater_Island\" title=\"Cheater Island\">Cheater Island</a>. A light beam was placed on the platform so players could find its spawn from anywhere on the map. The platform was removed on the date of the vehicle's retirement.\n</p>\n<h2><span class=\"mw-headline\" id=\"Performance\">Performance</span></h2>\n<p>Overall, the Torero is a phenomenal limited-time vehicle. Despite being based on a vintage supercar from the 1970s, the Torero has impressive performance that outpaces some of <i>Jailbreak</i>'s modern supercars.\n</p><p>The Torero's powerful launch and rapid acceleration complement a high top speed. It has capable brakes and handling, and additionally, the vehicle has a notably fast reverse speed and top-notch off-road capabilities.\n</p>\n<table class=\"article-table\" style=\"width: 100%;\">\n<tbody><tr>\n<th colspan=\"100%\" style=\"text-align:center\"><font face=\"badang\"><span style=\"font-size:20px; letter-spacing:1px;\">Stats</span></font>\n<center><span class=\"wds-button mw-customtoggle-stats\">Toggle details</span></center>\n</th></tr>\n<tr>\n<td><b>Top speed</b>\n<center><b>Excellent</b></center>\n<figure class=\"thumb mw-halign-center show-info-icon\" typeof=\"mw:File/Thumb\" style=\"width: 180px\"> \t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest?cb=20191226172544\" class=\"mw-file-description image\"><img alt=\"4s\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage lazyload\" data-image-name=\"4s.png\" data-image-key=\"4s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" /></a> \t<noscript><a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest?cb=20191226172544\" class=\"mw-file-description image\"><img alt=\"4s\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage\" data-image-name=\"4s.png\" data-image-key=\"4s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" /></a></noscript> \t<figcaption class=\"thumbcaption\"> \t\t \t\t\t<a href=\"/wiki/File:4s.png\" class=\"info-icon\"><svg><use xlink:href=\"#wds-icons-info-small\"></use></svg></a> \t\t \t\t \t\t \t</figcaption> </figure>\n</td>\n<td><b>Reverse speed</b>\n<center><b>Excellent</b></center>\n<figure class=\"thumb mw-halign-center show-info-icon\" typeof=\"mw:File/Thumb\" style=\"width: 180px\"> \t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest?cb=20191226172544\" class=\"mw-file-description image\"><img alt=\"4s\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage lazyload\" data-image-name=\"4s.png\" data-image-key=\"4s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" /></a> \t<noscript><a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest?cb=20191226172544\" class=\"mw-file-description image\"><img alt=\"4s\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage\" data-image-name=\"4s.png\" data-image-key=\"4s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" /></a></noscript> \t<figcaption class=\"thumbcaption\"> \t\t \t\t\t<a href=\"/wiki/File:4s.png\" class=\"info-icon\"><svg><use xlink:href=\"#wds-icons-info-small\"></use></svg></a> \t\t \t\t \t\t \t</figcaption> </figure>\n</td></tr>\n<tr id=\"mw-customcollapsible-stats\" class=\"mw-collapsible\" valign=\"top\">\n<td style=\"font-size: 13px; width: 50%\">The Torero has a top speed of 220 MPH, which is ahead of the <a href=\"/wiki/Roadster\" title=\"Roadster\">Roadster</a>.\n</td>\n<td style=\"font-size: 13px; width: 50%\">One of the fastest in-game, being able to reach 88 MPH, it is comparable to the <a href=\"/wiki/M12_Molten\" title=\"M12 Molten\">M12 Molten</a>, but slower than the <a href=\"/wiki/Crown\" title=\"Crown\">Crown</a>.\n</td></tr>\n<tr>\n<td><b>Launch</b>\n<center><b>Phenomenal</b></center>\n<figure class=\"thumb mw-halign-center show-info-icon\" typeof=\"mw:File/Thumb\" style=\"width: 180px\"> \t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest?cb=20190110054642\" class=\"mw-file-description image\"><img alt=\"5s\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage lazyload\" data-image-name=\"5s.png\" data-image-key=\"5s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" /></a> \t<noscript><a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest?cb=20190110054642\" class=\"mw-file-description image\"><img alt=\"5s\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage\" data-image-name=\"5s.png\" data-image-key=\"5s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" /></a></noscript> \t<figcaption class=\"thumbcaption\"> \t\t \t\t\t<a href=\"/wiki/File:5s.png\" class=\"info-icon\"><svg><use xlink:href=\"#wds-icons-info-small\"></use></svg></a> \t\t \t\t \t\t \t</figcaption> </figure>\n</td>\n<td><b>Acceleration</b>\n<center><b>Incredible</b></center>\n<figure class=\"thumb mw-halign-center show-info-icon\" typeof=\"mw:File/Thumb\" style=\"width: 180px\"> \t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/d/d5/4.5s.png/revision/latest?cb=20211205000606\" class=\"mw-file-description image\"><img alt=\"4.5s\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage lazyload\" data-image-name=\"4.5s.png\" data-image-key=\"4.5s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/d/d5/4.5s.png/revision/latest/scale-to-width-down/180?cb=20211205000606\" /></a> \t<noscript><a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/d/d5/4.5s.png/revision/latest?cb=20211205000606\" class=\"mw-file-description image\"><img alt=\"4.5s\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/d/d5/4.5s.png/revision/latest/scale-to-width-down/180?cb=20211205000606\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage\" data-image-name=\"4.5s.png\" data-image-key=\"4.5s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/d/d5/4.5s.png/revision/latest/scale-to-width-down/180?cb=20211205000606\" /></a></noscript> \t<figcaption class=\"thumbcaption\"> \t\t \t\t\t<a href=\"/wiki/File:4.5s.png\" class=\"info-icon\"><svg><use xlink:href=\"#wds-icons-info-small\"></use></svg></a> \t\t \t\t \t\t \t</figcaption> </figure>\n</td></tr>\n<tr id=\"mw-customcollapsible-stats\" class=\"mw-collapsible\" valign=\"top\">\n<td style=\"font-size: 13px; width: 50%\">Reaching 85 MPH in a single second, its launch is one of the best in the game. It's equal to the <a href=\"/wiki/Polaire\" title=\"Polaire\">Polaire</a>, but beaten by <a href=\"/wiki/Bluebird\" title=\"Bluebird\">Bluebird</a> and <a href=\"/wiki/Volt\" title=\"Volt\">Volt</a>.\n</td>\n<td style=\"font-size: 13px; width: 50%\">The Torero’s acceleration is incredible. Because of this vehicle having one of the best launches out of any vehicle in the game, it ties for 0-150 MPH acceleration in the game with the <a href=\"/wiki/Successor\" title=\"Successor\">Successor</a> and the <a href=\"/wiki/Power-1\" title=\"Power-1\">Power-1</a>. It is only behind the <a href=\"/wiki/Katana\" title=\"Katana\">Katana</a>, <a href=\"/wiki/Polaire\" title=\"Polaire\">Polaire</a>, <a href=\"/wiki/Bluebird\" title=\"Bluebird\">Bluebird</a> and <a href=\"/wiki/Volt\" title=\"Volt\">Volt</a> in that aspect. It takes 3.5s to reach 150 MPH and only 6 seconds to hit 180 MPH. However, it slows down a bit after hitting 180 MPH. It's better than <a href=\"/wiki/Stormrider\" title=\"Stormrider\">Stormrider</a> and only loses to <a href=\"/wiki/Roadster\" title=\"Roadster\">Roadster</a>, <a href=\"/wiki/Volt\" title=\"Volt\">Volt</a>, <a href=\"/wiki/Bluebird\" title=\"Bluebird\">Bluebird</a>, <a href=\"/wiki/Polaire\" title=\"Polaire\">Polaire</a>, <a href=\"/wiki/Katana\" title=\"Katana\">Katana</a> and <a href=\"/wiki/Manta\" title=\"Manta\">Manta</a> in this stat.\n</td></tr>\n<tr>\n<td><b>Handling</b>\n<center><b>Excellent</b></center>\n<figure class=\"thumb mw-halign-center show-info-icon\" typeof=\"mw:File/Thumb\" style=\"width: 180px\"> \t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest?cb=20191226172544\" class=\"mw-file-description image\"><img alt=\"4s\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage lazyload\" data-image-name=\"4s.png\" data-image-key=\"4s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" /></a> \t<noscript><a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest?cb=20191226172544\" class=\"mw-file-description image\"><img alt=\"4s\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage\" data-image-name=\"4s.png\" data-image-key=\"4s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1f/4s.png/revision/latest/scale-to-width-down/180?cb=20191226172544\" /></a></noscript> \t<figcaption class=\"thumbcaption\"> \t\t \t\t\t<a href=\"/wiki/File:4s.png\" class=\"info-icon\"><svg><use xlink:href=\"#wds-icons-info-small\"></use></svg></a> \t\t \t\t \t\t \t</figcaption> </figure>\n</td>\n<td><b>Off-Roading</b>\n<center><b>Phenomenal</b></center>\n<figure class=\"thumb mw-halign-center show-info-icon\" typeof=\"mw:File/Thumb\" style=\"width: 180px\"> \t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest?cb=20190110054642\" class=\"mw-file-description image\"><img alt=\"5s\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage lazyload\" data-image-name=\"5s.png\" data-image-key=\"5s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" /></a> \t<noscript><a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest?cb=20190110054642\" class=\"mw-file-description image\"><img alt=\"5s\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage\" data-image-name=\"5s.png\" data-image-key=\"5s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" /></a></noscript> \t<figcaption class=\"thumbcaption\"> \t\t \t\t\t<a href=\"/wiki/File:5s.png\" class=\"info-icon\"><svg><use xlink:href=\"#wds-icons-info-small\"></use></svg></a> \t\t \t\t \t\t \t</figcaption> </figure>\n</td></tr>\n<tr id=\"mw-customcollapsible-stats\" class=\"mw-collapsible\" valign=\"top\">\n<td style=\"font-size: 13px; width: 50%\">Due to it's relatively small size, the Torero can be controlled with ease at any speed, however, it becomes more difficult to control at higher speeds. Comparable to the <a href=\"/wiki/Megalodon\" title=\"Megalodon\">Megalodon</a>.\n</td>\n<td style=\"font-size: 13px; width: 50%\">Off-roading performance is the best among all supercars, with its amazing traction allowing it to climb mountains and steep hills with ease. It can usually climb hills at a nearly 90-degree angle, a trait sometimes shared with the <a href=\"/wiki/M12_Molten\" title=\"M12 Molten\">M12 Molten</a>, <a href=\"/wiki/Trailblazer\" title=\"Trailblazer\">Trailblazer</a> and <a href=\"/wiki/Concept\" title=\"Concept\">Concept</a>.\n</td></tr>\n<tr>\n<td><b>Braking</b>\n<center><b>Phenomenal</b></center>\n<figure class=\"thumb mw-halign-center show-info-icon\" typeof=\"mw:File/Thumb\" style=\"width: 180px\"> \t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest?cb=20190110054642\" class=\"mw-file-description image\"><img alt=\"5s\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage lazyload\" data-image-name=\"5s.png\" data-image-key=\"5s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" /></a> \t<noscript><a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest?cb=20190110054642\" class=\"mw-file-description image\"><img alt=\"5s\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage\" data-image-name=\"5s.png\" data-image-key=\"5s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/2a/5s.png/revision/latest/scale-to-width-down/180?cb=20190110054642\" /></a></noscript> \t<figcaption class=\"thumbcaption\"> \t\t \t\t\t<a href=\"/wiki/File:5s.png\" class=\"info-icon\"><svg><use xlink:href=\"#wds-icons-info-small\"></use></svg></a> \t\t \t\t \t\t \t</figcaption> </figure>\n</td>\n<td><b>Durability</b>\n<center><b>Fair</b></center>\n<figure class=\"thumb mw-halign-center show-info-icon\" typeof=\"mw:File/Thumb\" style=\"width: 180px\"> \t<a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/f/fe/3s.png/revision/latest?cb=20191226172230\" class=\"mw-file-description image\"><img alt=\"3s\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage lazyload\" data-image-name=\"3s.png\" data-image-key=\"3s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/f/fe/3s.png/revision/latest/scale-to-width-down/180?cb=20191226172230\" /></a> \t<noscript><a href=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/f/fe/3s.png/revision/latest?cb=20191226172230\" class=\"mw-file-description image\"><img alt=\"3s\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/f/fe/3s.png/revision/latest/scale-to-width-down/180?cb=20191226172230\" decoding=\"async\" loading=\"lazy\" width=\"180\" height=\"34\" class=\"thumbimage\" data-image-name=\"3s.png\" data-image-key=\"3s.png\" data-relevant=\"1\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/f/fe/3s.png/revision/latest/scale-to-width-down/180?cb=20191226172230\" /></a></noscript> \t<figcaption class=\"thumbcaption\"> \t\t \t\t\t<a href=\"/wiki/File:3s.png\" class=\"info-icon\"><svg><use xlink:href=\"#wds-icons-info-small\"></use></svg></a> \t\t \t\t \t\t \t</figcaption> </figure>\n</td></tr>\n<tr id=\"mw-customcollapsible-stats\" class=\"mw-collapsible\" valign=\"top\">\n<td style=\"font-size: 13px; width: 50%\">Its braking is one of the best in-game, stopping within 0.7 seconds from top speed. It is comparable to the <a href=\"/wiki/Successor\" title=\"Successor\">Successor</a>.\n</td>\n<td style=\"font-size: 13px; width: 50%\">The Torero has the same durability as most Hypercars of 75 HP with a disable duration of 7.5 seconds.\n<p>Ram Slowdown Duration/Pit Manuever Cooldown: 2s\n</p>\n</td></tr></tbody></table>\n<h2><span class=\"mw-headline\" id=\"Gallery\">Gallery</span></h2>\n<div class=\"tabber wds-tabber\"><div class=\"wds-tabs__wrapper with-bottom-border\"><ul class=\"wds-tabs\"><li class=\"wds-tabs__tab wds-is-current\" data-hash=\"Current\"><div class=\"wds-tabs__tab-label\"><a href=\"#\">Current</a></div></li><li class=\"wds-tabs__tab\" data-hash=\"Outdated\"><div class=\"wds-tabs__tab-label\"><a href=\"#\">Outdated</a></div></li><li class=\"wds-tabs__tab\" data-hash=\"Teaser\"><div class=\"wds-tabs__tab-label\"><a href=\"#\">Teaser</a></div></li><li class=\"wds-tabs__tab\" data-hash=\"Others_\"><div class=\"wds-tabs__tab-label\"><a href=\"#\">Others </a></div></li></ul></div><div class=\"wds-tab__content wds-is-current\"><p class=\"mw-empty-elt\">\n</p><h4><span class=\"mw-headline\" id=\"Current\"><i>Current</i></span></h4>\n<div id=\"gallery-0\" hash=\"1f33ba957e6fe62ea9d9f8df6d34cbd2\" data-seq-no=\"0\" class=\"wikia-gallery wikia-gallery-caption-below wikia-gallery-position-center wikia-gallery-spacing-small wikia-gallery-border-small wikia-gallery-captions-left wikia-gallery-caption-size-medium\"><div class=\"wikia-gallery-caption\"></div><div class=\"wikia-gallery-row\"><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"ToreroGeneralView-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:ToreroGeneralView.png\" title=\"ToreroGeneralView.png (1.68 MB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/c/c1/ToreroGeneralView.png/revision/latest/scale-to-width-down/185?cb=20251118072901\" title=\"ToreroGeneralView.png (1.68 MB)\" class=\"thumbimage\" alt=\"A general view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroGeneralView.png\" data-image-key=\"ToreroGeneralView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;A general view of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"ToreroGeneralView.png (1.68 MB)\" class=\"thumbimage lazyload\" alt=\"A general view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroGeneralView.png\" data-image-key=\"ToreroGeneralView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;A general view of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/c/c1/ToreroGeneralView.png/revision/latest/scale-to-width-down/185?cb=20251118072901\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>A general view of the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"ToreroFrontView-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:ToreroFrontView.png\" title=\"ToreroFrontView.png (1.95 MB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/f/f9/ToreroFrontView.png/revision/latest/scale-to-width-down/185?cb=20251118073610\" title=\"ToreroFrontView.png (1.95 MB)\" class=\"thumbimage\" alt=\"The front view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroFrontView.png\" data-image-key=\"ToreroFrontView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The front view of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"ToreroFrontView.png (1.95 MB)\" class=\"thumbimage lazyload\" alt=\"The front view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroFrontView.png\" data-image-key=\"ToreroFrontView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The front view of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/f/f9/ToreroFrontView.png/revision/latest/scale-to-width-down/185?cb=20251118073610\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The front view of the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"ToreroRearView-png\" style=\"position: relative; height:102px; width:185px; top:1px;\"><a class=\"image lightbox\" href=\"/wiki/File:ToreroRearView.png\" title=\"ToreroRearView.png (1.81 MB)\" style=\"height:102px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/c/cf/ToreroRearView.png/revision/latest/scale-to-width-down/185?cb=20251118073022\" title=\"ToreroRearView.png (1.81 MB)\" class=\"thumbimage\" alt=\"The rear view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroRearView.png\" data-image-key=\"ToreroRearView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The rear view of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"ToreroRearView.png (1.81 MB)\" class=\"thumbimage lazyload\" alt=\"The rear view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroRearView.png\" data-image-key=\"ToreroRearView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The rear view of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/c/cf/ToreroRearView.png/revision/latest/scale-to-width-down/185?cb=20251118073022\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The rear view of the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"ToreroRightView-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:ToreroRightView.png\" title=\"ToreroRightView.png (1.73 MB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/3/34/ToreroRightView.png/revision/latest/scale-to-width-down/185?cb=20251118073049\" title=\"ToreroRightView.png (1.73 MB)\" class=\"thumbimage\" alt=\"The right view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroRightView.png\" data-image-key=\"ToreroRightView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The right view of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"ToreroRightView.png (1.73 MB)\" class=\"thumbimage lazyload\" alt=\"The right view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroRightView.png\" data-image-key=\"ToreroRightView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The right view of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/3/34/ToreroRightView.png/revision/latest/scale-to-width-down/185?cb=20251118073049\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The right view of the Torero.</i></div></div></div><div class=\"wikia-gallery-row\"><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"ToreroLeftView-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:ToreroLeftView.png\" title=\"ToreroLeftView.png (1.4 MB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/e/e7/ToreroLeftView.png/revision/latest/scale-to-width-down/185?cb=20251118073107\" title=\"ToreroLeftView.png (1.4 MB)\" class=\"thumbimage\" alt=\"The left view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroLeftView.png\" data-image-key=\"ToreroLeftView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The left view of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"ToreroLeftView.png (1.4 MB)\" class=\"thumbimage lazyload\" alt=\"The left view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroLeftView.png\" data-image-key=\"ToreroLeftView.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The left view of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/e/e7/ToreroLeftView.png/revision/latest/scale-to-width-down/185?cb=20251118073107\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The left view of the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"ToreroSpoiler-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:ToreroSpoiler.png\" title=\"ToreroSpoiler.png (3.2 MB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/a/a1/ToreroSpoiler.png/revision/latest/scale-to-width-down/185?cb=20251118073127\" title=\"ToreroSpoiler.png (3.2 MB)\" class=\"thumbimage\" alt=\"The Torero with a spoiler equipped.\" height=\"104\" width=\"185\" data-image-name=\"ToreroSpoiler.png\" data-image-key=\"ToreroSpoiler.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero with a spoiler equipped.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"ToreroSpoiler.png (3.2 MB)\" class=\"thumbimage lazyload\" alt=\"The Torero with a spoiler equipped.\" height=\"104\" width=\"185\" data-image-name=\"ToreroSpoiler.png\" data-image-key=\"ToreroSpoiler.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero with a spoiler equipped.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/a/a1/ToreroSpoiler.png/revision/latest/scale-to-width-down/185?cb=20251118073127\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The Torero with a spoiler equipped.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"ToreroInterior-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:ToreroInterior.png\" title=\"ToreroInterior.png (1.76 MB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/0/06/ToreroInterior.png/revision/latest/scale-to-width-down/185?cb=20251118073145\" title=\"ToreroInterior.png (1.76 MB)\" class=\"thumbimage\" alt=\"The interior view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroInterior.png\" data-image-key=\"ToreroInterior.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The interior view of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"ToreroInterior.png (1.76 MB)\" class=\"thumbimage lazyload\" alt=\"The interior view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"ToreroInterior.png\" data-image-key=\"ToreroInterior.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The interior view of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/0/06/ToreroInterior.png/revision/latest/scale-to-width-down/185?cb=20251118073145\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The interior view of the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"ToreroPolice-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:ToreroPolice.png\" title=\"ToreroPolice.png (3.17 MB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/a/af/ToreroPolice.png/revision/latest/scale-to-width-down/185?cb=20251118073204\" title=\"ToreroPolice.png (3.17 MB)\" class=\"thumbimage\" alt=\"The Torero with police sirens.\" height=\"104\" width=\"185\" data-image-name=\"ToreroPolice.png\" data-image-key=\"ToreroPolice.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero with police sirens.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"ToreroPolice.png (3.17 MB)\" class=\"thumbimage lazyload\" alt=\"The Torero with police sirens.\" height=\"104\" width=\"185\" data-image-name=\"ToreroPolice.png\" data-image-key=\"ToreroPolice.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero with police sirens.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/a/af/ToreroPolice.png/revision/latest/scale-to-width-down/185?cb=20251118073204\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The Torero with police sirens.</i></div></div></div></div><p class=\"mw-empty-elt\"></p></div><div class=\"wds-tab__content\"><p class=\"mw-empty-elt\">\n</p><h4><span class=\"mw-headline\" id=\"Spawns\"><i>Spawns</i></span></h4>\n<div id=\"gallery-1\" hash=\"c73a346772388803ee9d4e4589488c3f\" data-seq-no=\"1\" class=\"wikia-gallery wikia-gallery-caption-below wikia-gallery-position-center wikia-gallery-spacing-small wikia-gallery-border-small wikia-gallery-captions-left wikia-gallery-caption-size-medium\"><div class=\"wikia-gallery-caption\"></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"RobloxScreenShot20210904_080323513-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:RobloxScreenShot20210904_080323513.png\" title=\"RobloxScreenShot20210904 080323513.png (637 KB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/7/7e/RobloxScreenShot20210904_080323513.png/revision/latest/scale-to-width-down/185?cb=20210904142330\" title=\"RobloxScreenShot20210904 080323513.png (637 KB)\" class=\"thumbimage\" alt=\"The Torero at its spawn point.\" height=\"104\" width=\"185\" data-image-name=\"RobloxScreenShot20210904 080323513.png\" data-image-key=\"RobloxScreenShot20210904_080323513.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero at its spawn point.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"RobloxScreenShot20210904 080323513.png (637 KB)\" class=\"thumbimage lazyload\" alt=\"The Torero at its spawn point.\" height=\"104\" width=\"185\" data-image-name=\"RobloxScreenShot20210904 080323513.png\" data-image-key=\"RobloxScreenShot20210904_080323513.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero at its spawn point.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/7/7e/RobloxScreenShot20210904_080323513.png/revision/latest/scale-to-width-down/185?cb=20210904142330\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The Torero at its spawn point.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"RobloxScreenShot20210904_080951552-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:RobloxScreenShot20210904_080951552.png\" title=\"RobloxScreenShot20210904 080951552.png (511 KB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/b/bb/RobloxScreenShot20210904_080951552.png/revision/latest/scale-to-width-down/185?cb=20210904142331\" title=\"RobloxScreenShot20210904 080951552.png (511 KB)\" class=\"thumbimage\" alt=\"The Torero&#039;s spawn point at night.\" height=\"104\" width=\"185\" data-image-name=\"RobloxScreenShot20210904 080951552.png\" data-image-key=\"RobloxScreenShot20210904_080951552.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero&#039;s spawn point at night.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"RobloxScreenShot20210904 080951552.png (511 KB)\" class=\"thumbimage lazyload\" alt=\"The Torero&#39;s spawn point at night.\" height=\"104\" width=\"185\" data-image-name=\"RobloxScreenShot20210904 080951552.png\" data-image-key=\"RobloxScreenShot20210904_080951552.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero&#39;s spawn point at night.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/b/bb/RobloxScreenShot20210904_080951552.png/revision/latest/scale-to-width-down/185?cb=20210904142331\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The Torero's spawn point at night.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"RobloxScreenShot20210904_080305399-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:RobloxScreenShot20210904_080305399.png\" title=\"RobloxScreenShot20210904 080305399.png (639 KB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/d/da/RobloxScreenShot20210904_080305399.png/revision/latest/scale-to-width-down/185?cb=20210904142327\" title=\"RobloxScreenShot20210904 080305399.png (639 KB)\" class=\"thumbimage\" alt=\"The Torero&#039;s spawn point when viewed from a distance.\" height=\"104\" width=\"185\" data-image-name=\"RobloxScreenShot20210904 080305399.png\" data-image-key=\"RobloxScreenShot20210904_080305399.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero&#039;s spawn point when viewed from a distance.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"RobloxScreenShot20210904 080305399.png (639 KB)\" class=\"thumbimage lazyload\" alt=\"The Torero&#39;s spawn point when viewed from a distance.\" height=\"104\" width=\"185\" data-image-name=\"RobloxScreenShot20210904 080305399.png\" data-image-key=\"RobloxScreenShot20210904_080305399.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero&#39;s spawn point when viewed from a distance.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/d/da/RobloxScreenShot20210904_080305399.png/revision/latest/scale-to-width-down/185?cb=20210904142327\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The Torero's spawn point when viewed from a distance.</i></div></div></div><p class=\"mw-empty-elt\"></p></div><div class=\"wds-tab__content\"><p class=\"mw-empty-elt\">\n</p><h3><span class=\"mw-headline\" id=\"Teaser\"><i>Teaser</i></span></h3>\n<center>Teaser images of the Torero prior to release.</center>\n<div id=\"gallery-2\" hash=\"75d2c847b64daecb634509a3e4b8b1ba\" data-seq-no=\"2\" class=\"wikia-gallery wikia-gallery-caption-below wikia-gallery-position-center wikia-gallery-spacing-small wikia-gallery-border-small wikia-gallery-captions-left wikia-gallery-caption-size-medium\"><div class=\"wikia-gallery-caption\"></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"Torero-jpg\" style=\"position: relative; height:89px; width:185px; top:7.5px;\"><a class=\"image lightbox\" href=\"/wiki/File:Torero.jpg\" title=\"Torero.jpg (151 KB)\" style=\"height:89px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1b/Torero.jpg/revision/latest/scale-to-width-down/185?cb=20220816101421\" title=\"Torero.jpg (151 KB)\" class=\"thumbimage\" alt=\"A front view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"Torero.jpg\" data-image-key=\"Torero.jpg\" data-relevant=\"1\" data-caption=\"&lt;i&gt;A front view of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"Torero.jpg (151 KB)\" class=\"thumbimage lazyload\" alt=\"A front view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"Torero.jpg\" data-image-key=\"Torero.jpg\" data-relevant=\"1\" data-caption=\"&lt;i&gt;A front view of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/1b/Torero.jpg/revision/latest/scale-to-width-down/185?cb=20220816101421\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>A front view of the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"The_Torero-_2-jpg\" style=\"position: relative; height:94px; width:185px; top:5px;\"><a class=\"image lightbox\" href=\"/wiki/File:The_Torero._2.jpg\" title=\"The Torero. 2.jpg (191 KB)\" style=\"height:94px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/5/55/The_Torero._2.jpg/revision/latest/scale-to-width-down/185?cb=20210903222250\" title=\"The Torero. 2.jpg (191 KB)\" class=\"thumbimage\" alt=\"A rear view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"The Torero. 2.jpg\" data-image-key=\"The_Torero._2.jpg\" data-relevant=\"1\" data-caption=\"&lt;i&gt;A rear view of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"The Torero. 2.jpg (191 KB)\" class=\"thumbimage lazyload\" alt=\"A rear view of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"The Torero. 2.jpg\" data-image-key=\"The_Torero._2.jpg\" data-relevant=\"1\" data-caption=\"&lt;i&gt;A rear view of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/5/55/The_Torero._2.jpg/revision/latest/scale-to-width-down/185?cb=20210903222250\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>A rear view of the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"The_Torero_Interior-jpg\" style=\"position: relative; height:89px; width:185px; top:7.5px;\"><a class=\"image lightbox\" href=\"/wiki/File:The_Torero_Interior.jpg\" title=\"The Torero Interior.jpg (125 KB)\" style=\"height:89px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/21/The_Torero_Interior.jpg/revision/latest/scale-to-width-down/185?cb=20210903222304\" title=\"The Torero Interior.jpg (125 KB)\" class=\"thumbimage\" alt=\"The interior of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"The Torero Interior.jpg\" data-image-key=\"The_Torero_Interior.jpg\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The interior of the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"The Torero Interior.jpg (125 KB)\" class=\"thumbimage lazyload\" alt=\"The interior of the Torero.\" height=\"104\" width=\"185\" data-image-name=\"The Torero Interior.jpg\" data-image-key=\"The_Torero_Interior.jpg\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The interior of the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/21/The_Torero_Interior.jpg/revision/latest/scale-to-width-down/185?cb=20210903222304\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The interior of the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:106px;\"><div class=\"gallery-image-wrapper accent\" id=\"JBSept20215Days5VehiclesDay4-png\" style=\"position: relative; height:104px; width:185px;\"><a class=\"image lightbox\" href=\"/wiki/File:JBSept20215Days5VehiclesDay4.png\" title=\"JBSept20215Days5VehiclesDay4.png (2.2 MB)\" style=\"height:104px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/b/b8/JBSept20215Days5VehiclesDay4.png/revision/latest/scale-to-width-down/185?cb=20210904045619\" title=\"JBSept20215Days5VehiclesDay4.png (2.2 MB)\" class=\"thumbimage\" alt=\"The Torero on the 5 Days 5 Vehicles Update 2021 sheet.\" height=\"104\" width=\"185\" data-image-name=\"JBSept20215Days5VehiclesDay4.png\" data-image-key=\"JBSept20215Days5VehiclesDay4.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero on the 5 Days 5 Vehicles Update 2021 sheet.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"JBSept20215Days5VehiclesDay4.png (2.2 MB)\" class=\"thumbimage lazyload\" alt=\"The Torero on the 5 Days 5 Vehicles Update 2021 sheet.\" height=\"104\" width=\"185\" data-image-name=\"JBSept20215Days5VehiclesDay4.png\" data-image-key=\"JBSept20215Days5VehiclesDay4.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero on the 5 Days 5 Vehicles Update 2021 sheet.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/b/b8/JBSept20215Days5VehiclesDay4.png/revision/latest/scale-to-width-down/185?cb=20210904045619\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The Torero on the 5 Days 5 Vehicles Update 2021 sheet.</i></div></div></div><p class=\"mw-empty-elt\"></p></div><div class=\"wds-tab__content\"><p class=\"mw-empty-elt\">\n</p><h4><span class=\"mw-headline\" id=\"Thumbnails\"><i>Thumbnails</i></span></h4>\n<center>The thumbnails featuring the Torero.</center>\n<div id=\"gallery-3\" hash=\"b3f161ff66026a1df6bb7bc959725978\" data-seq-no=\"3\" class=\"wikia-gallery wikia-gallery-caption-below wikia-gallery-position-center wikia-gallery-spacing-small wikia-gallery-border-small wikia-gallery-captions-left wikia-gallery-caption-size-medium\"><div class=\"wikia-gallery-caption\"></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:152px;\"><div class=\"gallery-image-wrapper accent\" id=\"JBToreroIsGonnaBeLimited-png\" style=\"position: relative; height:103px; width:185px; top:23.5px;\"><a class=\"image lightbox\" href=\"/wiki/File:JBToreroIsGonnaBeLimited.png\" title=\"JBToreroIsGonnaBeLimited.png (334 KB)\" style=\"height:103px; width:185px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/19/JBToreroIsGonnaBeLimited.png/revision/latest/scale-to-width-down/185?cb=20210909071708\" title=\"JBToreroIsGonnaBeLimited.png (334 KB)\" class=\"thumbimage\" alt=\"A thumbnail for the Torero.\" height=\"150\" width=\"185\" data-image-name=\"JBToreroIsGonnaBeLimited.png\" data-image-key=\"JBToreroIsGonnaBeLimited.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;A thumbnail for the Torero.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"JBToreroIsGonnaBeLimited.png (334 KB)\" class=\"thumbimage lazyload\" alt=\"A thumbnail for the Torero.\" height=\"150\" width=\"185\" data-image-name=\"JBToreroIsGonnaBeLimited.png\" data-image-key=\"JBToreroIsGonnaBeLimited.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;A thumbnail for the Torero.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/1/19/JBToreroIsGonnaBeLimited.png/revision/latest/scale-to-width-down/185?cb=20210909071708\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>A thumbnail for the Torero.</i></div></div><div class=\"wikia-gallery-item\" style=\"width:187px; \"><div class=\"thumb\" style=\"height:152px;\"><div class=\"gallery-image-wrapper accent\" id=\"A33a5e942c26a0fa30fbabe7555b8442-png\" style=\"position: relative; height:150px; width:150px;\"><a class=\"image lightbox\" href=\"/wiki/File:A33a5e942c26a0fa30fbabe7555b8442.png\" title=\"A33a5e942c26a0fa30fbabe7555b8442.png (56 KB)\" style=\"height:150px; width:150px;\"><noscript><img style=\"\" src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/0/07/A33a5e942c26a0fa30fbabe7555b8442.png/revision/latest?cb=20210911223253\" title=\"A33a5e942c26a0fa30fbabe7555b8442.png (56 KB)\" class=\"thumbimage\" alt=\"The Torero seen in another thumbnail.\" height=\"150\" width=\"150\" data-image-name=\"A33a5e942c26a0fa30fbabe7555b8442.png\" data-image-key=\"A33a5e942c26a0fa30fbabe7555b8442.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero seen in another thumbnail.&lt;/i&gt;\"></noscript><img style=\"\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" title=\"A33a5e942c26a0fa30fbabe7555b8442.png (56 KB)\" class=\"thumbimage lazyload\" alt=\"The Torero seen in another thumbnail.\" height=\"150\" width=\"150\" data-image-name=\"A33a5e942c26a0fa30fbabe7555b8442.png\" data-image-key=\"A33a5e942c26a0fa30fbabe7555b8442.png\" data-relevant=\"1\" data-caption=\"&lt;i&gt;The Torero seen in another thumbnail.&lt;/i&gt;\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/0/07/A33a5e942c26a0fa30fbabe7555b8442.png/revision/latest?cb=20210911223253\" /></a></div></div><div class=\"lightbox-caption\" style=\"width:185px;\"><i>The Torero seen in another thumbnail.</i></div></div></div><p class=\"mw-empty-elt\"></p></div></div>\n<h2><span class=\"mw-headline\" id=\"Trivia\">Trivia</span></h2>\n<ul><li>The Torero is <i>SampleModeler</i>'s favorite vehicle in-game.\n<ul><li>He has made this statement four times. The first time in a tweet in 2022<sup id=\"cite&#95;ref-2\" class=\"reference\"><a href=\"#cite_note-2\"><span class=\"cite-bracket\">&#91;</span>2<span class=\"cite-bracket\">&#93;</span></a></sup>, the second time in a QNA session in the same year<sup id=\"cite&#95;ref-3\" class=\"reference\"><a href=\"#cite_note-3\"><span class=\"cite-bracket\">&#91;</span>3<span class=\"cite-bracket\">&#93;</span></a></sup>, the third time in a tweet in 2023<sup id=\"cite&#95;ref-4\" class=\"reference\"><a href=\"#cite_note-4\"><span class=\"cite-bracket\">&#91;</span>4<span class=\"cite-bracket\">&#93;</span></a></sup>, and lastly in a QnA session in 2025<sup id=\"cite&#95;ref-5\" class=\"reference\"><a href=\"#cite_note-5\"><span class=\"cite-bracket\">&#91;</span>5<span class=\"cite-bracket\">&#93;</span></a></sup>.</li></ul></li>\n<li>The Torero, along with the <a href=\"/wiki/Concept\" title=\"Concept\">Concept</a>, are the only vehicles in the <i>5 Days of Vehicles Update 2021</i> that are not community-created models.</li>\n<li>\"Torero\" means \"bullfighter\" in multiple Romance languages, so the vehicle's name is most likely referencing the bull on <i>Lamborghini</i>'s logo.</li>\n<li>The popular game series <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://en.wikipedia.org/wiki/Grand_Theft_Auto\"><i>Grand Theft Auto</i></a> uses Torero as the name for the <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://en.wikipedia.org/wiki/Lamborghini_Countach\">Lamborghini Countach</a> equivalent as well.\n<ul><li>The Torero in <i>Grand Theft Auto</i> was released before the Torero in <i>Jailbreak</i>. This suggests that <i>Grand Theft Auto</i> was a likely inspiration for the name.</li></ul></li>\n<li>Dogs cannot sit inside of the Torero.\n<ul><li><i>SampleModeler</i> had mentioned that there is no space for the dog to fit inside. The dog was to be seated on the windshield, but it would always pop out of the seat.<sup id=\"cite&#95;ref-6\" class=\"reference\"><a href=\"#cite_note-6\"><span class=\"cite-bracket\">&#91;</span>6<span class=\"cite-bracket\">&#93;</span></a></sup>\n<ul><li>The dog stays outside of the vehicle, similar to the <a href=\"/wiki/ATV\" title=\"ATV\">ATV</a>, <a href=\"/wiki/Patrol\" title=\"Patrol\">Patrol</a>, <a href=\"/wiki/Dirtbike\" title=\"Dirtbike\">Dirtbike</a>, <a href=\"/wiki/Frost_Crawler\" title=\"Frost Crawler\">Frost Crawler</a> and the <a href=\"/wiki/Volt\" title=\"Volt\">Volt</a>.</li></ul></li></ul></li>\n<li>The reason why <i>SampleModeler</i> decided to add the Torero to the game was that he was \"<i>always obsessed with the 70s/80s wedge shaped cars that aimed for a futurism look.</i>\"<sup id=\"cite&#95;ref-7\" class=\"reference\"><a href=\"#cite_note-7\"><span class=\"cite-bracket\">&#91;</span>7<span class=\"cite-bracket\">&#93;</span></a></sup></li>\n<li>The Torero's in game top speed when stock is the same as the real life counterpart's top speed, that being 182mph.</li>\n<li>The Torero's license plate used to read 'LIMITED' upon release. However, it was later changed, with the license plate being moved lower and the \"LIMITED\" plaque added.</li></ul>\n<h3><span class=\"mw-headline\" id=\"Miscellaneous_Trivia\">Miscellaneous Trivia</span></h3>\n<ul><li>The Torero has a accompanying garage piece, the Torero Wing.\n<ul><li>However, unlike other accompanying garage pieces, the wing was added as a Season 23 Level 4 prize, 3 years after the Torero's release.</li>\n<li>The wing is also positioned a little bit back compared to its real life counterpart.</li></ul></li>\n<li>The Torero is the fourth <i>Lamborghini</i> in the game, after <a href=\"/wiki/La_Matador\" title=\"La Matador\">La Matador</a>, <a href=\"/wiki/Surus\" title=\"Surus\">Surus</a> and <a href=\"/wiki/M12_Molten\" title=\"M12 Molten\">M12 Molten</a>.</li>\n<li>The Torero has the 5th shortest obtainability in the game, only being available for 9 days.\n<ul><li>The vehicle with the shortest obtainability was the <a href=\"/wiki/Javelin\" title=\"Javelin\">Javelin</a>, which was only available for 2 days, followed by the <a href=\"/wiki/Parisian\" title=\"Parisian\">Parisian</a>, which were available for 4 days, followed by the <a href=\"/wiki/Agent\" title=\"Agent\">Agent</a>, which was obtainable for 6 days, and the <a href=\"/wiki/Aperture\" title=\"Aperture\">Aperture</a>, which was obtainable for 7 days (1 week).</li></ul></li></ul>\n<div class=\"two-tone-border\" style=\"width: 100%;\">\n<div style=\"padding-bottom: 6px;\">\n<div class=\"title-style\"><span typeof=\"mw:File\"><a href=\"/wiki/Vehicles\" title=\"Vehicles\"><img alt=\"VehiclesNavbox3.0\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"450\" height=\"45\" class=\"mw-file-element lazyload\" data-image-name=\"VehiclesNavbox3.0.png\" data-image-key=\"VehiclesNavbox3.0.png\" data-relevant=\"0\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/7/78/VehiclesNavbox3.0.png/revision/latest/scale-to-width-down/450?cb=20260605105632\" /></a></span></div>\n</div>\n<div class=\"table-title-style\" style=\"text-align:center;\"> \n<table style=\"width:100%; font-size:100%; text-align:center;\">\n<tbody><tr>\n<td><div class=\"two-tone-border mw-collapsible mw-collapsed\" data-expandtext=\"▼\" data-collapsetext=\"▲\">\n<div style=\"padding-bottom:6px;\">\n<div class=\"title-style\"><span typeof=\"mw:File\"><a href=\"/wiki/Vehicles\" title=\"Vehicles\"><img alt=\"ObtNavImg\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"350\" height=\"35\" class=\"mw-file-element lazyload\" data-image-name=\"ObtNavImg.png\" data-image-key=\"ObtNavImg.png\" data-relevant=\"0\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/4/40/ObtNavImg.png/revision/latest/scale-to-width-down/350?cb=20260605102240\" /></a></span><span class=\"mw-collapsible-toggle-placeholder\"></span>\n</div>\n</div>\n<div class=\"mw-collapsible-content\"> \n<table style=\"width:100%; font-size:100%; text-align:center;\">\n\n<tbody><tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">General Cars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/3-EV\" title=\"3-EV\">3-EV</a> • <a href=\"/wiki/Boxer\" title=\"Boxer\">Boxer</a> • <a href=\"/wiki/Camper\" title=\"Camper\">Camper</a> • <a href=\"/wiki/Comet\" title=\"Comet\">Comet</a> • <a href=\"/wiki/Crown\" title=\"Crown\">Crown</a> • <a href=\"/wiki/Deja\" title=\"Deja\">Deja</a> • <a href=\"/wiki/Interrogator\" title=\"Interrogator\">Interrogator</a> • <a href=\"/wiki/Laviolette\" title=\"Laviolette\">Laviolette</a> • <a href=\"/wiki/Outlaw\" title=\"Outlaw\">Outlaw</a> • <a href=\"/wiki/Pickup\" title=\"Pickup\">Pickup</a> • <a href=\"/wiki/Prison_Bus\" title=\"Prison Bus\">Prison Bus</a> • <a href=\"/wiki/Semi_Truck\" title=\"Semi Truck\">Semi Truck</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Supercars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Concept\" title=\"Concept\">Concept</a> • <a href=\"/wiki/Eclaire\" title=\"Eclaire\">Eclaire</a> • <a href=\"/wiki/Fatalita\" title=\"Fatalita\">Fatalita </a> • <a href=\"/wiki/La_Matador\" title=\"La Matador\">La Matador</a> • <a href=\"/wiki/Manta\" title=\"Manta\">Manta</a> • <a href=\"/wiki/Ray_9\" title=\"Ray 9\">Ray 9</a> • <a href=\"/wiki/Roadster\" title=\"Roadster\">Roadster</a> • <a href=\"/wiki/Successor\" title=\"Successor\">Successor</a> • <a href=\"/wiki/Venom\" title=\"Venom\">Venom</a> • <a href=\"/wiki/XRK\" title=\"XRK\">XRK</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Off-roaders\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Badger\" title=\"Badger\">Badger</a> • <a href=\"/wiki/Desert_Crawler\" title=\"Desert Crawler\">Desert Crawler</a> • <a href=\"/wiki/Expeditioner\" title=\"Expeditioner\">Expeditioner</a> • <a href=\"/wiki/Jeep\" class=\"mw-redirect\" title=\"Jeep\">Jeep</a> • <a href=\"/wiki/Monster_Truck\" title=\"Monster Truck\">Monster Truck</a> • <a href=\"/wiki/Sentinel\" title=\"Sentinel\">Sentinel</a> • <a href=\"/wiki/Star-Truck\" title=\"Star-Truck\">Star-Truck</a> • <a href=\"/wiki/Trailblazer\" title=\"Trailblazer\">Trailblazer</a>\n</td></tr>\n<tr>\n<th class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\" nowrap=\"nowrap\">Bikes\n</th>\n<td style=\"padding:0.2em 0.5em; color=#FFF5F2;\"><a href=\"/wiki/ATV\" title=\"ATV\">ATV</a> • <a href=\"/wiki/Falcon_S\" title=\"Falcon S\">Falcon S</a> • <a href=\"/wiki/Reaper\" title=\"Reaper\">Reaper</a> • <a href=\"/wiki/Volt\" title=\"Volt\">Volt</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Special Cars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Ambulance\" title=\"Ambulance\">Ambulance</a> • <a href=\"/wiki/Duskrunner\" title=\"Duskrunner\">Duskrunner</a> • <a href=\"/wiki/Firetruck\" title=\"Firetruck\">Firetruck</a> • <a href=\"/wiki/Hammerhead\" title=\"Hammerhead\">Hammerhead</a> • <a href=\"/wiki/Pizza_Delivery\" title=\"Pizza Delivery\">Pizza Delivery</a> • <a href=\"/wiki/Tank\" title=\"Tank\">Tank</a> • <a href=\"/wiki/Tanker\" title=\"Tanker\">Tanker</a> • <a href=\"/wiki/Tow_Truck\" title=\"Tow Truck\">Tow Truck</a> • <a href=\"/wiki/WYNDR\" title=\"WYNDR\">WYNDR</a> • <a href=\"/wiki/The_Boulder\" title=\"The Boulder\">The Boulder</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Gamepass\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Celestial\" title=\"Celestial\">Celestial</a> • <a href=\"/wiki/SWAT_Van\" title=\"SWAT Van\">SWAT Van</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Racecars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Bluebird\" title=\"Bluebird\">Bluebird</a> • <a href=\"/wiki/Gromitt\" title=\"Gromitt\">Gromitt</a> • <a href=\"/wiki/Renesis\" title=\"Renesis\">Renesis</a>\n</td></tr>\n<tr>\n<th class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\" nowrap=\"nowrap\">Aircraft\n</th>\n<td style=\"padding:0.2em 0.5em; color=#FFF5F2;\"><a href=\"/wiki/Bionic\" title=\"Bionic\">Bionic</a> • <a href=\"/wiki/Black_Hawk\" title=\"Black Hawk\">Black Hawk</a> • <a href=\"/wiki/Escape_Bot\" title=\"Escape Bot\">Escape Bot</a> • <a href=\"/wiki/Helicopter\" title=\"Helicopter\">Helicopter</a> • <a href=\"/wiki/Jet\" title=\"Jet\">Jet</a> • <a href=\"/wiki/Little_Bird\" title=\"Little Bird\">Little Bird</a> •  <a href=\"/wiki/Stunt\" title=\"Stunt\">Stunt</a> • <a href=\"/wiki/UFO\" title=\"UFO\">UFO</a>\n</td></tr>\n<tr>\n<th class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\" nowrap=\"nowrap\">Watercraft\n</th>\n<td style=\"padding:0.2em 0.5em; color=#FFF5F2;\"><a href=\"/wiki/Cruiser\" title=\"Cruiser\">Cruiser</a> • <a href=\"/wiki/Jet_Ski\" title=\"Jet Ski\">Jet Ski</a> • <a href=\"/wiki/Sloop\" title=\"Sloop\">Sloop</a> • <a href=\"/wiki/Speed_Yacht\" title=\"Speed Yacht\">Speed Yacht</a>\n</td></tr></tbody></table>\n</div>\n</div>\n</td></tr>\n<tr>\n<td><div class=\"two-tone-border mw-collapsible mw-collapsed\" data-expandtext=\"▼\" data-collapsetext=\"▲\">\n<div style=\"padding-bottom:6px;\">\n<div class=\"title-style\"><span typeof=\"mw:File\"><a href=\"/wiki/Vehicles\" title=\"Vehicles\"><img alt=\"LimitedNavImg\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"350\" height=\"35\" class=\"mw-file-element lazyload\" data-image-name=\"LimitedNavImg.png\" data-image-key=\"LimitedNavImg.png\" data-relevant=\"0\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/0/01/LimitedNavImg.png/revision/latest/scale-to-width-down/350?cb=20260605095754\" /></a></span><span class=\"mw-collapsible-toggle-placeholder\"></span>\n</div>\n</div>\n<div class=\"mw-collapsible-content\">\n<table style=\"width:100%; font-size:90%; text-align:center;\">\n\n<tbody><tr>\n<th rowspan=\"6\" class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\">Retired Vehicles\n</th>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\">General Cars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Classic\" title=\"Classic\">Classic</a> • <a href=\"/wiki/Fiasco\" title=\"Fiasco\">Fiasco</a> <small>(Common Safe)</small> • <a href=\"/wiki/Mighty\" title=\"Mighty\">Mighty</a> • <a href=\"/wiki/Posh\" title=\"Posh\">Posh</a> • <a href=\"/wiki/Ray\" title=\"Ray\">Ray</a> • <a href=\"/wiki/Shell_Mark-5\" title=\"Shell Mark-5\">Shell Mark-5</a> • <a href=\"/wiki/Steed\" title=\"Steed\">Steed</a> • <a href=\"/wiki/SUV\" title=\"SUV\">SUV</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\">Supercars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Airtail\" title=\"Airtail\">Airtail</a> • <a href=\"/wiki/Brulee\" title=\"Brulee\">Brulee</a> • <a href=\"/wiki/Megalodon\" title=\"Megalodon\">Megalodon</a> • <a href=\"/wiki/Surus\" title=\"Surus\">Surus</a> • <a href=\"/wiki/Stallion\" title=\"Stallion\">Stallion</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\">Racecars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Shell_Classic\" title=\"Shell Classic\">Shell Classic</a> <small>(Legends Safe)</small>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\">Off-roaders\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Dune_Buggy\" title=\"Dune Buggy\">Dune Buggy</a>\n</td></tr>\n<tr>\n<th class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\">Bikes\n</th>\n<td style=\"padding:0.2em 0.5em; color=#FFF5F2;\"><a href=\"/wiki/Dirtbike\" title=\"Dirtbike\">Dirtbike</a> • <a href=\"/wiki/Patrol\" title=\"Patrol\">Patrol</a>\n</td></tr>\n<tr>\n<th class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\">Aircraft\n</th>\n<td style=\"padding:0.2em 0.5em; color=#FFF5F2;\"><a href=\"/wiki/Drone\" title=\"Drone\">Drone</a>\n</td></tr>\n<tr>\n<th rowspan=\"3\" class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\">Limited Time Vehicles\n</th>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\">Supercars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Aperture\" title=\"Aperture\">Aperture</a> • <a href=\"/wiki/Carbonara\" title=\"Carbonara\">Carbonara</a> • <a href=\"/wiki/Iceborn\" title=\"Iceborn\">Iceborn</a> • <a href=\"/wiki/Javelin\" title=\"Javelin\">Javelin</a> • <a href=\"/wiki/M12_Molten\" title=\"M12 Molten\">M12 Molten</a> • <a href=\"/wiki/OG_La_Matador\" title=\"OG La Matador\">OG La Matador</a> • <a href=\"/wiki/Orion_M42\" title=\"Orion M42\">Orion M42</a> • <a href=\"/wiki/Snake\" title=\"Snake\">Snake</a> • <a href=\"/wiki/Scorpion\" title=\"Scorpion\">Scorpion</a> • <strong class=\"mw-selflink selflink\">Torero</strong>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\">Special Cars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Agent\" title=\"Agent\">Agent</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\">Racecars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/MCL36\" title=\"MCL36\">MCL36</a> • <a href=\"/wiki/NASCAR\" title=\"NASCAR\">NASCAR</a> • <a href=\"/wiki/NASCAR_75\" title=\"NASCAR 75\">NASCAR 75</a> • <a href=\"/wiki/NASCAR_(Free)\" title=\"NASCAR (Free)\">NASCAR (Free)</a> • <a href=\"/wiki/Parisian\" title=\"Parisian\">Parisian</a> • <a href=\"/wiki/Polaire\" title=\"Polaire\">Polaire</a>\n</td></tr></tbody></table>\n</div>\n</div>\n</td></tr>\n<tr>\n<td><div class=\"two-tone-border mw-collapsible mw-collapsed\" data-expandtext=\"▼\" data-collapsetext=\"▲\">\n<div style=\"padding-bottom:6px;\">\n<div class=\"title-style\"><span typeof=\"mw:File\"><a href=\"/wiki/Vehicles\" title=\"Vehicles\"><img alt=\"SeasonalNavImg\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"350\" height=\"35\" class=\"mw-file-element lazyload\" data-image-name=\"SeasonalNavImg.png\" data-image-key=\"SeasonalNavImg.png\" data-relevant=\"0\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/b/b6/SeasonalNavImg.png/revision/latest/scale-to-width-down/350?cb=20260605080709\" /></a></span><span class=\"mw-collapsible-toggle-placeholder\"></span>\n</div>\n</div>\n<div class=\"mw-collapsible-content\"> \n<table style=\"width:100%; font-size:100%; text-align:center;\">\n\n<tbody><tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">General Cars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Bandit\" title=\"Bandit\">Bandit</a> • <a href=\"/wiki/Icebreaker\" title=\"Icebreaker\">Icebreaker</a> • <a href=\"/wiki/Longhorn\" title=\"Longhorn\">Longhorn</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Supercars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Beam_Hybrid\" title=\"Beam Hybrid\">Beam Hybrid</a> • <a href=\"/wiki/Beignet\" title=\"Beignet\">Beignet</a> • <a href=\"/wiki/JB8\" title=\"JB8\">JB8</a> • <a href=\"/wiki/JBX-0031\" title=\"JBX-0031\">JBX-0031</a> • <a href=\"/wiki/Macaron\" title=\"Macaron\">Macaron</a> • <a href=\"/wiki/Power-1\" title=\"Power-1\">Power-1</a> • <a href=\"/wiki/Torpedo\" title=\"Torpedo\">Torpedo</a> • <a href=\"/wiki/Wedge\" title=\"Wedge\">Wedge</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Racecars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Proto-08\" title=\"Proto-08\">Proto-08</a> • <a href=\"/wiki/Samurai\" title=\"Samurai\">Samurai</a> •  <a href=\"/wiki/Shogun\" title=\"Shogun\">Shogun</a> • <a href=\"/wiki/Stormrider\" title=\"Stormrider\">Stormrider</a> • <a href=\"/wiki/Velociraptor\" title=\"Velociraptor\">Velociraptor</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Off-roaders\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Cobra\" title=\"Cobra\">Cobra</a> • <a href=\"/wiki/Jackrabbit\" title=\"Jackrabbit\">Jackrabbit</a> • <a href=\"/wiki/Maverick\" title=\"Maverick\">Maverick</a> • <a href=\"/wiki/OG_Monster_Truck\" title=\"OG Monster Truck\">OG Monster Truck</a> • <a href=\"/wiki/Raptor\" title=\"Raptor\">Raptor</a> • <a href=\"/wiki/Volt_4X4\" title=\"Volt 4X4\">Volt 4X4</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Special Cars\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Arachnid\" title=\"Arachnid\">Arachnid</a> • <a href=\"/wiki/Banana_Car\" title=\"Banana Car\">Banana Car</a> • <a href=\"/wiki/Blackbeard\" title=\"Blackbeard\">Blackbeard</a> • <a href=\"/wiki/Black_Widow\" title=\"Black Widow\">Black Widow</a> • <a href=\"/wiki/Bloxy\" title=\"Bloxy\">Bloxy</a> • <a href=\"/wiki/Brick_Kar-1\" title=\"Brick Kar-1\">Brick Kar-1</a> • <a href=\"/wiki/Frost_Crawler\" title=\"Frost Crawler\">Frost Crawler</a> • <a href=\"/wiki/Goliath\" title=\"Goliath\">Goliath</a> • <a href=\"/wiki/Katana\" title=\"Katana\">Katana</a> • <a href=\"/wiki/Poseidon\" title=\"Poseidon\">Poseidon</a> • <a href=\"/wiki/Rattler\" title=\"Rattler\">Rattler</a> • <a href=\"/wiki/Revox\" title=\"Revox\">Revox</a> • <a href=\"/wiki/Striker\" title=\"Striker\">Striker</a> • <a href=\"/wiki/Tiny_Toy\" title=\"Tiny Toy\">Tiny Toy</a>\n</td></tr>\n<tr>\n<th class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\" nowrap=\"nowrap\">Aircraft\n</th>\n<td style=\"padding:0.2em 0.5em; color=#FFF5F2;\"><a href=\"/wiki/Celsior\" title=\"Celsior\">Celsior</a> • <a href=\"/wiki/Crew_Capsule\" title=\"Crew Capsule\">Crew Capsule</a>\n</td></tr></tbody></table>\n</div>\n</div>\n</td></tr>\n<tr>\n<td><div class=\"two-tone-border mw-collapsible mw-collapsed\" data-expandtext=\"▼\" data-collapsetext=\"▲\">\n<div style=\"padding-bottom:6px;\">\n<div class=\"title-style\"><span typeof=\"mw:File\"><a href=\"/wiki/Vehicles\" title=\"Vehicles\"><img alt=\"OtherNavImg\" src=\"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D\" decoding=\"async\" loading=\"lazy\" width=\"350\" height=\"35\" class=\"mw-file-element lazyload\" data-image-name=\"OtherNavImg.png\" data-image-key=\"OtherNavImg.png\" data-relevant=\"0\" data-src=\"https://static.wikia.nocookie.net/rblx-jailbreak/images/2/28/OtherNavImg.png/revision/latest/scale-to-width-down/350?cb=20260605113612\" /></a></span><span class=\"mw-collapsible-toggle-placeholder\"></span>\n</div>\n</div>\n<div class=\"mw-collapsible-content\"> \n<table style=\"width:100%; font-size:100%; text-align:center;\">\n\n<tbody><tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Land Vehicles\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Bank_Truck\" title=\"Bank Truck\">Bank Truck</a> • <a href=\"/wiki/Cargo_Train\" title=\"Cargo Train\">Cargo Train</a> • <a href=\"/wiki/Passenger_Train\" title=\"Passenger Train\">Passenger Train</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Aircraft\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Cargo_Plane\" title=\"Cargo Plane\">Cargo Plane</a> • <a href=\"/wiki/Private_Jet\" title=\"Private Jet\">Private Jet</a> • <a href=\"/wiki/Stealth_Jets\" title=\"Stealth Jets\">Stealth Jets</a>\n</td></tr>\n<tr>\n<th class=\"yes\" style=\"padding:0.2em 0.5em; font-family: Badang; letter-spacing: 2px;\" nowrap=\"nowrap\">Watercraft\n</th>\n<td style=\"padding:0.2em 0.5em; color=#FFF5F2;\"><a href=\"/wiki/Cargo_Ship\" title=\"Cargo Ship\">Cargo Ship</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Exclusive\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Admin_Nuke\" title=\"Admin Nuke\">Admin Nuke</a> • <a href=\"/wiki/Lia\" title=\"Lia\">Lia</a>\n</td></tr>\n<tr>\n<th class=\"table-sub-column-title-style\" style=\"padding:0.2em 0.5em;\" nowrap=\"nowrap\">Removed\n</th>\n<td style=\"padding:0.2em 0.5em;\"><a href=\"/wiki/Blade\" title=\"Blade\">Blade</a> • <a href=\"/wiki/Police_Camaro\" title=\"Police Camaro\">Police Camaro</a>\n</td></tr>\n</tbody></table>\n</div>\n</div>\n</td></tr>\n</tbody></table>\n</div>\n</div><center>\n<div class=\"two-tone-border\" style=\"width: 100%;\">\n<div class=\"title-style\" style=\"&#123;&#123;&#123;titleStyle&#125;&#125;&#125;\">Languages</div>\n<div style=\"text-align: center; padding-top: 6px; &#123;&#123;&#123;descStyle&#125;&#125;&#125;\"> <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=es&amp;u=jailbreak.fandom.com/wiki/Torero\">Español</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=fr&amp;u=jailbreak.fandom.com/wiki/Torero\">Français</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=tl&amp;u=jailbreak.fandom.com/wiki/Torero\">Filipino</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=zh-CN&amp;u=jailbreak.fandom.com/wiki/Torero\">中文简体</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=ru&amp;u=jailbreak.fandom.com/wiki/Torero\">русский</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=pl&amp;u=jailbreak.fandom.com/wiki/Torero\">język polski</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=vi&amp;u=jailbreak.fandom.com/wiki/Torero\">Việt Nam</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=id&amp;u=jailbreak.fandom.com/wiki/Torero\">bahasa Indonesia</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=jw&amp;u=jailbreak.fandom.com/wiki/Torero\">basa jawa</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=ar&amp;u=jailbreak.fandom.com/wiki/Torero\">عربى</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=ro&amp;u=jailbreak.fandom.com/wiki/Torero\">Română</a> • <a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external text\" href=\"https://translate.google.com/translate?sl=auto&amp;tl=tl&amp;u=jailbreak.fandom.com/wiki/Torero\">Tagalog</a> </div>\n</div>\n</center>\n<h2><span class=\"mw-headline\" id=\"References\">References</span></h2>\n<div style=\"width:100%; height:150px; overflow:auto; margin-bottom:3px; padding-left:0.5em; padding-right:0.5em; border:1px solid; font-size:small\">\n<div class=\"mw-references-wrap\"><ol class=\"references\">\n<li id=\"cite&#95;note-1\"><span class=\"mw-cite-backlink\"><a href=\"#cite_ref-1\">↑</a></span> <span class=\"reference-text\"><a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external free\" href=\"https://twitter.com/badimo/status/1\">https://twitter.com/badimo/status/1</a></span>\n</li>\n<li id=\"cite&#95;note-2\"><span class=\"mw-cite-backlink\"><a href=\"#cite_ref-2\">↑</a></span> <span class=\"reference-text\"><a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external free\" href=\"https://twitter.com/SampleModeler/status/1\">https://twitter.com/SampleModeler/status/1</a></span>\n</li>\n<li id=\"cite&#95;note-3\"><span class=\"mw-cite-backlink\"><a href=\"#cite_ref-3\">↑</a></span> <span class=\"reference-text\"><a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external free\" href=\"https://youtu.be/2PpWHcd5WUw?t=276\">https://youtu.be/2PpWHcd5WUw?t=276</a></span>\n</li>\n<li id=\"cite&#95;note-4\"><span class=\"mw-cite-backlink\"><a href=\"#cite_ref-4\">↑</a></span> <span class=\"reference-text\"><a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external free\" href=\"https://x.com/SampleModeler/status/1?s=20\">https://x.com/SampleModeler/status/1?s=20</a></span>\n</li>\n<li id=\"cite&#95;note-5\"><span class=\"mw-cite-backlink\"><a href=\"#cite_ref-5\">↑</a></span> <span class=\"reference-text\"><a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external free\" href=\"https://x.com/SampleModeler/status/1\">https://x.com/SampleModeler/status/1</a></span>\n</li>\n<li id=\"cite&#95;note-6\"><span class=\"mw-cite-backlink\"><a href=\"#cite_ref-6\">↑</a></span> <span class=\"reference-text\"><a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external free\" href=\"https://twitter.com/SampleModeler/status/1\">https://twitter.com/SampleModeler/status/1</a></span>\n</li>\n<li id=\"cite&#95;note-7\"><span class=\"mw-cite-backlink\"><a href=\"#cite_ref-7\">↑</a></span> <span class=\"reference-text\"><a target=\"_blank\" rel=\"nofollow noreferrer noopener\" class=\"external free\" href=\"https://twitter.com/SampleModeler/status/1\">https://twitter.com/SampleModeler/status/1</a></span>\n</li>\n</ol></div>\n</div></div>",
+            "categories": [
+              {
+                "sortkey": "",
+                "category": "Unobtainable_Content"
+              },
+              {
+                "sortkey": "",
+                "category": "Vehicles"
+              },
+              {
+                "sortkey": "",
+                "category": "Land_Vehicles"
+              },
+              {
+                "sortkey": "",
+                "category": "Supercars"
+              },
+              {
+                "sortkey": "",
+                "category": "Limited-Time_Vehicles"
+              },
+              {
+                "sortkey": "",
+                "category": "Cars"
+              },
+              {
+                "sortkey": "",
+                "category": "Vehicles_with_a_detailed_interior",
+                "missing": true,
+                "known": true
+              },
+              {
+                "sortkey": "",
+                "category": "Vehicles_with_non-customizable_spoilers"
+              },
+              {
+                "sortkey": "",
+                "category": "Lamborghini"
+              },
+              {
+                "sortkey": "",
+                "category": "Rumble_Chassis"
+              },
+              {
+                "sortkey": "",
+                "category": "Vehicles_with_first-person_driving",
+                "missing": true,
+                "known": true
+              },
+              {
+                "sortkey": "",
+                "category": "5_Days_of_Vehicles"
+              },
+              {
+                "sortkey": "",
+                "category": "Classic"
+              }
+            ],
+            "displaytitle": "<span class=\"mw-page-title-main\">Torero</span>"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "jailbreak.fandom.com",
+        "path": "/api.php",
+        "query": {
+          "action": "query",
+          "list": "search",
+          "srsearch": "torero",
+          "srnamespace": "0"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "batchcomplete": true,
+          "continue": {
+            "sroffset": 50,
+            "continue": "-||"
+          },
+          "query": {
+            "search": [
+              {
+                "ns": 0,
+                "title": "Torero",
+                "pageid": 134132,
+                "snippet": "",
+                "timestamp": "2026-05-22T06:30:08Z"
+              },
+              {
+                "ns": 0,
+                "title": "Polaire",
+                "pageid": 146216,
+                "snippet": "",
+                "timestamp": "2026-07-05T06:32:18Z"
+              },
+              {
+                "ns": 0,
+                "title": "5 Days of Vehicles",
+                "pageid": 139170,
+                "snippet": "",
+                "timestamp": "2026-09-18T18:23:45Z"
+              },
+              {
+                "ns": 0,
+                "title": "Concept",
+                "pageid": 134203,
+                "snippet": "",
+                "timestamp": "2026-09-22T16:54:10Z"
+              },
+              {
+                "ns": 0,
+                "title": "Banana Car",
+                "pageid": 133542,
+                "snippet": "",
+                "timestamp": "2026-08-08T10:21:00Z"
+              },
+              {
+                "ns": 0,
+                "title": "Firetruck",
+                "pageid": 50609,
+                "snippet": "",
+                "timestamp": "2026-06-28T23:59:26Z"
+              },
+              {
+                "ns": 0,
+                "title": "Ray 9",
+                "pageid": 134082,
+                "snippet": "",
+                "timestamp": "2026-08-06T23:06:25Z"
+              },
+              {
+                "ns": 0,
+                "title": "Admin Nuke",
+                "pageid": 146334,
+                "snippet": "",
+                "timestamp": "2026-10-07T12:35:41Z"
+              },
+              {
+                "ns": 0,
+                "title": "M12 Molten",
+                "pageid": 124216,
+                "snippet": "",
+                "timestamp": "2026-10-01T09:28:06Z"
+              },
+              {
+                "ns": 0,
+                "title": "Desert Crawler",
+                "pageid": 139143,
+                "snippet": "",
+                "timestamp": "2026-07-13T22:33:04Z"
+              },
+              {
+                "ns": 0,
+                "title": "WYNDR",
+                "pageid": 145470,
+                "snippet": "",
+                "timestamp": "2026-07-17T15:20:31Z"
+              },
+              {
+                "ns": 0,
+                "title": "Rattler",
+                "pageid": 132511,
+                "snippet": "",
+                "timestamp": "2026-06-04T14:31:42Z"
+              },
+              {
+                "ns": 0,
+                "title": "Snake",
+                "pageid": 138246,
+                "snippet": "",
+                "timestamp": "2026-07-09T19:47:00Z"
+              },
+              {
+                "ns": 0,
+                "title": "Crown",
+                "pageid": 139502,
+                "snippet": "",
+                "timestamp": "2026-06-14T13:06:29Z"
+              },
+              {
+                "ns": 0,
+                "title": "Bloxy",
+                "pageid": 138594,
+                "snippet": "",
+                "timestamp": "2026-08-23T13:05:38Z"
+              },
+              {
+                "ns": 0,
+                "title": "Surus",
+                "pageid": 103557,
+                "snippet": "",
+                "timestamp": "2026-09-25T02:47:56Z"
+              },
+              {
+                "ns": 0,
+                "title": "Manta",
+                "pageid": 144592,
+                "snippet": "",
+                "timestamp": "2026-07-17T15:17:29Z"
+              },
+              {
+                "ns": 0,
+                "title": "Agent",
+                "pageid": 131863,
+                "snippet": "",
+                "timestamp": "2026-02-21T14:35:26Z"
+              },
+              {
+                "ns": 0,
+                "title": "Dogs",
+                "pageid": 129010,
+                "snippet": "",
+                "timestamp": "2026-07-26T21:34:40Z"
+              },
+              {
+                "ns": 0,
+                "title": "Torpedo",
+                "pageid": 37373,
+                "snippet": "",
+                "timestamp": "2026-10-14T11:32:00Z"
+              },
+              {
+                "ns": 0,
+                "title": "Stormrider",
+                "pageid": 144710,
+                "snippet": "",
+                "timestamp": "2026-06-23T12:39:16Z"
+              },
+              {
+                "ns": 0,
+                "title": "Beam Hybrid",
+                "pageid": 128258,
+                "snippet": "",
+                "timestamp": "2026-09-03T16:38:08Z"
+              },
+              {
+                "ns": 0,
+                "title": "Monster Truck",
+                "pageid": 1280,
+                "snippet": "",
+                "timestamp": "2026-08-23T11:17:46Z"
+              },
+              {
+                "ns": 0,
+                "title": "Parisian",
+                "pageid": 139932,
+                "snippet": "",
+                "timestamp": "2026-09-24T22:33:06Z"
+              },
+              {
+                "ns": 0,
+                "title": "Power-1",
+                "pageid": 141539,
+                "snippet": "",
+                "timestamp": "2026-09-13T19:38:18Z"
+              },
+              {
+                "ns": 0,
+                "title": "Katana",
+                "pageid": 145459,
+                "snippet": "",
+                "timestamp": "2026-09-05T19:33:13Z"
+              },
+              {
+                "ns": 0,
+                "title": "Successor",
+                "pageid": 142548,
+                "snippet": "",
+                "timestamp": "2026-10-10T06:10:55Z"
+              },
+              {
+                "ns": 0,
+                "title": "Icebreaker",
+                "pageid": 135656,
+                "snippet": "",
+                "timestamp": "2026-08-23T07:08:22Z"
+              },
+              {
+                "ns": 0,
+                "title": "Fatalita",
+                "pageid": 146754,
+                "snippet": "",
+                "timestamp": "2026-10-18T20:29:32Z"
+              },
+              {
+                "ns": 0,
+                "title": "JBX-0031",
+                "pageid": 146415,
+                "snippet": "",
+                "timestamp": "2026-08-06T07:58:38Z"
+              },
+              {
+                "ns": 0,
+                "title": "Wedge",
+                "pageid": 144578,
+                "snippet": "",
+                "timestamp": "2026-06-10T02:02:46Z"
+              },
+              {
+                "ns": 0,
+                "title": "OG La Matador",
+                "pageid": 143845,
+                "snippet": "",
+                "timestamp": "2026-06-20T11:23:33Z"
+              },
+              {
+                "ns": 0,
+                "title": "La Matador",
+                "pageid": 118,
+                "snippet": "",
+                "timestamp": "2026-10-09T13:44:03Z"
+              },
+              {
+                "ns": 0,
+                "title": "Jet Ski",
+                "pageid": 68596,
+                "snippet": "",
+                "timestamp": "2026-09-04T06:58:53Z"
+              },
+              {
+                "ns": 0,
+                "title": "Beignet",
+                "pageid": 134546,
+                "snippet": "",
+                "timestamp": "2026-10-14T14:05:04Z"
+              },
+              {
+                "ns": 0,
+                "title": "Hammerhead",
+                "pageid": 143685,
+                "snippet": "",
+                "timestamp": "2026-08-16T21:18:34Z"
+              },
+              {
+                "ns": 0,
+                "title": "Mighty",
+                "pageid": 159,
+                "snippet": "",
+                "timestamp": "2026-10-11T03:16:13Z"
+              },
+              {
+                "ns": 0,
+                "title": "Aperture",
+                "pageid": 141554,
+                "snippet": "",
+                "timestamp": "2026-08-30T06:59:53Z"
+              },
+              {
+                "ns": 0,
+                "title": "Airtail",
+                "pageid": 129713,
+                "snippet": "",
+                "timestamp": "2026-07-22T17:22:38Z"
+              },
+              {
+                "ns": 0,
+                "title": "Venom",
+                "pageid": 144182,
+                "snippet": "",
+                "timestamp": "2026-07-18T06:09:31Z"
+              },
+              {
+                "ns": 0,
+                "title": "Velociraptor",
+                "pageid": 147199,
+                "snippet": "",
+                "timestamp": "2026-10-13T13:54:39Z"
+              },
+              {
+                "ns": 0,
+                "title": "Reaper",
+                "pageid": 146674,
+                "snippet": "",
+                "timestamp": "2026-10-01T09:05:37Z"
+              },
+              {
+                "ns": 0,
+                "title": "The Boulder",
+                "pageid": 147194,
+                "snippet": "",
+                "timestamp": "2026-10-11T03:46:32Z"
+              },
+              {
+                "ns": 0,
+                "title": "Javelin",
+                "pageid": 139203,
+                "snippet": "",
+                "timestamp": "2026-10-14T11:37:50Z"
+              },
+              {
+                "ns": 0,
+                "title": "Pizza Delivery",
+                "pageid": 145669,
+                "snippet": "",
+                "timestamp": "2026-10-11T03:18:29Z"
+              },
+              {
+                "ns": 0,
+                "title": "Boxer",
+                "pageid": 127759,
+                "snippet": "",
+                "timestamp": "2026-09-30T22:08:26Z"
+              },
+              {
+                "ns": 0,
+                "title": "Police Camaro",
+                "pageid": 127093,
+                "snippet": "",
+                "timestamp": "2026-09-22T16:50:19Z"
+              },
+              {
+                "ns": 0,
+                "title": "Trading Island",
+                "pageid": 137991,
+                "snippet": "",
+                "timestamp": "2025-10-14T02:08:21Z"
+              },
+              {
+                "ns": 0,
+                "title": "Samurai",
+                "pageid": 146586,
+                "snippet": "",
+                "timestamp": "2026-08-23T07:04:57Z"
+              },
+              {
+                "ns": 0,
+                "title": "Gromitt",
+                "pageid": 146745,
+                "snippet": "",
+                "timestamp": "2026-09-16T21:08:26Z"
               }
             ]
           }

@@ -51,6 +51,16 @@ pub struct Parsed {
     pub title: Option<String>,
 }
 
+/// `SiteGeneral`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SiteGeneral {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mainpage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sitename: Option<String>,
+}
+
 /// `SearchHit`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -79,6 +89,8 @@ pub struct SearchInfo {
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct QueryResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub general: Option<SiteGeneral>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub search: Option<Vec<SearchHit>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -113,6 +125,8 @@ pub struct ActionApiParams {
     pub srnamespace: Option<String>,
     pub srlimit: Option<i32>,
     pub srprop: Option<String>,
+    pub meta: Option<String>,
+    pub siprop: Option<String>,
 }
 
 /// `GET /api.php`
@@ -137,6 +151,8 @@ pub fn action_api_request(params: &ActionApiParams) -> Result<Request> {
     r.query("srnamespace", &params.srnamespace);
     r.query("srlimit", &params.srlimit);
     r.query("srprop", &params.srprop);
+    r.query("meta", &params.meta);
+    r.query("siprop", &params.siprop);
     Ok(r)
 }
 

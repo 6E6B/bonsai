@@ -1,11 +1,51 @@
 /**
- * Roblox Wiki articles about items, experiences and players. The Rust side fetches and parses
- * them (`bonsai-core/src/wiki.rs`); text arrives plain with `[[Title|label]]` links, and nothing
- * here talks to Fandom. See docs/wiki.md.
+ * Roblox Wiki articles about items, experiences and players, and articles from experiences' own
+ * Fandom wikis. The Rust side fetches and parses them (`bonsai-core/src/wiki.rs`); text arrives
+ * plain with `[[Title|label]]` links, and nothing here talks to Fandom. See docs/wiki.md.
  */
 import type { WikiTarget } from "./ipc/bindings"
 
-export type { WikiArticle, WikiBlock, WikiFact, WikiPageView, WikiSearchView, WikiTarget } from "./ipc/bindings"
+export type {
+  WikiArticle,
+  WikiBlock,
+  WikiFact,
+  WikiImage,
+  WikiLink,
+  WikiPageView,
+  WikiSearchView,
+  WikiTarget,
+} from "./ipc/bindings"
+
+/** The Roblox Wiki's name on Fandom. Other wikis are named by their subdomain (`jailbreak`). */
+export const ROBLOX_WIKI = "roblox"
+
+/** Titles on other wikis look like MediaWiki's links between them: `w:c:jailbreak:Torpedo`. */
+const OTHER = /^w:c:([a-z0-9-]+):(.*)$/
+
+/** `w:c:jailbreak:Torpedo` → `{ wiki: "jailbreak", title: "Torpedo" }`; anything else is on the
+ * Roblox Wiki. */
+export function splitWiki(title: string) {
+  const m = title.match(OTHER)
+  return m ? { wiki: m[1], title: m[2] } : { wiki: ROBLOX_WIKI, title }
+}
+
+/** The main page of `wiki`, as a title. */
+export const mainPage = (wiki: string) => (wiki === ROBLOX_WIKI ? "" : `w:c:${wiki}:`)
+
+/** The Wiki screen's search, on `wiki`. */
+export const searchPath = (q: string, wiki = ROBLOX_WIKI) => {
+  const p = new URLSearchParams()
+  if (q) p.set("q", q)
+  if (wiki !== ROBLOX_WIKI) p.set("w", wiki)
+  const s = p.toString()
+  return s ? `/wiki?${s}` : "/wiki"
+}
+
+/** A `wiki.search` argument: the query, after `w:c:<wiki>:` to search another wiki. */
+export function splitSearch(arg: string | null) {
+  const { wiki, title } = splitWiki((arg ?? "").trim())
+  return { wiki, query: title.trim() }
+}
 
 export type WikiKind = "item" | "game" | "player" | "page"
 
@@ -55,10 +95,35 @@ export function splitArg(arg: string | null) {
 
 export type Span = { text: string } | { text: string; link: string }
 
-/** Splits wikitext-style `[[Target]]` and `[[Target|label]]` links out of plain text. */
+/** What a link opens: an article, a Roblox page in Bonsai (`@item:42`), or another site. */
+export type LinkTarget =
+  | { kind: "article"; title: string }
+  | { kind: "roblox"; command: string; arg: string }
+  | { kind: "web"; url: string }
+
+const robloxCommands: Record<string, (id: string) => [string, string]> = {
+  item: (id) => ["market.open", id],
+  bundle: (id) => ["market.open", `bundle:${id}`],
+  game: (id) => ["game.open", id],
+  user: (id) => ["user.open", id],
+  group: (id) => ["group.open", id],
+}
+
+export function linkTarget(link: string): LinkTarget {
+  if (/^https?:\/\//.test(link)) return { kind: "web", url: link }
+  const m = link.match(/^@(item|bundle|game|user|group):(\d+)$/)
+  if (m) {
+    const [command, arg] = robloxCommands[m[1]](m[2])
+    return { kind: "roblox", command, arg }
+  }
+  return { kind: "article", title: link }
+}
+
+/** Splits wikitext-style `[[Target]]` and `[[Target|label]]` links out of plain text. A label
+ * may hold a single `]` ("Player [VIP]"); the Rust side never leaves `]]` in one. */
 export function parseLinks(text: string): Span[] {
   const out: Span[] = []
-  const re = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g
+  const re = /\[\[([^\]|]+)(?:\|(.+?))?\]\](?!\])/g
   let last = 0
   for (const m of text.matchAll(re)) {
     const at = m.index ?? 0

@@ -776,7 +776,8 @@ async fn wiki_articles_only_when_turned_on() {
     };
     // Off by default: no request, no data.
     assert!(c.wiki_about(&dominus(31_101_391)).data.is_none());
-    assert!(c.wiki_search("dominus").data.is_none());
+    assert!(c.wiki_search("roblox", "dominus").data.is_none());
+    assert!(c.wiki_page("w:c:jailbreak:Torero").data.is_none());
     c.update_settings(|s| s.wiki = true);
     let p = poll(|| c.wiki_about(&dominus(31_101_391))).await;
     let a = p.article.as_ref().unwrap();
@@ -809,17 +810,61 @@ async fn wiki_articles_only_when_turned_on() {
     })
     .await;
     assert!(missing.article.is_none());
-    let hits = poll(|| c.wiki_search("  dominus ")).await;
+    let hits = poll(|| c.wiki_search("roblox", "  dominus ")).await;
     assert_eq!(hits.len(), 50);
     assert_eq!(hits[0].title, "Dominus (series)");
     assert!(hits.iter().any(|h| h.title == "Catalog:Dominus Infernus"));
+    let a = poll(|| c.wiki_about(&dominus(31_101_391))).await;
+    let a = a.article.as_ref().unwrap();
+    let image = a.image.as_ref().unwrap();
+    assert!(
+        image
+            .src
+            .starts_with("roblox/images/0/01/Dominus_Infernus.png/revision/latest/")
+    );
+    // Links to other sites open only when the article has them. (Turning the wiki on swapped in
+    // the system opener, so the accepted link isn't opened here.)
+    let link = "https://create.roblox.com/store/asset/31100020/";
+    assert!(a.links.iter().any(|l| l == link), "{:?}", a.links);
+    assert!(
+        c.open_wiki_link("Catalog:Dominus Infernus", "https://example.com/")
+            .is_err()
+    );
+    assert!(c.open_wiki_link("Catalog:No Such Hat", link).is_err());
+
+    // An experience's own wiki: same API on its own host, titled `w:c:<wiki>:`.
+    let t = poll(|| c.wiki_page("w:c:jailbreak:Torero")).await;
+    let t = t.article.as_ref().unwrap();
+    assert_eq!(
+        (t.title.as_str(), t.site.as_str(), t.main),
+        ("w:c:jailbreak:Torero", "Jailbreak Wiki", false)
+    );
+    assert!(
+        t.image
+            .as_ref()
+            .unwrap()
+            .src
+            .starts_with("rblx-jailbreak/images/")
+    );
+    assert!(
+        t.infobox
+            .iter()
+            .any(|f| f.label == "Successor" && f.value == "[[w:c:jailbreak:Snake|Snake]]"),
+        "links stay on that wiki: {:?}",
+        t.infobox
+    );
+    let hits = poll(|| c.wiki_search("jailbreak", "torero")).await;
+    assert_eq!(hits.len(), 50);
+    assert_eq!(hits[0].title, "w:c:jailbreak:Torero");
+    // Not a wiki name: nothing to fetch.
+    assert!(c.wiki_search("evil.com/x", "torero").data.is_none());
+
     let reqs = replay.requests().await;
-    let third: Vec<_> = reqs
-        .iter()
-        .filter(|q| q.url.path().starts_with("/roblox.fandom.com"))
-        .collect();
-    assert_eq!(third.len(), 3);
-    assert!(third.iter().all(|q| !q.headers.contains_key("cookie")));
+    for (host, n) in [("/roblox.fandom.com", 3), ("/jailbreak.fandom.com", 3)] {
+        let third: Vec<_> = reqs.iter().filter(|q| q.url.path().starts_with(host)).collect();
+        assert_eq!(third.len(), n, "{host}");
+        assert!(third.iter().all(|q| !q.headers.contains_key("cookie")));
+    }
 }
 
 #[tokio::test(flavor = "multi_thread")]

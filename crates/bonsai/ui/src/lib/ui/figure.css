@@ -1,0 +1,41 @@
+@layer components {
+  [data-component="figure"] {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+  }
+
+  [data-component="figure"] [data-slot="frame"] {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background-color: var(--color-control);
+    background-image: var(--sheen-soft);
+    box-shadow: var(--shadow-media);
+  }
+
+  [data-component="figure"] [data-slot="image"] {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  [data-component="figure"] [data-slot="fallback"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--color-fg-faint);
+  }
+
+  [data-component="figure"] [data-slot="caption"] {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    line-height: 1.4;
+  }
+}

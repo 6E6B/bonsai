@@ -2,12 +2,17 @@ import { describe, expect, it } from "vitest"
 import {
   articlePath,
   knownArticle,
+  linkTarget,
   listDepth,
+  mainPage,
   parseLinks,
   parseTarget,
   plain,
   rememberArticle,
+  searchPath,
   splitArg,
+  splitSearch,
+  splitWiki,
   titleOf,
 } from "./wiki"
 import { sampleAbout, samplePage, sampleSearch } from "./wiki-sample"
@@ -21,6 +26,29 @@ describe("parseLinks", () => {
       { text: "pixelfox", link: "Pixel Fox" },
       { text: "." },
     ])
+  })
+
+  it("keeps a single ] in a label", () => {
+    expect(parseLinks("buy [[https://x.com/vip|Player [VIP]]] now")).toEqual([
+      { text: "buy " },
+      { text: "Player [VIP]", link: "https://x.com/vip" },
+      { text: " now" },
+    ])
+    expect(parseLinks("[[A|x [1]]] and [[B]]")).toEqual([
+      { text: "x [1]", link: "A" },
+      { text: " and " },
+      { text: "B", link: "B" },
+    ])
+  })
+
+  it("tells articles, Roblox pages and other sites apart", () => {
+    expect(linkTarget("Catalog:Dominus Infernus")).toEqual({ kind: "article", title: "Catalog:Dominus Infernus" })
+    expect(linkTarget("w:c:jailbreak:Torero")).toEqual({ kind: "article", title: "w:c:jailbreak:Torero" })
+    expect(linkTarget("@item:31101391")).toEqual({ kind: "roblox", command: "market.open", arg: "31101391" })
+    expect(linkTarget("@bundle:7")).toEqual({ kind: "roblox", command: "market.open", arg: "bundle:7" })
+    expect(linkTarget("@game:606849621")).toEqual({ kind: "roblox", command: "game.open", arg: "606849621" })
+    expect(linkTarget("https://x.com/badimo")).toEqual({ kind: "web", url: "https://x.com/badimo" })
+    expect(linkTarget("@nope:1")).toEqual({ kind: "article", title: "@nope:1" })
   })
 
   it("leaves text without links alone", () => {
@@ -54,6 +82,30 @@ describe("titles and paths", () => {
   it("reads nested list depth", () => {
     expect(listDepth("– – deep")).toEqual({ depth: 2, text: "deep" })
     expect(listDepth("top – dash")).toEqual({ depth: 0, text: "top – dash" })
+  })
+})
+
+describe("other wikis", () => {
+  it("splits titles on other wikis", () => {
+    expect(splitWiki("w:c:jailbreak:Torero")).toEqual({ wiki: "jailbreak", title: "Torero" })
+    expect(splitWiki("w:c:jailbreak:")).toEqual({ wiki: "jailbreak", title: "" })
+    expect(splitWiki("Catalog:Dominus Infernus")).toEqual({ wiki: "roblox", title: "Catalog:Dominus Infernus" })
+    expect(mainPage("jailbreak")).toBe("w:c:jailbreak:")
+  })
+
+  it("searches a wiki", () => {
+    expect(searchPath("")).toBe("/wiki")
+    expect(searchPath("dominus")).toBe("/wiki?q=dominus")
+    expect(searchPath("", "jailbreak")).toBe("/wiki?w=jailbreak")
+    expect(searchPath("torero car", "jailbreak")).toBe("/wiki?q=torero+car&w=jailbreak")
+    expect(splitSearch("w:c:jailbreak: torero ")).toEqual({ wiki: "jailbreak", query: "torero" })
+    expect(splitSearch(" dominus ")).toEqual({ wiki: "roblox", query: "dominus" })
+    expect(splitSearch(null)).toEqual({ wiki: "roblox", query: "" })
+  })
+
+  it("keeps other wikis' pages in the Wiki screen", () => {
+    expect(articlePath("w:c:jailbreak:Torero")).toBe("/wiki/w:c:jailbreak:Torero")
+    expect(titleOf("w:c:jailbreak:Jailbreak_Wiki:Home")).toBe("w:c:jailbreak:Jailbreak Wiki:Home")
   })
 })
 

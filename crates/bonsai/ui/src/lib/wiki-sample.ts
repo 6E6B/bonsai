@@ -387,6 +387,8 @@ const view = (d: Draft): WikiArticle => {
   const title = d.kind === "item" ? `Catalog:${d.title}` : d.title
   return {
     title,
+    wiki: "roblox",
+    source: "Roblox Wiki",
     name: d.title,
     kind: d.kind,
     extract: d.extract,
@@ -399,8 +401,10 @@ const view = (d: Draft): WikiArticle => {
     })),
     infoboxTitle: d.infobox[0]?.title ?? "",
     infobox: d.infobox.flatMap((g) => g.facts.map((f) => ({ key: "", ...f }))),
+    image: null,
     categories: d.categories ?? [d.category],
     target: d.target,
+    wikis: [],
     url: `https://roblox.fandom.com/wiki/${slug(title)}`,
     revision: 1,
   }
@@ -435,23 +439,25 @@ export const sampleAbout = (kind: string, id: number) =>
     }),
   )
 
-export function sampleSearch(query: string): WikiSearchView {
+export function sampleSearch(query: string, wiki = "roblox"): WikiSearchView {
   const q = norm(query)
   const days = [1, 3, 6, 12, 20, 40]
   return {
+    wiki,
     enabled: true,
     loading: false,
     error: null,
-    hits: q
-      ? sampleArticles
-          .filter((a) => norm(a.name).includes(q) || a.extract.toLowerCase().includes(q))
-          .map((a, i) => ({
-            title: a.title,
-            name: a.name,
-            kind: a.kind === "item" ? "item" : "page",
-            snippet: a.extract.replace(/\[\[(?:[^\]|]+\|)?([^\]]+)\]\]/g, "$1"),
-            edited: new Date(ago(days[i % days.length])).toISOString(),
-          }))
-      : [],
+    hits:
+      q && wiki === "roblox"
+        ? sampleArticles
+            .filter((a) => norm(a.name).includes(q) || a.extract.toLowerCase().includes(q))
+            .map((a, i) => ({
+              title: a.title,
+              name: a.name,
+              kind: a.kind === "item" ? "item" : "page",
+              snippet: a.extract.replace(/\[\[(?:[^\]|]+\|)?([^\]]+)\]\]/g, "$1"),
+              edited: new Date(ago(days[i % days.length])).toISOString(),
+            }))
+        : [],
   }
 }

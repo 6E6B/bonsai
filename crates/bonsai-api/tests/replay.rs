@@ -850,6 +850,32 @@ async fn wiki_parse_search_and_missing_page() {
     .await
     .unwrap();
     assert_eq!(s.query.unwrap().search.unwrap().len(), 50);
+    // An experience's own wiki: the same operation on its own host.
+    let site = bonsai_api::fandom::action_api_on(
+        &c,
+        "jailbreak",
+        &ActionApiParams {
+            action: "query".into(),
+            format: "json".into(),
+            meta: Some("siteinfo".into()),
+            siprop: Some("general".into()),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    let g = site.query.unwrap().general.unwrap();
+    assert_eq!(g.mainpage.as_deref(), Some("Jailbreak Wiki:Home"));
+    assert_eq!(g.sitename.as_deref(), Some("Jailbreak Wiki"));
+    let p = bonsai_api::fandom::action_api_on(&c, "jailbreak", &parse("Torero"))
+        .await
+        .unwrap();
+    assert!(p.parse.unwrap().text.unwrap().contains("rblx-jailbreak/images"));
+    assert!(
+        bonsai_api::fandom::action_api_on(&c, "evil.com/x", &parse("Torero"))
+            .await
+            .is_err()
+    );
     for q in r.requests().await {
         assert!(!q.headers.contains_key("cookie"), "{:?}", q.headers);
         assert!(!q.headers.contains_key("x-csrf-token"));

@@ -2,17 +2,35 @@ import { useSearchParams } from "@solidjs/router"
 import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, createSignal, For, Match, on, onCleanup, Show, Switch } from "solid-js"
 import { useListCursor } from "~/lib/commands/hooks"
+import { run } from "~/lib/commands/registry"
 import { ago } from "~/lib/format"
 import { commands, type WikiHit } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
-import { Alert, Badge, EmptyState, ListItem, Page, SectionHeader, Skeleton, TextField, Thumbnail } from "~/lib/ui"
-import { kindLabel, type WikiSearchView } from "~/lib/wiki"
-import { openArticle, WikiOff } from "~/lib/wiki-panels"
+import {
+  Alert,
+  Badge,
+  Button,
+  EmptyState,
+  ListItem,
+  Page,
+  SectionHeader,
+  Skeleton,
+  TextField,
+  Thumbnail,
+} from "~/lib/ui"
+import { kindLabel, mainPage, ROBLOX_WIKI, type WikiSearchView } from "~/lib/wiki"
+import { openArticle, useWikiPage, WikiOff } from "~/lib/wiki-panels"
 import { sampleSearch } from "~/lib/wiki-sample"
 
-/** Search the Roblox Wiki on Fandom. Results open in the article screen. */
+/** Search the Roblox Wiki on Fandom, or with `?w=jailbreak` an experience's own wiki. Results
+ * open in the article screen. */
 export default function Wiki() {
   const [params] = useSearchParams()
+  const wiki = () => (typeof params.w === "string" && params.w ? params.w : ROBLOX_WIKI)
+  const other = () => wiki() !== ROBLOX_WIKI
+  // Another wiki's name comes with its main page, which its search links to anyway.
+  const main = useWikiPage(() => (other() ? mainPage(wiki()) : ""))
+  const source = () => (other() ? (main.article?.source ?? wiki()) : "Roblox Wiki")
   const [query, setQuery] = createSignal("")
   const [searched, setSearched] = createSignal("")
   createEffect(
@@ -33,10 +51,15 @@ export default function Wiki() {
   })
   const [cursor, setCursor] = createSignal(0)
   const view = useLive(
-    searched,
-    (q) => commands.wikiSearch(q),
+    () => JSON.stringify([wiki(), searched()]),
+    (k) => {
+      const [w, q] = JSON.parse(k) as [string, string]
+      return commands.wikiSearch(w, q)
+    },
     (): WikiSearchView =>
-      isTauri() ? { enabled: true, loading: Boolean(searched()), error: null, hits: [] } : sampleSearch(searched()),
+      isTauri()
+        ? { wiki: wiki(), enabled: true, loading: Boolean(searched()), error: null, hits: [] }
+        : sampleSearch(searched(), wiki()),
   )
   useListCursor({
     count: () => view.hits.length,
@@ -49,7 +72,20 @@ export default function Wiki() {
   })
 
   return (
-    <Page title="Wiki" meta={<span class="text-sm text-fg-muted">Roblox Wiki · from Fandom</span>}>
+    <Page
+      title="Wiki"
+      meta={<span class="text-sm text-fg-muted">{source()} · from Fandom</span>}
+      actions={
+        <Show when={other()}>
+          <Button size="sm" variant="ghost" icon="wiki" onClick={() => openArticle(mainPage(wiki()))}>
+            Main page
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => run("wiki.search", query())}>
+            Search the Roblox Wiki
+          </Button>
+        </Show>
+      }
+    >
       <Switch>
         <Match when={!view.enabled}>
           <WikiOff />
@@ -57,7 +93,7 @@ export default function Wiki() {
         <Match when>
           <TextField
             icon="search"
-            placeholder="Search items, experiences, players and more"
+            placeholder={other() ? `Search the ${source()}` : "Search items, experiences, players and more"}
             value={query()}
             onChange={(v) => {
               setQuery(v)
@@ -66,6 +102,13 @@ export default function Wiki() {
             autofocus
           />
           <Switch>
+            <Match when={!searched() && other()}>
+              <EmptyState
+                icon="wiki"
+                title={`Search the ${source()}`}
+                description="An experience's own wiki on Fandom, written by its players."
+              />
+            </Match>
             <Match when={!searched()}>
               <EmptyState
                 icon="wiki"

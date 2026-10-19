@@ -5,6 +5,7 @@
 
 pub mod batch;
 pub mod error;
+pub mod fandom;
 pub mod paging;
 pub mod realtime;
 #[cfg(feature = "replay")]
