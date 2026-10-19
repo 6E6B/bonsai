@@ -596,7 +596,7 @@ export type AvatarView = {
 
 /**  The app background picture and how see-through things are over it. */
 export type BackgroundView = {
-	/**  File name under `bg://`. */
+	/**  External HTTPS URL, loaded through `bg://`. */
 	file: string,
 	/**  How strongly the picture shows, 0–100. */
 	image: number,
