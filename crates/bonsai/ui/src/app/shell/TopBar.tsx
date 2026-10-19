@@ -40,6 +40,9 @@ export function TopBar(props: { drawer: boolean }) {
           onClick={() => run("nav.notifications")}
         />
       </Tooltip>
+      <Tooltip content="Join the Bonsai Discord" placement="bottom">
+        <IconButton icon="discord" label="Join the Bonsai Discord" onClick={() => run("help.discord")} />
+      </Tooltip>
       <Tooltip content="Friends and chat" keys={[shortcutOf("view.drawer") ?? ""]} placement="bottom">
         <IconButton
           icon="friends"

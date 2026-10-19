@@ -1203,6 +1203,8 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         Ok(())
     };
     match id {
+        CommandId::OpenDiscord => core.open_discord_invite(false),
+        CommandId::OpenDiscordBrowser => core.open_discord_invite(true),
         CommandId::SwitchAccount => switch(inv.arg.and_then(|a| a.parse().ok()).map(AccountId)),
         CommandId::SwitchToLast => {
             core.switch_last();

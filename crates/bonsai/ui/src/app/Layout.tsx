@@ -40,6 +40,7 @@ import { AddAccount, type AddMode } from "./shell/AddAccount"
 import { ApproveCode } from "./shell/ApproveCode"
 import { Backdrop } from "./shell/Backdrop"
 import { ChallengeDialog } from "./shell/ChallengeDialog"
+import { DiscordDialog } from "./shell/DiscordDialog"
 import { Drawer } from "./shell/Drawer"
 import { PinForm } from "./shell/PinForm"
 import { ChangePasswordForm, PasswordForm, SecurityDialog } from "./shell/SecurityForms"
@@ -145,6 +146,12 @@ export function Layout(props: ParentProps) {
     dialog.show(() => <AddAccount mode={mode} onDone={() => dialog.close()} />, { title, size: "sm" })
 
   const off = [
+    handle("help.discord", () =>
+      dialog.show(() => <DiscordDialog />, {
+        title: "Bonsai Discord",
+        size: "sm",
+      }),
+    ),
     handle("account.add", addAccount("choose", "Add account")),
     handle("account.replace_cookie", addAccount("paste", "Paste a new cookie")),
     // The dialog starts the backend side (code polling, the sign-in window) and stops it on close.

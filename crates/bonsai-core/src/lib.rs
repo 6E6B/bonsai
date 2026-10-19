@@ -13,6 +13,7 @@ pub mod commands;
 pub mod communities;
 pub mod core;
 pub mod discover;
+mod discord;
 pub mod experience;
 pub mod feed;
 pub mod fmt;

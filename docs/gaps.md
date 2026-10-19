@@ -18,3 +18,7 @@ Remove a line when it ships.
 
 
 Theme backgrounds now travel as external HTTPS links and effects with theme exports and hub releases. The editor previews drafts directly in the app.
+
+## Discord community
+
+- The top bar and command palette open the community invite dialog. The server invite code lives in `discord-invite.txt` at the repository root and enables its Discord protocol and browser actions. Change only the code (not a URL) and rebuild when replacing the invite. If the code is cleared, the dialog shows “Invite coming soon” and disables both actions.
