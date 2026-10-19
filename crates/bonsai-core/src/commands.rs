@@ -570,6 +570,9 @@ commands! {
     FilterNotificationCategory => "notifications.category", "Show one notification category (friends, trades, communities, experiences, account, messages, other; no argument shows all)", ["notifications", "category", "filter", "friends", "trades", "security", "robux", "group", "experience"], Text, Local, [];
     ClearNotifications => "notifications.mark_read", "Mark notifications read", ["notifications", "bell", "clear", "read"], None, Write(Harmless), [];
     GoChat => "nav.chat", "Go to Chat", ["chat", "conversations"], None, Read, [];
+    DiscordDialog => "help.discord", "Join the Bonsai Discord", ["discord", "support", "community", "feedback", "server"], None, Read, [];
+    OpenDiscord => "help.discord_open", "Open the Bonsai invite in Discord", ["discord", "invite", "join", "server"], None, Read, [];
+    OpenDiscordBrowser => "help.discord_browser", "Open the Bonsai Discord invite in browser", ["discord", "invite", "browser", "web"], None, Read, [];
     GoNotifications => "nav.notifications", "Go to Notifications", ["notifications", "bell", "alerts"], None, Read, [];
 
     SearchCommunities => "group.search", "Search communities", ["groups", "communities", "find group"], Text, Read, [];

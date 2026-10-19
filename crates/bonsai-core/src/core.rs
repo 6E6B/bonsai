@@ -527,6 +527,12 @@ impl Core {
         opener.open_web(url)
     }
 
+    /// Opens only the bundled community invite, through Discord or the default browser.
+    pub fn open_discord_invite(&self, browser: bool) -> Result<(), String> {
+        let url = crate::discord::invite_url(include_str!("../../../discord-invite.txt"), browser)?;
+        self.open_built_link(&url)
+    }
+
     /// Opens a link to a third-party site that this crate built itself, never one from a
     /// response or the UI (see [`crate::wiki::site_url`]).
     pub(crate) fn open_built_link(&self, url: &str) -> Result<(), String> {

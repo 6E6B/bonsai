@@ -51,6 +51,7 @@ import inspect from "@phosphor-icons/core/assets/regular/cursor-click.svg?raw"
 import database from "@phosphor-icons/core/assets/regular/database.svg?raw"
 import devices from "@phosphor-icons/core/assets/regular/devices.svg?raw"
 import value from "@phosphor-icons/core/assets/regular/diamond.svg?raw"
+import discord from "@phosphor-icons/core/assets/regular/discord-logo.svg?raw"
 import more from "@phosphor-icons/core/assets/regular/dots-three.svg?raw"
 import download from "@phosphor-icons/core/assets/regular/download-simple.svg?raw"
 import messages from "@phosphor-icons/core/assets/regular/envelope-simple.svg?raw"
@@ -126,6 +127,7 @@ const rolimons =
  * here describe the use ("marketplace"), not the drawing ("storefront"). `-fill` names are the
  * filled weight, for pressed or active states. */
 const svgs = {
+  discord,
   plus,
   x,
   check,

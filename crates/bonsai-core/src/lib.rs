@@ -12,6 +12,7 @@ pub mod chat;
 pub mod commands;
 pub mod communities;
 pub mod core;
+mod discord;
 pub mod discover;
 pub mod experience;
 pub mod feed;
