@@ -10,6 +10,7 @@ import {
   EmptyState,
   IconButton,
   Page,
+  SectionHeader,
   SegmentedControl,
   TextField,
   ThemeCard,
@@ -73,26 +74,6 @@ export default function Themes() {
       title="Themes"
       actions={
         <>
-          <TextField
-            size="sm"
-            icon="search"
-            aria-label="Search themes"
-            placeholder="Search"
-            class="w-48"
-            value={query()}
-            onChange={setQuery}
-          />
-          <SegmentedControl
-            size="sm"
-            aria-label="Base"
-            value={base()}
-            onChange={setBase}
-            options={[
-              { value: "all", label: "All" },
-              { value: "dark", label: "Dark" },
-              { value: "light", label: "Light" },
-            ]}
-          />
           <Button size="sm" onClick={() => run("nav.hub")}>
             Browse hub
           </Button>
@@ -100,76 +81,106 @@ export default function Themes() {
             Import
           </Button>
           <Button size="sm" variant="primary" icon="plus" onClick={() => run("theme.new")}>
-            New
+            Create theme
           </Button>
         </>
       }
     >
-      <Show
-        when={rows().length > 0}
-        fallback={<EmptyState icon="palette" title="No themes match" description="Try another name or base." />}
-      >
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
-          <For each={rows()}>
-            {(r) => {
-              const tokens = createMemo(() => {
-                const t = drafts[r.id]?.theme ?? r.theme
-                return t ? resolve(t) : {}
-              })
-              return (
-                <ContextMenu
-                  items={[
-                    menuItem("theme.apply", { arg: r.id, icon: "check", disabled: !r.onDisk }),
-                    menuItem("theme.edit", { arg: r.id, icon: "edit" }),
-                    menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
-                    menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
-                    { kind: "separator" },
-                    menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
-                    menuItem("hub.publish", {
-                      arg: JSON.stringify({ kind: "themes", id: r.id }),
-                      label: "Publish to hub",
-                      disabled: r.builtin || !r.onDisk,
-                    }),
-                    menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
-                    { kind: "separator" },
-                    menuItem("theme.delete", {
-                      arg: r.id,
-                      icon: "trash",
-                      danger: true,
-                      disabled: r.builtin || !r.onDisk,
-                    }),
-                  ]}
-                >
-                  <div class="group relative">
-                    <ThemeCard
-                      class="w-full"
-                      name={drafts[r.id]?.theme.name ?? r.name}
-                      detail={detail(r)}
-                      tokens={tokens()}
-                      selected={r.id === app.darkTheme || r.id === app.lightTheme}
-                      onClick={() => run(r.onDisk ? "theme.apply" : "theme.edit", r.id)}
-                    />
-                    <Show when={!r.onDisk || (drafts[r.id] && changed(drafts[r.id]))}>
-                      <Badge variant="warning" class="pointer-events-none absolute top-2 left-2">
-                        Unsaved
-                      </Badge>
-                    </Show>
-                    <div class="absolute top-2 right-2 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
-                      <IconButton
-                        size="sm"
-                        variant="secondary"
-                        icon="edit"
-                        label={r.builtin ? `Edit a copy of ${r.name}` : `Edit ${r.name}`}
-                        onClick={() => run("theme.edit", r.id)}
+      <section class="flex flex-col gap-2">
+        <SectionHeader
+          title="Your library"
+          meta={rows().length}
+          actions={
+            <>
+              <TextField
+                size="sm"
+                icon="search"
+                aria-label="Search themes"
+                placeholder="Search themes…"
+                class="w-64"
+                value={query()}
+                onChange={setQuery}
+              />
+              <SegmentedControl
+                size="sm"
+                aria-label="Base"
+                value={base()}
+                onChange={setBase}
+                options={[
+                  { value: "all", label: "All" },
+                  { value: "dark", label: "Dark" },
+                  { value: "light", label: "Light" },
+                ]}
+              />
+            </>
+          }
+        />
+        <Show
+          when={rows().length > 0}
+          fallback={<EmptyState icon="palette" title="No themes match" description="Try another name or base." />}
+        >
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3">
+            <For each={rows()}>
+              {(r) => {
+                const tokens = createMemo(() => {
+                  const t = drafts[r.id]?.theme ?? r.theme
+                  return t ? resolve(t) : {}
+                })
+                return (
+                  <ContextMenu
+                    items={[
+                      menuItem("theme.apply", { arg: r.id, icon: "check", disabled: !r.onDisk }),
+                      menuItem("theme.edit", { arg: r.id, icon: "edit" }),
+                      menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
+                      menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
+                      { kind: "separator" },
+                      menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
+                      menuItem("hub.publish", {
+                        arg: JSON.stringify({ kind: "themes", id: r.id }),
+                        label: "Publish to hub",
+                        disabled: r.builtin || !r.onDisk,
+                      }),
+                      menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
+                      { kind: "separator" },
+                      menuItem("theme.delete", {
+                        arg: r.id,
+                        icon: "trash",
+                        danger: true,
+                        disabled: r.builtin || !r.onDisk,
+                      }),
+                    ]}
+                  >
+                    <div class="group relative">
+                      <ThemeCard
+                        class="w-full"
+                        actions={
+                          <IconButton
+                            size="sm"
+                            variant="ghost"
+                            icon="edit"
+                            label={r.builtin ? `Edit a copy of ${r.name}` : `Edit ${r.name}`}
+                            onClick={() => run("theme.edit", r.id)}
+                          />
+                        }
+                        name={drafts[r.id]?.theme.name ?? r.name}
+                        detail={detail(r)}
+                        tokens={tokens()}
+                        selected={r.id === app.darkTheme || r.id === app.lightTheme}
+                        onClick={() => run(r.onDisk ? "theme.apply" : "theme.edit", r.id)}
                       />
+                      <Show when={!r.onDisk || (drafts[r.id] && changed(drafts[r.id]))}>
+                        <Badge variant="warning" class="pointer-events-none absolute top-2 left-2">
+                          Unsaved
+                        </Badge>
+                      </Show>
                     </div>
-                  </div>
-                </ContextMenu>
-              )
-            }}
-          </For>
-        </div>
-      </Show>
+                  </ContextMenu>
+                )
+              }}
+            </For>
+          </div>
+        </Show>
+      </section>
     </Page>
   )
 }

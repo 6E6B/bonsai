@@ -4,7 +4,22 @@ import { emptyHub, hubQuery, hubUi, setHubUi, target } from "~/lib/hub"
 import { commands, type HubEntry } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
 import { parseTheme, resolve } from "~/lib/theme"
-import { Alert, Badge, Button, Card, EmptyState, Page, SegmentedControl, Select, TextField, ThemeCard } from "~/lib/ui"
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Icon,
+  IconButton,
+  Page,
+  SegmentedControl,
+  Select,
+  TabPanel,
+  Tabs,
+  TextField,
+  ThemeCard,
+} from "~/lib/ui"
 
 export default function Hub() {
   const data = useLive(
@@ -17,6 +32,7 @@ export default function Hub() {
     { keep: true },
   )
   createEffect(() => setHubUi("userId", data.userId))
+  const [section, setSection] = createSignal("browse")
   const [search, setSearch] = createSignal(hubUi.query)
   createEffect(() => {
     const q = search()
@@ -37,189 +53,115 @@ export default function Hub() {
     const version = "doc" in found ? parseTheme(found.doc)?.version : found.version
     return version === entry.version ? "Installed" : "Review update"
   }
-  return (
-    <Page
-      title="Hub"
-      actions={
-        <>
-          <Show
-            when={data.userName}
-            fallback={
-              <Button
-                size="sm"
-                disabled={!data.configured || data.signingIn || data.busy}
-                onClick={() => run("hub.sign_in")}
-              >
-                {data.signingIn ? "Waiting for browser" : "Sign in with GitHub"}
-              </Button>
-            }
-          >
-            <span class="text-sm text-fg-muted">{data.userName}</span>
-            <Button size="sm" disabled={data.busy} onClick={() => run("hub.sign_out")}>
-              Sign out
-            </Button>
-          </Show>
-          <Button size="sm" disabled={!data.configured || data.loading} onClick={() => run("hub.refresh")}>
-            Refresh
-          </Button>
-          <Button size="sm" variant="primary" disabled={!data.userId || data.busy} onClick={() => run("hub.publish")}>
-            Publish
-          </Button>
-        </>
-      }
-    >
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <SegmentedControl
-            aria-label="Hub content"
-            value={hubUi.kind}
-            options={[
-              { value: "themes", label: "Themes" },
-              { value: "plugins", label: "Plugins" },
-            ]}
-            onChange={(kind) => setHubUi({ kind, offset: 0, base: "all" })}
-          />
+  const Browse = () => (
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <TextField
+            size="sm"
             icon="search"
             aria-label="Search hub"
-            placeholder="Search names, descriptions and tags"
-            class="w-72"
+            placeholder={hubUi.kind === "themes" ? "Search themes…" : "Search plugins…"}
+            class="w-64"
             value={search()}
             onChange={setSearch}
           />
-          <Show when={hubUi.kind === "themes"}>
-            <SegmentedControl
-              size="sm"
-              aria-label="Theme base"
-              value={hubUi.base}
-              options={[
-                { value: "all", label: "All" },
-                { value: "dark", label: "Dark" },
-                { value: "light", label: "Light" },
-              ]}
-              onChange={(base) => setHubUi({ base, offset: 0 })}
-            />
-          </Show>
-          <Select
-            size="sm"
-            aria-label="Sort releases"
-            value={hubUi.sort}
-            onChange={(sort) => setHubUi({ sort, offset: 0 })}
-            options={[
-              { value: "updated", label: "Recently updated" },
-              { value: "name", label: "Name" },
-            ]}
-          />
-          <Button
-            size="sm"
-            onClick={() =>
-              run(hubUi.kind === "themes" ? "nav.themes" : "nav.settings", hubUi.kind === "themes" ? null : "plugins")
-            }
-          >
-            Manage installed
-          </Button>
-        </div>
-        <Show when={!data.configured}>
-          <Alert title="Hub is unavailable">
-            You can still manage your installed themes and plugins while the hub is unavailable.
-          </Alert>
-        </Show>
-        <Show when={data.error}>
-          <Alert title="Hub request failed" variant="danger">
-            {data.error}
-          </Alert>
-        </Show>
-        <Show when={data.signingIn}>
-          <Alert
-            title="Complete sign-in in your browser"
-            actions={
-              <Button size="sm" disabled={data.busy} onClick={() => run("hub.sign_out")}>
-                Cancel
-              </Button>
-            }
-          >
-            Sign in with GitHub to publish. Your publisher account is separate from the active Roblox account.
-          </Alert>
-        </Show>
-        <Show when={hubUi.kind === "plugins"}>
-          <Alert title="Reviewed releases only">
-            Installing opens a permission review. Updates require the same review before new permissions are granted.
-          </Alert>
-        </Show>
-        <For each={data.revoked}>
-          {(warning) => (
-            <Alert title="Revoked plugin" variant="danger">
-              {warning}
-            </Alert>
-          )}
-        </For>
-        <div class="flex items-center justify-between text-sm text-fg-muted" aria-live="polite">
-          <span>
-            {data.items.length} releases on this page<Show when={data.loading}> · Loading</Show>
-            <Show when={data.busy}> · Working</Show>
-          </span>
-          <Show when={hubUi.kind === "plugins"}>
-            <Button size="sm" disabled={!data.configured} onClick={() => run("hub.revocations")}>
-              Check installed releases
-            </Button>
-          </Show>
-        </div>
-        <Show
-          when={data.items.length > 0}
-          fallback={
-            <EmptyState
-              icon={hubUi.kind === "themes" ? "palette" : "plugin"}
-              title={data.loading ? "Loading hub" : "No releases found"}
-              description="Try another search or refresh the hub."
-            />
-          }
-        >
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3">
-            <For each={data.items}>
-              {(entry) => {
-                const theme = createMemo(() => (entry.document ? parseTheme(entry.document) : undefined))
-                return (
-                  <Card class="flex flex-col gap-3 p-3">
-                    <Show when={theme()}>
-                      {(doc) => (
-                        <ThemeCard
-                          class="w-full"
-                          name={entry.name}
-                          detail={`${entry.version} · ${entry.base}`}
-                          tokens={resolve(doc())}
-                          onClick={() => run("hub.details", JSON.stringify(entry))}
-                        />
-                      )}
-                    </Show>
-                    <Show when={!theme()}>
-                      <div class="flex items-center justify-between gap-2">
-                        <span class="font-medium">{entry.name}</span>
-                        <Badge>{entry.version}</Badge>
-                      </div>
-                    </Show>
-                    <p class="text-sm text-fg-muted line-clamp-2">{entry.description || "No description."}</p>
-                    <div class="flex flex-wrap gap-1">
-                      <For each={entry.tags}>{(tag) => <Badge>{tag}</Badge>}</For>
-                    </div>
-                    <div class="mt-auto flex items-center justify-between gap-2">
-                      <Button size="sm" onClick={() => run("hub.details", JSON.stringify(entry))}>
-                        Details
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        disabled={data.busy || installLabel(entry) === "Installed"}
-                        onClick={() => run("hub.install", target(entry))}
-                      >
-                        {installLabel(entry)}
-                      </Button>
-                    </div>
-                  </Card>
-                )
-              }}
-            </For>
+
+          <div class="flex items-center gap-3">
+            <Show when={hubUi.kind === "themes"}>
+              <SegmentedControl
+                size="sm"
+                aria-label="Theme base"
+                value={hubUi.base}
+                options={[
+                  { value: "all", label: "All" },
+                  { value: "dark", label: "Dark" },
+                  { value: "light", label: "Light" },
+                ]}
+                onChange={(base) => setHubUi({ base, offset: 0 })}
+              />
+            </Show>
           </div>
-        </Show>
+        </div>
+        <Select
+          size="sm"
+          aria-label="Sort releases"
+          value={hubUi.sort}
+          onChange={(sort) => setHubUi({ sort, offset: 0 })}
+          options={[
+            { value: "updated", label: "Recently updated" },
+            { value: "name", label: "Name" },
+          ]}
+        />
+      </div>
+      <span class="text-sm text-fg-muted" aria-live="polite">
+        {data.items.length} {hubUi.kind} on this page<Show when={data.loading}> · Loading</Show>
+        <Show when={data.busy}> · Working</Show>
+      </span>
+      <Show
+        when={data.items.length > 0}
+        fallback={
+          <EmptyState
+            icon={hubUi.kind === "themes" ? "palette" : "plugin"}
+            title={data.loading ? "Loading hub" : "No releases found"}
+            description="Try another search or refresh the hub."
+          />
+        }
+      >
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-3">
+          <For each={data.items}>
+            {(entry) => {
+              const theme = createMemo(() => (entry.document ? parseTheme(entry.document) : undefined))
+              return (
+                <Card class="flex flex-col gap-3 p-3">
+                  <Show when={theme()}>
+                    {(doc) => (
+                      <ThemeCard
+                        class="w-full"
+                        name={entry.name}
+                        detail={`${entry.version} · ${entry.base}`}
+                        tokens={resolve(doc())}
+                        onClick={() => run("hub.details", JSON.stringify(entry))}
+                      />
+                    )}
+                  </Show>
+                  <Show when={!theme()}>
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-3">
+                        <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-control text-fg-muted">
+                          <Icon name="plugin" />
+                        </span>
+                        <div class="flex min-w-0 flex-col gap-1">
+                          <span class="font-medium">{entry.name}</span>
+                          <span class="text-xs text-fg-muted">Version {entry.version}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Show>
+                  <p class="text-sm text-fg-muted line-clamp-2">{entry.description || "No description."}</p>
+                  <div class="flex flex-wrap gap-1">
+                    <For each={entry.tags}>{(tag) => <Badge>{tag}</Badge>}</For>
+                  </div>
+                  <div class="mt-auto flex items-center justify-between gap-2">
+                    <Button size="sm" onClick={() => run("hub.details", JSON.stringify(entry))}>
+                      Details
+                    </Button>
+                    <Button
+                      size="sm"
+                      icon="download"
+                      disabled={data.busy || installLabel(entry) === "Installed"}
+                      onClick={() => run("hub.install", target(entry))}
+                    >
+                      {installLabel(entry)}
+                    </Button>
+                  </div>
+                </Card>
+              )
+            }}
+          </For>
+        </div>
+      </Show>
+      <Show when={hubUi.offset > 0 || data.nextOffset !== null}>
         <div class="flex items-center justify-between">
           <Button
             size="sm"
@@ -237,33 +179,168 @@ export default function Hub() {
             Next
           </Button>
         </div>
-        <Show when={data.userId}>
-          <Card class="flex flex-col gap-3 p-3">
-            <div class="flex items-center justify-between">
-              <span class="font-medium">Your submissions</span>
-              <Button size="sm" onClick={() => run("hub.submissions")}>
-                Refresh status
-              </Button>
+      </Show>
+      <Show when={hubUi.kind === "plugins"}>
+        <div class="flex items-center justify-between gap-3 border-t border-line pt-3">
+          <span class="text-xs text-fg-muted">Permissions are reviewed before installation.</span>
+          <Button size="sm" variant="ghost" disabled={!data.configured} onClick={() => run("hub.revocations")}>
+            Check installed releases
+          </Button>
+        </div>
+      </Show>
+    </div>
+  )
+  return (
+    <Page
+      title="Hub"
+      actions={
+        <>
+          <IconButton
+            size="sm"
+            icon="refresh"
+            label="Refresh hub"
+            disabled={!data.configured || data.loading}
+            onClick={() => run("hub.refresh")}
+          />
+          <Button
+            size="sm"
+            onClick={() =>
+              run(hubUi.kind === "themes" ? "nav.themes" : "nav.settings", hubUi.kind === "themes" ? null : "plugins")
+            }
+          >
+            {hubUi.kind === "themes" ? "My themes" : "Installed plugins"}
+          </Button>
+        </>
+      }
+    >
+      <Tabs
+        aria-label="Hub section"
+        value={section() === "publisher" ? "publisher" : hubUi.kind}
+        items={[
+          { value: "themes", label: "Themes" },
+          { value: "plugins", label: "Plugins" },
+          { value: "publisher", label: "Publishing" },
+        ]}
+        onChange={(value) => {
+          if (value === "publisher") setSection(value)
+          else {
+            setSection("browse")
+            setHubUi({ kind: value, offset: 0, base: "all" })
+          }
+        }}
+      >
+        <Show when={!data.configured || data.error || data.signingIn || data.revoked.length > 0}>
+          <div class="flex flex-col gap-3 pt-3">
+            <Show when={!data.configured}>
+              <Alert title="Hub is unavailable">
+                You can still manage your installed themes and plugins while the hub is unavailable.
+              </Alert>
+            </Show>
+            <Show when={data.error}>
+              <Alert title="Hub request failed" variant="danger">
+                {data.error}
+              </Alert>
+            </Show>
+            <Show when={data.signingIn}>
+              <Alert
+                title="Complete sign-in in your browser"
+                actions={
+                  <Button size="sm" disabled={data.busy} onClick={() => run("hub.sign_out")}>
+                    Cancel
+                  </Button>
+                }
+              >
+                Sign in with GitHub to publish. Your publisher account is separate from the active Roblox account.
+              </Alert>
+            </Show>
+            <For each={data.revoked}>
+              {(warning) => (
+                <Alert title="Revoked plugin" variant="danger">
+                  {warning}
+                </Alert>
+              )}
+            </For>
+          </div>
+        </Show>
+        <TabPanel value="themes">
+          <Browse />
+        </TabPanel>
+        <TabPanel value="plugins">
+          <Browse />
+        </TabPanel>
+        <TabPanel value="publisher" class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-col gap-1">
+              <span class="font-medium">Publisher account</span>
+              <span class="text-sm text-fg-muted">
+                Sign in with GitHub to publish. Browsing and installing need no account.
+              </span>
             </div>
             <Show
-              when={data.submissions.length > 0}
-              fallback={<p class="text-sm text-fg-muted">Refresh to see published themes and plugin reviews.</p>}
+              when={data.userName}
+              fallback={
+                <Button
+                  size="sm"
+                  disabled={!data.configured || data.signingIn || data.busy}
+                  onClick={() => run("hub.sign_in")}
+                >
+                  {data.signingIn ? "Waiting for browser" : "Sign in with GitHub"}
+                </Button>
+              }
             >
-              <For each={data.submissions}>
-                {(submission) => (
-                  <div class="flex items-center gap-3 text-sm">
-                    <span>
-                      {submission.entryId} {submission.version}
-                    </span>
-                    <Badge>{submission.status}</Badge>
-                    <span class="text-fg-muted">{submission.reason}</span>
-                  </div>
-                )}
-              </For>
+              <div class="flex items-center gap-3">
+                <span class="text-sm">{data.userName}</span>
+                <Button size="sm" disabled={data.busy} onClick={() => run("hub.sign_out")}>
+                  Sign out
+                </Button>
+              </div>
             </Show>
-          </Card>
-        </Show>
-      </div>
+          </div>
+          <Show when={data.userId}>
+            <Card class="flex flex-col gap-3 p-3">
+              <div class="flex items-center justify-between">
+                <span class="font-medium">Your submissions</span>
+                <div class="flex gap-2">
+                  <Button size="sm" onClick={() => run("hub.submissions")}>
+                    Refresh status
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={data.busy}
+                    onClick={() => run("hub.publish", JSON.stringify({ kind: "plugins" }))}
+                  >
+                    Submit plugin
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    disabled={data.busy}
+                    onClick={() => run("hub.publish", JSON.stringify({ kind: "themes" }))}
+                  >
+                    Publish theme
+                  </Button>
+                </div>
+              </div>
+              <Show
+                when={data.submissions.length > 0}
+                fallback={<p class="text-sm text-fg-muted">Refresh to see published themes and plugin reviews.</p>}
+              >
+                <For each={data.submissions}>
+                  {(submission) => (
+                    <div class="flex items-center gap-3 text-sm">
+                      <span>
+                        {submission.entryId} {submission.version}
+                      </span>
+                      <Badge>{submission.status}</Badge>
+                      <span class="text-fg-muted">{submission.reason}</span>
+                    </div>
+                  )}
+                </For>
+              </Show>
+            </Card>
+          </Show>
+        </TabPanel>
+      </Tabs>
     </Page>
   )
 }
