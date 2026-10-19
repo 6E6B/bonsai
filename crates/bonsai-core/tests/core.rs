@@ -2496,7 +2496,16 @@ async fn quick_sign_in_shows_code_then_confirms() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn cancelling_quick_sign_in_cancels_the_code() {
-    let replay = Replay::start(&["quick_sign_in"]).await;
+    let fixture = replay::load("quick_sign_in");
+    let replay = Replay::from_fixture(&fixture).await;
+    // The captured flow eventually returns Cancelled on its own. Keep it pending here:
+    // this test must be the thing that cancels it, regardless of how many polls run.
+    let pending = fixture
+        .interactions
+        .iter()
+        .find(|i| i.request.path.ends_with("/login/status") && i.response.body["status"] == "Created")
+        .unwrap();
+    replay.repeat(pending).await;
     let r = rig(
         Base::Replay(replay.server.uri()),
         tempfile::tempdir().unwrap(),
@@ -2508,6 +2517,20 @@ async fn cancelling_quick_sign_in_cancels_the_code() {
         matches!(s.login, Some(LoginState::QuickCode { .. }))
     })
     .await;
+    // Let multiple status polls finish before cancelling. The code must remain visible.
+    let start = Instant::now();
+    while replay
+        .requests()
+        .await
+        .iter()
+        .filter(|q| q.url.path().ends_with("/login/status"))
+        .count()
+        < 3
+    {
+        assert!(start.elapsed() < Duration::from_secs(10), "no status polls");
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert!(matches!(r.core.store().login, Some(LoginState::QuickCode { .. })));
     r.core.cancel_login();
     assert!(r.core.store().login.is_none());
     let start = Instant::now();
