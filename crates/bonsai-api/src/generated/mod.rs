@@ -46,6 +46,7 @@ pub mod presence;
 pub mod privatemessages;
 pub mod publish;
 pub mod realtime_signalr;
+pub mod roblox_fandom_com;
 pub mod thumbnails;
 pub mod thumbnailsresizer;
 pub mod trades;

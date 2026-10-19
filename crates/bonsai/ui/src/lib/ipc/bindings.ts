@@ -273,6 +273,14 @@ export const commands = {
 	saveTabs: (tabs: TabView[], active: number) => __TAURI_INVOKE<void>("save_tabs", { tabs, active }),
 	/**  Every installed theme: built-ins first, then the user's by name. */
 	themes: () => __TAURI_INVOKE<ThemeView[]>("themes"),
+	/**  The article called `title` (as the wiki names it, `Catalog:` included for items). */
+	wikiPage: (title: string) => __TAURI_INVOKE<WikiPageView>("wiki_page", { title }),
+	/**
+	 *  The article about an item (`item`, `bundle`), experience (`game`, by place id) or player
+	 *  (`user`) called `name`, if the wiki has one about this very one.
+	 */
+	wikiAbout: (kind: string, id: Id, name: string) => __TAURI_INVOKE<WikiPageView>("wiki_about", { kind, id, name }),
+	wikiSearch: (query: string) => __TAURI_INVOKE<WikiSearchView>("wiki_search", { query }),
 	hubCatalog: (query: string) => typedError<HubView, string>(__TAURI_INVOKE("hub_catalog", { query })),
 	hubHistory: (target: string) => typedError<HubHistory, string>(__TAURI_INVOKE("hub_history", { target })),
 	appearance: () => __TAURI_INVOKE<AppearanceView>("appearance"),
@@ -2138,6 +2146,8 @@ export type Shell = {
 	security: SecurityFlowView | null,
 	/**  Item values from Rolimons are on. */
 	itemValues: boolean,
+	/**  Wiki articles from Fandom are on. */
+	wiki: boolean,
 	/**  Avatar viewers open in 3D instead of on the image. */
 	avatar3d: boolean,
 	/**  Window zoom, 1 = 100%. */
@@ -2512,6 +2522,78 @@ export type WardrobeSection = {
 	name: string,
 	slots: Choice[],
 };
+
+export type WikiArticle = {
+	/**  What the wiki calls the page, like `Catalog:Dominus Infernus`. Identifies it. */
+	title: string,
+	/**  The title without its namespace, for headings. */
+	name: string,
+	/**  `item`, `game`, `player` or `page`. */
+	kind: string,
+	/**  The first paragraph. */
+	extract: string,
+	/**  Text before the first heading. */
+	lead: WikiBlock[],
+	sections: WikiSection[],
+	infoboxTitle: string,
+	infobox: WikiFact[],
+	categories: string[],
+	target: WikiTarget | null,
+	/**  The article on the site, shown for attribution. Opened with `wiki.open_site`. */
+	url: string,
+	revision: Id,
+};
+
+/**  Text is plain with `[[Title]]` and `[[Title|label]]` links to other articles. */
+export type WikiBlock = { type: "p"; text: string } | { type: "list"; ordered: boolean; items: string[] } | { type: "table"; columns: string[]; rows: string[][] } | { type: "note"; text: string };
+
+export type WikiFact = {
+	key: string,
+	label: string,
+	value: string,
+};
+
+export type WikiHit = {
+	title: string,
+	name: string,
+	kind: string,
+	snippet: string,
+	/**  RFC 3339; empty when the wiki didn't say. */
+	edited: string,
+};
+
+/**
+ *  One article, or why there is none. `article` is `None` with nothing loading and no error
+ *  when the wiki has no such page.
+ */
+export type WikiPageView = {
+	/**  The user turned the wiki on. */
+	enabled: boolean,
+	loading: boolean,
+	error: string | null,
+	/**  ms since the epoch; `None` before the first load. */
+	fetchedAt: number | null,
+	article: WikiArticle | null,
+	source: string,
+	license: string,
+};
+
+export type WikiSearchView = {
+	enabled: boolean,
+	loading: boolean,
+	error: string | null,
+	hits: WikiHit[],
+};
+
+export type WikiSection = {
+	id: string,
+	title: string,
+	level: number,
+	blocks: WikiBlock[],
+};
+
+/**  The Bonsai page an article is about, from the roblox.com links in it. */
+export type WikiTarget = { kind: "item"; id: Id } | { kind: "game"; placeId: Id } | { kind: "user"; id: Id };
 
 /**  The main window's corners. Sent when they change; `window_frame` reads them at startup. */
 export type WindowFrame = {

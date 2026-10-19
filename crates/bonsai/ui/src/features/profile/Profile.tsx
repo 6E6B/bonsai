@@ -45,8 +45,7 @@ import {
   VirtualGrid,
 } from "~/lib/ui"
 import { rolimonsFailed, VALUES_SOURCE } from "~/lib/values"
-import { articleFor } from "~/lib/wiki"
-import { WikiArticleView, WikiSummary } from "~/lib/wiki-panels"
+import { useWikiAbout, WikiSummary, WikiTab } from "~/lib/wiki-panels"
 import { Outfits } from "./Outfits"
 import { BadgeTile, Overview } from "./Overview"
 
@@ -148,14 +147,17 @@ export default function Profile() {
     const shown = shownGameLists()
     if (shown.length > 0 && !shown.some((l) => l.value === games())) setGames(shown[0].value)
   })
-  const wiki = createMemo(() => articleFor({ kind: "user", id: userId() }))
+  const wiki = useWikiAbout(() => {
+    const name = view.user?.name
+    return name ? { kind: "user", id: userId(), name } : null
+  })
   const sections = createMemo(() => {
     const hidden = new Set<string>()
     if (shownGameLists().length === 0) hidden.add("experiences")
     if (isEmpty(badges)) hidden.add("badges")
     if (isEmpty(groups)) hidden.add("communities")
     if (isEmpty(collectibles)) hidden.add("items")
-    if (!wiki()) hidden.add("wiki")
+    if (!wiki.article) hidden.add("wiki")
     return allSections.filter((t) => !hidden.has(t.value))
   })
   createEffect(() => {
@@ -315,7 +317,7 @@ export default function Profile() {
 
       <Tabs aria-label="Profile sections" items={sections()} value={section()} onChange={setSection}>
         <TabPanel value="about" class="flex flex-col gap-4">
-          <Show when={wiki()}>{(a) => <WikiSummary article={a()} facts={3} />}</Show>
+          <Show when={wiki.article}>{(a) => <WikiSummary view={wiki} article={a()} facts={3} />}</Show>
           <Overview
             userId={userId()}
             view={view}
@@ -330,7 +332,7 @@ export default function Profile() {
           />
         </TabPanel>
         <TabPanel value="wiki">
-          <Show when={wiki()}>{(a) => <WikiArticleView article={a()} toc={false} target={false} />}</Show>
+          <WikiTab view={wiki} missing="The Roblox Wiki has no article about this player." />
         </TabPanel>
         <TabPanel value="outfits">
           <Outfits userId={userId()} mine={view.mine} outfits={outfits} />

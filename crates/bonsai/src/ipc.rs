@@ -33,6 +33,7 @@ mod plugins;
 mod security;
 mod trades;
 mod transactions;
+mod wiki;
 
 /// A Roblox user, game or item id, or a local id. Roblox ids stay far below 2^53, so a
 /// JS number holds them exactly.
@@ -95,6 +96,8 @@ pub struct Shell {
     pub security: Option<security::SecurityFlowView>,
     /// Item values from Rolimons are on.
     pub item_values: bool,
+    /// Wiki articles from Fandom are on.
+    pub wiki: bool,
     /// Avatar viewers open in 3D instead of on the image.
     pub avatar_3d: bool,
     /// Window zoom, 1 = 100%.
@@ -1019,6 +1022,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
             .collect(),
         keychain_warning: s.keychain_warning.clone(),
         item_values: core.values_enabled(),
+        wiki: core.wiki_enabled(),
         avatar_3d: core.settings().avatar_3d,
         ui_scale: f64::from(core.settings().ui_scale),
         look: {
@@ -1178,6 +1182,9 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         return r;
     }
     if let Some(r) = hub::run(core, id, &inv) {
+        return r;
+    }
+    if let Some(r) = wiki::run(core, id, &inv) {
         return r;
     }
     if let Some(r) = plugins::run(app, core, id, &inv, core.acting(picked)) {
@@ -2848,6 +2855,9 @@ pub fn builder() -> Builder<tauri::Wry> {
             account::start_tabs,
             account::save_tabs,
             account::themes,
+            wiki::wiki_page,
+            wiki::wiki_about,
+            wiki::wiki_search,
             hub::hub_catalog,
             hub::hub_history,
             account::appearance,

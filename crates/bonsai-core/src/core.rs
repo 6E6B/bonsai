@@ -527,6 +527,13 @@ impl Core {
         opener.open_web(url)
     }
 
+    /// Opens a link to a third-party site that this crate built itself, never one from a
+    /// response or the UI (see [`crate::wiki::site_url`]).
+    pub(crate) fn open_built_link(&self, url: &str) -> Result<(), String> {
+        let opener = self.inner.opener.read().clone();
+        opener.open_web(url)
+    }
+
     pub fn dismiss_toast(&self, id: u64) {
         self.inner.store.write().toasts.retain(|t| t.id != id);
         self.inner.repaint();

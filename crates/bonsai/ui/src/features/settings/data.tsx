@@ -49,6 +49,7 @@ export function DataSection() {
       </SettingsGroup>
       <SettingsGroup title="Third-party data">
         <PrefRow name="item_values" />
+        <PrefRow name="wiki" />
       </SettingsGroup>
       <SettingsGroup title="Bug reports">
         <SettingRow

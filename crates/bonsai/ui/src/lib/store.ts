@@ -72,6 +72,7 @@ const shellMirror = mirror<Shell>(
     security: null,
     approve: null,
     itemValues: false,
+    wiki: false,
     avatar3d: false,
     uiScale: 1,
     look: {

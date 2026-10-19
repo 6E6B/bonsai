@@ -1,34 +1,16 @@
 import { describe, expect, it } from "vitest"
 import {
-  articleFor,
-  articles,
-  backlinks,
-  gameWiki,
-  hasWiki,
+  articlePath,
+  knownArticle,
+  listDepth,
   parseLinks,
   parseTarget,
   plain,
-  resolveLink,
-  searchWiki,
-  siteUrl,
-  type WikiArticle,
+  rememberArticle,
+  splitArg,
+  titleOf,
 } from "./wiki"
-
-const art = (title: string, extra: Partial<WikiArticle> = {}): WikiArticle => ({
-  source: "roblox",
-  slug: title.replace(/ /g, "_"),
-  title,
-  kind: "page",
-  category: "Misc",
-  extract: "",
-  target: null,
-  revised: 0,
-  editors: 1,
-  infobox: [],
-  sections: [],
-  categories: [],
-  ...extra,
-})
+import { sampleAbout, samplePage, sampleSearch } from "./wiki-sample"
 
 describe("parseLinks", () => {
   it("splits links and labels out of text", () => {
@@ -51,22 +33,27 @@ describe("parseLinks", () => {
   })
 })
 
-describe("searchWiki", () => {
-  const all = [
-    art("Grill Studio"),
-    art("Grill"),
-    art("The Big Grill"),
-    art("Patty", { extract: "Cooked on the grill." }),
-    art("Bun", { kind: "item" }),
-  ]
-
-  it("ranks exact, prefix, word, then lead matches", () => {
-    expect(searchWiki(all, "grill").map((a) => a.title)).toEqual(["Grill", "Grill Studio", "The Big Grill", "Patty"])
+describe("titles and paths", () => {
+  it("round-trips titles through paths", () => {
+    expect(articlePath("Catalog:Dominus Infernus")).toBe("/wiki/Catalog:Dominus_Infernus")
+    expect(articlePath("Catalog:Dominus Infernus", "Trivia")).toBe("/wiki/Catalog:Dominus_Infernus#Trivia")
+    expect(articlePath("Café & more?")).toBe("/wiki/Caf%C3%A9_%26_more%3F")
+    expect(titleOf("Caf%C3%A9_%26_more%3F")).toBe("Café & more?")
+    expect(titleOf("100%_bad")).toBe("100% bad")
   })
 
-  it("filters by kind and keeps order for an empty query", () => {
-    expect(searchWiki(all, "  ", "item").map((a) => a.title)).toEqual(["Bun"])
-    expect(searchWiki(all, "").length).toBe(all.length)
+  it("splits a wiki.open argument", () => {
+    expect(splitArg("Catalog:Dominus_Infernus#Trivia")).toEqual({
+      title: "Catalog:Dominus Infernus",
+      section: "Trivia",
+    })
+    expect(splitArg(" Robux ")).toEqual({ title: "Robux", section: undefined })
+    expect(splitArg(null)).toEqual({ title: "", section: undefined })
+  })
+
+  it("reads nested list depth", () => {
+    expect(listDepth("– – deep")).toEqual({ depth: 2, text: "deep" })
+    expect(listDepth("top – dash")).toEqual({ depth: 0, text: "top – dash" })
   })
 })
 
@@ -79,36 +66,27 @@ describe("targets", () => {
     expect(parseTarget(null)).toBeNull()
   })
 
-  it("finds the Roblox Wiki article about a page, not experience wiki pages", () => {
-    expect(articleFor({ kind: "game", placeId: 9001 })?.source).toBe("roblox")
-    expect(articleFor({ kind: "user", id: 101 })?.title).toBe("Pixel Fox")
-    expect(articleFor({ kind: "item", id: 999_999 })).toBeUndefined()
-  })
-
-  it("knows which experiences have a wiki of their own", () => {
-    expect(gameWiki(9001)?.pages.every((p) => p.source === "burgershift")).toBe(true)
-    expect(gameWiki(9000)).toBeUndefined()
-    expect(hasWiki({ kind: "game", placeId: 9003 })).toBe(true)
-    expect(hasWiki({ kind: "game", placeId: 9000 })).toBe(false)
+  it("remembers which article a page had", () => {
+    rememberArticle({ kind: "game", placeId: 5 }, "Some Game")
+    expect(knownArticle({ kind: "game", placeId: 5 })).toBe("Some Game")
+    expect(knownArticle({ kind: "user", id: 5 })).toBeUndefined()
   })
 })
 
-describe("links between articles", () => {
-  it("resolves in the same wiki first, then the Roblox Wiki", () => {
-    expect(resolveLink("burgershift", "Night Shift")?.source).toBe("burgershift")
-    expect(resolveLink("burgershift", "Golden Spatula")?.source).toBe("roblox")
-    expect(resolveLink("roblox", "Nowhere")).toBeUndefined()
+describe("browser sample", () => {
+  it("finds articles by title, name and target", () => {
+    expect(samplePage("Catalog:Golden_Spatula").article?.name).toBe("Golden Spatula")
+    expect(samplePage("golden spatula").article?.title).toBe("Catalog:Golden Spatula")
+    expect(samplePage("Nowhere").article).toBeNull()
+    expect(sampleAbout("game", 9001).article?.title).toBe("Burger Shift")
+    expect(sampleAbout("user", 101).article?.title).toBe("Pixel Fox")
+    expect(sampleAbout("item", 999_999).article).toBeNull()
   })
 
-  it("lists the articles that link here", () => {
-    const shift = articles.find((a) => a.slug === "Burger_Shift" && a.source === "roblox")
-    if (!shift) throw new Error("sample article missing")
-    const from = backlinks(shift).map((a) => a.title)
-    expect(from).toContain("Golden Spatula")
-    expect(from).not.toContain("Burger Shift")
-  })
-
-  it("builds the article's address on its wiki", () => {
-    expect(siteUrl({ source: "roblox", slug: "Golden_Spatula" })).toBe("https://roblox.fandom.com/wiki/Golden_Spatula")
+  it("searches names and leads, with plain snippets", () => {
+    const hits = sampleSearch("grill").hits
+    expect(hits.map((h) => h.name)).toContain("Grill Studio")
+    expect(hits.every((h) => !h.snippet.includes("[["))).toBe(true)
+    expect(sampleSearch("  ").hits).toEqual([])
   })
 })

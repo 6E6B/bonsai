@@ -40,6 +40,9 @@ base64 = "0.23"
 # Raw deflate for theme share codes. Already in the tree through reqwest.
 flate2 = "1.1"
 url = "2"
+# Wiki article HTML, parsed in Rust so none of it reaches the webview. Already in the tree
+# through tauri-utils.
+dom_query = { version = "0.28", default-features = false }
 heck = "0.5"
 time = { version = "0.3", features = ["formatting", "parsing", "local-offset", "macros"] }
 keyring = "4"

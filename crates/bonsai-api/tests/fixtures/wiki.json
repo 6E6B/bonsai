@@ -1,0 +1,128 @@
+{
+  "captured": "2026-10-18",
+  "source": "synthetic",
+  "note": "Hand-written to the MediaWiki action API's documented shape (format=json, formatversion=2): the machine this was written on can't reach fandom.com. Replace with a capture of roblox.fandom.com/api.php. Page text cut down to an infobox, a lead, two sections and a reference.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "roblox.fandom.com",
+        "path": "/api.php",
+        "query": {
+          "action": "parse",
+          "page": "Catalog:Dominus Infernus",
+          "format": "json",
+          "formatversion": "2",
+          "redirects": "1"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "parse": {
+            "title": "Catalog:Dominus Infernus",
+            "pageid": 12345,
+            "revid": 678901,
+            "displaytitle": "<span class=\"mw-page-title-namespace\">Catalog</span><span class=\"mw-page-title-separator\">:</span><span class=\"mw-page-title-main\">Dominus Infernus</span>",
+            "text": "<div class=\"mw-parser-output\"><aside class=\"portable-infobox pi-background pi-theme-catalog pi-layout-default\"><h2 class=\"pi-item pi-item-spacing pi-title pi-secondary-background\" data-source=\"name\">Dominus Infernus</h2><div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"creator\"><h3 class=\"pi-data-label pi-secondary-font\">Creator</h3><div class=\"pi-data-value pi-font\"><a href=\"/wiki/Roblox_(user)\" title=\"Roblox (user)\">Roblox</a></div></div><div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"id\"><h3 class=\"pi-data-label pi-secondary-font\">Item ID</h3><div class=\"pi-data-value pi-font\"><a rel=\"nofollow\" class=\"external text\" href=\"https://www.roblox.com/catalog/31101391/Dominus-Infernus\">31101391</a></div></div><div class=\"pi-item pi-data pi-item-spacing pi-border-color\" data-source=\"type\"><h3 class=\"pi-data-label pi-secondary-font\">Type</h3><div class=\"pi-data-value pi-font\"><a href=\"/wiki/Catalog:Hat\" title=\"Catalog:Hat\">Hat</a></div></div></aside>\n<p><b>Dominus Infernus</b> is a <a href=\"/wiki/Catalog:Limited\" title=\"Catalog:Limited\">limited</a> <a href=\"/wiki/Catalog:Hat\" title=\"Catalog:Hat\">hat</a> in the <a href=\"/wiki/Dominus\" title=\"Dominus\">Dominus</a> series.<sup id=\"cite_ref-1\" class=\"reference\"><a href=\"#cite_note-1\">[1]</a></sup>\n</p>\n<div class=\"mw-heading mw-heading2\"><h2 id=\"Appearance\">Appearance</h2></div>\n<p>A dark helmet with glowing red eyes.</p>\n<div class=\"mw-heading mw-heading2\"><h2 id=\"Trivia\">Trivia</h2></div>\n<ul><li>It is one of the most expensive items on the catalog.</li></ul>\n<div class=\"mw-references-wrap\"><ol class=\"references\"><li id=\"cite_note-1\">A reference.</li></ol></div>\n</div>",
+            "categories": [
+              {
+                "sortkey": "",
+                "category": "Hats",
+                "hidden": false
+              },
+              {
+                "sortkey": "",
+                "category": "Limited_items",
+                "hidden": false
+              },
+              {
+                "sortkey": "",
+                "category": "Pages_with_broken_file_links",
+                "hidden": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "roblox.fandom.com",
+        "path": "/api.php",
+        "query": {
+          "action": "parse",
+          "page": "Catalog:No Such Hat"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "error": {
+            "code": "missingtitle",
+            "info": "The page you specified doesn't exist.",
+            "docref": "See https://roblox.fandom.com/api.php for API usage."
+          },
+          "servedby": "mw-1"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "roblox.fandom.com",
+        "path": "/api.php",
+        "query": {
+          "action": "query",
+          "list": "search",
+          "srsearch": "dominus",
+          "srnamespace": "*"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "batchcomplete": true,
+          "query": {
+            "searchinfo": {
+              "totalhits": 3
+            },
+            "search": [
+              {
+                "ns": 0,
+                "title": "Dominus",
+                "pageid": 111,
+                "snippet": "The <span class=\"searchmatch\">Dominus</span> series is a set of hats.",
+                "timestamp": "2026-09-30T12:00:00Z"
+              },
+              {
+                "ns": 112,
+                "title": "Catalog:Dominus Infernus",
+                "pageid": 12345,
+                "snippet": "<span class=\"searchmatch\">Dominus</span> Infernus is a limited hat.",
+                "timestamp": "2026-10-01T08:30:00Z"
+              },
+              {
+                "ns": 1,
+                "title": "Talk:Dominus",
+                "pageid": 112,
+                "snippet": "Talk about <span class=\"searchmatch\">Dominus</span>.",
+                "timestamp": "2026-08-01T00:00:00Z"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -60,7 +60,7 @@ export function App() {
         <Route path="/themes" component={Themes} />
         <Route path="/themes/:id" component={ThemeEditor} />
         <Route path="/wiki" component={Wiki} />
-        <Route path="/wiki/:source/:slug" component={WikiArticle} />
+        <Route path="/wiki/:slug" component={WikiArticle} />
         <Route path="/components" component={Components} />
         <Route path="/overview" component={Overview} />
       </Router>

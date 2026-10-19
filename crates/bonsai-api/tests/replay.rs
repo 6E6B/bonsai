@@ -814,3 +814,44 @@ async fn authenticator_setup_hands_back_a_key_then_recovery_codes() {
             .unwrap();
     assert_eq!(ok.recovery_codes.unwrap().len(), 2);
 }
+
+#[tokio::test]
+async fn wiki_parse_search_and_missing_page() {
+    use roblox_fandom_com::undocumented::{ActionApiParams, action_api};
+    let r = Replay::start(&["wiki"]).await;
+    // A signed-in client, to check its cookie never goes to Fandom.
+    let c = r.client();
+    let parse = |page: &str| ActionApiParams {
+        action: "parse".into(),
+        format: "json".into(),
+        formatversion: Some("2".into()),
+        page: Some(page.into()),
+        redirects: Some("1".into()),
+        ..Default::default()
+    };
+    let p = action_api(&c, &parse("Catalog:Dominus Infernus")).await.unwrap();
+    let page = p.parse.unwrap();
+    assert_eq!(page.title.as_deref(), Some("Catalog:Dominus Infernus"));
+    assert!(page.text.unwrap().contains("portable-infobox"));
+    assert_eq!(page.categories.unwrap()[2].hidden, Some(true));
+    let missing = action_api(&c, &parse("Catalog:No Such Hat")).await.unwrap();
+    assert_eq!(missing.error.unwrap().code.as_deref(), Some("missingtitle"));
+    let s = action_api(
+        &c,
+        &ActionApiParams {
+            action: "query".into(),
+            format: "json".into(),
+            list: Some("search".into()),
+            srsearch: Some("dominus".into()),
+            srnamespace: Some("*".into()),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(s.query.unwrap().search.unwrap().len(), 3);
+    for q in r.requests().await {
+        assert!(!q.headers.contains_key("cookie"), "{:?}", q.headers);
+        assert!(!q.headers.contains_key("x-csrf-token"));
+    }
+}

@@ -1,0 +1,94 @@
+# Articles from the Roblox Wiki (https://roblox.fandom.com), a community wiki on Fandom, a
+# third-party site. Opt-in only (Settings → Wiki articles); the app works without it and shows
+# the source and license (CC BY-SA) under every article.
+# The transport never sends the Roblox cookie, tracker or CSRF token to this host.
+#
+# api.php is MediaWiki's action API (https://www.mediawiki.org/wiki/API:Main_page). One path
+# serves every action, so this is one operation and `action` picks what it does:
+#   action=parse&page=<title>&prop=text|categories|revid|displaytitle&redirects=1  one article
+#   action=query&list=search&srsearch=<text>&srnamespace=*&srlimit=50              search
+# Always with format=json&formatversion=2, where `parse.text` is a string, not {"*": ...}.
+swagger: "2.0"
+host: roblox.fandom.com
+info: { title: "Roblox Wiki on Fandom (third party)", version: undocumented }
+paths:
+  /api.php:
+    get:
+      # Not yet captured from the site: the machine this was written on can't reach fandom.com.
+      # Written 2026-10-18 from the MediaWiki docs (API:Parsing_wikitext, API:Search) and the
+      # page the user pointed at, api.php?action=parse&page=Catalog:Dominus_Infernus&prop=text.
+      # The fixture (wiki.json) is hand-written to that shape; replace both with a capture.
+      x-captured: "not yet; written 2026-10-18 from the MediaWiki API docs for https://roblox.fandom.com/api.php?action=parse&page=Catalog%3ADominus_Infernus&prop=text&format=json"
+      x-rust-name: action_api
+      summary: MediaWiki's action API. `parse` returns an article, `query` a search.
+      # A missing page is HTTP 200 with {"error": {"code": "missingtitle", ...}}.
+      description: >-
+        parse.text is the article as HTML (with formatversion=2). parse.categories lists its
+        categories, hidden ones (maintenance) flagged. query.search lists matches; each snippet
+        is HTML with the match wrapped in <span class="searchmatch">. srnamespace=* searches
+        every namespace; items are in the Catalog one (Catalog:Dominus Infernus), whose number
+        isn't known here, so callers keep main-namespace (ns 0) and Catalog: titles. Errors
+        come back as error.code with HTTP 200.
+      parameters:
+        - { in: query, name: action, required: true, type: string }
+        - { in: query, name: format, required: true, type: string }
+        - { in: query, name: formatversion, type: string }
+        - { in: query, name: page, type: string }
+        - { in: query, name: prop, type: string }
+        - { in: query, name: redirects, type: string }
+        - { in: query, name: disableeditsection, type: string }
+        - { in: query, name: disablelimitreport, type: string }
+        - { in: query, name: list, type: string }
+        - { in: query, name: srsearch, type: string }
+        - { in: query, name: srnamespace, type: string }
+        - { in: query, name: srlimit, type: integer, format: int32 }
+        - { in: query, name: srprop, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ActionResult" } }
+definitions:
+  ActionResult:
+    type: object
+    properties:
+      parse: { $ref: "#/definitions/Parsed" }
+      query: { $ref: "#/definitions/QueryResult" }
+      error: { $ref: "#/definitions/ActionError" }
+  Parsed:
+    type: object
+    properties:
+      title: { type: string }
+      pageid: { type: integer, format: int64 }
+      revid: { type: integer, format: int64 }
+      displaytitle: { type: string }
+      text: { type: string }
+      categories:
+        type: array
+        items: { $ref: "#/definitions/ParsedCategory" }
+  ParsedCategory:
+    type: object
+    properties:
+      category: { type: string }
+      hidden: { type: boolean }
+  QueryResult:
+    type: object
+    properties:
+      search:
+        type: array
+        items: { $ref: "#/definitions/SearchHit" }
+      searchinfo: { $ref: "#/definitions/SearchInfo" }
+  SearchHit:
+    type: object
+    properties:
+      ns: { type: integer, format: int64 }
+      title: { type: string }
+      pageid: { type: integer, format: int64 }
+      snippet: { type: string }
+      timestamp: { type: string }
+  SearchInfo:
+    type: object
+    properties:
+      totalhits: { type: integer, format: int64 }
+  ActionError:
+    type: object
+    properties:
+      code: { type: string }
+      info: { type: string }

@@ -1,37 +1,41 @@
-import type { WikiArticle, WikiSource } from "./wiki"
+import type { WikiArticle, WikiBlock, WikiPageView, WikiSearchView, WikiTarget } from "./ipc/bindings"
 
 /**
- * Made-up wiki articles for the wiki prototype. They match the games and friends in `sample.ts`
- * (Burger Shift is place 9001, pixelfox is user 101) so the panels on those pages have
- * something to show. Every name, item and event here is made up.
+ * Made-up Roblox Wiki articles for the browser preview (`bun run dev`), where there is no
+ * backend to fetch real ones. They match the games and friends in `sample.ts` (Burger Shift is
+ * place 9001, pixelfox is user 101) so the panels on those pages have something to show. Every
+ * name, item and event here is made up. The app never shows them.
  */
 
+type Kind = "item" | "game" | "player" | "page"
+
+interface Draft {
+  title: string
+  kind: Kind
+  category: string
+  target: WikiTarget | null
+  revised?: number
+  editors?: number
+  extract: string
+  infobox: { title?: string; facts: { label: string; value: string }[] }[]
+  sections: {
+    id: string
+    title: string
+    blocks: (
+      | { type: "p"; text: string }
+      | { type: "list"; items: string[] }
+      | { type: "table"; columns: string[]; rows: string[][] }
+      | { type: "note"; text: string }
+    )[]
+  }[]
+  categories?: string[]
+}
+
 const DAY = 86_400_000
-// Relative to now so "edited 5 hours ago" reads right whenever the prototype runs.
-const NOW = Date.now()
-const ago = (days: number) => NOW - days * DAY
+const ago = (days: number) => Date.now() - days * DAY
 
-const CC = "CC BY-SA 3.0"
-
-export const sources: WikiSource[] = [
-  { key: "roblox", name: "Roblox Wiki", host: "roblox.fandom.com", license: CC },
-  { key: "burgershift", name: "Burger Shift Wiki", host: "burgershift.fandom.com", license: CC, placeId: 9001 },
-]
-
-type Draft = Omit<WikiArticle, "slug" | "categories" | "editors" | "revised"> &
-  Partial<Pick<WikiArticle, "categories" | "editors" | "revised">>
-
-const article = (a: Draft): WikiArticle => ({
-  slug: a.title.replace(/\s+/g, "_"),
-  categories: [a.category],
-  editors: 4,
-  revised: ago(3),
-  ...a,
-})
-
-const roblox: WikiArticle[] = [
-  article({
-    source: "roblox",
+const drafts: Draft[] = [
+  {
     title: "Burger Shift",
     kind: "game",
     category: "Experiences",
@@ -39,7 +43,7 @@ const roblox: WikiArticle[] = [
     revised: ago(1),
     editors: 38,
     extract:
-      "Burger Shift is a restaurant simulator by [[Grill Studio]] where players take orders, cook and serve customers in a busy diner. It was released in April 2024 and passed one billion visits in 2026. It has its own fan wiki, the [[Burger Shift Wiki]].",
+      "Burger Shift is a restaurant simulator by [[Grill Studio]] where players take orders, cook and serve customers in a busy diner. It was released in April 2024 and passed one billion visits in 2026.",
     infobox: [
       {
         title: "Burger Shift",
@@ -119,9 +123,8 @@ const roblox: WikiArticle[] = [
       },
     ],
     categories: ["Experiences", "Simulation experiences", "Front page experiences", "2024 experiences"],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "Block Kart",
     kind: "game",
     category: "Experiences",
@@ -157,9 +160,8 @@ const roblox: WikiArticle[] = [
         ],
       },
     ],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "Night Ferry",
     kind: "game",
     category: "Experiences",
@@ -169,9 +171,8 @@ const roblox: WikiArticle[] = [
     extract: "Night Ferry is a story experience by Harbor Lights about a ferry crossing that never reaches the shore.",
     infobox: [{ facts: [{ label: "Developer", value: "Harbor Lights" }] }],
     sections: [],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "Golden Spatula",
     kind: "item",
     category: "Event items",
@@ -223,9 +224,8 @@ const roblox: WikiArticle[] = [
       },
     ],
     categories: ["Event items", "Back accessories", "2025 items", "Burger Shift"],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "Frostbite Crown",
     kind: "item",
     category: "Limited items",
@@ -278,9 +278,8 @@ const roblox: WikiArticle[] = [
       },
     ],
     categories: ["Limited items", "Hats", "Winter items", "2019 items"],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "Traffic Cone Hat",
     kind: "item",
     category: "Hats",
@@ -290,9 +289,8 @@ const roblox: WikiArticle[] = [
     extract: "The Traffic Cone Hat is a hat sold in the Avatar Shop since 2012. It is one of the most worn free hats.",
     infobox: [{ facts: [{ label: "Type", value: "Hat" }] }],
     sections: [],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "Pixel Fox",
     kind: "player",
     category: "Notable players",
@@ -339,9 +337,8 @@ const roblox: WikiArticle[] = [
       },
     ],
     categories: ["Notable players", "Developers"],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "Lumen",
     kind: "player",
     category: "Notable players",
@@ -351,9 +348,8 @@ const roblox: WikiArticle[] = [
     extract: "lumen_dev, known as Lumen, is a builder who co-created [[Burger Shift]].",
     infobox: [{ facts: [{ label: "Username", value: "lumen_dev" }] }],
     sections: [],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "The Big Grill (2025)",
     kind: "page",
     category: "Events",
@@ -373,9 +369,8 @@ const roblox: WikiArticle[] = [
     ],
     sections: [],
     categories: ["Events", "2025 events"],
-  }),
-  article({
-    source: "roblox",
+  },
+  {
     title: "Grill Studio",
     kind: "page",
     category: "Communities",
@@ -383,211 +378,80 @@ const roblox: WikiArticle[] = [
     extract: "Grill Studio is the community that develops [[Burger Shift]]. It was founded by [[Pixel Fox]] in 2023.",
     infobox: [],
     sections: [],
-  }),
+  },
 ]
 
-const burgershift: WikiArticle[] = [
-  article({
-    source: "burgershift",
-    title: "Burger Shift Wiki",
-    kind: "page",
-    category: "Main",
-    target: { kind: "game", placeId: 9001 },
-    revised: ago(0.2),
-    editors: 112,
-    extract:
-      "Welcome to the Burger Shift Wiki, the guide to every station, ingredient, customer and update. Start with [[Stations]], or read the [[Night Shift]] guide.",
-    infobox: [],
-    sections: [],
-  }),
-  article({
-    source: "burgershift",
-    title: "Stations",
-    kind: "page",
-    category: "Gameplay",
-    target: null,
-    revised: ago(2),
-    editors: 21,
-    extract: "There are four stations in the diner. Each one needs a different skill and earns a share of the tips.",
-    infobox: [
-      {
-        facts: [
-          { label: "Stations", value: "4" },
-          { label: "Unlock", value: "All from level 1" },
-        ],
-      },
-    ],
-    sections: [
-      {
-        id: "list",
-        title: "List of stations",
-        blocks: [
-          {
-            type: "table",
-            columns: ["Station", "Tip share", "Upgrade"],
-            rows: [
-              ["Register", "20%", "Second till"],
-              ["[[Grill]]", "35%", "Double grill"],
-              ["Fryer", "25%", "Auto basket"],
-              ["Drinks", "20%", "Shake machine"],
-            ],
-          },
-        ],
-      },
-    ],
-  }),
-  article({
-    source: "burgershift",
-    title: "Grill",
-    kind: "page",
-    category: "Equipment",
-    target: null,
-    revised: ago(4),
-    editors: 9,
-    extract:
-      "The Grill cooks patties. Each patty has to be flipped once and taken off before it burns. Upgrading it adds a second grill and a timer light.",
-    infobox: [
-      {
-        title: "Grill",
-        facts: [
-          { label: "Station", value: "Kitchen" },
-          { label: "Cook time", value: "6 s per side" },
-          { label: "Burns after", value: "11 s" },
-          { label: "Upgrade cost", value: "4,000 tips" },
-        ],
-      },
-    ],
-    sections: [
-      {
-        id: "tips",
-        title: "Tips",
-        blocks: [
-          {
-            type: "list",
-            items: [
-              "Flip when the edge turns brown, not when the timer light comes on.",
-              "Keep two patties going at once once you have the Double Grill.",
-              "Burnt patties still count for the [[Night Shift]] quota.",
-            ],
-          },
-        ],
-      },
-    ],
-  }),
-  article({
-    source: "burgershift",
-    title: "Night Shift",
-    kind: "page",
-    category: "Game modes",
-    target: null,
-    revised: ago(1),
-    editors: 16,
-    extract:
-      "Night Shift is the hard mode, unlocked at level 20. Customers arrive faster, orders are longer and the last customer is [[Mr. Patty]].",
-    infobox: [
-      {
-        title: "Night Shift",
-        facts: [
-          { label: "Unlocked at", value: "Level 20" },
-          { label: "Length", value: "15 min" },
-          { label: "Boss", value: "[[Mr. Patty]]" },
-        ],
-      },
-    ],
-    sections: [
-      {
-        id: "strategy",
-        title: "Strategy",
-        blocks: [
-          {
-            type: "p",
-            text: "Put your best player on the [[Grill]]. Keep one player on the register at all times; walk-outs end the shift early.",
-          },
-        ],
-      },
-    ],
-  }),
-  article({
-    source: "burgershift",
-    title: "Mr. Patty",
-    kind: "page",
-    category: "Customers",
-    target: null,
-    revised: ago(6),
-    editors: 7,
-    extract:
-      "Mr. Patty is the final customer of [[Night Shift]]. He orders twelve burgers at once and leaves after 90 seconds.",
-    infobox: [
-      {
-        title: "Mr. Patty",
-        facts: [
-          { label: "Appears in", value: "[[Night Shift]]" },
-          { label: "Patience", value: "90 s" },
-          { label: "Reward", value: "Night Owl badge" },
-        ],
-      },
-    ],
-    sections: [],
-  }),
-  article({
-    source: "burgershift",
-    title: "Ingredients",
-    kind: "page",
-    category: "Items",
-    target: null,
-    revised: ago(8),
-    editors: 12,
-    extract: "Every order is built from these ingredients. New ones arrive with updates.",
-    infobox: [],
-    sections: [
-      {
-        id: "list",
-        title: "List",
-        blocks: [
-          {
-            type: "table",
-            columns: ["Ingredient", "Station", "Added"],
-            rows: [
-              ["Bun", "Register", "Launch"],
-              ["Patty", "[[Grill]]", "Launch"],
-              ["Cheese", "[[Grill]]", "Launch"],
-              ["Onion rings", "Fryer", "Update 1.4"],
-              ["Milkshake", "Drinks", "Update 2.0"],
-            ],
-          },
-        ],
-      },
-    ],
-  }),
-  article({
-    source: "burgershift",
-    title: "Updates",
-    kind: "page",
-    category: "Updates",
-    target: null,
-    revised: ago(0.2),
-    editors: 30,
-    extract: "The update log. The newest update is 3.4, released this week.",
-    infobox: [],
-    sections: [
-      {
-        id: "log",
-        title: "Update log",
-        blocks: [
-          {
-            type: "table",
-            columns: ["Version", "Date", "Changes"],
-            rows: [
-              ["3.4", "Oct 2026", "Drive-thru window, two new customers"],
-              ["3.2", "Mar 2026", "Cheaper late upgrades"],
-              ["3.0", "Jul 2025", "[[Night Shift]], The Big Grill event"],
-              ["2.0", "Nov 2024", "Drinks station, milkshakes"],
-            ],
-          },
-        ],
-      },
-    ],
-  }),
-]
+const slug = (title: string) => title.replace(/\s+/g, "_")
 
-export const articles: WikiArticle[] = [...roblox, ...burgershift]
+const view = (d: Draft): WikiArticle => {
+  const title = d.kind === "item" ? `Catalog:${d.title}` : d.title
+  return {
+    title,
+    name: d.title,
+    kind: d.kind,
+    extract: d.extract,
+    lead: [{ type: "p", text: d.extract }],
+    sections: d.sections.map((s) => ({
+      id: s.id,
+      title: s.title,
+      level: 2,
+      blocks: s.blocks.map((b): WikiBlock => (b.type === "list" ? { ...b, ordered: false } : b)),
+    })),
+    infoboxTitle: d.infobox[0]?.title ?? "",
+    infobox: d.infobox.flatMap((g) => g.facts.map((f) => ({ key: "", ...f }))),
+    categories: d.categories ?? [d.category],
+    target: d.target,
+    url: `https://roblox.fandom.com/wiki/${slug(title)}`,
+    revision: 1,
+  }
+}
+
+export const sampleArticles: WikiArticle[] = drafts.map(view)
+
+const page = (article: WikiArticle | undefined): WikiPageView => ({
+  enabled: true,
+  loading: false,
+  error: null,
+  fetchedAt: ago(0.2),
+  article: article ?? null,
+  source: "Roblox Wiki",
+  license: "CC BY-SA 3.0",
+})
+
+const norm = (t: string) => t.replace(/_/g, " ").trim().toLowerCase()
+
+/** The sample article called `title`, by its wiki title or its name. */
+export const samplePage = (title: string) =>
+  page(sampleArticles.find((a) => norm(a.title) === norm(title) || norm(a.name) === norm(title)))
+
+/** The sample article about an item, experience or player. */
+export const sampleAbout = (kind: string, id: number) =>
+  page(
+    sampleArticles.find((a) => {
+      const t = a.target
+      if (!t) return false
+      if (t.kind === "game") return kind === "game" && t.placeId === id
+      return (kind === "item" ? "item" : kind === "user" ? "user" : "") === t.kind && t.id === id
+    }),
+  )
+
+export function sampleSearch(query: string): WikiSearchView {
+  const q = norm(query)
+  const days = [1, 3, 6, 12, 20, 40]
+  return {
+    enabled: true,
+    loading: false,
+    error: null,
+    hits: q
+      ? sampleArticles
+          .filter((a) => norm(a.name).includes(q) || a.extract.toLowerCase().includes(q))
+          .map((a, i) => ({
+            title: a.title,
+            name: a.name,
+            kind: a.kind === "item" ? "item" : "page",
+            snippet: a.extract.replace(/\[\[(?:[^\]|]+\|)?([^\]]+)\]\]/g, "$1"),
+            edited: new Date(ago(days[i % days.length])).toISOString(),
+          }))
+      : [],
+  }
+}

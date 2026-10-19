@@ -125,6 +125,7 @@ export const browserShell: Shell = {
   security: null,
   approve: null,
   itemValues: false,
+  wiki: true,
   avatar3d: false,
   uiScale: 1,
   look: {

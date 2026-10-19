@@ -459,6 +459,7 @@ dependencies = [
  "bonsai-hub-api",
  "bonsai-plugin",
  "directories",
+ "dom_query",
  "fastrand",
  "flate2",
  "image",
