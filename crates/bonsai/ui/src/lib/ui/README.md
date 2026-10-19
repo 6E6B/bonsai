@@ -62,7 +62,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `Figure` | A picture of any shape with a caption, loaded lazily: wiki article pictures. |
 | `Avatar` | A user or account picture. `presence` dot, `count` badge, sizes `xs`–`xl`. |
 | `Stat` | Label over value inside a `Card` grid (Playing / Visits / Rating). |
-| `Facts` | An entity's details beside its description: `FactGroup`s of `Fact` label/value rows in one panel. |
+| `Facts` | An entity's details beside its description: `FactGroup`s of `Fact` label/value rows in one panel. `nested` inside a `Card`. |
 | `Meter` | Amount of a known maximum: server fill (`tone="capacity"` warns near full), progress. |
 | `Robux` | Any Robux amount; `null` shows a dash. |
 | `Badge` | A short status word: Limited, Primary, Owned, Offline. |
@@ -77,7 +77,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 |---|---|
 | `Page` | The frame of every non-split screen: padding, max width, heading with actions. |
 | `SectionHeader` | Headings with optional meta and actions: `page`, `section`, or `group` (the small "In game · 2" label). |
-| `Card` | A raised panel grouping related content: stats, trade sides. |
+| `Card` | A raised panel grouping related content: stats, trade sides. `nested` for a card inside a card: the control fill, like a secondary button. |
 | `SettingsGroup` | A titled panel of settings, a line between each row. Rows are `SettingRow` (label and description left, control right; `layout="stacked"` for full-width controls) or `SettingSwitch`. `list` for a panel of `ListItem`s. |
 | `Divider` | A line between groups in a row or column. |
 

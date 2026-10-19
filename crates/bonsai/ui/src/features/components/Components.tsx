@@ -395,6 +395,17 @@ export default function Components() {
           <span class="font-medium">Card</span>
           <Divider />
           <span class="text-fg-muted">Muted text inside a card.</span>
+          <Card nested class="p-2 text-fg-muted">
+            A nested card.
+          </Card>
+        </Card>
+        <Card class="w-64 p-3">
+          <Facts nested>
+            <FactGroup>
+              <Fact label="Membership">Plus</Fact>
+              <Fact label="Joined">Dec 10, 2016</Fact>
+            </FactGroup>
+          </Facts>
         </Card>
       </Section>
 

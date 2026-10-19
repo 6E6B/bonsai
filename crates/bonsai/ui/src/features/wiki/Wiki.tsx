@@ -150,7 +150,7 @@ function HitRow(props: { hit: WikiHit; index: number; selected: boolean }) {
     <ListItem
       data-index={props.index}
       selected={props.selected}
-      leading={<Thumbnail class="w-10" alt="" fallback={props.hit.kind === "item" ? "marketplace" : "wiki"} />}
+      leading={<Thumbnail class="w-8" alt="" fallback={props.hit.kind === "item" ? "marketplace" : "wiki"} />}
       title={
         <span class="flex items-center gap-2">
           {props.hit.name}

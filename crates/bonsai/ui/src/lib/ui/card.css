@@ -1,8 +1,15 @@
-/* A raised panel: flat surface fill with the raised elevation. */
+/* A raised panel: flat surface fill with the raised elevation. A nested one, inside another card,
+ * takes the control fill and elevation instead, like a secondary button. */
 @layer components {
   [data-component="card"] {
     border-radius: var(--radius-lg);
     background: var(--color-surface);
     box-shadow: var(--shadow-raised);
+  }
+
+  [data-component="card"][data-nested] {
+    border-radius: var(--radius-md);
+    background: var(--color-control);
+    box-shadow: var(--shadow-control);
   }
 }

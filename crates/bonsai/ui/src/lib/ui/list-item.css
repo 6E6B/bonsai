@@ -32,6 +32,12 @@
     cursor: default;
   }
 
+  /* One line beside a picture: as much room above and below the picture as to its left. Two
+   * lines are tall enough already. */
+  [data-component="list-item"] [data-slot="main"]:has(> [data-slot="leading"]):not(:has([data-slot="subtitle"])) {
+    padding-block: 8px;
+  }
+
   [data-component="list-item"] [data-slot="main"]:focus-visible {
     outline-offset: -2px;
     border-radius: var(--radius-md);
