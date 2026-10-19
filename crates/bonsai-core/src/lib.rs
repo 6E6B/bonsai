@@ -43,6 +43,7 @@ pub mod thumbs;
 pub mod trades;
 pub mod transactions;
 pub mod values;
+pub mod wiki;
 
 pub use crate::core::{Cmd, Core, CoreConfig, Repaint};
 pub use account::{AccountMeta, ColorTag, Paths};

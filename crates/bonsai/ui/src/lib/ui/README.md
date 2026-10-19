@@ -59,6 +59,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `MediaFrame` | An image with previous and next arrows and a counter laid over it. |
 | `AudioPlayer` | Play, pause and seek one sound from `rbxasset://`: item pages for audio. `ref` hands back `toggle` for a command. |
 | `Thumbnail` | A `thumb://` image with a fixed aspect ratio and a fallback icon. |
+| `Figure` | A picture of any shape with a caption, loaded lazily: wiki article pictures. |
 | `Avatar` | A user or account picture. `presence` dot, `count` badge, sizes `xs`–`xl`. |
 | `Stat` | Label over value inside a `Card` grid (Playing / Visits / Rating). |
 | `Facts` | An entity's details beside its description: `FactGroup`s of `Fact` label/value rows in one panel. |

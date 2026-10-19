@@ -26,6 +26,7 @@ export const screens: Screen[] = [
   { command: "nav.home", label: "Home", icon: "home", path: "/", sidebar: "top", group: "start" },
   { command: "nav.friends", label: "Friends", icon: "friends", path: "/friends", sidebar: "top", group: "social" },
   { command: "nav.discover", label: "Discover", icon: "discover", path: "/discover", sidebar: "top", group: "start" },
+  { command: "nav.wiki", label: "Wiki", icon: "wiki", path: "/wiki", sidebar: "top", group: "start" },
   { command: "nav.avatar", label: "Avatar", icon: "avatar", path: "/avatar", sidebar: "top", group: "items" },
   {
     command: "nav.marketplace",

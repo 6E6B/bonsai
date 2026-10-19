@@ -22,6 +22,7 @@ import {
   Fact,
   FactGroup,
   Facts,
+  Figure,
   Icon,
   IconButton,
   type IconName,
@@ -684,6 +685,7 @@ export default function Components() {
       <Section title="Thumbnail and tile">
         <Thumbnail class="w-16" alt="Square" />
         <Thumbnail class="w-40" alt="Wide" shape="wide" />
+        <Figure class="w-40" alt="Figure" width={4} height={3} caption="A caption under the picture" />
         <MediaFrame class="w-64" index={0} count={3} onStep={() => {}} caption="Trailer" captionIcon="video">
           <Thumbnail alt="Media frame" shape="wide" />
         </MediaFrame>

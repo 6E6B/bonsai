@@ -33,3 +33,10 @@ export function assetFileUrl(account: number, id: number) {
   if (!isTauri()) return undefined
   return convertFileSrc(`${account}.${id}`, "rbxasset")
 }
+
+/** URL for a wiki article picture (`WikiImage.src`), served by the `wikiimg://` protocol
+ * (crates/bonsai/src/wikiimg.rs), which fetches it from Fandom. Undefined outside the app. */
+export function wikiImageUrl(src: string) {
+  if (!isTauri() || !src) return undefined
+  return convertFileSrc(src, "wikiimg")
+}

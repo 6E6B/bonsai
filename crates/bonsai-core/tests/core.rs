@@ -763,6 +763,111 @@ async fn player_stats_from_rolimons_only_when_values_are_on() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn wiki_articles_only_when_turned_on() {
+    use bonsai_core::wiki::{About, Block};
+    let replay = Replay::from_fixture(&replay::load("wiki")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let dominus = |id| About::Item {
+        id,
+        name: "Dominus Infernus".into(),
+    };
+    // Off by default: no request, no data.
+    assert!(c.wiki_about(&dominus(31_101_391)).data.is_none());
+    assert!(c.wiki_search("roblox", "dominus").data.is_none());
+    assert!(c.wiki_page("w:c:jailbreak:Torero").data.is_none());
+    c.update_settings(|s| s.wiki = true);
+    let p = poll(|| c.wiki_about(&dominus(31_101_391))).await;
+    let a = p.article.as_ref().unwrap();
+    assert_eq!(a.title, "Catalog:Dominus Infernus");
+    assert_eq!(a.revision, 1_833_149);
+    assert_eq!(a.infobox_title, "Dominus Infernus");
+    assert!(
+        a.categories.contains(&"Hats".to_owned()) && !a.categories.iter().any(|c| c.starts_with("Pages ")),
+        "hidden categories dropped: {:?}",
+        a.categories
+    );
+    assert!(
+        a.extract()
+            .starts_with("Dominus Infernus is a [[Limited unique|limited unique]] [[Hat|hat]]")
+    );
+    let titles: Vec<_> = a.sections.iter().map(|s| s.title.as_str()).collect();
+    assert_eq!(
+        titles,
+        ["History", "Release history", "Appearance", "Contents", "Trivia"]
+    );
+    assert!(matches!(a.sections[1].blocks[..], [Block::Table { .. }]));
+    // The same page is cached: a different item with that name isn't this one.
+    let other = c.wiki_about(&dominus(5));
+    assert!(other.data.unwrap().article.is_none());
+    let missing = poll(|| {
+        c.wiki_about(&About::Item {
+            id: 9,
+            name: "No Such Hat".into(),
+        })
+    })
+    .await;
+    assert!(missing.article.is_none());
+    let hits = poll(|| c.wiki_search("roblox", "  dominus ")).await;
+    assert_eq!(hits.len(), 50);
+    assert_eq!(hits[0].title, "Dominus (series)");
+    assert!(hits.iter().any(|h| h.title == "Catalog:Dominus Infernus"));
+    let a = poll(|| c.wiki_about(&dominus(31_101_391))).await;
+    let a = a.article.as_ref().unwrap();
+    let image = a.image.as_ref().unwrap();
+    assert!(
+        image
+            .src
+            .starts_with("roblox/images/0/01/Dominus_Infernus.png/revision/latest/")
+    );
+    // Links to other sites open only when the article has them. (Turning the wiki on swapped in
+    // the system opener, so the accepted link isn't opened here.)
+    let link = "https://create.roblox.com/store/asset/31100020/";
+    assert!(a.links.iter().any(|l| l == link), "{:?}", a.links);
+    assert!(
+        c.open_wiki_link("Catalog:Dominus Infernus", "https://example.com/")
+            .is_err()
+    );
+    assert!(c.open_wiki_link("Catalog:No Such Hat", link).is_err());
+
+    // An experience's own wiki: same API on its own host, titled `w:c:<wiki>:`.
+    let t = poll(|| c.wiki_page("w:c:jailbreak:Torero")).await;
+    let t = t.article.as_ref().unwrap();
+    assert_eq!(
+        (t.title.as_str(), t.site.as_str(), t.main),
+        ("w:c:jailbreak:Torero", "Jailbreak Wiki", false)
+    );
+    assert!(
+        t.image
+            .as_ref()
+            .unwrap()
+            .src
+            .starts_with("rblx-jailbreak/images/")
+    );
+    assert!(
+        t.infobox
+            .iter()
+            .any(|f| f.label == "Successor" && f.value == "[[w:c:jailbreak:Snake|Snake]]"),
+        "links stay on that wiki: {:?}",
+        t.infobox
+    );
+    let hits = poll(|| c.wiki_search("jailbreak", "torero")).await;
+    assert_eq!(hits.len(), 50);
+    assert_eq!(hits[0].title, "w:c:jailbreak:Torero");
+    // Not a wiki name: nothing to fetch.
+    assert!(c.wiki_search("evil.com/x", "torero").data.is_none());
+
+    let reqs = replay.requests().await;
+    for (host, n) in [("/roblox.fandom.com", 3), ("/jailbreak.fandom.com", 3)] {
+        let third: Vec<_> = reqs.iter().filter(|q| q.url.path().starts_with(host)).collect();
+        assert_eq!(third.len(), n, "{host}");
+        assert!(third.iter().all(|q| !q.headers.contains_key("cookie")));
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn friends_search_pages() {
     let replay = Replay::from_fixture(&replay::load("friends_search")).await;
     let dir = tempfile::tempdir().unwrap();

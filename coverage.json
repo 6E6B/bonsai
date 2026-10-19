@@ -7632,6 +7632,16 @@
     },
     {
       "deprecated": false,
+      "function": "action_api",
+      "host": "roblox.fandom.com",
+      "method": "GET",
+      "module": "roblox_fandom_com::undocumented",
+      "path": "/api.php",
+      "summary": "MediaWiki's action API. `parse` returns an article, `query` a search.",
+      "used": false
+    },
+    {
+      "deprecated": false,
       "function": "post_batch",
       "host": "thumbnails.roblox.com",
       "method": "POST",
@@ -7881,6 +7891,6 @@
       "used": true
     }
   ],
-  "total": 788,
+  "total": 789,
   "used": 252
 }

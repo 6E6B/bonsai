@@ -273,6 +273,19 @@ export const commands = {
 	saveTabs: (tabs: TabView[], active: number) => __TAURI_INVOKE<void>("save_tabs", { tabs, active }),
 	/**  Every installed theme: built-ins first, then the user's by name. */
 	themes: () => __TAURI_INVOKE<ThemeView[]>("themes"),
+	/**
+	 *  The article called `title` (as the wiki names it, `Catalog:` included for items;
+	 *  `w:c:<wiki>:<title>` on another wiki, `w:c:<wiki>:` for its main page).
+	 */
+	wikiPage: (title: string) => __TAURI_INVOKE<WikiPageView>("wiki_page", { title }),
+	/**
+	 *  The article about an item (`item`, `bundle`), experience (`game`, by place id) or player
+	 *  (`user`) called `name`, if the wiki has one about this very one. `creator` and
+	 *  `creator_group` place an experience's article under its group or player.
+	 */
+	wikiAbout: (kind: string, id: Id, name: string, creator: string, creatorGroup: boolean) => __TAURI_INVOKE<WikiPageView>("wiki_about", { kind, id, name, creator, creatorGroup }),
+	/**  Search `wiki` (`roblox`, or an experience's wiki like `jailbreak`) for `query`. */
+	wikiSearch: (wiki: string, query: string) => __TAURI_INVOKE<WikiSearchView>("wiki_search", { wiki, query }),
 	hubCatalog: (query: string) => typedError<HubView, string>(__TAURI_INVOKE("hub_catalog", { query })),
 	hubHistory: (target: string) => typedError<HubHistory, string>(__TAURI_INVOKE("hub_history", { target })),
 	appearance: () => __TAURI_INVOKE<AppearanceView>("appearance"),
@@ -583,7 +596,7 @@ export type AvatarView = {
 
 /**  The app background picture and how see-through things are over it. */
 export type BackgroundView = {
-	/**  File name under `bg://`. */
+	/**  External HTTPS URL, loaded through `bg://`. */
 	file: string,
 	/**  How strongly the picture shows, 0–100. */
 	image: number,
@@ -2138,6 +2151,8 @@ export type Shell = {
 	security: SecurityFlowView | null,
 	/**  Item values from Rolimons are on. */
 	itemValues: boolean,
+	/**  Wiki articles from Fandom are on. */
+	wiki: boolean,
 	/**  Avatar viewers open in 3D instead of on the image. */
 	avatar3d: boolean,
 	/**  Window zoom, 1 = 100%. */
@@ -2512,6 +2527,115 @@ export type WardrobeSection = {
 	name: string,
 	slots: Choice[],
 };
+
+export type WikiArticle = {
+	/**
+	 *  What the wiki calls the page, like `Catalog:Dominus Infernus`, or on another wiki
+	 *  `w:c:jailbreak:Torpedo`. Identifies it.
+	 */
+	title: string,
+	/**  The wiki it is on: `roblox` for the Roblox Wiki, else its subdomain. */
+	wiki: string,
+	/**  That wiki's name, for the byline: "Roblox Wiki", "Jailbreak Wiki". */
+	source: string,
+	/**  The title without its namespace, for headings. */
+	name: string,
+	/**  `item`, `game`, `player` or `page`. */
+	kind: string,
+	/**  The first paragraph. */
+	extract: string,
+	/**  Text before the first heading. */
+	lead: WikiBlock[],
+	sections: WikiSection[],
+	infoboxTitle: string,
+	infobox: WikiFact[],
+	/**  The infobox picture. */
+	image: WikiImage | null,
+	categories: string[],
+	target: WikiTarget | null,
+	/**  Other wikis it sends readers to, such as the experience's own. */
+	wikis: WikiLink[],
+	/**  The article on the site, shown for attribution. Opened with `wiki.open_site`. */
+	url: string,
+	revision: Id,
+};
+
+/**
+ *  Text is plain with `[[Title]]` and `[[Title|label]]` links. A title is an article (on
+ *  another wiki: `w:c:jailbreak:Torpedo`), `@item:<id>` (also `@bundle`, `@game` by place,
+ *  `@user`, `@group`) a Roblox page Bonsai opens, and `https://…` another site, opened with
+ *  `wiki.open_link`.
+ */
+export type WikiBlock = { type: "p"; text: string } | { type: "list"; ordered: boolean; items: string[] } | { type: "table"; columns: string[]; rows: string[][] } | { type: "note"; text: string } | { type: "images"; images: WikiImage[] };
+
+export type WikiFact = {
+	key: string,
+	label: string,
+	value: string,
+};
+
+export type WikiHit = {
+	title: string,
+	name: string,
+	kind: string,
+	snippet: string,
+	/**  RFC 3339; empty when the wiki didn't say. */
+	edited: string,
+};
+
+/**  A picture. Shown from `wikiimg://` with `src` as the path. */
+export type WikiImage = {
+	src: string,
+	/**  Text with links. */
+	caption: string,
+	/**  What the article shows it at; 0 when unknown. */
+	width: number,
+	height: number,
+};
+
+/**  Another Fandom wiki an article points to, like an experience's own. */
+export type WikiLink = {
+	/**  Its main page as a title: `w:c:jailbreak:`. */
+	title: string,
+	name: string,
+	/**  Its subdomain, for searching it. */
+	wiki: string,
+};
+
+/**
+ *  One article, or why there is none. `article` is `None` with nothing loading and no error
+ *  when the wiki has no such page.
+ */
+export type WikiPageView = {
+	/**  The user turned the wiki on. */
+	enabled: boolean,
+	loading: boolean,
+	error: string | null,
+	/**  ms since the epoch; `None` before the first load. */
+	fetchedAt: number | null,
+	article: WikiArticle | null,
+	source: string,
+	license: string,
+};
+
+export type WikiSearchView = {
+	/**  The wiki searched, and its name when known ("Jailbreak Wiki"). */
+	wiki: string,
+	enabled: boolean,
+	loading: boolean,
+	error: string | null,
+	hits: WikiHit[],
+};
+
+export type WikiSection = {
+	id: string,
+	title: string,
+	level: number,
+	blocks: WikiBlock[],
+};
+
+/**  The Bonsai page an article is about, from the roblox.com links in it. */
+export type WikiTarget = { kind: "item"; id: Id } | { kind: "game"; placeId: Id } | { kind: "user"; id: Id };
 
 /**  The main window's corners. Sent when they change; `window_frame` reads them at startup. */
 export type WindowFrame = {

@@ -19,6 +19,7 @@ mod notify;
 mod schemes;
 mod signin;
 mod thumb;
+mod wikiimg;
 
 pub fn run() {
     notify::capture_local_offset();
@@ -52,6 +53,7 @@ pub fn run() {
         .register_asynchronous_uri_scheme_protocol(asset::SCHEME, asset::handle)
         .register_asynchronous_uri_scheme_protocol(font::SCHEME, font::handle)
         .register_asynchronous_uri_scheme_protocol(bg::SCHEME, bg::handle)
+        .register_asynchronous_uri_scheme_protocol(wikiimg::SCHEME, wikiimg::handle)
         .on_page_load(move |w, p| eprintln!("PROFILE {:?} page {:?} {}", t0.elapsed(), p.event(), w.label())) // PROFILE-TMP
         .setup(move |app| {
             eprintln!("PROFILE {:?} setup start", t0.elapsed()); // PROFILE-TMP

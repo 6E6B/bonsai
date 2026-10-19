@@ -570,6 +570,12 @@ impl Client {
         .await
     }
 
+    /// Download an image from a Fandom wiki article (see [`crate::fandom::IMAGE_HOST`]). Only
+    /// that host is allowed; no cookie is sent.
+    pub async fn fetch_wiki_image(&self, url: &str) -> Result<Vec<u8>> {
+        self.fetch_file(url, |h| h == crate::fandom::IMAGE_HOST).await
+    }
+
     /// Download a font file (a URL from Google Fonts' CSS API). Only `https://fonts.gstatic.com`
     /// URLs are allowed; no cookie is sent.
     pub async fn fetch_font(&self, url: &str) -> Result<Vec<u8>> {

@@ -16,6 +16,7 @@ import {
   type ServerOffer,
   type ServerRow,
   type Servers,
+  type WikiPageView,
 } from "~/lib/ipc/bindings"
 import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
@@ -61,6 +62,7 @@ import {
   useDialog,
   VerifiedBadge,
 } from "~/lib/ui"
+import { useWikiAbout, WikiTab, WikiTeaser } from "~/lib/wiki-panels"
 
 const allSections = [
   { value: "about", label: "About" },
@@ -71,6 +73,7 @@ const allSections = [
   { value: "badges", label: "Badges" },
   { value: "events", label: "Events" },
   { value: "recommended", label: "Recommended" },
+  { value: "wiki", label: "Wiki" },
 ]
 
 /** A list that has finished loading with nothing in it. Errors keep their tab so they show. */
@@ -112,6 +115,10 @@ export default function Game() {
   const badges = useLive(placeId, (id) => commands.gameBadges(id), emptyList<BadgeRow>)
   const events = useLive(placeId, (id) => commands.gameEvents(id), emptyList<EventRow>)
   const recommended = useLive(placeId, (id) => commands.gameRecommended(id), emptyList<GameCard>)
+  const wiki = useWikiAbout(() => {
+    const d = game.details
+    return d ? { kind: "game", id: d.rootPlaceId, name: d.name, creator: d.creatorName, group: d.creatorIsGroup } : null
+  })
   const [section, setSection] = createSignal("about")
   const sections = createMemo(() => {
     const hidden = new Set<string>()
@@ -121,6 +128,7 @@ export default function Game() {
     if (isEmpty(badges)) hidden.add("badges")
     if (isEmpty(events)) hidden.add("events")
     if (isEmpty(recommended)) hidden.add("recommended")
+    if (!wiki.article) hidden.add("wiki")
     return allSections.filter((t) => !hidden.has(t.value))
   })
   createEffect(() => {
@@ -271,7 +279,7 @@ export default function Game() {
 
       <Tabs aria-label="Experience sections" items={sections()} value={section()} onChange={setSection}>
         <TabPanel value="about">
-          <AboutPanel game={game} />
+          <AboutPanel game={game} wiki={wiki} />
         </TabPanel>
         <TabPanel value="servers">
           <ServersPanel placeId={placeId()} max={game.details?.maxPlayers ?? 0} />
@@ -293,6 +301,9 @@ export default function Game() {
         </TabPanel>
         <TabPanel value="recommended">
           <RecommendedPanel list={recommended} />
+        </TabPanel>
+        <TabPanel value="wiki">
+          <WikiTab view={wiki} missing="The Roblox Wiki has no article about this experience." />
         </TabPanel>
       </Tabs>
     </Page>
@@ -759,7 +770,7 @@ function RecommendedPanel(props: { list: List<GameCard> }) {
 }
 
 /** Description and the creator on the left; every detail in one panel on the right. */
-function AboutPanel(props: { game: GameView }) {
+function AboutPanel(props: { game: GameView; wiki: WikiPageView }) {
   const d = () => props.game.details
   const bio = useLive(
     () => (d() ? `${d()?.creatorIsGroup ? "g" : "u"}${d()?.creatorId}` : ""),
@@ -823,6 +834,14 @@ function AboutPanel(props: { game: GameView }) {
                     </div>
                   </div>
                 </section>
+                <Show when={props.wiki.article}>
+                  {(a) => (
+                    <>
+                      <Divider />
+                      <WikiTeaser view={props.wiki} article={a()} />
+                    </>
+                  )}
+                </Show>
               </Card>
               <Facts class="h-fit">
                 <FactGroup title="Experience">

@@ -317,6 +317,8 @@ pub struct Settings {
     pub plugin_shortcuts: BTreeMap<String, Vec<Shortcut>>,
     /// Off by default: show limited item values from Rolimons (a third-party site) next to RAP.
     pub item_values: bool,
+    /// Off by default: show Roblox Wiki articles from Fandom (a third-party site).
+    pub wiki: bool,
     pub sidebar: SidebarPrefs,
     /// Avatar viewers open in 3D instead of on the image. Off by default: the engine is heavy.
     pub avatar_3d: bool,
@@ -464,6 +466,7 @@ impl Default for Settings {
             shortcuts: HashMap::new(),
             plugin_shortcuts: BTreeMap::new(),
             item_values: false,
+            wiki: false,
             sidebar: SidebarPrefs::default(),
             avatar_3d: false,
             motion: "system".into(),

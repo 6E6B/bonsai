@@ -417,6 +417,14 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "wiki",
+        "data",
+        "Wiki articles",
+        "Show Roblox Wiki articles from Fandom on items, experiences and profiles, and the Wiki screen. An article is fetched when you open a page it could be about, and kept for 12 hours.",
+        &["wiki", "fandom", "article", "trivia", "history"],
+        PrefKind::Bool,
+    ),
+    pref(
         "cache_days",
         "data",
         "Keep unused data for",
@@ -490,6 +498,7 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "avatar_view" => if s.avatar_3d { "3d" } else { "2d" }.to_owned(),
         "format_locale" => s.format_locale.clone(),
         "item_values" => on_off(s.item_values).to_owned(),
+        "wiki" => on_off(s.wiki).to_owned(),
         "motion" => s.motion.clone(),
         "time_format" => s.time_format.clone(),
         "relative_dates" => on_off(s.relative_dates).to_owned(),
@@ -559,6 +568,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
     }
     match key {
         "item_values" => s.item_values = bool()?,
+        "wiki" => s.wiki = bool()?,
         "background_accounts" => s.background_accounts = bool()?,
         "account_accent" => s.account_accent = bool()?,
         "relative_dates" => s.relative_dates = bool()?,
@@ -766,6 +776,8 @@ mod tests {
         assert!(s.item_values);
         apply(&mut s, "item_values").unwrap();
         assert!(!s.item_values);
+        apply(&mut s, "wiki on").unwrap();
+        assert!(s.wiki);
         apply(&mut s, "notify.sales off").unwrap();
         assert!(!s.notify.sales);
         apply(&mut s, "player_command flatpak run org.vinegarhq.Sober {uri}").unwrap();

@@ -1,0 +1,114 @@
+# Articles from the Roblox Wiki (https://roblox.fandom.com), a community wiki on Fandom, a
+# third-party site. Opt-in only (Settings → Wiki articles); the app works without it and shows
+# the source and license (CC BY-SA) under every article.
+# The transport never sends the Roblox cookie, tracker or CSRF token to this host.
+#
+# api.php is MediaWiki's action API (https://www.mediawiki.org/wiki/API:Main_page). One path
+# serves every action, so this is one operation and `action` picks what it does:
+#   action=parse&page=<title>&prop=text|categories|revid|displaytitle&redirects=1  one article
+#   action=query&list=search&srsearch=<text>&srnamespace=0|112|114&srlimit=50      search
+#   action=query&meta=siteinfo&siprop=general                    main page and wiki name
+# Always with format=json&formatversion=2, where `parse.text` is a string, not {"*": ...}.
+#
+# Every Fandom wiki serves the same api.php on its own subdomain. Experiences with their own
+# wiki (jailbreak.fandom.com) are linked from their Roblox Wiki article, and
+# `bonsai_api::fandom::action_api_on` sends this operation to that wiki's host instead.
+# Captured 2026-10-19 from jailbreak.fandom.com/api.php: same parameters and responses. Its
+# main page is in the project namespace (`Jailbreak Wiki:Home`), so it comes from siteinfo.
+#
+# Article images are on static.wikia.nocookie.net (`<img src>` or, for lazy-loaded ones,
+# `data-src` in parse.text), fetched with `Client::fetch_wiki_image`.
+swagger: "2.0"
+host: roblox.fandom.com
+info: { title: "Roblox Wiki on Fandom (third party)", version: undocumented }
+paths:
+  /api.php:
+    get:
+      # Captured 2026-10-19 from roblox.fandom.com/api.php, the endpoint behind the wiki's own
+      # pages (the user pointed at api.php?action=parse&page=Catalog:Dominus_Infernus&prop=text).
+      # Fixture: crates/bonsai-api/tests/fixtures/wiki.json.
+      x-captured: "2026-10-19 https://roblox.fandom.com/api.php?action=parse&page=Catalog%3ADominus_Infernus&prop=text&format=json"
+      x-rust-name: action_api
+      summary: MediaWiki's action API. `parse` returns an article, `query` a search.
+      # A missing page is HTTP 200 with {"error": {"code": "missingtitle", ...}}.
+      description: >-
+        parse.text is the article as HTML (with formatversion=2). parse.categories lists its
+        categories, hidden ones (maintenance) flagged. query.search lists matches; each snippet
+        is HTML with the match wrapped in <span class="searchmatch">, though Fandom sends it
+        empty, and searchinfo is absent there. Namespaces (meta=siteinfo, 2026-10-19): 0 main,
+        112 Catalog (Catalog:Dominus Infernus), 114 Player (Player:Builderman and the
+        experiences players made, Player:Builderman/Some Game). Errors come back as error.code
+        with HTTP 200.
+      parameters:
+        - { in: query, name: action, required: true, type: string }
+        - { in: query, name: format, required: true, type: string }
+        - { in: query, name: formatversion, type: string }
+        - { in: query, name: page, type: string }
+        - { in: query, name: prop, type: string }
+        - { in: query, name: redirects, type: string }
+        - { in: query, name: disableeditsection, type: string }
+        - { in: query, name: disablelimitreport, type: string }
+        - { in: query, name: list, type: string }
+        - { in: query, name: srsearch, type: string }
+        - { in: query, name: srnamespace, type: string }
+        - { in: query, name: srlimit, type: integer, format: int32 }
+        - { in: query, name: srprop, type: string }
+        - { in: query, name: meta, type: string }
+        - { in: query, name: siprop, type: string }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ActionResult" } }
+definitions:
+  ActionResult:
+    type: object
+    properties:
+      parse: { $ref: "#/definitions/Parsed" }
+      query: { $ref: "#/definitions/QueryResult" }
+      error: { $ref: "#/definitions/ActionError" }
+  Parsed:
+    type: object
+    properties:
+      title: { type: string }
+      pageid: { type: integer, format: int64 }
+      revid: { type: integer, format: int64 }
+      displaytitle: { type: string }
+      text: { type: string }
+      categories:
+        type: array
+        items: { $ref: "#/definitions/ParsedCategory" }
+  ParsedCategory:
+    type: object
+    properties:
+      category: { type: string }
+      hidden: { type: boolean }
+  QueryResult:
+    type: object
+    properties:
+      general: { $ref: "#/definitions/SiteGeneral" }
+      search:
+        type: array
+        items: { $ref: "#/definitions/SearchHit" }
+      searchinfo: { $ref: "#/definitions/SearchInfo" }
+  SearchHit:
+    type: object
+    properties:
+      ns: { type: integer, format: int64 }
+      title: { type: string }
+      pageid: { type: integer, format: int64 }
+      snippet: { type: string }
+      timestamp: { type: string }
+  # meta=siteinfo&siprop=general. `mainpage` is a title (`Jailbreak Wiki:Home`), `sitename`
+  # the wiki's name (`Jailbreak Wiki`).
+  SiteGeneral:
+    type: object
+    properties:
+      mainpage: { type: string }
+      sitename: { type: string }
+  SearchInfo:
+    type: object
+    properties:
+      totalhits: { type: integer, format: int64 }
+  ActionError:
+    type: object
+    properties:
+      code: { type: string }
+      info: { type: string }
