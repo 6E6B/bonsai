@@ -529,8 +529,17 @@ impl Core {
 
     /// Opens only the bundled community invite, through Discord or the default browser.
     pub fn open_discord_invite(&self, browser: bool) -> Result<(), String> {
-        let url = crate::discord::invite_url(include_str!("../../../discord-invite.txt"), browser)?;
-        self.open_built_link(&url)
+        let code = include_str!("../../../discord-invite.txt");
+        // Validate before scheduling work so a missing invite still fails immediately.
+        crate::discord::invite_url(code, browser)?;
+        let opener = self.inner.opener.read().clone();
+        let inner = self.inner.clone();
+        self.inner.rt.spawn_blocking(move || {
+            if let Err(error) = crate::discord::launch_invite(opener.as_ref(), code, browser) {
+                inner.toast(None, &error, true);
+            }
+        });
+        Ok(())
     }
 
     /// Opens a link to a third-party site that this crate built itself, never one from a
