@@ -1,4 +1,5 @@
-/* A raised panel of label/value rows in titled groups. */
+/* A raised panel of label/value rows in titled groups. A nested one, inside a card, takes the
+ * control fill and elevation instead, like a secondary button. */
 @layer components {
   [data-component="facts"] {
     display: flex;
@@ -7,6 +8,12 @@
     background: var(--color-surface);
     box-shadow: var(--shadow-raised);
     font-size: var(--text-sm);
+  }
+
+  [data-component="facts"][data-nested] {
+    border-radius: var(--radius-md);
+    background: var(--color-control);
+    box-shadow: var(--shadow-control);
   }
 
   [data-component="facts"] [data-slot="group"] {

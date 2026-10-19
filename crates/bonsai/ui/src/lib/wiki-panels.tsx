@@ -379,7 +379,7 @@ export function WikiSummary(props: { view: WikiPageView; article: WikiArticle; f
             <WikiAttribution view={props.view} article={props.article} />
           </div>
           <Show when={facts().length > 0}>
-            <Facts class="h-fit">
+            <Facts nested class="h-fit">
               <FactGroup>
                 <For each={facts()}>
                   {(f) => (
