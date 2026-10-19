@@ -770,47 +770,49 @@ async fn wiki_articles_only_when_turned_on() {
     let cookies = seeded(&dir);
     let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
     let c = &r.core;
+    let dominus = |id| About::Item {
+        id,
+        name: "Dominus Infernus".into(),
+    };
     // Off by default: no request, no data.
-    assert!(
-        c.wiki_about(About::Item(31_101_391), "Dominus Infernus")
-            .data
-            .is_none()
-    );
+    assert!(c.wiki_about(&dominus(31_101_391)).data.is_none());
     assert!(c.wiki_search("dominus").data.is_none());
     c.update_settings(|s| s.wiki = true);
-    let p = poll(|| c.wiki_about(About::Item(31_101_391), "Dominus Infernus")).await;
+    let p = poll(|| c.wiki_about(&dominus(31_101_391))).await;
     let a = p.article.as_ref().unwrap();
     assert_eq!(a.title, "Catalog:Dominus Infernus");
-    assert_eq!(a.revision, 678_901);
-    assert_eq!(
-        a.categories,
-        ["Hats", "Limited items"],
-        "hidden categories dropped"
+    assert_eq!(a.revision, 1_833_149);
+    assert_eq!(a.infobox_title, "Dominus Infernus");
+    assert!(
+        a.categories.contains(&"Hats".to_owned()) && !a.categories.iter().any(|c| c.starts_with("Pages ")),
+        "hidden categories dropped: {:?}",
+        a.categories
     );
     assert!(
         a.extract()
-            .starts_with("Dominus Infernus is a [[Catalog:Limited|limited]]")
+            .starts_with("Dominus Infernus is a [[Limited unique|limited unique]] [[Hat|hat]]")
     );
-    assert_eq!(a.sections.len(), 2, "references dropped");
-    assert_eq!(
-        a.sections[1].blocks,
-        [Block::List {
-            ordered: false,
-            items: vec!["It is one of the most expensive items on the catalog.".into()]
-        }]
-    );
-    // The same page is cached: a different item with that name isn't this one.
-    let other = c.wiki_about(About::Item(5), "Dominus Infernus");
-    assert!(other.data.unwrap().article.is_none());
-    let missing = poll(|| c.wiki_about(About::Item(9), "No Such Hat")).await;
-    assert!(missing.article.is_none());
-    let hits = poll(|| c.wiki_search("  dominus ")).await;
-    let titles: Vec<_> = hits.iter().map(|h| h.title.as_str()).collect();
+    let titles: Vec<_> = a.sections.iter().map(|s| s.title.as_str()).collect();
     assert_eq!(
         titles,
-        ["Dominus", "Catalog:Dominus Infernus"],
-        "talk pages dropped"
+        ["History", "Release history", "Appearance", "Contents", "Trivia"]
     );
+    assert!(matches!(a.sections[1].blocks[..], [Block::Table { .. }]));
+    // The same page is cached: a different item with that name isn't this one.
+    let other = c.wiki_about(&dominus(5));
+    assert!(other.data.unwrap().article.is_none());
+    let missing = poll(|| {
+        c.wiki_about(&About::Item {
+            id: 9,
+            name: "No Such Hat".into(),
+        })
+    })
+    .await;
+    assert!(missing.article.is_none());
+    let hits = poll(|| c.wiki_search("  dominus ")).await;
+    assert_eq!(hits.len(), 50);
+    assert_eq!(hits[0].title, "Dominus (series)");
+    assert!(hits.iter().any(|h| h.title == "Catalog:Dominus Infernus"));
     let reqs = replay.requests().await;
     let third: Vec<_> = reqs
         .iter()

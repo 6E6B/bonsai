@@ -843,13 +843,13 @@ async fn wiki_parse_search_and_missing_page() {
             format: "json".into(),
             list: Some("search".into()),
             srsearch: Some("dominus".into()),
-            srnamespace: Some("*".into()),
+            srnamespace: Some("0|112|114".into()),
             ..Default::default()
         },
     )
     .await
     .unwrap();
-    assert_eq!(s.query.unwrap().search.unwrap().len(), 3);
+    assert_eq!(s.query.unwrap().search.unwrap().len(), 50);
     for q in r.requests().await {
         assert!(!q.headers.contains_key("cookie"), "{:?}", q.headers);
         assert!(!q.headers.contains_key("x-csrf-token"));

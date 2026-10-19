@@ -144,8 +144,15 @@ pub struct WikiSearchView {
 
 const CATALOG: &str = "Catalog:";
 
+/// What a page shows as its name: the title without its namespace, and an experience without
+/// the group or player it is filed under (`Badimo/Jailbreak` → `Jailbreak`).
 fn name_of(title: &str) -> String {
-    title.strip_prefix(CATALOG).unwrap_or(title).to_owned()
+    let t = title.strip_prefix(CATALOG).unwrap_or(title);
+    let t = t.strip_prefix(wiki::PLAYER).unwrap_or(t);
+    match wiki::kind_of(title) {
+        "game" => t.rsplit('/').next().unwrap_or(t).to_owned(),
+        _ => t.to_owned(),
+    }
 }
 
 fn target(a: &Article) -> Option<WikiTarget> {
@@ -164,7 +171,7 @@ fn kind(title: &str, target: Option<&WikiTarget>) -> String {
         _ if title.starts_with(CATALOG) => "item",
         Some(WikiTarget::Game { .. }) => "game",
         Some(WikiTarget::User { .. }) => "player",
-        _ => "page",
+        _ => wiki::kind_of(title),
     }
     .to_owned()
 }
@@ -227,18 +234,31 @@ pub fn wiki_page(core: State<'_, Arc<Core>>, title: String) -> WikiPageView {
 }
 
 /// The article about an item (`item`, `bundle`), experience (`game`, by place id) or player
-/// (`user`) called `name`, if the wiki has one about this very one.
+/// (`user`) called `name`, if the wiki has one about this very one. `creator` and
+/// `creator_group` place an experience's article under its group or player.
 #[tauri::command]
 #[specta::specta]
-pub fn wiki_about(core: State<'_, Arc<Core>>, kind: String, id: Id, name: String) -> WikiPageView {
+pub fn wiki_about(
+    core: State<'_, Arc<Core>>,
+    kind: String,
+    id: Id,
+    name: String,
+    creator: String,
+    creator_group: bool,
+) -> WikiPageView {
     let about = match kind.as_str() {
-        "item" => About::Item(id.0),
-        "bundle" => About::Bundle(id.0),
-        "game" => About::Game(id.0),
-        "user" => About::User(id.0),
+        "item" => About::Item { id: id.0, name },
+        "bundle" => About::Bundle { id: id.0, name },
+        "game" => About::Game {
+            place: id.0,
+            name,
+            creator,
+            group: creator_group,
+        },
+        "user" => About::User { id: id.0, name },
         _ => return page_view(&core, Res::default()),
     };
-    page_view(&core, core.wiki_about(about, &name))
+    page_view(&core, core.wiki_about(&about))
 }
 
 fn hit(h: &Hit) -> WikiHit {
@@ -322,6 +342,19 @@ mod tests {
             "items mentioned in passing don't count"
         );
         assert_eq!(article(&Article::default()).kind, "page");
+        let named = |title: &str| {
+            let a = article(&Article {
+                title: title.into(),
+                ..Default::default()
+            });
+            (a.kind, a.name)
+        };
+        assert_eq!(named("Badimo/Jailbreak"), ("game".into(), "Jailbreak".into()));
+        assert_eq!(named("Player:Builderman"), ("player".into(), "Builderman".into()));
+        assert_eq!(
+            named("Player:Builderman/Some Game"),
+            ("game".into(), "Some Game".into())
+        );
         assert_eq!(v.url, "https://roblox.fandom.com/wiki/Catalog:Dominus_Infernus");
     }
 }

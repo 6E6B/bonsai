@@ -61,17 +61,21 @@ export function useWikiPage(title: () => string) {
 
 /** The article about an item, experience or player, if the wiki has one about this very one.
  * `null`, or no name yet, asks for nothing. */
-export function useWikiAbout(about: () => { kind: AboutKind; id: number; name: string } | null) {
+/** What a page is: its kind, id and name, and for an experience who made it (the wiki files
+ * experiences under their group or player). */
+export type About = { kind: AboutKind; id: number; name: string; creator?: string; group?: boolean }
+
+export function useWikiAbout(about: () => About | null) {
   const key = () => {
     const a = about()
-    return a?.name ? `${a.kind}\n${a.id}\n${a.name}` : ""
+    return a?.name ? JSON.stringify([a.kind, a.id, a.name, a.creator ?? "", a.group ?? false]) : ""
   }
   const view = useLive(
     key,
     (k) => {
       if (!k) return Promise.resolve({ ...waiting(), loading: false })
-      const [kind, id, name] = k.split("\n")
-      return commands.wikiAbout(kind, Number(id), name)
+      const [kind, id, name, creator, group] = JSON.parse(k) as [AboutKind, number, string, string, boolean]
+      return commands.wikiAbout(kind, id, name, creator, group)
     },
     () => {
       const a = about()

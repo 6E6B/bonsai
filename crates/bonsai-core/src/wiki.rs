@@ -30,6 +30,11 @@ const SEARCH_AGE: i64 = 3600;
 const SEARCH_LIMIT: i32 = 50;
 /// The namespace items live in on the Roblox Wiki: `Catalog:Dominus Infernus`.
 const CATALOG: &str = "Catalog:";
+/// Players and the experiences they made: `Player:Builderman`, `Player:Builderman/Some Game`.
+pub const PLAYER: &str = "Player:";
+/// Main, Catalog (112) and Player (114), from the wiki's `meta=siteinfo` on 2026-10-19. Talk,
+/// user, blog and template pages are left out of search.
+const SEARCH_NAMESPACES: &str = "0|112|114";
 
 /// One block of article text. Text is plain with `[[Title]]` or `[[Title|label]]` links to
 /// other articles on the same wiki.
@@ -100,6 +105,9 @@ pub struct Article {
     pub categories: Vec<String>,
     /// roblox.com pages the article links to, infobox links first.
     pub roblox: Vec<RobloxRef>,
+    /// Usernames the infobox links by name (`users/profile?username=`), lowercase. Player
+    /// articles link profiles this way rather than by id.
+    pub usernames: Vec<String>,
 }
 
 impl Article {
@@ -142,39 +150,91 @@ pub struct Hit {
     pub edited: String,
 }
 
-/// A Bonsai page that may have an article about it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// A Bonsai page that may have an article about it, with what its title is made from.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum About {
-    Item(u64),
-    Bundle(u64),
-    Game(u64),
-    User(u64),
+    Item {
+        id: u64,
+        name: String,
+    },
+    Bundle {
+        id: u64,
+        name: String,
+    },
+    /// By root place. `creator` is the group or user that made it; empty when unknown.
+    Game {
+        place: u64,
+        name: String,
+        creator: String,
+        group: bool,
+    },
+    User {
+        id: u64,
+        name: String,
+    },
 }
 
-/// The wiki title for a thing called `name`: items live under `Catalog:`, the rest in the main
-/// namespace. Experience names often carry update tags (`[🎃 UPDATE] Name`); those go.
-pub fn title_for(about: About, name: &str) -> String {
+/// A name without update tags (`[🎃 UPDATE] Name`) and leading emoji.
+fn clean_name(name: &str) -> String {
     let mut n = name.trim();
     while let Some(rest) = n.strip_prefix('[').or_else(|| n.strip_prefix('(')) {
         let Some(end) = rest.find([']', ')']) else { break };
         n = rest[end + 1..].trim_start();
     }
-    let n = n.trim_start_matches(|c: char| !c.is_alphanumeric()).trim();
+    n.trim_start_matches(|c: char| !c.is_alphanumeric())
+        .trim()
+        .to_owned()
+}
+
+/// The wiki titles to try for a page, best first. Items live under `Catalog:`, players under
+/// `Player:`. Experiences are `<group>/<name>` or `Player:<user>/<name>`; their bare name is
+/// often a redirect to that, so it comes second.
+pub fn titles_for(about: &About) -> Vec<String> {
     match about {
-        About::Item(_) | About::Bundle(_) => format!("{CATALOG}{n}"),
-        About::Game(_) | About::User(_) => n.to_owned(),
+        About::Item { name, .. } | About::Bundle { name, .. } => {
+            vec![format!("{CATALOG}{}", clean_name(name))]
+        }
+        About::User { name, .. } => vec![format!("{PLAYER}{}", name.trim())],
+        About::Game {
+            name, creator, group, ..
+        } => {
+            let n = clean_name(name);
+            let c = creator.trim();
+            match (c.is_empty(), group) {
+                (true, _) => vec![n],
+                (false, true) => vec![format!("{c}/{n}"), n],
+                (false, false) => vec![format!("{PLAYER}{c}/{n}"), n],
+            }
+        }
     }
 }
 
 /// Whether `article` is about `about`. Item names are unique enough in the Catalog namespace,
-/// so an item article only fails when it links a different item. A game or player article
-/// must link the very place or profile: names alone collide too often ("Apple", "Jailbreak").
-pub fn is_about(article: &Article, about: About) -> bool {
+/// so an item article only fails when it links a different item. An experience article must
+/// link the very place, and a player article that profile (by id or by username): names
+/// alone collide too often.
+pub fn is_about(article: &Article, about: &About) -> bool {
     match about {
-        About::Item(id) => article.names(RobloxRef::Item(id)) != Some(false),
-        About::Bundle(id) => article.names(RobloxRef::Bundle(id)) != Some(false),
-        About::Game(id) => article.names(RobloxRef::Game(id)) == Some(true),
-        About::User(id) => article.names(RobloxRef::User(id)) == Some(true),
+        About::Item { id, .. } => article.names(RobloxRef::Item(*id)) != Some(false),
+        About::Bundle { id, .. } => article.names(RobloxRef::Bundle(*id)) != Some(false),
+        About::Game { place, .. } => article.names(RobloxRef::Game(*place)) == Some(true),
+        About::User { id, name } => {
+            article.roblox.contains(&RobloxRef::User(*id))
+                || article.usernames.contains(&name.trim().to_lowercase())
+        }
+    }
+}
+
+/// `item`, `game`, `player` or `page`, from the title alone.
+pub fn kind_of(title: &str) -> &'static str {
+    if title.starts_with(CATALOG) {
+        "item"
+    } else if let Some(rest) = title.strip_prefix(PLAYER) {
+        if rest.contains('/') { "game" } else { "player" }
+    } else if title.contains('/') {
+        "game"
+    } else {
+        "page"
     }
 }
 
@@ -225,16 +285,22 @@ impl Core {
         )
     }
 
-    /// The article about an item, experience or player called `name`, if the wiki has one
-    /// and it is about this very one (see [`is_about`]).
-    pub fn wiki_about(&self, about: About, name: &str) -> Res<Page> {
-        let mut r = self.wiki_page(&title_for(about, name));
-        if let Some(p) = &r.data
-            && p.article.as_ref().is_some_and(|a| !is_about(a, about))
-        {
-            r.data = Some(std::sync::Arc::new(Page::default()));
+    /// The article about an item, experience or player, if the wiki has one and it is about
+    /// this very one (see [`titles_for`] and [`is_about`]).
+    pub fn wiki_about(&self, about: &About) -> Res<Page> {
+        let mut last = Res::default();
+        for title in titles_for(about) {
+            let r = self.wiki_page(&title);
+            match &r.data {
+                Some(p) if p.article.as_ref().is_some_and(|a| is_about(a, about)) => return r,
+                // Missing, or about something else: try the next title.
+                Some(_) => last = r,
+                // Still loading or failed: say so rather than trying more.
+                None => return r,
+            }
         }
-        r
+        last.data = last.data.map(|_| std::sync::Arc::new(Page::default()));
+        last
     }
 
     /// Search results for `query` among articles and items, best match first.
@@ -255,7 +321,7 @@ impl Core {
                         formatversion: Some("2".into()),
                         list: Some("search".into()),
                         srsearch: Some(q),
-                        srnamespace: Some("*".into()),
+                        srnamespace: Some(SEARCH_NAMESPACES.into()),
                         srlimit: Some(SEARCH_LIMIT),
                         srprop: Some("snippet|timestamp".into()),
                         ..Default::default()
@@ -327,12 +393,12 @@ fn api_error(e: fandom::ActionError) -> Error {
     ))
 }
 
-/// Keeps articles and items; drops talk, user, template and other pages.
+/// Keeps articles, items and players, in case the wiki returns other pages anyway.
 fn hits(raw: Vec<fandom::SearchHit>) -> Vec<Hit> {
     raw.into_iter()
         .filter_map(|h| {
             let title = h.title?;
-            if h.ns != Some(0) && !title.starts_with(CATALOG) {
+            if !matches!(h.ns, Some(0 | 112 | 114)) {
                 return None;
             }
             Some(Hit {
@@ -373,6 +439,15 @@ const SKIP_CLASSES: &[&str] = &[
     "infobox",
     "navigation-not-searchable",
     "mw-cite-backlink",
+    // Tooltip bodies: the text the site shows on hover, not part of the sentence.
+    "wds-dropdown__content",
+    // Tab labels; each tab's content still shows, one after another.
+    "wds-tabs__wrapper",
+    "interactive-maps-container",
+    "video-thumbnail",
+    "gallery-image-wrapper",
+    "mbox__close",
+    "mw-collapsible-toggle",
 ];
 /// Elements that start a new block.
 const BLOCK_TAGS: &[&str] = &[
@@ -547,9 +622,17 @@ impl Inline<'_> {
                     None => self.out.push_str(&escape(&label)),
                 }
             }
-            _ => {
+            t => {
+                // Blocks inside inline text (a notice's header and body) stay apart.
+                let block = BLOCK_TAGS.contains(&t);
+                if block {
+                    self.out.push(' ');
+                }
                 for c in n.children_it(false) {
                     self.node(&c);
+                }
+                if block {
+                    self.out.push(' ');
                 }
             }
         }
@@ -739,7 +822,7 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
                 if let Some(v) = value {
                     facts.push(Fact {
                         key: d.attr("data-source").map(|s| s.to_string()).unwrap_or_default(),
-                        label: label.map(|l| squash(&l.text())).unwrap_or_default(),
+                        label: label.map(|l| strip_links(&inline(&l, refs))).unwrap_or_default(),
                         value: inline(&v, refs),
                     });
                 }
@@ -747,7 +830,7 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
                 let labels: Vec<String> = d
                     .descendants_it()
                     .filter(|x| tag(x) == "th" && x.has_class("pi-horizontal-group-item"))
-                    .map(|x| squash(&x.text()))
+                    .map(|x| strip_links(&inline(&x, refs)))
                     .collect();
                 let values: Vec<NodeRef> = d
                     .descendants_it()
@@ -768,7 +851,7 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
                         x.has_class("pi-smart-data-label")
                             && x.attr("data-source").is_some_and(|s| *s == *key)
                     })
-                    .map(|l| squash(&l.text()))
+                    .map(|l| strip_links(&inline(&l, refs)))
                     .unwrap_or_default();
                 facts.push(Fact {
                     key,
@@ -778,6 +861,9 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
             }
         }
         facts.retain(|f| !f.value.is_empty());
+        for f in facts.iter_mut().filter(|f| f.label.is_empty()) {
+            f.label = label_of(&f.key);
+        }
         return (title, facts);
     }
     let table = doc.select("table.infobox").first();
@@ -799,6 +885,38 @@ fn infobox(doc: &Document, refs: &mut Vec<RobloxRef>) -> (String, Vec<Fact>) {
     (String::new(), facts)
 }
 
+/// A label for an infobox row the template left unlabelled, from its field: `last_updated` →
+/// "Last updated".
+fn label_of(key: &str) -> String {
+    let words = key.replace('_', " ");
+    let mut c = words.trim().chars();
+    c.next()
+        .map(|f| f.to_uppercase().chain(c).collect())
+        .unwrap_or_default()
+}
+
+/// Profiles the infobox links by username, like the title of a player article.
+fn infobox_usernames(doc: &Document) -> Vec<String> {
+    let mut out = Vec::new();
+    for a in doc.select("aside.portable-infobox a[href]").nodes() {
+        let Some(href) = a.attr("href") else { continue };
+        let Ok(u) = url::Url::parse(&href) else { continue };
+        let roblox = u
+            .host_str()
+            .is_some_and(|h| h == "roblox.com" || h.ends_with(".roblox.com"));
+        if !roblox || !u.path().trim_end_matches('/').ends_with("/users/profile") {
+            continue;
+        }
+        if let Some((_, name)) = u.query_pairs().find(|(k, _)| k.eq_ignore_ascii_case("username")) {
+            let name = name.trim().to_lowercase();
+            if !name.is_empty() && !out.contains(&name) {
+                out.push(name);
+            }
+        }
+    }
+    out
+}
+
 /// Turns MediaWiki's rendered HTML into blocks. Title, revision and categories come from the
 /// rest of the response.
 pub fn parse_html(html: &str) -> Article {
@@ -815,7 +933,22 @@ pub fn parse_html(html: &str) -> Article {
     };
     b.block(&root);
     b.flush();
-    b.sections.retain(|s| !s.blocks.is_empty());
+    // An empty section stays when one of its subsections has text ("History" over "Release
+    // history"); empty ones without, like a gallery's, go.
+    let n = b.sections.len();
+    let mut keep = vec![false; n];
+    for i in (0..n).rev() {
+        let level = b.sections[i].level;
+        keep[i] = !b.sections[i].blocks.is_empty()
+            || (i + 1..n)
+                .take_while(|&j| b.sections[j].level > level)
+                .any(|j| keep[j]);
+    }
+    let mut i = 0;
+    b.sections.retain(|_| {
+        i += 1;
+        keep[i - 1]
+    });
     // Infobox links say best what the article is about; body links follow.
     refs.append(&mut b.refs);
     let mut seen = BTreeSet::new();
@@ -826,6 +959,7 @@ pub fn parse_html(html: &str) -> Article {
         infobox_title,
         infobox,
         roblox: refs,
+        usernames: infobox_usernames(&doc),
         ..Default::default()
     }
 }
@@ -941,25 +1075,159 @@ mod tests {
 
     #[test]
     fn titles_and_matching() {
+        let item = |id| About::Item {
+            id,
+            name: " Dominus Infernus ".into(),
+        };
+        let game = |name: &str, creator: &str, group| About::Game {
+            place: 606_849_621,
+            name: name.into(),
+            creator: creator.into(),
+            group,
+        };
+        assert_eq!(titles_for(&item(1)), ["Catalog:Dominus Infernus"]);
         assert_eq!(
-            title_for(About::Item(1), " Dominus Infernus "),
-            "Catalog:Dominus Infernus"
+            titles_for(&game("[🎃 UPDATE] (x2) Jailbreak", "Badimo", true)),
+            ["Badimo/Jailbreak", "Jailbreak"]
         );
         assert_eq!(
-            title_for(About::Game(1), "[🎃 UPDATE] (x2) Blox Fruits"),
-            "Blox Fruits"
+            titles_for(&game("🔥 Natural Disaster Survival", "Stickmasterluke", false)),
+            [
+                "Player:Stickmasterluke/Natural Disaster Survival",
+                "Natural Disaster Survival"
+            ]
         );
+        assert_eq!(titles_for(&game("Solo", "", true)), ["Solo"]);
         assert_eq!(
-            title_for(About::Game(1), "🔥 Natural Disaster Survival"),
-            "Natural Disaster Survival"
+            titles_for(&About::User {
+                id: 156,
+                name: "builderman".into()
+            }),
+            ["Player:builderman"]
         );
         let a = parse_html(PAGE);
-        assert!(is_about(&a, About::Item(31_101_391)));
-        assert!(!is_about(&a, About::Item(5)), "links a different item");
-        assert!(is_about(&a, About::User(156)));
-        assert!(!is_about(&a, About::Game(1)), "games need their place linked");
+        assert!(is_about(&a, &item(31_101_391)));
+        assert!(!is_about(&a, &item(5)), "links a different item");
+        assert!(is_about(
+            &a,
+            &About::User {
+                id: 156,
+                name: "x".into()
+            }
+        ));
+        assert!(
+            !is_about(&a, &game("Jailbreak", "Badimo", true)),
+            "games need their place linked"
+        );
         let bare = Article::default();
-        assert!(is_about(&bare, About::Item(5)) && !is_about(&bare, About::User(5)));
+        assert!(is_about(&bare, &item(5)));
+        assert!(!is_about(
+            &bare,
+            &About::User {
+                id: 5,
+                name: "x".into()
+            }
+        ));
+        assert_eq!(
+            (
+                kind_of("Catalog:Dominus Infernus"),
+                kind_of("Player:Builderman"),
+                kind_of("Player:Builderman/Some Game"),
+                kind_of("Badimo/Jailbreak"),
+                kind_of("Robux")
+            ),
+            ("item", "player", "game", "game", "page")
+        );
+    }
+
+    /// Cut from the live pages (2026-10-19): Badimo/Jailbreak's and Player:Builderman's
+    /// infobox heads, and a tooltip and a tab row from Catalog:Dominus Infernus and others.
+    #[test]
+    fn real_markup_games_players_tooltips_tabs() {
+        let jb = parse_html(
+            r##"<div class="mw-parser-output"><aside role="region" class="portable-infobox pi-background">
+<h2 class="pi-item pi-title" data-source="name"><a class="external text" href="https://www.roblox.com/games/606849621">Jailbreak</a></h2>
+<div class="pi-item pi-data" data-source="creator"><h3 class="pi-data-label">Creator</h3><div class="pi-data-value"><a href="/wiki/Badimo" title="Badimo">Badimo</a> <span class="wds-dropdown custom-tooltip"><span class="wds-dropdown&#95;&#95;toggle"><span typeof="mw:File/Frameless"><span><img src="x.svg"></span></span></span><span class="wds-dropdown&#95;&#95;content"><span><b>Badimo</b> is a notable community verified by Roblox Corporation. <a href="/wiki/Verified_Badge">Learn more</a>.</span></span></span></div></div>
+<div class="pi-item pi-data" data-source="former genre"><h3 class="pi-data-label"><span class="wds-dropdown custom-tooltip"><span class="wds-dropdown&#95;&#95;toggle">Former Genre</span><span class="wds-dropdown&#95;&#95;content">This experience's genre prior to the update.</span></span></h3><div class="pi-data-value">Town and City</div></div>
+<div class="pi-item pi-data" data-source="last_updated"><div class="pi-data-value pi-font"><small>Page last updated on <b>July 9, 2026</b></small></div></div>
+</aside>
+<b>Jailbreak</b> is an experience by <a href="/wiki/Badimo">Badimo</a>.
+<div class="wds-tabber"><div class="wds-tabs__wrapper"><ul class="wds-tabs"><li class="wds-tabs__tab"><span class="wds-tabs__tab-label">Current</span></li></ul></div><div class="wds-tab__content wds-is-current"><p>Tab text.</p></div></div>
+<h2><span class="mw-headline" id="History">History</span></h2>
+<h3><span class="mw-headline" id="Release_history">Release history</span></h3><p>Released in 2017.</p>
+<div class="mbox"><div class="mbox&#95;&#95;content"><div class="mbox&#95;&#95;content&#95;&#95;header">Jailbreak Wiki</div><div class="mbox&#95;&#95;content&#95;&#95;text">This experience has a dedicated wiki.</div></div></div>
+<h2><span class="mw-headline" id="Gallery">Gallery</span></h2>
+<h3><span class="mw-headline" id="Old">Old</span></h3><div class="wikia-gallery"><a href="/wiki/File:X.png">X</a></div>
+</div>"##,
+        );
+        let facts: Vec<_> = jb
+            .infobox
+            .iter()
+            .map(|f| (f.label.as_str(), f.value.as_str()))
+            .collect();
+        assert_eq!(
+            facts,
+            [
+                ("Creator", "[[Badimo]]"),
+                ("Former Genre", "Town and City"),
+                ("Last updated", "Page last updated on July 9, 2026")
+            ],
+            "tooltip bodies dropped"
+        );
+        assert_eq!(jb.roblox, [RobloxRef::Game(606_849_621)]);
+        assert!(is_about(
+            &jb,
+            &About::Game {
+                place: 606_849_621,
+                name: "Jailbreak".into(),
+                creator: "Badimo".into(),
+                group: true
+            }
+        ));
+        assert_eq!(
+            jb.lead,
+            [
+                Block::P {
+                    text: "Jailbreak is an experience by [[Badimo]].".into()
+                },
+                Block::P {
+                    text: "Tab text.".into()
+                }
+            ],
+            "tab labels dropped, tab content kept"
+        );
+        let titles: Vec<_> = jb.sections.iter().map(|s| (s.title.as_str(), s.level)).collect();
+        assert_eq!(
+            titles,
+            [("History", 2), ("Release history", 3)],
+            "parent of a subsection with text kept, empty gallery dropped"
+        );
+        assert_eq!(
+            jb.sections[1].blocks[1],
+            Block::Note {
+                text: "Jailbreak Wiki This experience has a dedicated wiki.".into()
+            }
+        );
+
+        let bm = parse_html(
+            r##"<aside class="portable-infobox"><h2 class="pi-item pi-title" data-source="name"><a class="external text" href="https://www.roblox.com/users/profile?username=builderman">builderman</a></h2></aside><p>A player.</p>"##,
+        );
+        assert_eq!(bm.usernames, ["builderman"]);
+        assert!(bm.roblox.is_empty());
+        assert!(is_about(
+            &bm,
+            &About::User {
+                id: 156,
+                name: "Builderman".into()
+            }
+        ));
+        assert!(!is_about(
+            &bm,
+            &About::User {
+                id: 1,
+                name: "Roblox".into()
+            }
+        ));
     }
 
     #[test]

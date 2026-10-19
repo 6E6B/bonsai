@@ -277,9 +277,10 @@ export const commands = {
 	wikiPage: (title: string) => __TAURI_INVOKE<WikiPageView>("wiki_page", { title }),
 	/**
 	 *  The article about an item (`item`, `bundle`), experience (`game`, by place id) or player
-	 *  (`user`) called `name`, if the wiki has one about this very one.
+	 *  (`user`) called `name`, if the wiki has one about this very one. `creator` and
+	 *  `creator_group` place an experience's article under its group or player.
 	 */
-	wikiAbout: (kind: string, id: Id, name: string) => __TAURI_INVOKE<WikiPageView>("wiki_about", { kind, id, name }),
+	wikiAbout: (kind: string, id: Id, name: string, creator: string, creatorGroup: boolean) => __TAURI_INVOKE<WikiPageView>("wiki_about", { kind, id, name, creator, creatorGroup }),
 	wikiSearch: (query: string) => __TAURI_INVOKE<WikiSearchView>("wiki_search", { query }),
 	hubCatalog: (query: string) => typedError<HubView, string>(__TAURI_INVOKE("hub_catalog", { query })),
 	hubHistory: (target: string) => typedError<HubHistory, string>(__TAURI_INVOKE("hub_history", { target })),

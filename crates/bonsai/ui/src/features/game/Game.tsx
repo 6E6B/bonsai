@@ -117,7 +117,7 @@ export default function Game() {
   const recommended = useLive(placeId, (id) => commands.gameRecommended(id), emptyList<GameCard>)
   const wiki = useWikiAbout(() => {
     const d = game.details
-    return d ? { kind: "game", id: d.rootPlaceId, name: d.name } : null
+    return d ? { kind: "game", id: d.rootPlaceId, name: d.name, creator: d.creatorName, group: d.creatorIsGroup } : null
   })
   const [section, setSection] = createSignal("about")
   const sections = createMemo(() => {

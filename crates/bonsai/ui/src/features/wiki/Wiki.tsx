@@ -114,7 +114,7 @@ function HitRow(props: { hit: WikiHit; index: number; selected: boolean }) {
           <Badge>{kindLabel[props.hit.kind] ?? "Article"}</Badge>
         </span>
       }
-      subtitle={<span class="line-clamp-1">{props.hit.snippet}</span>}
+      subtitle={props.hit.snippet}
       meta={
         <Show when={!Number.isNaN(edited())}>
           <span class="text-xs">edited {ago(edited())}</span>

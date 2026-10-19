@@ -3,10 +3,9 @@
 Articles about items, experiences and players from the [Roblox Wiki](https://roblox.fandom.com),
 a community wiki on Fandom, inside Bonsai.
 
-**Status:** fetched and parsed for real, behind an opt-in setting. **Not yet checked against the
-live site**: the spec and replay fixture were written from the MediaWiki API docs on a machine
-that couldn't reach fandom.com. Before relying on it, capture real responses (see
-[Checking against the site](#checking-against-the-site)).
+**Status:** fetched and parsed for real, behind an opt-in setting. Checked against the live site
+on 2026-10-19: the fixture is a capture, and the parser has tests built from real item,
+experience and player pages (see [Checked against the site](#checked-against-the-site)).
 
 ## What's there
 
@@ -33,41 +32,49 @@ infobox are the wiki's own text.
   `action_api`, since `action` picks what api.php does. The transport never sends Roblox
   credentials to a non-Roblox host, and requests share the machine rate limiter.
   - Article: `action=parse&page=<title>&prop=text|categories|revid|displaytitle&redirects=1`.
-  - Search: `action=query&list=search&srsearch=<text>&srnamespace=*`, then only main-namespace
-    and `Catalog:` titles are kept.
+  - Search: `action=query&list=search&srsearch=<text>&srnamespace=0|112|114` (main, `Catalog:`,
+    `Player:`; numbers from `meta=siteinfo`). Fandom returns no snippets, so results show the
+    title, kind and last edit.
 - **Parsing** (`bonsai-core/src/wiki.rs`). The page HTML is parsed with `dom_query` (already in
   the tree through Tauri) into paragraphs, lists, tables and notes, plus the portable infobox
   (`aside.portable-infobox`) or a classic `table.infobox`. Links to other articles become
   `[[Title|label]]`; links to missing pages, files, categories, user and talk pages become plain
   text. Scripts, styles, images, navboxes, the TOC, edit links and references are dropped. Only
   this text crosses IPC; no Fandom HTML reaches the webview, and the CSP is unchanged.
-- **Matching.** Items are looked up as `Catalog:<name>`, experiences and players by name, with
-  update tags like `[🎃 UPDATE]` stripped from experience names. The roblox.com links in an
-  article decide whether it is about this very page: an item article is rejected only if it links
-  a different item; an experience or player article must link that place or profile, since names
-  alone collide too often.
+- **Matching.** The wiki's titles: items are `Catalog:<name>`, players `Player:<username>`, and
+  experiences live under whoever made them, `<Group>/<Game>` or `Player:<user>/<Game>` (the bare
+  name is tried next; it is often a redirect). Update tags like `[🎃 UPDATE]` and leading emoji
+  are stripped from experience names. Then the article must be about this very page: an item
+  article is rejected only if it links a different item; an experience article must link that
+  place; a player article must link that profile or name the username in its infobox's
+  `users/profile?username=` link, which is how most player infoboxes link.
 - **Cache.** Articles are shared public data (`Key::shared`), kept 12 hours; searches 1 hour.
   The saved copy shows at once on the next visit.
 - **Open on Fandom.** `wiki.open_site` builds the address from the wiki's host in Rust and opens
   it with the system browser. It never opens a link taken from a response or the UI.
-- **IPC** (`bonsai/src/ipc/wiki.rs`): `wiki_page(title)`, `wiki_about(kind, id, name)` and
+- **IPC** (`bonsai/src/ipc/wiki.rs`): `wiki_page(title)`, `wiki_about(kind, id, name, creator, creator_group)` and
   `wiki_search(query)`, read with `useLive`. The browser preview (`bun run dev`) shows made-up
   articles from `ui/src/lib/wiki-sample.ts`; the app never does.
 - **UI.** `ui/src/lib/wiki.ts` (pure helpers, tested), `ui/src/lib/wiki-panels.tsx` (shared
   views and the navigating `wiki.*` handlers, in `lib/` because three features embed them) and
   `ui/src/features/wiki/` (the two screens).
 
-## Checking against the site
+## Checked against the site
 
-1. On a machine that can reach Fandom, open
-   `https://roblox.fandom.com/api.php?action=parse&page=Catalog:Dominus_Infernus&prop=text|categories|revid|displaytitle&redirects=1&format=json&formatversion=2`
-   and a search like `...api.php?action=query&list=search&srsearch=dominus&srnamespace=*&format=json&formatversion=2`.
-2. Replace `crates/bonsai-api/tests/fixtures/wiki.json` with those responses (`"source": "live"`)
-   and update the spec's `x-captured` note.
-3. Check what the parser makes of a few real pages (an item, an experience, a player, a long
-   article with tables): `parse_html` in `wiki.rs` has a unit test to extend. Things to look at:
-   which template classes Fandom uses for notices and quotes, tabbers (`.tabber`), galleries
-   inside infoboxes, and whether experience and player articles link their roblox.com pages.
+On 2026-10-19, against `Catalog:Dominus Infernus`, `Badimo/Jailbreak`, `Player:Builderman` and
+`Dominus (series)`. What real pages needed, each with a test in `wiki.rs`:
+
+- Leads are often bare inline text before the first block, not a `<p>`.
+- Infobox labels carry tooltip text (`.wds-dropdown__content`), dropped. Tabbed infobox groups
+  (`.wds-tabs`) keep their content and drop the tab labels.
+- Headings are `<h2><span class="mw-headline" id=...>`, not `<div class="mw-heading">`.
+- Sections that are empty except for subsections (History → Release history) are kept;
+  sections left empty after dropping galleries and maps are not.
+- Notices are `.mbox` boxes; their close buttons and collapsible toggles are dropped.
+- Item prices carry a Robux icon image, dropped with other images.
+
+To check again, fetch a page with the same parameters (see the spec) with `format=json&formatversion=2`
+and compare with what `parse_html` makes of it.
 
 ## Not done
 

@@ -119,9 +119,9 @@ pub struct ActionApiParams {
 ///
 /// MediaWiki's action API. 'parse' returns an article, 'query' a search.
 ///
-/// parse.text is the article as HTML (with formatversion=2). parse.categories lists its categories, hidden ones (maintenance) flagged. query.search lists matches; each snippet is HTML with the match wrapped in \<span class="searchmatch"\>. srnamespace=* searches every namespace; items are in the Catalog one (Catalog:Dominus Infernus), whose number isn't known here, so callers keep main-namespace (ns 0) and Catalog: titles. Errors come back as error.code with HTTP 200.
+/// parse.text is the article as HTML (with formatversion=2). parse.categories lists its categories, hidden ones (maintenance) flagged. query.search lists matches; each snippet is HTML with the match wrapped in \<span class="searchmatch"\>, though Fandom sends it empty, and searchinfo is absent there. Namespaces (meta=siteinfo, 2026-10-19): 0 main, 112 Catalog (Catalog:Dominus Infernus), 114 Player (Player:Builderman and the experiences players made, Player:Builderman/Some Game). Errors come back as error.code with HTTP 200.
 ///
-/// Undocumented; captured not yet; written 2026-10-18 from the MediaWiki API docs for https://roblox.fandom.com/api.php?action=parse&page=Catalog%3ADominus_Infernus&prop=text&format=json.
+/// Undocumented; captured 2026-10-19 https://roblox.fandom.com/api.php?action=parse&page=Catalog%3ADominus_Infernus&prop=text&format=json.
 pub fn action_api_request(params: &ActionApiParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/api.php".to_string());
     r.query("action", &params.action);
@@ -144,9 +144,9 @@ pub fn action_api_request(params: &ActionApiParams) -> Result<Request> {
 ///
 /// MediaWiki's action API. 'parse' returns an article, 'query' a search.
 ///
-/// parse.text is the article as HTML (with formatversion=2). parse.categories lists its categories, hidden ones (maintenance) flagged. query.search lists matches; each snippet is HTML with the match wrapped in \<span class="searchmatch"\>. srnamespace=* searches every namespace; items are in the Catalog one (Catalog:Dominus Infernus), whose number isn't known here, so callers keep main-namespace (ns 0) and Catalog: titles. Errors come back as error.code with HTTP 200.
+/// parse.text is the article as HTML (with formatversion=2). parse.categories lists its categories, hidden ones (maintenance) flagged. query.search lists matches; each snippet is HTML with the match wrapped in \<span class="searchmatch"\>, though Fandom sends it empty, and searchinfo is absent there. Namespaces (meta=siteinfo, 2026-10-19): 0 main, 112 Catalog (Catalog:Dominus Infernus), 114 Player (Player:Builderman and the experiences players made, Player:Builderman/Some Game). Errors come back as error.code with HTTP 200.
 ///
-/// Undocumented; captured not yet; written 2026-10-18 from the MediaWiki API docs for https://roblox.fandom.com/api.php?action=parse&page=Catalog%3ADominus_Infernus&prop=text&format=json.
+/// Undocumented; captured 2026-10-19 https://roblox.fandom.com/api.php?action=parse&page=Catalog%3ADominus_Infernus&prop=text&format=json.
 pub async fn action_api(client: &Client, params: &ActionApiParams) -> Result<ActionResult> {
     client.send(action_api_request(params)?).await?.json()
 }
