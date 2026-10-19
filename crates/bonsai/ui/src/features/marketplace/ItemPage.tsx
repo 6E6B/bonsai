@@ -49,6 +49,8 @@ import {
 } from "~/lib/ui"
 import { DemandPips, TrendMark, useValuesRefresh, ValueAmount, ValueFlags } from "~/lib/value-tags"
 import { rapGap, VALUES_SOURCE, versionLabel } from "~/lib/values"
+import { articleFor } from "~/lib/wiki"
+import { WikiArticleView } from "~/lib/wiki-panels"
 import { PriceHistory } from "./PriceHistory"
 
 const ms = (iso: string) => {
@@ -156,11 +158,13 @@ export default function ItemPage() {
   // Non-limited UGC can also carry a collectibleId; only limiteds and collectibles have copies.
   const resells = () => Boolean(info()?.collectibleId && info()?.limited)
   const [section, setSection] = createSignal("similar")
+  const wiki = createMemo(() => (bundle() ? undefined : articleFor({ kind: "item", id: id() })))
   const sections = createMemo(() => [
     { value: "similar", label: "Similar items", disabled: !inCatalog() },
     { value: "resellers", label: "Resellers", disabled: !resells() },
     { value: "history", label: "Price history", disabled: !resells() },
     { value: "owners", label: "Owners", disabled: !resells() || bundle() },
+    ...(wiki() ? [{ value: "wiki", label: "Wiki" }] : []),
   ])
   useSubTabs(sections, section, setSection)
   createEffect(() => {
@@ -409,6 +413,9 @@ export default function ItemPage() {
           </TabPanel>
           <TabPanel value="owners">
             <Owners assetId={id()} />
+          </TabPanel>
+          <TabPanel value="wiki">
+            <Show when={wiki()}>{(a) => <WikiArticleView article={a()} toc={false} target={false} />}</Show>
           </TabPanel>
         </Tabs>
       </Show>

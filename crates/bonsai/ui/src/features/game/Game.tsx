@@ -61,6 +61,8 @@ import {
   useDialog,
   VerifiedBadge,
 } from "~/lib/ui"
+import { articleFor, hasWiki } from "~/lib/wiki"
+import { GameWikiPanel, WikiTeaser } from "~/lib/wiki-panels"
 
 const allSections = [
   { value: "about", label: "About" },
@@ -71,6 +73,7 @@ const allSections = [
   { value: "badges", label: "Badges" },
   { value: "events", label: "Events" },
   { value: "recommended", label: "Recommended" },
+  { value: "wiki", label: "Wiki" },
 ]
 
 /** A list that has finished loading with nothing in it. Errors keep their tab so they show. */
@@ -121,6 +124,7 @@ export default function Game() {
     if (isEmpty(badges)) hidden.add("badges")
     if (isEmpty(events)) hidden.add("events")
     if (isEmpty(recommended)) hidden.add("recommended")
+    if (!hasWiki({ kind: "game", placeId: placeId() })) hidden.add("wiki")
     return allSections.filter((t) => !hidden.has(t.value))
   })
   createEffect(() => {
@@ -293,6 +297,9 @@ export default function Game() {
         </TabPanel>
         <TabPanel value="recommended">
           <RecommendedPanel list={recommended} />
+        </TabPanel>
+        <TabPanel value="wiki">
+          <GameWikiPanel placeId={placeId()} />
         </TabPanel>
       </Tabs>
     </Page>
@@ -823,6 +830,14 @@ function AboutPanel(props: { game: GameView }) {
                     </div>
                   </div>
                 </section>
+                <Show when={articleFor({ kind: "game", placeId: g().rootPlaceId })}>
+                  {(a) => (
+                    <>
+                      <Divider />
+                      <WikiTeaser article={a()} />
+                    </>
+                  )}
+                </Show>
               </Card>
               <Facts class="h-fit">
                 <FactGroup title="Experience">

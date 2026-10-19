@@ -350,6 +350,11 @@ commands! {
     OpenItem => "market.open", "Open item", ["item", "asset", "bundle", "pass", "open"], Text, Read, [];
     PreviewItem => "market.preview", "Preview item in a side panel", ["item", "asset", "bundle", "preview", "peek", "details", "inspect", "side"], Text, Read, [];
     OpenCommunity => "group.open", "Open community", ["group", "community", "open"], Text, Read, [];
+    GoWiki => "nav.wiki", "Go to Wiki", ["wiki", "fandom", "article", "lore", "trivia", "guide", "history"], None, Read, [Shortcut::seq("G", "W")];
+    WikiOpen => "wiki.open", "Open wiki article", ["wiki", "fandom", "article", "page"], Text, Read, [];
+    WikiSearch => "wiki.search", "Search the wiki", ["wiki", "fandom", "search", "look up", "lookup"], Text, Read, [];
+    WikiArticle => "wiki.article", "Read the wiki article about this", ["wiki", "fandom", "article", "about", "history", "trivia", "lore"], None, Read, [];
+    WikiOpenSite => "wiki.open_site", "Open wiki article on Fandom", ["wiki", "fandom", "browser", "web", "site"], None, Read, [];
     GoComponents => "nav.components", "Go to Components (UI gallery)", ["components", "gallery", "ui", "design"], None, Read, [];
     GoOverview => "nav.overview", "Go to Overview (console clone test)", ["overview", "console", "clone", "test", "card"], None, Read, [];
     GoHub => "nav.hub", "Go to Theme and Plugin Hub", ["hub", "themes", "plugins", "browse", "community"], None, Read, [];

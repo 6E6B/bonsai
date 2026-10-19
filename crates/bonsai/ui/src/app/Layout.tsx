@@ -31,6 +31,7 @@ import { shell, startSync } from "~/lib/store"
 import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
 import { shownBackground } from "~/lib/theme"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
+import { registerWikiCommands } from "~/lib/wiki-panels"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
 import { useWindowFrame } from "./frame"
@@ -332,6 +333,7 @@ export function Layout(props: ParentProps) {
       onTab(() => tabActions.reopen()),
     ),
     ...registerHubCommands(),
+    ...registerWikiCommands({ visit: visitPath }),
     ...registerThemeCommands({ visit: visitPath, prompt }),
   ]
   onCleanup(() => {

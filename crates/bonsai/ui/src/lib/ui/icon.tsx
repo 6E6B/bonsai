@@ -2,6 +2,7 @@ import check from "@phosphor-icons/core/assets/bold/check-bold.svg?raw"
 import tradesFill from "@phosphor-icons/core/assets/fill/arrows-left-right-fill.svg?raw"
 import inventoryFill from "@phosphor-icons/core/assets/fill/backpack-fill.svg?raw"
 import bellFill from "@phosphor-icons/core/assets/fill/bell-fill.svg?raw"
+import wikiFill from "@phosphor-icons/core/assets/fill/book-open-text-fill.svg?raw"
 import valuesFill from "@phosphor-icons/core/assets/fill/chart-line-up-fill.svg?raw"
 import chatFill from "@phosphor-icons/core/assets/fill/chat-circle-fill.svg?raw"
 import discoverFill from "@phosphor-icons/core/assets/fill/compass-fill.svg?raw"
@@ -30,6 +31,7 @@ import trendMixed from "@phosphor-icons/core/assets/regular/arrows-down-up.svg?r
 import trades from "@phosphor-icons/core/assets/regular/arrows-left-right.svg?raw"
 import inventory from "@phosphor-icons/core/assets/regular/backpack.svg?raw"
 import bell from "@phosphor-icons/core/assets/regular/bell.svg?raw"
+import wiki from "@phosphor-icons/core/assets/regular/book-open-text.svg?raw"
 import calendar from "@phosphor-icons/core/assets/regular/calendar-blank.svg?raw"
 import chevronDown from "@phosphor-icons/core/assets/regular/caret-down.svg?raw"
 import chevronLeft from "@phosphor-icons/core/assets/regular/caret-left.svg?raw"
@@ -244,6 +246,8 @@ const svgs = {
   shield,
   database,
   layout,
+  wiki,
+  "wiki-fill": wikiFill,
 } as const
 
 export type IconName = keyof typeof svgs
