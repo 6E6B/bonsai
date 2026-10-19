@@ -571,7 +571,7 @@ commands! {
     ClearNotifications => "notifications.mark_read", "Mark notifications read", ["notifications", "bell", "clear", "read"], None, Write(Harmless), [];
     GoChat => "nav.chat", "Go to Chat", ["chat", "conversations"], None, Read, [];
     DiscordDialog => "help.discord", "Join the Bonsai Discord", ["discord", "support", "community", "feedback", "server"], None, Read, [];
-    OpenDiscord => "help.discord_open", "Open the Bonsai invite in Discord", ["discord", "invite", "join", "server"], None, Read, [];
+    CopyDiscordInvite => "help.discord_copy", "Copy the Bonsai Discord invite", ["discord", "invite", "copy", "link"], None, Read, [];
     OpenDiscordBrowser => "help.discord_browser", "Open the Bonsai Discord invite in browser", ["discord", "invite", "browser", "web"], None, Read, [];
     GoNotifications => "nav.notifications", "Go to Notifications", ["notifications", "bell", "alerts"], None, Read, [];
 

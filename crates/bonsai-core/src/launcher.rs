@@ -133,13 +133,10 @@ pub async fn mint_ticket(client: &Client) -> Result<Secret, Error> {
         })
 }
 
-/// Hands player links, application protocols and website links to their own launchers.
+/// Hands the URI to the player, and website links to the browser.
 pub trait Opener: Send + Sync {
     fn open(&self, uri: &Secret) -> Result<(), String>;
     fn open_web(&self, url: &str) -> Result<(), String>;
-    /// Launch an application protocol without using the configured Roblox player command.
-    /// This may wait for the desktop dispatcher, so call it from a blocking worker.
-    fn open_protocol(&self, uri: &str) -> Result<(), String>;
 }
 
 /// The OS handler for `roblox-player:`, or a custom command with `{uri}` in it
@@ -174,28 +171,6 @@ impl Opener for SystemOpener {
             }
         }
     }
-    fn open_protocol(&self, uri: &str) -> Result<(), String> {
-        // xdg-open may hand unknown schemes to a browser. GIO reports a missing handler
-        // instead, letting the caller fall back to an actual HTTPS invite.
-        #[cfg(target_os = "linux")]
-        {
-            let status = std::process::Command::new("gio")
-                .args(["open", uri])
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .status()
-                .map_err(|e| format!("could not open the application link ({e})"))?;
-            if status.success() {
-                Ok(())
-            } else {
-                Err("No application could open the link.".into())
-            }
-        }
-        #[cfg(not(target_os = "linux"))]
-        {
-            open::that(uri).map_err(|e| format!("could not open the application link ({e})"))
-        }
-    }
     /// Always the default browser; the player command is only for `roblox-player:`.
     fn open_web(&self, url: &str) -> Result<(), String> {
         open::that_detached(url).map_err(|e| format!("could not open the browser ({e})"))
@@ -207,15 +182,9 @@ impl Opener for SystemOpener {
 pub struct RecordingOpener {
     pub opened: parking_lot::Mutex<Vec<Secret>>,
     pub web: parking_lot::Mutex<Vec<String>>,
-    pub protocols: parking_lot::Mutex<Vec<String>>,
 }
 
 impl Opener for RecordingOpener {
-    fn open_protocol(&self, uri: &str) -> Result<(), String> {
-        self.protocols.lock().push(uri.to_owned());
-        Ok(())
-    }
-
     fn open(&self, uri: &Secret) -> Result<(), String> {
         self.opened.lock().push(uri.clone());
         Ok(())
