@@ -46,6 +46,7 @@ import {
   Tabs,
   TextField,
 } from "~/lib/ui"
+import { saves } from "./commands"
 import {
   changed,
   type Draft,
@@ -64,7 +65,7 @@ import {
   update,
 } from "./draft"
 
-type Section = "seeds" | "tokens" | "checks"
+type Section = "seeds" | "background" | "details" | "tokens" | "checks"
 
 /** The theme editor, one theme per tab. Edits go to a draft (see `draft.ts`) until Save. */
 export default function Editor() {
@@ -90,9 +91,9 @@ export default function Editor() {
   )
   const leave = (x: string) => {
     setActiveDraft(undefined)
-    // An untouched draft goes; one with changes stays, listed on the Themes screen as unsaved.
+    // Only discard a saved, unchanged draft. New themes stay in the library until saved.
     const d = drafts[x]
-    if (d && !changed(d)) dropDraft(x)
+    if (d?.onDisk && !changed(d)) dropDraft(x)
   }
   onCleanup(() => leave(id()))
   createEffect(() => {
@@ -138,9 +139,11 @@ function Workbench(props: { id: string; draft: Draft }) {
   /** Tokens picked with Inspect; the Tokens list shows only these while set. */
   const [picked, setPicked] = createSignal<string[]>()
   const items = () => [
-    { value: "seeds", label: "Seeds" },
-    { value: "tokens", label: "Tokens", count: Object.keys(props.draft.theme.tokens).length },
-    { value: "checks", label: "Checks", count: failing() },
+    { value: "seeds", label: "Appearance" },
+    { value: "background", label: "Background" },
+    { value: "details", label: "Details" },
+    { value: "tokens", label: "Advanced", count: Object.keys(props.draft.theme.tokens).length },
+    { value: "checks", label: "Readability", count: failing() },
   ]
   useSubTabs(items, section, (v) => setSection(v as Section))
   const edit = (f: (d: Draft) => Draft) => update(props.id, f)
@@ -192,9 +195,9 @@ function Workbench(props: { id: string; draft: Draft }) {
       <header class="flex flex-wrap items-center gap-2 border-line border-b px-5 py-2">
         <h1 class="min-w-0 truncate font-semibold text-lg">{props.draft.theme.name}</h1>
         <Badge>{props.draft.theme.base === "dark" ? "Dark" : "Light"}</Badge>
-        <Show when={unsaved(props.draft)}>
-          <Badge variant="warning">{props.draft.onDisk ? "Unsaved changes" : "Not saved"}</Badge>
-        </Show>
+        <span role="status" aria-live="polite" class="text-sm text-fg-muted">
+          {saves[props.id]?.busy ? "Saving…" : unsaved(props.draft) ? "Unsaved changes" : "All changes saved"}
+        </span>
         <div class="flex-1" />
         <IconButton
           size="sm"
@@ -215,8 +218,28 @@ function Workbench(props: { id: string; draft: Draft }) {
         <Button size="sm" variant="ghost" disabled={!changed(props.draft)} onClick={() => run("theme.revert")}>
           Revert
         </Button>
-        <Button size="sm" variant="primary" disabled={!unsaved(props.draft)} onClick={() => run("theme.save")}>
-          Save
+        <Button
+          size="sm"
+          variant="primary"
+          loading={saves[props.id]?.busy}
+          disabled={!unsaved(props.draft)}
+          onClick={() => run("theme.save")}
+        >
+          Save theme
+        </Button>
+        <Button
+          size="sm"
+          disabled={unsaved(props.draft) || saves[props.id]?.busy}
+          onClick={() => run("theme.apply", props.id)}
+        >
+          Use theme
+        </Button>
+        <Button
+          size="sm"
+          disabled={unsaved(props.draft) || saves[props.id]?.busy}
+          onClick={() => run("hub.publish", JSON.stringify({ kind: "themes", id: props.id }))}
+        >
+          Publish…
         </Button>
         <Menu
           size="sm"
@@ -229,10 +252,24 @@ function Workbench(props: { id: string; draft: Draft }) {
             menuItem("theme.apply", { arg: props.id, icon: "check", disabled: !props.draft.onDisk }),
             menuItem("theme.duplicate", { arg: props.id, icon: "copy", disabled: !props.draft.onDisk }),
             menuItem("theme.fix_contrast", { icon: "circle-check" }),
-            menuItem("theme.delete", { arg: props.id, icon: "trash", danger: true, disabled: !props.draft.onDisk }),
+            menuItem("theme.delete", {
+              arg: props.id,
+              icon: "trash",
+              danger: true,
+              label: props.draft.onDisk ? "Delete theme" : "Discard draft",
+            }),
           ]}
         />
       </header>
+      <div class="flex flex-wrap items-center gap-2 border-line border-b px-5 py-2 text-sm text-fg-muted">
+        <Badge>Live preview</Badge>
+        <span>Changes preview across Bonsai. Save to keep them, then Use theme to make it your default.</span>
+      </div>
+      <Show when={saves[props.id]?.error}>
+        <Alert class="mx-5 mt-3" variant="danger" title="Save failed">
+          {saves[props.id]?.error}
+        </Alert>
+      </Show>
       <Show when={props.draft.from}>
         {(from) => (
           <Alert class="mx-5 mt-3" title={`A copy of ${from()}`}>
@@ -245,6 +282,34 @@ function Workbench(props: { id: string; draft: Draft }) {
           <Tabs aria-label="Editor" items={items()} value={section()} onChange={(v) => setSection(v as Section)}>
             <TabPanel value="seeds">
               <SeedsPanel draft={props.draft} edit={edit} fontStatus={fontStatus} />
+            </TabPanel>
+            <TabPanel value="background">
+              <div class="flex flex-col gap-3">
+                <BackgroundFields draft={props.draft} edit={edit} />
+              </div>
+            </TabPanel>
+            <TabPanel value="details">
+              <div class="flex flex-col gap-3">
+                <TextField
+                  label="Theme name"
+                  value={props.draft.theme.name}
+                  maxLength={64}
+                  onChange={(v) => edit((d) => setInfo(d, "name", v, "name"))}
+                  onBlur={() => edit(endGroup)}
+                />
+                <TextField
+                  label="Author"
+                  description="Shown when someone imports your theme."
+                  value={props.draft.theme.author}
+                  maxLength={64}
+                  onChange={(v) => edit((d) => setInfo(d, "author", v, "author"))}
+                  onBlur={() => edit(endGroup)}
+                />
+                <p class="text-sm text-fg-muted">
+                  Save keeps this theme on your computer. Publish shares a saved version on the hub. Export a file or
+                  copy a theme code from your theme library to share it privately.
+                </p>
+              </div>
             </TabPanel>
             <TabPanel value="tokens">
               <TokensPanel
@@ -313,22 +378,6 @@ function SeedsPanel(props: { draft: Draft; edit: Edit; fontStatus: (s: FontSeed<
   )
   return (
     <div class="flex flex-col gap-3">
-      <TextField
-        size="sm"
-        label="Name"
-        value={props.draft.theme.name}
-        maxLength={64}
-        onChange={(v) => props.edit((d) => setInfo(d, "name", v, "name"))}
-        onBlur={() => props.edit(endGroup)}
-      />
-      <TextField
-        size="sm"
-        label="Author"
-        value={props.draft.theme.author}
-        maxLength={64}
-        onChange={(v) => props.edit((d) => setInfo(d, "author", v, "author"))}
-        onBlur={() => props.edit(endGroup)}
-      />
       <SegmentedControl
         size="sm"
         aria-label="Base"
@@ -368,8 +417,6 @@ function SeedsPanel(props: { draft: Draft; edit: Edit; fontStatus: (s: FontSeed<
           )}
         </For>
       </div>
-
-      <BackgroundFields draft={props.draft} edit={props.edit} />
 
       <SectionHeader title="Shape" size="group" />
       {num("contrast", "Surface contrast", 3)}
@@ -439,7 +486,8 @@ function BackgroundFields(props: { draft: Draft; edit: Edit }) {
       <TextField
         size="sm"
         label="Image URL"
-        placeholder="https://example.com/background.webp"
+        placeholder="https://example.com/background.gif"
+        description="Paste a direct HTTPS link to a PNG, JPEG, WebP or GIF. Animated GIFs play automatically."
         value={url()}
         error={error()}
         onChange={(value) => {

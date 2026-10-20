@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { applyAppearance, previewTheme, shownBackground } from "./apply"
 import { builtin } from "./builtins"
 import { BACKGROUND_DEFAULTS, readTheme } from "./theme"
@@ -41,4 +41,13 @@ describe("live theme previews", () => {
     ])
       expect(readTheme({ ...builtin("dark"), background }).ok).toBe(false)
   })
+})
+
+it("does not rewrite root styles when only a theme name changes", () => {
+  const theme = { ...builtin("dark"), background: { ...BACKGROUND_DEFAULTS, url: "https://example.com/a.gif" } }
+  previewTheme(theme)
+  const write = vi.spyOn(document.documentElement.style, "setProperty")
+  previewTheme({ ...theme, name: "Renamed" })
+  expect(write).not.toHaveBeenCalled()
+  write.mockRestore()
 })

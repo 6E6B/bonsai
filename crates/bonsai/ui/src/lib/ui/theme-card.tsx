@@ -8,7 +8,7 @@ export interface ThemeCardProps {
   tokens: Record<string, string>
   selected?: boolean
   onClick?: () => void
-  /** Optional controls beside the caption, outside the theme selection button. */
+  /** Compact controls over the preview, outside the theme selection button. */
   actions?: JSX.Element
   class?: string
 }
