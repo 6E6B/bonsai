@@ -12,13 +12,21 @@ export interface OutfitJson {
     proportion?: number
     bodyType?: number
   }
-  bodyColors: {
+  bodyColors?: {
     headColorId?: number
     torsoColorId?: number
     leftArmColorId?: number
     rightArmColorId?: number
     leftLegColorId?: number
     rightLegColorId?: number
+  }
+  bodyColor3s?: {
+    headColor3?: string
+    torsoColor3?: string
+    leftArmColor3?: string
+    rightArmColor3?: string
+    leftLegColor3?: string
+    rightLegColor3?: string
   }
   assets: { id: number; name: string; assetType: { id: number }; meta?: { order: number } }[]
 }
@@ -33,7 +41,7 @@ export interface TryOnItem {
 const num = (v: number | null) => v ?? undefined
 
 /** The engine outfit for an avatar view. Emotes aren't worn; the viewer plays them. */
-export function toOutfitJson(view: Avatar3dView): OutfitJson {
+export function toOutfitJson(view: Avatar3dView, colorHex: string[] = []): OutfitJson {
   const [head, torso, leftArm, rightArm, leftLeg, rightLeg] = view.colors
   return {
     playerAvatarType: view.rig === "R6" ? "R6" : "R15",
@@ -53,6 +61,19 @@ export function toOutfitJson(view: Avatar3dView): OutfitJson {
       leftLegColorId: leftLeg,
       rightLegColorId: rightLeg,
     },
+    ...(colorHex.length === 6 && colorHex.every(Boolean)
+      ? {
+          bodyColors: undefined,
+          bodyColor3s: {
+            headColor3: colorHex[0],
+            torsoColor3: colorHex[1],
+            leftArmColor3: colorHex[2],
+            rightArmColor3: colorHex[3],
+            leftLegColor3: colorHex[4],
+            rightLegColor3: colorHex[5],
+          },
+        }
+      : {}),
     assets: view.assets.map((a) => ({
       id: a.id,
       name: a.name,

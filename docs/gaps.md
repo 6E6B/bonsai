@@ -7,6 +7,7 @@ Remove a line when it ships.
 
 - Chat: group creation, rename and membership writes have replay coverage but still need live verification with consenting participants. The live chat smoke test only reads settings, conversations and group history.
 
+- Avatar editor search and name sorting cover the currently loaded inventory type. Global wardrobe search needs an index or an API that searches owned wearables across types.
 - Avatar: reset to default appearance. No reset endpoint in the tracker; capture what the site sends.
 - Home: event cards and banners. `/v1/events/single` and `virtual-events` exist but their response shapes aren't recorded.
 - Settings > Security: adding passkeys and security keys, and SMS codes. WebAuthn only works on roblox.com, so these link to the site. Untested live: Roblox may want a `secureAuthenticationIntent` on these calls.

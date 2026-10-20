@@ -2181,10 +2181,10 @@ async fn avatar_wear_outfits_and_rig() {
     let reqs = replay.requests().await;
     let colors = reqs
         .iter()
-        .find(|q| q.url.path() == "/avatar.roblox.com/v1/avatar/set-body-colors")
+        .find(|q| q.url.path() == "/avatar.roblox.com/v2/avatar/set-body-colors")
         .unwrap();
     let body: serde_json::Value = serde_json::from_slice(&colors.body).unwrap();
-    assert_eq!(body["torsoColorId"], 1003);
+    assert_eq!(body["torsoColor3"], "111111");
 
     assert!(c.save_outfit(ME, "  ").is_err());
     c.save_outfit(ME, "Work").unwrap();
@@ -2192,12 +2192,12 @@ async fn avatar_wear_outfits_and_rig() {
     let reqs = replay.requests().await;
     let create = reqs
         .iter()
-        .find(|q| q.url.path() == "/avatar.roblox.com/v2/outfits/create")
+        .find(|q| q.url.path() == "/avatar.roblox.com/v3/outfits/create")
         .unwrap();
     let body: serde_json::Value = serde_json::from_slice(&create.body).unwrap();
     assert_eq!(body["name"], "Work");
     assert_eq!(body["playerAvatarType"], "R6");
-    assert_eq!(body["bodyColors"]["headColorId"], 226);
+    assert_eq!(body["bodyColor3s"]["headColor3"], "F5CD30");
     assert_eq!(body["assets"].as_array().unwrap().len(), 2);
 
     c.set_rig(ME, Rig::R15);
@@ -2231,7 +2231,7 @@ async fn avatar_wear_outfits_and_rig() {
             .requests()
             .await
             .iter()
-            .filter(|q| q.url.path() == "/avatar.roblox.com/v2/outfits/24477597/update")
+            .filter(|q| q.url.path() == "/avatar.roblox.com/v3/outfits/24477597")
             .map(|q| serde_json::from_slice(&q.body).unwrap())
             .collect()
     };
@@ -2241,7 +2241,7 @@ async fn avatar_wear_outfits_and_rig() {
     let sent = updates().await;
     assert_eq!(sent[0]["name"], "2015");
     assert_eq!(sent[0]["assets"].as_array().unwrap().len(), 2);
-    assert_eq!(sent[0]["bodyColors"]["headColorId"], 226);
+    assert_eq!(sent[0]["bodyColor3s"]["headColor3"], "F5CD30");
 
     // Renaming keeps the outfit's contents.
     assert!(c.rename_outfit(ME, 24_477_597, " ").is_err());
@@ -2249,8 +2249,7 @@ async fn avatar_wear_outfits_and_rig() {
     wait_for(c, "renamed", toast("Outfit renamed.")).await;
     let sent = updates().await;
     assert_eq!(sent[1]["name"], "Old");
-    assert_eq!(sent[1]["bodyColors"]["torsoColorId"], 1003);
-    assert!(!sent[1]["assets"].as_array().unwrap().is_empty());
+    assert_eq!(sent[1], serde_json::json!({"name": "Old"}));
 
     c.delete_outfit(ME, 24_477_597);
     wait_for(c, "deleted", toast("Outfit deleted.")).await;
@@ -2279,14 +2278,25 @@ async fn avatar_wear_outfits_and_rig() {
     let reqs = replay.requests().await;
     let colors = reqs
         .iter()
-        .rfind(|q| q.url.path() == "/avatar.roblox.com/v1/avatar/set-body-colors")
+        .rfind(|q| q.url.path() == "/avatar.roblox.com/v2/avatar/set-body-colors")
         .unwrap();
     let body: serde_json::Value = serde_json::from_slice(&colors.body).unwrap();
     assert_eq!(
-        (body["leftArmColorId"].as_i64(), body["rightArmColorId"].as_i64()),
-        (Some(1003), Some(1003))
+        (body["leftArmColor3"].as_str(), body["rightArmColor3"].as_str()),
+        (Some("111111"), Some("111111"))
     );
-    assert_eq!(body["headColorId"], 226);
+    assert_eq!(body["headColor3"], "F5CD30");
+    assert!(c.set_body_color_hex(ME, vec![], "#12345").is_err());
+    c.set_body_color_hex(ME, vec![Part::Head], "123456").unwrap();
+    wait_for(c, "custom color", idle).await;
+    let reqs = replay.requests().await;
+    let painted = reqs
+        .iter()
+        .rfind(|q| q.url.path() == "/avatar.roblox.com/v2/avatar/set-body-colors")
+        .unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&painted.body).unwrap();
+    assert_eq!(body["headColor3"], "123456");
+    assert_eq!(body["torsoColor3"], "0D69AC");
 
     // Scales snap to the range Roblox allows.
     c.set_scale(ME, Scale::Height, 1.5).unwrap();

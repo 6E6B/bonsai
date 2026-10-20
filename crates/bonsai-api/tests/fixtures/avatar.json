@@ -1,7 +1,7 @@
 {
   "captured": "2026-10-14",
   "source": "GET bodies captured from avatar.roblox.com for the public Roblox account (user 156): /v1/users/156/avatar (same AvatarModelV2 as /v1/avatar), /v2/avatar/users/156/outfits and /v1/outfits/24477597/details and /v1/avatar-rules (trimmed to the wearable types). Write responses are from the tracker's avatar v1/v2 schemas. /v1/avatar-rules scales and body color palettes are live (signed out, 2026-10-14). /v1/recent-items/0/list is synthetic from the tracker schema (list type 0 is all items).",
-  "note": "Read the rules, the avatar and outfits; take an item off; wear an outfit (items, body type, colors, scales); save an outfit; switch to R15; swap a T-shirt; a wear Roblox refuses. Then replace an outfit with the current look, rename it, delete it and redraw the avatar image. Then read recent items, paint the arms and set the height. Then switch to R6 while wearing a layered jacket (synthetic). Then put an emote in slot 2 and clear it (bodies synthetic: the site returns an empty object).",
+  "note": "Read the rules, the avatar and outfits; take an item off; wear an outfit (items, body type, colors, scales); save an outfit; switch to R15; swap a T-shirt; a wear Roblox refuses. Then replace an outfit with the current look, rename it, delete it and redraw the avatar image. Then read recent items, paint the arms and set the height. Then switch to R6 while wearing a layered jacket (synthetic). Then put an emote in slot 2 and clear it (bodies synthetic: the site returns an empty object). Exact RGB avatar and color-write bodies are synthetic from avatar v2 schemas; all six parts are supplied to exercise preserving untouched colors. RGB outfit reads and write responses follow avatar v3 schemas. Rename uses a name-only PATCH.",
   "interactions": [
     {
       "request": {
@@ -1176,61 +1176,6 @@
     },
     {
       "request": {
-        "method": "GET",
-        "host": "avatar.roblox.com",
-        "path": "/v1/avatar"
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "scales": {
-            "height": 1.0,
-            "width": 1.0,
-            "head": 1.0,
-            "depth": 1.0,
-            "proportion": 0.0,
-            "bodyType": 0.0
-          },
-          "playerAvatarType": "R6",
-          "bodyColors": {
-            "headColorId": 226,
-            "torsoColorId": 1017,
-            "rightArmColorId": 26,
-            "leftArmColorId": 26,
-            "rightLegColorId": 26,
-            "leftLegColorId": 26
-          },
-          "assets": [
-            {
-              "id": 1080951,
-              "name": "Builders Club Hard Hat",
-              "assetType": {
-                "id": 8,
-                "name": "Hat"
-              },
-              "currentVersionId": 883359816
-            },
-            {
-              "id": 1142116,
-              "name": "bm-mo2.jpg",
-              "assetType": {
-                "id": 2,
-                "name": "TShirt"
-              },
-              "currentVersionId": 142362
-            }
-          ],
-          "defaultShirtApplied": false,
-          "defaultPantsApplied": false,
-          "emotes": []
-        }
-      }
-    },
-    {
-      "request": {
         "method": "POST",
         "host": "avatar.roblox.com",
         "path": "/v2/outfits/create",
@@ -1561,61 +1506,6 @@
     },
     {
       "request": {
-        "method": "GET",
-        "host": "avatar.roblox.com",
-        "path": "/v1/avatar"
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "scales": {
-            "height": 1.0,
-            "width": 1.0,
-            "head": 1.0,
-            "depth": 1.0,
-            "proportion": 0.0,
-            "bodyType": 0.0
-          },
-          "playerAvatarType": "R6",
-          "bodyColors": {
-            "headColorId": 226,
-            "torsoColorId": 1017,
-            "rightArmColorId": 26,
-            "leftArmColorId": 26,
-            "rightLegColorId": 26,
-            "leftLegColorId": 26
-          },
-          "assets": [
-            {
-              "id": 1080951,
-              "name": "Builders Club Hard Hat",
-              "assetType": {
-                "id": 8,
-                "name": "Hat"
-              },
-              "currentVersionId": 883359816
-            },
-            {
-              "id": 1142116,
-              "name": "bm-mo2.jpg",
-              "assetType": {
-                "id": 2,
-                "name": "TShirt"
-              },
-              "currentVersionId": 142362
-            }
-          ],
-          "defaultShirtApplied": false,
-          "defaultPantsApplied": false,
-          "emotes": []
-        }
-      }
-    },
-    {
-      "request": {
         "method": "POST",
         "host": "avatar.roblox.com",
         "path": "/v2/outfits/24477597/update",
@@ -1851,61 +1741,6 @@
     },
     {
       "request": {
-        "method": "GET",
-        "host": "avatar.roblox.com",
-        "path": "/v1/avatar"
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "scales": {
-            "height": 1.0,
-            "width": 1.0,
-            "head": 1.0,
-            "depth": 1.0,
-            "proportion": 0.0,
-            "bodyType": 0.0
-          },
-          "playerAvatarType": "R6",
-          "bodyColors": {
-            "headColorId": 226,
-            "torsoColorId": 1017,
-            "rightArmColorId": 26,
-            "leftArmColorId": 26,
-            "rightLegColorId": 26,
-            "leftLegColorId": 26
-          },
-          "assets": [
-            {
-              "id": 1080951,
-              "name": "Builders Club Hard Hat",
-              "assetType": {
-                "id": 8,
-                "name": "Hat"
-              },
-              "currentVersionId": 883359816
-            },
-            {
-              "id": 1142116,
-              "name": "bm-mo2.jpg",
-              "assetType": {
-                "id": 2,
-                "name": "TShirt"
-              },
-              "currentVersionId": 142362
-            }
-          ],
-          "defaultShirtApplied": false,
-          "defaultPantsApplied": false,
-          "emotes": []
-        }
-      }
-    },
-    {
-      "request": {
         "method": "POST",
         "host": "avatar.roblox.com",
         "path": "/v1/avatar/set-body-colors",
@@ -2112,6 +1947,828 @@
           "content-type": "application/json; charset=utf-8"
         },
         "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/users/1000001/avatar"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "scales": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "assets": [
+            {
+              "id": 1080951,
+              "name": "Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883359816
+            },
+            {
+              "id": 1142116,
+              "name": "bm-mo2.jpg",
+              "assetType": {
+                "id": 2,
+                "name": "TShirt"
+              },
+              "currentVersionId": 142362
+            }
+          ],
+          "defaultShirtApplied": false,
+          "defaultPantsApplied": false,
+          "emotes": [],
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "0D69AC",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/set-body-colors"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v3/outfits/24477597/details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": 24477597,
+          "universeId": 0,
+          "name": "2015",
+          "assets": [
+            {
+              "id": 119735386706067,
+              "name": "Mr. Chuckles - Head",
+              "assetType": {
+                "id": 79,
+                "name": "DynamicHead"
+              },
+              "currentVersionId": 17699434760835,
+              "supportsHeadShapes": true
+            },
+            {
+              "id": 73094282779994,
+              "name": "Mr. Chuckles - Mood",
+              "assetType": {
+                "id": 78,
+                "name": "MoodAnimation"
+              },
+              "currentVersionId": 2120416406346
+            },
+            {
+              "id": 27112025,
+              "name": "Roblox 2.0 Torso",
+              "assetType": {
+                "id": 27,
+                "name": "Torso"
+              },
+              "currentVersionId": 11201616558
+            },
+            {
+              "id": 27112052,
+              "name": "Roblox 2.0 Left Arm",
+              "assetType": {
+                "id": 29,
+                "name": "LeftArm"
+              },
+              "currentVersionId": 11201616588
+            },
+            {
+              "id": 27112039,
+              "name": "Roblox 2.0 Right Arm",
+              "assetType": {
+                "id": 28,
+                "name": "RightArm"
+              },
+              "currentVersionId": 11201616570
+            },
+            {
+              "id": 27112056,
+              "name": "Roblox 2.0 Left Leg",
+              "assetType": {
+                "id": 30,
+                "name": "LeftLeg"
+              },
+              "currentVersionId": 4414048454802
+            },
+            {
+              "id": 27112068,
+              "name": "Roblox 2.0 Right Leg",
+              "assetType": {
+                "id": 31,
+                "name": "RightLeg"
+              },
+              "currentVersionId": 67685323292678
+            },
+            {
+              "id": 13343843,
+              "name": "ROBLOX R&R&R Hoodie by 1blox",
+              "assetType": {
+                "id": 11,
+                "name": "Shirt"
+              },
+              "currentVersionId": 34200596
+            },
+            {
+              "id": 129458426,
+              "name": "Jeans",
+              "assetType": {
+                "id": 12,
+                "name": "Pants"
+              },
+              "currentVersionId": 304919540
+            },
+            {
+              "id": 11844853,
+              "name": "Turbo Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883360292
+            }
+          ],
+          "scale": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "outfitType": "Avatar",
+          "isEditable": true,
+          "moderationStatus": null,
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "111111",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "avatar.roblox.com",
+        "path": "/v3/outfits/create",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v3/outfits/24477597/details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": 24477597,
+          "universeId": 0,
+          "name": "2015",
+          "assets": [
+            {
+              "id": 119735386706067,
+              "name": "Mr. Chuckles - Head",
+              "assetType": {
+                "id": 79,
+                "name": "DynamicHead"
+              },
+              "currentVersionId": 17699434760835,
+              "supportsHeadShapes": true
+            },
+            {
+              "id": 73094282779994,
+              "name": "Mr. Chuckles - Mood",
+              "assetType": {
+                "id": 78,
+                "name": "MoodAnimation"
+              },
+              "currentVersionId": 2120416406346
+            },
+            {
+              "id": 27112025,
+              "name": "Roblox 2.0 Torso",
+              "assetType": {
+                "id": 27,
+                "name": "Torso"
+              },
+              "currentVersionId": 11201616558
+            },
+            {
+              "id": 27112052,
+              "name": "Roblox 2.0 Left Arm",
+              "assetType": {
+                "id": 29,
+                "name": "LeftArm"
+              },
+              "currentVersionId": 11201616588
+            },
+            {
+              "id": 27112039,
+              "name": "Roblox 2.0 Right Arm",
+              "assetType": {
+                "id": 28,
+                "name": "RightArm"
+              },
+              "currentVersionId": 11201616570
+            },
+            {
+              "id": 27112056,
+              "name": "Roblox 2.0 Left Leg",
+              "assetType": {
+                "id": 30,
+                "name": "LeftLeg"
+              },
+              "currentVersionId": 4414048454802
+            },
+            {
+              "id": 27112068,
+              "name": "Roblox 2.0 Right Leg",
+              "assetType": {
+                "id": 31,
+                "name": "RightLeg"
+              },
+              "currentVersionId": 67685323292678
+            },
+            {
+              "id": 13343843,
+              "name": "ROBLOX R&R&R Hoodie by 1blox",
+              "assetType": {
+                "id": 11,
+                "name": "Shirt"
+              },
+              "currentVersionId": 34200596
+            },
+            {
+              "id": 129458426,
+              "name": "Jeans",
+              "assetType": {
+                "id": 12,
+                "name": "Pants"
+              },
+              "currentVersionId": 304919540
+            },
+            {
+              "id": 11844853,
+              "name": "Turbo Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883360292
+            }
+          ],
+          "scale": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "outfitType": "Avatar",
+          "isEditable": true,
+          "moderationStatus": null,
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "111111",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "avatar.roblox.com",
+        "path": "/v3/outfits/24477597",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v3/outfits/24477597/details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": 24477597,
+          "universeId": 0,
+          "name": "2015",
+          "assets": [
+            {
+              "id": 119735386706067,
+              "name": "Mr. Chuckles - Head",
+              "assetType": {
+                "id": 79,
+                "name": "DynamicHead"
+              },
+              "currentVersionId": 17699434760835,
+              "supportsHeadShapes": true
+            },
+            {
+              "id": 73094282779994,
+              "name": "Mr. Chuckles - Mood",
+              "assetType": {
+                "id": 78,
+                "name": "MoodAnimation"
+              },
+              "currentVersionId": 2120416406346
+            },
+            {
+              "id": 27112025,
+              "name": "Roblox 2.0 Torso",
+              "assetType": {
+                "id": 27,
+                "name": "Torso"
+              },
+              "currentVersionId": 11201616558
+            },
+            {
+              "id": 27112052,
+              "name": "Roblox 2.0 Left Arm",
+              "assetType": {
+                "id": 29,
+                "name": "LeftArm"
+              },
+              "currentVersionId": 11201616588
+            },
+            {
+              "id": 27112039,
+              "name": "Roblox 2.0 Right Arm",
+              "assetType": {
+                "id": 28,
+                "name": "RightArm"
+              },
+              "currentVersionId": 11201616570
+            },
+            {
+              "id": 27112056,
+              "name": "Roblox 2.0 Left Leg",
+              "assetType": {
+                "id": 30,
+                "name": "LeftLeg"
+              },
+              "currentVersionId": 4414048454802
+            },
+            {
+              "id": 27112068,
+              "name": "Roblox 2.0 Right Leg",
+              "assetType": {
+                "id": 31,
+                "name": "RightLeg"
+              },
+              "currentVersionId": 67685323292678
+            },
+            {
+              "id": 13343843,
+              "name": "ROBLOX R&R&R Hoodie by 1blox",
+              "assetType": {
+                "id": 11,
+                "name": "Shirt"
+              },
+              "currentVersionId": 34200596
+            },
+            {
+              "id": 129458426,
+              "name": "Jeans",
+              "assetType": {
+                "id": 12,
+                "name": "Pants"
+              },
+              "currentVersionId": 304919540
+            },
+            {
+              "id": 11844853,
+              "name": "Turbo Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883360292
+            }
+          ],
+          "scale": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "outfitType": "Avatar",
+          "isEditable": true,
+          "moderationStatus": null,
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "111111",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PATCH",
+        "host": "avatar.roblox.com",
+        "path": "/v3/outfits/24477597",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/users/1000001/avatar"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "scales": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "assets": [
+            {
+              "id": 1080951,
+              "name": "Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883359816
+            },
+            {
+              "id": 1142116,
+              "name": "bm-mo2.jpg",
+              "assetType": {
+                "id": 2,
+                "name": "TShirt"
+              },
+              "currentVersionId": 142362
+            }
+          ],
+          "defaultShirtApplied": false,
+          "defaultPantsApplied": false,
+          "emotes": [],
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "0D69AC",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/users/1000001/avatar"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "scales": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "assets": [
+            {
+              "id": 1080951,
+              "name": "Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883359816
+            },
+            {
+              "id": 1142116,
+              "name": "bm-mo2.jpg",
+              "assetType": {
+                "id": 2,
+                "name": "TShirt"
+              },
+              "currentVersionId": 142362
+            }
+          ],
+          "defaultShirtApplied": false,
+          "defaultPantsApplied": false,
+          "emotes": [],
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "0D69AC",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/users/1000001/avatar"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "scales": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "assets": [
+            {
+              "id": 1080951,
+              "name": "Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883359816
+            },
+            {
+              "id": 1142116,
+              "name": "bm-mo2.jpg",
+              "assetType": {
+                "id": 2,
+                "name": "TShirt"
+              },
+              "currentVersionId": 142362
+            }
+          ],
+          "defaultShirtApplied": false,
+          "defaultPantsApplied": false,
+          "emotes": [],
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "0D69AC",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/users/1000001/avatar"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "scales": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "assets": [
+            {
+              "id": 1080951,
+              "name": "Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883359816
+            },
+            {
+              "id": 1142116,
+              "name": "bm-mo2.jpg",
+              "assetType": {
+                "id": 2,
+                "name": "TShirt"
+              },
+              "currentVersionId": 142362
+            }
+          ],
+          "defaultShirtApplied": false,
+          "defaultPantsApplied": false,
+          "emotes": [],
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "0D69AC",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/users/1000001/avatar"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "scales": {
+            "height": 1.0,
+            "width": 1.0,
+            "head": 1.0,
+            "depth": 1.0,
+            "proportion": 0.0,
+            "bodyType": 0.0
+          },
+          "playerAvatarType": "R6",
+          "assets": [
+            {
+              "id": 1080951,
+              "name": "Builders Club Hard Hat",
+              "assetType": {
+                "id": 8,
+                "name": "Hat"
+              },
+              "currentVersionId": 883359816
+            },
+            {
+              "id": 1142116,
+              "name": "bm-mo2.jpg",
+              "assetType": {
+                "id": 2,
+                "name": "TShirt"
+              },
+              "currentVersionId": 142362
+            }
+          ],
+          "defaultShirtApplied": false,
+          "defaultPantsApplied": false,
+          "emotes": [],
+          "bodyColor3s": {
+            "headColor3": "F5CD30",
+            "torsoColor3": "0D69AC",
+            "leftArmColor3": "F5CD30",
+            "rightArmColor3": "F5CD30",
+            "leftLegColor3": "A1C48C",
+            "rightLegColor3": "A1C48C"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/set-body-colors"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "avatar.roblox.com",
+        "path": "/v2/avatar/set-body-colors"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "success": true
+        }
       }
     }
   ]

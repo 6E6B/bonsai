@@ -53,6 +53,18 @@ describe("toOutfitJson", () => {
     expect(j.scale.bodyType).toBe(0.3)
   })
 
+  it("passes exact custom colors through to the 3D engine", () => {
+    const colors = ["#123456", "#ABCDEF", "#111111", "#222222", "#333333", "#444444"]
+    const rgb = toOutfitJson(view(), colors)
+    expect(rgb.bodyColors).toBeUndefined()
+    expect(rgb.bodyColor3s?.headColor3).toBe("#123456")
+    expect(rgb.bodyColor3s?.rightLegColor3).toBe("#444444")
+    expect(subjectKey({ kind: "outfit", outfit: rgb, wear: [] })).not.toBe(
+      subjectKey({ kind: "outfit", outfit: toOutfitJson(view()), wear: [] }),
+    )
+    expect(toOutfitJson(view(), [""]).bodyColor3s).toBeUndefined()
+  })
+
   it("treats anything but R6 as R15", () => {
     expect(toOutfitJson(view({ rig: "R6" })).playerAvatarType).toBe("R6")
     expect(toOutfitJson(view({ rig: "" })).playerAvatarType).toBe("R15")

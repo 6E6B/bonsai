@@ -17,10 +17,12 @@ import { emptyList, ListState } from "~/lib/list-state"
 import { itemMenu } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { ItemTile, TILE_WIDTH, tileGrid } from "~/lib/tiles"
+import { ItemTile, TILE_WIDTH } from "~/lib/tiles"
 import {
   Button,
+  ColorPicker,
   ContextMenu,
+  EmptyState,
   IconButton,
   ListItem,
   Menu,
@@ -31,7 +33,6 @@ import {
   Select,
   Slider,
   Swatch,
-  Switch,
   TabPanel,
   Tabs,
   TextField,
@@ -41,6 +42,9 @@ import {
   VirtualGrid,
 } from "~/lib/ui"
 
+import { matchesWear, named, sortOptions } from "./wardrobe"
+
+const WARDROBE = "wardrobe"
 const OUTFITS = "outfits"
 const RECENT = "recent"
 const BODY = "body"
@@ -79,13 +83,25 @@ export default function AvatarEditor() {
     (): Paged<OutfitView> => ({ list: emptyList<OutfitView>(), moreKey: "" }),
   )
   const sections = useLive(() => shell.active, commands.wardrobe, emptyList<WardrobeSection>)
-  const [section, setSection] = createSignal(OUTFITS)
+  const [section, setSection] = createSignal(WARDROBE)
   const tabs = () => [
+    { value: WARDROBE, label: "Wardrobe" },
     { value: OUTFITS, label: "Outfits" },
-    { value: RECENT, label: "Recent" },
     { value: BODY, label: "Body" },
+  ]
+  const [category, setCategory] = createSignal(RECENT)
+  const categories = () => [
+    { value: RECENT, label: "Recent" },
     ...sections.items.map((s) => ({ value: s.name, label: s.name })),
   ]
+  createEffect(() => {
+    shell.active
+    setSection(WARDROBE)
+    setCategory(RECENT)
+    setOutfitQuery("")
+    setOutfitSort("default")
+    setOutfitFilter("all")
+  })
   useSubTabs(tabs, section, setSection)
   const prompt = usePrompt()
   const saveOutfit = async () => {
@@ -115,10 +131,15 @@ export default function AvatarEditor() {
     }),
   ]
   const [outfitQuery, setOutfitQuery] = createSignal("")
-  const shownOutfits = createMemo(() => {
-    const q = outfitQuery().trim().toLowerCase()
-    return outfits.list.items.filter((o) => !q || o.name.toLowerCase().includes(q))
-  })
+  const [outfitSort, setOutfitSort] = createSignal("default")
+  const [outfitFilter, setOutfitFilter] = createSignal("all")
+  const shownOutfits = createMemo(() =>
+    named(
+      outfits.list.items.filter((o) => outfitFilter() === "all" || (outfitFilter() === "editable") === o.editable),
+      outfitQuery(),
+      outfitSort(),
+    ),
+  )
   const previewMenu = (): MenuEntry[] => [
     { label: "Save as outfit…", icon: "plus", onSelect: () => void saveOutfit() },
     menuItem("avatar.rig", { label: view.rig === "R6" ? "Switch to R15" : "Switch to R6", icon: "avatar" }),
@@ -143,9 +164,16 @@ export default function AvatarEditor() {
         </>
       }
     >
-      <div class="flex items-start gap-6">
-        <aside class="sticky top-4 flex w-64 shrink-0 flex-col gap-3">
-          <AvatarViewer source={{ kind: "me" }} image={preview()} alt="Your avatar" menu={previewMenu()} controls />
+      <div class="flex flex-col items-start gap-6 lg:flex-row">
+        <aside class="flex w-64 max-w-full shrink-0 flex-col gap-3 lg:sticky lg:top-4">
+          <AvatarViewer
+            colorHex={view.colors.map((c) => c.hex)}
+            source={{ kind: "me" }}
+            image={preview()}
+            alt="Your avatar"
+            menu={previewMenu()}
+            controls
+          />
           <div class="flex items-center justify-between">
             <SegmentedControl
               aria-label="Body type"
@@ -265,20 +293,57 @@ export default function AvatarEditor() {
           </Show>
         </aside>
 
-        <div class="flex min-w-0 flex-1 flex-col gap-3">
+        <div class="flex w-full min-w-0 flex-1 flex-col gap-3">
           <Tabs aria-label="Wardrobe" items={tabs()} value={section()} onChange={setSection}>
             <TabPanel value={OUTFITS}>
               <div class="flex flex-col gap-3">
-                <TextField
-                  icon="search"
-                  aria-label="Filter outfits"
-                  placeholder="Filter"
-                  value={outfitQuery()}
-                  onChange={setOutfitQuery}
+                <div class="flex flex-wrap items-center gap-2">
+                  <TextField
+                    class="min-w-40 flex-1"
+                    icon="search"
+                    aria-label="Search outfits"
+                    placeholder="Search outfits"
+                    value={outfitQuery()}
+                    onChange={setOutfitQuery}
+                  />
+                  <Select
+                    aria-label="Outfit source"
+                    value={outfitFilter()}
+                    onChange={setOutfitFilter}
+                    options={[
+                      { value: "all", label: "All outfits" },
+                      { value: "editable", label: "My outfits" },
+                      { value: "bundle", label: "From bundles" },
+                    ]}
+                  />
+                  <Select
+                    aria-label="Sort outfits"
+                    value={outfitSort()}
+                    onChange={setOutfitSort}
+                    options={[
+                      { value: "default", label: "Default order" },
+                      ...sortOptions.filter((s) => s.value.startsWith("name")),
+                    ]}
+                  />
+                </div>
+                <ResultStatus
+                  shown={shownOutfits().length}
+                  loaded={outfits.list.items.length}
+                  more={outfits.list.more}
                 />
                 <ListState list={outfits.list} icon="avatar" empty="No outfits yet" more={outfits.moreKey}>
-                  <div class={tileGrid}>
-                    <For each={shownOutfits()}>
+                  <Show
+                    when={shownOutfits().length}
+                    fallback={
+                      <NoMatches
+                        reset={() => {
+                          setOutfitQuery("")
+                          setOutfitFilter("all")
+                        }}
+                      />
+                    }
+                  >
+                    <VirtualGrid items={shownOutfits()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
                       {(o) => (
                         <ContextMenu items={outfitMenu(o)}>
                           <Tile
@@ -290,29 +355,53 @@ export default function AvatarEditor() {
                           />
                         </ContextMenu>
                       )}
-                    </For>
-                  </div>
+                    </VirtualGrid>
+                  </Show>
                 </ListState>
               </div>
             </TabPanel>
-            <TabPanel value={RECENT}>
-              <Recent />
+            <TabPanel value={WARDROBE}>
+              <Tabs aria-label="Wardrobe category" items={categories()} value={category()} onChange={setCategory}>
+                <TabPanel value={RECENT}>
+                  <Recent />
+                </TabPanel>
+                <For each={sections.items}>
+                  {(s) => (
+                    <TabPanel value={s.name}>
+                      <Section section={s} worn={view.wearing.map((w) => w.id)} />
+                    </TabPanel>
+                  )}
+                </For>
+              </Tabs>
             </TabPanel>
             <TabPanel value={BODY}>
               <Body view={view} />
             </TabPanel>
-            <For each={sections.items}>
-              {(s) => (
-                <TabPanel value={s.name}>
-                  <Section section={s} worn={view.wearing.map((w) => w.id)} />
-                </TabPanel>
-              )}
-            </For>
           </Tabs>
           <Show when={sections.error}>{(e) => <span class="text-sm text-fg-muted">{e()}</span>}</Show>
         </div>
       </div>
     </Page>
+  )
+}
+
+function ResultStatus(props: { shown: number; loaded: number; more?: boolean }) {
+  return (
+    <p class="text-xs text-fg-muted" role="status">
+      {props.shown} of {props.loaded} loaded
+      <Show when={props.more}> · More items available. Search and name sorting cover loaded items.</Show>
+    </p>
+  )
+}
+
+function NoMatches(props: { reset: () => void }) {
+  return (
+    <div class="flex flex-col items-center gap-2 py-6">
+      <EmptyState icon="search" title="No matches" description="Try another search or clear your filters." />
+      <Button variant="ghost" size="sm" onClick={props.reset}>
+        Clear filters
+      </Button>
+    </div>
   )
 }
 
@@ -322,59 +411,94 @@ function Section(props: { section: WardrobeSection; worn: number[] }) {
     if (!props.section.slots.some((s) => s.value === slot())) setSlot(props.section.slots[0]?.value ?? "")
   })
   const [query, setQuery] = createSignal("")
-  const [wornOnly, setWornOnly] = createSignal(false)
+  const [sort, setSort] = createSignal("newest")
+  const [wearFilter, setWearFilter] = createSignal("all")
+  const [kind, setKind] = createSignal("all")
+  const reset = () => {
+    setQuery("")
+    setWearFilter("all")
+    setKind("all")
+  }
   const items = useLive(
-    () => [shell.active, slot()] as const,
-    ([me, s]) =>
+    () => [shell.active, slot(), sort() === "oldest"] as const,
+    ([me, s, oldest]) =>
       me !== null && s
-        ? commands.inventoryItems(me, s, false)
+        ? commands.inventoryItems(me, s, oldest)
         : Promise.resolve({ list: emptyList<ItemCard>(), moreKey: "" }),
     (): Paged<ItemCard> => ({ list: emptyList<ItemCard>(), moreKey: "" }),
   )
-  const shown = createMemo(() => {
-    const q = query().trim().toLowerCase()
-    return items.list.items.filter(
-      (i) => (!q || i.name.toLowerCase().includes(q)) && (!wornOnly() || props.worn.includes(i.id)),
-    )
-  })
+  const shown = createMemo(() =>
+    named(
+      items.list.items.filter(
+        (i) =>
+          matchesWear(i.id, props.worn, wearFilter()) &&
+          (kind() !== "limited" || i.limited) &&
+          (kind() !== "copies" || i.copies > 1),
+      ),
+      query(),
+      sort(),
+    ),
+  )
   return (
     <div class="flex flex-col gap-3">
-      <div class="flex items-center gap-3">
-        <TextField
-          class="flex-1"
-          icon="search"
-          aria-label="Filter wardrobe"
-          placeholder="Filter"
-          value={query()}
-          onChange={setQuery}
-        />
-        <Show when={props.section.slots.length > 1}>
-          <Select aria-label="Type" options={props.section.slots} value={slot()} onChange={setSlot} />
-        </Show>
-        <Switch checked={wornOnly()} onChange={setWornOnly}>
-          Worn only
-        </Switch>
-      </div>
-      <ListState list={items.list} icon="avatar" empty="Nothing here" more={items.moreKey}>
-        <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
-          {(i) => (
-            <ItemTile
-              item={i}
-              selected={props.worn.includes(i.id)}
-              onClick={() => run("avatar.wear", `${i.id}:${slotType(slot())}`)}
-              menu={{
-                actions: [
-                  menuItem("avatar.wear", {
-                    arg: `${i.id}:${slotType(slot())}`,
-                    icon: "avatar",
-                    label: props.worn.includes(i.id) ? "Take off" : "Wear",
-                  }),
-                ],
-              }}
+      <Tabs aria-label={`${props.section.name} type`} items={props.section.slots} value={slot()} onChange={setSlot}>
+        <TabPanel value={slot()} class="flex flex-col gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <TextField
+              class="min-w-40 flex-1"
+              icon="search"
+              aria-label="Search wardrobe"
+              placeholder={`Search ${props.section.slots.find((s) => s.value === slot())?.label.toLowerCase() ?? "items"}`}
+              value={query()}
+              onChange={setQuery}
             />
-          )}
-        </VirtualGrid>
-      </ListState>
+            <Select aria-label="Sort wardrobe" options={sortOptions} value={sort()} onChange={setSort} />
+            <Select
+              aria-label="Equipped filter"
+              value={wearFilter()}
+              onChange={setWearFilter}
+              options={[
+                { value: "all", label: "All items" },
+                { value: "worn", label: "Wearing" },
+                { value: "unworn", label: "Not wearing" },
+              ]}
+            />
+            <Select
+              aria-label="Item filter"
+              value={kind()}
+              onChange={setKind}
+              options={[
+                { value: "all", label: "Any item" },
+                { value: "limited", label: "Limited" },
+                { value: "copies", label: "Multiple copies" },
+              ]}
+            />
+          </div>
+          <ResultStatus shown={shown().length} loaded={items.list.items.length} more={items.list.more} />
+          <ListState list={items.list} icon="avatar" empty="No items in this category" more={items.moreKey}>
+            <Show when={shown().length} fallback={<NoMatches reset={reset} />}>
+              <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+                {(i) => (
+                  <ItemTile
+                    item={i}
+                    selected={props.worn.includes(i.id)}
+                    onClick={() => run("avatar.wear", `${i.id}:${slotType(slot())}`)}
+                    menu={{
+                      actions: [
+                        menuItem("avatar.wear", {
+                          arg: `${i.id}:${slotType(slot())}`,
+                          icon: "avatar",
+                          label: props.worn.includes(i.id) ? "Take off" : "Wear",
+                        }),
+                      ],
+                    }}
+                  />
+                )}
+              </VirtualGrid>
+            </Show>
+          </ListState>
+        </TabPanel>
+      </Tabs>
     </div>
   )
 }
@@ -382,39 +506,91 @@ function Section(props: { section: WardrobeSection; worn: number[] }) {
 /** Items and outfits worn lately. Clicking wears them again. */
 function Recent() {
   const recent = useLive(() => shell.active, commands.recentItems, emptyList<RecentView>)
+  const [query, setQuery] = createSignal("")
+  const [kind, setKind] = createSignal("all")
+  const [sort, setSort] = createSignal("recent")
+  const shown = createMemo(() =>
+    named(
+      recent.items.filter((r) => kind() === "all" || (kind() === "outfits") === r.outfit),
+      query(),
+      sort(),
+    ),
+  )
   const wear = (r: RecentView) => (r.outfit ? run("avatar.outfit", r.id) : run("avatar.wear", `${r.id}:${r.typeId}`))
   return (
-    <ListState list={recent} icon="avatar" empty="Nothing worn lately">
-      <div class={tileGrid}>
-        <For each={recent.items}>
-          {(r) => (
-            <ContextMenu
-              items={
-                r.outfit
-                  ? [menuItem("avatar.outfit", { arg: r.id, label: "Wear", icon: "avatar" })]
-                  : itemMenu(Number(r.id), false, r.typeId, {
-                      actions: [
-                        menuItem("avatar.wear", {
-                          arg: `${r.id}:${r.typeId}`,
-                          label: "Wear or take off",
-                          icon: "avatar",
-                        }),
-                      ],
-                    })
-              }
-            >
-              <Tile
-                title={r.name}
-                subtitle={r.outfit ? "Outfit" : r.typeName}
-                src={thumbUrl(r.outfit ? "outfit" : "asset", r.id)}
-                fallback="avatar"
-                onClick={() => void wear(r)}
-              />
-            </ContextMenu>
-          )}
-        </For>
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <TextField
+          class="min-w-40 flex-1"
+          icon="search"
+          aria-label="Search recent items"
+          placeholder="Search recent items"
+          value={query()}
+          onChange={setQuery}
+        />
+        <Select
+          aria-label="Recent item type"
+          value={kind()}
+          onChange={setKind}
+          options={[
+            { value: "all", label: "Items and outfits" },
+            { value: "items", label: "Items" },
+            { value: "outfits", label: "Outfits" },
+          ]}
+        />
+        <Select
+          aria-label="Sort recent items"
+          value={sort()}
+          onChange={setSort}
+          options={[
+            { value: "recent", label: "Recently worn" },
+            ...sortOptions.filter((s) => s.value.startsWith("name")),
+          ]}
+        />
       </div>
-    </ListState>
+      <ResultStatus shown={shown().length} loaded={recent.items.length} />
+      <ListState list={recent} icon="avatar" empty="Nothing worn lately">
+        <Show
+          when={shown().length}
+          fallback={
+            <NoMatches
+              reset={() => {
+                setQuery("")
+                setKind("all")
+              }}
+            />
+          }
+        >
+          <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+            {(r) => (
+              <ContextMenu
+                items={
+                  r.outfit
+                    ? [menuItem("avatar.outfit", { arg: r.id, label: "Wear", icon: "avatar" })]
+                    : itemMenu(Number(r.id), false, r.typeId, {
+                        actions: [
+                          menuItem("avatar.wear", {
+                            arg: `${r.id}:${r.typeId}`,
+                            label: "Wear or take off",
+                            icon: "avatar",
+                          }),
+                        ],
+                      })
+                }
+              >
+                <Tile
+                  title={r.name}
+                  subtitle={r.outfit ? "Outfit" : r.typeName}
+                  src={thumbUrl(r.outfit ? "outfit" : "asset", r.id)}
+                  fallback="avatar"
+                  onClick={() => void wear(r)}
+                />
+              </ContextMenu>
+            )}
+          </VirtualGrid>
+        </Show>
+      </ListState>
+    </div>
   )
 }
 
@@ -431,63 +607,160 @@ function Body(props: { view: AvatarView }) {
   const [parts, setParts] = createSignal<string[]>([])
   const togglePart = (p: string) => setParts((ps) => (ps.includes(p) ? ps.filter((x) => x !== p) : [...ps, p]))
   const target = () => (parts().length ? parts() : props.view.colors.map((c) => c.part))
-  const current = (id: number) => target().every((p) => props.view.colors.find((c) => c.part === p)?.color === id)
+  const current = (id: number) => {
+    const swatch = palette.find((s) => s.id === id)
+    return (
+      !!swatch &&
+      target().length > 0 &&
+      target().every((p) => props.view.colors.find((c) => c.part === p)?.hex.toLowerCase() === swatch.hex.toLowerCase())
+    )
+  }
   const paint = (id: number) => run("avatar.color", parts().length ? `${parts().join(",")}:${id}` : String(id))
-  const basic = () => palette.filter((s) => s.basic)
-  const rest = () => palette.filter((s) => !s.basic)
+  const [tab, setTab] = createSignal("colors")
+  const [mode, setMode] = createSignal("basic")
+  const [query, setQuery] = createSignal("")
+  const [custom, setCustom] = createSignal("")
+  const selectedColor = () => props.view.colors.find((c) => target().includes(c.part))?.hex ?? ""
+  const mixed = () =>
+    new Set(props.view.colors.filter((c) => target().includes(c.part)).map((c) => c.hex.toLowerCase())).size > 1
+  const shownPalette = () =>
+    palette.filter(
+      (s) =>
+        (mode() !== "basic" || s.basic) &&
+        (!query().trim() || `${s.name} ${s.hex} ${s.id}`.toLowerCase().includes(query().trim().toLowerCase())),
+    )
+  const paintCustom = () => {
+    const hex = custom() || selectedColor()
+    if (hex) void run("avatar.color", parts().length ? `${parts().join(",")}:${hex}` : hex)
+  }
+  createEffect(() => {
+    shell.active
+    setParts([])
+    setCustom("")
+    setQuery("")
+  })
+  createEffect(() => {
+    parts()
+    setCustom("")
+  })
   return (
-    <div class="flex flex-col gap-6">
-      <section class="flex flex-col gap-3">
-        <SectionHeader title="Body colors" meta={parts().length ? "Selected parts" : "All parts"} size="group" />
-        <div class="flex flex-wrap gap-2">
-          <For each={props.view.colors}>
-            {(c) => (
-              <Button
-                size="sm"
-                variant={parts().includes(c.part) ? "primary" : "secondary"}
-                aria-pressed={parts().includes(c.part)}
-                onClick={() => togglePart(c.part)}
-              >
-                <Swatch display color={c.hex} label={c.label} />
-                {c.label}
-              </Button>
-            )}
-          </For>
-          <Show when={parts().length}>
-            <Button size="sm" variant="ghost" onClick={() => setParts([])}>
+    <Tabs
+      aria-label="Body settings"
+      items={[
+        { value: "colors", label: "Colors" },
+        { value: "scales", label: "Scale" },
+      ]}
+      value={tab()}
+      onChange={setTab}
+    >
+      <TabPanel value="colors">
+        <section class="flex flex-col gap-3">
+          <SectionHeader title="Body colors" meta={parts().length ? "Selected parts" : "All parts"} size="group" />
+          <p class="text-sm text-fg-muted">Choose all parts or select individual parts to color together.</p>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={parts().length ? "secondary" : "primary"}
+              aria-pressed={!parts().length}
+              onClick={() => setParts([])}
+            >
               All parts
             </Button>
-          </Show>
-        </div>
-        <div class="flex flex-wrap gap-1.5">
-          <For each={basic()}>
-            {(s) => <Swatch color={s.hex} label={s.name} selected={current(s.id)} onClick={() => void paint(s.id)} />}
-          </For>
-        </div>
-        <Show when={rest().length}>
-          <div class="flex flex-wrap gap-1.5">
-            <For each={rest()}>
-              {(s) => <Swatch color={s.hex} label={s.name} selected={current(s.id)} onClick={() => void paint(s.id)} />}
+            <For each={props.view.colors}>
+              {(c) => (
+                <Button
+                  size="sm"
+                  variant={parts().includes(c.part) ? "primary" : "secondary"}
+                  aria-pressed={parts().includes(c.part)}
+                  onClick={() => togglePart(c.part)}
+                >
+                  <Swatch display color={c.hex} label={c.label} />
+                  {c.label}
+                </Button>
+              )}
             </For>
           </div>
-        </Show>
-      </section>
-      <section class="flex flex-col gap-3">
-        <SectionHeader title="Scales" meta={props.view.rig === "R6" ? "R15 only" : undefined} size="group" />
-        <div class="grid grid-cols-2 gap-x-8 gap-y-4">
-          <For each={props.view.scales}>{(s) => <ScaleSlider scale={s} />}</For>
-        </div>
-      </section>
-    </div>
+          <div class="flex items-center gap-2 text-sm text-fg-muted">
+            <Show
+              when={mixed()}
+              fallback={
+                <>
+                  <Swatch display color={selectedColor()} label="Current color" />
+                  {selectedColor()}
+                </>
+              }
+            >
+              Mixed colors
+            </Show>
+          </div>
+          <SegmentedControl
+            aria-label="Color mode"
+            options={[
+              { value: "basic", label: "Basic" },
+              { value: "all", label: "All colors" },
+              { value: "custom", label: "Custom" },
+            ]}
+            value={mode()}
+            onChange={setMode}
+          />
+          <Show
+            when={mode() !== "custom"}
+            fallback={
+              <div class="flex max-w-80 flex-col gap-3">
+                <ColorPicker label="Custom body color" value={custom() || selectedColor()} onChange={setCustom} />
+                <Button disabled={!props.view.colors.length || !custom()} onClick={paintCustom}>
+                  Apply to{" "}
+                  {parts().length
+                    ? `${parts().length} selected ${parts().length === 1 ? "part" : "parts"}`
+                    : "all parts"}
+                </Button>
+              </div>
+            }
+          >
+            <TextField
+              icon="search"
+              aria-label="Search colors"
+              placeholder="Search by name, hex or color ID"
+              value={query()}
+              onChange={setQuery}
+            />
+            <div class="flex max-w-xl flex-wrap gap-1.5">
+              <For each={shownPalette()}>
+                {(s) => (
+                  <Swatch
+                    color={s.hex}
+                    label={s.name}
+                    selected={current(s.id) && !mixed()}
+                    onClick={() => void paint(s.id)}
+                  />
+                )}
+              </For>
+            </div>
+            <Show when={palette.length && !shownPalette().length}>
+              <EmptyState icon="search" title="No colors match" />
+            </Show>
+          </Show>
+        </section>
+      </TabPanel>
+      <TabPanel value="scales">
+        <section class="flex flex-col gap-3">
+          <SectionHeader title="Scales" meta={props.view.rig === "R6" ? "R15 only" : undefined} size="group" />
+          <div class="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+            <For each={props.view.scales}>{(s) => <ScaleSlider scale={s} disabled={props.view.rig !== "R15"} />}</For>
+          </div>
+        </section>
+      </TabPanel>
+    </Tabs>
   )
 }
 
-function ScaleSlider(props: { scale: ScaleView }) {
+function ScaleSlider(props: { scale: ScaleView; disabled: boolean }) {
   // Follows the slider while dragging; the avatar catches up after the write.
   const [value, setValue] = createSignal(props.scale.value ?? 0)
   createEffect(() => setValue(props.scale.value ?? 0))
   return (
     <Slider
+      disabled={props.disabled}
       label={props.scale.label}
       value={value()}
       min={props.scale.min ?? 0}

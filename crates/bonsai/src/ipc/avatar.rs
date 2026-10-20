@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use bonsai_core::avatar::{BodyColors, Look, Part, Rig, Scale};
+use bonsai_core::avatar::{Look, Part, Rig, Scale};
 use bonsai_core::commands::CommandId;
 use bonsai_core::inventory::InvSlot;
 use bonsai_core::market::ItemRef;
@@ -101,14 +101,18 @@ fn scale_label(s: Scale) -> &'static str {
     }
 }
 
-fn part_colors(c: BodyColors, hex: impl Fn(i32) -> String) -> Vec<PartColor> {
+fn part_colors(look: &Look, hex: impl Fn(i32) -> String) -> Vec<PartColor> {
     Part::ALL
         .iter()
         .map(|&p| PartColor {
             part: p.key().to_owned(),
             label: part_label(p).to_owned(),
-            color: c.get(p),
-            hex: hex(c.get(p)),
+            color: look.colors.get(p),
+            hex: look
+                .color_hex
+                .get(p.key())
+                .cloned()
+                .unwrap_or_else(|| hex(look.colors.get(p))),
         })
         .collect()
 }
@@ -126,7 +130,7 @@ pub fn avatar(core: State<'_, Arc<Core>>) -> AvatarView {
             .map(|s| s.hex.clone())
             .unwrap_or_default()
     };
-    let colors = look.map(|l| part_colors(l.colors, hex)).unwrap_or_default();
+    let colors = look.map(|l| part_colors(l, hex)).unwrap_or_default();
     let scales = match (look, rules.as_deref()) {
         (Some(l), Some(rules)) => Scale::ALL
             .iter()
@@ -336,7 +340,7 @@ fn look_view(core: &Core, r: Res<Look>) -> LookView {
                 }
             })
             .collect(),
-        colors: part_colors(look.colors, hex),
+        colors: part_colors(look, hex),
     }
 }
 
@@ -495,7 +499,13 @@ pub(super) fn run(
                 ),
                 None => (Vec::new(), text),
             };
-            let color = color.trim().parse().map_err(|_| "Not a color id.".to_owned())?;
+            if color.trim().starts_with('#') {
+                return core.set_body_color_hex(a, parts, color);
+            }
+            let color = color
+                .trim()
+                .parse()
+                .map_err(|_| "Use a color id or #RRGGBB.".to_owned())?;
             core.set_body_color(a, parts, color)
         })(),
         CommandId::SetScale => (|| {
