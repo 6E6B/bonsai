@@ -501,7 +501,7 @@ commands! {
     RenameOutfit => "avatar.rename_outfit", "Rename outfit (id, then name)", ["outfit", "rename", "name", "avatar"], Text, Write(Harmless), [];
     DeleteOutfit => "avatar.delete_outfit", "Delete outfit", ["outfit", "delete", "remove", "avatar"], Outfit, Write(Harmless), [];
     MoveLayer => "avatar.layer", "Move layered clothing up or down (item id, then up or down)", ["layer", "order", "layered clothing", "on top", "under", "avatar"], Text, Write(Harmless), [];
-    SetBodyColor => "avatar.color", "Set body color (color id, or part:color id)", ["skin", "color", "colour", "tone", "body", "avatar"], Text, Write(Harmless), [];
+    SetBodyColor => "avatar.color", "Set body color (color id or #RRGGBB, optionally part:color)", ["skin", "color", "colour", "tone", "body", "avatar"], Text, Write(Harmless), [];
     SetScale => "avatar.scale", "Set body scale (scale, then value)", ["height", "width", "head", "proportion", "body type", "scale", "size", "avatar"], Text, Write(Harmless), [];
     SetEmote => "avatar.emote", "Put an emote in a hotbar slot (slot 1-8, then item id; slot alone clears it)", ["emote", "hotbar", "slot", "dance", "avatar"], Text, Write(Harmless), [];
     RedrawAvatar => "avatar.redraw", "Redraw avatar image", ["redraw", "refresh", "thumbnail", "render", "avatar"], None, Write(Harmless), [];

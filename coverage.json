@@ -1398,7 +1398,7 @@
       "module": "avatar::v1",
       "path": "/v1/avatar/set-body-colors",
       "summary": "Sets the authenticated user's body colors",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -1478,7 +1478,7 @@
       "module": "avatar::v1",
       "path": "/v1/outfits/{userOutfitId}/details",
       "summary": "",
-      "used": true
+      "used": false
     },
     {
       "deprecated": true,
@@ -1548,7 +1548,7 @@
       "module": "avatar::v2",
       "path": "/v2/avatar/set-body-colors",
       "summary": "Sets the authenticated user's body colors",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -1568,7 +1568,7 @@
       "module": "avatar::v2",
       "path": "/v2/avatar/users/{userId}/avatar",
       "summary": "Returns details about a specified user's avatar",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -1588,7 +1588,7 @@
       "module": "avatar::v2",
       "path": "/v2/outfits/create",
       "summary": "Creates a new outfit.",
-      "used": true
+      "used": false
     },
     {
       "deprecated": true,
@@ -1608,7 +1608,7 @@
       "module": "avatar::v2",
       "path": "/v2/outfits/{userOutfitId}/update",
       "summary": "Updates the contents of the outfit.",
-      "used": true
+      "used": false
     },
     {
       "deprecated": true,
@@ -1618,7 +1618,7 @@
       "module": "avatar::v3",
       "path": "/v3/outfits/create",
       "summary": "Creates a new outfit.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": true,
@@ -1628,7 +1628,7 @@
       "module": "avatar::v3",
       "path": "/v3/outfits/{userOutfitId}",
       "summary": "Updates the contents of an outfit.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": true,
@@ -1638,7 +1638,7 @@
       "module": "avatar::v3",
       "path": "/v3/outfits/{userOutfitId}/details",
       "summary": "Gets details about the contents of an outfit.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -7892,5 +7892,5 @@
     }
   ],
   "total": 789,
-  "used": 252
+  "used": 253
 }

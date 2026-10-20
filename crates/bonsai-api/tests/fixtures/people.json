@@ -1,7 +1,7 @@
 {
   "captured": "2026-10-13",
   "source": "live; the second following-exists batch is synthetic from the tracker schemas (2026-10-15). 156's avatar, outfits and one outfit's details are the bodies captured for avatar.json (2026-10-14).",
-  "note": "Profile of builderman (156) and Roblox (1) as the test account. Then what 156 wears, their outfits and one outfit's contents, and which of a page of people the test account follows.",
+  "note": "Profile of builderman (156) and Roblox (1) as the test account. Then what 156 wears, their outfits and one outfit's contents, and which of a page of people the test account follows. Outfit detail transport uses the avatar v3 RGB schema, with colors converted from the recorded BrickColor palette.",
   "interactions": [
     {
       "request": {
@@ -1826,7 +1826,7 @@
                 "id": 1,
                 "type": "User"
               },
-              "description": "Experience Chaos Canyon - Escape from Desolation Valley, explore the ruins on the cliffs, walk on the Sky Bridge and hold the Battle Cube from invaders! This map features models created by the community, including: PilotLuke, tingc222, and Yahoo.\n\nChaos Canyon is a classic Brick Battle game, and was one of Roblox's first \"official arena maps\". In pure Roblox fashion, the places could be edited by anyone. (This game will be available to tinker with after The Hunt: Roblox 20).\n\n\"One thing we at Roblox have been thinking hard about is how to make sure users can find fun maps on Roblox when they want to play a quick game. In the past this has not been a problem since we didn’t have all that many users... Recently, the number of users who are proficient builders has exploded... If you go to the “Browse Places” tab, you’ll now get exactly 100 pages of places (as of this writing). That’s 1000 places.\" ~ Shedletsky, December 11th, 2006, The Roblox Blog\n\n4eb4-808f-5bf5d4cb7759",
+              "description": "Experience Chaos Canyon - Escape from Desolation Valley, explore the ruins on the cliffs, walk on the Sky Bridge and hold the Battle Cube from invaders! This map features models created by the community, including: PilotLuke, tingc222, and Yahoo.\n\nChaos Canyon is a classic Brick Battle game, and was one of Roblox's first \"official arena maps\". In pure Roblox fashion, the places could be edited by anyone. (This game will be available to tinker with after The Hunt: Roblox 20).\n\n\"One thing we at Roblox have been thinking hard about is how to make sure users can find fun maps on Roblox when they want to play a quick game. In the past this has not been a problem since we didn\u2019t have all that many users... Recently, the number of users who are proficient builders has exploded... If you go to the \u201cBrowse Places\u201d tab, you\u2019ll now get exactly 100 pages of places (as of this writing). That\u2019s 1000 places.\" ~ Shedletsky, December 11th, 2006, The Roblox Blog\n\n4eb4-808f-5bf5d4cb7759",
               "id": 295594,
               "name": "Chaos Canyon",
               "placeVisits": 12079743,
@@ -1842,7 +1842,7 @@
                 "id": 1,
                 "type": "User"
               },
-              "description": "This map goes back to the basics: Rockets, jetboots, and blowing up bridges. Out-maneuver your foes using your jetboots, cut off their escape by nuking the bridges, and rain doom down upon them using a rapid-fire rocket launcher. But don't fall in the lava - ouch!\n\nRocket Arena is a unique Brick Battle game as it focuses on some people's favorite brick battle weapon: The Rocket Launcher.\n\n\"I am working on a set of additional badges for a future release. New badges fall into one of two catagories: they are either entirely unlike any existing badge, or they are “higher level” versions of existing badges. One “higher level” badge I am thinking of making is a more difficult to get version of the Bloxxer badge. At the moment, 64 Robloxians have bloxxers. Using my January 8 post as a reference point, one can say that about 1.3 users earn Bloxxers every day on Roblox. Roughly 2% of all Robloxians have Bloxxers.\" ~ Shedletsky, Bloxxers Who Roxor, Roblox Blog, January 23rd, 2007\n",
+              "description": "This map goes back to the basics: Rockets, jetboots, and blowing up bridges. Out-maneuver your foes using your jetboots, cut off their escape by nuking the bridges, and rain doom down upon them using a rapid-fire rocket launcher. But don't fall in the lava - ouch!\n\nRocket Arena is a unique Brick Battle game as it focuses on some people's favorite brick battle weapon: The Rocket Launcher.\n\n\"I am working on a set of additional badges for a future release. New badges fall into one of two catagories: they are either entirely unlike any existing badge, or they are \u201chigher level\u201d versions of existing badges. One \u201chigher level\u201d badge I am thinking of making is a more difficult to get version of the Bloxxer badge. At the moment, 64 Robloxians have bloxxers. Using my January 8 post as a reference point, one can say that about 1.3 users earn Bloxxers every day on Roblox. Roughly 2% of all Robloxians have Bloxxers.\" ~ Shedletsky, Bloxxers Who Roxor, Roblox Blog, January 23rd, 2007\n",
               "id": 246424,
               "name": "Rocket Arena",
               "placeVisits": 16535522,
@@ -1858,7 +1858,7 @@
                 "id": 1,
                 "type": "User"
               },
-              "description": "The classic Roblox level is back! Crossroads is Roblox's very first multiplayer game. It is a classic brick battle game with a destructible environment. All great warriors find themselves here.\n\n\"I joined the Roblox team just as they were rolling out the first multiplayer Roblox level - a very early version of Crossroads. This version featured a castle made by Erik and a white house and playground constructed by Builderman. There were two weapons: the slingshot and the rocket launcher. I remember the first time we noticed a user, “dergenx”, actually playing our game, everyone on the team got on and played with him for an hour. It was very exciting. Since the original Crossroads was published, it has been added onto many times as we push the state of the art forward.\" ~ Shedletsky, December 11th, 2006 \"Now We are 10,000\" - Celebrating the 10,000th Roblox user.",
+              "description": "The classic Roblox level is back! Crossroads is Roblox's very first multiplayer game. It is a classic brick battle game with a destructible environment. All great warriors find themselves here.\n\n\"I joined the Roblox team just as they were rolling out the first multiplayer Roblox level - a very early version of Crossroads. This version featured a castle made by Erik and a white house and playground constructed by Builderman. There were two weapons: the slingshot and the rocket launcher. I remember the first time we noticed a user, \u201cdergenx\u201d, actually playing our game, everyone on the team got on and played with him for an hour. It was very exciting. Since the original Crossroads was published, it has been added onto many times as we push the state of the art forward.\" ~ Shedletsky, December 11th, 2006 \"Now We are 10,000\" - Celebrating the 10,000th Roblox user.",
               "id": 13058,
               "name": "Crossroads",
               "placeVisits": 39641163,
@@ -2033,7 +2033,7 @@
       "request": {
         "method": "GET",
         "host": "avatar.roblox.com",
-        "path": "/v1/outfits/24477597/details"
+        "path": "/v3/outfits/24477597/details"
       },
       "response": {
         "status": 200,
@@ -2137,14 +2137,6 @@
               "currentVersionId": 883360292
             }
           ],
-          "bodyColors": {
-            "headColorId": 1030,
-            "torsoColorId": 1003,
-            "rightArmColorId": 1030,
-            "leftArmColorId": 1030,
-            "rightLegColorId": 1030,
-            "leftLegColorId": 1030
-          },
           "scale": {
             "height": 1.0,
             "width": 1.0,
@@ -2156,7 +2148,15 @@
           "playerAvatarType": "R6",
           "outfitType": "Avatar",
           "isEditable": true,
-          "moderationStatus": null
+          "moderationStatus": null,
+          "bodyColor3s": {
+            "headColor3": "FFCC99",
+            "torsoColor3": "111111",
+            "rightArmColor3": "FFCC99",
+            "leftArmColor3": "FFCC99",
+            "rightLegColor3": "FFCC99",
+            "leftLegColor3": "FFCC99"
+          }
         }
       }
     },

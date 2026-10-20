@@ -116,16 +116,51 @@ impl BodyColors {
             Part::RightLeg => self.right_leg,
         }
     }
+}
 
-    fn set(&mut self, p: Part, color: i32) {
-        *match p {
-            Part::Head => &mut self.head,
-            Part::Torso => &mut self.torso,
-            Part::LeftArm => &mut self.left_arm,
-            Part::RightArm => &mut self.right_arm,
-            Part::LeftLeg => &mut self.left_leg,
-            Part::RightLeg => &mut self.right_leg,
-        } = color;
+/// Accept only opaque, six-digit RGB colors.
+pub fn normalize_body_hex(value: &str) -> Result<String, String> {
+    let value = value.trim();
+    let value = value.strip_prefix('#').unwrap_or(value);
+    if value.len() != 6 || !value.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Err("Use a six-digit RGB hex color, like #4ACE51.".into());
+    }
+    Ok(format!("#{}", value.to_ascii_uppercase()))
+}
+
+fn exact_colors(c: avatar::v2::BodyColors3Model) -> std::collections::HashMap<String, String> {
+    [
+        (Part::Head, c.head_color3),
+        (Part::Torso, c.torso_color3),
+        (Part::LeftArm, c.left_arm_color3),
+        (Part::RightArm, c.right_arm_color3),
+        (Part::LeftLeg, c.left_leg_color3),
+        (Part::RightLeg, c.right_leg_color3),
+    ]
+    .into_iter()
+    .filter_map(|(p, hex)| Some((p.key().to_owned(), normalize_body_hex(hex.as_deref()?).ok()?)))
+    .collect()
+}
+
+fn painted_rgb(
+    c: avatar::v2::BodyColors3Model,
+    parts: &[Part],
+    color: &str,
+) -> avatar::v2::BodyColorsModelV2 {
+    let paint = |p: Part, old: Option<String>| {
+        if parts.is_empty() || parts.contains(&p) {
+            Some(color.trim_start_matches('#').to_owned())
+        } else {
+            old.map(|hex: String| hex.trim_start_matches('#').to_owned())
+        }
+    };
+    avatar::v2::BodyColorsModelV2 {
+        head_color3: paint(Part::Head, c.head_color3),
+        torso_color3: paint(Part::Torso, c.torso_color3),
+        left_arm_color3: paint(Part::LeftArm, c.left_arm_color3),
+        right_arm_color3: paint(Part::RightArm, c.right_arm_color3),
+        left_leg_color3: paint(Part::LeftLeg, c.left_leg_color3),
+        right_leg_color3: paint(Part::RightLeg, c.right_leg_color3),
     }
 }
 
@@ -207,6 +242,8 @@ pub struct Look {
     pub assets: Vec<Worn>,
     pub emotes: Vec<Emote>,
     pub colors: BodyColors,
+    /// Exact RGB colors, keyed by body part. Kept separately from legacy BrickColor ids.
+    pub color_hex: std::collections::HashMap<String, String>,
     pub scales: Scales,
 }
 
@@ -310,6 +347,7 @@ fn look(a: avatar::v1::AvatarModelV2) -> Look {
             })
             .collect(),
         colors: a.body_colors.map(colors).unwrap_or_default(),
+        color_hex: Default::default(),
         scales: a.scales.map(scales).unwrap_or_default(),
     }
 }
@@ -342,6 +380,7 @@ fn outfit_look(o: avatar::v1::OutfitDetailsModel) -> Look {
         assets: worn(o.assets),
         emotes: Vec::new(),
         colors: o.body_colors.map(colors).unwrap_or_default(),
+        color_hex: Default::default(),
         scales: o.scale.map(scales).unwrap_or_default(),
     }
 }
@@ -354,17 +393,6 @@ fn colors(c: avatar::v1::BodyColorsModel) -> BodyColors {
         right_arm: c.right_arm_color_id.unwrap_or(0),
         left_leg: c.left_leg_color_id.unwrap_or(0),
         right_leg: c.right_leg_color_id.unwrap_or(0),
-    }
-}
-
-fn colors_model(c: BodyColors) -> avatar::v1::BodyColorsModel {
-    avatar::v1::BodyColorsModel {
-        head_color_id: Some(c.head),
-        torso_color_id: Some(c.torso),
-        left_arm_color_id: Some(c.left_arm),
-        right_arm_color_id: Some(c.right_arm),
-        left_leg_color_id: Some(c.left_leg),
-        right_leg_color_id: Some(c.right_leg),
     }
 }
 
@@ -601,15 +629,42 @@ async fn set_rig(client: &Client, rig: Rig) -> Result<(), Error> {
 }
 
 /// The current look as outfit contents, named `name`.
-fn current_look(now: avatar::v1::AvatarModelV2, name: String) -> avatar::v2::OutfitUpdateModelV2 {
-    avatar::v2::OutfitUpdateModelV2 {
-        assets: Some(wear_list(now.assets.unwrap_or_default())),
-        body_colors: convert(now.body_colors),
+fn current_look(now: avatar::v2::AvatarModelV3, name: String) -> avatar::v3::OutfitUpdateModelV3 {
+    avatar::v3::OutfitUpdateModelV3 {
+        assets: convert(Some(
+            now.assets
+                .unwrap_or_default()
+                .into_iter()
+                .map(|a| avatar::v2::AssetWearModel {
+                    id: a.id,
+                    meta: a.meta,
+                })
+                .collect::<Vec<_>>(),
+        )),
+        body_color3s: convert(now.body_color3s),
         name: Some(name),
-        outfit_type: Some(avatar::v2::OutfitUpdateModelV2OutfitType::Avatar),
-        player_avatar_type: Some(rig_name(now.player_avatar_type)).filter(|r| !r.is_empty()),
+        outfit_type: Some(1),
+        player_avatar_type: match now.player_avatar_type {
+            Some(avatar::v2::AvatarModelV3PlayerAvatarType::R6) => Some("R6".into()),
+            Some(avatar::v2::AvatarModelV3PlayerAvatarType::R15) => Some("R15".into()),
+            _ => None,
+        },
         scale: convert(now.scales),
     }
+}
+
+// The tracker marks the RGB outfit API deprecated, but the older outfit APIs only carry
+// BrickColor ids. Use this version to preserve exact colors when saving or wearing a look.
+#[allow(deprecated)]
+async fn rgb_outfit(client: &Client, outfit: u64) -> Result<avatar::v3::OutfitDetailsModelV2, Error> {
+    avatar::v3::get_outfits_by_user_outfit_id_details(client, outfit as i64, &Default::default()).await
+}
+
+fn rgb_outfit_look(o: avatar::v3::OutfitDetailsModelV2) -> Look {
+    let rgb = convert(o.body_color3s.clone()).unwrap_or_default();
+    let mut result = outfit_look(convert(Some(o)).unwrap_or_default());
+    result.color_hex = exact_colors(rgb);
+    result
 }
 
 /// The avatar images are rendered again after a change; drop ours so they reload.
@@ -628,8 +683,11 @@ impl Core {
             return Res::default();
         }
         self.inner
-            .res(Key::private(account, "avatar", ""), AGE, |f| async move {
-                Ok(look(avatar::v1::get_avatar(&f.client).await?))
+            .res(Key::private(account, "avatar", ""), AGE, move |f| async move {
+                let mut result = look(avatar::v1::get_avatar(&f.client).await?);
+                let rgb = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
+                result.color_hex = exact_colors(rgb.body_color3s.unwrap_or_default());
+                Ok(result)
             })
     }
 
@@ -762,9 +820,7 @@ impl Core {
     pub fn outfit(&self, outfit: u64) -> Res<Look> {
         self.inner
             .res(Key::shared("outfit", outfit), AGE, move |f| async move {
-                Ok(outfit_look(
-                    avatar::v1::get_outfits_by_user_outfit_id_details(&f.client, outfit as i64).await?,
-                ))
+                Ok(rgb_outfit_look(rgb_outfit(&f.client, outfit).await?))
             })
     }
 
@@ -795,16 +851,31 @@ impl Core {
             "Outfit on.",
             &["avatar"],
             move |f| async move {
-                let o = avatar::v1::get_outfits_by_user_outfit_id_details(&f.client, outfit as i64).await?;
-                set_wearing(&f.client, wear_list(o.assets.unwrap_or_default())).await?;
+                let o = rgb_outfit(&f.client, outfit).await?;
+                set_wearing(
+                    &f.client,
+                    convert(Some(
+                        o.assets
+                            .unwrap_or_default()
+                            .into_iter()
+                            .map(|a| avatar::v3::AssetWearModel {
+                                id: a.id,
+                                meta: a.meta,
+                            })
+                            .collect::<Vec<_>>(),
+                    ))
+                    .unwrap_or_default(),
+                )
+                .await?;
                 if let Some(rig) = o.player_avatar_type.as_deref().and_then(Rig::parse) {
                     set_rig(&f.client, rig).await?;
                 }
-                if let Some(c) = o.body_colors {
-                    avatar::v1::post_avatar_set_body_colors(&f.client, &c).await?;
+                if let Some(c) = convert(o.body_color3s) {
+                    avatar::v2::post_avatar_set_body_colors(&f.client, &c).await?;
                 }
                 if let Some(s) = o.scale {
-                    avatar::v1::post_avatar_set_scales(&f.client, &s).await?;
+                    avatar::v1::post_avatar_set_scales(&f.client, &convert(Some(s)).unwrap_or_default())
+                        .await?;
                 }
                 forget_images(&f.inner, account.0);
                 Ok(())
@@ -813,6 +884,7 @@ impl Core {
     }
 
     /// Save what `account` wears now as a new outfit.
+    #[allow(deprecated)]
     pub fn save_outfit(&self, account: AccountId, name: &str) -> Result<(), String> {
         let name = name.trim().to_string();
         if name.is_empty() {
@@ -824,8 +896,9 @@ impl Core {
             "Outfit saved.",
             &["outfits"],
             move |f| async move {
-                let now = avatar::v1::get_avatar(&f.client).await?;
-                avatar::v2::post_outfits_create(&f.client, &current_look(now, name)).await?;
+                let now = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
+                avatar::v3::post_outfits_create(&f.client, &Default::default(), &current_look(now, name))
+                    .await?;
                 Ok(())
             },
         );
@@ -833,6 +906,7 @@ impl Core {
     }
 
     /// Replace what `outfit` holds with what `account` wears now. Keeps its name.
+    #[allow(deprecated)]
     pub fn update_outfit(&self, account: AccountId, outfit: u64) {
         self.inner.mutate(
             account,
@@ -840,10 +914,16 @@ impl Core {
             "Outfit updated.",
             &["outfits"],
             move |f| async move {
-                let o = avatar::v1::get_outfits_by_user_outfit_id_details(&f.client, outfit as i64).await?;
-                let now = avatar::v1::get_avatar(&f.client).await?;
+                let o = rgb_outfit(&f.client, outfit).await?;
+                let now = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
                 let body = current_look(now, o.name.unwrap_or_default());
-                avatar::v2::post_outfits_by_user_outfit_id_update(&f.client, outfit as i64, &body).await?;
+                avatar::v3::patch_outfits_by_user_outfit_id(
+                    &f.client,
+                    outfit as i64,
+                    &Default::default(),
+                    &body,
+                )
+                .await?;
                 forget_outfit_image(&f.inner, outfit);
                 Ok(())
             },
@@ -851,6 +931,7 @@ impl Core {
     }
 
     /// Rename `outfit`. Its contents stay as they are.
+    #[allow(deprecated)]
     pub fn rename_outfit(&self, account: AccountId, outfit: u64, name: &str) -> Result<(), String> {
         let name = name.trim().to_string();
         if name.is_empty() {
@@ -862,16 +943,18 @@ impl Core {
             "Outfit renamed.",
             &["outfits"],
             move |f| async move {
-                let o = avatar::v1::get_outfits_by_user_outfit_id_details(&f.client, outfit as i64).await?;
-                let body = avatar::v2::OutfitUpdateModelV2 {
-                    assets: Some(wear_list(o.assets.unwrap_or_default())),
-                    body_colors: convert(o.body_colors),
+                // PATCH only the name, so colors and layered metadata remain untouched.
+                let body = avatar::v3::OutfitUpdateModelV3 {
                     name: Some(name),
-                    outfit_type: Some(avatar::v2::OutfitUpdateModelV2OutfitType::Avatar),
-                    player_avatar_type: o.player_avatar_type.filter(|r| !r.is_empty()),
-                    scale: convert(o.scale),
+                    ..Default::default()
                 };
-                avatar::v2::post_outfits_by_user_outfit_id_update(&f.client, outfit as i64, &body).await?;
+                avatar::v3::patch_outfits_by_user_outfit_id(
+                    &f.client,
+                    outfit as i64,
+                    &Default::default(),
+                    &body,
+                )
+                .await?;
                 Ok(())
             },
         );
@@ -915,31 +998,43 @@ impl Core {
         Ok(())
     }
 
-    /// Paint `parts` (every part when empty) BrickColor `color`.
+    /// Paint `parts` (every part when empty) using a palette color without rounding
+    /// untouched custom RGB colors back to BrickColor ids.
     pub fn set_body_color(&self, account: AccountId, parts: Vec<Part>, color: i32) -> Result<(), String> {
-        if let Some(r) = self.avatar_rules().data
-            && !r.palette.is_empty()
-            && !r.palette.iter().any(|s| s.id == color)
-        {
-            return Err("That color is not in the palette.".into());
-        }
-        let parts = if parts.is_empty() {
-            Part::ALL.to_vec()
-        } else {
-            parts
-        };
+        let rules = self
+            .avatar_rules()
+            .data
+            .ok_or("The body color palette has not loaded yet.")?;
+        let hex = rules
+            .palette
+            .iter()
+            .find(|s| s.id == color)
+            .ok_or("That color is not in the palette.")?
+            .hex
+            .clone();
+        self.set_body_color_hex(account, parts, &hex)
+    }
+
+    /// Paint exact RGB colors. Read the current server state so other limbs retain their colors.
+    pub fn set_body_color_hex(
+        &self,
+        account: AccountId,
+        parts: Vec<Part>,
+        color: &str,
+    ) -> Result<(), String> {
+        let color = normalize_body_hex(color)?;
         self.inner.mutate(
             account,
             "change the body color",
             "",
             &["avatar"],
             move |f| async move {
-                let now = avatar::v1::get_avatar(&f.client).await?;
-                let mut c = now.body_colors.map(colors).unwrap_or_default();
-                for p in parts {
-                    c.set(p, color);
+                let now = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
+                let body = painted_rgb(now.body_color3s.unwrap_or_default(), &parts, &color);
+                let response = avatar::v2::post_avatar_set_body_colors(&f.client, &body).await?;
+                if response.success == Some(false) {
+                    return Err(Error::Message("Roblox would not apply that body color.".into()));
                 }
-                avatar::v1::post_avatar_set_body_colors(&f.client, &colors_model(c)).await?;
                 forget_images(&f.inner, account.0);
                 Ok(())
             },
@@ -1182,5 +1277,42 @@ mod tests {
         let w = wear_list(vec![a]);
         let m = w[0].meta.as_ref().unwrap();
         assert_eq!((w[0].id, m.order, m.puffiness), (Some(5), Some(3), Some(0.5)));
+    }
+}
+
+#[cfg(test)]
+mod rgb_tests {
+    use super::*;
+
+    #[test]
+    fn custom_hex_is_strict_and_normalized() {
+        assert_eq!(normalize_body_hex("  #aB12ef ").unwrap(), "#AB12EF");
+        for invalid in ["#abc", "#12345678", "red", "#GG0000", "##123456", ""] {
+            assert!(normalize_body_hex(invalid).is_err(), "{invalid}");
+        }
+    }
+
+    #[test]
+    fn painting_preserves_other_parts_exactly() {
+        let c = avatar::v2::BodyColors3Model {
+            head_color3: Some("#123456".into()),
+            torso_color3: Some("#ABCDEF".into()),
+            ..Default::default()
+        };
+        let painted = painted_rgb(c.clone(), &[Part::Head], "#987654");
+        assert_eq!(painted.head_color3.as_deref(), Some("987654"));
+        assert_eq!(painted.torso_color3.as_deref(), Some("ABCDEF"));
+        assert!(painted.left_arm_color3.is_none());
+        let all = painted_rgb(c, &[], "#987654");
+        assert_eq!(all.left_leg_color3.as_deref(), Some("987654"));
+        assert_eq!(
+            exact_colors(avatar::v2::BodyColors3Model {
+                head_color3: Some("abcdef".into()),
+                ..Default::default()
+            })
+            .get("head")
+            .map(String::as_str),
+            Some("#ABCDEF")
+        );
     }
 }

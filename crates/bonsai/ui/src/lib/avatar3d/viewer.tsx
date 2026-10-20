@@ -50,6 +50,8 @@ export interface AvatarViewerProps {
   /** The 2D image, shown in 2D mode and when the model can't load. */
   image?: string
   alt: string
+  /** Exact body colors from the editor, in head/torso/arms/legs order. */
+  colorHex?: string[]
   /** Items worn on top of the avatar, like an item or bundle being tried on. */
   wear?: TryOnItem[]
   /** An accessory drawn by itself, instead of any avatar. */
@@ -69,8 +71,20 @@ export interface AvatarViewerProps {
  * Only one viewer shows the model at a time; the engine loads on first use.
  */
 export function AvatarViewer(props: AvatarViewerProps) {
-  const key = createMemo(() => JSON.stringify(props.source ?? null), undefined, { equals: (a, b) => a === b })
+  const key = createMemo(() => JSON.stringify([shell.active, props.source ?? null]), undefined, {
+    equals: (a, b) => a === b,
+  })
   const view = useLive(key, () => (props.source ? commands.avatar3d(props.source) : Promise.resolve(blank())), blank)
+  // Saved outfits use RGB colors; read the existing UI view alongside the legacy
+  // 3D payload so generated bindings remain unchanged.
+  const rgb = useLive(
+    () => [key(), shell.active] as const,
+    async () => ({
+      colors:
+        props.source?.kind === "outfit" ? (await commands.outfitLook(props.source.id)).colors.map((c) => c.hex) : [],
+    }),
+    () => ({ colors: [] as string[] }),
+  )
   const [state, setState] = createSignal<StageState | "off" | "failed">("off")
   const [anim, setAnim] = createSignal("idle")
   const [lease, setLease] = createSignal<Lease | null>(null)
@@ -88,7 +102,7 @@ export function AvatarViewer(props: AvatarViewerProps) {
     const wear = props.wear ?? []
     if (!props.source) return { kind: "outfit", outfit: MANNEQUIN, wear }
     if (view.rig === "" || view.error !== null) return null
-    return { kind: "outfit", outfit: toOutfitJson(view), wear }
+    return { kind: "outfit", outfit: toOutfitJson(view, props.colorHex ?? rgb.colors), wear }
   }
   const ready = () => subject() !== null
 
