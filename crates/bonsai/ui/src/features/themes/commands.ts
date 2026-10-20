@@ -2,6 +2,7 @@
  * The theme editor's commands. They act on the editor that is showing (`activeDraft`); with none
  * they say so. The layout registers them, since `theme.new` and `theme.edit` run from anywhere.
  */
+import { createStore } from "solid-js/store"
 import { handle, runBackend } from "~/lib/commands/registry"
 import { commands, type ThemeView } from "~/lib/ipc/bindings"
 import { DEFAULT_SEEDS, type Mode, parseTheme, SCHEMA, shownBase, type Theme } from "~/lib/theme"
@@ -10,6 +11,7 @@ import {
   activeDraft,
   copyOf,
   drafts,
+  dropDraft,
   edit,
   fixContrast,
   newId,
@@ -22,17 +24,35 @@ import {
   update,
 } from "./draft"
 
+export const [themeUi, setThemeUi] = createStore({ importing: false })
+
 export const editorPath = (id: string) => `/themes/${id}`
 
 const takenIn = (all: ThemeView[]) => (id: string) => all.some((t) => t.id === id) || id in drafts
 
-/** Saves a draft. True when the backend took it. */
+export const [saves, setSaves] = createStore<Record<string, { busy: boolean; error: string }>>({})
+
+/** Saves a snapshot; edits made during the write stay dirty. */
 export async function saveDraft(id: string) {
+  if (saves[id]?.busy) return false
   const theme = plain(id)
   if (!theme) return false
-  const ok = await runBackend("theme.save", JSON.stringify(theme))
-  if (ok) update(id, (d) => ({ ...d, base: theme, onDisk: true, from: undefined }))
-  return ok
+  setSaves(id, { busy: true, error: "" })
+  try {
+    const ok = await runBackend("theme.save", JSON.stringify(theme))
+    if (!ok) {
+      setSaves(id, "error", "Theme could not be saved. Your changes are still here. Try again.")
+      return false
+    }
+    update(id, (d) => ({ ...d, base: theme, onDisk: true, from: undefined }))
+    showToast(`Saved ${theme.name}.`)
+    return true
+  } catch {
+    setSaves(id, "error", "Theme could not be saved. Your changes are still here. Try again.")
+    return false
+  } finally {
+    setSaves(id, "busy", false)
+  }
 }
 
 /** The theme on screen now: the one for the base the mode shows. */
@@ -66,13 +86,27 @@ export function registerThemeCommands(opts: {
   }
 
   return [
+    handle("theme.import", (arg) => {
+      if (arg?.trim()) return void runBackend("theme.import", arg)
+      setThemeUi("importing", true)
+    }),
     handle("theme.new", async () => {
+      const name = (
+        await opts.prompt({
+          title: "Create theme",
+          label: "Theme name",
+          placeholder: "My theme",
+          submit: "Create theme",
+          maxLength: 64,
+        })
+      )?.trim()
+      if (!name) return
       const [all, app] = await Promise.all([commands.themes(), commands.appSettings()])
       const base = shownBase(app.mode as Mode)
       const theme: Theme = {
         schema: SCHEMA,
-        id: newId("New theme", takenIn(all)),
-        name: "New theme",
+        id: newId(name, takenIn(all)),
+        name,
         author: "",
         version: "1.0.0",
         base,
@@ -87,6 +121,18 @@ export function registerThemeCommands(opts: {
       // A document from the command bar or another caller saves as is.
       if (arg?.trim()) return void runBackend("theme.save", arg)
       return onActive(saveDraft)()
+    }),
+    handle("theme.delete", async (arg) => {
+      const id = arg?.trim() || activeDraft()
+      if (id && saves[id]?.busy) return void showToast("Wait for this theme to finish saving.")
+      if (id && drafts[id] && !drafts[id].onDisk) {
+        dropDraft(id)
+        showToast("Theme draft discarded.")
+      } else {
+        if (!(await runBackend("theme.delete", id ?? arg))) return
+        if (id) dropDraft(id)
+      }
+      if (id === activeDraft()) opts.visit("/themes")
     }),
     handle("theme.rename", async (arg) => {
       const id = arg?.trim() || activeDraft()

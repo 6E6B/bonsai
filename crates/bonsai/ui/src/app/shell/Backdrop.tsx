@@ -9,6 +9,9 @@ import { backgroundUrl } from "~/lib/thumb"
  * they suit light and dark themes alike. With `strip`, the tab strip at the top of the parent, the
  * picture is cut to the page and the active tab, so the tab reads as part of the page. */
 export function Backdrop(props: { background: BackgroundView | null; strip?: HTMLElement }) {
+  // Keep the image resource separate from effect changes and store refreshes. A stable
+  // image node and src let the webview keep one animation timeline while editing.
+  const src = createMemo(() => backgroundUrl(props.background?.file ?? ""))
   return (
     <Show when={props.background}>
       {(b) => {
@@ -23,12 +26,13 @@ export function Backdrop(props: { background: BackgroundView | null; strip?: HTM
             class="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
             style={{ "background-color": "var(--backdrop-base)", "clip-path": clip() }}
           >
-            <Show when={backgroundUrl(b().file)}>
-              {(src) => (
+            <Show when={src()}>
+              {(imageSrc) => (
                 <img
-                  src={src()}
+                  src={imageSrc()}
                   alt=""
                   draggable={false}
+                  decoding="async"
                   class="absolute max-w-none object-cover"
                   style={{
                     top: `-${l().overhang}px`,

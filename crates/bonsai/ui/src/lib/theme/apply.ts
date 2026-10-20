@@ -34,8 +34,8 @@ function base(): Base {
 function paint() {
   const b = draft?.base ?? base()
   const root = document.documentElement
-  root.dataset.theme = b
-  root.style.colorScheme = b
+  if (root.dataset.theme !== b) root.dataset.theme = b
+  if (root.style.colorScheme !== b) root.style.colorScheme = b
   const theme = draft ?? themes[b]
   const bg = theme?.background
   setShownBackground(bg ? { ...bg, file: bg.url } : null)
@@ -47,7 +47,10 @@ function paint() {
     const value = tokens[tag] ?? getComputedStyle(root).getPropertyValue(`--${tag}`).trim()
     Object.assign(tokens, accentTokens(value, b === "dark"))
   }
-  for (const [name, value] of Object.entries(tokens)) root.style.setProperty(`--${name}`, value)
+  // A store notification or a change to theme metadata must not invalidate every style in
+  // the window. Avoid style/layout work competing with animated image playback.
+  for (const [name, value] of Object.entries(tokens))
+    if (root.style.getPropertyValue(`--${name}`) !== value) root.style.setProperty(`--${name}`, value)
   set = new Set(Object.keys(tokens))
 }
 

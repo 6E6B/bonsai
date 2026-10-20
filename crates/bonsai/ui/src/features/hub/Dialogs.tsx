@@ -1,11 +1,20 @@
-import { createSignal, For, Show } from "solid-js"
+import { createEffect, createSignal, For, on, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
-import { hubUi, publishProblem, setHubUi, target } from "~/lib/hub"
+import { emptyHub, hubUi, publishProblem, setHubUi, target } from "~/lib/hub"
 import { commands, type HubHistory } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
-import { Alert, Badge, Button, Dialog, Select, TextField } from "~/lib/ui"
+import { Alert, Badge, Button, Dialog, EmptyState, Select, showToast, TextField } from "~/lib/ui"
 
 export function HubDialogs() {
+  const account = useLive(
+    () => (hubUi.publishing ? "publish-account" : ""),
+    async (key) => {
+      if (!key) return emptyHub()
+      const r = await commands.hubCatalog(JSON.stringify({ kind: hubUi.kind }))
+      return r.status === "ok" ? r.data : { ...emptyHub(), error: r.error }
+    },
+    emptyHub,
+  )
   const history = useLive(
     () => (hubUi.selected ? target(hubUi.selected) : ""),
     async (selected): Promise<HubHistory> => {
@@ -18,7 +27,14 @@ export function HubDialogs() {
   const [error, setError] = createSignal("")
   const [sending, setSending] = createSignal(false)
   const [reason, setReason] = createSignal("")
+  createEffect(
+    on(
+      () => hubUi.publishing,
+      () => setError(""),
+    ),
+  )
   const publish = async () => {
+    if (sending() || account.busy) return
     const problem = publishProblem(hubUi)
     if (problem) return setError(problem)
     setSending(true)
@@ -37,7 +53,16 @@ export function HubDialogs() {
             .filter(Boolean),
         }),
       )
-      if (accepted) setHubUi("publishing", false)
+      if (accepted) {
+        setHubUi("publishing", false)
+        showToast(
+          hubUi.kind === "themes"
+            ? "Uploading theme. Bonsai will notify you when it is published."
+            : "Submitting plugin for review…",
+        )
+      } else setError("Upload could not start. Check your connection and publication details, then try again.")
+    } catch {
+      setError("Upload could not start. Your publication details are still here. Try again.")
     } finally {
       setSending(false)
     }
@@ -170,65 +195,119 @@ export function HubDialogs() {
       <Dialog
         open={hubUi.publishing}
         onOpenChange={(open) => {
-          setHubUi("publishing", open)
-          setError("")
+          if (!sending()) setHubUi("publishing", open)
         }}
         title={hubUi.kind === "themes" ? "Publish theme" : "Submit plugin for review"}
         size="md"
       >
         <div class="flex min-h-0 flex-col gap-3 overflow-y-auto p-4">
-          <Alert title={hubUi.kind === "themes" ? "Publish a saved theme" : "Plugins require approval"}>
-            {hubUi.kind === "themes"
-              ? "Each version is permanent. Your verified Bonsai account is the publisher."
-              : "The current installed files and manifest version are packaged. New versions must be set in plugin.toml before submission."}
-          </Alert>
-          <Select
-            label="Installed content"
-            placeholder="Choose saved content"
-            value={hubUi.localId}
-            options={hubUi.choices.map((c) => ({ value: c.id, label: c.name }))}
-            onChange={(id) => {
-              const picked = hubUi.choices.find((c) => c.id === id)
-              if (picked) setHubUi({ localId: id, hubId: id, name: picked.name, version: picked.version })
-            }}
-          />
-          <TextField
-            label="Hub ID"
-            value={hubUi.hubId}
-            onChange={(hubId) => setHubUi("hubId", hubId)}
-            disabled={hubUi.kind === "plugins"}
-            maxLength={64}
-          />
-          <TextField label="Name" value={hubUi.name} onChange={(name) => setHubUi("name", name)} maxLength={64} />
-          <TextField
-            label="Release version"
-            value={hubUi.version}
-            onChange={(version) => setHubUi("version", version)}
-            disabled={hubUi.kind === "plugins"}
-            maxLength={64}
-          />
-          <TextField
-            label="Description"
-            multiline
-            value={hubUi.description}
-            onChange={(description) => setHubUi("description", description)}
-            maxLength={2000}
-          />
-          <TextField
-            label="Tags"
-            placeholder="dark, minimal"
-            value={hubUi.tags}
-            onChange={(tags) => setHubUi("tags", tags)}
-          />
-          <Show when={error()}>
-            <Alert title="Check publication details" variant="danger">
-              {error()}
+          <Show
+            when={hubUi.choices.length > 0}
+            fallback={
+              <EmptyState
+                icon="palette"
+                title={hubUi.kind === "themes" ? "Save a theme first" : "No plugins to submit"}
+                description={
+                  hubUi.kind === "themes"
+                    ? "Create a theme or edit a copy of a built-in theme, then save it before publishing."
+                    : "Install a plugin package before submitting it for review."
+                }
+              >
+                <Show when={hubUi.kind === "themes"}>
+                  <Button
+                    onClick={() => {
+                      setHubUi("publishing", false)
+                      void run("theme.new")
+                    }}
+                  >
+                    Create theme
+                  </Button>
+                </Show>
+              </EmptyState>
+            }
+          >
+            <Alert title={hubUi.kind === "themes" ? "Share your theme with the community" : "Plugins require approval"}>
+              {hubUi.kind === "themes"
+                ? "This uploads a saved copy to the hub. Later edits stay private until you publish another version."
+                : "Your plugin files are packaged and sent for review. Set a new version in plugin.toml before submitting an update."}
+            </Alert>
+            <Show when={!account.userId}>
+              <Alert title="Sign in to publish">
+                Your GitHub account identifies you as the publisher. Your Roblox account is not used.
+                <Button size="sm" class="mt-2" loading={account.signingIn} onClick={() => run("hub.sign_in")}>
+                  {account.signingIn ? "Waiting for GitHub…" : "Sign in with GitHub"}
+                </Button>
+              </Alert>
+            </Show>
+            <Show when={account.userName}>
+              <p class="text-sm text-fg-muted">Publishing as {account.userName}</p>
+            </Show>
+            <Select
+              label={hubUi.kind === "themes" ? "Theme to publish" : "Plugin to submit"}
+              placeholder={hubUi.kind === "themes" ? "Choose one of your saved themes" : "Choose a plugin"}
+              value={hubUi.localId}
+              disabled={sending()}
+              options={hubUi.choices.map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(id) => {
+                const picked = hubUi.choices.find((c) => c.id === id)
+                if (picked) setHubUi({ localId: id, hubId: id, name: picked.name, version: picked.version })
+              }}
+            />
+            <TextField label="Name" value={hubUi.name} onChange={(name) => setHubUi("name", name)} maxLength={64} />
+            <TextField
+              label="Version"
+              description="Use 1.0.0 for a first release. For an update, use a new version such as 1.0.1. Published versions cannot be replaced."
+              value={hubUi.version}
+              onChange={(version) => setHubUi("version", version)}
+              disabled={hubUi.kind === "plugins"}
+              maxLength={64}
+            />
+            <TextField
+              label="Description"
+              description={
+                hubUi.kind === "themes" ? "Describe the look of your theme." : "Describe what your plugin does."
+              }
+              multiline
+              value={hubUi.description}
+              onChange={(description) => setHubUi("description", description)}
+              maxLength={2000}
+            />
+            <TextField
+              label="Tags (optional)"
+              description="Up to 8 lowercase tags, separated by commas."
+              placeholder="dark, minimal"
+              value={hubUi.tags}
+              onChange={(tags) => setHubUi("tags", tags)}
+            />
+            <details class="text-sm">
+              <summary class="cursor-pointer text-fg-muted">Advanced publication settings</summary>
+              <TextField
+                class="mt-3"
+                label="Publication ID"
+                value={hubUi.hubId}
+                description="A stable name used to identify this theme on the hub. We fill it in for you. Keep it the same when publishing updates."
+                onChange={(hubId) => setHubUi("hubId", hubId)}
+                disabled={hubUi.kind === "plugins"}
+                maxLength={64}
+              />
+            </details>
+          </Show>
+          <Show when={error() || account.error}>
+            <Alert title="Could not publish" variant="danger">
+              {error() || account.error}
             </Alert>
           </Show>
           <div class="flex justify-end gap-2">
-            <Button onClick={() => setHubUi("publishing", false)}>Cancel</Button>
-            <Button variant="primary" disabled={!hubUi.localId || sending()} onClick={publish}>
-              Submit release
+            <Button disabled={sending()} onClick={() => setHubUi("publishing", false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              loading={sending()}
+              disabled={!hubUi.localId || !account.userId || account.busy}
+              onClick={publish}
+            >
+              {sending() ? "Starting upload…" : hubUi.kind === "themes" ? "Publish theme" : "Submit for review"}
             </Button>
           </div>
         </div>

@@ -17,7 +17,7 @@ Remove a line when it ships.
 - Profile > Creations: a user's models, decals, audio and other assets. No endpoint lists them.
 
 
-Theme backgrounds now travel as external HTTPS links and effects with theme exports and hub releases. The editor previews drafts directly in the app.
+Theme backgrounds now travel as external HTTPS links and effects with theme exports and hub releases. The editor previews drafts directly in the app. Creating, importing, saving, using and publishing have explicit controls and feedback. GIF backgrounds keep a stable image resource and theme updates skip unchanged root styles. The reported intermittent playback speed still needs confirmation in a native Linux webview with the affected GIF.
 
 ## Discord community
 

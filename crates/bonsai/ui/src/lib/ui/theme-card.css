@@ -57,10 +57,14 @@
 
   [data-component="theme-card"] > [data-slot="actions"] {
     position: absolute;
-    inset-inline-end: 0;
-    bottom: 0;
+    inset-block-start: calc(var(--spacing) * 2);
+    inset-inline-end: calc(var(--spacing) * 2);
     display: flex;
     align-items: center;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-control);
   }
 
   [data-component="theme-card"] [data-slot="side"] {
@@ -169,10 +173,5 @@
   }
   [data-component="theme-card"] > [data-slot="trigger"]:hover [data-slot="preview"] {
     border-color: var(--color-line-strong);
-  }
-
-  [data-component="theme-card"][data-has-actions] [data-slot="name"],
-  [data-component="theme-card"][data-has-actions] [data-slot="detail"] {
-    padding-inline-end: var(--control-sm);
   }
 }

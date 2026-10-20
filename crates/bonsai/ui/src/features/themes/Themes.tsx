@@ -9,6 +9,8 @@ import {
   ContextMenu,
   EmptyState,
   IconButton,
+  Menu,
+  type MenuEntry,
   Page,
   SectionHeader,
   SegmentedControl,
@@ -39,7 +41,7 @@ export default function Themes() {
   const rows = createMemo((): Row[] => {
     const out: Row[] = installed.map((t) => ({ ...t, onDisk: true, theme: parseTheme(t.doc) }))
     for (const d of Object.values(drafts))
-      if (!d.onDisk && changed(d)) out.push({ ...d.theme, builtin: false, onDisk: false, theme: d.theme })
+      if (!d.onDisk) out.push({ ...d.theme, builtin: false, onDisk: false, theme: d.theme })
     const q = query().trim().toLowerCase()
     return out.filter(
       (r) =>
@@ -86,6 +88,9 @@ export default function Themes() {
         </>
       }
     >
+      <p class="text-sm text-fg-muted">
+        Choose a theme to use it. The pencil edits a theme, making a copy of built-in themes.
+      </p>
       <section class="flex flex-col gap-2">
         <SectionHeader
           title="Your library"
@@ -126,41 +131,51 @@ export default function Themes() {
                   const t = drafts[r.id]?.theme ?? r.theme
                   return t ? resolve(t) : {}
                 })
+                const actions = (): MenuEntry[] => [
+                  menuItem("theme.apply", { arg: r.id, icon: "check", disabled: !r.onDisk }),
+                  menuItem("theme.edit", { arg: r.id, icon: "edit" }),
+                  menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
+                  menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
+                  { kind: "separator" },
+                  menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
+                  menuItem("hub.publish", {
+                    arg: JSON.stringify({ kind: "themes", id: r.id }),
+                    label: "Publish to hub",
+                    disabled: r.builtin || !r.onDisk || !!(drafts[r.id] && changed(drafts[r.id])),
+                  }),
+                  menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
+                  { kind: "separator" },
+                  menuItem("theme.delete", {
+                    arg: r.id,
+                    icon: "trash",
+                    danger: true,
+                    label: r.onDisk ? "Delete theme" : "Discard draft",
+                    disabled: r.builtin,
+                  }),
+                ]
                 return (
-                  <ContextMenu
-                    items={[
-                      menuItem("theme.apply", { arg: r.id, icon: "check", disabled: !r.onDisk }),
-                      menuItem("theme.edit", { arg: r.id, icon: "edit" }),
-                      menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
-                      menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
-                      { kind: "separator" },
-                      menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
-                      menuItem("hub.publish", {
-                        arg: JSON.stringify({ kind: "themes", id: r.id }),
-                        label: "Publish to hub",
-                        disabled: r.builtin || !r.onDisk,
-                      }),
-                      menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
-                      { kind: "separator" },
-                      menuItem("theme.delete", {
-                        arg: r.id,
-                        icon: "trash",
-                        danger: true,
-                        disabled: r.builtin || !r.onDisk,
-                      }),
-                    ]}
-                  >
+                  <ContextMenu items={actions()}>
                     <div class="group relative">
                       <ThemeCard
                         class="w-full"
                         actions={
-                          <IconButton
-                            size="sm"
-                            variant="ghost"
-                            icon="edit"
-                            label={r.builtin ? `Edit a copy of ${r.name}` : `Edit ${r.name}`}
-                            onClick={() => run("theme.edit", r.id)}
-                          />
+                          <>
+                            <IconButton
+                              size="sm"
+                              variant="ghost"
+                              icon="edit"
+                              label={r.builtin ? `Customize ${r.name}` : `Edit ${r.name}`}
+                              title={r.builtin ? "Customize a copy" : "Edit theme"}
+                              onClick={() => run("theme.edit", r.id)}
+                            />
+                            <Menu
+                              size="sm"
+                              variant="ghost"
+                              icon="more"
+                              label={`Actions for ${r.name}`}
+                              items={actions()}
+                            />
+                          </>
                         }
                         name={drafts[r.id]?.theme.name ?? r.name}
                         detail={detail(r)}
