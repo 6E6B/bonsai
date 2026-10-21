@@ -24,6 +24,20 @@ export function scrollParent(el: HTMLElement): HTMLElement | null {
   return null
 }
 
+/** Layout writes from size measurements must run after ResizeObserver delivery. */
+export function observeVirtualResize(elements: readonly Element[], measure: (entries: ResizeObserverEntry[]) => void) {
+  let frame = 0
+  const observer = new ResizeObserver((entries) => {
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(() => measure(entries))
+  })
+  for (const element of elements) observer.observe(element)
+  onCleanup(() => {
+    observer.disconnect()
+    cancelAnimationFrame(frame)
+  })
+}
+
 export interface InPageOptions {
   /** The list element. Read after mount. */
   el: () => HTMLElement | undefined
@@ -52,15 +66,15 @@ export function createInPageVirtualizer(opts: InPageOptions) {
     if (!el || !s) return
     const measure = () =>
       setMargin(Math.round(el.getBoundingClientRect().top - s.getBoundingClientRect().top + s.scrollTop))
-    const ro = new ResizeObserver(measure)
-    ro.observe(s)
-    if (s.firstElementChild) ro.observe(s.firstElementChild)
+    observeVirtualResize(s.firstElementChild ? [s, s.firstElementChild] : [s], measure)
     measure()
     setScroller(s)
-    onCleanup(() => ro.disconnect())
   })
 
   const virtualizer = createVirtualizer({
+    // Measuring a row changes the sizer and mounted window. Apply those writes outside
+    // ResizeObserver delivery so WebKit can finish delivering the current layout.
+    useAnimationFrameWithResizeObserver: true,
     // Defer initialization until we can read the shared scroller's actual offset.
     get enabled() {
       return scroller() !== null

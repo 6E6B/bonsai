@@ -1,5 +1,5 @@
-import { createEffect, createMemo, createSignal, For, type JSX, on, onCleanup, onMount, Show } from "solid-js"
-import { createInPageVirtualizer, gridColumns, toRows } from "./virtual"
+import { createEffect, createMemo, createSignal, For, type JSX, on, onMount, Show } from "solid-js"
+import { createInPageVirtualizer, gridColumns, observeVirtualResize, toRows } from "./virtual"
 import { virtualFocus } from "./virtual-focus"
 
 export interface VirtualGridProps<T> {
@@ -34,9 +34,7 @@ export function VirtualGrid<T>(props: VirtualGridProps<T>) {
 
   onMount(() => {
     if (!el) return
-    const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width))
-    ro.observe(el)
-    onCleanup(() => ro.disconnect())
+    observeVirtualResize([el], ([e]) => setWidth(e.contentRect.width))
   })
 
   const { virtualizer, margin, indexes, start } = createInPageVirtualizer({

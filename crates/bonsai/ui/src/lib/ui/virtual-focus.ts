@@ -45,6 +45,15 @@ export function virtualFocus(options: {
       event.preventDefault()
       options.scroll(next)
       cancelAnimationFrame(frame)
+      // Most neighbors are already mounted by overscan. Focus them synchronously so
+      // another Tab before the next frame advances from the new control.
+      const target = root?.querySelector(`[data-virtual-item="${next}"]`)
+      const nextEntries = target ? controls(target) : []
+      const nextControl = nextEntries[event.shiftKey ? nextEntries.length - 1 : 0]
+      if (nextControl) {
+        nextControl.focus({ preventScroll: true })
+        return
+      }
       frame = requestAnimationFrame(() => {
         if (!options.root()?.isConnected) return
         const target = options.root()?.querySelector(`[data-virtual-item="${next}"]`)

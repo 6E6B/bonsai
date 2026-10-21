@@ -86,11 +86,13 @@ These are synthetic frontend results, not production latency guarantees. Initial
 
 ## Native verification
 
-Playwright Chromium approximates WebView2; Playwright WebKit is useful for cross-engine comparisons but is not the exact WebKitGTK/WKWebView build shipped by Tauri. Native Linux scrolling, compositing and image decode behavior must also be checked in Bonsai. WebKit browser tests require the distribution's GTK/GStreamer and related browser libraries. Chromium scenarios were validated in the implementation environment; WebKit execution was blocked by missing system libraries.
+Playwright Chromium approximates WebView2; Playwright WebKit is useful for cross-engine comparisons but is not the exact WebKitGTK/WKWebView build shipped by Tauri. Native Linux scrolling, compositing and image decode behavior must also be checked in Bonsai. WebKit browser tests require the distribution's GTK/GStreamer and related browser libraries. Both Chromium and WebKit scenarios have been validated in the implementation environment.
 
 The synthetic store uses Solid stores and `reconcile` with fresh payload objects and refreshes mounted subscriptions. It does not exercise the production store's event coalescing, Rust/backend performance or real network scheduling. Background store refreshes here carry unchanged fixture data, so they measure the cost of unchanged snapshots rather than every possible update pattern.
 
 ## Shared collection rollout
+
+Shared virtualizers defer ResizeObserver measurements to the next animation frame. Measuring rows changes the mounted window and sizer, so applying those changes during observer delivery can produce WebKit resize-loop errors. The harness still treats these as application errors. Shelf tracks have an explicit keyboard tab stop for WebKit; focus moves synchronously between mounted controls so rapid Tab presses are not lost.
 
 The UI now uses `VirtualList`, `VirtualGrid`, `VirtualShelf` and the existing virtual `DataTable` as its collection primitives. The migration covers profile shelves; inbox and conversation lists; chat history and member pickers; notifications; trade lists and tradable-item pickers; community lists, stores, requests, audit logs, forum posts and replies; game passes, badges, events, recommendations and private/friend servers; similar items; themes and hub releases; search and wiki results; blocked users and private-server settings; and friends playing on Home.
 

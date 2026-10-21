@@ -15,6 +15,7 @@ test("profile shelves render a window and reach their last preview", async ({ pa
   await expect(shelf.getByText("Collectible 100", { exact: true })).toBeVisible()
   expect(await shelf.locator("[data-virtual-item]").count()).toBeLessThan(20)
   await shelf.focus()
+  await expect(shelf).toBeFocused()
   await page.keyboard.press("End")
   await expect(shelf.getByText("Collectible 129", { exact: true })).toBeVisible()
   await page.keyboard.press("Home")

@@ -1,6 +1,7 @@
 import { createVirtualizer, defaultRangeExtractor } from "@tanstack/solid-virtual"
-import { createMemo, createSignal, For, type JSX, onCleanup, onMount, Show } from "solid-js"
+import { createMemo, createSignal, For, type JSX, onMount, Show } from "solid-js"
 import { Icon } from "./icon"
+import { observeVirtualResize } from "./virtual"
 import { virtualFocus } from "./virtual-focus"
 
 export interface VirtualShelfProps<T> {
@@ -22,6 +23,7 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
   const [next, setNext] = createSignal(false)
   const [focused, setFocused] = createSignal<number | null>(null)
   const virtualizer = createVirtualizer({
+    useAnimationFrameWithResizeObserver: true,
     horizontal: true,
     get count() {
       return props.items.length
@@ -46,16 +48,12 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
   }
   onMount(() => {
     setScroller(track)
-    const observer = new ResizeObserver(measure)
-    observer.observe(track)
-    onCleanup(() => observer.disconnect())
+    observeVirtualResize([track], measure)
   })
   const observe = (element: HTMLDivElement) => {
-    const observer = new ResizeObserver(([entry]) =>
+    observeVirtualResize([element], ([entry]) =>
       setHeight((height) => Math.max(height, Math.ceil(entry.contentRect.height))),
     )
-    observer.observe(element)
-    onCleanup(() => observer.disconnect())
   }
   virtualFocus({
     root: () => root,
@@ -78,6 +76,8 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
         ref={track}
         data-slot="track"
         aria-label={props["aria-label"]}
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: WebKit requires an explicit tab stop for keyboard scrolling.
+        tabIndex={0}
         onScroll={measure}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
