@@ -8,7 +8,7 @@ export interface PersonTileProps {
   name: string
   /** Username, shown under the name with an @. */
   username?: string
-  /** A `thumbUrl("headshot", id)`. */
+  /** A `thumbUrl("headshot", id, true)` for the large avatar. */
   src?: string
   presence?: Presence
   verified?: boolean
@@ -23,13 +23,17 @@ export function PersonTile(props: PersonTileProps) {
     <KButton data-component="person-tile" class={props.class} onClick={props.onClick}>
       <Avatar size="xl" name={props.name} src={props.src} presence={props.presence} />
       <span data-slot="name" data-verified={props.verified ? "" : undefined}>
-        <span data-slot="name-text">{props.name}</span>
+        <span data-slot="name-text" title={props.name}>
+          {props.name}
+        </span>
         <Show when={props.verified}>
           <VerifiedBadge />
         </Show>
       </span>
       <Show when={props.username}>
-        <span data-slot="username">@{props.username}</span>
+        <span data-slot="username" title={`@${props.username}`}>
+          @{props.username}
+        </span>
       </Show>
     </KButton>
   )
