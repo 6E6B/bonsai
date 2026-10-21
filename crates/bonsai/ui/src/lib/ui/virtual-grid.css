@@ -1,4 +1,8 @@
 @layer components {
+  [data-component="virtual-grid"] [data-slot="item"] {
+    min-width: 0;
+  }
+
   [data-component="virtual-grid"] {
     min-width: 0;
   }

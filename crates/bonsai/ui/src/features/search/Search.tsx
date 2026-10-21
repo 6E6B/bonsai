@@ -20,6 +20,7 @@ import {
   Tabs,
   TextField,
   Thumbnail,
+  VirtualList,
 } from "~/lib/ui"
 
 const scopes = [
@@ -137,7 +138,11 @@ export default function Search() {
                           }
                         />
                       </Show>
-                      <For each={g.rows}>
+                      <VirtualList
+                        items={g.rows}
+                        activeIndex={g.rows.findIndex((r) => r.index === cursor())}
+                        estimateRowHeight={56}
+                      >
                         {(r) => (
                           <ListItem
                             data-index={r.index}
@@ -151,7 +156,7 @@ export default function Search() {
                             }}
                           />
                         )}
-                      </For>
+                      </VirtualList>
                     </div>
                   )}
                 </For>

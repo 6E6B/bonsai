@@ -22,7 +22,7 @@ import { accountItems, entityMenu, itemTarget, templateItems } from "~/lib/menus
 import { shell, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { assetFileUrl, thumbUrl } from "~/lib/thumb"
-import { ItemTile, tileGrid } from "~/lib/tiles"
+import { ItemTile } from "~/lib/tiles"
 import {
   type AudioControl,
   AudioPlayer,
@@ -46,6 +46,7 @@ import {
   Tooltip,
   useDialog,
   VerifiedBadge,
+  VirtualGrid,
 } from "~/lib/ui"
 import { DemandPips, TrendMark, useValuesRefresh, ValueAmount, ValueFlags } from "~/lib/value-tags"
 import { rapGap, VALUES_SOURCE, versionLabel } from "~/lib/values"
@@ -494,9 +495,9 @@ function Similar(props: { id: number; bundle: boolean; assetType: number }) {
   )
   return (
     <ListState list={list} icon="marketplace" empty="No similar items">
-      <div class={tileGrid}>
-        <For each={list.items}>{(i) => <ItemTile item={i} />}</For>
-      </div>
+      <VirtualGrid items={list.items} minItemWidth={128} estimateRowHeight={190} gap={12}>
+        {(i) => <ItemTile item={i} />}
+      </VirtualGrid>
     </ListState>
   )
 }

@@ -19,6 +19,7 @@ import {
   Tabs,
   TextField,
   ThemeCard,
+  VirtualGrid,
 } from "~/lib/ui"
 
 export default function Hub() {
@@ -108,58 +109,56 @@ export default function Hub() {
           />
         }
       >
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-3">
-          <For each={data.items}>
-            {(entry) => {
-              const theme = createMemo(() => (entry.document ? parseTheme(entry.document) : undefined))
-              return (
-                <Card class="flex flex-col gap-3 p-3">
-                  <Show when={theme()}>
-                    {(doc) => (
-                      <ThemeCard
-                        class="w-full"
-                        name={entry.name}
-                        detail={`${entry.version} · ${entry.base}`}
-                        tokens={resolve(doc())}
-                        onClick={() => run("hub.details", JSON.stringify(entry))}
-                      />
-                    )}
-                  </Show>
-                  <Show when={!theme()}>
-                    <div class="flex items-center justify-between gap-2">
-                      <div class="flex items-center gap-3">
-                        <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-control text-fg-muted">
-                          <Icon name="plugin" />
-                        </span>
-                        <div class="flex min-w-0 flex-col gap-1">
-                          <span class="font-medium">{entry.name}</span>
-                          <span class="text-xs text-fg-muted">Version {entry.version}</span>
-                        </div>
+        <VirtualGrid items={data.items} minItemWidth={288} estimateRowHeight={240} gap={12}>
+          {(entry) => {
+            const theme = createMemo(() => (entry.document ? parseTheme(entry.document) : undefined))
+            return (
+              <Card class="flex flex-col gap-3 p-3">
+                <Show when={theme()}>
+                  {(doc) => (
+                    <ThemeCard
+                      class="w-full"
+                      name={entry.name}
+                      detail={`${entry.version} · ${entry.base}`}
+                      tokens={resolve(doc())}
+                      onClick={() => run("hub.details", JSON.stringify(entry))}
+                    />
+                  )}
+                </Show>
+                <Show when={!theme()}>
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-3">
+                      <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-control text-fg-muted">
+                        <Icon name="plugin" />
+                      </span>
+                      <div class="flex min-w-0 flex-col gap-1">
+                        <span class="font-medium">{entry.name}</span>
+                        <span class="text-xs text-fg-muted">Version {entry.version}</span>
                       </div>
                     </div>
-                  </Show>
-                  <p class="text-sm text-fg-muted line-clamp-2">{entry.description || "No description."}</p>
-                  <div class="flex flex-wrap gap-1">
-                    <For each={entry.tags}>{(tag) => <Badge>{tag}</Badge>}</For>
                   </div>
-                  <div class="mt-auto flex items-center justify-between gap-2">
-                    <Button size="sm" onClick={() => run("hub.details", JSON.stringify(entry))}>
-                      Details
-                    </Button>
-                    <Button
-                      size="sm"
-                      icon="download"
-                      disabled={data.busy || installLabel(entry) === "Installed"}
-                      onClick={() => run("hub.install", target(entry))}
-                    >
-                      {installLabel(entry)}
-                    </Button>
-                  </div>
-                </Card>
-              )
-            }}
-          </For>
-        </div>
+                </Show>
+                <p class="text-sm text-fg-muted line-clamp-2">{entry.description || "No description."}</p>
+                <div class="flex flex-wrap gap-1">
+                  <For each={entry.tags}>{(tag) => <Badge>{tag}</Badge>}</For>
+                </div>
+                <div class="mt-auto flex items-center justify-between gap-2">
+                  <Button size="sm" onClick={() => run("hub.details", JSON.stringify(entry))}>
+                    Details
+                  </Button>
+                  <Button
+                    size="sm"
+                    icon="download"
+                    disabled={data.busy || installLabel(entry) === "Installed"}
+                    onClick={() => run("hub.install", target(entry))}
+                  >
+                    {installLabel(entry)}
+                  </Button>
+                </div>
+              </Card>
+            )
+          }}
+        </VirtualGrid>
       </Show>
       <Show when={hubUi.offset > 0 || data.nextOffset !== null}>
         <div class="flex items-center justify-between">

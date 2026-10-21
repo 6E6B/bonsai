@@ -1,4 +1,4 @@
-import { createVirtualizer } from "@tanstack/solid-virtual"
+import { createVirtualizer, defaultRangeExtractor } from "@tanstack/solid-virtual"
 import { createMemo, createSignal, onCleanup, onMount } from "solid-js"
 
 /** How many columns of at least `min` px fit in `width`, with `gap` px between them. */
@@ -16,12 +16,26 @@ export function toRows<T>(items: readonly T[], columns: number): T[][] {
 }
 
 /** The nearest ancestor that scrolls vertically. */
-function scrollParent(el: HTMLElement): HTMLElement | null {
+export function scrollParent(el: HTMLElement): HTMLElement | null {
   for (let p = el.parentElement; p; p = p.parentElement) {
     const o = getComputedStyle(p).overflowY
     if (o === "auto" || o === "scroll") return p
   }
   return null
+}
+
+/** Layout writes from size measurements must run after ResizeObserver delivery. */
+export function observeVirtualResize(elements: readonly Element[], measure: (entries: ResizeObserverEntry[]) => void) {
+  let frame = 0
+  const observer = new ResizeObserver((entries) => {
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(() => measure(entries))
+  })
+  for (const element of elements) observer.observe(element)
+  onCleanup(() => {
+    observer.disconnect()
+    cancelAnimationFrame(frame)
+  })
 }
 
 export interface InPageOptions {
@@ -31,6 +45,9 @@ export interface InPageOptions {
   estimate: number
   gap?: number
   overscan?: number
+  pinned?: () => number | null
+  keys?: () => readonly (string | number)[] | undefined
+  followEnd?: boolean
 }
 
 /**
@@ -49,15 +66,23 @@ export function createInPageVirtualizer(opts: InPageOptions) {
     if (!el || !s) return
     const measure = () =>
       setMargin(Math.round(el.getBoundingClientRect().top - s.getBoundingClientRect().top + s.scrollTop))
-    const ro = new ResizeObserver(measure)
-    ro.observe(s)
-    if (s.firstElementChild) ro.observe(s.firstElementChild)
+    observeVirtualResize(s.firstElementChild ? [s, s.firstElementChild] : [s], measure)
     measure()
     setScroller(s)
-    onCleanup(() => ro.disconnect())
   })
 
   const virtualizer = createVirtualizer({
+    // Measuring a row changes the sizer and mounted window. Apply those writes outside
+    // ResizeObserver delivery so WebKit can finish delivering the current layout.
+    useAnimationFrameWithResizeObserver: true,
+    // Defer initialization until we can read the shared scroller's actual offset.
+    get enabled() {
+      return scroller() !== null
+    },
+    get getItemKey() {
+      const keys = opts.keys?.()
+      return (index: number) => keys?.[index] ?? index
+    },
     get count() {
       return opts.count()
     },
@@ -68,9 +93,28 @@ export function createInPageVirtualizer(opts: InPageOptions) {
     get scrollMargin() {
       return margin()
     },
+    anchorTo: opts.followEnd ? "end" : "start",
+    followOnAppend: opts.followEnd ?? false,
+    scrollEndThreshold: 24,
+    rangeExtractor: (range) => {
+      const indexes = defaultRangeExtractor(range)
+      const pinned = opts.pinned?.()
+      if (pinned !== undefined && pinned !== null && pinned >= 0 && pinned < opts.count() && !indexes.includes(pinned))
+        indexes.push(pinned)
+      return indexes.sort((a, b) => a - b)
+    },
+    // Nested collections may mount after their shared page has already scrolled.
+    // Starting them at zero would reset that page's scroll position.
+    initialOffset: () => scroller()?.scrollTop ?? 0,
     estimateSize: () => opts.estimate,
     gap: opts.gap ?? 0,
     overscan: opts.overscan ?? 6,
+  })
+
+  onMount(() => {
+    if (!opts.followEnd) return
+    const frame = requestAnimationFrame(() => virtualizer.scrollToEnd())
+    onCleanup(() => cancelAnimationFrame(frame))
   })
 
   // Tanstack hands out fresh item objects on every scroll or measure. Keying `<For>` by them

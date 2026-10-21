@@ -24,6 +24,7 @@ import {
   Tabs,
   TextField,
   VerifiedBadge,
+  VirtualList,
 } from "~/lib/ui"
 
 const ms = (iso: string) => {
@@ -175,11 +176,16 @@ export default function Messages() {
         </Show>
         <ListState list={res.list} icon="inbox" empty="Nothing here" more={res.moreKey}>
           <div data-cursor-list class="flex flex-col">
-            <For each={shown()} fallback={<EmptyState icon="search" title="No messages match" />}>
+            <VirtualList
+              items={shown()}
+              activeIndex={cursor()}
+              estimateRowHeight={56}
+              empty={<EmptyState icon="search" title="No messages match" />}
+            >
               {(m, i) => (
                 <ListItem
-                  data-index={i()}
-                  selected={i() === cursor()}
+                  data-index={i}
+                  selected={i === cursor()}
                   unread={!m.read}
                   leading={
                     <Avatar
@@ -197,10 +203,10 @@ export default function Messages() {
                       </Checkbox>
                     </Show>
                   }
-                  onClick={() => setCursor(i())}
+                  onClick={() => setCursor(i)}
                 />
               )}
-            </For>
+            </VirtualList>
           </div>
         </ListState>
       </Pane>

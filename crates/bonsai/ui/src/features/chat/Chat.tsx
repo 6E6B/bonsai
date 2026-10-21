@@ -28,6 +28,7 @@ import {
   TextField,
   useDialog,
   usePrompt,
+  VirtualList,
 } from "~/lib/ui"
 import { dayLabel, filterConversations, startsDay } from "./timeline"
 
@@ -125,10 +126,15 @@ export default function Chat() {
         />
         <ListState list={list.list} icon="chat" empty="No conversations" more={list.moreKey}>
           <div data-cursor-list class="flex flex-col">
-            <For each={shown()} fallback={<EmptyState icon="search" title="No conversations match" />}>
+            <VirtualList
+              items={shown()}
+              activeIndex={cursor()}
+              estimateRowHeight={56}
+              empty={<EmptyState icon="search" title="No conversations match" />}
+            >
               {(c, i) => (
                 <ListItem
-                  data-index={i()}
+                  data-index={i}
                   selected={c.id === current()}
                   unread={c.unread > 0}
                   leading={<ConvAvatar c={c} />}
@@ -143,12 +149,12 @@ export default function Chat() {
                   subtitle={c.last}
                   meta={ms(c.updated) ? ago(ms(c.updated) ?? 0) : undefined}
                   onClick={() => {
-                    setCursor(i())
+                    setCursor(i)
                     setOpenId(c.id)
                   }}
                 />
               )}
-            </For>
+            </VirtualList>
           </div>
         </ListState>
       </Pane>
@@ -274,7 +280,7 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
               title="You"
               leading={<Avatar name="You" src={shell.active ? thumbUrl("headshot", shell.active) : undefined} />}
             />
-            <For each={view.people}>
+            <VirtualList items={view.people} estimateRowHeight={48}>
               {(person) => (
                 <ListItem
                   title={person.name}
@@ -285,7 +291,7 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                   }}
                 />
               )}
-            </For>
+            </VirtualList>
           </div>
         ),
         {
@@ -408,8 +414,8 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
           <Menu icon="more" label="Conversation" placement="bottom-end" items={items()} />
         </div>
       </header>
-      <div class="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-5 py-4">
-        <div class="flex flex-col gap-0.5">
+      <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-4">
+        <div class="mt-auto flex flex-col gap-0.5">
           <Show when={view.more}>
             <Button
               class="self-center"
@@ -423,14 +429,14 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
           </Show>
           <Show when={view.lines.length > 0 || !view.loading} fallback={<Skeleton class="h-32 w-full rounded-md" />}>
             <Show when={view.error}>{(e) => <span class="text-fg-muted">{e()}</span>}</Show>
-            <For each={view.lines}>
+            <VirtualList items={view.lines} estimateRowHeight={76} gap={2} itemKey={(line) => line.id} followEnd>
               {(l, i) => {
                 const at = (j: number) => ms(view.lines[j]?.created ?? "")
-                const newDay = () => startsDay(i() > 0 ? at(i() - 1) : null, at(i()))
+                const newDay = () => startsDay(i > 0 ? at(i - 1) : null, at(i))
                 // Runs of lines from one sender share an avatar and a time, on the last line.
                 const last = () => {
-                  const next = view.lines[i() + 1]
-                  return !next || next.senderId !== l.senderId || startsDay(at(i()), at(i() + 1))
+                  const next = view.lines[i + 1]
+                  return !next || next.senderId !== l.senderId || startsDay(at(i), at(i + 1))
                 }
                 const unseen = () => l.moderated || l.hidden
                 const places = () => (unseen() ? [] : experienceLinks(l.text))
@@ -442,7 +448,7 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                     <Show when={newDay()}>
                       <h3 class="my-3 flex items-center gap-3 text-xs font-normal text-fg-muted">
                         <span aria-hidden="true" class="h-px flex-1 bg-line" />
-                        {dayLabel(at(i()) ?? 0)}
+                        {dayLabel(at(i) ?? 0)}
                         <span aria-hidden="true" class="h-px flex-1 bg-line" />
                       </h3>
                     </Show>
@@ -464,7 +470,7 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                               when={
                                 group() &&
                                 !l.mine &&
-                                (i() === 0 || view.lines[i() - 1]?.senderId !== l.senderId || newDay())
+                                (i === 0 || view.lines[i - 1]?.senderId !== l.senderId || newDay())
                               }
                             >
                               <span class="text-xs font-medium text-fg-muted">{l.sender}</span>
@@ -522,7 +528,7 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                   </>
                 )
               }}
-            </For>
+            </VirtualList>
           </Show>
           <Show when={view.typing.length > 0}>
             <span class="text-xs text-fg-muted">{view.typing.join(", ")} typing…</span>

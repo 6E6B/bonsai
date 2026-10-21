@@ -17,6 +17,7 @@ import {
   Skeleton,
   TextField,
   Thumbnail,
+  VirtualList,
 } from "~/lib/ui"
 import { kindLabel, mainPage, ROBLOX_WIKI, type WikiSearchView } from "~/lib/wiki"
 import { openArticle, useWikiPage, WikiOff } from "~/lib/wiki-panels"
@@ -119,7 +120,9 @@ export default function Wiki() {
             <Match when={view.hits.length > 0}>
               <div class="flex flex-col" data-cursor-list>
                 <SectionHeader size="group" title={`${view.hits.length} articles`} />
-                <For each={view.hits}>{(h, i) => <HitRow hit={h} index={i()} selected={i() === cursor()} />}</For>
+                <VirtualList items={view.hits} activeIndex={cursor()} estimateRowHeight={72}>
+                  {(h, i) => <HitRow hit={h} index={i} selected={i === cursor()} />}
+                </VirtualList>
               </div>
             </Match>
             <Match when={view.loading}>

@@ -40,6 +40,7 @@ import {
   Thumbnail,
   Tooltip,
   usePrompt,
+  VirtualList,
 } from "~/lib/ui"
 import { useValuesRefresh, ValueAmount, ValueLine } from "~/lib/value-tags"
 import { hasTag, worth } from "~/lib/values"
@@ -121,18 +122,18 @@ export default function Trades() {
         <Tabs aria-label="Trade status" items={sections} value={section()} onChange={pick} />
         <ListState list={rows.list} icon="trades" empty={`No ${section()} trades`} more={rows.moreKey}>
           <div data-cursor-list class="flex flex-col">
-            <For each={rows.list.items}>
+            <VirtualList items={rows.list.items} activeIndex={cursor()} estimateRowHeight={56}>
               {(t, i) => (
                 <ListItem
-                  data-index={i()}
-                  selected={!draft.d && i() === cursor()}
+                  data-index={i}
+                  selected={!draft.d && i === cursor()}
                   leading={<Avatar name={t.partnerDisplay} src={thumbUrl("headshot", t.partnerId)} />}
                   title={t.partnerDisplay || t.partnerName}
                   subtitle={`${t.status} · ${ms(t.created) ? ago(ms(t.created) ?? 0) : ""}`}
-                  onClick={() => setCursor(i())}
+                  onClick={() => setCursor(i)}
                 />
               )}
-            </For>
+            </VirtualList>
           </div>
         </ListState>
       </Pane>
@@ -438,7 +439,7 @@ function Picker(props: { userId: number; chosen: TradeItemView[]; onPick: (i: Tr
       />
       <ListState list={res.list} icon="inventory" empty="Nothing tradable" more={res.moreKey}>
         <div class="flex max-h-96 flex-col overflow-y-auto">
-          <For each={shown()}>
+          <VirtualList items={shown()} estimateRowHeight={56}>
             {(i) => (
               <ItemRow
                 item={i}
@@ -446,7 +447,7 @@ function Picker(props: { userId: number; chosen: TradeItemView[]; onPick: (i: Tr
                 onClick={() => props.onPick(i)}
               />
             )}
-          </For>
+          </VirtualList>
         </div>
       </ListState>
     </Card>

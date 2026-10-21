@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from "solid-js"
+import { createSignal, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { date } from "~/lib/format"
 import { commands, type MyServerRow } from "~/lib/ipc/bindings"
@@ -6,7 +6,7 @@ import { emptyList, ListState } from "~/lib/list-state"
 import { ServerControls } from "~/lib/private-server"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Button, ListItem, Robux, SegmentedControl, SettingsGroup } from "~/lib/ui"
+import { Avatar, Button, ListItem, Robux, SegmentedControl, SettingsGroup, VirtualList } from "~/lib/ui"
 
 const serverTabs = [
   { value: "owned", label: "Yours" },
@@ -50,7 +50,7 @@ export function ServersSection() {
         empty={tab() === "owned" ? "You have no private servers" : "No one let you into theirs"}
         more={`my_servers:${tab()}`}
       >
-        <For each={list.items}>
+        <VirtualList items={list.items} estimateRowHeight={64}>
           {(s) => (
             <div class="flex flex-col">
               <ListItem
@@ -96,7 +96,7 @@ export function ServersSection() {
               </Show>
             </div>
           )}
-        </For>
+        </VirtualList>
       </ListState>
     </SettingsGroup>
   )

@@ -3,6 +3,10 @@
 What the website does that Bonsai doesn't yet.
 Remove a line when it ships.
 
+## Performance coverage
+
+- Automated frontend performance scenarios cover profiles, friends, marketplace, home, messages, chat, notifications, communities, trades and themes, including WebKit resize errors and keyboard navigation through virtual collections. Detail pages, image decoding, 3D, real IPC/API latency and native webview traces remain uncovered. See [ui-performance.md](ui-performance.md).
+
 ## Not built
 
 - Chat: group creation, rename and membership writes have replay coverage but still need live verification with consenting participants. The live chat smoke test only reads settings, conversations and group history.

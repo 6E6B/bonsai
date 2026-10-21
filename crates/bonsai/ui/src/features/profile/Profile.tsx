@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, Match, on, onCleanup, Show, Switch } from "solid-js"
+import { createEffect, createMemo, createSignal, Match, on, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
 import { run } from "~/lib/commands/registry"
 import { compact } from "~/lib/format"
@@ -20,7 +20,7 @@ import { userMenu } from "~/lib/menus"
 import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
-import { GameTile, ItemTile, PlayingRow, tileGrid } from "~/lib/tiles"
+import { GameTile, ItemTile, PlayingRow, TILE_WIDTH } from "~/lib/tiles"
 import {
   Avatar,
   Badge,
@@ -43,6 +43,7 @@ import {
   Tooltip,
   VerifiedBadge,
   VirtualGrid,
+  VirtualList,
 } from "~/lib/ui"
 import { rolimonsFailed, VALUES_SOURCE } from "~/lib/values"
 import { useWikiAbout, WikiSummary, WikiTab } from "~/lib/wiki-panels"
@@ -424,9 +425,9 @@ function Creations(props: { list: List<GameCard> }) {
   const list = props.list
   return (
     <ListState list={list} icon="game" empty="No experiences">
-      <div class={tileGrid}>
-        <For each={list.items}>{(g) => <GameTile game={g} />}</For>
-      </div>
+      <VirtualGrid items={list.items} minItemWidth={TILE_WIDTH} estimateRowHeight={190} gap={12}>
+        {(g) => <GameTile game={g} />}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -435,9 +436,9 @@ function Favorites(props: { list: List<GameCard> }) {
   const list = props.list
   return (
     <ListState list={list} icon="star" empty="No favorites" more="favorites">
-      <div class={tileGrid}>
-        <For each={list.items}>{(g) => <GameTile game={g} />}</For>
-      </div>
+      <VirtualGrid items={list.items} minItemWidth={TILE_WIDTH} estimateRowHeight={190} gap={12}>
+        {(g) => <GameTile game={g} />}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -446,9 +447,9 @@ function Followed(props: { list: List<GameCard> }) {
   const list = props.list
   return (
     <ListState list={list} icon="bell" empty="Not following any experiences">
-      <div class={tileGrid}>
-        <For each={list.items}>{(g) => <GameTile game={g} />}</For>
-      </div>
+      <VirtualGrid items={list.items} minItemWidth={TILE_WIDTH} estimateRowHeight={190} gap={12}>
+        {(g) => <GameTile game={g} />}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -457,9 +458,9 @@ function Badges(props: { list: List<UserBadge> }) {
   const list = props.list
   return (
     <ListState list={list} icon="badge" empty="No badges" more="badges">
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-3">
-        <For each={list.items}>{(b) => <BadgeTile badge={b} />}</For>
-      </div>
+      <VirtualGrid items={list.items} minItemWidth={96} estimateRowHeight={150} gap={12}>
+        {(b) => <BadgeTile badge={b} />}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -468,27 +469,25 @@ function Groups(props: { list: List<GroupCard> }) {
   const list = props.list
   return (
     <ListState list={list} icon="communities" empty="Not in any communities">
-      <div class="flex flex-col">
-        <For each={list.items}>
-          {(c) => (
-            <ListItem
-              leading={<Thumbnail class="w-10" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}
-              title={
-                <Show when={c.verified} fallback={c.name}>
-                  <span class="text-verified">{c.name}</span> <VerifiedBadge />
-                </Show>
-              }
-              subtitle={`${compact(c.members)} members · ${c.role}`}
-              meta={
-                <Show when={c.primary}>
-                  <Badge variant="accent">Primary</Badge>
-                </Show>
-              }
-              onClick={() => run("group.open", String(c.id))}
-            />
-          )}
-        </For>
-      </div>
+      <VirtualGrid items={list.items} estimateRowHeight={56} gap={0}>
+        {(c) => (
+          <ListItem
+            leading={<Thumbnail class="w-10" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}
+            title={
+              <Show when={c.verified} fallback={c.name}>
+                <span class="text-verified">{c.name}</span> <VerifiedBadge />
+              </Show>
+            }
+            subtitle={`${compact(c.members)} members · ${c.role}`}
+            meta={
+              <Show when={c.primary}>
+                <Badge variant="accent">Primary</Badge>
+              </Show>
+            }
+            onClick={() => run("group.open", String(c.id))}
+          />
+        )}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -497,9 +496,9 @@ function Collectibles(props: { list: List<ItemCard> }) {
   const list = props.list
   return (
     <ListState list={list} icon="inventory" empty="No collectibles">
-      <div class={tileGrid}>
-        <For each={list.items}>{(i) => <ItemTile item={i} showSerial showRap />}</For>
-      </div>
+      <VirtualGrid items={list.items} minItemWidth={TILE_WIDTH} estimateRowHeight={190} gap={12}>
+        {(i) => <ItemTile item={i} showSerial showRap />}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -602,7 +601,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
         autoMore
       >
         <div data-cursor-list>
-          <VirtualGrid items={shown()} estimateRowHeight={44} gap={0}>
+          <VirtualList items={shown()} activeIndex={cursor()} estimateRowHeight={44} gap={0}>
             {(p, i) => (
               <ContextMenu items={userMenu(p.id, { friend: p.friend, following: p.following ?? undefined })}>
                 <ListItem
@@ -643,7 +642,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                 />
               </ContextMenu>
             )}
-          </VirtualGrid>
+          </VirtualList>
         </div>
       </ListState>
     </div>

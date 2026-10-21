@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, waitFor } from "@solidjs/testing-library"
+import { For } from "solid-js"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { NewChat } from "./NewChat"
 
@@ -16,6 +17,13 @@ vi.mock("~/lib/store", () => ({
     ],
   },
   useLive: () => mocks.options,
+}))
+
+// Selection rules run independently of browser layout; windowing is covered in Playwright.
+vi.mock("~/lib/ui/virtual-list", () => ({
+  VirtualList: (props: { items: unknown[]; children: (item: unknown) => unknown }) => (
+    <For each={props.items}>{props.children as never}</For>
+  ),
 }))
 
 beforeEach(() => {

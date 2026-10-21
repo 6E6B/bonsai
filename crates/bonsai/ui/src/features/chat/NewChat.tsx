@@ -1,8 +1,8 @@
-import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, on, Show } from "solid-js"
 import { commands } from "~/lib/ipc/bindings"
 import { friends, shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Button, Checkbox, ListItem, showToast, TextField } from "~/lib/ui"
+import { Avatar, Button, Checkbox, ListItem, showToast, TextField, VirtualList } from "~/lib/ui"
 
 /** Pick friends to chat with; more than one makes a group, which can have a name. Opened by
  * `chat.new_group`. */
@@ -65,7 +65,11 @@ export function NewChat(props: { onDone: (started: boolean) => void }) {
         autofocus
       />
       <div class="flex max-h-80 flex-col overflow-y-auto">
-        <For each={shown()} fallback={<span class="p-2 text-sm text-fg-muted">No friends match.</span>}>
+        <VirtualList
+          items={shown()}
+          estimateRowHeight={56}
+          empty={<span class="p-2 text-sm text-fg-muted">No friends match.</span>}
+        >
           {(f) => (
             <ListItem
               leading={
@@ -89,7 +93,7 @@ export function NewChat(props: { onDone: (started: boolean) => void }) {
               subtitle={`@${f.name}`}
             />
           )}
-        </For>
+        </VirtualList>
       </div>
       <Show when={picked().length > 1}>
         <TextField label="Group name (optional)" maxLength={options.maxTitle} value={name()} onChange={setName} />

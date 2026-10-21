@@ -32,17 +32,17 @@ import {
   IconButton,
   PersonTile,
   SectionHeader,
-  Shelf,
   Thumbnail,
   Tile,
   Tooltip,
+  VirtualShelf,
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
 import { TradingCard } from "./Trading"
 
 /** Entry widths for each row: tiles match `tileGrid`; people and badges are narrower. */
-const TILE = "8rem"
-const SMALL = "6rem"
+const TILE = 128
+const SMALL = 96
 /** How many a row shows; "See all" has the rest. */
 const ROW_MAX = 30
 
@@ -201,7 +201,7 @@ function Row<T>(props: {
   /** The full count when Roblox gives one; otherwise how many have loaded, with "+" if more. */
   count?: number | null
   list: List<T>
-  width: string
+  width: number
   onSeeAll: () => void
   children: (item: T) => JSX.Element
 }) {
@@ -221,9 +221,9 @@ function Row<T>(props: {
             </Button>
           }
         />
-        <Shelf itemWidth={props.width}>
-          <For each={props.list.items.slice(0, ROW_MAX)}>{(item) => props.children(item)}</For>
-        </Shelf>
+        <VirtualShelf items={props.list.items.slice(0, ROW_MAX)} itemWidth={props.width} aria-label={props.title}>
+          {(item) => props.children(item)}
+        </VirtualShelf>
       </section>
     </Show>
   )

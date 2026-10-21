@@ -19,6 +19,8 @@ import {
   SectionHeader,
   Skeleton,
   Tooltip,
+  VirtualGrid,
+  VirtualList,
 } from "~/lib/ui"
 
 /** Landing screen: who is playing what, what you played last, and the Roblox home sorts. */
@@ -54,9 +56,9 @@ export default function Home() {
         <Show when={shell.look.homeFriends && playing().length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader title="Friends playing" meta={playing().length} />
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] items-start gap-2">
-              <For each={games()}>{(g) => <PlayingGroup group={g} />}</For>
-            </div>
+            <VirtualGrid items={games()} minItemWidth={256} estimateRowHeight={180} gap={8}>
+              {(g) => <PlayingGroup group={g} />}
+            </VirtualGrid>
           </section>
         </Show>
         <Show when={shell.look.homeContinue && home.recent.length > 0}>
@@ -137,7 +139,7 @@ function PlayingGroup(props: { group: GameGroup<Friend> }) {
       <Show when={props.group.placeId} fallback={header()}>
         {(placeId) => <ContextMenu items={gameMenu(placeId())}>{header()}</ContextMenu>}
       </Show>
-      <For each={props.group.users}>
+      <VirtualList items={props.group.users} estimateRowHeight={40}>
         {(f) => (
           <ContextMenu items={userMenu(f.id, { friend: true, inGame: true, placeId: f.placeId })}>
             <ListItem
@@ -164,7 +166,7 @@ function PlayingGroup(props: { group: GameGroup<Friend> }) {
             />
           </ContextMenu>
         )}
-      </For>
+      </VirtualList>
     </Card>
   )
 }

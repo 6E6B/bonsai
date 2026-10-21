@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { createMemo, createSignal, onCleanup, Show } from "solid-js"
 import { menuItem, run } from "~/lib/commands/registry"
 import { type AppSettings, commands, type ThemeView } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
@@ -16,6 +16,7 @@ import {
   SegmentedControl,
   TextField,
   ThemeCard,
+  VirtualGrid,
 } from "~/lib/ui"
 import { changed, drafts } from "./draft"
 import { isThemeCode } from "./import"
@@ -124,76 +125,74 @@ export default function Themes() {
           when={rows().length > 0}
           fallback={<EmptyState icon="palette" title="No themes match" description="Try another name or base." />}
         >
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3">
-            <For each={rows()}>
-              {(r) => {
-                const tokens = createMemo(() => {
-                  const t = drafts[r.id]?.theme ?? r.theme
-                  return t ? resolve(t) : {}
-                })
-                const actions = (): MenuEntry[] => [
-                  menuItem("theme.apply", { arg: r.id, icon: "check", disabled: !r.onDisk }),
-                  menuItem("theme.edit", { arg: r.id, icon: "edit" }),
-                  menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
-                  menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
-                  { kind: "separator" },
-                  menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
-                  menuItem("hub.publish", {
-                    arg: JSON.stringify({ kind: "themes", id: r.id }),
-                    label: "Publish to hub",
-                    disabled: r.builtin || !r.onDisk || !!(drafts[r.id] && changed(drafts[r.id])),
-                  }),
-                  menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
-                  { kind: "separator" },
-                  menuItem("theme.delete", {
-                    arg: r.id,
-                    icon: "trash",
-                    danger: true,
-                    label: r.onDisk ? "Delete theme" : "Discard draft",
-                    disabled: r.builtin,
-                  }),
-                ]
-                return (
-                  <ContextMenu items={actions()}>
-                    <div class="group relative">
-                      <ThemeCard
-                        class="w-full"
-                        actions={
-                          <>
-                            <IconButton
-                              size="sm"
-                              variant="ghost"
-                              icon="edit"
-                              label={r.builtin ? `Customize ${r.name}` : `Edit ${r.name}`}
-                              title={r.builtin ? "Customize a copy" : "Edit theme"}
-                              onClick={() => run("theme.edit", r.id)}
-                            />
-                            <Menu
-                              size="sm"
-                              variant="ghost"
-                              icon="more"
-                              label={`Actions for ${r.name}`}
-                              items={actions()}
-                            />
-                          </>
-                        }
-                        name={drafts[r.id]?.theme.name ?? r.name}
-                        detail={detail(r)}
-                        tokens={tokens()}
-                        selected={r.id === app.darkTheme || r.id === app.lightTheme}
-                        onClick={() => run(r.onDisk ? "theme.apply" : "theme.edit", r.id)}
-                      />
-                      <Show when={!r.onDisk || (drafts[r.id] && changed(drafts[r.id]))}>
-                        <Badge variant="warning" class="pointer-events-none absolute top-2 left-2">
-                          Unsaved
-                        </Badge>
-                      </Show>
-                    </div>
-                  </ContextMenu>
-                )
-              }}
-            </For>
-          </div>
+          <VirtualGrid items={rows()} minItemWidth={208} estimateRowHeight={240} gap={12}>
+            {(r) => {
+              const tokens = createMemo(() => {
+                const t = drafts[r.id]?.theme ?? r.theme
+                return t ? resolve(t) : {}
+              })
+              const actions = (): MenuEntry[] => [
+                menuItem("theme.apply", { arg: r.id, icon: "check", disabled: !r.onDisk }),
+                menuItem("theme.edit", { arg: r.id, icon: "edit" }),
+                menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
+                menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
+                { kind: "separator" },
+                menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
+                menuItem("hub.publish", {
+                  arg: JSON.stringify({ kind: "themes", id: r.id }),
+                  label: "Publish to hub",
+                  disabled: r.builtin || !r.onDisk || !!(drafts[r.id] && changed(drafts[r.id])),
+                }),
+                menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
+                { kind: "separator" },
+                menuItem("theme.delete", {
+                  arg: r.id,
+                  icon: "trash",
+                  danger: true,
+                  label: r.onDisk ? "Delete theme" : "Discard draft",
+                  disabled: r.builtin,
+                }),
+              ]
+              return (
+                <ContextMenu items={actions()}>
+                  <div class="group relative">
+                    <ThemeCard
+                      class="w-full"
+                      actions={
+                        <>
+                          <IconButton
+                            size="sm"
+                            variant="ghost"
+                            icon="edit"
+                            label={r.builtin ? `Customize ${r.name}` : `Edit ${r.name}`}
+                            title={r.builtin ? "Customize a copy" : "Edit theme"}
+                            onClick={() => run("theme.edit", r.id)}
+                          />
+                          <Menu
+                            size="sm"
+                            variant="ghost"
+                            icon="more"
+                            label={`Actions for ${r.name}`}
+                            items={actions()}
+                          />
+                        </>
+                      }
+                      name={drafts[r.id]?.theme.name ?? r.name}
+                      detail={detail(r)}
+                      tokens={tokens()}
+                      selected={r.id === app.darkTheme || r.id === app.lightTheme}
+                      onClick={() => run(r.onDisk ? "theme.apply" : "theme.edit", r.id)}
+                    />
+                    <Show when={!r.onDisk || (drafts[r.id] && changed(drafts[r.id]))}>
+                      <Badge variant="warning" class="pointer-events-none absolute top-2 left-2">
+                        Unsaved
+                      </Badge>
+                    </Show>
+                  </div>
+                </ContextMenu>
+              )
+            }}
+          </VirtualGrid>
         </Show>
       </section>
     </Page>

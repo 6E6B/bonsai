@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "@solidjs/router"
-import { createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { createMemo, createSignal, onCleanup, Show } from "solid-js"
 import { useListCursor } from "~/lib/commands/hooks"
 import { handle, menuItem, run } from "~/lib/commands/registry"
 import { compact } from "~/lib/format"
@@ -19,6 +19,7 @@ import {
   TextField,
   Thumbnail,
   VerifiedBadge,
+  VirtualList,
 } from "~/lib/ui"
 
 /** Your communities, with search and bulk leave for cleanup. Checkboxes show only while
@@ -129,7 +130,12 @@ export default function Communities() {
     return (
       <ListState list={mine} icon="communities" empty="Not in any communities">
         <div data-cursor-list class="flex flex-col">
-          <For each={shown()} fallback={<EmptyState icon="communities" title="No communities match" />}>
+          <VirtualList
+            items={shown()}
+            activeIndex={cursor()}
+            estimateRowHeight={56}
+            empty={<EmptyState icon="communities" title="No communities match" />}
+          >
             {(c, i) => (
               <ContextMenu
                 items={[
@@ -145,8 +151,8 @@ export default function Communities() {
                 ]}
               >
                 <ListItem
-                  data-index={i()}
-                  selected={i() === cursor()}
+                  data-index={i}
+                  selected={i === cursor()}
                   leading={<Thumbnail class="w-8" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}
                   title={
                     <Show when={c.verified} fallback={c.name}>
@@ -167,14 +173,14 @@ export default function Communities() {
                     </Show>
                   }
                   onClick={() => {
-                    setCursor(i())
+                    setCursor(i)
                     if (selecting()) toggle(c.id, !picked().has(c.id))
                     else void run("group.open", String(c.id))
                   }}
                 />
               </ContextMenu>
             )}
-          </For>
+          </VirtualList>
         </div>
       </ListState>
     )
@@ -194,7 +200,7 @@ function Results(props: { query: string; onClear: () => void }) {
       </div>
       <ListState list={list} icon="search" empty="No communities found">
         <div class="flex flex-col">
-          <For each={list.items}>
+          <VirtualList items={list.items} estimateRowHeight={56}>
             {(c) => (
               <ContextMenu
                 items={[menuItem("group.open", { arg: String(c.id), icon: "communities" }), shareMenu(`group:${c.id}`)]}
@@ -211,7 +217,7 @@ function Results(props: { query: string; onClear: () => void }) {
                 />
               </ContextMenu>
             )}
-          </For>
+          </VirtualList>
         </div>
       </ListState>
     </div>

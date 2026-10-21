@@ -76,7 +76,7 @@ crates/
 - Never destructure props. Read `props.x`, or use `splitProps`.
 - Use `<For>`, `<Show>`, `<Switch>`, not `.map()` or ternaries in JSX.
 - Shared state lives in `createStore` stores, not in signals passed between components.
-- Lists that can grow past about 100 rows use `@tanstack/solid-virtual`.
+- Growing collections use the shared `VirtualList`, `VirtualGrid`, `VirtualShelf` or `DataTable` from `~/lib/ui`. Do not add feature-specific virtualizers. Pass `activeIndex` for keyboard cursors; chat uses `followEnd` with a stable `itemKey`. See `crates/bonsai/ui/src/lib/ui/README.md`. Keep bounded forms and short fixed content in ordinary flow.
 - Load each screen with `lazy()` in `app/App.tsx`.
 
 ### UI components and styling

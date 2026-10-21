@@ -1,12 +1,12 @@
-import { createMemo, createSignal, For, Show } from "solid-js"
+import { createMemo, createSignal, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { type CommunityPass, commands, type ItemCard } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { gameMenu } from "~/lib/menus"
 import { useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { ItemTile, Price, tileGrid } from "~/lib/tiles"
-import { Badge, ContextMenu, SegmentedControl, Tile } from "~/lib/ui"
+import { ItemTile, Price } from "~/lib/tiles"
+import { Badge, ContextMenu, SegmentedControl, Tile, VirtualGrid } from "~/lib/ui"
 
 const kinds = [
   { value: "all", label: "All items" },
@@ -46,16 +46,16 @@ export function Store(props: { groupId: number }) {
             empty={items.items.length > 0 ? "None loaded yet" : "Nothing for sale"}
             more="store"
           >
-            <div class={tileGrid}>
-              <For each={shown()}>{(i) => <ItemTile item={i} />}</For>
-            </div>
+            <VirtualGrid items={shown()} minItemWidth={128} estimateRowHeight={240} gap={12}>
+              {(i) => <ItemTile item={i} />}
+            </VirtualGrid>
           </ListState>
         }
       >
         <ListState list={passes} icon="game" empty="No passes for sale">
-          <div class={tileGrid}>
-            <For each={passes.items}>{(p) => <PassTile pass={p} />}</For>
-          </div>
+          <VirtualGrid items={passes.items} minItemWidth={128} estimateRowHeight={240} gap={12}>
+            {(p) => <PassTile pass={p} />}
+          </VirtualGrid>
         </ListState>
       </Show>
     </div>

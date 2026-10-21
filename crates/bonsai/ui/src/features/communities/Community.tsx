@@ -23,7 +23,7 @@ import { entityMenu } from "~/lib/menus"
 import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
-import { GameTile, tileGrid } from "~/lib/tiles"
+import { GameTile } from "~/lib/tiles"
 import {
   Avatar,
   Badge,
@@ -51,6 +51,8 @@ import {
   useDialog,
   usePrompt,
   VerifiedBadge,
+  VirtualGrid,
+  VirtualList,
 } from "~/lib/ui"
 import { Affiliates } from "./Affiliates"
 import { PayoutForm, Revenue, SplitForm } from "./Revenue"
@@ -382,9 +384,9 @@ function Games(props: { groupId: number }) {
   const list = useLive(() => props.groupId, commands.communityGames, emptyList<GameCard>)
   return (
     <ListState list={list} icon="game" empty="No experiences">
-      <div class={tileGrid}>
-        <For each={list.items}>{(g) => <GameTile game={g} />}</For>
-      </div>
+      <VirtualGrid items={list.items} minItemWidth={128} estimateRowHeight={240} gap={12}>
+        {(g) => <GameTile game={g} />}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -538,7 +540,7 @@ function Requests(props: { groupId: number }) {
       </div>
       <ListState list={list} icon="user-plus" empty="No pending requests" more="requests">
         <div class="flex flex-col">
-          <For each={list.items}>
+          <VirtualList items={list.items} estimateRowHeight={56}>
             {(u) => (
               <ListItem
                 leading={
@@ -564,7 +566,7 @@ function Requests(props: { groupId: number }) {
                 onClick={() => run("user.open", String(u.id))}
               />
             )}
-          </For>
+          </VirtualList>
         </div>
       </ListState>
     </div>
@@ -643,7 +645,7 @@ function Audit(props: { groupId: number }) {
         />
       </div>
       <div class="flex flex-col">
-        <For each={shown()}>
+        <VirtualList items={shown()} estimateRowHeight={56}>
           {(a) => (
             <ListItem
               leading={<Avatar size="sm" name={a.actor} src={thumbUrl("headshot", a.actorId)} />}
@@ -652,7 +654,7 @@ function Audit(props: { groupId: number }) {
               onClick={() => run("user.open", String(a.actorId))}
             />
           )}
-        </For>
+        </VirtualList>
       </div>
     </ListState>
   )
@@ -707,7 +709,7 @@ function Forum(props: { groupId: number; canPost: boolean; canDelete: boolean; o
         </div>
         <ListState list={posts} icon="chat" empty="No posts yet" more={`posts:${category()}`}>
           <div class="flex flex-col">
-            <For each={posts.items}>
+            <VirtualList items={posts.items} estimateRowHeight={56}>
               {(p) => {
                 const open = () => props.onOpen({ category: category(), id: p.id, title: p.title })
                 const repliesLabel = () => `${compact(p.replies)} ${p.replies === 1 ? "reply" : "replies"}`
@@ -748,7 +750,7 @@ function Forum(props: { groupId: number; canPost: boolean; canDelete: boolean; o
                   />
                 )
               }}
-            </For>
+            </VirtualList>
           </div>
         </ListState>
       </div>
@@ -778,7 +780,7 @@ function Thread(props: { groupId: number; post: OpenPost; canReply: boolean; can
       </div>
       <ListState list={list} icon="chat" empty="No replies yet" more="comments">
         <div class="flex flex-col gap-3">
-          <For each={list.items}>
+          <VirtualList items={list.items} estimateRowHeight={90} gap={12}>
             {(c) => (
               <div class="flex items-start gap-3">
                 <Avatar size="sm" name={c.author} src={thumbUrl("headshot", c.authorId)} />
@@ -803,7 +805,7 @@ function Thread(props: { groupId: number; post: OpenPost; canReply: boolean; can
                 </Show>
               </div>
             )}
-          </For>
+          </VirtualList>
         </div>
       </ListState>
       <Show when={props.canReply}>

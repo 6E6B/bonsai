@@ -39,7 +39,10 @@ export function useListCursor(opts: CursorOptions) {
     if (n === 0) return
     const i = Math.min(n - 1, Math.max(0, opts.index() + by))
     opts.setIndex(i)
-    document.querySelector(`[data-cursor-list] [data-index="${i}"]`)?.scrollIntoView({ block: "nearest" })
+    const mounted = [...document.querySelectorAll<HTMLElement>(`[data-cursor-list] [data-index="${i}"]`)].find(
+      (element) => element.dataset.slot !== "row" || element.tagName === "TR",
+    )
+    mounted?.scrollIntoView({ block: "nearest" })
   }
   const off = [
     handle("list.down", () => move(1)),
