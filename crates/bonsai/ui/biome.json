@@ -1,7 +1,14 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["**", "!dist", "!src/lib/ipc/bindings.ts", "!src/lib/ui/assets", "!src/lib/avatar3d/engine"]
+    "includes": [
+      "**",
+      "!dist",
+      "!**/perf-results",
+      "!src/lib/ipc/bindings.ts",
+      "!src/lib/ui/assets",
+      "!src/lib/avatar3d/engine"
+    ]
   },
   "formatter": {
     "indentStyle": "space",

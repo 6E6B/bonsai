@@ -5,11 +5,19 @@ import { defineConfig } from "vitest/config"
 
 const host = process.env.TAURI_DEV_HOST
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [solid(), tailwindcss()],
   resolve: {
     // Not URL.pathname: on Windows that is "/D:/...", which resolves to "D:\D:\...".
-    alias: { "~": fileURLToPath(new URL("./src", import.meta.url)) },
+    alias: [
+      ...(mode === "performance"
+        ? [
+            { find: "~/lib/store", replacement: fileURLToPath(new URL("./perf/store.ts", import.meta.url)) },
+            { find: "~/lib/ipc/bindings", replacement: fileURLToPath(new URL("./perf/bindings.ts", import.meta.url)) },
+          ]
+        : []),
+      { find: "~", replacement: fileURLToPath(new URL("./src", import.meta.url)) },
+    ],
   },
   // Tauri expects a fixed port and prints its own errors.
   clearScreen: false,
@@ -22,6 +30,7 @@ export default defineConfig({
   },
   envPrefix: ["VITE_", "TAURI_ENV_*"],
   build: {
+    outDir: mode === "performance" ? "perf-results/dist" : "dist",
     // WebKitGTK and WKWebView track Safari; WebView2 tracks Chrome.
     target: process.env.TAURI_ENV_PLATFORM === "windows" ? "chrome120" : "safari16",
     minify: !process.env.TAURI_ENV_DEBUG,
@@ -31,4 +40,4 @@ export default defineConfig({
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
   },
-})
+}))
