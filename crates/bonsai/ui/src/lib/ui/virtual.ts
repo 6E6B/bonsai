@@ -1,4 +1,4 @@
-import { createVirtualizer } from "@tanstack/solid-virtual"
+import { createVirtualizer, defaultRangeExtractor } from "@tanstack/solid-virtual"
 import { createMemo, createSignal, onCleanup, onMount } from "solid-js"
 
 /** How many columns of at least `min` px fit in `width`, with `gap` px between them. */
@@ -16,7 +16,7 @@ export function toRows<T>(items: readonly T[], columns: number): T[][] {
 }
 
 /** The nearest ancestor that scrolls vertically. */
-function scrollParent(el: HTMLElement): HTMLElement | null {
+export function scrollParent(el: HTMLElement): HTMLElement | null {
   for (let p = el.parentElement; p; p = p.parentElement) {
     const o = getComputedStyle(p).overflowY
     if (o === "auto" || o === "scroll") return p
@@ -31,6 +31,9 @@ export interface InPageOptions {
   estimate: number
   gap?: number
   overscan?: number
+  pinned?: () => number | null
+  keys?: () => readonly (string | number)[] | undefined
+  followEnd?: boolean
 }
 
 /**
@@ -58,6 +61,14 @@ export function createInPageVirtualizer(opts: InPageOptions) {
   })
 
   const virtualizer = createVirtualizer({
+    // Defer initialization until we can read the shared scroller's actual offset.
+    get enabled() {
+      return scroller() !== null
+    },
+    get getItemKey() {
+      const keys = opts.keys?.()
+      return (index: number) => keys?.[index] ?? index
+    },
     get count() {
       return opts.count()
     },
@@ -68,9 +79,28 @@ export function createInPageVirtualizer(opts: InPageOptions) {
     get scrollMargin() {
       return margin()
     },
+    anchorTo: opts.followEnd ? "end" : "start",
+    followOnAppend: opts.followEnd ?? false,
+    scrollEndThreshold: 24,
+    rangeExtractor: (range) => {
+      const indexes = defaultRangeExtractor(range)
+      const pinned = opts.pinned?.()
+      if (pinned !== undefined && pinned !== null && pinned >= 0 && pinned < opts.count() && !indexes.includes(pinned))
+        indexes.push(pinned)
+      return indexes.sort((a, b) => a - b)
+    },
+    // Nested collections may mount after their shared page has already scrolled.
+    // Starting them at zero would reset that page's scroll position.
+    initialOffset: () => scroller()?.scrollTop ?? 0,
     estimateSize: () => opts.estimate,
     gap: opts.gap ?? 0,
     overscan: opts.overscan ?? 6,
+  })
+
+  onMount(() => {
+    if (!opts.followEnd) return
+    const frame = requestAnimationFrame(() => virtualizer.scrollToEnd())
+    onCleanup(() => cancelAnimationFrame(frame))
   })
 
   // Tanstack hands out fresh item objects on every scroll or measure. Keying `<For>` by them

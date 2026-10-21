@@ -1,5 +1,6 @@
-import { For, type JSX, Show } from "solid-js"
+import { createEffect, createSignal, For, type JSX, on, Show } from "solid-js"
 import { createInPageVirtualizer } from "./virtual"
+import { virtualFocus } from "./virtual-focus"
 
 export interface Column<T> {
   key: string
@@ -31,14 +32,32 @@ export interface DataTableProps<T> {
  * cell; clicks on them don't trigger `onRowClick`. */
 export function DataTable<T>(props: DataTableProps<T>) {
   let body: HTMLTableSectionElement | undefined
+  const [focused, setFocused] = createSignal<number | null>(null)
   const height = () => props.rowHeight ?? 34
   const template = () => props.columns.map((c) => c.width ?? "1fr").join(" ")
   const { virtualizer, margin, indexes, start } = createInPageVirtualizer({
     el: () => body,
     count: () => props.rows.length,
     estimate: height(),
+    pinned: focused,
   })
 
+  createEffect(
+    on(
+      () => props.selected,
+      (selected) => {
+        const index = props.rows.findIndex((row) => props.rowKey(row) === selected)
+        if (index >= 0) virtualizer.scrollToIndex(index, { align: "auto" })
+      },
+      { defer: true },
+    ),
+  )
+  virtualFocus({
+    root: () => body,
+    count: () => props.rows.length,
+    scroll: (index) => virtualizer.scrollToIndex(index, { align: "auto" }),
+    pin: setFocused,
+  })
   const pick = (r: T, target: EventTarget | null) => {
     if ((target as HTMLElement | null)?.closest("button, a, input, [role=combobox]")) return
     props.onRowClick?.(r)
@@ -62,7 +81,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
             </For>
           </tr>
         </thead>
-        <tbody ref={body} data-slot="body" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+        <tbody data-virtual-root ref={body} data-slot="body" style={{ height: `${virtualizer.getTotalSize()}px` }}>
           <For each={indexes()}>
             {(index) => {
               const row = () => props.rows[index]
@@ -73,6 +92,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                       data-slot="row"
                       aria-rowindex={index + 2}
                       data-index={index}
+                      data-virtual-item={index}
                       data-selected={
                         props.selected !== undefined && props.rowKey(r()) === props.selected ? "" : undefined
                       }

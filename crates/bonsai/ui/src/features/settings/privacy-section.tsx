@@ -5,7 +5,7 @@ import { emptyList, ListState } from "~/lib/list-state"
 import { privacyOptions, shownPrivacy, valueLabel } from "~/lib/privacy"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Button, ListItem, Select, SettingRow, SettingsGroup } from "~/lib/ui"
+import { Avatar, Button, ListItem, Select, SettingRow, SettingsGroup, VirtualList } from "~/lib/ui"
 import { WebButton } from "./shared"
 
 export function PrivacySection() {
@@ -53,7 +53,7 @@ export function PrivacySection() {
       </SettingsGroup>
       <SettingsGroup title="Blocked users" meta={blocked.items.length || undefined} list>
         <ListState list={blocked} icon="block" empty="Nobody blocked">
-          <For each={blocked.items}>
+          <VirtualList items={blocked.items} estimateRowHeight={48}>
             {(p) => (
               <ListItem
                 leading={<Avatar name={p.displayName || "?"} src={thumbUrl("headshot", p.id)} />}
@@ -67,7 +67,7 @@ export function PrivacySection() {
                 }
               />
             )}
-          </For>
+          </VirtualList>
         </ListState>
       </SettingsGroup>
     </>

@@ -1,12 +1,18 @@
 import type {
+  ChatLine,
   Connection,
+  ConversationRow,
   GameCard,
   GroupCard,
   ItemCard,
   List,
   LookView,
+  MessageRow,
+  NotificationRow,
   OutfitView,
   ProfileView,
+  ThemeView,
+  TradeRowView,
   UserBadge,
 } from "../src/lib/ipc/bindings"
 
@@ -96,3 +102,77 @@ export const profile: ProfileView = {
   nickname: null,
   note: null,
 }
+
+const created = "2026-01-01T12:00:00Z"
+export const conversations = rows<ConversationRow>((id) => ({
+  id: `chat-${id}`,
+  title: `Conversation ${id}`,
+  group: false,
+  partnerId: id,
+  unread: 0,
+  updated: created,
+  last: "Synthetic conversation",
+  pinned: false,
+}))
+const chatLine = (id: number): ChatLine => ({
+  id: `line-${id}`,
+  senderId: 101,
+  sender: "Fixture Player",
+  mine: false,
+  text: `Chat line ${id}${id % 7 === 0 ? " Longer synthetic text for measuring wrapped message heights.".repeat(8) : ""}`,
+  created,
+  system: false,
+  moderated: false,
+  pending: false,
+  hidden: false,
+  note: "",
+  failed: false,
+})
+export let chatLines = rows(chatLine)
+let nextChatId = 9000
+export function appendChat() {
+  chatLines = [...chatLines, chatLine(nextChatId++)]
+}
+export function prependChat() {
+  chatLines = [...Array.from({ length: 50 }, (_, i) => chatLine(i + 50)), ...chatLines]
+}
+export const messages = rows<MessageRow>((id) => ({
+  id,
+  senderId: id,
+  sender: `Sender ${id}`,
+  senderVerified: false,
+  recipientId: 1,
+  recipient: "Fixture Player",
+  subject: `Message ${id}`,
+  body: "Synthetic message body.",
+  created,
+  read: true,
+  system: false,
+}))
+export const notifications = rows<NotificationRow>((id) => ({
+  id: String(id),
+  title: `Notification ${id}`,
+  body: "Synthetic notification body.",
+  when: created,
+  read: true,
+  link: null,
+  userId: id,
+  category: "updates",
+}))
+export const trades = rows<TradeRowView>((id) => ({
+  id,
+  partnerId: id,
+  partnerName: `trader_${id}`,
+  partnerDisplay: `Trader ${id}`,
+  created,
+  expires: created,
+  status: "Completed",
+}))
+export const themes = rows<ThemeView>((id) => ({
+  id: `fixture-${id}`,
+  name: `Theme ${id}`,
+  author: "Fixture Studio",
+  base: "dark",
+  builtin: false,
+  doc: "",
+}))

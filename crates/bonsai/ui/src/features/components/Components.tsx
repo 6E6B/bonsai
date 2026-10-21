@@ -70,6 +70,8 @@ import {
   VerifiedBadge,
   Viewport,
   VirtualGrid,
+  VirtualList,
+  VirtualShelf,
   WindowControls,
 } from "~/lib/ui"
 
@@ -811,6 +813,22 @@ export default function Components() {
           rowKey={(r) => r.id}
           onRowClick={noop}
         />
+      </Section>
+
+      <Section title="Virtual list (1,000 rows)">
+        <VirtualList class="w-full" items={Array.from({ length: 1000 }, (_, i) => i)} estimateRowHeight={48}>
+          {(item) => <ListItem title={`Virtual row ${item + 1}`} onClick={noop} />}
+        </VirtualList>
+      </Section>
+      <Section title="Virtual shelf (1,000 tiles)">
+        <VirtualShelf
+          class="w-full"
+          items={Array.from({ length: 1000 }, (_, i) => i)}
+          itemWidth={128}
+          aria-label="Virtual shelf demo"
+        >
+          {(item) => <Tile title={`Shelf item ${item + 1}`} fallback="avatar" onClick={noop} />}
+        </VirtualShelf>
       </Section>
 
       <Section title="Virtual grid (500 tiles)">

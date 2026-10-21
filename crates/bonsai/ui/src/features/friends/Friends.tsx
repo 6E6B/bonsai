@@ -19,7 +19,7 @@ import {
   TextField,
   Tooltip,
   usePrompt,
-  VirtualGrid,
+  VirtualList,
 } from "~/lib/ui"
 
 interface Row {
@@ -184,8 +184,9 @@ export default function Friends() {
         </div>
         <TabPanel value={section()}>
           <div data-cursor-list>
-            <VirtualGrid
+            <VirtualList
               items={shown()}
+              activeIndex={cursor()}
               estimateRowHeight={44}
               gap={0}
               empty={
@@ -233,7 +234,7 @@ export default function Friends() {
                   />
                 </ContextMenu>
               )}
-            </VirtualGrid>
+            </VirtualList>
           </div>
           <Show when={section() !== "friends" && people.more}>
             <Button class="mt-2" variant="ghost" disabled={people.loading} onClick={() => run("list.more", section())}>

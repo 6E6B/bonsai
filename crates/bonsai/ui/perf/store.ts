@@ -1,14 +1,26 @@
 // Runs the real screens with synthetic store snapshots, only in --mode performance.
 import { createEffect, on, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
+import { run } from "../src/lib/commands/registry"
 import { browserFriends, browserHome, browserShell } from "../src/lib/sample"
 import { calls } from "./bindings"
-import { games, people } from "./fixtures"
+import { appendChat, games, people, prependChat } from "./fixtures"
 
 export const [shell] = createStore({ ...browserShell, wiki: false })
+const playing = new URLSearchParams(location.search).get("playing")
 export const [friends] = createStore({
   ...browserFriends,
-  friends: people.map((p) => ({ ...p, status: "Online", placeId: null, nickname: null, universeId: null })),
+  friends: people.map((person, index) => {
+    const game = playing === "single" ? 1000 : 1000 + Math.floor(index / 5)
+    return {
+      ...person,
+      presence: playing ? ("game" as const) : person.presence,
+      status: playing ? `Fixture Game ${game}` : "Online",
+      placeId: playing ? game : null,
+      nickname: null,
+      universeId: playing ? game : null,
+    }
+  }),
 })
 const [home] = createStore({
   ...browserHome,
@@ -29,6 +41,9 @@ Object.assign(window, {
       return revision
     },
     calls,
+    moveCursor: (direction: number) => run(direction > 0 ? "list.down" : "list.up"),
+    appendChat,
+    prependChat,
     async refresh() {
       await Promise.all([...refreshers].map((refresh) => refresh()))
       revision++

@@ -1,4 +1,4 @@
-import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js"
+import { createMemo, createResource, createSignal, onCleanup, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useListCursor } from "~/lib/commands/hooks"
 import { handle, run } from "~/lib/commands/registry"
@@ -7,7 +7,7 @@ import { commands, type NotificationRow, type Paged } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Button, Icon, ListItem, Page, SegmentedControl, Select } from "~/lib/ui"
+import { Avatar, Button, Icon, ListItem, Page, SegmentedControl, Select, VirtualList } from "~/lib/ui"
 import { categoryArg, openCommand, shownNotifications } from "./filter"
 
 const ms = (iso: string) => {
@@ -104,11 +104,11 @@ export default function Notifications() {
     >
       <ListState list={res.list} icon="bell" empty="You're all caught up" more={res.moreKey}>
         <div data-cursor-list class="flex flex-col">
-          <For each={shown()}>
+          <VirtualList items={shown()} activeIndex={cursor()} estimateRowHeight={56}>
             {(n, i) => (
               <ListItem
-                data-index={i()}
-                selected={i() === cursor()}
+                data-index={i}
+                selected={i === cursor()}
                 expanded={open[n.id]}
                 leading={
                   <Show when={n.userId} fallback={<Icon name="bell" class="m-1.5 text-fg-muted" />}>
@@ -119,12 +119,12 @@ export default function Notifications() {
                 subtitle={n.body || undefined}
                 meta={ago(ms(n.when))}
                 onClick={() => {
-                  setCursor(i())
-                  if (!toggleAt(i())) openAt(i())
+                  setCursor(i)
+                  if (!toggleAt(i)) openAt(i)
                 }}
               />
             )}
-          </For>
+          </VirtualList>
         </div>
       </ListState>
     </Page>

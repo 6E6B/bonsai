@@ -1,10 +1,10 @@
-import { For, Show } from "solid-js"
+import { Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { compact } from "~/lib/format"
 import type { AffiliatesView, CommunityHit } from "~/lib/ipc/bindings"
 import { ListState } from "~/lib/list-state"
 import { thumbUrl } from "~/lib/thumb"
-import { Button, IconButton, ListItem, Thumbnail, Tooltip, VerifiedBadge } from "~/lib/ui"
+import { Button, IconButton, ListItem, Thumbnail, Tooltip, VerifiedBadge, VirtualList } from "~/lib/ui"
 
 const text = {
   allies: { add: "Send ally request", addCommand: "group.ally", remove: "group.remove_ally", empty: "No allies" },
@@ -31,7 +31,7 @@ export function Affiliates(props: { view: AffiliatesView; kind: "allies" | "enem
       </Show>
       <ListState list={list()} icon="communities" empty={t().empty}>
         <div class="flex flex-col">
-          <For each={list().items}>
+          <VirtualList items={list().items} estimateRowHeight={56}>
             {(g: CommunityHit) => (
               <ListItem
                 leading={<Thumbnail class="w-10" alt="" src={thumbUrl("group_icon", g.id)} fallback="communities" />}
@@ -59,7 +59,7 @@ export function Affiliates(props: { view: AffiliatesView; kind: "allies" | "enem
                 onClick={() => run("group.open", String(g.id))}
               />
             )}
-          </For>
+          </VirtualList>
         </div>
       </ListState>
     </div>

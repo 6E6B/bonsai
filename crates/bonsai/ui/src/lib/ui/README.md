@@ -51,11 +51,13 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 |---|---|
 | `ListItem` | A row: friend, conversation, message, trade, notification, request. Leading avatar, title, subtitle, meta, actions. `selected` for the keyboard cursor, `unread`, `dim`. |
 | `DataTable` | Rows with real columns: servers, members, resellers, transactions, shortcuts. Virtual, scrolls with the page, sticky header. Column widths are fixed tracks, never `auto`. |
-| `VirtualGrid` | Anything that can pass ~100 entries: tile grids (inventory, catalog) or one-column lists (leave out `minItemWidth`). Scrolls with the page. |
+| `VirtualList` | Growing vertical collections: messages, chat, notifications, trade lists, search results and community activity. Measured row heights; shares the page or pane scrollbar. |
+| `VirtualGrid` | Growing tile grids: inventory, catalog, outfits, game stores and recommendations. Measures rows and adapts the column count. |
+| `VirtualShelf` | Horizontal collections with expensive tiles, such as profile preview shelves. Fixed item widths, measured height, fades and arrow controls. |
 | `PersonCard` | A person in a grid of compact cards: friends playing. A `Card` with avatar, name, one muted line, an optional trailing action. |
 | `PersonTile` | A person as a tile: big round headshot, display name, @username. Friends rows on a profile. |
 | `Tile` | A picture with a title: games, items, outfits, communities. `selected` for worn or picked items. |
-| `Shelf` | One sideways-scrolling row of tiles or people under a `SectionHeader`: profile overview rows. Arrows on hover. |
+| `Shelf` | A short, fixed horizontal strip. Use `VirtualShelf` for data collections. |
 | `MediaFrame` | An image with previous and next arrows and a counter laid over it. |
 | `AudioPlayer` | Play, pause and seek one sound from `rbxasset://`: item pages for audio. `ref` hands back `toggle` for a command. |
 | `Thumbnail` | A `thumb://` image with a fixed aspect ratio and a fallback icon. |
@@ -156,3 +158,15 @@ preview, so the preview uses the same token names as the app.
 `fonts/` holds Inter and JetBrains Mono Nerd Font, both under the SIL Open Font License 1.1.
 Icons come from `@phosphor-icons/core` (see Icons above).
 Loaded by `styles/base.css`.
+
+## Collection conventions
+
+Feature code uses these components instead of creating its own virtualizer. Keep bounded forms, settings controls, small palettes, selected trade items and short preview grids in ordinary flow. Windowing those can cost more than it saves and can discard form state.
+
+`VirtualList` and `VirtualGrid` take items and a renderer `(item, index)`. Put selection, expansion, drafts and checked items in the feature's store, not inside disposable row components. Pass `activeIndex` for keyboard cursors so movement can scroll to an unmounted row. The shared focus handling retains a focused row when scrolling and lets Tab advance across virtual windows. Tables use their existing `selected` key for cursor scrolling. Tile grids preload two extra rows; text lists preload six. Nested collections initialize from the surrounding scrollbar's actual offset so mounting a child does not reset the page.
+
+For chat history, use `VirtualList` with `followEnd` and a stable `itemKey`. TanStack's keyed end anchoring preserves the reading position when older rows are prepended, and follows appended rows only when the reader is near the end. Use normal vertical scrolling, not a reversed flex scroller. The minimum TanStack version is now 3.13.40, already present in the lockfile, for its native anchoring support.
+
+`VirtualShelf` takes a numeric `itemWidth` in CSS pixels, matching the grid API, and an accessible `aria-label`. Its region supports Left/Right, Home/End and normal focus traversal. The component gallery includes 1,000-row and 1,000-tile examples. Browser tests check list tails, cursor movement, focus retention, shelf/table Tab traversal, short chats and variable-height chat history updates.
+
+Virtualization limits native browser Find and screen-reader enumeration to mounted content. Keep feature search/filter controls available for searching the complete loaded collection. Browser tests use synthetic data; native webview and real image behavior still need platform testing.

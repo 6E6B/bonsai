@@ -17,7 +17,7 @@ import {
   TabPanel,
   Tabs,
   Tooltip,
-  VirtualGrid,
+  VirtualList,
 } from "~/lib/ui"
 
 /** The right-hand panel: friends by presence, and recent chats. Ctrl+\ toggles it. */
@@ -59,9 +59,9 @@ export function Drawer() {
               <EmptyState icon="friends" title="No friends yet" />
             </Match>
             <Match when={true}>
-              <VirtualGrid class="-mx-2" items={rows()} estimateRowHeight={36} gap={0}>
+              <VirtualList class="-mx-2" items={rows()} estimateRowHeight={36} gap={0}>
                 {(row) => <FriendRow row={row} />}
-              </VirtualGrid>
+              </VirtualList>
             </Match>
           </Switch>
         </TabPanel>

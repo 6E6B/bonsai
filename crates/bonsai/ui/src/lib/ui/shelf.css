@@ -1,11 +1,11 @@
 @layer components {
-  [data-component="shelf"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) {
     position: relative;
     min-width: 0;
   }
 
   /* Padding, pulled back with a margin, keeps focus rings from being clipped by the scroll. */
-  [data-component="shelf"] [data-slot="track"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="track"] {
     display: flex;
     gap: 12px;
     margin: -2px;
@@ -15,13 +15,18 @@
     scrollbar-width: none;
   }
 
-  [data-component="shelf"] [data-slot="track"]::-webkit-scrollbar {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="track"]::-webkit-scrollbar {
     display: none;
   }
 
   /* A context menu's trigger is `display: contents`, so size what it wraps. */
-  [data-component="shelf"] [data-slot="track"] > :not([data-slot="context-trigger"]),
-  [data-component="shelf"] [data-slot="track"] > [data-slot="context-trigger"] > * {
+  :is([data-component="shelf"], [data-component="virtual-shelf"])
+    [data-slot="track"]
+    > :not([data-slot="context-trigger"]),
+  :is([data-component="shelf"], [data-component="virtual-shelf"])
+    [data-slot="track"]
+    > [data-slot="context-trigger"]
+    > * {
     flex: none;
     width: var(--shelf-item);
     min-width: 0;
@@ -30,8 +35,8 @@
   /* Edges fade into the page while there is more to scroll that way. Set --shelf-fade to the
    * background when a shelf sits on something other than the page. Overlays, not a mask, since a
    * mask makes WebKitGTK repaint the whole row on scroll. */
-  [data-component="shelf"]::before,
-  [data-component="shelf"]::after {
+  :is([data-component="shelf"], [data-component="virtual-shelf"])::before,
+  :is([data-component="shelf"], [data-component="virtual-shelf"])::after {
     content: "";
     position: absolute;
     top: -2px;
@@ -43,23 +48,23 @@
     transition: opacity var(--duration) var(--ease);
   }
 
-  [data-component="shelf"]::before {
+  :is([data-component="shelf"], [data-component="virtual-shelf"])::before {
     left: -2px;
     background-image: linear-gradient(to right, var(--shelf-fade, var(--color-canvas)), transparent);
   }
 
-  [data-component="shelf"]::after {
+  :is([data-component="shelf"], [data-component="virtual-shelf"])::after {
     right: -2px;
     background-image: linear-gradient(to left, var(--shelf-fade, var(--color-canvas)), transparent);
   }
 
-  [data-component="shelf"][data-prev]::before,
-  [data-component="shelf"][data-next]::after {
+  :is([data-component="shelf"], [data-component="virtual-shelf"])[data-prev]::before,
+  :is([data-component="shelf"], [data-component="virtual-shelf"])[data-next]::after {
     opacity: 1;
   }
 
-  [data-component="shelf"] [data-slot="prev"],
-  [data-component="shelf"] [data-slot="next"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="prev"],
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="next"] {
     position: absolute;
     z-index: 2;
     top: calc(var(--shelf-item) / 2);
@@ -78,21 +83,21 @@
     transition: opacity var(--duration) var(--ease);
   }
 
-  [data-component="shelf"] [data-slot="prev"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="prev"] {
     left: 4px;
   }
 
-  [data-component="shelf"] [data-slot="next"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="next"] {
     right: 4px;
   }
 
-  [data-component="shelf"]:hover [data-slot="prev"],
-  [data-component="shelf"]:hover [data-slot="next"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]):hover [data-slot="prev"],
+  :is([data-component="shelf"], [data-component="virtual-shelf"]):hover [data-slot="next"] {
     opacity: 1;
   }
 
-  [data-component="shelf"] [data-slot="prev"]:hover,
-  [data-component="shelf"] [data-slot="next"]:hover {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="prev"]:hover,
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="next"]:hover {
     background-image: linear-gradient(var(--color-hover-on-fill), var(--color-hover-on-fill));
   }
 }

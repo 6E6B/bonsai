@@ -25,7 +25,7 @@ import { ServerControls } from "~/lib/private-server"
 import { friends, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
-import { GameTile, tileGrid } from "~/lib/tiles"
+import { GameTile } from "~/lib/tiles"
 import {
   Alert,
   Avatar,
@@ -61,6 +61,8 @@ import {
   Tooltip,
   useDialog,
   VerifiedBadge,
+  VirtualGrid,
+  VirtualList,
 } from "~/lib/ui"
 import { useWikiAbout, WikiTab, WikiTeaser } from "~/lib/wiki-panels"
 
@@ -588,7 +590,7 @@ function PrivateServersPanel(props: { list: List<PrivateServerRow>; offer: Serve
         description="Private servers you own or were invited to show up here."
         more="private_servers"
       >
-        <For each={list.items}>
+        <VirtualList items={list.items} estimateRowHeight={96}>
           {(s) => (
             <div class="flex flex-col">
               <ListItem
@@ -606,7 +608,7 @@ function PrivateServersPanel(props: { list: List<PrivateServerRow>; offer: Serve
               </Show>
             </div>
           )}
-        </For>
+        </VirtualList>
       </ListState>
     </div>
   )
@@ -656,35 +658,33 @@ function StorePanel(props: { list: List<PassRow> }) {
   const list = props.list
   return (
     <ListState list={list} icon="badge" empty="Nothing in the store" more="passes">
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3">
-        <For each={list.items}>
-          {(p) => (
-            <Card class="flex flex-col gap-2 p-2">
-              <Thumbnail alt={p.name} src={thumbUrl("game_pass", p.id)} fallback="badge" />
-              <Show when={p.description} fallback={<span class="truncate font-medium">{p.name}</span>}>
-                {(d) => (
-                  <Tooltip content={d()} class="min-w-0 max-w-full">
-                    <span class="truncate font-medium">{p.name}</span>
-                  </Tooltip>
-                )}
+      <VirtualGrid items={list.items} minItemWidth={160} estimateRowHeight={240} gap={12}>
+        {(p) => (
+          <Card class="flex flex-col gap-2 p-2">
+            <Thumbnail alt={p.name} src={thumbUrl("game_pass", p.id)} fallback="badge" />
+            <Show when={p.description} fallback={<span class="truncate font-medium">{p.name}</span>}>
+              {(d) => (
+                <Tooltip content={d()} class="min-w-0 max-w-full">
+                  <span class="truncate font-medium">{p.name}</span>
+                </Tooltip>
+              )}
+            </Show>
+            <div class="flex items-center justify-between">
+              <Show when={p.price !== null} fallback={<span class="text-sm text-fg-muted">Off sale</span>}>
+                <Robux amount={p.price ?? 0} />
               </Show>
-              <div class="flex items-center justify-between">
-                <Show when={p.price !== null} fallback={<span class="text-sm text-fg-muted">Off sale</span>}>
-                  <Robux amount={p.price ?? 0} />
-                </Show>
-                <Show when={p.owned}>
-                  <Badge variant="success">Owned</Badge>
-                </Show>
-              </div>
-              <Show when={!p.owned && p.price !== null}>
-                <Button size="sm" onClick={() => run("game.buy_pass", String(p.id))}>
-                  Buy
-                </Button>
+              <Show when={p.owned}>
+                <Badge variant="success">Owned</Badge>
               </Show>
-            </Card>
-          )}
-        </For>
-      </div>
+            </div>
+            <Show when={!p.owned && p.price !== null}>
+              <Button size="sm" onClick={() => run("game.buy_pass", String(p.id))}>
+                Buy
+              </Button>
+            </Show>
+          </Card>
+        )}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -693,7 +693,7 @@ function BadgesPanel(props: { list: List<BadgeRow> }) {
   const list = props.list
   return (
     <ListState list={list} icon="badge" empty="No badges" more="badges">
-      <For each={list.items}>
+      <VirtualList items={list.items} estimateRowHeight={64}>
         {(b) => (
           <ListItem
             leading={<Thumbnail class="w-10" alt={b.name} src={thumbUrl("badge_icon", b.id)} fallback="badge" />}
@@ -710,7 +710,7 @@ function BadgesPanel(props: { list: List<BadgeRow> }) {
             }
           />
         )}
-      </For>
+      </VirtualList>
     </ListState>
   )
 }
@@ -725,7 +725,7 @@ function EventsPanel(props: { list: List<EventRow> }) {
   const [open, setOpen] = createSignal<string>()
   return (
     <ListState list={list} icon="calendar" empty="No upcoming events">
-      <For each={list.items}>
+      <VirtualList items={list.items} estimateRowHeight={80}>
         {(e) => (
           <>
             <ListItem
@@ -753,7 +753,7 @@ function EventsPanel(props: { list: List<EventRow> }) {
             </Show>
           </>
         )}
-      </For>
+      </VirtualList>
     </ListState>
   )
 }
@@ -762,9 +762,9 @@ function RecommendedPanel(props: { list: List<GameCard> }) {
   const list = props.list
   return (
     <ListState list={list} icon="game" empty="No recommendations">
-      <div class={tileGrid}>
-        <For each={list.items}>{(g) => <GameTile game={g} />}</For>
-      </div>
+      <VirtualGrid items={list.items} minItemWidth={128} estimateRowHeight={190} gap={12}>
+        {(g) => <GameTile game={g} />}
+      </VirtualGrid>
     </ListState>
   )
 }
@@ -882,7 +882,7 @@ function FriendServersPanel(props: { list: List<ServerRow> }) {
   const friendName = (id: number) => friends.friends.find((f) => f.id === id)?.displayName ?? String(id)
   return (
     <ListState list={list} icon="friends" empty="No friends are playing">
-      <For each={list.items}>
+      <VirtualList items={list.items} estimateRowHeight={64}>
         {(s) => (
           <ListItem
             leading={
@@ -906,7 +906,7 @@ function FriendServersPanel(props: { list: List<ServerRow> }) {
             }
           />
         )}
-      </For>
+      </VirtualList>
     </ListState>
   )
 }

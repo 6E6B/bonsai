@@ -202,7 +202,13 @@ export function Outfits(props: { userId: number; mine: boolean; outfits: List<Ou
           />
           <ListState list={{ ...props.outfits, items: entries() }} icon="avatar" empty="" more="outfits" autoMore>
             <div data-cursor-list>
-              <VirtualGrid items={entries()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+              <VirtualGrid
+                activeIndex={cursor()}
+                items={entries()}
+                minItemWidth={TILE_WIDTH}
+                estimateRowHeight={170}
+                gap={12}
+              >
                 {(id, i) => (
                   <div data-index={i} class="grid min-w-0">
                     <Show

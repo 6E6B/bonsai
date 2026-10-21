@@ -1,5 +1,6 @@
-import { createMemo, createSignal, For, type JSX, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, type JSX, on, onCleanup, onMount, Show } from "solid-js"
 import { createInPageVirtualizer, gridColumns, toRows } from "./virtual"
+import { virtualFocus } from "./virtual-focus"
 
 export interface VirtualGridProps<T> {
   items: readonly T[]
@@ -10,6 +11,10 @@ export interface VirtualGridProps<T> {
   estimateRowHeight: number
   /** Gap between rows and columns in px. */
   gap?: number
+  /** Keep a keyboard cursor visible, even when its row has not mounted yet. */
+  activeIndex?: number
+  itemKey?: (item: T) => string | number
+  followEnd?: boolean
   /** Shown when `items` is empty. */
   empty?: JSX.Element
   class?: string
@@ -20,9 +25,12 @@ export interface VirtualGridProps<T> {
 export function VirtualGrid<T>(props: VirtualGridProps<T>) {
   let el: HTMLDivElement | undefined
   const [width, setWidth] = createSignal(0)
+  const [focused, setFocused] = createSignal<number | null>(null)
   const gap = () => props.gap ?? 8
   const columns = () => (props.minItemWidth ? gridColumns(width(), props.minItemWidth, gap()) : 1)
   const rows = createMemo(() => toRows(props.items, columns()))
+
+  const keys = createMemo(() => (props.itemKey ? rows().map((row) => props.itemKey?.(row[0]) ?? 0) : undefined))
 
   onMount(() => {
     if (!el) return
@@ -36,10 +44,27 @@ export function VirtualGrid<T>(props: VirtualGridProps<T>) {
     count: () => rows().length,
     estimate: props.estimateRowHeight,
     gap: props.gap ?? 8,
+    // Tile rows are much taller and more expensive than text rows.
+    overscan: props.minItemWidth ? 2 : 6,
+    keys,
+    followEnd: props.followEnd,
+    pinned: () => (focused() === null ? null : Math.floor((focused() ?? 0) / columns())),
   })
 
+  const scrollToItem = (index: number) => virtualizer.scrollToIndex(Math.floor(index / columns()), { align: "auto" })
+  createEffect(
+    on(
+      () => props.activeIndex,
+      (index) => {
+        if (index !== undefined && index >= 0 && index < props.items.length) scrollToItem(index)
+      },
+      { defer: true },
+    ),
+  )
+  virtualFocus({ root: () => el, count: () => props.items.length, scroll: scrollToItem, pin: setFocused })
+
   return (
-    <div ref={el} data-component="virtual-grid" class={props.class}>
+    <div ref={el} data-component="virtual-grid" data-virtual-root class={props.class}>
       <Show when={props.items.length > 0} fallback={props.empty}>
         <div data-slot="sizer" style={{ height: `${virtualizer.getTotalSize()}px` }}>
           <For each={indexes()}>
@@ -54,7 +79,13 @@ export function VirtualGrid<T>(props: VirtualGridProps<T>) {
                   gap: `${gap()}px`,
                 }}
               >
-                <For each={rows()[index]}>{(item, i) => props.children(item, index * columns() + i())}</For>
+                <For each={rows()[index]}>
+                  {(item, i) => (
+                    <div data-slot="item" data-virtual-item={index * columns() + i()}>
+                      {props.children(item, index * columns() + i())}
+                    </div>
+                  )}
+                </For>
               </div>
             )}
           </For>

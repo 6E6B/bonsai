@@ -43,6 +43,7 @@ import {
   Tooltip,
   VerifiedBadge,
   VirtualGrid,
+  VirtualList,
 } from "~/lib/ui"
 import { rolimonsFailed, VALUES_SOURCE } from "~/lib/values"
 import { useWikiAbout, WikiSummary, WikiTab } from "~/lib/wiki-panels"
@@ -600,7 +601,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
         autoMore
       >
         <div data-cursor-list>
-          <VirtualGrid items={shown()} estimateRowHeight={44} gap={0}>
+          <VirtualList items={shown()} activeIndex={cursor()} estimateRowHeight={44} gap={0}>
             {(p, i) => (
               <ContextMenu items={userMenu(p.id, { friend: p.friend, following: p.following ?? undefined })}>
                 <ListItem
@@ -641,7 +642,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                 />
               </ContextMenu>
             )}
-          </VirtualGrid>
+          </VirtualList>
         </div>
       </ListState>
     </div>

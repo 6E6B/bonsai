@@ -6,6 +6,9 @@ type Probe = {
   revision: number
   calls: Record<string, number>
   refresh: () => Promise<void>
+  moveCursor: (direction: number) => Promise<unknown>
+  appendChat: () => void
+  prependChat: () => void
 }
 declare global {
   interface Window {
@@ -25,6 +28,12 @@ const routes = [
   },
   { name: "friends", path: "/friends", ready: "Player 100", tabs: ["Followers", "Following", "Blocked", "Friends"] },
   { name: "marketplace", path: "/marketplace", ready: "Collectible 100", tabs: [] },
+  { name: "messages", path: "/messages", ready: "Message 100", tabs: [] },
+  { name: "chat", path: "/chat", ready: "Conversation 100", tabs: [] },
+  { name: "notifications", path: "/notifications", ready: "Notification 100", tabs: [] },
+  { name: "communities", path: "/communities", ready: "Community 100", tabs: [] },
+  { name: "trades", path: "/trades", ready: "Trader 100", tabs: [] },
+  { name: "themes", path: "/themes", ready: "Theme 100", tabs: [] },
   { name: "home", path: "/", ready: "Recommended", tabs: [] },
 ]
 

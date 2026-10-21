@@ -23,8 +23,10 @@ The UI GitHub Actions workflow also runs the scenarios on UI pull requests and m
 | Friends | Friends, followers, following, blocked, scrolling, filtering, store refresh |
 | Marketplace | Initial results, scrolling, store refresh |
 | Home | Initial populated screen, scrolling, store refresh |
+| Messages, conversations, notifications, communities, trades, themes | Populated collections, scrolling and store refresh |
+| Shared collection behavior | Shelf endpoints and Tab traversal, table Tab traversal, cursor movement past unmounted rows, focus retention, filtering, chat append/prepend and short chat alignment |
 
-Coverage is explicit. Other screens, dialogs, profile experience subfilters, Wiki enrichment, 3D avatars, image decoding and theme backgrounds are not yet benchmarked. Add fixtures and scenarios before claiming coverage for them. Unknown fixture calls, application exceptions and console errors fail the run rather than producing a timing for a broken or empty screen.
+Coverage is explicit. Game and community detail pages, other dialogs, profile experience subfilters, Wiki enrichment, 3D avatars, image decoding and theme backgrounds are not yet benchmarked. Add fixtures and scenarios before claiming coverage for them. Unknown fixture calls, application exceptions and console errors fail the run rather than producing a timing for a broken or empty screen.
 
 ## Measurements
 
@@ -87,3 +89,11 @@ These are synthetic frontend results, not production latency guarantees. Initial
 Playwright Chromium approximates WebView2; Playwright WebKit is useful for cross-engine comparisons but is not the exact WebKitGTK/WKWebView build shipped by Tauri. Native Linux scrolling, compositing and image decode behavior must also be checked in Bonsai. WebKit browser tests require the distribution's GTK/GStreamer and related browser libraries. Chromium scenarios were validated in the implementation environment; WebKit execution was blocked by missing system libraries.
 
 The synthetic store uses Solid stores and `reconcile` with fresh payload objects and refreshes mounted subscriptions. It does not exercise the production store's event coalescing, Rust/backend performance or real network scheduling. Background store refreshes here carry unchanged fixture data, so they measure the cost of unchanged snapshots rather than every possible update pattern.
+
+## Shared collection rollout
+
+The UI now uses `VirtualList`, `VirtualGrid`, `VirtualShelf` and the existing virtual `DataTable` as its collection primitives. The migration covers profile shelves; inbox and conversation lists; chat history and member pickers; notifications; trade lists and tradable-item pickers; community lists, stores, requests, audit logs, forum posts and replies; game passes, badges, events, recommendations and private/friend servers; similar items; themes and hub releases; search and wiki results; blocked users and private-server settings; and friends playing on Home.
+
+Existing inventory, marketplace, avatar/outfit and tabular views retain their shared virtualization. Bounded forms, palettes, tabs, capped small home previews and short metadata strips keep ordinary rendering. No Roblox endpoints, credentials, generated bindings or CSP settings changed. See the [component guide](../crates/bonsai/ui/src/lib/ui/README.md) for the contracts.
+
+In a 500-item synthetic profile run, virtualizing the six preview shelves reduced the full overview DOM from about 2,900 elements to about 1,200. Exact timings vary by machine; the stronger regression checks verify bounded mounting, reachability, focus and scroll anchoring. Real initial profile-opening latency still includes backend and image work outside this harness.

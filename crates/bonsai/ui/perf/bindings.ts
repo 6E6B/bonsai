@@ -1,6 +1,22 @@
 // This module replaces bindings only in the explicit performance build. No native IPC or credentials.
 import type { commands as realCommands } from "../src/lib/ipc/bindings"
-import { badges, games, groups, items, list, look, outfits, people, profile } from "./fixtures"
+import {
+  badges,
+  chatLines,
+  conversations,
+  games,
+  groups,
+  items,
+  list,
+  look,
+  messages,
+  notifications,
+  outfits,
+  people,
+  profile,
+  themes,
+  trades,
+} from "./fixtures"
 
 export * from "../src/lib/ipc/bindings"
 
@@ -53,6 +69,56 @@ const fixtures = {
     license: "CC BY-SA 3.0",
   }),
   saveTabs: () => null,
+  chatList: () => ({ list: list(conversations), moreKey: "" }),
+  takeChatFocus: () => "chat-100",
+  chatView: () => ({
+    loading: false,
+    error: null,
+    info: conversations[0],
+    lines: chatLines,
+    more: false,
+    people: [],
+    owner: false,
+    typing: [],
+    blocked: "",
+    maxTitle: 150,
+  }),
+  messages: () => ({ list: list(messages), moreKey: "" }),
+  notifications: () => ({ list: list(notifications), moreKey: "" }),
+  notificationCategories: () => [],
+  myCommunities: () => list(groups),
+  tradeList: () => ({ list: list(trades), moreKey: "" }),
+  tradeDraft: () => null,
+  tradeEligibility: () => ({ loading: false, canTrade: true, reason: "" }),
+  tradeDetail: () => ({
+    loading: false,
+    error: null,
+    status: "Completed",
+    partnerId: 100,
+    give: null,
+    get: null,
+    eval: null,
+  }),
+  themes: () => themes,
+  appSettings: () => ({
+    mode: "dark",
+    darkTheme: "",
+    lightTheme: "",
+    density: "comfortable",
+    playerCommand: "",
+    formatLocale: "",
+    notify: {
+      friendJoins: false,
+      trades: false,
+      chats: false,
+      friendRequests: false,
+      experienceUpdates: false,
+      sales: false,
+      plugins: false,
+    },
+    cacheData: 0,
+    cacheImages: 0,
+  }),
 } satisfies Fixtures
 
 export const calls: Record<string, number> = {}
