@@ -135,7 +135,7 @@ export function ItemTile(props: {
             <Show when={props.item.values?.value}>{(v) => <ValueAmount amount={v()} compact />}</Show>
           </span>
         }
-        src={thumbUrl(props.item.bundle ? "bundle" : "asset", props.item.id)}
+        src={thumbUrl(props.item.bundle ? "bundle" : "asset", props.item.id, true)}
         fallback={props.item.bundle ? "avatar" : assetIcon(props.item.assetType)}
         selected={props.selected}
         fixed={props.fixed}

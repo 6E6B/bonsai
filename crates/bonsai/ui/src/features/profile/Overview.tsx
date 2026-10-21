@@ -238,7 +238,7 @@ function Person(props: { person: Connection }) {
       <PersonTile
         name={p().displayName || p().name || `User ${p().id}`}
         username={p().name || undefined}
-        src={thumbUrl("headshot", p().id)}
+        src={thumbUrl("headshot", p().id, true)}
         presence={p().friend ? p().presence : undefined}
         verified={p().verified}
         onClick={() => run("user.open", String(p().id))}
@@ -252,7 +252,7 @@ function GroupTile(props: { group: GroupCard }) {
     <Tile
       title={props.group.name}
       subtitle={`${compact(props.group.members)} members`}
-      src={thumbUrl("group_icon", props.group.id)}
+      src={thumbUrl("group_icon", props.group.id, true)}
       fallback="communities"
       badge={
         <Show when={props.group.primary}>
