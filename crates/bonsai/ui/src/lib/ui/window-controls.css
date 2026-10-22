@@ -1,5 +1,6 @@
-/* Title bar window buttons. Wide, square-cornered hit targets like native controls; close turns
- * danger on hover. */
+/* Title bar window buttons. The default variant has wide, square-cornered hit targets like
+ * native Windows controls; close turns danger on hover. The `adwaita` and `breeze` variants draw
+ * the desktop's symbolic icons in small round buttons, the way GNOME and KDE draw theirs. */
 @layer components {
   [data-component="window-controls"] {
     display: flex;
@@ -32,5 +33,72 @@
 
   [data-component="window-controls"] [data-slot="button"]:focus-visible {
     outline-offset: -2px;
+  }
+
+  /* A symbolic icon from the desktop's icon theme, tinted with the text color. */
+  [data-component="window-controls"] [data-slot="glyph"] {
+    width: 16px;
+    height: 16px;
+    background: currentColor;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+  }
+
+  /* GNOME: always-visible soft circles, the glyph in the text color. */
+  [data-component="window-controls"][data-variant="adwaita"] {
+    align-items: center;
+    gap: 12px;
+    padding: 0 8px;
+  }
+
+  [data-component="window-controls"][data-variant="adwaita"] [data-slot="button"] {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+    background: var(--color-control);
+    color: var(--color-fg);
+  }
+
+  [data-component="window-controls"][data-variant="adwaita"] [data-slot="button"]:hover,
+  [data-component="window-controls"][data-variant="adwaita"] [data-slot="button"][data-close]:hover {
+    background: var(--color-control-hover);
+    color: var(--color-fg);
+  }
+
+  [data-component="window-controls"][data-variant="adwaita"] [data-slot="button"]:active {
+    background: var(--color-active);
+  }
+
+  /* KDE: bare glyphs; a circle shows on hover, red for close. */
+  [data-component="window-controls"][data-variant="breeze"] {
+    align-items: center;
+    gap: 6px;
+    padding: 0 6px;
+  }
+
+  [data-component="window-controls"][data-variant="breeze"] [data-slot="button"] {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-full);
+    color: var(--color-fg);
+  }
+
+  [data-component="window-controls"][data-variant="breeze"] [data-slot="button"]:hover {
+    background: var(--color-control-hover);
+  }
+
+  [data-component="window-controls"][data-variant="breeze"] [data-slot="button"]:active {
+    background: var(--color-active);
+  }
+
+  [data-component="window-controls"][data-variant="breeze"] [data-slot="button"][data-close]:hover {
+    background: var(--color-danger);
+    color: var(--color-on-media);
+  }
+
+  [data-component="window-controls"][data-variant="adwaita"] [data-slot="button"]:focus-visible,
+  [data-component="window-controls"][data-variant="breeze"] [data-slot="button"]:focus-visible {
+    outline-offset: 1px;
   }
 }

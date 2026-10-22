@@ -1,5 +1,6 @@
 import { createSignal, For, type ParentProps } from "solid-js"
 import { applyAppearance, DEFAULT_SEEDS, derive, type Mode } from "~/lib/theme"
+import { windowIcons } from "~/lib/thumb"
 import {
   Alert,
   AudioPlayer,
@@ -495,6 +496,19 @@ export default function Components() {
       <Section title="Window controls">
         <div class="flex h-10 bg-deep">
           <WindowControls onMinimize={noop} onMaximize={noop} onClose={noop} />
+        </div>
+        <div class="flex h-8 justify-end bg-deep">
+          <WindowControls variant="adwaita" icons={windowIcons()} onMinimize={noop} onMaximize={noop} onClose={noop} />
+        </div>
+        <div class="flex h-8 justify-end bg-deep">
+          <WindowControls
+            variant="breeze"
+            icons={windowIcons()}
+            maximized
+            onMinimize={noop}
+            onMaximize={noop}
+            onClose={noop}
+          />
         </div>
       </Section>
 

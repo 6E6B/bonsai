@@ -54,6 +54,43 @@ pub struct WindowFrame {
     pub radius: u32,
 }
 
+/// The title bar's window buttons: which ones, on which side, and how they look. See
+/// `titlebar.rs`.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct WindowButtons {
+    pub style: ButtonStyle,
+    /// Buttons before the app name, in order.
+    pub start: Vec<WindowButton>,
+    /// Buttons at the right edge, in order.
+    pub end: Vec<WindowButton>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum ButtonStyle {
+    /// The app's bundled icons. Windows, macOS, and Linux without an icon theme.
+    Builtin,
+    /// The desktop's icons, drawn like GNOME's.
+    Adwaita,
+    /// The desktop's icons, drawn like KDE's.
+    Breeze,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum WindowButton {
+    Minimize,
+    Maximize,
+    Close,
+}
+
+/// Sent when the main window is maximized or restored.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Type, Event)]
+pub struct WindowMaximized {
+    pub maximized: bool,
+}
+
 /// Shell state every screen needs: accounts, toasts, connectivity.
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -2768,6 +2805,18 @@ pub fn window_frame(frame: State<'_, crate::frame::Frame>) -> WindowFrame {
     frame.get()
 }
 
+#[tauri::command]
+#[specta::specta]
+pub fn window_buttons(t: State<'_, crate::titlebar::Titlebar>) -> WindowButtons {
+    t.buttons()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn window_maximized(t: State<'_, crate::titlebar::Titlebar>) -> bool {
+    t.maximized()
+}
+
 pub fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .commands(collect_commands![
@@ -2779,6 +2828,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             run_command,
             dismiss_toast,
             window_frame,
+            window_buttons,
+            window_maximized,
             friends,
             home,
             game,
@@ -2936,7 +2987,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             confirm_login,
             cancel_login
         ])
-        .events(collect_events![StoreChanged, WindowFrame])
+        .events(collect_events![StoreChanged, WindowFrame, WindowMaximized])
 }
 
 pub const BINDINGS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/ui/src/lib/ipc/bindings.ts");

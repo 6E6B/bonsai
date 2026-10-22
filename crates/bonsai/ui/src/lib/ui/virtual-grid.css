@@ -1,22 +1,23 @@
 @layer components {
-  [data-component="virtual-grid"] [data-slot="item"] {
-    min-width: 0;
-  }
-
+  /* Child combinators only: items often have their own `data-slot="row"` or `"item"` inside. */
   [data-component="virtual-grid"] {
     min-width: 0;
   }
 
-  [data-component="virtual-grid"] [data-slot="sizer"] {
+  [data-component="virtual-grid"] > [data-slot="sizer"] {
     position: relative;
     width: 100%;
   }
 
-  [data-component="virtual-grid"] [data-slot="row"] {
+  [data-component="virtual-grid"] > [data-slot="sizer"] > [data-slot="row"] {
     position: absolute;
     top: 0;
     left: 0;
     display: grid;
     width: 100%;
+  }
+
+  [data-component="virtual-grid"] > [data-slot="sizer"] > [data-slot="row"] > [data-slot="item"] {
+    min-width: 0;
   }
 }
