@@ -189,9 +189,7 @@ async fn switching_renders_from_cache_without_network() {
     let cookies = seeded(&dir);
     // Refuse connections deterministically. A fixed "dead" port can hang on some
     // Windows hosts instead of returning a connection error promptly.
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!("http://{}", listener.local_addr().unwrap());
     let reject_connections = tokio::spawn(async move {
         while let Ok((stream, _)) = listener.accept().await {
