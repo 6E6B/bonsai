@@ -34,6 +34,8 @@ export function VirtualGrid<T>(props: VirtualGridProps<T>) {
 
   onMount(() => {
     if (!el) return
+    // Read the width now so the first paint has the right columns, not one full-width column.
+    setWidth(el.clientWidth)
     observeVirtualResize([el], ([e]) => setWidth(e.contentRect.width))
   })
 
