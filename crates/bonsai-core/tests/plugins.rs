@@ -1253,3 +1253,54 @@ fn packages_install_with_their_hash() {
         Some(hash.as_str())
     );
 }
+
+#[test]
+fn network_permission_is_reviewed_and_requires_an_account_grant() {
+    let home = tempfile::tempdir().unwrap();
+    let src = tempfile::tempdir().unwrap();
+    let main = "bonsai.command { id = 'http', title = 'HTTP', run = function(ctx) return { toast = tostring(ctx.http { url = 'https://example.com/' }.status) } end }";
+    let dir = plugin(src.path(), "net", "\"net\"", main);
+    let file = dir.join("plugin.toml");
+    let manifest = format!(
+        "{}\nnetwork_hosts = [\"example.com\"]\n",
+        std::fs::read_to_string(&file).unwrap()
+    );
+    std::fs::write(&file, &manifest).unwrap();
+    let core = start(home.path());
+    core.stage_plugin_install(dir.to_str().unwrap(), true).unwrap();
+    assert!(
+        core.store()
+            .plugin_install
+            .as_ref()
+            .unwrap()
+            .added
+            .contains(&"net:example.com".into())
+    );
+    core.finish_plugin_install(Vec::new()).unwrap();
+    wait(&core, "network plugin", |p| running(p, "net"));
+    core.run_plugin_command(
+        &PluginCmd {
+            plugin: "net".into(),
+            id: "http".into(),
+        },
+        None,
+        None,
+        None,
+    )
+    .unwrap();
+    wait_store(&core, "network account refusal", |_| {
+        toasted(&core, "It may not use this account")
+    });
+    std::fs::write(
+        &file,
+        manifest.replace("[\"example.com\"]", "[\"example.com\", \"api.example.com\"]"),
+    )
+    .unwrap();
+    core.reload_plugin("net").unwrap();
+    let p = wait(&core, "new network host review", |p| {
+        matches!(status(p, "net"), Some(Status::NeedsReview(_)))
+    });
+    assert!(
+        matches!(status(&p, "net"), Some(Status::NeedsReview(added)) if added == &vec!["net:api.example.com".to_owned()])
+    );
+}

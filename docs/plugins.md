@@ -93,7 +93,7 @@ The install dialog shows each action under its tier.
 | `actions` | The built-in commands the plugin may run or propose, limited by [tier](#tiers). Anything not listed is refused. |
 | `notify` | Desktop alerts through `alerts.rs`. |
 | `clipboard.write` | Copy text. |
-| `net` | HTTPS to listed hosts. Not built yet; see [Network](#9-network). |
+| `net` | Credential-free HTTPS GET and JSON POST to approved public hosts. See [Network](#9-network). |
 
 Everything except `read.public` is granted **per account**: a plugin only sees and acts on the
 accounts the user ticked. The user sees the permissions at install. An update that asks for more,
@@ -504,16 +504,52 @@ unpacked plugins) writes one.
   the plugin's thread like command calls; the shell sends only the view's title and state with
   `storeChanged`, and the dialog fetches the tree with `plugin_view` when it changes.
 
-### 9. Network
+### 9. Network (done)
 
-Not now: plugins make no outside requests.
+```toml
+permissions = ["net"]
+network_hosts = ["api.example.com", "discord.com"]
+```
 
-Most plugins people want (value lists, trade calculators, Discord pings) need outside data.
+Hosts are exact DNS names, without URLs, ports or wildcards. At most 32. The install dialog
+shows every host; an update adding a host stops for review, even if `net` was already granted.
+Like other private permissions, network access requires a granted, signed-in account.
 
-**Decide first:** `AGENTS.md` makes `bonsai-api` the only crate that touches the network. A `net`
-permission would add a `PluginHttp` client there: HTTPS only, hosts listed in the manifest and
-shown at install, never any cookies, under the shared rate limiter, with a response size cap.
-That needs the rule amended.
+```lua
+local response = ctx.http { url = "https://api.example.com/values" }
+if response.status == 200 then
+    local values = response.json -- parsed JSON, or nil for non-JSON text
+end
+
+ctx.http {
+    url = "https://discord.com/api/webhooks/...",
+    method = "POST",
+    body = '{"content":"An alert from Bonsai"}',
+}
+```
+
+- `method` is `GET` (default) or `POST`. A POST body is UTF-8 text sent as
+  `application/json`; GET cannot carry a body. There are no arbitrary headers.
+- The response has `status`, UTF-8 `body` and `json`. HTTP errors are returned as statuses;
+  policy, connection, timeout and size failures raise errors catchable with `pcall`.
+- HTTPS on port 443 only, with normal certificate verification. No URL credentials, IP
+  literals, Roblox/Roblox CDN hosts, proxies or redirects. DNS resolution drops non-public
+  addresses before connecting, including loopback, private and link-local addresses.
+- `PluginHttp` lives in `bonsai-api` but is independent of the Roblox client. It has no account
+  cookie, CSRF token, browser tracker, auth ticket or cookie jar. It never retries a request,
+  so a webhook POST is not duplicated after a failure.
+- The shared machine rate limiter applies. A 429 blocks its host using `Retry-After`
+  (seconds, capped at 5 minutes), or 30 seconds when absent.
+- At most 10 HTTP calls per handler, 8192 bytes per URL, 64 KiB per request body and 1 MiB per
+  response, checked as decoded bytes stream in. Each request has a 15-second deadline,
+  including rate-limit waits, DNS and body reads. Waiting does not count against Luau CPU time.
+- The host rechecks account grants and plugin state while waiting and before returning a
+  response. Stopping, reloading or revoking the account cancels outstanding requests; a
+  request already delivered to a remote service cannot be undone.
+
+Network permission lets a plugin send the data it can read to its listed hosts. Grant it only
+to plugins and destinations you trust. No plugin code or remote content runs in the webview;
+the CSP is unchanged.
 
 ### 10. Packages and hub
 

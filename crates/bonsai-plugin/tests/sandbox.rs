@@ -1028,3 +1028,63 @@ fn example_plugins_load() {
         }
     }
 }
+
+const NETWORK: &str = r#"
+id = "test"
+entry = "main.luau"
+permissions = ["net"]
+network_hosts = ["example.com"]
+"#;
+
+#[test]
+fn http_needs_permission_and_caps_calls_and_payloads() {
+    let (out, reads) = read_with(
+        MANIFEST,
+        "ctx.http { url = 'https://example.com/' }",
+        FakeHost::default(),
+    );
+    assert!(script_error(out).contains("net"));
+    assert!(reads.is_empty());
+    for body in [
+        "ctx.http { url = 'https://example.com/', method = 'CONNECT' }",
+        "ctx.http { url = 'https://example.com/', body = '{}' }",
+        "ctx.http { url = 'https://example.com/', method = 'POST', body = string.rep('x', 65537) }",
+        "ctx.http { url = string.rep('x', 8193) }",
+    ] {
+        let (out, reads) = read_with(NETWORK, body, FakeHost::default());
+        assert!(out.is_err());
+        assert!(reads.is_empty());
+    }
+    let (out, reads) = read_with(
+        NETWORK,
+        "for i = 1, 11 do ctx.http { url = 'https://example.com/' } end",
+        FakeHost::default(),
+    );
+    assert!(script_error(out).contains("10 HTTP"));
+    assert_eq!(reads.len(), 10);
+}
+
+#[test]
+fn http_exposes_status_text_and_parsed_json() {
+    let host = FakeHost {
+        data: serde_json::json!({"status": 200, "body": "{}", "json": {"value": 7}}),
+        ..Default::default()
+    };
+    let (out, reads) = read_with(
+        NETWORK,
+        "local r = ctx.http { url = 'https://example.com/', method = 'POST', body = '{}' }; assert(r.status == 200 and r.json.value == 7); return { toast = r.body }",
+        host,
+    );
+    assert_eq!(out.unwrap(), Outcome::Toast("{}".into()));
+    assert_eq!(
+        reads,
+        vec![(
+            CTX.account,
+            Read::Http(bonsai_plugin::HttpRequest {
+                url: "https://example.com/".into(),
+                method: "POST".into(),
+                body: Some("{}".into())
+            })
+        )]
+    );
+}

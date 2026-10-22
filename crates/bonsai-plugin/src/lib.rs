@@ -7,7 +7,9 @@ mod sandbox;
 mod view;
 
 pub use manifest::{Manifest, Permission, Refused, Setting, SettingKind};
-pub use sandbox::{Action, Arg, Command, Ctx, EVENTS, Host, Limits, Outcome, Plugin, Read, TradeStatus};
+pub use sandbox::{
+    Action, Arg, Command, Ctx, EVENTS, Host, HttpRequest, Limits, Outcome, Plugin, Read, TradeStatus,
+};
 pub use view::{ButtonStyle, Cell, MAX_ROWS, Node, TableColumn, ViewEvent, is_action};
 
 /// The plugin API version this build provides. A manifest asking for a newer one is refused.

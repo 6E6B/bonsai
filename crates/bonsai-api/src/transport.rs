@@ -899,7 +899,7 @@ fn public_redirect_policy(a: reqwest::redirect::Attempt) -> reqwest::redirect::A
 
 /// Resolves names to their public addresses only, so a user link can't reach this machine or
 /// its network by a name that points there.
-struct PublicOnly;
+pub(crate) struct PublicOnly;
 
 impl reqwest::dns::Resolve for PublicOnly {
     fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {

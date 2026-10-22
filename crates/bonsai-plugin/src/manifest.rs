@@ -13,14 +13,16 @@ pub enum Permission {
     ReadAccount,
     Notify,
     ClipboardWrite,
+    Net,
 }
 
 impl Permission {
-    pub const ALL: [Permission; 4] = [
+    pub const ALL: [Permission; 5] = [
         Permission::ReadPublic,
         Permission::ReadAccount,
         Permission::Notify,
         Permission::ClipboardWrite,
+        Permission::Net,
     ];
 
     pub fn key(self) -> &'static str {
@@ -29,6 +31,7 @@ impl Permission {
             Permission::ReadAccount => "read.account",
             Permission::Notify => "notify",
             Permission::ClipboardWrite => "clipboard.write",
+            Permission::Net => "net",
         }
     }
 
@@ -56,6 +59,8 @@ pub struct Manifest {
     /// Plugin API version it was written for.
     pub api: u32,
     pub permissions: Vec<Permission>,
+    /// Exact public DNS hosts permitted for credential-free HTTPS.
+    pub network_hosts: Vec<String>,
     /// Built-in command keys it may run or propose. Checked against tiers by the host with
     /// [`Manifest::refuse_actions`].
     pub actions: Vec<String>,
@@ -271,6 +276,8 @@ struct Raw {
     #[serde(default)]
     permissions: Vec<toml::Value>,
     #[serde(default)]
+    network_hosts: Vec<String>,
+    #[serde(default)]
     actions: Vec<toml::Value>,
     #[serde(default)]
     settings: Vec<toml::Value>,
@@ -310,10 +317,6 @@ impl Manifest {
             match Permission::ALL.into_iter().find(|p| p.key() == key) {
                 Some(p) if !permissions.contains(&p) => permissions.push(p),
                 Some(_) => {}
-                None if key == "net" => refused.push(Refused {
-                    what: key,
-                    why: "Network access isn't available to plugins yet.".into(),
-                }),
                 // `actions` is a permission in the docs' table but its own key in the manifest.
                 None if key == "actions" => {}
                 None => refused.push(Refused {
@@ -321,6 +324,25 @@ impl Manifest {
                     why: "Unknown permission.".into(),
                 }),
             }
+        }
+        let mut network_hosts = Vec::new();
+        if raw.network_hosts.len() > 32 {
+            return Err(Error::Manifest("At most 32 network hosts.".into()));
+        }
+        for host in raw.network_hosts {
+            let host = host.to_ascii_lowercase();
+            if !valid_network_host(&host) {
+                return Err(Error::Manifest("Network hosts must be exact public DNS names outside Roblox, without wildcards, ports or URLs.".into()));
+            }
+            if !network_hosts.contains(&host) {
+                network_hosts.push(host);
+            }
+        }
+        if permissions.contains(&Permission::Net) && network_hosts.is_empty() {
+            return Err(Error::Manifest("The net permission needs network_hosts.".into()));
+        }
+        if !network_hosts.is_empty() && !permissions.contains(&Permission::Net) {
+            return Err(Error::Manifest("network_hosts needs the net permission.".into()));
         }
         let mut actions = Vec::new();
         for v in raw.actions {
@@ -367,6 +389,7 @@ impl Manifest {
             entry,
             api,
             permissions,
+            network_hosts,
             actions,
             settings,
             refused,
@@ -393,6 +416,23 @@ impl Manifest {
     pub fn declares(&self, action: &str) -> bool {
         self.actions.iter().any(|a| a == action)
     }
+}
+
+fn valid_network_host(host: &str) -> bool {
+    host.len() <= 253
+        && host.contains('.')
+        && !["roblox.com", "rbxcdn.com", "roblox.cn", "rbx.com"]
+            .iter()
+            .any(|d| host == *d || host.ends_with(&format!(".{d}")))
+        && !host.split('.').all(|p| p.bytes().all(|b| b.is_ascii_digit()))
+        && host.split('.').all(|p| {
+            !p.is_empty()
+                && p.len() <= 63
+                && !p.starts_with('-')
+                && !p.ends_with('-')
+                && p.bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+        })
 }
 
 fn value_text(v: &toml::Value) -> String {
@@ -433,6 +473,7 @@ entry = "main.luau"
 bonsai = 1
 homepage = "ignored"
 permissions = ["read.public", "read.account", "notify", "net", "files.read", "read.public"]
+network_hosts = ["example.com"]
 actions = ["user.unfriend", "user.decline_friend", "Not A Command", "user.unfriend"]
 "#;
 
@@ -447,12 +488,13 @@ actions = ["user.unfriend", "user.decline_friend", "Not A Command", "user.unfrie
             vec![
                 Permission::ReadPublic,
                 Permission::ReadAccount,
-                Permission::Notify
+                Permission::Notify,
+                Permission::Net
             ]
         );
         assert_eq!(m.actions, vec!["user.unfriend", "user.decline_friend"]);
         let refused: Vec<_> = m.refused.iter().map(|r| r.what.as_str()).collect();
-        assert_eq!(refused, vec!["net", "files.read", "Not A Command"]);
+        assert_eq!(refused, vec!["files.read", "Not A Command"]);
         assert!(m.declares("user.unfriend"));
         assert!(!m.declares("market.buy"));
     }
@@ -468,6 +510,35 @@ actions = ["user.unfriend", "user.decline_friend", "Not A Command", "user.unfrie
         assert!(Manifest::parse("id = \"x\"\nentry = \"main.lua\"").is_err());
         let m = Manifest::parse("id = \"x\"\nentry = \"src/main.luau\"").unwrap();
         assert_eq!((m.name.as_str(), m.api), ("x", 1));
+    }
+
+    #[test]
+    fn net_hosts_are_explicit_bounded_and_outside_roblox() {
+        for host in [
+            "*.example.com",
+            "https://example.com",
+            "example.com:443",
+            "localhost",
+            "127.0.0.1",
+            "[::1]",
+            "roblox.com",
+            "auth.roblox.com",
+            "a.rbxcdn.com",
+            "example.com.",
+            "a..example.com",
+            "-a.example.com",
+        ] {
+            let doc = format!(
+                "id = \"x\"\nentry = \"main.luau\"\npermissions = [\"net\"]\nnetwork_hosts = [\"{host}\"]"
+            );
+            assert!(Manifest::parse(&doc).is_err(), "{host}");
+        }
+        let doc = "id = \"x\"\nentry = \"main.luau\"\npermissions = [\"net\"]\nnetwork_hosts = [\"API.Example.com\", \"api.example.com\"]";
+        assert_eq!(
+            Manifest::parse(doc).unwrap().network_hosts,
+            vec!["api.example.com"]
+        );
+        assert!(Manifest::parse("id = \"x\"\nentry = \"main.luau\"\npermissions = [\"net\"]").is_err());
     }
 
     #[test]

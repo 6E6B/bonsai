@@ -545,6 +545,7 @@ fn permission_label(p: Permission) -> &'static str {
         Permission::ReadAccount => "Read friends, presence, inventory, trades and messages",
         Permission::Notify => "Show desktop alerts",
         Permission::ClipboardWrite => "Copy text",
+        Permission::Net => "Send credential-free HTTPS requests to the hosts below",
     }
 }
 
@@ -572,6 +573,11 @@ fn asks(m: &bonsai_core::plugins::Manifest) -> Asks {
                 label: permission_label(*p).to_owned(),
                 per_account: p.per_account(),
             })
+            .chain(m.network_hosts.iter().map(|h| PermissionView {
+                key: format!("net:{h}"),
+                label: format!("HTTPS: {h}"),
+                per_account: true,
+            }))
             .collect(),
         actions,
         refused: m.refused.iter().map(refused).collect(),

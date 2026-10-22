@@ -38,6 +38,7 @@ impl Inner {
         let account = AccountId(account);
         self.may_read(plugin, account, perm)?;
         match read {
+            Read::Http(request) => self.plugin_http(plugin, account, request),
             Read::User(id) => Ok(wait(|| self.profile(*id))?.map_or(Value::Null, |p| user_view(&p))),
             Read::Game(place) => self.read_game(*place),
             Read::Item { id, bundle } => {
@@ -111,6 +112,65 @@ impl Inner {
             }
         }
         Ok(())
+    }
+
+    fn network_grant(&self, plugin: &str, account: AccountId) -> Result<(Vec<String>, (u64, u64)), String> {
+        self.may_read(plugin, account, Permission::Net)?;
+        let p = self.plugins.lock();
+        let entry = p
+            .entries
+            .iter()
+            .find(|e| e.info.id == plugin)
+            .ok_or("Plugin stopped.")?;
+        let saved = p.saved.plugins.get(plugin).ok_or("Plugin stopped.")?;
+        if !matches!(entry.info.status, Status::Running { .. })
+            || !saved.permissions.iter().any(|s| s == "net")
+            || !saved.accounts.contains(&account)
+            || !entry.info.accounts.contains(&account)
+        {
+            return Err("Plugin network grant was revoked.".into());
+        }
+        let manifest = entry.info.manifest.as_ref().ok_or("Plugin stopped.")?;
+        if !manifest.has(Permission::Net) {
+            return Err("Plugin has no net permission.".into());
+        }
+        let hosts = manifest
+            .network_hosts
+            .iter()
+            .filter(|h| saved.permissions.contains(&format!("net:{h}")))
+            .cloned()
+            .collect();
+        let seq = entry.worker.as_ref().map(|w| w.seq).ok_or("Plugin stopped.")?;
+        Ok((hosts, (p.log.stop_gen, seq)))
+    }
+
+    fn plugin_http(
+        &self,
+        plugin: &str,
+        account: AccountId,
+        request: &bonsai_plugin::HttpRequest,
+    ) -> Result<Value, String> {
+        let (hosts, epoch) = self.network_grant(plugin, account)?;
+        let client =
+            bonsai_api::plugin_http::PluginHttp::new(self.limiter.clone()).map_err(|e| e.user_message())?;
+        self.rt.block_on(async {
+            let future = client.request(&hosts, &request.url, &request.method, request.body.as_deref());
+            tokio::pin!(future);
+            let mut tick = tokio::time::interval(Duration::from_millis(50));
+            loop {
+                tokio::select! {
+                    result = &mut future => {
+                        let (current, generation) = self.network_grant(plugin, account)?;
+                        if current != hosts || generation != epoch { return Err("Plugin network grant changed.".into()); }
+                        return result.map_err(|e| e.user_message()).and_then(|r| serde_json::to_value(r).map_err(|_| "Could not read plugin response.".into()));
+                    }
+                    _ = tick.tick() => {
+                        let (current, generation) = self.network_grant(plugin, account)?;
+                        if current != hosts || generation != epoch { return Err("Plugin network grant changed.".into()); }
+                    }
+                }
+            }
+        })
     }
 
     pub(super) fn read_game(&self, place: u64) -> Result<Value, String> {

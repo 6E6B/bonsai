@@ -339,6 +339,7 @@ enum Force<'a> {
 /// The plugin side of [`bonsai_plugin::Host`], on the plugin's thread.
 struct CoreHost {
     inner: Weak<Inner>,
+    seq: u64,
 }
 
 impl bonsai_plugin::Host for CoreHost {
@@ -348,6 +349,15 @@ impl bonsai_plugin::Host for CoreHost {
     }
     fn read(&self, plugin: &str, account: u64, read: &Read) -> Result<serde_json::Value, String> {
         let inner = self.inner.upgrade().ok_or("Bonsai is closing.")?;
+        if !inner
+            .plugins
+            .lock()
+            .entries
+            .iter()
+            .any(|e| e.info.id == plugin && e.worker.as_ref().is_some_and(|w| w.seq == self.seq))
+        {
+            return Err("This plugin was stopped or reloaded.".into());
+        }
         inner.plugin_read(plugin, account, read)
     }
     fn log(&self, plugin: &str, line: &str) {
@@ -403,7 +413,11 @@ fn setting_values(m: &Manifest, saved: Option<&Saved>) -> serde_json::Map<String
 static IO: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
 
 fn permission_keys(m: &Manifest) -> Vec<String> {
-    m.permissions.iter().map(|p| p.key().to_owned()).collect()
+    m.permissions
+        .iter()
+        .map(|p| p.key().to_owned())
+        .chain(m.network_hosts.iter().map(|h| format!("net:{h}")))
+        .collect()
 }
 
 /// What `m` asks for beyond what was agreed to.
@@ -670,7 +684,10 @@ impl Inner {
         let spawned = std::thread::Builder::new()
             .name(format!("plugin-{id}"))
             .spawn(move || {
-                let host = Rc::new(CoreHost { inner: weak.clone() });
+                let host = Rc::new(CoreHost {
+                    inner: weak.clone(),
+                    seq,
+                });
                 let loaded = Plugin::load(&dir, manifest, host, Limits::default());
                 let status = match &loaded {
                     Ok(p) => Status::Running {
@@ -1938,6 +1955,21 @@ mod tests {
         assert!(action_refusal(&r, "theme.apply").is_some());
         assert!(action_refusal(&r, "nav.home").is_some());
         assert!(action_refusal(&r, "not.a_command").is_some());
+    }
+
+    #[test]
+    fn a_new_network_host_always_needs_review() {
+        let mut m = Manifest::parse(
+            "id = \"x\"\nentry = \"main.luau\"\npermissions = [\"net\"]\nnetwork_hosts = [\"example.com\"]",
+        )
+        .unwrap();
+        let saved = Saved {
+            permissions: permission_keys(&m),
+            ..Default::default()
+        };
+        assert!(asks_more(&m, Some(&saved)).is_empty());
+        m.network_hosts.push("api.example.com".into());
+        assert_eq!(asks_more(&m, Some(&saved)), vec!["net:api.example.com"]);
     }
 
     #[test]
