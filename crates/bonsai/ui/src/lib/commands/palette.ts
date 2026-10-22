@@ -75,6 +75,11 @@ export interface PalettePlugin {
   enabled: boolean
 }
 
+export interface PalettePlaylist {
+  id: number
+  name: string
+}
+
 /** A setting, for `settings.set` and `settings.reset`. */
 export type PalettePref = Pick<PrefView, "key" | "section" | "title" | "keywords" | "kind" | "options">
 
@@ -128,7 +133,8 @@ function resetRows(c: CommandInfo, prefs: PalettePref[]): PaletteEntry[] {
 }
 
 /** Every command, with one row per choice for arguments that have a short fixed list
- * (accounts, settings sections, colors, modes, themes, tabs, sidebar screens, settings, plugins) and an
+ * (accounts, settings sections, colors, modes, themes, tabs, sidebar screens, settings, plugins,
+ * playlists) and an
  * asking row for typed arguments. */
 export function paletteEntries(
   commands: CommandInfo[],
@@ -138,6 +144,7 @@ export function paletteEntries(
   themes: PaletteTheme[] = [],
   prefs: PalettePref[] = [],
   plugins: PalettePlugin[] = [],
+  playlists: PalettePlaylist[] = [],
 ): PaletteEntry[] {
   const out: PaletteEntry[] = []
   for (const c of commands) {
@@ -179,6 +186,9 @@ export function paletteEntries(
           if ((c.id === "plugin.enable" && x.enabled) || (c.id === "plugin.disable" && !x.enabled)) continue
           choice(x.id, x.name)
         }
+        break
+      case "playlist":
+        for (const p of playlists) choice(String(p.id), p.name)
         break
       case "tab":
         for (const t of tabs) choice(t.key, t.title)

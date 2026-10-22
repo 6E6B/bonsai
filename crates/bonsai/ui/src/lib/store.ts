@@ -1,7 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, on, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
-import { commands, events, type Friends, type Home, type Shell } from "~/lib/ipc/bindings"
+import { commands, events, type Friends, type Home, type PlaylistView, type Shell } from "~/lib/ipc/bindings"
 import { browserFriends, browserHome, browserShell } from "~/lib/sample"
 
 /**
@@ -102,10 +102,15 @@ const homeMirror = mirror<Home>({ loading: true, error: null, recent: [], favori
   commands.home(),
 )
 
+const playlistsMirror = mirror<{ lists: PlaylistView[] }>({ lists: [] }, async () => ({
+  lists: await commands.playlists(),
+}))
+
 const mirrors = new Set<{ started: () => boolean; refresh: () => Promise<void> }>([
   shellMirror,
   friendsMirror,
   homeMirror,
+  playlistsMirror,
 ])
 
 export const shell = shellMirror.state
@@ -113,6 +118,10 @@ export const shell = shellMirror.state
 /** The active account's friends, grouped by presence then name. The drawer and Friends page
  * read this. */
 export const friends = friendsMirror.state
+
+/** The active account's game playlists. Local data, so it loads at startup for menus and the
+ * command bar. */
+export const playlists = playlistsMirror.state
 
 /** Home for the active account. Only loads once a screen asks for it, since asking starts the
  * network fetch of the sorts. */
@@ -160,4 +169,5 @@ export async function startSync() {
   })
   shellMirror.start()
   friendsMirror.start()
+  playlistsMirror.start()
 }

@@ -127,6 +127,11 @@ export const commands = {
 	forumComments: (groupId: Id, category: string, post: string) => __TAURI_INVOKE<List<ForumCommentRow>>("forum_comments", { groupId, category, post }),
 	/**  Posts to a forum category. Called only from the dialog `group.new_post` opens. */
 	createForumPost: (groupId: Id, category: string, title: string, text: string) => typedError<null, string>(__TAURI_INVOKE("create_forum_post", { groupId, category, title, text })),
+	/**
+	 *  The active account's playlists, oldest first. Games show cached details, or the name saved
+	 *  with them until details load.
+	 */
+	playlists: () => __TAURI_INVOKE<PlaylistView[]>("playlists"),
 	catalogCategories: () => __TAURI_INVOKE<List<CategoryView>>("catalog_categories"),
 	catalogOptions: () => __TAURI_INVOKE<CatalogOptions>("catalog_options"),
 	catalogSearch: (filter: CatalogFilter) => __TAURI_INVOKE<Paged<ItemCard>>("catalog_search", { filter }),
@@ -518,7 +523,7 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist";
 
 /**  What a plugin asks for, shown in Settings and the install dialog. */
 export type Asks = {
@@ -1635,6 +1640,12 @@ export type PlaceCard = {
 	creator: string,
 	/**  Paid access price; `None` when free to play. */
 	price: number | null,
+};
+
+export type PlaylistView = {
+	id: Id,
+	name: string,
+	games: GameCard[],
 };
 
 /**  Actions a plugin command proposed, for the user to run or cancel. */

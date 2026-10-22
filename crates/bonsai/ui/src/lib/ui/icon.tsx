@@ -13,6 +13,7 @@ import heartFill from "@phosphor-icons/core/assets/fill/heart-fill.svg?raw"
 import homeFill from "@phosphor-icons/core/assets/fill/house-fill.svg?raw"
 import pause from "@phosphor-icons/core/assets/fill/pause-fill.svg?raw"
 import play from "@phosphor-icons/core/assets/fill/play-fill.svg?raw"
+import playlistFill from "@phosphor-icons/core/assets/fill/playlist-fill.svg?raw"
 import pinFill from "@phosphor-icons/core/assets/fill/push-pin-fill.svg?raw"
 import starFill from "@phosphor-icons/core/assets/fill/star-fill.svg?raw"
 import marketplaceFill from "@phosphor-icons/core/assets/fill/storefront-fill.svg?raw"
@@ -79,6 +80,7 @@ import audio from "@phosphor-icons/core/assets/regular/music-notes.svg?raw"
 import palette from "@phosphor-icons/core/assets/regular/palette.svg?raw"
 import send from "@phosphor-icons/core/assets/regular/paper-plane-right.svg?raw"
 import edit from "@phosphor-icons/core/assets/regular/pencil-simple.svg?raw"
+import playlist from "@phosphor-icons/core/assets/regular/playlist.svg?raw"
 import plus from "@phosphor-icons/core/assets/regular/plus.svg?raw"
 import block from "@phosphor-icons/core/assets/regular/prohibit.svg?raw"
 import pin from "@phosphor-icons/core/assets/regular/push-pin.svg?raw"
@@ -250,6 +252,8 @@ const svgs = {
   layout,
   wiki,
   "wiki-fill": wikiFill,
+  playlist,
+  "playlist-fill": playlistFill,
 } as const
 
 export type IconName = keyof typeof svgs

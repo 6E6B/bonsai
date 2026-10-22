@@ -20,7 +20,7 @@ import {
 } from "~/lib/ipc/bindings"
 import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
-import { entityMenu, joinAsItems } from "~/lib/menus"
+import { entityMenu, joinAsItems, playlistItems } from "~/lib/menus"
 import { ServerControls } from "~/lib/private-server"
 import { friends, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
@@ -221,6 +221,7 @@ export default function Game() {
                     >
                       Join as…
                     </Menu>
+                    <Menu size="lg" icon="playlist" label="Add to playlist" items={playlistItems(placeId())} />
                     <Menu size="lg" icon="more" label="More" items={entityMenu(`game:${placeId()}`)} />
                   </div>
                   <div class="grid grid-cols-4 gap-1.5">

@@ -6,7 +6,7 @@ import type { GameCard, ValueTag } from "~/lib/ipc/bindings"
 import { wantsPreview } from "~/lib/item-preview"
 import { gameMenu, type ItemMenuExtras, itemMenu, itemTarget, joinUser } from "~/lib/menus"
 import { thumbUrl } from "~/lib/thumb"
-import { Badge, Button, ContextMenu, Icon, ListItem, Robux, Thumbnail, Tile, Tooltip } from "~/lib/ui"
+import { Badge, Button, ContextMenu, Icon, ListItem, type MenuEntry, Robux, Thumbnail, Tile, Tooltip } from "~/lib/ui"
 import { ValueAmount, ValueMarker } from "~/lib/value-tags"
 
 /** Grid classes for tiles, so every screen's tiles are the same size. `tileGrid` for square
@@ -16,10 +16,10 @@ export const wideTileGrid = "grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))
 /** `minItemWidth` for a `VirtualGrid` of square tiles; matches `tileGrid`. */
 export const TILE_WIDTH = 128
 
-/** A game in a grid. Click opens it; right-click for join and copy. */
-export function GameTile(props: { game: GameCard; shape?: "square" | "wide" }) {
+/** A game in a grid. Click opens it; right-click for join and copy, plus `menu` rows. */
+export function GameTile(props: { game: GameCard; shape?: "square" | "wide"; menu?: MenuEntry[] }) {
   return (
-    <ContextMenu items={gameMenu(props.game.placeId)}>
+    <ContextMenu items={[...gameMenu(props.game.placeId), ...(props.menu ?? [])]}>
       <Tile
         title={props.game.name}
         subtitle={
