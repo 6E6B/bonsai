@@ -881,3 +881,35 @@ async fn wiki_parse_search_and_missing_page() {
         assert!(!q.headers.contains_key("x-csrf-token"));
     }
 }
+
+#[tokio::test]
+async fn wardrobe_inventory_uses_csv_asset_types_and_preserves_type_and_cursor() {
+    use inventory::v2::{self, UserAssetItemModelV2AssetType as T};
+    let r = Replay::start(&["wardrobe"]).await;
+    let c = r.client();
+    let mut params = v2::GetUsersByUserIdInventoryParams {
+        asset_types: vec![T::Hat, T::Shirt],
+        limit: Some(100),
+        sort_order: Some(v2::GetAssetsByAssetIdOwnersSortOrder::Desc),
+        ..Default::default()
+    };
+    let first = v2::get_users_by_user_id_inventory(&c, 9001, &params)
+        .await
+        .unwrap();
+    assert_eq!(first.data.as_ref().unwrap()[0].asset_type, Some(T::Hat));
+    assert_eq!(first.data.as_ref().unwrap()[1].asset_type, Some(T::Unknown));
+    params.cursor = first.next_page_cursor;
+    let second = v2::get_users_by_user_id_inventory(&c, 9001, &params)
+        .await
+        .unwrap();
+    assert_eq!(second.data.as_ref().unwrap()[0].asset_type, Some(T::Shirt));
+    assert!(second.next_page_cursor.is_none());
+    let requests = r.requests().await;
+    let types: Vec<_> = requests[0]
+        .url
+        .query_pairs()
+        .filter(|(k, _)| k == "assetTypes")
+        .map(|(_, v)| v.into_owned())
+        .collect();
+    assert_eq!(types, vec!["8,11"]);
+}

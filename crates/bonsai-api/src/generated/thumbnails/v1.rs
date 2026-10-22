@@ -536,7 +536,7 @@ pub async fn get_asset_thumbnail_animated(
 /// Thumbnails assets.
 pub fn get_assets_request(params: &GetAssetsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/assets".to_string());
-    r.query("assetIds", &params.asset_ids);
+    r.query_csv("assetIds", &params.asset_ids);
     r.header("Roblox-Place-Id", &params.roblox_place_id);
     r.query("returnPolicy", &params.return_policy);
     r.query("size", &params.size);
@@ -578,7 +578,7 @@ pub async fn get_assets_thumbnail_3d(client: &Client, params: &GetAssetsThumbnai
 /// Thumbnails badge icons.
 pub fn get_badges_icons_request(params: &GetBadgesIconsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/badges/icons".to_string());
-    r.query("badgeIds", &params.badge_ids);
+    r.query_csv("badgeIds", &params.badge_ids);
     r.query("size", &params.size);
     r.query("format", &params.format);
     r.query("isCircular", &params.is_circular);
@@ -618,7 +618,7 @@ pub async fn post_batch(
 /// Get bundle thumbnails for the given CSV of bundle ids
 pub fn get_bundles_thumbnails_request(params: &GetBundlesThumbnailsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/bundles/thumbnails".to_string());
-    r.query("bundleIds", &params.bundle_ids);
+    r.query_csv("bundleIds", &params.bundle_ids);
     r.query("size", &params.size);
     r.query("format", &params.format);
     r.query("isCircular", &params.is_circular);
@@ -637,7 +637,7 @@ pub async fn get_bundles_thumbnails(client: &Client, params: &GetBundlesThumbnai
 /// Thumbnails developer product icons.
 pub fn get_developer_products_icons_request(params: &GetDeveloperProductsIconsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/developer-products/icons".to_string());
-    r.query("developerProductIds", &params.developer_product_ids);
+    r.query_csv("developerProductIds", &params.developer_product_ids);
     r.query("size", &params.size);
     r.query("format", &params.format);
     r.query("isCircular", &params.is_circular);
@@ -662,7 +662,7 @@ pub async fn get_developer_products_icons(
 /// Thumbnails game pass icons.
 pub fn get_game_passes_request(params: &GetGamePassesParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/game-passes".to_string());
-    r.query("gamePassIds", &params.game_pass_ids);
+    r.query_csv("gamePassIds", &params.game_pass_ids);
     r.query("size", &params.size);
     r.query("format", &params.format);
     r.query("isCircular", &params.is_circular);
@@ -681,7 +681,7 @@ pub async fn get_game_passes(client: &Client, params: &GetGamePassesParams) -> R
 /// Fetches game icon URLs for a list of universes' root places. Ids that do not correspond to a valid universe will be filtered out. The ordering of the results is not guaranteed to be the same as the inputs. In order to correlated inputs with outputs please use the 'targetId' of the objects in the result array.
 pub fn get_games_icons_request(params: &GetGamesIconsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/games/icons".to_string());
-    r.query("universeIds", &params.universe_ids);
+    r.query_csv("universeIds", &params.universe_ids);
     r.query("returnPolicy", &params.return_policy);
     r.query("size", &params.size);
     r.query("format", &params.format);
@@ -701,7 +701,7 @@ pub async fn get_games_icons(client: &Client, params: &GetGamesIconsParams) -> R
 /// Fetch game thumbnail URLs for a list of universe IDs.
 pub fn get_games_multiget_thumbnails_request(params: &GetGamesMultigetThumbnailsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/games/multiget/thumbnails".to_string());
-    r.query("universeIds", &params.universe_ids);
+    r.query_csv("universeIds", &params.universe_ids);
     r.query("countPerUniverse", &params.count_per_universe);
     r.query("defaults", &params.defaults);
     r.query("size", &params.size);
@@ -735,7 +735,7 @@ pub fn get_games_by_universe_id_thumbnails_request(
         HOST,
         format!("/v1/games/{}/thumbnails", crate::rt::path_value(&universe_id)),
     );
-    r.query("thumbnailIds", &params.thumbnail_ids);
+    r.query_csv("thumbnailIds", &params.thumbnail_ids);
     r.query("size", &params.size);
     r.query("format", &params.format);
     r.query("isCircular", &params.is_circular);
@@ -761,7 +761,7 @@ pub async fn get_games_by_universe_id_thumbnails(
 /// Fetches thumbnail URLs for a list of groups. Ids that do not correspond to groups will be filtered out.
 pub fn get_groups_icons_request(params: &GetGroupsIconsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/groups/icons".to_string());
-    r.query("groupIds", &params.group_ids);
+    r.query_csv("groupIds", &params.group_ids);
     r.query("size", &params.size);
     r.query("format", &params.format);
     r.query("isCircular", &params.is_circular);
@@ -780,7 +780,7 @@ pub async fn get_groups_icons(client: &Client, params: &GetGroupsIconsParams) ->
 /// Fetches game icon URLs for a list of places. Ids that do not correspond to a valid place will be filtered out.
 pub fn get_places_gameicons_request(params: &GetPlacesGameiconsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/places/gameicons".to_string());
-    r.query("placeIds", &params.place_ids);
+    r.query_csv("placeIds", &params.place_ids);
     r.query("returnPolicy", &params.return_policy);
     r.query("size", &params.size);
     r.query("format", &params.format);
@@ -800,7 +800,7 @@ pub async fn get_places_gameicons(client: &Client, params: &GetPlacesGameiconsPa
 /// Get Avatar Full body shots for the given CSV of userIds
 pub fn get_users_avatar_request(params: &GetUsersAvatarParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/users/avatar".to_string());
-    r.query("userIds", &params.user_ids);
+    r.query_csv("userIds", &params.user_ids);
     r.query("includeBackground", &params.include_background);
     r.query("size", &params.size);
     r.query("format", &params.format);
@@ -836,7 +836,7 @@ pub async fn get_users_avatar_3d(client: &Client, params: &GetUsersAvatar3dParam
 /// Get Avatar Busts for the given CSV of userIds
 pub fn get_users_avatar_bust_request(params: &GetUsersAvatarBustParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/users/avatar-bust".to_string());
-    r.query("userIds", &params.user_ids);
+    r.query_csv("userIds", &params.user_ids);
     r.query("includeBackground", &params.include_background);
     r.query("size", &params.size);
     r.query("format", &params.format);
@@ -856,7 +856,7 @@ pub async fn get_users_avatar_bust(client: &Client, params: &GetUsersAvatarBustP
 /// Get Avatar Headshots for the given CSV of userIds
 pub fn get_users_avatar_headshot_request(params: &GetUsersAvatarHeadshotParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/users/avatar-headshot".to_string());
-    r.query("userIds", &params.user_ids);
+    r.query_csv("userIds", &params.user_ids);
     r.query("includeBackground", &params.include_background);
     r.query("includeProfileFrame", &params.include_profile_frame);
     r.query("size", &params.size);
@@ -896,7 +896,7 @@ pub async fn get_users_outfit_3d(client: &Client, params: &GetUsersOutfit3dParam
 /// Get outfits for the given CSV of userOutfitIds
 pub fn get_users_outfits_request(params: &GetUsersOutfitsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/users/outfits".to_string());
-    r.query("userOutfitIds", &params.user_outfit_ids);
+    r.query_csv("userOutfitIds", &params.user_outfit_ids);
     r.query("includeBackground", &params.include_background);
     r.query("size", &params.size);
     r.query("format", &params.format);

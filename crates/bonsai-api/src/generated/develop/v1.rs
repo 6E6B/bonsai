@@ -1178,7 +1178,7 @@ pub struct GetUserUniversesParams {
 #[deprecated(note = "marked deprecated by Roblox")]
 pub fn get_assets_voting_request(params: &GetAssetsVotingParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/assets/voting".to_string());
-    r.query("assetIds", &params.asset_ids);
+    r.query_csv("assetIds", &params.asset_ids);
     Ok(r)
 }
 
@@ -1348,7 +1348,7 @@ pub async fn get_places_by_place_id_teamcreate_active_session_members(
 /// Gets plugin details by ids.
 pub fn get_plugins_request(params: &GetPluginsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/plugins".to_string());
-    r.query("pluginIds", &params.plugin_ids);
+    r.query_csv("pluginIds", &params.plugin_ids);
     Ok(r)
 }
 

@@ -115,6 +115,15 @@ impl Request {
         }
     }
 
+    /// Swagger CSV arrays use one comma-separated query parameter, not repeated keys.
+    pub fn query_csv(&mut self, key: &str, v: &impl ParamValue) {
+        let mut values = Vec::new();
+        v.param_values(&mut values);
+        if !values.is_empty() {
+            self.query.push((key.to_owned(), values.join(",")));
+        }
+    }
+
     pub fn header(&mut self, key: &str, v: &impl ParamValue) {
         let mut vals = Vec::new();
         v.param_values(&mut vals);

@@ -6,7 +6,7 @@ Read this at the start of every session. Other docs are in `docs/`; what's left 
 
 ```
 crates/
-  bonsai-api/     Roblox API client. The only crate that touches the network.
+  bonsai-api/     Roblox API client and credential-free plugin HTTPS transport.
   bonsai-core/    Domain logic: accounts, store, cache, commands, background jobs.
   bonsai-codegen/ Generates bonsai-api wrappers from specs (`cargo xtask codegen`).
   bonsai-plugin/  Plugin manifests and the Luau sandbox. No network, no store. See docs/plugins.md.
@@ -33,7 +33,8 @@ crates/
 
 ### Network and secrets
 
-- No network calls outside `crates/bonsai-api` (Roblox) and `crates/bonsai-hub-api` (Bonsai hub, with the same shared machine rate limiter and no Roblox credentials). The webview never fetches anything remote: no CDNs, no Google Fonts, no Roblox image URLs. The CSP in `tauri.conf.json` enforces this; don't loosen it.
+- No network calls outside `crates/bonsai-api` (Roblox, plus isolated `PluginHttp` HTTPS requests to explicitly granted public hosts without Roblox credentials) and `crates/bonsai-hub-api` (Bonsai hub, with the same shared machine rate limiter and no Roblox credentials). The webview never fetches anything remote: no CDNs, no Google Fonts, no Roblox image URLs. The CSP in `tauri.conf.json` enforces this; don't loosen it.
+- Plugin network requests use only `PluginHttp`: HTTPS on port 443, exact manifest hosts approved at install, public addresses only, no redirects, proxies, credentials or arbitrary headers, bounded bodies and timeouts, and the shared machine rate limiter. `bonsai-plugin` itself stays network-free.
 - No hardcoded Roblox endpoint URLs outside generated code and `specs/undocumented/`. Hub routes belong only to `bonsai-hub-api`, following `docs/hub-openapi.json`; its origin is configured by the Rust host.
 - Never edit files under `crates/bonsai-api/src/generated/`. Change the spec or the generator and rerun `cargo xtask codegen`.
 - Never log, print, commit or write to disk a `.ROBLOSECURITY` cookie, auth ticket or CSRF token. Redact them in `Debug` impls. Never send one to the UI.

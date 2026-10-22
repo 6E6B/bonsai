@@ -5238,7 +5238,7 @@
       "module": "inventory::v2",
       "path": "/v2/users/{userId}/inventory",
       "summary": "Get user's inventory by multiple Roblox.Platform.Assets.AssetType.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -7892,5 +7892,5 @@
     }
   ],
   "total": 789,
-  "used": 253
+  "used": 254
 }

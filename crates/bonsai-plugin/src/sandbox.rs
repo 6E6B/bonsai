@@ -90,6 +90,8 @@ pub trait Host {
 /// A read a plugin asked for through `ctx`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Read {
+    /// Credential-free HTTPS to a manifest host.
+    Http(HttpRequest),
     User(u64),
     /// By place id, like game commands get.
     Game(u64),
@@ -121,9 +123,27 @@ impl Read {
     /// What the manifest needs to ask for to make this read.
     pub fn permission(&self) -> Permission {
         match self {
+            Read::Http(_) => Permission::Net,
             Read::User(_) | Read::Game(_) | Read::Item { .. } => Permission::ReadPublic,
             _ => Permission::ReadAccount,
         }
+    }
+}
+
+/// Input to `ctx.http`. No headers, credentials, redirects or arbitrary methods.
+#[derive(Clone, PartialEq, Eq)]
+pub struct HttpRequest {
+    pub url: String,
+    pub method: String,
+    /// UTF-8 JSON body for POST. At most 64 KiB.
+    pub body: Option<String>,
+}
+
+impl std::fmt::Debug for HttpRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HttpRequest")
+            .field("method", &self.method)
+            .finish_non_exhaustive()
     }
 }
 
@@ -259,6 +279,7 @@ pub struct Plugin {
     host: Rc<dyn Host>,
     /// Reads made in the current call.
     reads: Rc<Cell<usize>>,
+    network_calls: Rc<Cell<usize>>,
     /// `ctx.store.set` calls made in the current call.
     sets: Rc<Cell<usize>>,
     /// `ctx.run` calls made in the current call.
@@ -344,6 +365,7 @@ impl Plugin {
             limits,
             host,
             reads: Rc::default(),
+            network_calls: Rc::default(),
             sets: Rc::default(),
             runs: Rc::default(),
         })
@@ -388,6 +410,7 @@ impl Plugin {
     fn call(&self, f: &Function, ctx: Ctx, arg: Value) -> Result<Outcome, Error> {
         let ctx = self.ctx_table(ctx).map_err(script)?;
         self.reads.set(0);
+        self.network_calls.set(0);
         self.sets.set(0);
         self.runs.set(0);
         self.clock.start(self.limits.call);
@@ -506,6 +529,7 @@ impl Plugin {
                 self.clock.clone(),
                 self.reads.clone(),
             );
+            let network_calls = self.network_calls.clone();
             Rc::new(move |lua: &Lua, r: Read| -> mlua::Result<Value> {
                 let p = r.permission();
                 if !manifest.permissions.contains(&p) {
@@ -518,6 +542,12 @@ impl Plugin {
                     return Err(mlua::Error::runtime(format!(
                         "A call can make at most {MAX_READS} reads."
                     )));
+                }
+                if matches!(r, Read::Http(_)) {
+                    if network_calls.get() >= 10 {
+                        return Err(mlua::Error::runtime("At most 10 HTTP requests per call."));
+                    }
+                    network_calls.set(network_calls.get() + 1);
                 }
                 reads.set(reads.get() + 1);
                 let v = clock
@@ -536,6 +566,21 @@ impl Plugin {
                 )?;
             }};
         }
+        def!("http", Table, |t: Table| -> mlua::Result<Read> {
+            let url: String = t.get("url")?;
+            let method: String = t.get::<Option<String>>("method")?.unwrap_or_else(|| "GET".into());
+            let body: Option<String> = t.get("body")?;
+            if url.len() > 8192
+                || !matches!(method.as_str(), "GET" | "POST")
+                || body.as_ref().is_some_and(|b| b.len() > 65536)
+                || (method == "GET" && body.is_some())
+            {
+                return Err(mlua::Error::runtime(
+                    "HTTP takes GET or POST, a URL up to 8192 bytes and a POST body up to 64 KiB.",
+                ));
+            }
+            Ok(Read::Http(HttpRequest { url, method, body }))
+        });
         def!("user", Value, |id: Value| -> mlua::Result<Read> {
             Ok(Read::User(id_arg("ctx.user", &id)?))
         });

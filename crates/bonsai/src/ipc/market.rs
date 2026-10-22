@@ -133,7 +133,7 @@ pub(super) fn inv_card(i: &InvItem, asset_type: i32, values: Option<&ValueTable>
         creator: String::new(),
         creator_verified: false,
         copies: 1,
-        asset_type,
+        asset_type: if asset_type == 0 { i.asset_type } else { asset_type },
         price: None,
         limited: i.rap.is_some() || i.serial.is_some(),
         serial: i.serial.and_then(count),
@@ -887,7 +887,9 @@ pub fn inventory_items(
     // Creator and price come from the catalog, a page (100 items) per request so the cache
     // keys stay put as pages load.
     let mut known: HashMap<ItemRef, CatalogItem> = HashMap::new();
-    for chunk in items.chunks(100) {
+    // The wardrobe index already has names and types; do not crawl catalog metadata for every owned item.
+    let catalog_items = if slot == InvSlot::Wardrobe { &[][..] } else { items };
+    for chunk in catalog_items.chunks(100) {
         let refs: Vec<ItemRef> = chunk.iter().map(|i| i.item).collect();
         if let Some(d) = core.items(&refs).data {
             known.extend(d.iter().map(|c| (c.item, c.clone())));

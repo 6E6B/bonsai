@@ -1354,7 +1354,7 @@ pub async fn get_assets_by_asset_id_bundles(
 /// Returns details about the given bundleIds.
 pub fn get_bundles_details_request(params: &GetBundlesDetailsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/bundles/details".to_string());
-    r.query("bundleIds", &params.bundle_ids);
+    r.query_csv("bundleIds", &params.bundle_ids);
     Ok(r)
 }
 

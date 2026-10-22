@@ -481,7 +481,7 @@ pub fn get_users_by_user_id_inventory_request(
         HOST,
         format!("/v2/users/{}/inventory", crate::rt::path_value(&user_id)),
     );
-    r.query("assetTypes", &params.asset_types);
+    r.query_csv("assetTypes", &params.asset_types);
     r.query("filterDisapprovedAssets", &params.filter_disapproved_assets);
     r.query("showApprovedOnly", &params.show_approved_only);
     r.query("limit", &params.limit);

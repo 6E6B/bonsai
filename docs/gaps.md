@@ -3,7 +3,6 @@
 What the website does that Bonsai doesn't yet.
 Remove a line when it ships.
 
-## Not built
+## Remaining limits
 
-- Avatar editor search and name sorting cover the currently loaded inventory type. Global wardrobe search needs an index or an API that searches owned wearables across types.
-- Plugins: outside network access (the `net` permission). Needs the network rule in `AGENTS.md` amended first. See [plugins.md](plugins.md#9-network).
+- Avatar category tabs search only their loaded inventory type. Use **All items** for the full wardrobe index and cross-type name sorting. The first index fills in pages; partial results stay visible until it completes.
