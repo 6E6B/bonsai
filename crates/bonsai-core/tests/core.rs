@@ -187,8 +187,18 @@ async fn sign_out_ends_the_session_then_forgets_the_account() {
 async fn switching_renders_from_cache_without_network() {
     let dir = tempfile::tempdir().unwrap();
     let cookies = seeded(&dir);
-    // Point at a dead address: every refresh fails, cached data must still be there.
-    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, cookies);
+    // Refuse connections deterministically. A fixed "dead" port can hang on some
+    // Windows hosts instead of returning a connection error promptly.
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let reject_connections = tokio::spawn(async move {
+        while let Ok((stream, _)) = listener.accept().await {
+            drop(stream);
+        }
+    });
+    let r = rig(Base::Replay(url), dir, cookies);
     let assert_alt_cache = || {
         let s = r.core.store();
         assert_eq!(s.account_data(ALT).unwrap().robux, Some(20));
@@ -217,6 +227,7 @@ async fn switching_renders_from_cache_without_network() {
     let list = AccountList::load(&r.core.paths().accounts_file());
     assert_eq!(list.active, Some(ME));
     assert_eq!(list.previous, Some(ALT));
+    reject_connections.abort();
 }
 
 #[tokio::test(flavor = "multi_thread")]
