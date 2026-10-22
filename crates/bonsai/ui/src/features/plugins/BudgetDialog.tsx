@@ -20,18 +20,20 @@ export function BudgetDialog() {
   const pending = () => shell.pluginBudget
   const [robux, setRobux] = createSignal("")
   const [trades, setTrades] = createSignal("")
+  const [payouts, setPayouts] = createSignal("")
   const [error, setError] = createSignal("")
   createEffect(
     on(pending, (p) => {
       setRobux(p?.budget.robux ? String(p.budget.robux) : "")
       setTrades(p?.budget.trades ? String(p.budget.trades) : "")
+      setPayouts(p?.budget.payouts ? String(p.budget.payouts) : "")
       setError("")
     }),
   )
-  const valid = () => amount(robux()) !== null && amount(trades()) !== null
+  const valid = () => amount(robux()) !== null && amount(trades()) !== null && amount(payouts()) !== null
   const save = async () => {
     if (!valid()) return
-    const r = await commands.pluginBudgetSave(amount(robux()) ?? 0, amount(trades()) ?? 0)
+    const r = await commands.pluginBudgetSave(amount(robux()) ?? 0, amount(trades()) ?? 0, amount(payouts()) ?? 0)
     if (r.status === "error") setError(r.error)
   }
   const bad = (text: string) => (amount(text) === null ? "A whole number, 0 or more." : undefined)
@@ -79,6 +81,18 @@ export function BudgetDialog() {
                 onChange={setTrades}
                 error={bad(trades())}
                 autofocus={!p().budget.hasRobux}
+              />
+            </Show>
+            <Show when={p().budget.hasPayouts}>
+              <TextField
+                label="Robux paid out of community funds a day"
+                description={`Paid out in the last 24 hours: R$ ${full(p().budget.spentPayouts)}`}
+                inputmode="numeric"
+                placeholder="0"
+                value={payouts()}
+                onChange={setPayouts}
+                error={bad(payouts())}
+                autofocus={!p().budget.hasRobux && !p().budget.hasTrades}
               />
             </Show>
             <Show when={error()}>

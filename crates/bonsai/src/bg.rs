@@ -7,6 +7,10 @@ use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 pub const SCHEME: &str = "bg";
 
 pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, res: UriSchemeResponder) {
+    // The sign-in window shows other sites; only the app's own window may fetch backgrounds.
+    if ctx.webview_label() != "main" {
+        return res.respond(status(StatusCode::FORBIDDEN));
+    }
     let url = bonsai_core::backgrounds::url_from_query(req.uri().query().unwrap_or_default());
     let Some(url) = url.filter(|u| bonsai_core::backgrounds::validate_url(u).is_ok()) else {
         return res.respond(status(StatusCode::BAD_REQUEST));

@@ -64,10 +64,11 @@ export function ApproveCode(props: {
               </Alert>
               <Show when={view()?.error ?? error()}>{(e) => <Alert variant="danger" title={e()} />}</Show>
               <div class="flex justify-end gap-2">
-                <Button variant="ghost" onClick={() => props.onDone()}>
+                {/* Focus starts on Cancel so a quick Enter can't hand the account to someone else. */}
+                <Button variant="ghost" autofocus onClick={() => props.onDone()}>
                   Cancel sign-in
                 </Button>
-                <Button variant="primary" autofocus disabled={view()?.busy} onClick={() => void confirm()}>
+                <Button variant="primary" disabled={view()?.busy} onClick={() => void confirm()}>
                   Confirm
                 </Button>
               </div>

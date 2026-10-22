@@ -10,7 +10,18 @@ describe("every", () => {
 })
 
 describe("budgetText", () => {
-  const b = { account: 1, robux: 0, trades: 0, spentRobux: 0, spentTrades: 0, hasRobux: true, hasTrades: false }
+  const b = {
+    account: 1,
+    robux: 0,
+    trades: 0,
+    spentRobux: 0,
+    spentTrades: 0,
+    payouts: 0,
+    spentPayouts: 0,
+    hasRobux: true,
+    hasTrades: false,
+    hasPayouts: false,
+  }
   it("says what asks each time", () => {
     expect(budgetText(b)).toBe("Asks before spending Robux.")
     expect(budgetText({ ...b, hasTrades: true })).toBe("Asks before spending Robux. Asks before accepting trades.")
@@ -19,6 +30,9 @@ describe("budgetText", () => {
     expect(budgetText({ ...b, robux: 500, spentRobux: 120 })).toBe("R$ 500 a day, R$ 120 spent.")
     expect(budgetText({ ...b, hasRobux: false, hasTrades: true, trades: 1, spentTrades: 1 })).toBe(
       "1 trade a day, 1 accepted.",
+    )
+    expect(budgetText({ ...b, hasPayouts: true, payouts: 100, spentPayouts: 40 })).toBe(
+      "Asks before spending Robux. R$ 100 of payouts a day, R$ 40 paid.",
     )
   })
 })

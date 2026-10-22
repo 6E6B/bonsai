@@ -157,7 +157,10 @@ function accountName(id: Id): string {
   return a ? (a.label ?? a.displayName) : String(id)
 }
 
-/** "R$ 500 a day, R$ 120 spent. 2 trades a day, 1 accepted." or what asks each time. */
+/**
+ * "R$ 500 a day, R$ 120 spent. 2 trades a day, 1 accepted. R$ 100 of payouts a day, R$ 0 paid."
+ * or what asks each time.
+ */
 export function budgetText(b: PluginBudgetView): string {
   const parts: string[] = []
   if (b.hasRobux)
@@ -169,6 +172,12 @@ export function budgetText(b: PluginBudgetView): string {
       b.trades > 0
         ? `${b.trades === 1 ? "1 trade" : `${b.trades} trades`} a day, ${b.spentTrades} accepted.`
         : "Asks before accepting trades.",
+    )
+  if (b.hasPayouts)
+    parts.push(
+      b.payouts > 0
+        ? `R$ ${full(b.payouts)} of payouts a day, R$ ${full(b.spentPayouts)} paid.`
+        : "Asks before paying out community funds.",
     )
   return parts.join(" ")
 }
@@ -305,7 +314,7 @@ function PluginGroup(props: { plugin: PluginView; automation: Id[] }) {
                 <SettingRow
                   label={`Budget on ${accountName(b.account)}`}
                   description={budgetText(b)}
-                  changed={b.robux > 0 || b.trades > 0}
+                  changed={b.robux > 0 || b.trades > 0 || b.payouts > 0}
                 >
                   <Button size="sm" onClick={() => run("plugin.budget", p().id, b.account)}>
                     Change

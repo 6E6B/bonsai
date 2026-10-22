@@ -333,7 +333,7 @@ export const commands = {
 	pluginAutomationConfirm: (typed: string) => typedError<null, string>(__TAURI_INVOKE("plugin_automation_confirm", { typed })),
 	pluginAutomationCancel: () => __TAURI_INVOKE<void>("plugin_automation_cancel"),
 	/**  Saves the budget in the budget dialog. Zero turns it off. */
-	pluginBudgetSave: (robux: number, trades: number) => typedError<null, string>(__TAURI_INVOKE("plugin_budget_save", { robux, trades })),
+	pluginBudgetSave: (robux: number, trades: number, payouts: number) => typedError<null, string>(__TAURI_INVOKE("plugin_budget_save", { robux, trades, payouts })),
 	pluginBudgetCancel: () => __TAURI_INVOKE<void>("plugin_budget_cancel"),
 	/**  Plugin writes, newest first. */
 	pluginActivity: () => __TAURI_INVOKE<ActivityView[]>("plugin_activity"),
@@ -1654,9 +1654,13 @@ export type PluginBudgetView = {
 	trades: number,
 	spentRobux: Id,
 	spentTrades: number,
-	/**  It may run actions that spend Robux, or accept trades. */
+	/**  Robux paid out of community funds; the account's own Robux are `robux`. */
+	payouts: number,
+	spentPayouts: Id,
+	/**  It may run actions that spend Robux, accept trades, or pay out community funds. */
 	hasRobux: boolean,
 	hasTrades: boolean,
+	hasPayouts: boolean,
 };
 
 /**  How often a plugin may run one tier 2 action an hour without a click. */

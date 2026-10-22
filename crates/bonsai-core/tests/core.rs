@@ -3122,6 +3122,9 @@ async fn theme_background_download_is_cached_for_offline_reuse() {
         Arc::default(),
     );
     let url = "https://images.example.com/cat.gif";
+    // Only the background of a theme in use is served.
+    assert!(r.core.background_image(url).await.is_err());
+    r.core.set_background(url).unwrap();
     let (bytes, mime) = r.core.background_image(url).await.unwrap();
     assert_eq!(bytes, b"GIF89a-background");
     assert_eq!(mime, "image/gif");

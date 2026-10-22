@@ -93,6 +93,7 @@ impl Log {
         for a in self.entries.iter().rev().take_while(|a| a.at > now - DAY) {
             if a.charged() && a.plugin == plugin && a.account == account {
                 match a.robux {
+                    Some(r) if r > 0 && a.command == CommandId::PayOut.key() => spent.add(Charge::Payout(r)),
                     Some(r) if r > 0 => spent.add(Charge::Robux(r)),
                     _ => spent.add(Charge::Trade),
                 }
@@ -204,8 +205,7 @@ impl Inner {
             return Err(why);
         }
         if a.tier == Tier::Value {
-            spent.robux += pending.robux;
-            spent.trades += pending.trades;
+            spent = spent.plus(pending);
             if let Some(why) = budget_refusal(charge(a), self.budget(plugin, account), spent) {
                 return Err(why);
             }
@@ -655,7 +655,18 @@ mod tests {
         log.push(spend(now - 80, 20, true, Some("Failed.")));
         log.push(entry(now - 70, "trade.accept", true, None));
         log.push(entry(now - 60, "trade.decline", true, None));
-        assert_eq!(log.spent("p", AccountId(1), now), Spent { robux: 40, trades: 1 });
+        log.push(Activity {
+            robux: Some(25),
+            ..entry(now - 50, "group.payout", true, None)
+        });
+        assert_eq!(
+            log.spent("p", AccountId(1), now),
+            Spent {
+                robux: 40,
+                trades: 1,
+                payouts: 25
+            }
+        );
         assert_eq!(log.spent("p", AccountId(2), now), Spent::default());
     }
 
@@ -674,7 +685,11 @@ mod tests {
         assert_eq!(log.entries.len(), KEEP_OLD + 1);
         assert_eq!(
             log.spent("p", AccountId(1), DAY - 100),
-            Spent { robux: 10, trades: 1 }
+            Spent {
+                robux: 10,
+                trades: 1,
+                payouts: 0
+            }
         );
         // A day on, they go like any other.
         log.push(entry(DAY + HOUR, "x", false, None));

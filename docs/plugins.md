@@ -106,8 +106,8 @@ Every write command in the registry declares a tier. The tier decides how a plug
 
 | Tier | Examples | Without automation | With automation on |
 |---|---|---|---|
-| **1. Harmless, reversible** | Wear item or outfit, favorite, follow a game, join a game, nickname, note | Runs unattended | Runs unattended |
-| **2. Social, visible to others** | Friend requests, accept, decline, unfriend, block, follow users, messages, chat | User confirms each batch | Runs unattended, under a rate cap |
+| **1. Harmless, reversible** | Wear item or outfit, favorite, follow a game, nickname, note | Runs unattended | Runs unattended |
+| **2. Social, visible to others** | Friend requests, accept, decline, unfriend, block, follow users, messages, chat, joining a game (it launches Roblox into a server other players see you in) | User confirms each batch | Runs unattended, under a rate cap |
 | **3. Value can be lost** | Buy, send or accept trades, group payouts, private servers | User confirms each batch | Purchases, payouts and accepting trades run unattended within a budget the user sets; over budget, and everything else, user confirms |
 | **4. Account control** | Password, two-step, sign out, cookie, PIN, email, privacy, removing the account | Never | Never |
 
@@ -136,8 +136,10 @@ commands `plugins.allow_automation` and `plugins.block_automation`.
 
 - **Rate caps** per plugin, per account, per tier 2 action (e.g. 20 friend requests an hour). The
   plugin can't raise them; the user can lower them. They sit on top of the shared rate limiter.
-- **Budgets** for tier 3, per plugin and account: Robux per day, and trades accepted per day.
-  Each counts the last 24 hours. Set with `plugin.budget` (Settings > Plugins > the plugin's
+- **Budgets** for tier 3, per plugin and account: Robux per day, trades accepted per day, and
+  Robux paid out of community funds per day (all the account's communities together). Payouts
+  never count against the Robux budget, since they don't spend the account's own Robux. Each
+  counts the last 24 hours. Set with `plugin.budget` (Settings > Plugins > the plugin's
   "Budget on" row), which opens its own dialog, never a checkbox in a list. Zero, the default,
   is no budget. Other tier 3 actions (sending or countering trades, deleting items, private
   server settings, recurring payouts) have no budget and always need the user to confirm.
@@ -264,7 +266,7 @@ price; Roblox refuses the purchase if it changed since.
 | `market.buy_resale` | The same. Buys the cheapest reseller's copy. |
 | `game.buy_pass` | `<place id> <pass id> <most>` |
 | `game.buy_private_server` | `<place id> <most> <name>` |
-| `group.payout` | `group:<id> <user id> <amount>`, from the community's funds |
+| `group.payout` | `group:<id> <user id> <amount>`, from the community's funds. Counts against the payout budget. |
 
 Unattended, a batch is checked against the budget at the most each action may cost; the activity
 log records what each one actually spent. Spending counts once the purchase is sent, even if
