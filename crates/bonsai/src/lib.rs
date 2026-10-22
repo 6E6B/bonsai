@@ -1,5 +1,5 @@
 //! Tauri shell. Owns [`Core`], exposes typed IPC commands (see [`ipc`]), serves thumbnails
-//! over `thumb://` (see [`thumb`]) and theme fonts over `font://` (see [`font`]), and tells the UI when the store changed (see [`notify`]).
+//! over `thumb://` (see [`thumb`]), title bar icons over `wicon://` (see [`titlebar`]) and theme fonts over `font://` (see [`font`]), and tells the UI when the store changed (see [`notify`]).
 //!
 //! No logic lives here: commands read the store or forward to `bonsai-core`.
 
@@ -20,6 +20,7 @@ mod schemes;
 mod session_lock;
 mod signin;
 mod thumb;
+mod titlebar;
 mod vault;
 mod wikiimg;
 
@@ -40,7 +41,10 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(desktop::plugin())
-        .on_window_event(desktop::on_window_event)
+        .on_window_event(|w, e| {
+            desktop::on_window_event(w, e);
+            titlebar::on_window_event(w, e);
+        })
         // Only the app's own window talks to the backend. The sign-in window shows
         // roblox.com and must never reach it (Tauri's ACL already denies remote pages).
         .invoke_handler(move |invoke| {
@@ -52,7 +56,13 @@ pub fn run() {
                 && core.accounts_locked()
                 && !matches!(
                     invoke.message.command(),
-                    "vault_status" | "vault_submit" | "vault_activity" | "window_frame" | "run_command"
+                    "vault_status"
+                        | "vault_submit"
+                        | "vault_activity"
+                        | "window_frame"
+                        | "window_buttons"
+                        | "window_maximized"
+                        | "run_command"
                 )
             {
                 invoke.resolver.reject("Unlock Bonsai to access accounts.");
@@ -65,11 +75,13 @@ pub fn run() {
         .register_asynchronous_uri_scheme_protocol(font::SCHEME, font::handle)
         .register_asynchronous_uri_scheme_protocol(bg::SCHEME, bg::handle)
         .register_asynchronous_uri_scheme_protocol(wikiimg::SCHEME, wikiimg::handle)
+        .register_asynchronous_uri_scheme_protocol(titlebar::SCHEME, titlebar::handle)
         .setup(move |app| {
             builder.mount_events(app);
             let repaint = notify::spawn(app.handle().clone())?;
             let core = Arc::new(Core::start(CoreConfig::standard(), repaint));
             app.manage(frame::Frame::default());
+            let titlebar = titlebar::Titlebar::read();
             // The window starts hidden so the frame can be set up before it is realized.
             if let Some(w) = app.get_webview_window("main") {
                 if let Err(e) = schemes::allow(&w) {
@@ -78,7 +90,9 @@ pub fn run() {
                 if let Err(e) = frame::init(&w) {
                     tracing::warn!("could not set up the window frame: {e}");
                 }
+                titlebar.set_maximized(w.is_maximized().unwrap_or(false));
             }
+            app.manage(titlebar);
             desktop::start(app.handle(), &core.settings());
             let handle = app.handle().clone();
             core.set_plugin_runner(Arc::new(move |account, id, arg| {

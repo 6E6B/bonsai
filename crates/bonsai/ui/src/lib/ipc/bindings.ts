@@ -17,6 +17,8 @@ export const commands = {
 	runCommand: (inv: Invocation) => typedError<null, string>(__TAURI_INVOKE("run_command", { inv })),
 	dismissToast: (id: Id) => __TAURI_INVOKE<void>("dismiss_toast", { id }),
 	windowFrame: () => __TAURI_INVOKE<WindowFrame>("window_frame"),
+	windowButtons: () => __TAURI_INVOKE<WindowButtons>("window_buttons"),
+	windowMaximized: () => __TAURI_INVOKE<boolean>("window_maximized"),
 	friends: (filter: string) => __TAURI_INVOKE<Friends>("friends", { filter }),
 	home: () => __TAURI_INVOKE<Home>("home"),
 	game: (placeId: Id) => __TAURI_INVOKE<Game>("game", { placeId }),
@@ -392,6 +394,7 @@ export const commands = {
 export const events = {
 	storeChanged: makeEvent<StoreChanged>("store-changed"),
 	windowFrame: makeEvent<WindowFrame>("window-frame"),
+	windowMaximized: makeEvent<WindowMaximized>("window-maximized"),
 };
 
 /* Types */
@@ -646,6 +649,14 @@ export type BundlePartView = {
 	/**  Asset type id; 0 when the catalog didn't say. */
 	typeId: number,
 };
+
+export type ButtonStyle = 
+/**  The app's bundled icons. Windows, macOS, and Linux without an icon theme. */
+"builtin" | 
+/**  The desktop's icons, drawn like GNOME's. */
+"adwaita" | 
+/**  The desktop's icons, drawn like KDE's. */
+"breeze";
 
 /**  One marketplace search, as the filters set it. */
 export type CatalogFilter = {
@@ -2652,6 +2663,20 @@ export type WikiSection = {
 /**  The Bonsai page an article is about, from the roblox.com links in it. */
 export type WikiTarget = { kind: "item"; id: Id } | { kind: "game"; placeId: Id } | { kind: "user"; id: Id };
 
+export type WindowButton = "minimize" | "maximize" | "close";
+
+/**
+ *  The title bar's window buttons: which ones, on which side, and how they look. See
+ *  `titlebar.rs`.
+ */
+export type WindowButtons = {
+	style: ButtonStyle,
+	/**  Buttons before the app name, in order. */
+	start: WindowButton[],
+	/**  Buttons at the right edge, in order. */
+	end: WindowButton[],
+};
+
 /**  The main window's corners. Sent when they change; `window_frame` reads them at startup. */
 export type WindowFrame = {
 	/**
@@ -2659,6 +2684,11 @@ export type WindowFrame = {
 	 *  off, or the window is maximized, tiled or fullscreen).
 	 */
 	radius: number,
+};
+
+/**  Sent when the main window is maximized or restored. */
+export type WindowMaximized = {
+	maximized: boolean,
 };
 
 export type WornView = {

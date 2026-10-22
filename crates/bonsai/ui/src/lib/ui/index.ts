@@ -76,4 +76,9 @@ export { Viewport } from "./viewport"
 export { VirtualGrid, type VirtualGridProps } from "./virtual-grid"
 export { VirtualList, type VirtualListProps } from "./virtual-list"
 export { VirtualShelf, type VirtualShelfProps } from "./virtual-shelf"
-export { WindowControls, type WindowControlsProps } from "./window-controls"
+export {
+  type WindowButtonKind,
+  type WindowControlIcons,
+  WindowControls,
+  type WindowControlsProps,
+} from "./window-controls"

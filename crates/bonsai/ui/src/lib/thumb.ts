@@ -1,4 +1,5 @@
 import { convertFileSrc, isTauri } from "@tauri-apps/api/core"
+import type { WindowControlIcons } from "~/lib/ui"
 
 /** Thumbnail kinds served by the `thumb://` protocol (crates/bonsai/src/thumb.rs). */
 export type ThumbKind =
@@ -39,4 +40,17 @@ export function assetFileUrl(account: number, id: number) {
 export function wikiImageUrl(src: string) {
   if (!isTauri() || !src) return undefined
   return convertFileSrc(src, "wikiimg")
+}
+
+/** Title bar glyphs from the desktop's icon theme, served by the `wicon://` protocol
+ * (crates/bonsai/src/titlebar.rs). Only exist on Linux when `windowButtons` says so; undefined
+ * outside the app. */
+export function windowIcons(): WindowControlIcons | undefined {
+  if (!isTauri()) return undefined
+  return {
+    minimize: convertFileSrc("minimize", "wicon"),
+    maximize: convertFileSrc("maximize", "wicon"),
+    restore: convertFileSrc("restore", "wicon"),
+    close: convertFileSrc("close", "wicon"),
+  }
 }

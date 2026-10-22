@@ -17,6 +17,7 @@ pub fn allow(w: &WebviewWindow) -> Result<(), String> {
             crate::asset::SCHEME,
             crate::font::SCHEME,
             crate::wikiimg::SCHEME,
+            crate::titlebar::SCHEME,
         ]
         .iter()
         .map(|s| format!("{s}://*/*"))
