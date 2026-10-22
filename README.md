@@ -54,8 +54,13 @@ Themes and plugins are covered in [docs/theming.md](docs/theming.md) and [docs/p
 Installers are on the [Releases](https://github.com/6E6B/bonsai/releases) page: `.exe` and `.msi`
 for Windows, `.dmg` for macOS, and `.deb`, `.rpm` and `.AppImage` for Linux.
 
-Builds are not code-signed. On Windows, SmartScreen asks for confirmation (More info → Run anyway).
-On macOS, right-click the app and choose Open the first time.
+> [!WARNING]
+> Builds are currently unsigned, so your OS will warn you the first time you run Bonsai.
+>
+> - **Windows:** SmartScreen shows "Windows protected your PC". Click **More info** → **Run anyway**.
+> - **macOS:** Gatekeeper blocks the app. Open **System Settings → Privacy & Security** and click
+>   **Open Anyway**. If macOS says the app is damaged, run `xattr -cr /Applications/Bonsai.app`.
+> - **Linux:** no warning. Mark the `.AppImage` executable (`chmod +x`) before running it.
 
 To launch games through [Sober](https://sober.vinegarhq.org) on Linux, set the launch command in Settings → General.
 
