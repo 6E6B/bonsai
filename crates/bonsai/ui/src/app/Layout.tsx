@@ -50,6 +50,7 @@ import { StatusBar } from "./shell/StatusBar"
 import { TabBar } from "./shell/TabBar"
 import { TitleBar } from "./shell/TitleBar"
 import { TopBar } from "./shell/TopBar"
+import { VaultForm } from "./shell/VaultForm"
 
 /**
  * The window:
@@ -146,6 +147,30 @@ export function Layout(props: ParentProps) {
     dialog.show(() => <AddAccount mode={mode} onDone={() => dialog.close()} />, { title, size: "sm" })
 
   const off = [
+    handle("vault.enable", () =>
+      dialog.show(() => <VaultForm action="enable" onDone={() => dialog.close()} />, {
+        title: "Protect all accounts",
+        size: "sm",
+      }),
+    ),
+    handle("vault.unlock", () =>
+      dialog.show(() => <VaultForm action="unlock" onDone={() => dialog.close()} />, {
+        title: "Unlock Bonsai",
+        size: "sm",
+      }),
+    ),
+    handle("vault.change", () =>
+      dialog.show(() => <VaultForm action="change" onDone={() => dialog.close()} />, {
+        title: "Change Bonsai PIN",
+        size: "sm",
+      }),
+    ),
+    handle("vault.disable", () =>
+      dialog.show(() => <VaultForm action="disable" onDone={() => dialog.close()} />, {
+        title: "Turn off PIN protection",
+        size: "sm",
+      }),
+    ),
     handle("help.discord", () =>
       dialog.show(() => <DiscordDialog />, {
         title: "Bonsai Discord",

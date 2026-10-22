@@ -15,6 +15,17 @@ use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 pub const SCHEME: &str = "font";
 
 pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, res: UriSchemeResponder) {
+    if let Some(core) = ctx.app_handle().try_state::<Arc<Core>>()
+        && core.accounts_locked()
+    {
+        return res.respond(
+            Response::builder()
+                .status(403)
+                .body(Vec::new())
+                .unwrap_or_default(),
+        );
+    }
+
     let Some(rel) = rel_path(req.uri().path()) else {
         return res.respond(status(StatusCode::BAD_REQUEST));
     };

@@ -294,6 +294,7 @@ type ChallengeHook = Box<
 const MAX_CHALLENGES: u32 = 3;
 
 struct Inner {
+    revoked: tokio::sync::watch::Sender<bool>,
     http: reqwest::Client,
     /// For [`Client::fetch_user_image`]: reaches public addresses only. Built on first use.
     public_http: OnceLock<reqwest::Client>,
@@ -404,6 +405,7 @@ impl ClientBuilder {
             .map_err(|e| Error::Network(e.to_string()))?;
         Ok(Client {
             inner: Arc::new(Inner {
+                revoked: tokio::sync::watch::channel(false).0,
                 http,
                 public_http: OnceLock::new(),
                 user_agent: self.user_agent,
@@ -456,7 +458,27 @@ impl Client {
 
     /// Send a request. Handles CSRF, 429 and 5xx retries; returns typed errors for 401 and
     /// challenges. A challenge on a signed-in write goes to the `on_challenge` hook first.
-    pub async fn send(&self, mut req: Request) -> Result<Response> {
+    /// Permanently invalidates every clone and cancels requests still waiting on the wire,
+    /// rate limiter, retry delay or challenge. A new unlock creates new clients.
+    pub fn revoke(&self) {
+        self.inner.revoked.send_replace(true);
+        *self.inner.cookie.write() = None;
+        *self.inner.csrf.write() = None;
+    }
+
+    pub async fn send(&self, req: Request) -> Result<Response> {
+        let mut revoked = self.inner.revoked.subscribe();
+        if *revoked.borrow() {
+            return Err(Error::Message("Account session is locked.".into()));
+        }
+        tokio::select! {
+            biased;
+            _ = revoked.changed() => Err(Error::Message("Account session is locked.".into())),
+            result = self.send_live(req) => result,
+        }
+    }
+
+    async fn send_live(&self, mut req: Request) -> Result<Response> {
         let mut csrf_retried = false;
         let mut n429 = 0;
         let mut n5xx = 0;
@@ -527,7 +549,11 @@ impl Client {
                 && !csrf_retried
                 && let Some(tok) = response.header("x-csrf-token")
             {
-                *self.inner.csrf.write() = Some(Secret::new(tok));
+                let mut csrf = self.inner.csrf.write();
+                if *self.inner.revoked.borrow() {
+                    return Err(Error::Message("Account session is locked.".into()));
+                }
+                *csrf = Some(Secret::new(tok));
                 csrf_retried = true;
                 continue;
             }
@@ -717,6 +743,9 @@ impl Client {
     }
 
     fn build(&self, req: &Request) -> Result<reqwest::RequestBuilder> {
+        if *self.inner.revoked.borrow() {
+            return Err(Error::Message("Account session is locked.".into()));
+        }
         let method = match req.method {
             Method::GET => reqwest::Method::GET,
             Method::POST => reqwest::Method::POST,
@@ -819,14 +848,13 @@ impl Client {
                 continue;
             }
             let new = Secret::new(value);
-            let changed = self
-                .inner
-                .cookie
-                .read()
-                .as_ref()
-                .is_none_or(|old| old.expose() != new.expose());
+            let mut cookie = self.inner.cookie.write();
+            if *self.inner.revoked.borrow() {
+                return;
+            }
+            let changed = cookie.as_ref().is_none_or(|old| old.expose() != new.expose());
             if changed {
-                *self.inner.cookie.write() = Some(new.clone());
+                *cookie = Some(new.clone());
                 if let Some(h) = &self.inner.on_cookie_rotated {
                     h(self.inner.account, &new);
                 }
@@ -997,6 +1025,44 @@ fn challenge_from(h: &HeaderMap) -> Option<Challenge> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn revoking_a_client_cancels_pending_work_and_all_clones() {
+        let limiter = RateLimiter::new(1.0, 1.0);
+        limiter.block("test.invalid", Duration::from_secs(60));
+        let client = Client::builder(AccountId(7))
+            .cookie(Secret::new("synthetic-session-secret"))
+            .limiter(Arc::new(limiter))
+            .build()
+            .unwrap();
+        *client.inner.csrf.write() = Some(Secret::new("synthetic-csrf-secret"));
+        let cloned = client.clone();
+        let request = Request::new(Method::GET, "test.invalid", "/test".into());
+        let waiting = cloned.send(request.clone());
+        tokio::pin!(waiting);
+        tokio::select! {
+            biased;
+            result = &mut waiting => panic!("request should wait on limiter: {result:?}"),
+            _ = tokio::task::yield_now() => {},
+        }
+        client.revoke();
+        assert!(client.inner.cookie.read().is_none());
+        assert!(cloned.inner.csrf.read().is_none());
+        let error = tokio::time::timeout(Duration::from_secs(1), waiting)
+            .await
+            .unwrap()
+            .unwrap_err();
+        assert!(matches!(error, Error::Message(_)));
+        assert!(cloned.send(request).await.is_err());
+        // A late response must not restore a cookie after revocation.
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "set-cookie",
+            HeaderValue::from_static(".ROBLOSECURITY=late-secret; Path=/"),
+        );
+        cloned.capture_rotated_cookie(&headers);
+        assert!(client.inner.cookie.read().is_none());
+    }
 
     #[test]
     fn only_global_addresses_are_public() {

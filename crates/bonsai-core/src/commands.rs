@@ -294,6 +294,12 @@ macro_rules! commands {
 }
 
 commands! {
+    VaultEnable => "vault.enable", "Protect all accounts with a PIN", ["vault", "pin", "encrypt", "lock"], None, Write(Account), [];
+    VaultUnlock => "vault.unlock", "Unlock Bonsai", ["vault", "pin", "unlock"], None, Write(Account), [];
+    VaultLock => "vault.lock", "Lock Bonsai", ["vault", "pin", "lock"], None, Write(Account), [Shortcut::ctrl_shift("L")];
+    VaultChange => "vault.change", "Change Bonsai PIN", ["vault", "pin", "password"], None, Write(Account), [];
+    VaultDisable => "vault.disable", "Turn off Bonsai PIN protection", ["vault", "pin", "disable"], None, Write(Account), [];
+    VaultForget => "vault.forget", "Reset all local accounts after forgetting PIN", ["vault", "pin", "forget", "reset", "recovery"], None, Write(Account), [];
     OpenCommandBar => "palette.open", "Search or run a command", ["palette", "search", "find"], None, Read, [Shortcut::ctrl("K"), Shortcut::key("Slash")];
     ShowShortcuts => "help.shortcuts", "Show keyboard shortcuts", ["help", "keys", "keyboard"], None, Read, [Shortcut::key("Questionmark")];
 
@@ -937,7 +943,8 @@ mod tests {
     fn account_control_is_tier_4() {
         for c in Registry::default().all() {
             let key = c.id.key();
-            let control = key.starts_with("security.")
+            let control = key.starts_with("vault.")
+                || key.starts_with("security.")
                 || key.starts_with("privacy.")
                 || matches!(
                     c.id,

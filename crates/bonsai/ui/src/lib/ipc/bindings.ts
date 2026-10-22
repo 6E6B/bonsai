@@ -6,6 +6,9 @@ import * as __TAURI_EVENT from "@tauri-apps/api/event";
 /** Commands */
 export const commands = {
 	shell: () => __TAURI_INVOKE<Shell>("shell"),
+	vaultStatus: () => __TAURI_INVOKE<VaultView>("vault_status"),
+	vaultSubmit: (action: string, current: string, next: string) => typedError<null, string>(__TAURI_INVOKE("vault_submit", { action, current, next })),
+	vaultActivity: () => __TAURI_INVOKE<void>("vault_activity"),
 	commands: () => __TAURI_INVOKE<CommandInfo[]>("commands"),
 	/**
 	 *  Runs a command that needs the backend. Commands that only change UI state (navigation,
@@ -2491,6 +2494,14 @@ export type ValuesStatus = {
 	/**  ms since the epoch; `None` before the first load. */
 	fetchedAt: number | null,
 	count: number,
+};
+
+export type VaultView = {
+	status: string,
+	error: string | null,
+	retrySeconds: number,
+	locked: boolean,
+	systemLockWarning: string | null,
 };
 
 export type ViewButtonStyle = "default" | "primary" | "danger";

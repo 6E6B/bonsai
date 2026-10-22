@@ -108,10 +108,15 @@ pub(crate) struct Inner {
     pub(crate) hub: crate::hub::Hub,
     pub(crate) store: Arc<RwLock<StoreData>>,
     pub(crate) cache: Cache,
+    cache_available: bool,
     pub(crate) disk: DiskCache,
     clients: RwLock<HashMap<AccountId, Client>>,
     pub(crate) anon: Client,
     cookies: Arc<dyn CookieStore>,
+    pub(crate) vault: Arc<crate::vault::Vault>,
+    pub(crate) vault_ending: std::sync::atomic::AtomicBool,
+    pub(crate) vault_busy: std::sync::atomic::AtomicBool,
+    pub(crate) vault_activity: Mutex<std::time::Instant>,
     opener: RwLock<Arc<dyn Opener>>,
     pub(crate) limiter: Arc<RateLimiter>,
     pub(crate) base: Base,
@@ -165,7 +170,11 @@ pub struct Core {
 impl Drop for Core {
     fn drop(&mut self) {
         if let Some(rt) = self.rt.take() {
-            rt.shutdown_background();
+            // A replacement Core must not race old tasks still holding the vault writer
+            // lock. Shut down off-thread so dropping Core inside another Tokio runtime
+            // is also safe. If a blocking task outlives the timeout, its lock stays held.
+            let shutdown = std::thread::spawn(move || rt.shutdown_timeout(Duration::from_secs(5)));
+            let _ = shutdown.join();
         }
     }
 }
@@ -180,9 +189,13 @@ impl Core {
             .build()
             .unwrap_or_else(|e| panic!("cannot start the background runtime: {e}"));
         cfg.paths.make_private();
-        let cache = Cache::open(&cfg.paths.db_file())
+        let vault = Arc::new(crate::vault::Vault::open(&cfg.paths.config, cfg.cookies.clone()));
+        let persistent_cache = Cache::open(&cfg.paths.db_file());
+        let cache_available = persistent_cache.is_ok();
+        let cache = persistent_cache
             .or_else(|_| Cache::in_memory())
             .unwrap_or_else(|e| panic!("sqlite: {e}"));
+        cache.attach_vault(vault.clone());
         if let Some(o) = cache.local_offset() {
             crate::fmt::set_local_offset(o);
         }
@@ -199,15 +212,22 @@ impl Core {
             accounts,
             ..Default::default()
         };
-        warm_store(&cache, &mut store);
+        if !vault.blocked() {
+            warm_store(&cache, &mut store);
+        }
         let inner = Arc::new(Inner {
             hub: crate::hub::Hub::new(cfg.limiter.clone()),
             store: Arc::new(RwLock::new(store)),
             disk: DiskCache::new(&cfg.paths.thumbs_dir()),
             cache,
+            cache_available,
             clients: RwLock::new(HashMap::new()),
             anon,
-            cookies: cfg.cookies,
+            cookies: vault.clone(),
+            vault,
+            vault_busy: Default::default(),
+            vault_ending: Default::default(),
+            vault_activity: Mutex::new(std::time::Instant::now()),
             opener: RwLock::new(cfg.opener),
             limiter: cfg.limiter,
             base: cfg.base,
@@ -239,7 +259,9 @@ impl Core {
             rt: rt.handle().clone(),
         });
         inner.load_clients();
-        crate::plugins::load(&inner);
+        if !inner.vault.blocked() {
+            crate::plugins::load(&inner);
+        }
         {
             let weak = Arc::downgrade(&inner);
             inner.limiter.set_on_block(move |host, wait| {
@@ -301,6 +323,9 @@ impl Core {
     }
 
     pub fn send(&self, cmd: Cmd) {
+        if self.accounts_locked() {
+            return;
+        }
         let _ = self.tx.send(cmd);
     }
 
@@ -318,6 +343,9 @@ impl Core {
 
     /// Paste flow step 1. Returns false if the text does not look like a cookie at all.
     pub fn submit_cookie(&self, text: &str) -> bool {
+        if self.accounts_locked() {
+            return false;
+        }
         match parse_cookie_input(text) {
             Some(c) => {
                 self.inner.store.write().login = Some(LoginState::Validating);
@@ -670,6 +698,9 @@ impl Inner {
     }
 
     fn load_clients(self: &Arc<Self>) {
+        if self.vault.blocked() || self.vault_ending.load(std::sync::atomic::Ordering::Acquire) {
+            return;
+        }
         let ids: Vec<AccountId> = self.store.read().accounts.accounts.iter().map(|a| a.id).collect();
         for id in ids {
             match self.cookies.get(id) {
@@ -694,8 +725,12 @@ impl Inner {
             .base(self.base.clone())
             .limiter(self.limiter.clone())
             .on_cookie_rotated(move |acc, c| {
-                if let Some(me) = me.upgrade() {
-                    let _ = me.cookies.set(acc, c);
+                if let Some(me) = me.upgrade()
+                    && let Err(e) = me.cookies.set(acc, c)
+                {
+                    // A rotated session must not appear durably saved when the write failed.
+                    me.store.write().keychain_warning = Some(e);
+                    me.repaint();
                 }
             })
             .on_challenge(move |acc, ch| {
@@ -706,6 +741,12 @@ impl Inner {
     }
 
     pub(crate) fn client(&self, id: AccountId) -> Option<Client> {
+        if self.vault.blocked()
+            || self.vault_busy.load(std::sync::atomic::Ordering::Acquire)
+            || self.vault_ending.load(std::sync::atomic::Ordering::Acquire)
+        {
+            return None;
+        }
         if id.is_anonymous() {
             return Some(self.anon.clone());
         }
@@ -808,6 +849,12 @@ impl Inner {
     }
 
     async fn handle(self: Arc<Self>, cmd: Cmd) {
+        if self.vault.blocked()
+            || self.vault_busy.load(std::sync::atomic::Ordering::Acquire)
+            || self.vault_ending.load(std::sync::atomic::Ordering::Acquire)
+        {
+            return;
+        }
         self.store.write().jobs += 1;
         self.repaint();
         match cmd {
@@ -973,7 +1020,10 @@ impl Inner {
     }
 
     fn remove_account(&self, id: AccountId) {
-        let _ = self.cookies.delete(id);
+        if let Err(e) = self.cookies.delete(id) {
+            self.toast(Some(id), format!("Could not remove the saved account: {e}"), true);
+            return;
+        }
         self.clients.write().remove(&id);
         self.cache.forget_account(id);
         self.res.forget_account(id);
@@ -1799,5 +1849,155 @@ impl Core {
     pub fn notice(&self, text: impl Into<String>, error: bool) {
         self.inner.toast(None, text, error);
         self.inner.repaint();
+    }
+}
+
+impl Core {
+    pub fn vault_status(&self) -> crate::vault::Status {
+        self.inner.vault.status()
+    }
+    pub fn vault_error(&self) -> Option<String> {
+        self.inner.vault.error()
+    }
+    pub fn vault_retry_seconds(&self) -> u32 {
+        self.inner.vault.retry_seconds()
+    }
+    pub fn accounts_locked(&self) -> bool {
+        self.inner.vault.blocked()
+            || self.inner.vault_busy.load(std::sync::atomic::Ordering::Acquire)
+            || self.inner.vault_ending.load(std::sync::atomic::Ordering::Acquire)
+    }
+    pub fn vault_activity(&self) {
+        *self.inner.vault_activity.lock() = std::time::Instant::now();
+    }
+    pub fn vault_idle(&self) -> bool {
+        self.vault_status() == crate::vault::Status::Unlocked
+            && self.inner.vault_activity.lock().elapsed()
+                >= crate::vault::idle_timeout(self.inner.settings.read().vault_idle_minutes)
+    }
+    pub fn vault_session_live(&self) -> bool {
+        self.vault_status() == crate::vault::Status::Unlocked
+            || self.inner.vault_busy.load(std::sync::atomic::Ordering::Acquire)
+    }
+    /// The shell must end the process session after this call, before permitting unlock.
+    pub fn close_vault_session(&self) -> bool {
+        if !self.inner.vault.protected() && !self.inner.vault_busy.load(std::sync::atomic::Ordering::Acquire)
+        {
+            return false;
+        }
+        if self
+            .inner
+            .vault_ending
+            .swap(true, std::sync::atomic::Ordering::AcqRel)
+        {
+            return false;
+        }
+        self.inner.vault.close_admission();
+        for client in self.inner.clients.read().values() {
+            client.revoke();
+        }
+        true
+    }
+    pub fn vault_action(&self, action: &str, current: &str, next: &str) -> Result<(), String> {
+        use std::sync::atomic::Ordering;
+        if self.inner.vault_ending.load(Ordering::Acquire) {
+            return Err("Bonsai is locking. Wait for the new session.".into());
+        }
+        if self
+            .inner
+            .vault_busy
+            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+            .is_err()
+        {
+            return Err("Another vault operation is in progress.".into());
+        }
+        struct Busy<'a>(&'a std::sync::atomic::AtomicBool);
+        impl Drop for Busy<'_> {
+            fn drop(&mut self) {
+                self.0.store(false, Ordering::Release);
+            }
+        }
+        let _busy = Busy(&self.inner.vault_busy);
+        let v = &self.inner.vault;
+        let result = (|| {
+            match action {
+                "forget" => {
+                    if !self.inner.cache_available {
+                        return Err("Cannot clear the private cache while its file is unavailable. Repair or remove the cache database, then restart Bonsai.".into());
+                    }
+                    if next != "RESET" || !v.protected() {
+                        return Err("Type RESET to remove every local account and its private cache.".into());
+                    }
+                    v.close_admission();
+                    for client in self.inner.clients.read().values() {
+                        client.revoke();
+                    }
+                    self.inner.clients.write().clear();
+                    let ids: Vec<_> = self.store().accounts.accounts.iter().map(|a| a.id).collect();
+                    // Remove transitional source credentials before clearing the only
+                    // plaintext account index, so an interrupted reset can retry cleanup.
+                    v.prepare_forget(&ids)?;
+                    self.inner.cache.forget_private()?;
+                    crate::account::AccountList::default()
+                        .save(&self.inner.paths.accounts_file())
+                        .map_err(|_| "Cannot reset the local account list.")?;
+                    v.forget(&ids)?;
+                }
+                "enable" => {
+                    crate::vault::Vault::validate_pin(next)?;
+                    if !self.inner.cache_available {
+                        return Err("Cannot protect the private cache while its file is unavailable. Repair or remove the cache database, then restart Bonsai.".into());
+                    }
+                    // Revocation waits for any rotation callback holding the cookie lock.
+                    // Read source credentials only after every such callback has persisted.
+                    for client in self.inner.clients.read().values() {
+                        client.revoke();
+                    }
+                    self.inner.clients.write().clear();
+                    let ids: Vec<_> = self.store().accounts.accounts.iter().map(|a| a.id).collect();
+                    v.enable(next, &ids)?;
+                    self.inner.cache.migrate_vault(v, true)?;
+                    v.finish_migration()?;
+                }
+                "unlock" => {
+                    v.unlock(current)?;
+                    if v.migration_pending() {
+                        self.inner.cache.migrate_vault(v, true)?;
+                    }
+                    v.finish_migration()?;
+                    warm_store(&self.inner.cache, &mut self.inner.store.write());
+                }
+                "change" => {
+                    v.change_pin(current, next)?;
+                }
+                "disable" => {
+                    v.prepare_disable(current)?;
+                    self.inner.cache.migrate_vault(v, false)?;
+                    if let Err(e) = v.disable(current) {
+                        // Restore encrypted cache on a failed disable. A restart also resumes
+                        // this migration if the process was interrupted.
+                        let rollback = self.inner.cache.migrate_vault(v, true);
+                        return Err(match rollback { Ok(()) => e, Err(_) => "Disable failed and cache rollback needs repair. Keep Bonsai closed until the vault can be unlocked.".into() });
+                    }
+                }
+                _ => return Err("Unknown vault action.".into()),
+            }
+            Ok(())
+        })();
+        if result.is_err() && v.protected() && v.blocked() {
+            v.lock();
+        }
+        self.vault_activity();
+        self.inner.repaint();
+        drop(_busy);
+        if result.is_ok() && !self.accounts_locked() && matches!(action, "unlock" | "enable") {
+            self.inner.load_clients();
+            crate::plugins::load(&self.inner);
+            let ids: Vec<_> = self.store().accounts.accounts.iter().map(|a| a.id).collect();
+            for id in ids {
+                self.send(Cmd::Refresh(id));
+            }
+        }
+        result
     }
 }

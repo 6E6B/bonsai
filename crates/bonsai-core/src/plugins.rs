@@ -604,6 +604,12 @@ impl Inner {
     /// Rereads plugins from disk and starts, stops or restarts each to match. A plugin whose
     /// files and settings didn't change keeps running. Blocking; call with [`IO`] held.
     fn sync_plugins(self: &Arc<Self>, force: Force<'_>) {
+        if self.vault.blocked()
+            || self.vault_busy.load(std::sync::atomic::Ordering::Acquire)
+            || self.vault_ending.load(std::sync::atomic::Ordering::Acquire)
+        {
+            return;
+        }
         let saved = self.plugins.lock().saved.clone();
         let fresh = scan(&self.paths.plugins_dir(), &saved);
         let mut p = self.plugins.lock();

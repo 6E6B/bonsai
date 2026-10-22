@@ -2,6 +2,7 @@ import { Route, Router } from "@solidjs/router"
 import { lazy } from "solid-js"
 import { DialogProvider, Toaster } from "~/lib/ui"
 import { Layout } from "./Layout"
+import { VaultGate } from "./VaultGate"
 
 const Home = lazy(() => import("~/features/home/Home"))
 const Friends = lazy(() => import("~/features/friends/Friends"))
@@ -34,36 +35,38 @@ const Overview = lazy(() => import("~/features/overview/Overview"))
 export function App() {
   return (
     <DialogProvider>
-      <Router root={Layout}>
-        <Route path="/" component={Home} />
-        <Route path="/friends" component={Friends} />
-        <Route path="/discover" component={Discover} />
-        <Route path="/games/:id" component={Game} />
-        <Route path="/users/:id" component={Profile} />
-        <Route path="/avatar" component={AvatarEditor} />
-        <Route path="/marketplace" component={Marketplace} />
-        <Route path="/catalog/:id" component={ItemPage} />
-        <Route path="/bundles/:id" component={ItemPage} />
-        <Route path="/passes/:id" component={PassPage} />
-        <Route path="/inventory/:user?" component={Inventory} />
-        <Route path="/trades" component={Trades} />
-        <Route path="/values" component={Values} />
-        <Route path="/transactions" component={Transactions} />
-        <Route path="/messages" component={Messages} />
-        <Route path="/chat" component={Chat} />
-        <Route path="/notifications" component={Notifications} />
-        <Route path="/communities" component={Communities} />
-        <Route path="/communities/:id" component={Community} />
-        <Route path="/search" component={Search} />
-        <Route path="/settings/:section?/:setting?" component={Settings} />
-        <Route path="/hub" component={Hub} />
-        <Route path="/themes" component={Themes} />
-        <Route path="/themes/:id" component={ThemeEditor} />
-        <Route path="/wiki" component={Wiki} />
-        <Route path="/wiki/:slug" component={WikiArticle} />
-        <Route path="/components" component={Components} />
-        <Route path="/overview" component={Overview} />
-      </Router>
+      <VaultGate>
+        <Router root={Layout}>
+          <Route path="/" component={Home} />
+          <Route path="/friends" component={Friends} />
+          <Route path="/discover" component={Discover} />
+          <Route path="/games/:id" component={Game} />
+          <Route path="/users/:id" component={Profile} />
+          <Route path="/avatar" component={AvatarEditor} />
+          <Route path="/marketplace" component={Marketplace} />
+          <Route path="/catalog/:id" component={ItemPage} />
+          <Route path="/bundles/:id" component={ItemPage} />
+          <Route path="/passes/:id" component={PassPage} />
+          <Route path="/inventory/:user?" component={Inventory} />
+          <Route path="/trades" component={Trades} />
+          <Route path="/values" component={Values} />
+          <Route path="/transactions" component={Transactions} />
+          <Route path="/messages" component={Messages} />
+          <Route path="/chat" component={Chat} />
+          <Route path="/notifications" component={Notifications} />
+          <Route path="/communities" component={Communities} />
+          <Route path="/communities/:id" component={Community} />
+          <Route path="/search" component={Search} />
+          <Route path="/settings/:section?/:setting?" component={Settings} />
+          <Route path="/hub" component={Hub} />
+          <Route path="/themes" component={Themes} />
+          <Route path="/themes/:id" component={ThemeEditor} />
+          <Route path="/wiki" component={Wiki} />
+          <Route path="/wiki/:slug" component={WikiArticle} />
+          <Route path="/components" component={Components} />
+          <Route path="/overview" component={Overview} />
+        </Router>
+      </VaultGate>
       <Toaster />
     </DialogProvider>
   )

@@ -9,6 +9,8 @@ Remove a line when it ships.
 
 ## Not built
 
+- Account PIN vault: device-bound encryption, lock enforcement and interrupted on/off transitions are implemented. Native keychain/restart and lock/sleep delivery testing on all platforms, low-end unlock-cost benchmarking and independent security review remain release gates. Native notification adapters, configurable inactivity and confirmed destructive recovery are implemented. See [account-vault.md](account-vault.md).
+
 - Chat: group creation, rename and membership writes have replay coverage but still need live verification with consenting participants. The live chat smoke test only reads settings, conversations and group history.
 
 - Avatar editor search and name sorting cover the currently loaded inventory type. Global wardrobe search needs an index or an API that searches owned wearables across types.

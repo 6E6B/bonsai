@@ -1,9 +1,10 @@
-import { For } from "solid-js"
+import { For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import type { Account, Color } from "~/lib/ipc/bindings"
 import { shell } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Badge, Button, IconButton, ListItem, Select, SettingsGroup, usePrompt } from "~/lib/ui"
+import { vault } from "~/lib/vault"
 import { PrefRow } from "./prefs"
 
 const colors: { value: Color; label: string }[] = [
@@ -26,6 +27,29 @@ export function AccountsSection() {
   }
   return (
     <>
+      <SettingsGroup
+        title="Bonsai PIN"
+        description="One PIN protects every saved account on this computer. This is separate from Roblox account security."
+      >
+        <Show when={vault.systemLockWarning}>
+          <p role="status" class="px-3 pt-3 text-sm text-warning">
+            {vault.systemLockWarning}
+          </p>
+        </Show>
+        <div class="flex flex-wrap items-center gap-2 p-3">
+          <Show
+            when={vault.status === "unlocked"}
+            fallback={<Button onClick={() => run("vault.enable")}>Enable protection</Button>}
+          >
+            <Button onClick={() => run("vault.lock")}>Lock now</Button>
+            <Button onClick={() => run("vault.change")}>Change PIN</Button>
+            <Button variant="ghost" onClick={() => run("vault.disable")}>
+              Turn off protection
+            </Button>
+          </Show>
+        </div>
+        <PrefRow name="vault_idle_minutes" />
+      </SettingsGroup>
       <SettingsGroup
         title="Signed in"
         meta={shell.accounts.length}

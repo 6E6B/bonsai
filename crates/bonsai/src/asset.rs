@@ -16,6 +16,17 @@ use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 pub const SCHEME: &str = "rbxasset";
 
 pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, res: UriSchemeResponder) {
+    if let Some(core) = ctx.app_handle().try_state::<Arc<Core>>()
+        && core.accounts_locked()
+    {
+        return res.respond(
+            Response::builder()
+                .status(403)
+                .body(Vec::new())
+                .unwrap_or_default(),
+        );
+    }
+
     // The sign-in window shows roblox.com; only the app's own window may fetch as an account.
     if ctx.webview_label() != "main" {
         return res.respond(status(StatusCode::FORBIDDEN));

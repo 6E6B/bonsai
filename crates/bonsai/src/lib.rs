@@ -17,8 +17,10 @@ mod frame;
 pub mod ipc;
 mod notify;
 mod schemes;
+mod session_lock;
 mod signin;
 mod thumb;
+mod vault;
 mod wikiimg;
 
 pub fn run() {
@@ -44,6 +46,16 @@ pub fn run() {
         .invoke_handler(move |invoke| {
             if invoke.message.webview().label() != "main" {
                 invoke.resolver.reject("not allowed from this window");
+                return true;
+            }
+            if let Some(core) = invoke.message.webview().app_handle().try_state::<Arc<Core>>()
+                && core.accounts_locked()
+                && !matches!(
+                    invoke.message.command(),
+                    "vault_status" | "vault_submit" | "vault_activity" | "window_frame" | "run_command"
+                )
+            {
+                invoke.resolver.reject("Unlock Bonsai to access accounts.");
                 return true;
             }
             handler(invoke)
@@ -82,6 +94,9 @@ pub fn run() {
                 ipc::dispatch(&handle, &core, inv)
             }));
             app.manage(core);
+            app.manage(vault::SystemLockWarning::default());
+            vault::start_idle(app.handle().clone());
+            vault::start_system_lock(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!());
