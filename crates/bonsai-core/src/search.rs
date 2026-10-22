@@ -246,8 +246,8 @@ impl TypoQuery {
 
     fn score(&self, text: &str) -> Option<u32> {
         let lowercase = text.to_lowercase();
-        let words = std::iter::once(lowercase.as_str())
-            .chain(lowercase.split(|c: char| !c.is_alphanumeric()));
+        let words =
+            std::iter::once(lowercase.as_str()).chain(lowercase.split(|c: char| !c.is_alphanumeric()));
         words
             .filter(|word| !word.is_empty())
             .filter_map(|word| {
@@ -257,8 +257,7 @@ impl TypoQuery {
                 // The full word can beat its prefix when extra leading characters
                 // are insertions. Only compare it separately when the word is longer.
                 if chars.len() > self.query.len()
-                    && let Some(full) =
-                        bounded_osa_distance(&self.query, &chars, self.max_distance)
+                    && let Some(full) = bounded_osa_distance(&self.query, &chars, self.max_distance)
                 {
                     distance = Some(distance.map_or(full, |d| d.min(full)));
                 }
@@ -454,5 +453,4 @@ mod tests {
         let budget = if cfg!(debug_assertions) { 1000 } else { 16 };
         assert!(elapsed.as_millis() < budget, "{elapsed:?}");
     }
-
 }
