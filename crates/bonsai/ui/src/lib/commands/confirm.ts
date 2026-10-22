@@ -19,6 +19,12 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
     confirm: "Unlist",
     danger: true,
   }),
+  "playlist.delete": () => ({
+    title: "Delete this playlist?",
+    description: "The experiences in it stay where they are.",
+    confirm: "Delete",
+    danger: true,
+  }),
   "user.unfriend": () => ({
     title: "Remove friend?",
     description: "You'd have to send a new request to be friends again.",

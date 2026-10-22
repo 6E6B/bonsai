@@ -82,6 +82,11 @@ describe("paletteEntries", () => {
     ])
   })
 
+  it("lists playlists for playlist arguments", () => {
+    const rows = paletteEntries([cmd("playlist.open", "playlist")], [], [], [], [], [], [], [{ id: 3, name: "Obbies" }])
+    expect(rows.map((r) => [r.key, r.title, r.arg])).toEqual([["playlist.open:3", "playlist.open: Obbies", "3"]])
+  })
+
   it("lists accounts for account arguments", () => {
     const rows = paletteEntries(
       [cmd("account.remove", "account")],

@@ -2,6 +2,7 @@
 import { createEffect, on, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { run } from "../src/lib/commands/registry"
+import type { PlaylistView } from "../src/lib/ipc/bindings"
 import { browserFriends, browserHome, browserShell } from "../src/lib/sample"
 import { calls } from "./bindings"
 import { appendChat, games, people, prependChat } from "./fixtures"
@@ -22,6 +23,7 @@ export const [friends] = createStore({
     }
   }),
 })
+export const [playlists] = createStore<{ lists: PlaylistView[] }>({ lists: [] })
 const [home] = createStore({
   ...browserHome,
   favorites: games,

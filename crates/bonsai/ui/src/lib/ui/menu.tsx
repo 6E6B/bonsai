@@ -4,6 +4,7 @@ import { For, type JSX, Match, type ParentProps, Show, Switch, splitProps } from
 import { Button, type ButtonProps } from "./button"
 import { Icon, type IconName } from "./icon"
 import { Kbd } from "./kbd"
+import { Tooltip } from "./tooltip"
 
 /** One row of a menu. Build command rows with `menuItem()` from `~/lib/commands/registry`, so
  * the label and shortcut come from the registry. */
@@ -92,20 +93,25 @@ export interface MenuProps extends Omit<ButtonProps, "onClick"> {
 }
 
 /** A button that opens a menu. Takes the same props as `Button`; with no children it is a
- * square icon button (pass `icon` and `label`). */
+ * square icon button (pass `icon` and `label`) with `label` as its tooltip. */
 export function Menu(props: MenuProps) {
   const [local, rest] = splitProps(props, ["items", "label", "placement", "children", "variant"])
+  const trigger = () => (
+    <KDropdownMenu.Trigger
+      as={Button}
+      variant={local.variant ?? (local.children ? "secondary" : "ghost")}
+      aria-label={local.label}
+      data-icon-only={local.children ? undefined : ""}
+      {...rest}
+    >
+      {local.children}
+    </KDropdownMenu.Trigger>
+  )
   return (
     <KDropdownMenu placement={local.placement ?? "bottom-start"} gutter={4}>
-      <KDropdownMenu.Trigger
-        as={Button}
-        variant={local.variant ?? (local.children ? "secondary" : "ghost")}
-        aria-label={local.label}
-        data-icon-only={local.children ? undefined : ""}
-        {...rest}
-      >
-        {local.children}
-      </KDropdownMenu.Trigger>
+      <Show when={!local.children && local.label} fallback={trigger()}>
+        {(label) => <Tooltip content={label()}>{trigger()}</Tooltip>}
+      </Show>
       <KDropdownMenu.Portal>
         <KDropdownMenu.Content data-component="menu">
           <Entries parts={KDropdownMenu} items={local.items} />

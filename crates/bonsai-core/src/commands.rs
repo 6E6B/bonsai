@@ -38,6 +38,8 @@ pub enum ArgKind {
     Setting,
     /// an installed plugin
     Plugin,
+    /// a game playlist of the active account
+    Playlist,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -356,6 +358,7 @@ commands! {
     OpenItem => "market.open", "Open item", ["item", "asset", "bundle", "pass", "open"], Text, Read, [];
     PreviewItem => "market.preview", "Preview item in a side panel", ["item", "asset", "bundle", "preview", "peek", "details", "inspect", "side"], Text, Read, [];
     OpenCommunity => "group.open", "Open community", ["group", "community", "open"], Text, Read, [];
+    GoPlaylists => "nav.playlists", "Go to Playlists", ["playlists", "lists", "collections", "games", "saved"], None, Read, [Shortcut::seq("G", "L")];
     GoWiki => "nav.wiki", "Go to Wiki", ["wiki", "fandom", "article", "lore", "trivia", "guide", "history"], None, Read, [Shortcut::seq("G", "W")];
     WikiOpen => "wiki.open", "Open wiki article", ["wiki", "fandom", "article", "page"], Text, Read, [];
     WikiSearch => "wiki.search", "Search the wiki", ["wiki", "fandom", "search", "look up", "lookup"], Text, Read, [];
@@ -484,6 +487,12 @@ commands! {
     LikeGame => "game.like", "Like this experience", ["like", "thumbs up", "vote", "upvote"], None, Write(Harmless), [];
     DislikeGame => "game.dislike", "Dislike this experience", ["dislike", "thumbs down", "vote", "downvote"], None, Write(Harmless), [];
     FavoriteGame => "game.favorite", "Favorite or unfavorite this experience", ["favorite", "favourite", "star"], None, Write(Harmless), [];
+    NewPlaylist => "playlist.new", "New game playlist", ["playlist", "list", "collection", "create", "new"], Text, Write(Harmless), [];
+    AddToPlaylist => "playlist.add", "Add this experience to a playlist", ["playlist", "list", "collection", "add", "save"], Playlist, Write(Harmless), [];
+    RemoveFromPlaylist => "playlist.remove", "Remove experience from playlist (playlist, then place)", ["playlist", "list", "remove"], Text, Write(Harmless), [];
+    OpenPlaylist => "playlist.open", "Open playlist", ["playlist", "list", "collection"], Playlist, Read, [];
+    RenamePlaylist => "playlist.rename", "Rename playlist", ["playlist", "list", "rename", "name"], Playlist, Write(Harmless), [];
+    DeletePlaylist => "playlist.delete", "Delete playlist", ["playlist", "list", "delete", "remove"], Playlist, Write(Harmless), [];
     NotifyGame => "game.notify", "Turn update notifications on or off", ["notify", "follow", "bell", "updates"], None, Write(Harmless), [];
     NotifyEvent => "game.event_notify", "Notify me about an event", ["event", "rsvp", "notify", "remind"], Text, Write(Harmless), [];
     BuyPass => "game.buy_pass", "Buy a pass", ["pass", "gamepass", "store", "buy", "purchase"], Text, Write(Value), [];

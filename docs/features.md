@@ -29,3 +29,4 @@ Features beyond the website, with the command that reaches each.
 | Every account's balance and period totals side by side | Transactions → All accounts | Go to Transactions |
 | Monthly incoming vs outgoing, spending per experience, top items sold, top buyers | Transactions → Insights | Go to Transactions |
 | Toast on a new sale (watcher only notifies) | Settings → Notifications | Turn a notification kind on or off (`sales`) |
+| Game playlists (local, per account) | Playlists; experience page and game menus → Add to playlist | Go to Playlists; New game playlist; Add this experience to a playlist |

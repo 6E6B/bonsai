@@ -19,7 +19,7 @@ import {
 import { command, commandList, run } from "~/lib/commands/registry"
 import { commands, type PluginView, type PrefView, type RemoteSearch, type ThemeView } from "~/lib/ipc/bindings"
 import { screenKey, sidebarScreens } from "~/lib/screens"
-import { friends, shell, useLive } from "~/lib/store"
+import { friends, playlists, shell, useLive } from "~/lib/store"
 import { tabLabel, tabs } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Icon, Kbd, SegmentedControl, Spinner, TextField, Thumbnail, useDialog } from "~/lib/ui"
@@ -54,6 +54,7 @@ export function CommandPalette() {
       themes,
       prefs,
       plugins,
+      playlists.lists,
     ),
   )
   const people = createMemo(() =>

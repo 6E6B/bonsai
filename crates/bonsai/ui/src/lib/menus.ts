@@ -1,6 +1,6 @@
 import { commandList, menuItem } from "~/lib/commands/registry"
 import { type PluginContext, pluginCommandsFor } from "~/lib/plugins"
-import { shell } from "~/lib/store"
+import { playlists, shell } from "~/lib/store"
 import type { MenuEntry } from "~/lib/ui"
 
 /**
@@ -122,12 +122,22 @@ export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[
   ]
 }
 
+/** "Add to playlist" rows: one per playlist, then New playlist. */
+export function playlistItems(placeId: number): MenuEntry[] {
+  return [
+    ...playlists.lists.map((p) => menuItem("playlist.add", { arg: `${p.id} ${placeId}`, label: p.name })),
+    ...(playlists.lists.length > 0 ? [sep] : []),
+    menuItem("playlist.new", { icon: "plus", label: "New playlist…" }),
+  ]
+}
+
 export function gameMenu(placeId: number): MenuEntry[] {
   const id = String(placeId)
   return [
     menuItem("game.open", { arg: id, icon: "game" }),
     menuItem("game.join", { arg: id, icon: "play" }),
     ...joinAs(id),
+    { kind: "submenu", label: "Add to playlist", icon: "playlist", items: playlistItems(placeId) },
     sep,
     ...pluginMenu("game", placeId),
     shareMenu(`game:${id}`),

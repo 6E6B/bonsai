@@ -39,10 +39,13 @@ export async function loadCommands() {
 // loads it at startup, so menus would show raw command ids until a restart.
 if (import.meta.hot) void loadCommands()
 
-/** Registers a UI-side handler for a command id. Returns a function that removes it. */
+/** Registers a UI-side handler for a command id. Returns a function that removes it, unless a
+ * newer handler took its place: a remounted layout registers again before the old one cleans up. */
 export function handle(id: string, fn: Handler) {
   local.set(id, fn)
-  return () => local.delete(id)
+  return () => {
+    if (local.get(id) === fn) local.delete(id)
+  }
 }
 
 /** The registry entry for `id`, once loaded. */

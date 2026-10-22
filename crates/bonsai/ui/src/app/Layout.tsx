@@ -27,7 +27,7 @@ import { registerHubCommands } from "~/lib/hub"
 import { commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
-import { shell, startSync } from "~/lib/store"
+import { playlists, shell, startSync } from "~/lib/store"
 import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
 import { shownBackground } from "~/lib/theme"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
@@ -141,6 +141,27 @@ export function Layout(props: ParentProps) {
       maxLength: nickname ? 32 : 500,
     })
     if (text !== null) void runBackend(id, `${who} ${text}`)
+  }
+
+  /** `playlist.new` and `playlist.rename`: ask for the name unless the argument has it. */
+  const newPlaylist = async (arg: string | null) => {
+    const name =
+      arg?.trim() || (await prompt({ title: "New playlist", label: "Name", submit: "Create", maxLength: 60 }))
+    if (name) void runBackend("playlist.new", name)
+  }
+  const renamePlaylist = async (arg: string | null) => {
+    const raw = arg?.trim() || /^playlist:(\d+)$/.exec(commandContext() ?? "")?.[1] || ""
+    if (/\s/.test(raw)) return void runBackend("playlist.rename", raw)
+    const list = playlists.lists.find((p) => String(p.id) === raw)
+    if (!list) return void showToast("Pick a playlist first.")
+    const name = await prompt({
+      title: "Rename playlist",
+      label: "Name",
+      initial: list.name,
+      submit: "Rename",
+      maxLength: 60,
+    })
+    if (name) void runBackend("playlist.rename", `${raw} ${name}`)
   }
 
   const addAccount = (mode: AddMode, title: string) => () =>
@@ -274,6 +295,9 @@ export function Layout(props: ParentProps) {
     ),
     handle("user.nickname", editAbout("nickname")),
     handle("user.note", editAbout("note")),
+    handle("playlist.new", newPlaylist),
+    handle("playlist.rename", renamePlaylist),
+    handle("playlist.open", open("/playlists")),
     handle("search.open", (q) => {
       const t = q?.trim() ?? ""
       if (t) void runBackend("search.open", t)

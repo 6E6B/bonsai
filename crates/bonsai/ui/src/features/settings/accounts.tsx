@@ -32,11 +32,11 @@ export function AccountsSection() {
         description="One PIN protects every saved account on this computer. This is separate from Roblox account security."
       >
         <Show when={vault.systemLockWarning}>
-          <p role="status" class="px-3 pt-3 text-sm text-warning">
+          <p role="status" class="pt-3 text-sm text-warning">
             {vault.systemLockWarning}
           </p>
         </Show>
-        <div class="flex flex-wrap items-center gap-2 p-3">
+        <div class="flex flex-wrap items-center gap-2 py-3">
           <Show
             when={vault.status === "unlocked"}
             fallback={<Button onClick={() => run("vault.enable")}>Enable protection</Button>}
@@ -86,7 +86,7 @@ export function AccountsSection() {
                   />
                   <Select
                     size="sm"
-                    class="w-28"
+                    class="w-36"
                     aria-label="Color tag"
                     options={colors}
                     value={a.color}
