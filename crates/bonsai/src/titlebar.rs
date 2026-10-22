@@ -116,6 +116,7 @@ impl Titlebar {
 /// Splits a GTK decoration layout like `icon:minimize,maximize,close` into the buttons at the
 /// start and at the end of the bar. Entries other than the three buttons (`icon`, `menu`,
 /// `appmenu`, `spacer`) are skipped. With no colon, everything sits at the start, as in GTK.
+#[cfg(any(target_os = "linux", test))]
 fn parse_layout(layout: &str) -> (Vec<WindowButton>, Vec<WindowButton>) {
     let side = |s: &str| {
         s.split(',')
