@@ -256,12 +256,11 @@ impl TypoQuery {
                 let mut distance = bounded_osa_distance(&self.query, prefix, self.max_distance);
                 // The full word can beat its prefix when extra leading characters
                 // are insertions. Only compare it separately when the word is longer.
-                if chars.len() > self.query.len() {
-                    if let Some(full) =
+                if chars.len() > self.query.len()
+                    && let Some(full) =
                         bounded_osa_distance(&self.query, &chars, self.max_distance)
-                    {
-                        distance = Some(distance.map_or(full, |d| d.min(full)));
-                    }
+                {
+                    distance = Some(distance.map_or(full, |d| d.min(full)));
                 }
                 distance.map(|d| 20u32.saturating_sub(d as u32 * 8))
             })
