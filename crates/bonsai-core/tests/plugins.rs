@@ -1022,18 +1022,18 @@ fn tier_3_runs_within_its_budget_at_todays_price() {
     core.request_automation(ME).unwrap();
     core.confirm_automation("TestUser").unwrap();
     run("trade.accept 1", "no trade budget");
-    run("group.payout group:7 156 10", "no Robux budget");
+    run("group.payout group:7 156 10", "no payout budget");
     assert!(ran.lock().is_empty());
 
     // The user sets one.
     assert!(core.request_budget("nope", ME).is_err());
     core.request_budget("budget", ME).unwrap();
     let pending = core.store().plugin_budget.clone().unwrap();
-    assert!(pending.current.robux && pending.current.trades);
-    core.save_budget(100, 2).unwrap();
+    assert!(pending.current.robux && pending.current.trades && pending.current.payouts);
+    core.save_budget(100, 2, 60).unwrap();
     assert!(core.store().plugin_budget.is_none());
     let b = &core.plugin_budgets("budget")[0];
-    assert_eq!((b.budget.robux, b.budget.trades), (100, 2));
+    assert_eq!((b.budget.robux, b.budget.trades, b.budget.payouts), (100, 2, 60));
 
     // Trades count one each.
     run("trade.accept 1", "Budget: ran");
@@ -1041,17 +1041,17 @@ fn tier_3_runs_within_its_budget_at_todays_price() {
     run("trade.accept 3", "budget of 2 trades a day");
     assert_eq!(ran.lock().len(), 2);
 
-    // Robux count what was spent.
+    // Payouts spend community funds, so they count against their own budget.
     run("group.payout group:7 156 60", "Budget: ran");
     assert_eq!(last(), Some((CommandId::PayOut, "group:7 156 60".into())));
-    run("group.payout group:7 156 50", "budget of R$ 100 a day");
+    run("group.payout group:7 156 1", "payout budget of R$ 60 a day");
 
     // A purchase runs at the price asked now, only when that is no more than it named.
     run("market.buy item:2 40", "more than the R$ 40");
     assert_eq!(ran.lock().len(), 3);
     run("market.buy item:2", "the most to pay");
     core.request_budget("budget", ME).unwrap();
-    core.save_budget(1000, 2).unwrap();
+    core.save_budget(900, 2, 60).unwrap();
     run("market.buy item:2 60", "Budget: ran");
     assert_eq!(last(), Some((CommandId::BuyItem, "item:2 50".into())));
     assert_eq!(core.plugin_activity(1)[0].robux, Some(50));
@@ -1060,8 +1060,9 @@ fn tier_3_runs_within_its_budget_at_todays_price() {
     assert_eq!(
         core.plugin_budgets("budget")[0].spent,
         bonsai_core::plugins::Spent {
-            robux: 110,
-            trades: 2
+            robux: 50,
+            trades: 2,
+            payouts: 60
         }
     );
 
@@ -1070,7 +1071,7 @@ fn tier_3_runs_within_its_budget_at_todays_price() {
 
     // A batch counts at the most each may cost. Over budget, it waits for the user.
     core.request_budget("budget", ME).unwrap();
-    core.save_budget(2000, 2).unwrap();
+    core.save_budget(1900, 2, 60).unwrap();
     core.run_plugin_command(
         &c("batch"),
         Some("market.buy_resale item:3 950;market.buy item:2 950".into()),
@@ -1097,13 +1098,13 @@ fn tier_3_runs_within_its_budget_at_todays_price() {
     wait_store(&core, "the batch", |_| ran.lock().len() == 6);
     assert_eq!(last(), Some((CommandId::BuyItem, "item:2 50".into())));
     assert_eq!(ran.lock()[4].2.as_deref(), Some("item:3 900"));
-    assert_eq!(core.plugin_budgets("budget")[0].spent.robux, 110);
+    assert_eq!(core.plugin_budgets("budget")[0].spent.robux, 50);
     // Within it, a batch runs by itself.
     core.run_plugin_command(&c("batch"), Some("market.buy item:2 50".into()), Some(ME), None)
         .unwrap();
     wait_store(&core, "the unattended batch", |_| ran.lock().len() == 7);
     assert!(core.store().plugin_actions.is_none());
-    assert_eq!(core.plugin_budgets("budget")[0].spent.robux, 160);
+    assert_eq!(core.plugin_budgets("budget")[0].spent.robux, 100);
 
     // Taking the account away drops its budget.
     core.set_plugin_account("budget", ME, false).unwrap();

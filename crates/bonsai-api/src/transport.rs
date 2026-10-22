@@ -3,7 +3,8 @@
 //! `Retry-After`, and backoff with jitter.
 
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::net::{IpAddr, SocketAddr};
+use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 
 use base64::Engine as _;
@@ -294,6 +295,9 @@ const MAX_CHALLENGES: u32 = 3;
 
 struct Inner {
     http: reqwest::Client,
+    /// For [`Client::fetch_user_image`]: reaches public addresses only. Built on first use.
+    public_http: OnceLock<reqwest::Client>,
+    user_agent: String,
     account: AccountId,
     cookie: RwLock<Option<Secret>>,
     csrf: RwLock<Option<Secret>>,
@@ -392,14 +396,17 @@ impl ClientBuilder {
     pub fn build(self) -> Result<Client> {
         init_tls();
         let http = reqwest::Client::builder()
-            .user_agent(self.user_agent)
+            .user_agent(&self.user_agent)
             .connect_timeout(Duration::from_secs(10))
             .timeout(Duration::from_secs(30))
+            .redirect(reqwest::redirect::Policy::custom(redirect_policy))
             .build()
             .map_err(|e| Error::Network(e.to_string()))?;
         Ok(Client {
             inner: Arc::new(Inner {
                 http,
+                public_http: OnceLock::new(),
+                user_agent: self.user_agent,
                 account: self.account,
                 cookie: RwLock::new(self.cookie),
                 csrf: RwLock::new(None),
@@ -472,7 +479,12 @@ impl Client {
             };
             let status = resp.status().as_u16();
             let headers = resp.headers().clone();
-            if roblox {
+            // A redirect may have left Roblox; only Roblox's own answer may set credentials.
+            let landed_on_roblox = match self.inner.base {
+                Base::Production => resp.url().host_str().is_some_and(is_roblox_host),
+                Base::Replay(_) => roblox,
+            };
+            if landed_on_roblox {
                 self.capture_rotated_cookie(&headers);
             }
             let body = resp
@@ -511,7 +523,7 @@ impl Client {
                 }
             }
             if status == 403
-                && roblox
+                && landed_on_roblox
                 && !csrf_retried
                 && let Some(tok) = response.header("x-csrf-token")
             {
@@ -582,22 +594,29 @@ impl Client {
         self.fetch_file(url, |h| h == "fonts.gstatic.com").await
     }
 
-    /// Download an image the user pasted a link to, for the app background. Any `https` host,
-    /// since the user picked it; no cookie is sent. Fails past `max` bytes without reading on.
+    /// Download an image the user pasted a link to, for the app background. Any public `https`
+    /// host, since the user picked it; never loopback, private or link-local addresses, even
+    /// through DNS or a redirect. No cookie is sent. Fails past `max` bytes without reading on.
     /// The caller checks that the bytes are an image.
     pub async fn fetch_user_image(&self, url: &str, max: usize) -> Result<Vec<u8>> {
         let host = https_host(url);
         if host.is_empty() || host.contains(['@', '\\']) {
             return Err(Error::Encode("only https links work".into()));
         }
-        let url = match &self.inner.base {
-            Base::Production => url.to_string(),
-            Base::Replay(_) => self.inner.base.url(host, &url[8 + host.len()..]),
+        let (url, http) = match &self.inner.base {
+            Base::Production => {
+                if literal_ip(host).is_some_and(|ip| !is_public_ip(ip)) {
+                    return Err(Error::Message(PRIVATE_ADDRESS.into()));
+                }
+                (url.to_string(), self.public_http()?)
+            }
+            Base::Replay(_) => (
+                self.inner.base.url(host, &url[8 + host.len()..]),
+                &self.inner.http,
+            ),
         };
         self.inner.limiter.acquire(host).await;
-        let mut resp = self
-            .inner
-            .http
+        let mut resp = http
             .get(url)
             .send()
             .await
@@ -624,6 +643,23 @@ impl Client {
         Ok(body)
     }
 
+    /// The client for [`Self::fetch_user_image`]: its resolver drops non-public addresses and
+    /// its redirects stay on https and off non-public address literals.
+    fn public_http(&self) -> Result<&reqwest::Client> {
+        if let Some(c) = self.inner.public_http.get() {
+            return Ok(c);
+        }
+        let c = reqwest::Client::builder()
+            .user_agent(&self.inner.user_agent)
+            .connect_timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(30))
+            .dns_resolver(PublicOnly)
+            .redirect(reqwest::redirect::Policy::custom(public_redirect_policy))
+            .build()
+            .map_err(|e| Error::Network(e.to_string()))?;
+        Ok(self.inner.public_http.get_or_init(|| c))
+    }
+
     /// GET a public file by URL with no credentials, if `allowed` accepts its host.
     async fn fetch_file(&self, url: &str, allowed: impl Fn(&str) -> bool) -> Result<Vec<u8>> {
         let host = https_host(url);
@@ -642,6 +678,12 @@ impl Client {
             .send()
             .await
             .map_err(|e| Error::Network(e.without_url().to_string()))?;
+        if matches!(self.inner.base, Base::Production) {
+            let landed = resp.url().host_str().unwrap_or("");
+            if !allowed(landed) {
+                return Err(Error::Encode(format!("refusing a redirect to host {landed}")));
+            }
+        }
         let status = resp.status().as_u16();
         let body = resp
             .bytes()
@@ -794,6 +836,100 @@ impl Client {
 }
 
 /// The host of an `https://` URL, or empty.
+const PRIVATE_ADDRESS: &str = "That link points to a local or private address.";
+
+fn is_rbxcdn_host(host: &str) -> bool {
+    host == "rbxcdn.com" || host.ends_with(".rbxcdn.com")
+}
+
+/// Follows a redirect only if it stays on https once there, and, when the request started at
+/// Roblox, only to Roblox or its CDN. reqwest drops the cookie on a cross-host hop but keeps
+/// the CSRF token and every other header.
+fn redirect_policy(a: reqwest::redirect::Attempt) -> reqwest::redirect::Action {
+    let prev = a.previous();
+    let from_roblox = prev
+        .first()
+        .and_then(|u| u.host_str())
+        .is_some_and(is_roblox_host);
+    let was_https = prev.iter().any(|u| u.scheme() == "https");
+    let next = a.url();
+    let host = next.host_str().unwrap_or("");
+    let ok = prev.len() < 10
+        && (!was_https || next.scheme() == "https")
+        && (!from_roblox || is_roblox_host(host) || is_rbxcdn_host(host));
+    if ok { a.follow() } else { a.stop() }
+}
+
+/// [`redirect_policy`] for user links: https only, and never to a non-public address literal
+/// (names go through [`PublicOnly`]).
+fn public_redirect_policy(a: reqwest::redirect::Attempt) -> reqwest::redirect::Action {
+    let next = a.url();
+    let host = next.host_str().unwrap_or("");
+    let ok = a.previous().len() < 10 && next.scheme() == "https" && literal_ip(host).is_none_or(is_public_ip);
+    if ok { a.follow() } else { a.stop() }
+}
+
+/// Resolves names to their public addresses only, so a user link can't reach this machine or
+/// its network by a name that points there.
+struct PublicOnly;
+
+impl reqwest::dns::Resolve for PublicOnly {
+    fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
+        let host = name.as_str().to_owned();
+        Box::pin(async move {
+            let addrs: Vec<SocketAddr> = tokio::net::lookup_host((host.as_str(), 0))
+                .await?
+                .filter(|a| is_public_ip(a.ip()))
+                .collect();
+            if addrs.is_empty() {
+                return Err(PRIVATE_ADDRESS.into());
+            }
+            Ok(Box::new(addrs.into_iter()) as reqwest::dns::Addrs)
+        })
+    }
+}
+
+/// The address in a URL host that is an IP literal (`1.2.3.4`, `[::1]`).
+fn literal_ip(host: &str) -> Option<IpAddr> {
+    host.trim_start_matches('[').trim_end_matches(']').parse().ok()
+}
+
+/// Whether `ip` is a globally routed unicast address: not loopback, private, link-local, shared
+/// (CGNAT), multicast, documentation or otherwise reserved.
+pub fn is_public_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(v4) => {
+            let [a, b, c, _] = v4.octets();
+            !(a == 0
+                || a == 10
+                || a == 127
+                || a >= 224
+                || (a == 100 && (64..128).contains(&b))
+                || (a == 169 && b == 254)
+                || (a == 172 && (16..32).contains(&b))
+                || (a == 192 && b == 168)
+                || (a == 192 && b == 0 && (c == 0 || c == 2))
+                || (a == 198 && (b == 18 || b == 19))
+                || (a == 198 && b == 51 && c == 100)
+                || (a == 203 && b == 0 && c == 113))
+        }
+        IpAddr::V6(v6) => {
+            if let Some(v4) = v6.to_ipv4_mapped() {
+                return is_public_ip(IpAddr::V4(v4));
+            }
+            let s = v6.segments();
+            // NAT64 carries an IPv4 address in its low 32 bits.
+            if s[..6] == [0x64, 0xff9b, 0, 0, 0, 0] {
+                let [.., hi, lo] = s;
+                let v4 = std::net::Ipv4Addr::from((u32::from(hi) << 16) | u32::from(lo));
+                return is_public_ip(IpAddr::V4(v4));
+            }
+            // Global unicast is 2000::/3; drop documentation (2001:db8::/32) inside it.
+            (s[0] & 0xe000) == 0x2000 && !(s[0] == 0x2001 && s[1] == 0x0db8)
+        }
+    }
+}
+
 fn https_host(url: &str) -> &str {
     url.strip_prefix("https://")
         .and_then(|r| r.split(['/', '?', '#']).next())
@@ -861,6 +997,51 @@ fn challenge_from(h: &HeaderMap) -> Option<Challenge> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_global_addresses_are_public() {
+        for ip in [
+            "0.0.0.0",
+            "10.1.2.3",
+            "100.64.0.1",
+            "127.0.0.1",
+            "169.254.169.254",
+            "172.16.0.1",
+            "172.31.255.255",
+            "192.0.2.1",
+            "192.168.1.1",
+            "198.18.0.1",
+            "224.0.0.1",
+            "255.255.255.255",
+            "::",
+            "::1",
+            "::ffff:127.0.0.1",
+            "64:ff9b::a00:1",
+            "fc00::1",
+            "fd12:3456::1",
+            "fe80::1",
+            "ff02::1",
+            "2001:db8::1",
+        ] {
+            assert!(!is_public_ip(ip.parse().unwrap()), "{ip}");
+        }
+        for ip in [
+            "1.1.1.1",
+            "172.32.0.1",
+            "100.128.0.1",
+            "::ffff:8.8.8.8",
+            "2606:4700::1111",
+        ] {
+            assert!(is_public_ip(ip.parse().unwrap()), "{ip}");
+        }
+    }
+
+    #[test]
+    fn literal_ip_reads_bracketed_v6() {
+        assert_eq!(literal_ip("[::1]"), Some("::1".parse().unwrap()));
+        assert_eq!(literal_ip("127.0.0.1"), Some("127.0.0.1".parse().unwrap()));
+        assert_eq!(literal_ip("example.com"), None);
+    }
 
     #[test]
     fn backoff_grows_and_is_capped() {

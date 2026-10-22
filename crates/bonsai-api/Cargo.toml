@@ -14,7 +14,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 reqwest = { workspace = true }
 rustls = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["net"] }
 parking_lot = { workspace = true }
 thiserror = { workspace = true }
 base64 = { workspace = true }

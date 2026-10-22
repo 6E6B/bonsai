@@ -156,7 +156,9 @@ pub(super) fn read_zip(zip: &[u8]) -> Result<Files, String> {
         if flags & 1 != 0 {
             return Err(format!("\"{name}\" is encrypted."));
         }
-        if files.iter().any(|(p, _)| *p == path) {
+        // Windows and macOS fold case, so two names that differ only in case would unpack to
+        // one file, and not necessarily the one that was reviewed.
+        if files.iter().any(|(p, _)| p.to_lowercase() == path.to_lowercase()) {
             return Err(format!("The package lists \"{name}\" twice."));
         }
         if files.len() >= MAX_FILES || total + size > MAX_BYTES {
@@ -435,6 +437,17 @@ mod tests {
         let mut names: Vec<String> = read_zip(&zip).unwrap().into_iter().map(|(p, _)| p).collect();
         names.sort();
         assert_eq!(names, vec!["main.luau", "plugin.toml"]);
+    }
+
+    #[test]
+    fn refuses_names_that_differ_only_in_case() {
+        let zip = write_zip(&files(&[
+            ("plugin.toml", "id = \"x\"\nentry = \"main.luau\""),
+            ("main.luau", "return 1"),
+            ("Main.luau", "return 2"),
+        ]))
+        .unwrap();
+        assert!(read_zip(&zip).unwrap_err().contains("twice"));
     }
 
     #[test]

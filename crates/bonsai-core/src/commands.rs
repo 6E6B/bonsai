@@ -230,9 +230,9 @@ impl Shortcut {
 /// How risky a write is. Decides what a plugin may do with it; see `docs/plugins.md`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Tier {
-    /// Reversible and seen only by you: wear an item, favorite, join a game, a note.
+    /// Reversible and seen only by you: wear an item, favorite, a note.
     Harmless = 1,
-    /// Visible to other people: friends, follows, blocks, chat, communities.
+    /// Visible to other people: friends, follows, blocks, chat, communities, joining a server.
     Social = 2,
     /// Robux or items can be lost: buying, trades, payouts, private servers.
     Value = 3,
@@ -412,7 +412,7 @@ commands! {
     RevokePlugin => "plugin.revoke", "Stop plugin using this account", ["plugin", "account", "revoke", "deny", "permission"], Plugin, Local, [];
     SetPluginSetting => "plugin.set", "Change plugin setting (plugin, setting, value; no value resets it)", ["plugin", "setting", "option", "config", "preference"], Text, Local, [];
     SetPluginCap => "plugin.cap", "Lower a plugin's hourly cap (plugin, action, number)", ["plugin", "cap", "limit", "rate", "hour", "automation"], Text, Local, [];
-    SetPluginBudget => "plugin.budget", "Set a plugin's daily budget on this account", ["plugin", "budget", "robux", "spend", "limit", "day", "trade", "automation"], Plugin, Local, [];
+    SetPluginBudget => "plugin.budget", "Set a plugin's daily budget on this account", ["plugin", "budget", "robux", "spend", "limit", "day", "trade", "payout", "automation"], Plugin, Local, [];
     AllowAutomation => "plugins.allow_automation", "Allow plugin automation on this account", ["plugin", "automation", "automate", "unattended", "bot", "allow"], None, Local, [];
     BlockAutomation => "plugins.block_automation", "Turn off plugin automation on this account", ["plugin", "automation", "automate", "unattended", "bot", "block", "off"], None, Local, [];
     StopPlugins => "plugins.stop_all", "Stop all plugins", ["plugin", "stop", "kill", "panic", "disable", "halt", "automation"], None, Local, [Shortcut::ctrl_shift("Backspace")];
@@ -450,13 +450,13 @@ commands! {
     GoTabLast => "tab.go_last", "Go to last tab", ["tab", "end"], None, Local, [Shortcut::alt("9")];
     ReopenTab => "tab.reopen", "Reopen closed tab", ["undo", "tab"], None, Local, [Shortcut::ctrl_shift("T")];
 
-    Join => "game.join", "Join", ["join", "play", "launch"], GameOrFriend, Write(Harmless), [];
-    JoinAs => "game.join_as", "Join as another account", ["join", "alt", "as"], GameOrFriend, Write(Harmless), [];
-    JoinServer => "game.join_server", "Join selected server", ["server", "join"], None, Write(Harmless), [];
-    JoinBestServer => "game.join_best", "Join best server for me", ["best", "ping", "server"], None, Write(Harmless), [];
-    JoinSmallestServer => "game.join_smallest", "Join smallest server", ["small", "empty", "server"], None, Write(Harmless), [];
-    JoinRandomServer => "game.join_random", "Join random server", ["random", "server"], None, Write(Harmless), [];
-    JoinJobId => "game.join_job", "Join server by job id", ["job", "instance", "server id"], Text, Write(Harmless), [];
+    Join => "game.join", "Join", ["join", "play", "launch"], GameOrFriend, Write(Social), [];
+    JoinAs => "game.join_as", "Join as another account", ["join", "alt", "as"], GameOrFriend, Write(Social), [];
+    JoinServer => "game.join_server", "Join selected server", ["server", "join"], None, Write(Social), [];
+    JoinBestServer => "game.join_best", "Join best server for me", ["best", "ping", "server"], None, Write(Social), [];
+    JoinSmallestServer => "game.join_smallest", "Join smallest server", ["small", "empty", "server"], None, Write(Social), [];
+    JoinRandomServer => "game.join_random", "Join random server", ["random", "server"], None, Write(Social), [];
+    JoinJobId => "game.join_job", "Join server by job id", ["job", "instance", "server id"], Text, Write(Social), [];
     CopyServerLink => "game.copy_server_link", "Copy server invite link", ["invite", "share", "server"], None, Read, [];
     FindUser => "user.find", "Find which server a user is in", ["find", "where", "server"], User, Read, [];
     OpenProfile => "user.open", "Open profile", ["profile", "user", "player"], User, Read, [];
@@ -482,7 +482,7 @@ commands! {
     NotifyEvent => "game.event_notify", "Notify me about an event", ["event", "rsvp", "notify", "remind"], Text, Write(Harmless), [];
     BuyPass => "game.buy_pass", "Buy a pass", ["pass", "gamepass", "store", "buy", "purchase"], Text, Write(Value), [];
     BuyPrivateServer => "game.buy_private_server", "Buy a private server", ["private server", "vip", "buy", "create"], Text, Write(Value), [];
-    JoinPrivateServer => "game.join_private_server", "Join a private server", ["private server", "vip", "join"], Text, Write(Harmless), [];
+    JoinPrivateServer => "game.join_private_server", "Join a private server", ["private server", "vip", "join"], Text, Write(Social), [];
     RenamePrivateServer => "server.rename", "Rename private server (id, then name)", ["private server", "vip", "name"], Text, Write(Value), [];
     ToggleServerActive => "server.toggle_active", "Turn private server on or off", ["private server", "vip", "active", "disable"], Text, Write(Value), [];
     NewServerLink => "server.new_link", "Make a new private server link", ["private server", "vip", "link", "invite", "regenerate"], Text, Write(Value), [];

@@ -155,9 +155,13 @@ pub struct PluginBudgetView {
     pub trades: u32,
     pub spent_robux: Id,
     pub spent_trades: u32,
-    /// It may run actions that spend Robux, or accept trades.
+    /// Robux paid out of community funds; the account's own Robux are `robux`.
+    pub payouts: u32,
+    pub spent_payouts: Id,
+    /// It may run actions that spend Robux, accept trades, or pay out community funds.
     pub has_robux: bool,
     pub has_trades: bool,
+    pub has_payouts: bool,
 }
 
 /// The budget dialog's plugin and account.
@@ -177,8 +181,11 @@ fn budget_view(b: &PluginBudget) -> PluginBudgetView {
         trades: b.budget.trades,
         spent_robux: Id(b.spent.robux.max(0) as u64),
         spent_trades: b.spent.trades,
+        payouts: b.budget.payouts,
+        spent_payouts: Id(b.spent.payouts.max(0) as u64),
         has_robux: b.robux,
         has_trades: b.trades,
+        has_payouts: b.payouts,
     }
 }
 
@@ -760,8 +767,13 @@ pub fn plugin_automation_cancel(core: State<'_, Arc<Core>>) {
 /// Saves the budget in the budget dialog. Zero turns it off.
 #[tauri::command]
 #[specta::specta]
-pub fn plugin_budget_save(core: State<'_, Arc<Core>>, robux: u32, trades: u32) -> Result<(), String> {
-    core.save_budget(robux, trades)
+pub fn plugin_budget_save(
+    core: State<'_, Arc<Core>>,
+    robux: u32,
+    trades: u32,
+    payouts: u32,
+) -> Result<(), String> {
+    core.save_budget(robux, trades, payouts)
 }
 
 #[tauri::command]

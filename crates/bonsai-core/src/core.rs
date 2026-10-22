@@ -179,6 +179,7 @@ impl Core {
             .enable_all()
             .build()
             .unwrap_or_else(|e| panic!("cannot start the background runtime: {e}"));
+        cfg.paths.make_private();
         let cache = Cache::open(&cfg.paths.db_file())
             .or_else(|_| Cache::in_memory())
             .unwrap_or_else(|e| panic!("sqlite: {e}"));

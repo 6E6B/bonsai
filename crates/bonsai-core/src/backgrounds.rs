@@ -27,6 +27,16 @@ pub fn validate_url(value: &str) -> Result<(), String> {
     {
         return Err("Use an external https image link.".into());
     }
+    // The download also refuses names that resolve to these; this catches them early.
+    let local = match url.host() {
+        Some(url::Host::Ipv4(ip)) => !bonsai_api::transport::is_public_ip(ip.into()),
+        Some(url::Host::Ipv6(ip)) => !bonsai_api::transport::is_public_ip(ip.into()),
+        Some(url::Host::Domain(d)) => d == "localhost" || d.ends_with(".localhost"),
+        None => true,
+    };
+    if local {
+        return Err("Use an external https image link, not a local or private address.".into());
+    }
     Ok(())
 }
 
@@ -60,6 +70,9 @@ impl Core {
     /// from the async bg protocol; the webview never contacts the external image host.
     pub async fn background_image(&self, url: &str) -> Result<(Vec<u8>, &'static str), String> {
         validate_url(url)?;
+        if !self.is_shown_background(url) {
+            return Err("That image isn't the background of a theme in use.".into());
+        }
         let hash = Sha256::digest(url.as_bytes());
         let key: String = hash.iter().map(|b| format!("{b:02x}")).collect();
         let path = self.paths().backgrounds_dir().join(format!("{key}.image"));
@@ -89,6 +102,18 @@ impl Core {
         })
         .await;
         Ok((bytes, content_type(&format!("image.{ext}"))))
+    }
+
+    /// Whether `url` is the background of the dark or light theme in use. `bg://` serves only
+    /// these, so it can't fetch arbitrary links for whoever builds the URL.
+    fn is_shown_background(&self, url: &str) -> bool {
+        [crate::themes::Base::Dark, crate::themes::Base::Light]
+            .into_iter()
+            .any(|b| {
+                self.appearance_theme(b)
+                    .background
+                    .is_some_and(|bg| bg.url == url)
+            })
     }
 
     /// Edits the current theme, copying a built-in first, while preserving System mode.
@@ -219,6 +244,12 @@ mod tests {
             "file:///a.png",
             "data:image/png;base64,abc",
             "https://user:pass@example.com/a",
+            "https://localhost/a.png",
+            "https://127.0.0.1/a.png",
+            "https://192.168.1.10:8443/a.png",
+            "https://169.254.169.254/latest",
+            "https://[::1]/a.png",
+            "https://[fd00::1]/a.png",
         ] {
             assert!(validate_url(value).is_err(), "{value}");
         }

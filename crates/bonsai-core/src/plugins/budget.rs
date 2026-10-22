@@ -24,10 +24,14 @@ const PASSES: usize = 500;
 /// user sets one, tier 3 asks each time.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Budget {
+    /// The account's own Robux.
     #[serde(default)]
     pub robux: u32,
     #[serde(default)]
     pub trades: u32,
+    /// Robux paid out of the funds of communities the account manages, all together.
+    #[serde(default)]
+    pub payouts: u32,
 }
 
 /// What a plugin spent without a click on one account in the last 24 hours.
@@ -35,6 +39,7 @@ pub struct Budget {
 pub struct Spent {
     pub robux: i64,
     pub trades: u32,
+    pub payouts: i64,
 }
 
 impl Spent {
@@ -42,6 +47,15 @@ impl Spent {
         match c {
             Charge::Robux(n) => self.robux += n,
             Charge::Trade => self.trades += 1,
+            Charge::Payout(n) => self.payouts += n,
+        }
+    }
+
+    pub(super) fn plus(self, o: Spent) -> Spent {
+        Spent {
+            robux: self.robux + o.robux,
+            trades: self.trades + o.trades,
+            payouts: self.payouts + o.payouts,
         }
     }
 }
@@ -51,6 +65,8 @@ impl Spent {
 pub enum Charge {
     Robux(i64),
     Trade,
+    /// Robux from a community's funds, not the account's.
+    Payout(i64),
 }
 
 /// Why a tier 3 action that counts `charge` can't run without a click, having `spent` this much
@@ -71,6 +87,13 @@ pub fn budget_refusal(charge: Option<Charge>, budget: Budget, spent: Spent) -> O
         Some(Charge::Trade) if spent.trades >= budget.trades => {
             Some(format!("Over its budget of {} a day.", trades(budget.trades)))
         }
+        Some(Charge::Payout(_)) if budget.payouts == 0 => {
+            Some("It has no payout budget on this account. Set one in Settings > Plugins.".into())
+        }
+        Some(Charge::Payout(n)) if spent.payouts + n > i64::from(budget.payouts) => Some(format!(
+            "Over its payout budget of {} a day.",
+            fmt::robux(budget.payouts.into())
+        )),
         Some(_) => None,
     }
 }
@@ -193,6 +216,7 @@ pub(super) fn charge(a: &ProposedAction) -> Option<Charge> {
         return Some(Charge::Trade);
     }
     match Spend::parse(a.id, a.arg.as_deref()) {
+        Some(Ok(Spend::Payout { amount, .. })) => Some(Charge::Payout(amount)),
         Some(Ok(s)) => Some(Charge::Robux(s.most())),
         _ => None,
     }
@@ -207,15 +231,16 @@ pub fn cost_label(a: &ProposedAction) -> Option<String> {
     }
 }
 
-/// Which budgets an action key needs: (Robux, trades).
-fn budgeted(key: &str) -> (bool, bool) {
+/// Which budgets an action key needs: (Robux, trades, payouts).
+fn budgeted(key: &str) -> (bool, bool, bool) {
     use CommandId as C;
     match CommandId::from_key(key) {
-        Some(C::BuyItem | C::BuyItemAs | C::BuyResale | C::BuyPass | C::BuyPrivateServer | C::PayOut) => {
-            (true, false)
+        Some(C::BuyItem | C::BuyItemAs | C::BuyResale | C::BuyPass | C::BuyPrivateServer) => {
+            (true, false, false)
         }
-        Some(C::AcceptTrade) => (false, true),
-        _ => (false, false),
+        Some(C::AcceptTrade) => (false, true, false),
+        Some(C::PayOut) => (false, false, true),
+        _ => (false, false, false),
     }
 }
 
@@ -309,9 +334,10 @@ pub struct PluginBudget {
     pub account: AccountId,
     pub budget: Budget,
     pub spent: Spent,
-    /// It may run actions that spend Robux, or accept trades.
+    /// It may run actions that spend Robux, accept trades, or pay out community funds.
     pub robux: bool,
     pub trades: bool,
+    pub payouts: bool,
 }
 
 /// The budget dialog's plugin and account, while it is open.
@@ -330,12 +356,14 @@ impl Core {
         let Some(saved) = p.saved.plugins.get(id) else {
             return Vec::new();
         };
-        let (robux, trades) = saved
+        let (robux, trades, payouts) = saved
             .actions
             .iter()
             .map(|k| budgeted(k))
-            .fold((false, false), |(r, t), (r2, t2)| (r || r2, t || t2));
-        if !robux && !trades {
+            .fold((false, false, false), |(r, t, p), (r2, t2, p2)| {
+                (r || r2, t || t2, p || p2)
+            });
+        if !robux && !trades && !payouts {
             return Vec::new();
         }
         saved
@@ -347,6 +375,7 @@ impl Core {
                 spent: p.log.spent(id, *a, now),
                 robux,
                 trades,
+                payouts,
             })
             .collect()
     }
@@ -383,7 +412,7 @@ impl Core {
     }
 
     /// Saves the budget in the dialog. Zero turns that budget off.
-    pub fn save_budget(&self, robux: u32, trades: u32) -> Result<(), String> {
+    pub fn save_budget(&self, robux: u32, trades: u32, payouts: u32) -> Result<(), String> {
         let Some(pending) = self.store().plugin_budget.clone() else {
             return Err("Nothing to save.".into());
         };
@@ -401,6 +430,7 @@ impl Core {
             let b = Budget {
                 robux: if pending.current.robux { robux } else { 0 },
                 trades: if pending.current.trades { trades } else { 0 },
+                payouts: if pending.current.payouts { payouts } else { 0 },
             };
             if b == Budget::default() {
                 saved.budgets.remove(&account);
@@ -505,8 +535,13 @@ mod tests {
         let b = Budget {
             robux: 100,
             trades: 2,
+            payouts: 50,
         };
-        let spent = Spent { robux: 60, trades: 1 };
+        let spent = Spent {
+            robux: 60,
+            trades: 1,
+            payouts: 0,
+        };
         assert_eq!(budget_refusal(Some(Charge::Robux(40)), b, spent), None);
         assert!(
             budget_refusal(Some(Charge::Robux(41)), b, spent)
@@ -514,7 +549,11 @@ mod tests {
                 .contains("R$ 100 a day")
         );
         assert_eq!(budget_refusal(Some(Charge::Trade), b, spent), None);
-        let spent = Spent { robux: 0, trades: 2 };
+        let spent = Spent {
+            robux: 0,
+            trades: 2,
+            payouts: 0,
+        };
         assert!(
             budget_refusal(Some(Charge::Trade), b, spent)
                 .unwrap()
@@ -533,5 +572,35 @@ mod tests {
                 .contains("no trade budget")
         );
         assert!(budget_refusal(None, b, Spent::default()).is_some());
+    }
+
+    #[test]
+    fn payouts_have_their_own_budget() {
+        let b = Budget {
+            robux: 1000,
+            trades: 0,
+            payouts: 50,
+        };
+        let payout = action(CommandId::PayOut, "group:7 156 40");
+        assert_eq!(charge(&payout), Some(Charge::Payout(40)));
+        // Robux spent from the account leaves the payout budget alone, and the other way round.
+        let spent = Spent {
+            robux: 900,
+            trades: 0,
+            payouts: 10,
+        };
+        assert_eq!(budget_refusal(Some(Charge::Payout(40)), b, spent), None);
+        assert!(
+            budget_refusal(Some(Charge::Payout(41)), b, spent)
+                .unwrap()
+                .contains("payout budget of R$ 50")
+        );
+        assert_eq!(budget_refusal(Some(Charge::Robux(100)), b, spent), None);
+        let none = Budget { payouts: 0, ..b };
+        assert!(
+            budget_refusal(Some(Charge::Payout(1)), none, Spent::default())
+                .unwrap()
+                .contains("no payout budget")
+        );
     }
 }

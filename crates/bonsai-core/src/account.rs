@@ -388,6 +388,24 @@ impl Paths {
             downloads: dir.join("downloads"),
         }
     }
+    /// Creates the config and cache folders so only this user can open them. They hold cached
+    /// messages and trades, plugin storage and the activity log, and the files inside get the
+    /// default umask, which on many systems lets other users read them.
+    pub fn make_private(&self) {
+        for dir in [&self.config, &self.cache] {
+            if let Err(e) = std::fs::create_dir_all(dir) {
+                tracing::warn!("cannot create {}: {e}", dir.display());
+                continue;
+            }
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                if let Err(e) = std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700)) {
+                    tracing::warn!("cannot restrict {}: {e}", dir.display());
+                }
+            }
+        }
+    }
     pub fn accounts_file(&self) -> PathBuf {
         self.config.join("accounts.json")
     }
@@ -435,6 +453,21 @@ impl Paths {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn data_folders_are_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let t = tempfile::tempdir().unwrap();
+        let paths = Paths::in_dir(t.path());
+        std::fs::create_dir_all(&paths.cache).unwrap();
+        std::fs::set_permissions(&paths.cache, std::fs::Permissions::from_mode(0o755)).unwrap();
+        paths.make_private();
+        for dir in [&paths.config, &paths.cache] {
+            let mode = std::fs::metadata(dir).unwrap().permissions().mode();
+            assert_eq!(mode & 0o777, 0o700, "{}", dir.display());
+        }
+    }
 
     #[test]
     fn legacy_dir_moves_once() {
