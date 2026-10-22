@@ -686,7 +686,7 @@ pub fn get_users_by_user_id_badges_awarded_dates_request(
             crate::rt::path_value(&user_id)
         ),
     );
-    r.query("badgeIds", &params.badge_ids);
+    r.query_csv("badgeIds", &params.badge_ids);
     Ok(r)
 }
 

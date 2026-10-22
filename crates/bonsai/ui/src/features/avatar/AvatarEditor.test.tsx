@@ -55,6 +55,15 @@ vi.mock("~/lib/store", async () => {
       if (fetch === commands.recentItems)
         return list([{ id: "1", name: "Blue Hat", outfit: false, typeId: 8, typeName: "Hat" }])
       if (fetch === commands.bodyPalette) return [{ id: 1, name: "Custom swatch", hex: "#123456", basic: true }]
+      const source = (_source as () => unknown)()
+      if (Array.isArray(source) && source[1] === "wardrobe")
+        return {
+          list: list([
+            { id: 90001, name: "Red Hat", assetType: 8, copies: 1, limited: false, bundle: false },
+            { id: 90004, name: "Red Shirt", assetType: 11, copies: 1, limited: false, bundle: false },
+          ]),
+          moreKey: "inventory:1:wardrobe:false",
+        }
       return { list: list([]), moreKey: "" }
     },
   }
@@ -102,4 +111,15 @@ test("custom colors are applied explicitly to the selected body part", async () 
   expect(mocks.run).not.toHaveBeenCalled()
   fireEvent.click(r.getByRole("button", { name: "Apply to 1 selected part" }))
   expect(mocks.run).toHaveBeenCalledWith("avatar.color", "head:#AABBCC")
+})
+
+test("searches across wearable types and wears the matched item's type", () => {
+  const r = render(() => <AvatarEditor />)
+  fireEvent.click(r.getByRole("tab", { name: "All items" }))
+  expect(r.getByRole("button", { name: /Red Hat/ })).toBeTruthy()
+  expect(r.getByRole("button", { name: /Red Shirt/ })).toBeTruthy()
+  fireEvent.input(r.getByRole("textbox", { name: "Search wardrobe" }), { target: { value: "shirt red" } })
+  expect(r.queryByRole("button", { name: /Red Hat/ })).toBeNull()
+  fireEvent.click(r.getByRole("button", { name: /Red Shirt/ }))
+  expect(mocks.run).toHaveBeenCalledWith("avatar.wear", "90004:11")
 })

@@ -2544,7 +2544,7 @@
         "method": "GET",
         "path": "/v1/users/1000001/badges/awarded-dates",
         "query": {
-          "badgeIds": "2344531550519489"
+          "badgeIds": "2124439922,2124439923,2124439924,2124439925,2124439926,2124439927,2124439928,3720272393025103,2344531550519489"
         }
       },
       "response": {
@@ -3660,6 +3660,6 @@
       }
     }
   ],
-  "note": "Adopt Me (universe 383310974, place 920587237): page data, store, badges, events, private servers; favorite, notify and event RSVP on then off. The game page HTML is trimmed to its private-server data attributes.",
+  "note": "Adopt Me (universe 383310974, place 920587237): page data, store, badges, events, private servers; favorite, notify and event RSVP on then off. The game page HTML is trimmed to its private-server data attributes. Request matching for badgeIds normalized to the documented CSV encoding on 2026-10-22; response unchanged.",
   "source": "live"
 }

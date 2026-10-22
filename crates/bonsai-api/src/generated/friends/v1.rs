@@ -1293,7 +1293,7 @@ pub fn get_users_by_user_id_friends_statuses_request(
         HOST,
         format!("/v1/users/{}/friends/statuses", crate::rt::path_value(&user_id)),
     );
-    r.query("userIds", &params.user_ids);
+    r.query_csv("userIds", &params.user_ids);
     Ok(r)
 }
 

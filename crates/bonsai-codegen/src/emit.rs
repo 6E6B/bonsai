@@ -179,6 +179,7 @@ struct Param {
     required: bool,
     loc: String,
     doc: String,
+    csv: bool,
 }
 
 impl Gen {
@@ -462,6 +463,8 @@ impl Gen {
                 required,
                 loc,
                 doc: d,
+                csv: p.get("type").and_then(Value::as_str) == Some("array")
+                    && p.get("collectionFormat").and_then(Value::as_str) == Some("csv"),
             });
         }
         // Placeholders the spec forgot to declare still need an argument.
@@ -484,6 +487,7 @@ impl Gen {
                     required: true,
                     loc: "path".into(),
                     doc: String::new(),
+                    csv: false,
                 });
             }
             rest = &rest[i + j + 1..];
@@ -597,6 +601,7 @@ impl Gen {
                 "header" => "header",
                 "formData" if p.ty == "FilePart" => "form_file",
                 "formData" => "form_text",
+                "query" if p.csv => "query_csv",
                 _ => "query",
             };
             let _ = writeln!(out, "    r.{f}(\"{}\", &params.{});", p.wire, p.rust);

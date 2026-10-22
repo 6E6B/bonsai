@@ -4764,7 +4764,7 @@ pub async fn get_groups_by_group_id_users_by_user_id_permissions(
 /// Gets the Roles by their ids.
 pub fn get_roles_request(params: &GetRolesParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/roles".to_string());
-    r.query("ids", &params.ids);
+    r.query_csv("ids", &params.ids);
     r.query("includePrivate", &params.include_private);
     Ok(r)
 }

@@ -1296,7 +1296,7 @@ pub struct GetPrivateServersMyPrivateServersParams {
 /// Gets a list of games' detail
 pub fn get_games_request(params: &GetGamesParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/games".to_string());
-    r.query("universeIds", &params.universe_ids);
+    r.query_csv("universeIds", &params.universe_ids);
     Ok(r)
 }
 
@@ -1364,7 +1364,7 @@ pub async fn get_games_game_thumbnails(
 /// Gets a list of games' product info, used to purchase a game
 pub fn get_games_games_product_info_request(params: &GetGamesGamesProductInfoParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/games/games-product-info".to_string());
-    r.query("universeIds", &params.universe_ids);
+    r.query_csv("universeIds", &params.universe_ids);
     Ok(r)
 }
 
@@ -1431,7 +1431,7 @@ pub fn get_games_multiget_playability_status_request(
         HOST,
         "/v1/games/multiget-playability-status".to_string(),
     );
-    r.query("universeIds", &params.universe_ids);
+    r.query_csv("universeIds", &params.universe_ids);
     Ok(r)
 }
 
@@ -1561,7 +1561,7 @@ pub async fn post_games_vip_servers_by_universe_id(
 /// Gets a list of universe vote status
 pub fn get_games_votes_request(params: &GetGamesVotesParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/games/votes".to_string());
-    r.query("universeIds", &params.universe_ids);
+    r.query_csv("universeIds", &params.universe_ids);
     Ok(r)
 }
 
@@ -1876,7 +1876,7 @@ pub async fn get_games_by_universe_id_votes_user(
 /// Get private servers from private server ids
 pub fn get_private_servers_request(params: &GetPrivateServersParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v1/private-servers".to_string());
-    r.query("privateServerIds", &params.private_server_ids);
+    r.query_csv("privateServerIds", &params.private_server_ids);
     Ok(r)
 }
 

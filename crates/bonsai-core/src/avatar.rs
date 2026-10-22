@@ -693,10 +693,7 @@ impl Core {
 
     /// What an avatar may wear, the body colors and the scale ranges. Public.
     pub fn avatar_rules(&self) -> Res<Rules> {
-        self.inner
-            .res(Key::shared("avatar_rules", ""), RULES_AGE, |f| async move {
-                Ok(rules(avatar::v1::get_avatar_rules(&f.client).await?))
-            })
+        self.inner.avatar_rules()
     }
 
     /// Asset types an avatar can wear. Public.
@@ -1314,5 +1311,13 @@ mod rgb_tests {
             .map(String::as_str),
             Some("#ABCDEF")
         );
+    }
+}
+
+impl Inner {
+    pub(crate) fn avatar_rules(self: &std::sync::Arc<Self>) -> Res<Rules> {
+        self.res(Key::shared("avatar_rules", ""), RULES_AGE, |f| async move {
+            Ok(rules(avatar::v1::get_avatar_rules(&f.client).await?))
+        })
     }
 }

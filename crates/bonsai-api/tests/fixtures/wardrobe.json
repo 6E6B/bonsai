@@ -1,0 +1,104 @@
+{
+  "captured": "2026-10-22",
+  "source": "synthetic",
+  "note": "Documented multi-type inventory schema. Deterministic pagination across hats and shirts, with a future type and an excluded asset. No authenticated recording was made.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "avatar.roblox.com",
+        "path": "/v1/avatar-rules"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "wearableAssetTypes": [
+            {
+              "id": 8,
+              "name": "Hat",
+              "maxNumber": 3
+            },
+            {
+              "id": 11,
+              "name": "Shirt",
+              "maxNumber": 1
+            },
+            {
+              "id": 61,
+              "name": "EmoteAnimation",
+              "maxNumber": 0
+            },
+            {
+              "id": 9999,
+              "name": "Future",
+              "maxNumber": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v2/users/9001/inventory",
+        "query": {
+          "assetTypes": "8,11",
+          "limit": "100",
+          "sortOrder": "Desc"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "data": [
+            {
+              "assetId": 90001,
+              "assetType": 8,
+              "name": "Red Hat",
+              "created": "2026-10-01T00:00:00Z"
+            },
+            {
+              "assetId": 90002,
+              "assetType": 9999,
+              "name": "Future"
+            },
+            {
+              "assetId": 90003,
+              "assetType": 3,
+              "name": "Audio"
+            }
+          ],
+          "nextPageCursor": "page-two"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "inventory.roblox.com",
+        "path": "/v2/users/9001/inventory",
+        "query": {
+          "assetTypes": "8,11",
+          "limit": "100",
+          "sortOrder": "Desc",
+          "cursor": "page-two"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "data": [
+            {
+              "assetId": 90004,
+              "assetType": 11,
+              "name": "Red Shirt",
+              "created": "2026-09-01T00:00:00Z"
+            }
+          ],
+          "nextPageCursor": null
+        }
+      }
+    }
+  ]
+}

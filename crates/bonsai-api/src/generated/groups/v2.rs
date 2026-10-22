@@ -583,7 +583,7 @@ pub struct GetUsersByUserIdGroupsRolesParams {
 /// If a group comes back as null, it will not be returned in the response.
 pub fn get_groups_request(params: &GetGroupsParams) -> Result<Request> {
     let mut r = Request::new(Method::GET, HOST, "/v2/groups".to_string());
-    r.query("groupIds", &params.group_ids);
+    r.query_csv("groupIds", &params.group_ids);
     Ok(r)
 }
 
