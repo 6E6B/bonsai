@@ -11,6 +11,7 @@
 [![Rust](https://github.com/6E6B/bonsai/actions/workflows/rust.yml/badge.svg)](https://github.com/6E6B/bonsai/actions/workflows/rust.yml)
 [![UI](https://github.com/6E6B/bonsai/actions/workflows/ui.yml/badge.svg)](https://github.com/6E6B/bonsai/actions/workflows/ui.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/6E6B/bonsai/total)](https://github.com/6E6B/bonsai/releases)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
 [Releases](https://github.com/6E6B/bonsai/releases) · [Features](docs/features.md) · [Install](#install) · [Plugins](docs/plugins.md) · [Building](#building) · [Architecture](AGENTS.md)
