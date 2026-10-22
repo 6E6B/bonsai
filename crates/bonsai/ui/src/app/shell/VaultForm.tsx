@@ -60,17 +60,11 @@ export function VaultForm(props: { action: VaultAction; onDone?: () => void }) {
       </Show>
       <Show when={props.action === "enable"}>
         <p class="text-sm text-fg-muted">
-          One PIN protects every account on this computer. Use at least 8 digits or a passphrase of at least 12
-          characters. A passphrase provides stronger protection if your system keychain is compromised.
+          One PIN protects every account here. Use 8+ digits or a 12+ character passphrase. Bonsai locks on startup,
+          system lock or sleep, and after 5 idle minutes.
         </p>
         <p class="text-sm text-fg-muted">
-          Bonsai locks on startup, system lock or sleep, and after inactivity. The default timeout is 5 minutes; change
-          it in Accounts settings. Locking restarts the app session. Moving the vault file alone will not move your
-          accounts.
-        </p>
-        <p class="text-sm text-fg-muted">
-          There is no PIN recovery. If you forget it, use Forgot PIN? to remove the local accounts and private cache,
-          then sign into your accounts again.
+          There is no recovery. If you forget it, you must sign in to your accounts again.
         </p>
       </Show>
       <Show when={props.action === "disable"}>
