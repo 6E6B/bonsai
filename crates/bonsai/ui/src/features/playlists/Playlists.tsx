@@ -117,7 +117,7 @@ export default function Playlists() {
               >
                 <div class="flex flex-col gap-3">
                   <TextField
-                    class="w-72"
+                    class="w-full"
                     icon="search"
                     aria-label="Search this playlist"
                     placeholder="Search by name or creator"
@@ -160,7 +160,6 @@ function Header(props: { list: PlaylistView }) {
     <header class="flex items-center gap-4">
       <Cover class="w-20" games={props.list.games} />
       <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <span class="text-fg-muted text-xs uppercase">Playlist</span>
         <h2 class="truncate font-medium text-2xl">{props.list.name}</h2>
         <span class="text-fg-muted">{experiences(props.list.games.length)}</span>
       </div>
