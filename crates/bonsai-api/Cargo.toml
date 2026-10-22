@@ -17,6 +17,7 @@ rustls = { workspace = true }
 tokio = { workspace = true, features = ["net"] }
 parking_lot = { workspace = true }
 thiserror = { workspace = true }
+zeroize.workspace = true
 base64 = { workspace = true }
 fastrand = { workspace = true }
 tracing = { workspace = true }

@@ -46,6 +46,19 @@ dom_query = { version = "0.28", default-features = false }
 heck = "0.5"
 time = { version = "0.3", features = ["formatting", "parsing", "local-offset", "macros"] }
 keyring = "4"
+# Account vault: standard memory-hard KDF, authenticated encryption, OS entropy and key erasure.
+argon2 = { version = "=0.5.3", features = ["zeroize"] }
+chacha20poly1305 = { version = "=0.10.1", features = ["std"] }
+getrandom = "=0.3.4"
+zeroize = { version = "1.8", features = ["serde"] }
+# A process lock prevents two vault writers; tempfile provides atomic replacement.
+fs2 = "=0.4.3"
+# Native session lock notifications. These crates are already used by Tauri.
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_RemoteDesktop", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Gdi"] }
+objc2 = "=0.6.5"
+objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std", "block2", "NSString", "NSNotification", "NSDistributedNotificationCenter", "NSOperation", "NSObject"] }
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSWorkspace"] }
+block2 = "=0.6.2"
 rusqlite = { version = "0.40", features = ["bundled"] }
 nucleo-matcher = "0.3"
 directories = "6"

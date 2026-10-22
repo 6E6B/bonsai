@@ -184,36 +184,48 @@ async fn sign_out_ends_the_session_then_forgets_the_account() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn switching_is_instant_and_renders_from_cache() {
+async fn switching_renders_from_cache_without_network() {
     let dir = tempfile::tempdir().unwrap();
     let cookies = seeded(&dir);
-    // Point at a dead address: every refresh fails, cached data must still be there.
-    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, cookies);
-    {
+    // Refuse connections deterministically. A fixed "dead" port can hang on some
+    // Windows hosts instead of returning a connection error promptly.
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let reject_connections = tokio::spawn(async move {
+        while let Ok((stream, _)) = listener.accept().await {
+            drop(stream);
+        }
+    });
+    let r = rig(Base::Replay(url), dir, cookies);
+    let assert_alt_cache = || {
         let s = r.core.store();
-        assert_eq!(s.active_id(), Some(ME));
         assert_eq!(s.account_data(ALT).unwrap().robux, Some(20));
         assert_eq!(s.account_data(ALT).unwrap().unread.messages, 3);
         assert_eq!(
             s.account_data(ALT).unwrap().friends.data.as_deref(),
             Some(&[1_u64, 156][..])
         );
-    }
-    let t = Instant::now();
+    };
+    assert_eq!(r.core.store().active_id(), Some(ME));
+    assert_alt_cache();
     assert!(r.core.switch(ALT));
-    assert!(
-        t.elapsed() < Duration::from_millis(16),
-        "switch took {:?}",
-        t.elapsed()
-    );
+    // Check the visible state as soon as switch returns, without awaiting a refresh.
+    // A frame-sized wall-clock budget also measures disk and scheduler delays in CI.
     assert_eq!(r.core.store().active_id(), Some(ALT));
+    assert_alt_cache();
+    wait_for(&r.core, "failed offline refresh", |s| s.offline).await;
+    assert_eq!(r.core.store().active_id(), Some(ALT));
+    assert_alt_cache();
     assert!(r.core.switch_last());
     assert_eq!(r.core.store().active_id(), Some(ME));
+    assert_eq!(r.core.store().account_data(ME).unwrap().robux, Some(10));
     assert!(!r.core.switch(AccountId(42)));
+    assert_eq!(r.core.store().active_id(), Some(ME));
     // Survives a restart.
     let list = AccountList::load(&r.core.paths().accounts_file());
     assert_eq!(list.active, Some(ME));
     assert_eq!(list.previous, Some(ALT));
+    reject_connections.abort();
 }
 
 #[tokio::test(flavor = "multi_thread")]

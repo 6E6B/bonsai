@@ -20,6 +20,7 @@ path = "src/main.rs"
 tauri-build = { workspace = true }
 
 [dependencies]
+zeroize.workspace = true
 bonsai-core = { workspace = true }
 tauri = { workspace = true }
 tauri-specta = { workspace = true }
@@ -39,3 +40,12 @@ time = { workspace = true }
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = { workspace = true }
 webkit2gtk = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2.workspace = true
+objc2-foundation.workspace = true
+objc2-app-kit.workspace = true
+block2.workspace = true

@@ -70,6 +70,9 @@ fn show_alerts(app: &AppHandle) {
     let Some(core) = app.try_state::<Arc<Core>>() else {
         return;
     };
+    if core.accounts_locked() {
+        return;
+    }
     let alerts = core.take_alerts();
     if alerts.is_empty() {
         return;

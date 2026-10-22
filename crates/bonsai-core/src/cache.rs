@@ -4,10 +4,13 @@
 //! and shared by every account. Private data (inventory, messages, trades, friends) is keyed by
 //! the account that fetched it and never read by another.
 
+use crate::vault::Vault;
 use std::path::Path;
+use std::sync::Arc;
+use zeroize::Zeroizing;
 
 use bonsai_api::AccountId;
-use parking_lot::Mutex;
+use parking_lot::{Mutex, RwLock};
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -106,9 +109,174 @@ pub fn now() -> i64 {
 
 pub struct Cache {
     db: Mutex<Connection>,
+    vault: RwLock<Option<Arc<Vault>>>,
 }
 
 impl Cache {
+    pub fn attach_vault(&self, vault: Arc<Vault>) {
+        *self.vault.write() = Some(vault);
+    }
+    fn encode_private(&self, aad: &[u8], json: &str) -> Option<String> {
+        match &*self.vault.read() {
+            Some(v) if v.blocked() => None,
+            Some(v) if v.protected() => {
+                if v.blocked() {
+                    return None;
+                }
+                v.encrypt_cache(aad, json.as_bytes()).ok()
+            }
+            _ => Some(json.to_owned()),
+        }
+    }
+    fn decode_private(&self, aad: &[u8], json: &str) -> Option<Zeroizing<Vec<u8>>> {
+        match &*self.vault.read() {
+            Some(v) if v.blocked() => None,
+            Some(v) if v.protected() => {
+                if v.blocked() {
+                    return None;
+                }
+                v.decrypt_cache(aad, json).ok()
+            }
+            _ if json.starts_with("vault1:") => None,
+            _ => Some(Zeroizing::new(json.as_bytes().to_vec())),
+        }
+    }
+    fn encode(&self, kind: Kind, account: AccountId, id: &str, json: &str) -> Option<String> {
+        if kind.is_shared() {
+            Some(json.to_owned())
+        } else {
+            self.encode_private(
+                &entity_aad(kind.name(), Self::account_for(kind, account), id),
+                json,
+            )
+        }
+    }
+    fn decode(&self, kind: Kind, account: AccountId, id: &str, json: &str) -> Option<Zeroizing<Vec<u8>>> {
+        if kind.is_shared() {
+            Some(Zeroizing::new(json.as_bytes().to_vec()))
+        } else {
+            self.decode_private(
+                &entity_aad(kind.name(), Self::account_for(kind, account), id),
+                json,
+            )
+        }
+    }
+    /// Called with account admission closed. The SQL transaction is restartable; all payloads
+    /// are authenticated against their complete key. VACUUM/checkpoint remove old logical
+    /// plaintext pages, but cannot erase snapshots, filesystem history or SSD remnants.
+    pub fn migrate_vault(&self, vault: &Vault, encrypt: bool) -> Result<(), String> {
+        let mut db = self.db.lock();
+        db.execute_batch("PRAGMA secure_delete = ON;")
+            .map_err(|_| "Cannot prepare cache migration.")?;
+        let tx = db.transaction().map_err(|_| "Cannot start cache migration.")?;
+        let shared = [
+            "user", "universe", "place", "item", "group", "thumb", "servers", "search",
+        ];
+        {
+            let mut query = tx
+                .prepare("SELECT kind, account, id, json FROM entities")
+                .map_err(|_| "Cannot read cache migration.")?;
+            let rows = query
+                .query_map([], |r| {
+                    Ok((
+                        r.get::<_, String>(0)?,
+                        r.get::<_, i64>(1)?,
+                        r.get::<_, String>(2)?,
+                        r.get::<_, String>(3)?,
+                    ))
+                })
+                .map_err(|_| "Cannot read cache migration.")?;
+            for row in rows {
+                let (kind, account, id, raw) = row.map_err(|_| "Cannot read cache row.")?;
+                let raw = Zeroizing::new(raw);
+                if shared.contains(&kind.as_str()) {
+                    continue;
+                }
+                let aad = entity_aad(&kind, account, &id);
+                let value = migrate_payload(vault, &aad, &raw, encrypt)?;
+                tx.execute(
+                    "UPDATE entities SET json = ?1 WHERE kind = ?2 AND account = ?3 AND id = ?4",
+                    params![value.as_str(), kind, account, id],
+                )
+                .map_err(|_| "Cannot migrate private cache row.")?;
+            }
+        }
+        {
+            let mut query = tx
+                .prepare("SELECT account, scope, kind, id, at, json FROM ledger")
+                .map_err(|_| "Cannot read ledger migration.")?;
+            let rows = query
+                .query_map([], |r| {
+                    Ok((
+                        r.get::<_, i64>(0)?,
+                        r.get::<_, String>(1)?,
+                        r.get::<_, String>(2)?,
+                        r.get::<_, String>(3)?,
+                        r.get::<_, i64>(4)?,
+                        r.get::<_, String>(5)?,
+                    ))
+                })
+                .map_err(|_| "Cannot read ledger migration.")?;
+            for row in rows {
+                let (account, scope, kind, id, at, raw) = row.map_err(|_| "Cannot read ledger row.")?;
+                let value = migrate_payload(
+                    vault,
+                    &ledger_aad(account, &scope, &kind, &id, at),
+                    &Zeroizing::new(raw),
+                    encrypt,
+                )?;
+                tx.execute(
+                    "UPDATE ledger SET json = ?1 WHERE account = ?2 AND scope = ?3 AND kind = ?4 AND id = ?5",
+                    params![value.as_str(), account, scope, kind, id],
+                )
+                .map_err(|_| "Cannot migrate private ledger row.")?;
+            }
+        }
+        tx.commit()
+            .map_err(|_| "Cannot commit private cache migration.")?;
+        let (busy, _, _): (i32, i32, i32) = db
+            .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
+                Ok((r.get(0)?, r.get(1)?, r.get(2)?))
+            })
+            .map_err(|_| "Cannot checkpoint private cache.")?;
+        if busy != 0 {
+            return Err("Private cache is busy. Close other readers and try again.".into());
+        }
+        db.execute_batch("VACUUM;")
+            .map_err(|_| "Cannot compact private cache migration.")?;
+        let (busy, _, _): (i32, i32, i32) = db
+            .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
+                Ok((r.get(0)?, r.get(1)?, r.get(2)?))
+            })
+            .map_err(|_| "Cannot checkpoint private cache.")?;
+        if busy != 0 {
+            return Err("Private cache checkpoint is busy.".into());
+        }
+        Ok(())
+    }
+    /// Forgotten-PIN recovery removes private rows without decrypting them.
+    pub fn forget_private(&self) -> Result<(), String> {
+        let mut db = self.db.lock();
+        db.execute_batch("PRAGMA synchronous = FULL; PRAGMA secure_delete = ON;")
+            .map_err(|_| "Cannot prepare account data reset.")?;
+        let tx = db.transaction().map_err(|_| "Cannot start account data reset.")?;
+        tx.execute("DELETE FROM entities WHERE kind NOT IN ('user','universe','place','item','group','thumb','servers','search')", [])
+            .map_err(|_| "Cannot clear private account data.")?;
+        tx.execute("DELETE FROM ledger", [])
+            .map_err(|_| "Cannot clear private transaction data.")?;
+        tx.commit().map_err(|_| "Cannot commit account data reset.")?;
+        db.execute_batch("VACUUM;")
+            .map_err(|_| "Cannot compact account data reset.")?;
+        let (busy, _, _): (i32, i32, i32) = db
+            .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
+                Ok((r.get(0)?, r.get(1)?, r.get(2)?))
+            })
+            .map_err(|_| "Cannot checkpoint account data reset.")?;
+        if busy != 0 {
+            return Err("Account data is busy. Restart Bonsai and try again.".into());
+        }
+        Ok(())
+    }
     pub fn open(path: &Path) -> rusqlite::Result<Cache> {
         if let Some(d) = path.parent() {
             let _ = std::fs::create_dir_all(d);
@@ -145,7 +313,10 @@ impl Cache {
                  PRIMARY KEY (account, scope, kind, id)
              );",
         )?;
-        Ok(Cache { db: Mutex::new(db) })
+        Ok(Cache {
+            db: Mutex::new(db),
+            vault: RwLock::new(None),
+        })
     }
 
     /// The local time zone's offset from UTC in seconds, as the C library sees it right now.
@@ -176,16 +347,21 @@ impl Cache {
             .ok()
             .flatten();
         let (json, fetched_at) = row?;
-        serde_json::from_str(&json)
+        serde_json::from_slice(&self.decode(kind, account, id, &json)?)
             .ok()
             .map(|value| Cached { value, fetched_at })
     }
 
     pub fn put<T: Serialize>(&self, kind: Kind, account: AccountId, id: &str, value: &T) {
-        let Ok(json) = serde_json::to_string(value) else {
+        let Ok(json) = serde_json::to_string(value).map(Zeroizing::new) else {
             return;
         };
+        // Hold the database lock across the admission check and write. Otherwise a
+        // plaintext payload encoded just before setup could arrive after cache encryption.
         let db = self.db.lock();
+        let Some(json) = self.encode(kind, account, id, &json) else {
+            return;
+        };
         let r = db.execute(
             "INSERT INTO entities (kind, account, id, json, fetched_at) VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT (kind, account, id) DO UPDATE SET json = excluded.json, fetched_at = excluded.fetched_at",
@@ -221,15 +397,17 @@ impl Cache {
         let Ok(rows) = rows else { return Vec::new() };
         rows.flatten()
             .filter_map(|(id, json, t)| {
-                serde_json::from_str(&json).ok().map(|v| {
-                    (
-                        id,
-                        Cached {
-                            value: v,
-                            fetched_at: t,
-                        },
-                    )
-                })
+                serde_json::from_slice(&self.decode(kind, account, &id, &json)?)
+                    .ok()
+                    .map(|v| {
+                        (
+                            id,
+                            Cached {
+                                value: v,
+                                fetched_at: t,
+                            },
+                        )
+                    })
             })
             .collect()
     }
@@ -250,7 +428,11 @@ impl Cache {
                      ON CONFLICT (account, scope, kind, id) DO UPDATE SET at = excluded.at, json = excluded.json",
                 )?;
                 for (kind, id, at, v) in rows {
-                    let Ok(json) = serde_json::to_string(v) else {
+                    let Ok(json) = serde_json::to_string(v).map(Zeroizing::new) else {
+                        continue;
+                    };
+                    let aad = ledger_aad(account.0 as i64, scope, kind, id, at);
+                    let Some(json) = self.encode_private(&aad, &json) else {
                         continue;
                     };
                     st.execute(params![account.0 as i64, scope, kind, id, at, json])?;
@@ -266,15 +448,27 @@ impl Cache {
     /// Every transaction row of one scope, newest first.
     pub fn ledger_all<T: DeserializeOwned>(&self, account: AccountId, scope: &str) -> Vec<T> {
         let db = self.db.lock();
-        let Ok(mut st) =
-            db.prepare("SELECT json FROM ledger WHERE account = ?1 AND scope = ?2 ORDER BY at DESC")
-        else {
+        let Ok(mut st) = db.prepare(
+            "SELECT kind, id, at, json FROM ledger WHERE account = ?1 AND scope = ?2 ORDER BY at DESC",
+        ) else {
             return Vec::new();
         };
-        let rows = st.query_map(params![account.0 as i64, scope], |r| r.get::<_, String>(0));
+        let rows = st.query_map(params![account.0 as i64, scope], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, i64>(2)?,
+                r.get::<_, String>(3)?,
+            ))
+        });
         let Ok(rows) = rows else { return Vec::new() };
         rows.flatten()
-            .filter_map(|json| serde_json::from_str(&json).ok())
+            .filter_map(|(kind, id, at, json)| {
+                serde_json::from_slice(
+                    &self.decode_private(&ledger_aad(account.0 as i64, scope, &kind, &id, at), &json)?,
+                )
+                .ok()
+            })
             .collect()
     }
 
@@ -347,6 +541,29 @@ impl Cache {
             params![account.0 as i64],
         );
         let _ = db.execute("DELETE FROM ledger WHERE account = ?1", params![account.0 as i64]);
+    }
+}
+
+fn entity_aad(kind: &str, account: i64, id: &str) -> Vec<u8> {
+    // Length-delimited JSON tuples avoid ambiguous concatenated keys.
+    serde_json::to_vec(&("entities", kind, account, id)).unwrap_or_default()
+}
+fn ledger_aad(account: i64, scope: &str, kind: &str, id: &str, at: i64) -> Vec<u8> {
+    serde_json::to_vec(&("ledger", account, scope, kind, id, at)).unwrap_or_default()
+}
+fn migrate_payload(vault: &Vault, aad: &[u8], raw: &str, encrypt: bool) -> Result<Zeroizing<String>, String> {
+    if encrypt {
+        if raw.starts_with("vault1:") {
+            vault.decrypt_cache(aad, raw)?;
+            Ok(Zeroizing::new(raw.to_owned()))
+        } else {
+            vault.encrypt_cache(aad, raw.as_bytes()).map(Zeroizing::new)
+        }
+    } else {
+        let bytes = vault.decrypt_cache(aad, raw)?;
+        String::from_utf8(bytes.to_vec())
+            .map(Zeroizing::new)
+            .map_err(|_| "Invalid private cache text.".into())
     }
 }
 

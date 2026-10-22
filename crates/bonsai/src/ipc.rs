@@ -1132,6 +1132,9 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
 #[specta::specta]
 pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) -> Result<(), String> {
     if let Some(CommandRef::Plugin(cmd)) = CommandRef::parse(&inv.id) {
+        if core.accounts_locked() {
+            return Err("Unlock Bonsai to access accounts.".into());
+        }
         let picked = inv.as_account.map(|a| AccountId(a.0));
         return core.run_plugin_command(&cmd, inv.arg, core.acting(picked), inv.context.as_deref());
     }
@@ -1144,6 +1147,27 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
     let Some(CommandRef::Builtin(id)) = CommandRef::parse(&inv.id) else {
         return Err(format!("unknown command: {}", inv.id));
     };
+    if core.accounts_locked()
+        && !matches!(
+            id,
+            CommandId::Quit | CommandId::MinimizeWindow | CommandId::MaximizeWindow
+        )
+    {
+        return Err("Unlock Bonsai to access accounts.".into());
+    }
+    if id == CommandId::VaultLock {
+        return crate::vault::lock(app, core);
+    }
+    if matches!(
+        id,
+        CommandId::VaultEnable
+            | CommandId::VaultUnlock
+            | CommandId::VaultChange
+            | CommandId::VaultDisable
+            | CommandId::VaultForget
+    ) {
+        return Err("Open the vault dialog to continue.".into());
+    }
     let nth = |n: usize| core.store().accounts.accounts.get(n).map(|a| a.id);
     let switch = |target: Option<AccountId>| match target {
         Some(a) if core.switch(a) => Ok(()),
@@ -1203,6 +1227,12 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         Ok(())
     };
     match id {
+        CommandId::VaultEnable
+        | CommandId::VaultUnlock
+        | CommandId::VaultLock
+        | CommandId::VaultChange
+        | CommandId::VaultDisable
+        | CommandId::VaultForget => unreachable!("vault commands handled above"),
         CommandId::OpenDiscordBrowser => core.open_discord_invite(),
         CommandId::CopyDiscordInvite => copy(app, core, core.discord_invite_url()?, "Copied Discord invite"),
         CommandId::SwitchAccount => switch(inv.arg.and_then(|a| a.parse().ok()).map(AccountId)),
@@ -2742,6 +2772,9 @@ pub fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             shell,
+            crate::vault::vault_status,
+            crate::vault::vault_submit,
+            crate::vault::vault_activity,
             commands,
             run_command,
             dismiss_toast,

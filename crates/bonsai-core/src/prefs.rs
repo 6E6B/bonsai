@@ -63,6 +63,13 @@ const IMAGE_CACHE: &[(&str, &str)] = &[
     ("2048", "2 GB"),
     ("4096", "4 GB"),
 ];
+const VAULT_TIMEOUTS: &[(&str, &str)] = &[
+    ("1", "1 minute"),
+    ("5", "5 minutes"),
+    ("15", "15 minutes"),
+    ("30", "30 minutes"),
+    ("60", "1 hour"),
+];
 const MOTIONS: &[(&str, &str)] = &[("system", "System"), ("reduce", "Reduced"), ("full", "Full")];
 const TIME_FORMATS: &[(&str, &str)] = &[("auto", "Automatic"), ("12h", "12-hour"), ("24h", "24-hour")];
 /// Screens a launch can open, by route name, and `last` for the tabs from last time.
@@ -457,6 +464,14 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "vault_idle_minutes",
+        "accounts",
+        "Lock after inactivity",
+        "When PIN protection is on, lock after this long without input in Bonsai. System locking and sleep also lock Bonsai.",
+        &["pin", "vault", "lock", "timeout", "idle", "security"],
+        PrefKind::Choice(VAULT_TIMEOUTS),
+    ),
+    pref(
         "account_accent",
         "accounts",
         "Account color as accent",
@@ -494,6 +509,7 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "ui_scale" => ((s.ui_scale * 100.0).round() as i32).to_string(),
         "background_accounts" => on_off(s.background_accounts).to_owned(),
         "account_accent" => on_off(s.account_accent).to_owned(),
+        "vault_idle_minutes" => s.vault_idle_minutes.clamp(1, 60).to_string(),
         "player_command" => s.player_command.clone().unwrap_or_default(),
         "avatar_view" => if s.avatar_3d { "3d" } else { "2d" }.to_owned(),
         "format_locale" => s.format_locale.clone(),
@@ -558,6 +574,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
             "quiet_end" => s.quiet.end = v.parse().unwrap_or(8),
             "cache_days" => s.cache_days = v.parse().unwrap_or(30),
             "image_cache_mb" => s.image_cache_mb = v.parse().unwrap_or(1024),
+            "vault_idle_minutes" => s.vault_idle_minutes = v.parse().unwrap_or(5),
             _ => unreachable!("choice without a setter: {key}"),
         }
         return Ok(());
