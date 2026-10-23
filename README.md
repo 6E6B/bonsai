@@ -73,8 +73,30 @@ Requires [Rust](https://rustup.rs), [bun](https://bun.sh) and the
 git clone --recursive https://github.com/6E6B/bonsai
 cd bonsai/crates/bonsai/ui
 bun install
+```
+
+For development (Tauri with the Vite dev server and hot reload):
+
+```sh
 bun run app
 ```
+
+To build a standalone production executable without creating installers:
+
+```sh
+bun run tauri build --no-bundle
+```
+
+To build a production executable and platform-specific installers or app bundles:
+
+```sh
+bun run tauri build
+```
+
+Run these commands from `crates/bonsai/ui`. Production builds compile and embed the
+frontend, so the executable does not need a local Vite server. Plain `cargo build` does
+not run Tauri's frontend build step; a debug app build expects the development server
+at `http://localhost:1420`.
 
 See [AGENTS.md](AGENTS.md) for the code layout and contribution rules.
 
