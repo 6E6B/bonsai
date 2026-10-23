@@ -3237,3 +3237,110 @@ async fn wardrobe_keeps_partial_results_and_stops_on_a_repeated_cursor() {
         "a failed index does not spin on its cursor"
     );
 }
+
+/// Synthetic batch replies exercise export selection without live Roblox/CDN requests.
+fn image_export_reply(request_id: &str, state: &str, url: Option<&str>) -> Interaction {
+    serde_json::from_value(serde_json::json!({
+        "request": { "method": "POST", "host": "thumbnails.roblox.com", "path": "/v1/batch" },
+        "response": { "status": 200, "body": { "data": [{
+            "requestId": request_id, "state": state, "imageUrl": url
+        }] } }
+    }))
+    .unwrap()
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn image_export_fetches_largest_render_without_replacing_display_thumbnail() {
+    let url = "https://tr.rbxcdn.com/export-large";
+    let fixture = Fixture {
+        interactions: vec![image_export_reply("Asset:42:700x700", "Completed", Some(url))],
+        ..Default::default()
+    };
+    let replay = Replay::from_fixture(&fixture).await;
+    let dir = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(dir.path());
+    let bytes = png();
+    DiskCache::new(&paths.thumbs_dir()).put(url, &bytes);
+    let r = rig(Base::Replay(replay.server.uri()), dir, Arc::default());
+    let key = ThumbKey::small(ThumbKind::Asset, 42);
+    let image = r.core.thumbnail_image(key).await.unwrap();
+    assert_eq!(image.image.bytes, bytes);
+    assert_eq!(image.url.as_deref(), Some(url));
+    assert!(!r.core.store().thumbs.contains_key(&key));
+    let requests = replay.requests().await;
+    let body: serde_json::Value = serde_json::from_slice(&requests[0].body).unwrap();
+    assert_eq!(body[0]["size"], "700x700");
+    assert_eq!(body[0]["targetId"], 42);
+    let path = paths.cache.join("saved.png");
+    image.image.save(&path).unwrap();
+    assert_eq!(std::fs::read(path).unwrap(), bytes);
+    // A repeat reuses the highest resolution cached URL and bytes without a second lookup.
+    assert_eq!(r.core.thumbnail_image(key).await.unwrap().url, image.url);
+    assert_eq!(replay.requests().await.len(), 1);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn image_export_falls_back_after_pending_and_invalid_larger_images() {
+    let bad_url = "https://tr.rbxcdn.com/export-corrupt";
+    let good_url = "https://tr.rbxcdn.com/export-small";
+    let fixture = Fixture {
+        interactions: vec![
+            image_export_reply("AvatarHeadShot:42:720x720", "Pending", None),
+            image_export_reply("AvatarHeadShot:42:720x720", "Pending", None),
+            image_export_reply("AvatarHeadShot:42:720x720", "Pending", None),
+            image_export_reply("AvatarHeadShot:42:420x420", "Completed", Some(bad_url)),
+            image_export_reply("AvatarHeadShot:42:352x352", "Completed", Some(good_url)),
+        ],
+        ..Default::default()
+    };
+    let replay = Replay::from_fixture(&fixture).await;
+    let dir = tempfile::tempdir().unwrap();
+    let disk = DiskCache::new(&Paths::in_dir(dir.path()).thumbs_dir());
+    disk.put(bad_url, b"not an image");
+    disk.put(good_url, &png());
+    let r = rig(Base::Replay(replay.server.uri()), dir, Arc::default());
+    let image = r
+        .core
+        .thumbnail_image(ThumbKey::small(ThumbKind::Headshot, 42))
+        .await
+        .unwrap();
+    assert_eq!(image.url.as_deref(), Some(good_url));
+    let sizes: Vec<String> = replay
+        .requests()
+        .await
+        .iter()
+        .filter(|r| r.url.path().ends_with("/v1/batch"))
+        .map(|r| {
+            serde_json::from_slice::<serde_json::Value>(&r.body).unwrap()[0]["size"]
+                .as_str()
+                .unwrap()
+                .to_owned()
+        })
+        .collect();
+    assert_eq!(sizes, ["720x720", "720x720", "720x720", "420x420", "352x352"]);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn image_export_uses_cached_display_when_lookup_is_offline() {
+    let fixture = Fixture {
+        interactions: vec![image_export_reply("Asset:42:700x700", "Blocked", None)],
+        ..Default::default()
+    };
+    let replay = Replay::from_fixture(&fixture).await;
+    let dir = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(dir.path());
+    let url = "https://tr.rbxcdn.com/display-only";
+    std::fs::create_dir_all(&paths.cache).unwrap();
+    let cache = Cache::open(&paths.db_file()).unwrap();
+    cache.put(Kind::ThumbUrl, AccountId::ANONYMOUS, "Asset:42:150x150", &url);
+    DiskCache::new(&paths.thumbs_dir()).put(url, &png());
+    drop(cache);
+    let r = rig(Base::Replay(replay.server.uri()), dir, Arc::default());
+    let image = r
+        .core
+        .thumbnail_image(ThumbKey::small(ThumbKind::Asset, 42))
+        .await
+        .unwrap();
+    assert_eq!(image.url.as_deref(), Some(url));
+    assert!(image.image.rgba().is_ok());
+}

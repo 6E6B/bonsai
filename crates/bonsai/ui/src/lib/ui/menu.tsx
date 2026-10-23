@@ -1,6 +1,20 @@
 import { ContextMenu as KContextMenu } from "@kobalte/core/context-menu"
 import { DropdownMenu as KDropdownMenu } from "@kobalte/core/dropdown-menu"
-import { For, type JSX, Match, type ParentProps, Show, Switch, splitProps } from "solid-js"
+import {
+  createContext,
+  createSignal,
+  For,
+  type JSX,
+  Match,
+  onCleanup,
+  type ParentProps,
+  Show,
+  Switch,
+  splitProps,
+  useContext,
+} from "solid-js"
+import { menuItem } from "~/lib/commands/registry"
+import { forgetImage, type ImageTarget, imageAt, imageKey, selectImage } from "~/lib/image-actions"
 import { Button, type ButtonProps } from "./button"
 import { Icon, type IconName } from "./icon"
 import { Kbd } from "./kbd"
@@ -124,23 +138,85 @@ export function Menu(props: MenuProps) {
 export interface ContextMenuProps extends ParentProps {
   items: MenuEntry[]
   class?: string
+  /** Inline image boundary; existing row/tile menus keep their usual div trigger. */
+  inline?: boolean
   /** Called when the menu opens or closes, e.g. to load what its entries show. */
   onOpenChange?: (open: boolean) => void
 }
 
 /** Opens a menu on right-click (or the Menu key) anywhere inside `children`. Everything in it
  * must also be reachable another way: the command bar or a visible button. */
-export function ContextMenu(props: ContextMenuProps): JSX.Element {
+const ImageMenuContext = createContext(false)
+
+/** Whether an image already belongs to a row/tile context menu. */
+export const useImageMenu = () => useContext(ImageMenuContext)
+
+/** Image components join an existing context menu, or provide one when standing alone. */
+export function ImageMenu(props: ParentProps<{ src?: string }>): JSX.Element {
+  if (useContext(ImageMenuContext)) return props.children
   return (
-    <KContextMenu onOpenChange={props.onOpenChange}>
-      <KContextMenu.Trigger as="div" data-slot="context-trigger" class={props.class}>
+    <Show when={imageKey(props.src)} fallback={props.children}>
+      <ContextMenu items={[]} inline>
         {props.children}
-      </KContextMenu.Trigger>
-      <KContextMenu.Portal>
-        <KContextMenu.Content data-component="menu">
-          <Entries parts={KContextMenu} items={props.items} />
-        </KContextMenu.Content>
-      </KContextMenu.Portal>
-    </KContextMenu>
+      </ContextMenu>
+    </Show>
+  )
+}
+
+export function ContextMenu(props: ContextMenuProps): JSX.Element {
+  const [image, setImage] = createSignal<ImageTarget>()
+  onCleanup(() => forgetImage(image()))
+  const choose = (event: Event & { currentTarget: HTMLElement }) => {
+    const target = imageAt(event.target, event.currentTarget)
+    setImage(target)
+    selectImage(target)
+  }
+  const imageItems = (): MenuEntry[] => {
+    const target = image()
+    if (!target) return []
+    const arg = JSON.stringify(target)
+    return [
+      ...(props.items.length ? [{ kind: "separator" } as const] : []),
+      { kind: "heading", label: "Rendered thumbnail" },
+      menuItem("image.save", { arg, label: "Save Image As…", icon: "download" }),
+      menuItem("image.copy", { arg, label: "Copy Image", icon: "copy" }),
+      menuItem("image.copy_url", { arg, label: "Copy Image URL", icon: "link" }),
+    ]
+  }
+  return (
+    <ImageMenuContext.Provider value={true}>
+      <KContextMenu onOpenChange={props.onOpenChange}>
+        <KContextMenu.Trigger
+          as={props.inline ? "span" : "div"}
+          data-slot="context-trigger"
+          class={props.class}
+          onContextMenu={choose}
+          onFocusIn={choose}
+          onPointerDown={choose}
+          onKeyDown={(event: KeyboardEvent & { currentTarget: HTMLElement }) => {
+            if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10")) return
+            event.preventDefault()
+            event.stopPropagation()
+            const target = event.target instanceof HTMLElement ? event.target : event.currentTarget
+            const rect = target.getBoundingClientRect()
+            target.dispatchEvent(
+              new MouseEvent("contextmenu", {
+                bubbles: true,
+                cancelable: true,
+                clientX: rect.left,
+                clientY: rect.bottom,
+              }),
+            )
+          }}
+        >
+          {props.children}
+        </KContextMenu.Trigger>
+        <KContextMenu.Portal>
+          <KContextMenu.Content data-component="menu">
+            <Entries parts={KContextMenu} items={[...props.items, ...imageItems()]} />
+          </KContextMenu.Content>
+        </KContextMenu.Portal>
+      </KContextMenu>
+    </ImageMenuContext.Provider>
   )
 }

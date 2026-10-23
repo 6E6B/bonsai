@@ -25,7 +25,7 @@ pub enum ThumbKind {
 }
 
 impl ThumbKind {
-    fn api_type(self) -> &'static str {
+    pub(crate) fn api_type(self) -> &'static str {
         match self {
             ThumbKind::Headshot => "AvatarHeadShot",
             ThumbKind::Avatar => "Avatar",
@@ -39,6 +39,29 @@ impl ThumbKind {
             ThumbKind::Outfit => "Outfit",
         }
     }
+    /// Supported render sizes in descending resolution, from the tracker's thumbnails/v1.json.
+    /// Export only: keep display requests small so scrolling stays cheap.
+    pub fn export_sizes(self) -> &'static [&'static str] {
+        match self {
+            Self::Headshot => &[
+                "720x720", "420x420", "352x352", "180x180", "150x150", "110x110", "100x100", "75x75",
+                "60x60", "50x50", "48x48",
+            ],
+            Self::Avatar => &[
+                "720x720", "420x420", "352x352", "250x250", "180x180", "150x150", "140x140", "110x110",
+                "100x100", "75x75", "60x60", "48x48", "30x30",
+            ],
+            Self::Asset => &[
+                "700x700", "512x512", "420x420", "250x250", "150x150", "140x140", "110x110", "75x75",
+                "50x50", "42x42", "30x30",
+            ],
+            Self::GameIcon => &["512x512", "420x420", "256x256", "150x150", "128x128", "50x50"],
+            Self::GameThumbnail => &["768x432", "576x324", "480x270", "384x216", "256x144"],
+            Self::Bundle | Self::GroupIcon | Self::Outfit => &["420x420", "150x150"],
+            Self::BadgeIcon | Self::GamePass => &["150x150"],
+        }
+    }
+
     /// How long a looked-up URL is trusted. An older one still shows at once and is checked
     /// again in the background. Avatars change often; icons and item images rarely do.
     pub fn url_age_secs(self) -> i64 {
@@ -88,14 +111,41 @@ impl ThumbKey {
             large: true,
         }
     }
+    /// The protocol's opaque image identity. Never accepts remote URLs or file paths.
+    pub fn parse(path: &str) -> Option<Self> {
+        let mut parts = path.trim_start_matches('/').split('.');
+        let kind = match parts.next()? {
+            "headshot" => ThumbKind::Headshot,
+            "avatar" => ThumbKind::Avatar,
+            "game_icon" => ThumbKind::GameIcon,
+            "game_thumbnail" => ThumbKind::GameThumbnail,
+            "asset" => ThumbKind::Asset,
+            "bundle" => ThumbKind::Bundle,
+            "group_icon" => ThumbKind::GroupIcon,
+            "badge_icon" => ThumbKind::BadgeIcon,
+            "game_pass" => ThumbKind::GamePass,
+            "outfit" => ThumbKind::Outfit,
+            _ => return None,
+        };
+        let id = parts
+            .next()?
+            .parse::<u64>()
+            .ok()
+            .filter(|id| (1..=9_007_199_254_740_991).contains(id))?;
+        let large = match parts.next()? {
+            "s" => false,
+            "l" => true,
+            _ => return None,
+        };
+        parts.next().is_none().then_some(Self { kind, id, large })
+    }
+
     /// The batch request id, also the key of its cached URL.
     pub fn request_id(&self) -> String {
-        format!(
-            "{}:{}:{}",
-            self.kind.api_type(),
-            self.id,
-            self.kind.size(self.large)
-        )
+        self.request_id_for(self.kind.size(self.large))
+    }
+    pub(crate) fn request_id_for(&self, size: &str) -> String {
+        format!("{}:{}:{size}", self.kind.api_type(), self.id)
     }
 }
 
