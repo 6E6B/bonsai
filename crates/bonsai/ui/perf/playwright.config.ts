@@ -3,7 +3,7 @@ import { defineConfig } from "@playwright/test"
 
 export default defineConfig({
   testDir: ".",
-  testMatch: ["ui.perf.ts", "virtualization.spec.ts"],
+  testMatch: ["ui.perf.ts", "virtualization.spec.ts", "dependencies.spec.ts"],
   fullyParallel: false,
   workers: 1,
   retries: 0,

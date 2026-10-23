@@ -1,0 +1,116 @@
+{
+  "captured": "2026-10-22",
+  "source": "synthetic",
+  "note": "Schema-based replay of source and processed accessory models, duplicate references, denied metadata and credential-free CDN requests. Live asset-delivery routes and processed header verified 2026-10-22 on a public accessory; all fixture IDs, names and files are synthetic.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "assetdelivery.roblox.com",
+        "path": "/v2/assetId/1000100",
+        "headers": {
+          "roblox-assetformat": ""
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "assetTypeId": 8,
+          "locations": [
+            {
+              "location": "https://sc0.rbxcdn.com/dependency-source"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "sc0.rbxcdn.com",
+        "path": "/dependency-source",
+        "absent_headers": [
+          "cookie"
+        ]
+      },
+      "response": {
+        "status": 200,
+        "body": "<roblox version=\"4\"><Item class=\"Accessory\"><Properties><string name=\"Name\">Hat</string></Properties><Item class=\"SpecialMesh\"><Properties><Content name=\"MeshId\"><url>rbxassetid://1000101</url></Content><Content name=\"TextureId\"><url>rbxassetid://1000102</url></Content></Properties></Item></Item></roblox>"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "assetdelivery.roblox.com",
+        "path": "/v2/assetId/1000100",
+        "headers": {
+          "roblox-assetformat": "avatar_meshpart_accessory"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "assetTypeId": 8,
+          "locations": [
+            {
+              "location": "https://sc0.rbxcdn.com/dependency-processed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "sc0.rbxcdn.com",
+        "path": "/dependency-processed",
+        "absent_headers": [
+          "cookie"
+        ]
+      },
+      "response": {
+        "status": 200,
+        "body": "<roblox version=\"4\"><Item class=\"Accessory\"><Properties><string name=\"Name\">Hat</string></Properties><Item class=\"MeshPart\"><Properties><Content name=\"MeshId\"><url>rbxassetid://1000101</url></Content><Content name=\"TextureID\"><url>rbxassetid://1000102</url></Content></Properties></Item></Item></roblox>"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "economy.roblox.com",
+        "path": "/v2/assets/1000101/details"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "AssetId": 1000101,
+          "Name": "Example mesh",
+          "AssetTypeId": 4,
+          "Creator": {
+            "Id": 1000001,
+            "Name": "Example studio",
+            "CreatorType": "Group",
+            "HasVerifiedBadge": true
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "economy.roblox.com",
+        "path": "/v2/assets/1000102/details"
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "errors": [
+            {
+              "code": 1,
+              "message": "Asset unavailable"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

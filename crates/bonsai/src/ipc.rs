@@ -2888,6 +2888,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             market::catalog_options,
             market::catalog_search,
             market::item_page,
+            market::item_dependencies,
             market::pass_page,
             market::item_resellers,
             market::buy_item,

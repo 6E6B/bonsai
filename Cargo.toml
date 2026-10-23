@@ -61,6 +61,10 @@ objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std
 block2 = "=0.6.2"
 rusqlite = { version = "0.40", features = ["bundled"] }
 nucleo-matcher = "0.3"
+# Roblox binary/XML model decoding, shared DOM, and LZ4/Zstd support from rbx-dom.
+rbx_binary = "=3.0.1"
+rbx_xml = "=3.0.1"
+rbx_dom_weak = "=4.2.0"
 directories = "6"
 sha2 = "0.11"
 open = "5"

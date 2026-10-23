@@ -608,6 +608,17 @@ impl Client {
         .await
     }
 
+    /// Download a model with a strict byte budget. Uses the same CDN allowlist and never
+    /// sends account credentials to the download URL.
+    pub async fn fetch_cdn_limited(&self, url: &str, max: usize) -> Result<Vec<u8>> {
+        self.fetch_file_limited(
+            url,
+            |h| h == "rbxcdn.com" || h.ends_with(".rbxcdn.com") || h == "contentdelivery.roblox.com",
+            max,
+        )
+        .await
+    }
+
     /// Download an image from a Fandom wiki article (see [`crate::fandom::IMAGE_HOST`]). Only
     /// that host is allowed; no cookie is sent.
     pub async fn fetch_wiki_image(&self, url: &str) -> Result<Vec<u8>> {
@@ -688,6 +699,15 @@ impl Client {
 
     /// GET a public file by URL with no credentials, if `allowed` accepts its host.
     async fn fetch_file(&self, url: &str, allowed: impl Fn(&str) -> bool) -> Result<Vec<u8>> {
+        self.fetch_file_limited(url, allowed, usize::MAX).await
+    }
+
+    async fn fetch_file_limited(
+        &self,
+        url: &str,
+        allowed: impl Fn(&str) -> bool,
+        max: usize,
+    ) -> Result<Vec<u8>> {
         let host = https_host(url);
         if !allowed(host) {
             return Err(Error::Encode(format!("refusing to fetch url host {host}")));
@@ -697,7 +717,7 @@ impl Client {
             Base::Replay(_) => self.inner.base.url(host, &url[8 + host.len()..]),
         };
         self.inner.limiter.acquire(host).await;
-        let resp = self
+        let mut resp = self
             .inner
             .http
             .get(url)
@@ -711,11 +731,24 @@ impl Client {
             }
         }
         let status = resp.status().as_u16();
-        let body = resp
-            .bytes()
+        if resp.content_length().is_some_and(|size| size > max as u64) {
+            return Err(Error::Message(
+                "The asset exceeds the download size limit.".into(),
+            ));
+        }
+        let mut body = Vec::new();
+        while let Some(chunk) = resp
+            .chunk()
             .await
             .map_err(|e| Error::Network(e.without_url().to_string()))?
-            .to_vec();
+        {
+            if chunk.len() > max.saturating_sub(body.len()) {
+                return Err(Error::Message(
+                    "The asset exceeds the download size limit.".into(),
+                ));
+            }
+            body.extend_from_slice(&chunk);
+        }
         if !(200..300).contains(&status) {
             return Err(status_error(status, &body));
         }

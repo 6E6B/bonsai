@@ -50,7 +50,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | Component | Use it for |
 |---|---|
 | `ListItem` | A row: friend, conversation, message, trade, notification, request. Leading avatar, title, subtitle, meta, actions. `selected` for the keyboard cursor, `unread`, `dim`. |
-| `DataTable` | Rows with real columns: servers, members, resellers, transactions, shortcuts. Virtual, scrolls with the page, sticky header. Column widths are fixed tracks, never `auto`. |
+| `DataTable` | Rows with real columns: servers, members, resellers, transactions, shortcuts. Card surface, rounded frame, subtle row separators and a sticky header. Virtual, scrolls with the page. Column widths are fixed tracks, never `auto`. |
 | `VirtualList` | Growing vertical collections: messages, chat, notifications, trade lists, search results and community activity. Measured row heights; shares the page or pane scrollbar. |
 | `VirtualGrid` | Growing tile grids: inventory, catalog, outfits, game stores and recommendations. Measures rows and adapts the column count. |
 | `VirtualShelf` | Horizontal collections with expensive tiles, such as profile preview shelves. Fixed item widths, measured height, fades and arrow controls. |

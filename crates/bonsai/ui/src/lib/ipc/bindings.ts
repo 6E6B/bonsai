@@ -138,6 +138,7 @@ export const commands = {
 	catalogOptions: () => __TAURI_INVOKE<CatalogOptions>("catalog_options"),
 	catalogSearch: (filter: CatalogFilter) => __TAURI_INVOKE<Paged<ItemCard>>("catalog_search", { filter }),
 	itemPage: (id: Id, bundle: boolean) => __TAURI_INVOKE<ItemView>("item_page", { id, bundle }),
+	itemDependencies: (id: Id, assetType: number) => __TAURI_INVOKE<DependenciesView>("item_dependencies", { id, assetType }),
 	passPage: (id: Id) => __TAURI_INVOKE<PassView>("pass_page", { id }),
 	itemResellers: (collectibleId: string) => __TAURI_INVOKE<Paged<ResellerRow>>("item_resellers", { collectibleId }),
 	/**
@@ -886,6 +887,30 @@ export type ConversationRow = {
 	/**  The last line, as the list shows it. */
 	last: string,
 	pinned: boolean,
+};
+
+export type DependenciesView = {
+	list: List<DependencyView>,
+	note: string | null,
+};
+
+export type DependencyUsage = {
+	class: string,
+	path: string,
+	property: string,
+};
+
+/**  One referenced asset. Missing economy details never remove a dependency from the list. */
+export type DependencyView = {
+	id: Id,
+	name: string | null,
+	assetType: number,
+	typeName: string,
+	creator: string,
+	creatorId: Id,
+	creatorIsGroup: boolean,
+	creatorVerified: boolean,
+	uses: DependencyUsage[],
 };
 
 export type DiscoverView = {
