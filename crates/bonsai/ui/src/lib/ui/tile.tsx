@@ -38,7 +38,7 @@ export function Tile(props: TileProps) {
       onClick={props.onClick}
     >
       <span data-slot="media">
-        <Thumbnail src={props.src} alt="" shape={props.shape} fallback={props.fallback} />
+        <Thumbnail src={props.src} alt={props.title} shape={props.shape} fallback={props.fallback} />
         <Show when={props.badge}>
           <span data-slot="badge">{props.badge}</span>
         </Show>

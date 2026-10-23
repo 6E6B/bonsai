@@ -1,6 +1,6 @@
 import { createSignal, For, type ParentProps } from "solid-js"
 import { applyAppearance, DEFAULT_SEEDS, derive, type Mode } from "~/lib/theme"
-import { windowIcons } from "~/lib/thumb"
+import { thumbUrl, windowIcons } from "~/lib/thumb"
 import {
   Alert,
   AudioPlayer,
@@ -619,6 +619,19 @@ export default function Components() {
         <Menu icon="more" label="More" items={[{ label: "Copy ID", icon: "copy", onSelect: noop }]} />
         <ContextMenu items={[{ label: "Copy ID", icon: "copy", onSelect: noop }]}>
           <Card class="px-3 py-2 text-fg-muted">Right-click me</Card>
+        </ContextMenu>
+      </Section>
+
+      <Section title="Image actions">
+        <Avatar src={thumbUrl("headshot", 1, true)} name="Roblox" size="lg" />
+        <Thumbnail src={thumbUrl("asset", 1029025, true)} alt="Classic teapot" class="w-20" />
+        <ContextMenu items={[{ label: "Existing row action", onSelect: noop }]}>
+          <ListItem
+            leading={<Thumbnail src={thumbUrl("game_icon", 1, true)} alt="Experience icon" class="w-8" />}
+            title="Image actions join the row menu"
+            subtitle="Right-click, or focus and press Shift+F10"
+            onClick={noop}
+          />
         </ContextMenu>
       </Section>
 

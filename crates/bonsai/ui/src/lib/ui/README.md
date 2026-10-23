@@ -170,3 +170,13 @@ For chat history, use `VirtualList` with `followEnd` and a stable `itemKey`. Tan
 `VirtualShelf` takes a numeric `itemWidth` in CSS pixels, matching the grid API, and an accessible `aria-label`. Its region supports Left/Right, Home/End and normal focus traversal. The component gallery includes 1,000-row and 1,000-tile examples. Browser tests check list tails, cursor movement, focus retention, shelf/table Tab traversal, short chats and variable-height chat history updates.
 
 Virtualization limits native browser Find and screen-reader enumeration to mounted content. Keep feature search/filter controls available for searching the complete loaded collection. Browser tests use synthetic data; native webview and real image behavior still need platform testing.
+
+### Image actions
+
+`Avatar` and `Thumbnail` expose **Save Image As…**, **Copy Image**, and **Copy Image URL** for
+`thumbUrl()` sources. Images join an enclosing `ContextMenu`; standalone images supply their
+own menu and support the Menu key or Shift+F10. Existing row/tile actions stay in the same menu.
+Use a descriptive `alt`/`name` for the suggested filename. `Tile` uses its title automatically.
+The command palette acts on the selected image or the entity page's main thumbnail.
+These actions save rendered thumbnails. Original clothing templates and model/texture downloads
+remain separate actions. See `docs/images.md` for resolution selection and caching.

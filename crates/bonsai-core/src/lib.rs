@@ -18,6 +18,7 @@ pub mod experience;
 pub mod feed;
 pub mod fmt;
 pub mod fonts;
+pub mod image_actions;
 pub mod inventory;
 pub mod launcher;
 pub mod links;

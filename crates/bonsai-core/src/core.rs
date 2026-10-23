@@ -1551,7 +1551,7 @@ fn cached_thumb_url(inner: &Inner, k: &ThumbKey) -> Option<(String, bool)> {
 
 /// Who looks thumbnails up: the first signed-in account, since Roblox allows a signed-in user
 /// more than an anonymous IP. The images are public, so the cache stays shared.
-fn thumb_client(inner: &Inner) -> Client {
+pub(crate) fn thumb_client(inner: &Inner) -> Client {
     let s = inner.store.read();
     let clients = inner.clients.read();
     clients
@@ -1738,6 +1738,13 @@ impl Inner {
         let mut budget = self.thumb_budget.lock();
         let mut s = self.store.write();
         for &kind in kinds {
+            for size in kind.export_sizes() {
+                self.cache.delete(
+                    Kind::ThumbUrl,
+                    AccountId::ANONYMOUS,
+                    &ThumbKey::large(kind, id).request_id_for(size),
+                );
+            }
             for k in [ThumbKey::small(kind, id), ThumbKey::large(kind, id)] {
                 self.cache
                     .delete(Kind::ThumbUrl, AccountId::ANONYMOUS, &k.request_id());

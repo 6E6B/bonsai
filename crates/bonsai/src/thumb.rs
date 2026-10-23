@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use bonsai_core::Core;
-use bonsai_core::thumbs::{ThumbKey, ThumbKind, ThumbState};
+use bonsai_core::thumbs::{ThumbKey, ThumbState};
 use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 
@@ -68,27 +68,7 @@ pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, r
 }
 
 fn parse(path: &str) -> Option<ThumbKey> {
-    let mut parts = path.trim_start_matches('/').split('.');
-    let kind = match parts.next()? {
-        "headshot" => ThumbKind::Headshot,
-        "avatar" => ThumbKind::Avatar,
-        "game_icon" => ThumbKind::GameIcon,
-        "game_thumbnail" => ThumbKind::GameThumbnail,
-        "asset" => ThumbKind::Asset,
-        "bundle" => ThumbKind::Bundle,
-        "group_icon" => ThumbKind::GroupIcon,
-        "badge_icon" => ThumbKind::BadgeIcon,
-        "game_pass" => ThumbKind::GamePass,
-        "outfit" => ThumbKind::Outfit,
-        _ => return None,
-    };
-    let id = parts.next()?.parse().ok()?;
-    let large = match parts.next()? {
-        "s" => false,
-        "l" => true,
-        _ => return None,
-    };
-    parts.next().is_none().then_some(ThumbKey { kind, id, large })
+    ThumbKey::parse(path)
 }
 
 fn serve(image: &bonsai_core::thumbs::Image) -> Response<Vec<u8>> {
@@ -109,6 +89,7 @@ fn status(code: StatusCode) -> Response<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bonsai_core::thumbs::ThumbKind;
 
     #[test]
     fn parses_paths() {
@@ -132,5 +113,7 @@ mod tests {
         assert_eq!(parse("/headshot.x.s"), None);
         assert_eq!(parse("/nope.1.s"), None);
         assert_eq!(parse("/headshot.1.s.extra"), None);
+        assert_eq!(parse("/headshot.0.s"), None);
+        assert_eq!(parse("/headshot.9007199254740992.s"), None);
     }
 }

@@ -27,6 +27,7 @@ mod challenge;
 mod communities;
 mod discover;
 mod hub;
+mod images;
 mod inbox;
 mod market;
 mod playlists;
@@ -1276,6 +1277,9 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         | CommandId::VaultChange
         | CommandId::VaultDisable
         | CommandId::VaultForget => unreachable!("vault commands handled above"),
+        CommandId::SaveImage | CommandId::CopyImage | CommandId::CopyImageUrl => {
+            images::run(app, core, &inv, id)
+        }
         CommandId::OpenDiscordBrowser => core.open_discord_invite(),
         CommandId::CopyDiscordInvite => copy(app, core, core.discord_invite_url()?, "Copied Discord invite"),
         CommandId::SwitchAccount => switch(inv.arg.and_then(|a| a.parse().ok()).map(AccountId)),

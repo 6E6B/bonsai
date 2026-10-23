@@ -618,6 +618,9 @@ commands! {
     SearchRoblox => "search.open", "Search Roblox (results page)", ["search", "find", "results", "people", "experiences", "groups", "marketplace"], Text, Read, [];
     ClearSearchHistory => "search.clear_history", "Clear recent searches", ["search", "history", "recent", "clear"], None, Local, [];
 
+    SaveImage => "image.save", "Save Image As…", ["image", "thumbnail", "picture", "save", "download", "render"], None, Local, [];
+    CopyImage => "image.copy", "Copy Image", ["image", "thumbnail", "picture", "copy", "clipboard"], None, Local, [];
+    CopyImageUrl => "image.copy_url", "Copy Image URL", ["image", "thumbnail", "picture", "copy", "url", "link"], None, Read, [];
     CopyId => "entity.copy_id", "Copy ID", ["copy", "id"], None, Read, [];
     CopyLink => "entity.copy_link", "Copy link", ["copy", "link", "url"], None, Read, [];
     OpenOnWebsite => "entity.open_website", "Open on website", ["browser", "web", "site"], None, Read, [Shortcut::ctrl_shift("O")];
