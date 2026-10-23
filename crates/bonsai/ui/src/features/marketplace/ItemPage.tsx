@@ -51,6 +51,7 @@ import {
 import { DemandPips, TrendMark, useValuesRefresh, ValueAmount, ValueFlags } from "~/lib/value-tags"
 import { rapGap, VALUES_SOURCE, versionLabel } from "~/lib/values"
 import { useWikiAbout, WikiTab } from "~/lib/wiki-panels"
+import { Dependencies } from "./Dependencies"
 import { PriceHistory } from "./PriceHistory"
 
 const ms = (iso: string) => {
@@ -163,12 +164,31 @@ export default function ItemPage() {
     return name ? { kind: bundle() ? "bundle" : "item", id: id(), name } : null
   })
   const sections = createMemo(() => [
-    { value: "similar", label: "Similar items", disabled: !inCatalog() },
-    { value: "resellers", label: "Resellers", disabled: !resells() },
-    { value: "history", label: "Price history", disabled: !resells() },
-    { value: "owners", label: "Owners", disabled: !resells() || bundle() },
+    ...(inCatalog() ? [{ value: "similar", label: "Similar items" }] : []),
+    ...(!bundle() ? [{ value: "dependencies", label: "Dependencies" }] : []),
+    ...(inCatalog()
+      ? [
+          { value: "resellers", label: "Resellers", disabled: !resells() },
+          { value: "history", label: "Price history", disabled: !resells() },
+          { value: "owners", label: "Owners", disabled: !resells() || bundle() },
+        ]
+      : []),
     ...(wiki.article ? [{ value: "wiki", label: "Wiki" }] : []),
   ])
+  onCleanup(
+    handle("market.dependencies", () => {
+      if (bundle()) return showToast("Open an item in this bundle to view its dependencies.")
+      setSection("dependencies")
+    }),
+  )
+  createEffect(
+    on(
+      () => [id(), bundle(), inCatalog()] as const,
+      () => {
+        setSection(inCatalog() ? "similar" : "dependencies")
+      },
+    ),
+  )
   useSubTabs(sections, section, setSection)
   createEffect(() => {
     if (resells() && section() === "similar" && info()?.hasResellers) setSection("resellers")
@@ -310,7 +330,15 @@ export default function ItemPage() {
                 <Menu
                   icon="more"
                   label="More"
-                  items={entityMenu(target(), item().bundle ? [] : templateItems(item().id, item().assetType))}
+                  items={entityMenu(
+                    target(),
+                    item().bundle
+                      ? []
+                      : [
+                          menuItem("market.dependencies", { label: "View dependencies", icon: "inventory" }),
+                          ...templateItems(item().id, item().assetType),
+                        ],
+                  )}
                 />
               </div>
               <Show when={sound()} keyed>
@@ -383,8 +411,17 @@ export default function ItemPage() {
         )}
       </Show>
 
-      <Show when={inCatalog()}>
+      <Show when={info()}>
         <Tabs aria-label="Item sections" items={sections()} value={section()} onChange={setSection}>
+          <TabPanel value="dependencies">
+            <Show when={!bundle() && info()}>
+              {(item) => (
+                <Show when={`${shell.active ?? 0}:${id()}:${item().assetType}`} keyed>
+                  {(_key) => <Dependencies id={id()} assetType={item().assetType} />}
+                </Show>
+              )}
+            </Show>
+          </TabPanel>
           <TabPanel value="similar">
             <Show when={bundle() || info()?.assetType}>
               <Similar id={id()} bundle={bundle()} assetType={info()?.assetType ?? 0} />

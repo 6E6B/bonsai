@@ -441,6 +441,76 @@ fn item_ref(id: Id, bundle: bool) -> ItemRef {
     }
 }
 
+/// One referenced asset. Missing economy details never remove a dependency from the list.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct DependencyView {
+    pub id: Id,
+    pub name: Option<String>,
+    pub asset_type: i32,
+    pub type_name: String,
+    pub creator: String,
+    pub creator_id: Id,
+    pub creator_is_group: bool,
+    pub creator_verified: bool,
+    pub uses: Vec<DependencyUsage>,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+pub struct DependencyUsage {
+    pub class: String,
+    pub path: String,
+    pub property: String,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+pub struct DependenciesView {
+    pub list: List<DependencyView>,
+    pub note: Option<String>,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn item_dependencies(core: State<'_, Arc<Core>>, id: Id, asset_type: i32) -> DependenciesView {
+    let account = core.acting(None).unwrap_or(AccountId::ANONYMOUS);
+    let resource = core.item_dependencies(account, id.0, asset_type);
+    let note = resource.data.as_ref().and_then(|d| d.note.clone());
+    let list = List {
+        loading: resource.loading,
+        error: resource.error,
+        more: false,
+        items: resource
+            .data
+            .as_ref()
+            .map(|d| {
+                d.items
+                    .iter()
+                    .map(|item| DependencyView {
+                        id: Id(item.id),
+                        name: item.name.clone(),
+                        asset_type: item.asset_type,
+                        type_name: bonsai_core::market::asset_type_name(item.asset_type).into(),
+                        creator: item.creator.clone(),
+                        creator_id: Id(item.creator_id),
+                        creator_is_group: item.creator_is_group,
+                        creator_verified: item.creator_verified,
+                        uses: item
+                            .uses
+                            .iter()
+                            .map(|u| DependencyUsage {
+                                class: u.class.clone(),
+                                path: u.path.clone(),
+                                property: u.property.clone(),
+                            })
+                            .collect(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
+    };
+    DependenciesView { list, note }
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn item_page(core: State<'_, Arc<Core>>, id: Id, bundle: bool) -> ItemView {

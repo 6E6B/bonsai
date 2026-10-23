@@ -39,6 +39,11 @@ zeroize.workspace = true
 fs2.workspace = true
 tempfile.workspace = true
 
+rbx_binary.workspace = true
+rbx_xml.workspace = true
+rbx_dom_weak.workspace = true
+futures.workspace = true
+
 [dev-dependencies]
 bonsai-api = { workspace = true, features = ["replay"] }
 tokio = { workspace = true }

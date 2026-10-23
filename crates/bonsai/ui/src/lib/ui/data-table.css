@@ -1,10 +1,12 @@
 @layer components {
   [data-component="data-table"] {
     min-width: 0;
-    /* Columns wider than the table get cut off instead of painting over whatever sits beside it.
-     * `clip`, not `hidden`, so the sticky header still sticks to the page. */
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+    /* Clip horizontal overflow without creating a vertical scroll container: the header
+     * must remain sticky to the surrounding page or dialog's scrollbar. */
     overflow-x: clip;
-    /* Keep the sticky header's z-index local so it can't paint over menus, popovers or the shell. */
     isolation: isolate;
   }
 
@@ -24,16 +26,19 @@
     grid-template-columns: var(--table-columns);
     gap: 12px;
     align-items: center;
-    padding: 0 8px;
+    padding: 0 12px;
   }
 
   [data-component="data-table"] [data-slot="header"] {
     position: sticky;
     top: 0;
     z-index: 1;
-    height: 28px;
+    height: var(--control-lg);
     border-bottom: 1px solid var(--color-line);
-    background: var(--color-canvas);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    /* Opaque under scrolled rows, with the same restrained tint as other controls. */
+    background-color: var(--color-surface);
+    background-image: linear-gradient(var(--color-control), var(--color-control));
   }
 
   [data-component="data-table"] [data-slot="th"] {
@@ -57,10 +62,17 @@
     left: 0;
     width: 100%;
     height: var(--table-row);
-    border-radius: var(--radius-md);
+    border-bottom: 1px solid var(--color-line);
+    transition: background-color var(--duration) var(--ease);
   }
 
-  [data-component="data-table"] [data-slot="row"]:hover {
+  /* The last mounted row is not necessarily the last logical row in a virtual table. */
+  [data-component="data-table"] [data-slot="row"][data-last] {
+    border-bottom: 0;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+
+  [data-component="data-table"] [data-slot="row"]:is(:hover, :focus-within) {
     background: var(--color-hover);
   }
 
@@ -69,7 +81,17 @@
   }
 
   [data-component="data-table"] [data-slot="row"][data-selected] {
-    background: var(--color-active);
+    background: var(--color-accent-soft);
+  }
+
+  [data-component="data-table"] [data-slot="row"][data-selected]::before {
+    position: absolute;
+    inset-block: 6px;
+    inset-inline-start: 0;
+    width: 2px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    content: "";
   }
 
   [data-component="data-table"] [data-slot="td"] {
@@ -91,5 +113,15 @@
   [data-component="data-table"] [data-slot="td"][data-mono] {
     font-family: var(--font-mono);
     font-size: var(--text-sm);
+  }
+
+  /* Tables already communicate structure through columns and row states. Keep ordinary
+   * cell actions quiet until hovered or focused; verified/danger identity colors stay intact. */
+  [data-component="data-table"] [data-component="text-link"][data-tone="accent"] {
+    color: inherit;
+  }
+
+  [data-component="data-table"] [data-component="text-link"][data-tone="accent"]:is(:hover, :focus-visible) {
+    color: var(--color-accent);
   }
 }

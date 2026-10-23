@@ -537,6 +537,9 @@ commands! {
     PriceHistoryRange => "market.history_range", "Set the price history range (7d, 30d, 90d, 1y, all; no argument cycles)", ["price history", "chart", "range", "rap", "sales", "limited"], Text, Local, [];
     PriceHistoryZoom => "market.history_zoom", "Zoom the price history chart (in, out, reset)", ["price history", "chart", "zoom", "pan", "limited"], Text, Local, [];
     TryOn => "market.try_on", "Try on this item in 3D", ["try on", "preview", "wear", "fit", "3d", "avatar"], None, Read, [];
+    InspectDependencyUses => "market.dependency_uses", "Inspect a dependency's references", ["dependencies", "references", "property", "inspect", "mesh", "texture"], Text, Read, [];
+    SearchDependencies => "market.dependencies_search", "Search this item's dependencies", ["dependencies", "filter", "mesh", "texture", "search"], Text, Read, [];
+    ViewDependencies => "market.dependencies", "View this item's dependencies", ["dependencies", "mesh", "texture", "assets", "references", "model"], None, Read, [];
     PlayAudio => "market.play_audio", "Play or pause this sound", ["play", "pause", "audio", "sound", "music", "listen"], None, Read, [];
     PriceHistoryScale => "market.history_scale", "Show the price history on a log or linear scale (log, linear; no argument toggles)", ["price history", "chart", "log", "scale", "limited"], Text, Local, [];
     PriceHistoryView => "market.history_view", "Show price history as a chart or a table (chart, table; no argument toggles)", ["price history", "chart", "table", "sales", "limited"], Text, Local, [];

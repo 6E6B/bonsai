@@ -92,6 +92,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                       data-slot="row"
                       aria-rowindex={index + 2}
                       data-index={index}
+                      data-last={index === props.rows.length - 1 ? "" : undefined}
                       data-virtual-item={index}
                       data-selected={
                         props.selected !== undefined && props.rowKey(r()) === props.selected ? "" : undefined

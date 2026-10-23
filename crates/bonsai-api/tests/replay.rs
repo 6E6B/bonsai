@@ -913,3 +913,22 @@ async fn wardrobe_inventory_uses_csv_asset_types_and_preserves_type_and_cursor()
         .collect();
     assert_eq!(types, vec!["8,11"]);
 }
+
+#[tokio::test]
+async fn model_download_enforces_byte_budget_and_cdn_allowlist() {
+    let r = Replay::start(&["assetdelivery"]).await;
+    let c = r.client();
+    let error = c
+        .fetch_cdn_limited("https://sc0.rbxcdn.com/shirt-model-redacted", 32)
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("size limit"));
+    assert!(
+        c.fetch_cdn_limited("https://example.com/model", 1024)
+            .await
+            .is_err()
+    );
+    let requests = r.requests().await;
+    assert_eq!(requests.len(), 1);
+    assert!(!requests[0].headers.contains_key("cookie"));
+}
