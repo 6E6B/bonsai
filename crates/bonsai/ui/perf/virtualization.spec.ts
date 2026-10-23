@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
 
 async function settle(page: Page) {
   await page.waitForFunction(() => window.__bonsaiPerf?.pending === 0)
@@ -6,6 +6,69 @@ async function settle(page: Page) {
     () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
   )
 }
+
+async function expectTilesFillCells(collection: Locator) {
+  await expect(async () => {
+    const sizes = await collection.locator('[data-component="tile"]').evaluateAll((tiles) =>
+      tiles.map((tile) => {
+        const cell = tile.closest("[data-virtual-item]")?.getBoundingClientRect()
+        const card = tile.getBoundingClientRect()
+        const image = tile.querySelector('[data-component="thumbnail"]')?.getBoundingClientRect()
+        return { cell: cell?.width ?? 0, card: card.width, image: image?.width ?? 0, height: image?.height ?? 0 }
+      }),
+    )
+    expect(sizes.length).toBeGreaterThan(1)
+    for (const size of sizes) {
+      expect(size.cell).toBeGreaterThan(80)
+      expect(Math.abs(size.card - size.cell)).toBeLessThan(1)
+      expect(Math.abs(size.image - size.cell)).toBeLessThan(1)
+      expect(Math.abs(size.height - size.image)).toBeLessThan(1)
+    }
+  }).toPass({ timeout: 5000 })
+}
+
+test("virtual grid tiles fill equal columns through resize and the last partial row", async ({ page }) => {
+  await page.goto("/components")
+  await settle(page)
+  const grid = page.locator('[data-component="virtual-grid"]').last()
+  await grid.scrollIntoViewIfNeeded()
+  await expectTilesFillCells(grid)
+  for (const width of [980, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    await grid.scrollIntoViewIfNeeded()
+    await expectTilesFillCells(grid)
+  }
+  const main = page.getByRole("main")
+  await expect(async () => {
+    await main.evaluate((el) => {
+      el.scrollTop = el.scrollHeight
+    })
+    await expect(grid.getByRole("button", { name: "Item 500", exact: true })).toBeInViewport()
+  }).toPass({ timeout: 5000 })
+  await expectTilesFillCells(grid)
+  expect(await grid.locator("[data-virtual-item]").count()).toBeLessThan(150)
+})
+
+test("profile tiles fill their grid and shelf cells with context menus", async ({ page }) => {
+  await page.goto("/users/100?rows=503")
+  await settle(page)
+  const shelf = page.getByRole("region", { name: "Collectibles", exact: true })
+  await shelf.scrollIntoViewIfNeeded()
+  await expectTilesFillCells(shelf)
+  await shelf.focus()
+  await page.keyboard.press("End")
+  await expect(shelf.getByText("Collectible 129", { exact: true })).toBeVisible()
+  await expectTilesFillCells(shelf)
+  await page
+    .getByRole("tablist", { name: "Profile sections" })
+    .getByRole("tab", { name: "Collectibles", exact: true })
+    .click()
+  const grid = page.locator('[data-component="virtual-grid"]').last()
+  await expect(grid.getByText("Collectible 100", { exact: true })).toBeVisible()
+  await expectTilesFillCells(grid)
+  await page.setViewportSize({ width: 980, height: 900 })
+  await expectTilesFillCells(grid)
+})
 
 test("profile shelves render a window and reach their last preview", async ({ page }) => {
   await page.goto("/users/100?rows=2000")

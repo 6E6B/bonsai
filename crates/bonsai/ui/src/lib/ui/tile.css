@@ -3,6 +3,8 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    /* Virtual collections wrap each tile in a cell, so it no longer stretches as a grid item. */
+    width: 100%;
     min-width: 0;
     padding: 0;
     border: 0;
