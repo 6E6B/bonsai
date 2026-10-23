@@ -177,7 +177,6 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
     const arg = JSON.stringify(target)
     return [
       ...(props.items.length ? [{ kind: "separator" } as const] : []),
-      { kind: "heading", label: "Rendered thumbnail" },
       menuItem("image.save", { arg, label: "Save Image As…", icon: "download" }),
       menuItem("image.copy", { arg, label: "Copy Image", icon: "copy" }),
       menuItem("image.copy_url", { arg, label: "Copy Image URL", icon: "link" }),
