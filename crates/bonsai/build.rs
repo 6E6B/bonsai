@@ -1,4 +1,5 @@
 fn main() {
+    println!("cargo:rerun-if-env-changed=BONSAI_UPDATER_PUBLIC_KEY");
     // tauri-build embeds its Windows manifest (Common Controls v6) in the app binary only. Test
     // binaries link the same comctl32 imports and exit with STATUS_ENTRYPOINT_NOT_FOUND without it,
     // so link our copy of that manifest into every binary of this crate instead.

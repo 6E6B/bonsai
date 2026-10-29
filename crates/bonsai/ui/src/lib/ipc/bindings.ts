@@ -5,6 +5,7 @@ import * as __TAURI_EVENT from "@tauri-apps/api/event";
 
 /** Commands */
 export const commands = {
+	updateStatus: () => __TAURI_INVOKE<UpdateStatus>("update_status"),
 	shell: () => __TAURI_INVOKE<Shell>("shell"),
 	vaultStatus: () => __TAURI_INVOKE<VaultView>("vault_status"),
 	vaultSubmit: (action: string, current: string, next: string) => typedError<null, string>(__TAURI_INVOKE("vault_submit", { action, current, next })),
@@ -1658,6 +1659,8 @@ export type Person = {
 	following: boolean | null,
 };
 
+export type Phase = "unavailable" | "idle" | "checking" | "available" | "downloading" | "verifying" | "ready" | "installing";
+
 export type PinView = {
 	loading: boolean,
 	error: string | null,
@@ -2463,6 +2466,18 @@ export type Unread = {
 	trades: number,
 	notifications: number,
 	chat: number,
+};
+
+export type UpdateStatus = {
+	phase: Phase,
+	currentVersion: string,
+	version: string | null,
+	notes: string | null,
+	downloaded: number,
+	total: number | null,
+	checkedAt: number | null,
+	error: string | null,
+	unavailableReason: string | null,
 };
 
 export type User = {

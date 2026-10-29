@@ -78,6 +78,7 @@ webkit2gtk = { version = "=2.0.2", features = ["v2_34"] }
 tauri-plugin-autostart = "=2.7.0"
 tauri-plugin-clipboard-manager = "=2.4.0"
 tauri-plugin-notification = "=2.5.0"
+tauri-plugin-updater = "=2.14.1"
 # Native file pickers for theme and plugin files. Opened from Rust, so the webview gets no file access.
 # The XDG portal backend talks D-Bus; the gtk3 one starts a second GTK thread, which Tauri's GTK
 # loop doesn't survive.

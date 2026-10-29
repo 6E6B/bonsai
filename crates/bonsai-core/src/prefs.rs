@@ -408,6 +408,22 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "update_downloads",
+        "desktop",
+        "Download updates automatically",
+        "After a check finds an update, download and verify it in the background. Installing still waits for you.",
+        &["updates", "download", "background", "automatic"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "update_checks",
+        "desktop",
+        "Check for updates automatically",
+        "Check on startup and every six hours. Download and restart only when you choose.",
+        &["updates", "upgrade", "version", "release", "automatic"],
+        PrefKind::Bool,
+    ),
+    pref(
         "start_hidden",
         "desktop",
         "Start in the tray",
@@ -538,6 +554,8 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "close_to_tray" => on_off(s.close_to_tray).to_owned(),
         "start_on_login" => on_off(s.start_on_login).to_owned(),
         "start_hidden" => on_off(s.start_hidden).to_owned(),
+        "update_checks" => on_off(s.update_checks).to_owned(),
+        "update_downloads" => on_off(s.update_downloads).to_owned(),
         _ => return None,
     })
 }
@@ -603,6 +621,8 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
         "close_to_tray" => s.close_to_tray = bool()?,
         "start_on_login" => s.start_on_login = bool()?,
         "start_hidden" => s.start_hidden = bool()?,
+        "update_checks" => s.update_checks = bool()?,
+        "update_downloads" => s.update_downloads = bool()?,
         "player_command" => s.player_command = Some(value.to_owned()).filter(|c| !c.is_empty()),
         "format_locale" => {
             if !valid_format_locale(value) {

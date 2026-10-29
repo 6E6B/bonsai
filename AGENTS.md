@@ -34,6 +34,7 @@ crates/
 ### Network and secrets
 
 - No network calls outside `crates/bonsai-api` (Roblox, plus isolated `PluginHttp` HTTPS requests to explicitly granted public hosts without Roblox credentials) and `crates/bonsai-hub-api` (Bonsai hub, with the same shared machine rate limiter and no Roblox credentials). The webview never fetches anything remote: no CDNs, no Google Fonts, no Roblox image URLs. The CSP in `tauri.conf.json` enforces this; don't loosen it.
+  - Application updates are an isolated exception in `bonsai/src/updater.rs`, using `tauri-plugin-updater` against the fixed Bonsai GitHub Releases manifest and HTTPS artifacts. Automatic downloads require the user's `update_downloads` opt-in. Never pass account credentials, accept a caller-supplied endpoint or signing key, or install without signature verification and an explicit user action. The plugin is host-only; do not grant its JavaScript API capabilities.
 - Plugin network requests use only `PluginHttp`: HTTPS on port 443, exact manifest hosts approved at install, public addresses only, no redirects, proxies, credentials or arbitrary headers, bounded bodies and timeouts, and the shared machine rate limiter. `bonsai-plugin` itself stays network-free.
 - No hardcoded Roblox endpoint URLs outside generated code and `specs/undocumented/`. Hub routes belong only to `bonsai-hub-api`, following `docs/hub-openapi.json`; its origin is configured by the Rust host.
 - Never edit files under `crates/bonsai-api/src/generated/`. Change the spec or the generator and rerun `cargo xtask codegen`.

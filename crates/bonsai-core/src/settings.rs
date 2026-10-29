@@ -362,6 +362,10 @@ pub struct Settings {
     pub start_on_login: bool,
     /// A start at login stays in the tray without opening the window. Only with `tray`.
     pub start_hidden: bool,
+    /// Check for signed Bonsai releases on startup and every six hours. Never installs silently.
+    pub update_checks: bool,
+    /// Download signed updates after checks when opted in. Installing still requires a click.
+    pub update_downloads: bool,
 }
 
 /// A daily stretch without notifications, in whole local hours. `start` is when it begins and
@@ -491,6 +495,8 @@ impl Default for Settings {
             close_to_tray: false,
             start_on_login: false,
             start_hidden: false,
+            update_checks: true,
+            update_downloads: false,
         }
     }
 }

@@ -21,6 +21,7 @@ mod session_lock;
 mod signin;
 mod thumb;
 mod titlebar;
+mod updater;
 mod vault;
 mod wikiimg;
 
@@ -108,6 +109,7 @@ pub fn run() {
                 ipc::dispatch(&handle, &core, inv)
             }));
             app.manage(core);
+            updater::start(app.handle())?;
             app.manage(vault::SystemLockWarning::default());
             vault::start_idle(app.handle().clone());
             vault::start_system_lock(app.handle().clone());

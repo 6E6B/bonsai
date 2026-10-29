@@ -27,6 +27,7 @@ tauri-specta = { workspace = true }
 tauri-plugin-autostart = { workspace = true }
 tauri-plugin-clipboard-manager = { workspace = true }
 tauri-plugin-notification = { workspace = true }
+tauri-plugin-updater = { workspace = true }
 rfd = { workspace = true }
 specta = { workspace = true }
 specta-typescript = { workspace = true }

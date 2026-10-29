@@ -12,6 +12,12 @@ export interface SettingsEntry {
 
 /** Rows that aren't in bonsai-core's settings list: Roblox account settings, actions and pages. */
 export const extraEntries: SettingsEntry[] = [
+  {
+    section: "desktop",
+    setting: "updates",
+    title: "Bonsai updates",
+    words: "update upgrade version release download install restart",
+  },
   { section: "profile", title: "Display name", words: "name rename" },
   { section: "profile", title: "Username", words: "name rename" },
   { section: "profile", title: "Email", words: "contact verify" },
