@@ -1271,6 +1271,9 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         Ok(())
     };
     match id {
+        CommandId::CheckUpdates => crate::updater::check(app),
+        CommandId::DownloadUpdate => crate::updater::download(app),
+        CommandId::InstallUpdate => crate::updater::install(app),
         CommandId::VaultEnable
         | CommandId::VaultUnlock
         | CommandId::VaultLock
@@ -2830,6 +2833,7 @@ pub fn window_maximized(t: State<'_, crate::titlebar::Titlebar>) -> bool {
 pub fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .commands(collect_commands![
+            crate::updater::update_status,
             shell,
             crate::vault::vault_status,
             crate::vault::vault_submit,

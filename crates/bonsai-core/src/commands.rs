@@ -638,6 +638,9 @@ commands! {
     ResetShortcuts => "shortcuts.reset", "Reset all shortcuts", ["shortcut", "keybinding", "hotkey", "default", "reset"], None, Local, [];
     ExportSettings => "settings.export", "Save settings to a file", ["export", "backup", "save", "settings", "file", "move"], None, Local, [];
     ImportSettings => "settings.import", "Load settings from a file", ["import", "restore", "load", "settings", "file", "backup"], None, Local, [];
+    CheckUpdates => "app.check_updates", "Check for Bonsai updates", ["update", "upgrade", "version", "release"], None, Read, [];
+    DownloadUpdate => "app.download_update", "Download Bonsai update", ["update", "download", "upgrade"], None, Local, [];
+    InstallUpdate => "app.install_update", "Install Bonsai update and restart", ["update", "install", "restart", "upgrade"], None, Local, [];
     CopyDiagnostics => "app.copy_diagnostics", "Copy diagnostics for a bug report", ["diagnostics", "debug", "bug", "report", "version", "about", "support"], None, Read, [];
     ClearCache => "app.clear_cache", "Clear cached data and images", ["cache", "clear", "disk", "storage"], None, Local, [];
 

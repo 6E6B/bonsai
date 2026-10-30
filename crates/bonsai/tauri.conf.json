@@ -26,6 +26,12 @@
       "devCsp": "default-src 'self' http://localhost:1420 ws://localhost:1420; img-src 'self' thumb: http://thumb.localhost bg: http://bg.localhost wikiimg: http://wikiimg.localhost wicon: http://wicon.localhost rbxasset: http://rbxasset.localhost data:; style-src 'self' 'unsafe-inline' http://localhost:1420; script-src 'self' http://localhost:1420; connect-src 'self' ipc: http://ipc.localhost rbxasset: http://rbxasset.localhost http://localhost:1420 ws://localhost:1420; font-src 'self' data: font: http://font.localhost http://localhost:1420"
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "windows": { "installMode": "passive" }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

@@ -31,6 +31,8 @@ import { playlists, shell, startSync } from "~/lib/store"
 import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
 import { shownBackground } from "~/lib/theme"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
+import { UpdateNotice } from "~/lib/update-view"
+import { useUpdates } from "~/lib/updates"
 import { registerWikiCommands } from "~/lib/wiki-panels"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
@@ -68,6 +70,7 @@ import { VaultForm } from "./shell/VaultForm"
 const NARROW = 1280
 
 export function Layout(props: ParentProps) {
+  useUpdates()
   setTabDescriber(describePath)
   const navigate = useNavigate()
   const location = useLocation()
@@ -168,6 +171,10 @@ export function Layout(props: ParentProps) {
     dialog.show(() => <AddAccount mode={mode} onDone={() => dialog.close()} />, { title, size: "sm" })
 
   const off = [
+    handle("app.check_updates", () => {
+      visitPath("/settings/desktop/updates")
+      void runBackend("app.check_updates")
+    }),
     handle("vault.enable", () =>
       dialog.show(() => <VaultForm action="enable" onDone={() => dialog.close()} />, {
         title: "Protect all accounts",
@@ -534,6 +541,7 @@ export function Layout(props: ParentProps) {
                 >
                   <div class="flex h-full flex-col">
                     <ShellAlerts />
+                    <UpdateNotice />
                     <ChallengeDialog />
                     <HubDialogs />
                     <ImportDialog />
