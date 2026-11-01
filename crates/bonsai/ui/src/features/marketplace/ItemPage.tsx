@@ -51,7 +51,7 @@ import {
 import { DemandPips, TrendMark, useValuesRefresh, ValueAmount, ValueFlags } from "~/lib/value-tags"
 import { rapGap, VALUES_SOURCE, versionLabel } from "~/lib/values"
 import { useWikiAbout, WikiTab } from "~/lib/wiki-panels"
-import { Dependencies } from "./Dependencies"
+import { Dependencies } from "./ItemDependencies"
 import { PriceHistory } from "./PriceHistory"
 
 const ms = (iso: string) => {
