@@ -26,13 +26,32 @@ Old versions without an updater require a one-time manual installation.
    the generated `.pub` file. This public key is compiled into the app.
 3. Set Actions secret `TAURI_SIGNING_PRIVATE_KEY` to the private key contents and
    secret `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` to its password. Never commit either.
-4. Bump the workspace version and push its matching `v<version>` tag. All three
-   build jobs sign their update packages. The release job validates the complete
-   platform set, creates `latest.json` with release notes and signatures, and uploads
-   it alongside the packages to the draft release. Review its assets and publish it.
+4. Use the GitHub release steps below. Signing configuration is checked before the
+   platform builds start.
 
-Tagged builds fail if signing configuration is missing. Manual workflow runs may
-build unsigned installers for testing, but these cannot receive in-app updates.
+## Create a release from GitHub
+
+1. Open **Actions > Release > Run workflow** and select `main`.
+2. Leave **Create a draft release** checked and click **Run workflow**.
+3. Wait for all three platform builds and **Draft release** to pass. Open the draft
+   using the link in the run summary, or find it on the repository's Releases page.
+4. Review the release notes and installers, confirm `latest.json` is attached, then
+   click **Publish release**. Leave **Set as a pre-release** unchecked for stable updates.
+
+The workflow uses `[workspace.package].version` in `Cargo.toml` and creates the matching
+`v<version>` tag from the exact commit built. No local Git commands or extra token are
+needed. For the first release, the current `0.1.0` version becomes `v0.1.0`. Before
+each later release, commit a higher workspace version to `main`. An existing tag that
+points to another commit is rejected instead of being moved. The workflow never publishes
+automatically. If draft creation or asset upload fails, delete the incomplete draft before
+rerunning; do not publish it with missing assets.
+
+For test installers without a release, uncheck **Create a draft release**. Downloads
+appear under **Artifacts** on the run page. These test builds may be unsigned if signing
+is not configured, and unsigned builds cannot receive in-app updates. Pushing a matching
+`v<version>` tag still starts the signed draft-release flow.
+
+Release builds fail if signing configuration is missing.
 Keep the same key for subsequent releases. Changing the compiled verification key
 without a migration breaks trust for existing installations. Updater signatures
 are separate from Windows Authenticode and macOS signing/notarization.
