@@ -51,6 +51,7 @@ runs:
         if [ -n "$RUST_TARGETS" ]; then rustup target add $RUST_TARGETS; fi
         # Cargo's user config overrides the [profile] in Cargo.toml.
         if [ "$FAST_DEPS" = true ]; then
+          mkdir -p "${CARGO_HOME:-$HOME/.cargo}"
           printf '[profile.dev.package."*"]\nopt-level = 0\n' >> "${CARGO_HOME:-$HOME/.cargo}/config.toml"
         fi
         rustc --version
