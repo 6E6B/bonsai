@@ -1,14 +1,19 @@
-# Builds installers for every platform. A `v*` tag also creates a draft GitHub release with them;
-# a manual run only uploads them as workflow artifacts.
+# Builds installers and prepares a draft release from a tag or the Run workflow button.
 name: Release
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: Create a draft release using the version in Cargo.toml (uncheck for test installers only)
+        type: boolean
+        default: true
 
 concurrency:
-  group: release-${{ github.ref }}
+  # Serialize manual and tag runs so they cannot race to create the same release.
+  group: release
   cancel-in-progress: false
 
 permissions:
@@ -20,26 +25,55 @@ env:
 
 jobs:
   version:
-    name: Check tag matches version
-    if: startsWith(github.ref, 'refs/tags/')
+    name: Check release version and signing
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      create_release: ${{ steps.version.outputs.create_release }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: |
+          fetch-depth: 0
+      - id: version
+        env:
+          CREATE_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') || inputs.create_release }}
+          BONSAI_UPDATER_PUBLIC_KEY: ${{ vars.BONSAI_UPDATER_PUBLIC_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
           version=$(sed -n '/^\[workspace.package\]/,/^\[/s/^version = "\(.*\)"/\1/p' Cargo.toml)
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+          if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Expected a stable major.minor.patch workspace version in Cargo.toml."
+            exit 1
+          fi
+          tag="v$version"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "create_release=$CREATE_RELEASE" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" == refs/tags/* ]] && [ "$tag" != "$GITHUB_REF_NAME" ]; then
             echo "::error::Tag $GITHUB_REF_NAME does not match workspace version $version in Cargo.toml."
             exit 1
+          fi
+          if [ "$CREATE_RELEASE" = true ]; then
+            if [ -z "$BONSAI_UPDATER_PUBLIC_KEY" ] || [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+              echo "::error::Configure BONSAI_UPDATER_PUBLIC_KEY and TAURI_SIGNING_PRIVATE_KEY first. See docs/updates.md."
+              exit 1
+            fi
+            if git show-ref --verify --quiet "refs/tags/$tag"; then
+              if [ "$(git rev-parse "refs/tags/$tag^{commit}")" != "$(git rev-parse HEAD)" ]; then
+                echo "::error::Tag $tag already points to another commit. Bump the workspace version before releasing again."
+                exit 1
+              fi
+            fi
+            echo "Preparing draft release **$tag** from commit $GITHUB_SHA. Nothing will be published automatically." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Building test installers only. No tag or release will be created." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   build:
     name: Build (${{ matrix.name }})
     needs: version
-    # Runs on manual dispatch too, where `version` is skipped.
-    if: ${{ !failure() && !cancelled() }}
     strategy:
       fail-fast: false
       matrix:
@@ -75,13 +109,14 @@ jobs:
         shell: bash
         env:
           BUNDLE_ARGS: ${{ matrix.args }}
+          CREATE_RELEASE: ${{ needs.version.outputs.create_release }}
           # linuxdeploy is itself an AppImage; runners have no FUSE.
           APPIMAGE_EXTRACT_AND_RUN: 1
           BONSAI_UPDATER_PUBLIC_KEY: ${{ vars.BONSAI_UPDATER_PUBLIC_KEY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]] && { [ -z "$BONSAI_UPDATER_PUBLIC_KEY" ] || [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; }; then
+          if [ "$CREATE_RELEASE" = true ] && { [ -z "$BONSAI_UPDATER_PUBLIC_KEY" ] || [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; }; then
             echo "::error::Release updates require BONSAI_UPDATER_PUBLIC_KEY and TAURI_SIGNING_PRIVATE_KEY. See docs/updates.md."
             exit 1
           fi
@@ -108,8 +143,8 @@ jobs:
 
   release:
     name: Draft release
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: [version, build]
+    if: needs.version.outputs.create_release == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -127,13 +162,17 @@ jobs:
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
         run: |
           mkdir out
           find dist -type f -exec mv -t out {} +
-          gh release create "$GITHUB_REF_NAME" \
-            --repo "$GITHUB_REPOSITORY" --verify-tag --draft --generate-notes --title "$GITHUB_REF_NAME"
-          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json body --jq .body > release-notes.txt
-          python3 scripts/update-manifest.py --directory out --tag "$GITHUB_REF_NAME" \
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft --generate-notes --title "$RELEASE_TAG"
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json body --jq .body > release-notes.txt
+          python3 scripts/update-manifest.py --directory out --tag "$RELEASE_TAG" \
             --repository "$GITHUB_REPOSITORY" --notes-file release-notes.txt
           (cd out && sha256sum -- * > SHA256SUMS)
-          gh release upload "$GITHUB_REF_NAME" out/* --repo "$GITHUB_REPOSITORY"
+          gh release upload "$RELEASE_TAG" out/* --repo "$GITHUB_REPOSITORY"
+          url=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json url --jq .url)
+          echo "### [$RELEASE_TAG draft release]($url)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Installers, updater signatures, latest.json and checksums are uploaded. Review the notes and assets, then click **Publish release** when ready." >> "$GITHUB_STEP_SUMMARY"
