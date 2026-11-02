@@ -49,7 +49,7 @@ export function TitleBar() {
     <header
       data-tauri-drag-region
       data-window-corner="top"
-      class="flex h-8 shrink-0 items-center border-b border-line bg-deep"
+      class="flex h-9 shrink-0 items-center border-b border-line bg-deep"
     >
       {controls(buttons()?.start ?? [])}
       <span data-tauri-drag-region class="flex flex-1 select-none items-baseline gap-1.5 px-3 text-sm">
