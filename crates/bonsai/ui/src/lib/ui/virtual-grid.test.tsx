@@ -64,4 +64,29 @@ test("keeps tiles when the column count changes", async () => {
   expect(r.container.querySelector("[data-tile=c]")).toBe(before)
   expect(before?.closest("[data-slot=item]")?.getAttribute("data-virtual-item")).toBe("2")
   expect(made.mock.calls.length).toBe(count)
+  expectRows(2)
+
+  // Back and forth across thresholds: every rendered row holds exactly its own tiles.
+  for (const [width, columns] of [
+    [300, 3],
+    [600, 6],
+    [100, 1],
+    [300, 3],
+  ] as const) {
+    resize(grid, width)
+    await frame()
+    expectRows(columns)
+  }
+  // "c" stayed in view the whole time, so it is still the same node.
+  expect(r.container.querySelector("[data-tile=c]")).toBe(before)
+
+  function expectRows(columns: number) {
+    const rendered = [...r.container.querySelectorAll("[data-slot=row]")]
+    expect(rendered.length).toBeGreaterThan(0)
+    for (const row of rendered) {
+      const at = Number(row.getAttribute("data-index")) * columns
+      const tiles = [...row.querySelectorAll("[data-tile]")].map((t) => t.getAttribute("data-tile"))
+      expect(tiles).toEqual(items.slice(at, at + columns))
+    }
+  }
 })
