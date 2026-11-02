@@ -7,11 +7,20 @@ paths:
     post:
       # Captured 2026-10-12 with a live request (fixture: auth_ticket.json).
       # Called by every Play / Join button on www.roblox.com/games/* before opening roblox-player:.
-      x-captured: "2026-10-12, Play button on www.roblox.com/games/{placeId}"
+      # Since 2026-11 the site first GETs /v1/client-assertion and posts its response as the
+      # body (GameLaunch bundle, captured 2026-11-01 on www.roblox.com/games/{placeId}). A
+      # ticket minted without it is issued but the player does not join with it.
+      x-captured: "2026-11-01, Play button on www.roblox.com/games/{placeId}"
       x-rust-name: post_authentication_ticket
       summary: Mint a one-shot authentication ticket for the game client. The ticket is returned in the `rbx-authentication-ticket` response header.
       parameters:
         - { in: header, name: Referer, type: string, required: true, description: "Must be https://www.roblox.com/" }
         - { in: header, name: RBXAuthenticationNegotiation, type: string, description: "The site sends 1" }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/AuthenticationTicketRequest" } }
       responses:
         "200": { description: OK }
+definitions:
+  AuthenticationTicketRequest:
+    type: object
+    properties:
+      clientAssertion: { type: string, description: "From GET /v1/client-assertion" }

@@ -608,7 +608,7 @@
       "module": "auth::v1",
       "path": "/v1/client-assertion",
       "summary": "Creates a client assertion to be used when generating an auth ticket.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -7352,16 +7352,6 @@
     },
     {
       "deprecated": false,
-      "function": "place_launcher",
-      "host": "assetgame.roblox.com",
-      "method": "GET",
-      "module": "assetgame::undocumented",
-      "path": "/game/PlaceLauncher.ashx",
-      "summary": "Join script request used by the player. request is RequestGame, RequestGameJob, RequestFollowUser or RequestPrivateGame.",
-      "used": true
-    },
-    {
-      "deprecated": false,
       "function": "post_authentication_ticket",
       "host": "auth.roblox.com",
       "method": "POST",
@@ -7662,6 +7652,16 @@
     },
     {
       "deprecated": false,
+      "function": "place_launcher",
+      "host": "www.roblox.com",
+      "method": "GET",
+      "module": "www::undocumented",
+      "path": "/Game/PlaceLauncher.ashx",
+      "summary": "Join script request used by the player. request is RequestGame, RequestGameJob, RequestFollowUser or RequestPrivateGame.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "page_badge",
       "host": "www.roblox.com",
       "method": "GET",
@@ -7892,5 +7892,5 @@
     }
   ],
   "total": 789,
-  "used": 254
+  "used": 255
 }

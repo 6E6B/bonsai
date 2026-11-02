@@ -10,7 +10,6 @@ pub mod api_rolimons_com;
 pub mod apis;
 pub mod arkoselabs;
 pub mod assetdelivery;
-pub mod assetgame;
 pub mod auth;
 pub mod avatar;
 pub mod badges;

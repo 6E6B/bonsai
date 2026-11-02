@@ -15,6 +15,7 @@ async fn csrf_token_is_fetched_and_request_retried_once() {
             referer: "https://www.roblox.com/".into(),
             ..Default::default()
         },
+        &Default::default(),
     )
     .unwrap();
     let resp = c.send(req.clone()).await.unwrap();
@@ -36,6 +37,13 @@ async fn csrf_token_is_fetched_and_request_retried_once() {
             .unwrap()
             .starts_with(".ROBLOSECURITY=")
     );
+}
+
+#[tokio::test]
+async fn client_assertion_is_read() {
+    let r = Replay::start(&["client_assertion"]).await;
+    let a = auth::v1::get_client_assertion(&r.client()).await.unwrap();
+    assert_eq!(a.client_assertion.as_deref(), Some("assertion-redacted"));
 }
 
 #[tokio::test]
@@ -108,7 +116,9 @@ async fn server_errors_retry_reads_but_never_writes() {
 async fn challenge_is_a_typed_error_and_can_be_answered() {
     let r = Replay::start(&["challenge"]).await;
     let c = r.client();
-    let req = auth::undocumented::post_authentication_ticket_request(&Default::default()).unwrap();
+    let req =
+        auth::undocumented::post_authentication_ticket_request(&Default::default(), &Default::default())
+            .unwrap();
     let e = c.send(req.clone()).await.unwrap_err();
     let Error::Challenge(ch) = e else {
         panic!("expected challenge, got {e:?}")
@@ -622,7 +632,9 @@ async fn challenge_hook_answers_and_the_write_is_resent() {
         })
         .build()
         .unwrap();
-    let req = auth::undocumented::post_authentication_ticket_request(&Default::default()).unwrap();
+    let req =
+        auth::undocumented::post_authentication_ticket_request(&Default::default(), &Default::default())
+            .unwrap();
     let resp = c.send(req).await.unwrap();
     assert_eq!(resp.status, 200);
     assert_eq!(
@@ -656,7 +668,9 @@ async fn challenge_hook_declining_fails_the_write() {
         .on_challenge(|_, _| async { None })
         .build()
         .unwrap();
-    let req = auth::undocumented::post_authentication_ticket_request(&Default::default()).unwrap();
+    let req =
+        auth::undocumented::post_authentication_ticket_request(&Default::default(), &Default::default())
+            .unwrap();
     let e = c.send(req).await.unwrap_err();
     assert!(matches!(e, Error::Challenge(_)), "{e:?}");
     assert_eq!(r.requests().await.len(), 1);

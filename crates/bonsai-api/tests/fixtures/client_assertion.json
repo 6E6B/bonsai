@@ -1,0 +1,23 @@
+{
+  "captured": "2026-11-01",
+  "source": "synthetic",
+  "note": "Shape from the tracker's auth v1 spec and the GameLaunch bundle on www.roblox.com/games/{placeId}, which posts this response as the body of /v1/authentication-ticket. Not recorded live: the assertion is a credential, and live.rs checks the real flow without saving it.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "auth.roblox.com",
+        "path": "/v1/client-assertion"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "clientAssertion": "assertion-redacted"
+        }
+      }
+    }
+  ]
+}
