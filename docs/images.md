@@ -33,6 +33,19 @@ best cached render or displayed bytes. URL and byte caches are shared with `thum
 the same freshness rules. Avatar/outfit changes invalidate export sizes too. Export images do
 not replace the small display image or increase the UI's image memory budget.
 
+## Freshness of avatar images
+
+A looked-up image URL is trusted for 7 days, or for 1 hour for headshots, avatars and outfits.
+An older URL still shows its image at once and is checked in the background. Avatar images
+that are on screen are also checked while shown: the saved accounts' own ones every 5 minutes,
+everyone else's every hour, and all of them when the user presses F5 (`view.refresh`), skipping
+any checked in the last minute. One check is at most one batch request of 100 images, and the
+image only downloads again when Roblox returns a new URL.
+
+`thumb://` URLs are fixed per image, so the webview keeps showing what it loaded. When an
+image changes during the run, the backend bumps its revision in `Shell.thumbRevs` and
+`thumbUrl()` adds it to the URL, which makes every `<img>` showing it load the new one.
+
 Rust handles every request through `bonsai-api` and its existing machine limiter and credential
 rules. The webview passes only a validated thumbnail identity and suggested name, never image
 bytes, a remote fetch URL, or an arbitrary file path. There are no new network endpoints,

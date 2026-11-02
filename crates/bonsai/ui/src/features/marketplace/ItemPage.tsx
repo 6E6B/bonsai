@@ -166,11 +166,12 @@ export default function ItemPage() {
   const sections = createMemo(() => [
     ...(inCatalog() ? [{ value: "similar", label: "Similar items" }] : []),
     ...(!bundle() ? [{ value: "dependencies", label: "Dependencies" }] : []),
-    ...(inCatalog()
+    // Only limiteds and collectibles have copies to resell, track or own.
+    ...(inCatalog() && resells()
       ? [
-          { value: "resellers", label: "Resellers", disabled: !resells() },
-          { value: "history", label: "Price history", disabled: !resells() },
-          { value: "owners", label: "Owners", disabled: !resells() || bundle() },
+          { value: "resellers", label: "Resellers" },
+          { value: "history", label: "Price history" },
+          ...(!bundle() ? [{ value: "owners", label: "Owners" }] : []),
         ]
       : []),
     ...(wiki.article ? [{ value: "wiki", label: "Wiki" }] : []),

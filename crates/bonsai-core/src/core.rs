@@ -128,7 +128,7 @@ pub(crate) struct Inner {
     /// The quick sign-in code that is waiting, so cancelling can tell Roblox.
     pub(crate) quick: Mutex<Option<crate::signin::QuickSession>>,
     pub(crate) quick_poll: Duration,
-    thumb_tx: mpsc::UnboundedSender<ThumbKey>,
+    thumb_tx: mpsc::UnboundedSender<ThumbMsg>,
     /// Which loaded thumbnails stay in memory.
     pub(crate) thumb_budget: Mutex<thumbs::Budget>,
     /// Woken on every store change, so `thumb://` requests wait for their image without polling.
@@ -546,9 +546,15 @@ impl Core {
         for k in missing {
             if let std::collections::hash_map::Entry::Vacant(e) = s.thumbs.entry(k) {
                 e.insert(ThumbState::Loading);
-                let _ = self.inner.thumb_tx.send(k);
+                let _ = self.inner.thumb_tx.send(ThumbMsg::Want(k));
             }
         }
+    }
+
+    /// Check the shown avatar images against Roblox again, like reloading a page on the site.
+    /// Ones checked in the last minute are skipped.
+    pub fn refresh_thumbs(&self) {
+        let _ = self.inner.thumb_tx.send(ThumbMsg::Refresh);
     }
 
     /// Show a short message in the corner.
@@ -949,7 +955,10 @@ impl Inner {
                     already_added: already,
                 });
                 self.thumb_tx
-                    .send(ThumbKey::large(thumbs::ThumbKind::Headshot, user.id))
+                    .send(ThumbMsg::Want(ThumbKey::large(
+                        thumbs::ThumbKind::Headshot,
+                        user.id,
+                    )))
                     .ok();
                 self.store
                     .write()
@@ -1551,13 +1560,42 @@ impl Inner {
 /// webview keeps its own copy of what it shows, so this only has to cover a few screens.
 const THUMB_MEMORY_BYTES: usize = 16 << 20;
 
-/// A thumbnail URL looked up before whose image is still on disk, and whether it is fresh.
-fn cached_thumb_url(inner: &Inner, k: &ThumbKey) -> Option<(String, bool)> {
+/// A thumbnail URL looked up before whose image is still on disk, and when it was looked up.
+fn cached_thumb_url(inner: &Inner, k: &ThumbKey) -> Option<(String, i64)> {
     let c = inner
         .cache
         .get::<String>(Kind::ThumbUrl, AccountId::ANONYMOUS, &k.request_id())?;
-    let fresh = c.is_fresh(k.kind.url_age_secs());
-    inner.disk.has(&c.value).then_some((c.value, fresh))
+    inner.disk.has(&c.value).then_some((c.value, c.fetched_at))
+}
+
+/// What the thumbnail worker is asked to do.
+pub(crate) enum ThumbMsg {
+    /// Load an image that is not in memory.
+    Want(ThumbKey),
+    /// The user refreshed: check the shown avatar images again.
+    Refresh,
+}
+
+/// How often the worker looks for shown avatar images that are due to be checked again.
+const RECHECK_EVERY: Duration = Duration::from_secs(60);
+
+/// Shown avatar images due to be checked again, given each one's maximum age.
+fn due_thumbs(
+    inner: &Inner,
+    checked: &HashMap<ThumbKey, i64>,
+    own_age: i64,
+    other_age: i64,
+) -> Vec<ThumbKey> {
+    let recent = inner.thumb_budget.lock().recent();
+    let own: HashSet<u64> = inner
+        .store
+        .read()
+        .accounts
+        .accounts
+        .iter()
+        .map(|a| a.id.0)
+        .collect();
+    thumbs::due_for_check(&recent, checked, &own, crate::cache::now(), own_age, other_age)
 }
 
 /// Who looks thumbnails up: the first signed-in account, since Roblox allows a signed-in user
@@ -1573,45 +1611,78 @@ pub(crate) fn thumb_client(inner: &Inner) -> Client {
         .unwrap_or_else(|| inner.anon.clone())
 }
 
-async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKey>) {
+async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbMsg>) {
     let mut pending: Vec<ThumbKey> = Vec::new();
     // Keys already shown from a stale cached URL and waiting to be checked again. A failed
     // check leaves the shown image alone.
     let mut stale: HashSet<ThumbKey> = HashSet::new();
+    // When each shown image's URL was last confirmed, in Unix seconds.
+    let mut checked: HashMap<ThumbKey, i64> = HashMap::new();
+    let mut recheck = tokio::time::interval(RECHECK_EVERY);
+    recheck.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
     // Keys to look up again, by when. One queue, so retries that fall due together go out in
     // one request.
     let mut later: HashMap<ThumbKey, tokio::time::Instant> = HashMap::new();
     let mut tries: HashMap<ThumbKey, u32> = HashMap::new();
     loop {
         // Collect what arrives within one frame.
-        let mut incoming = Vec::new();
+        let mut msgs = Vec::new();
+        // Shown images to check again; their current image stays up meanwhile.
+        let mut again_shown = Vec::new();
         if pending.is_empty() {
             let next = later.values().min().copied();
             tokio::select! {
-                k = rx.recv() => match k {
-                    Some(k) => incoming.push(k),
+                m = rx.recv() => match m {
+                    Some(m) => msgs.push(m),
                     None => return,
                 },
                 _ = tokio::time::sleep_until(next.unwrap_or_else(tokio::time::Instant::now)), if next.is_some() => {}
+                _ = recheck.tick() => {
+                    again_shown = due_thumbs(&inner, &checked, thumbs::OWN_AVATAR_AGE_SECS, thumbs::AVATAR_AGE_SECS);
+                }
             }
         }
         let deadline = tokio::time::Instant::now() + Duration::from_millis(16);
-        while let Ok(Some(k)) = tokio::time::timeout_at(deadline, rx.recv()).await {
-            incoming.push(k);
+        while let Ok(Some(m)) = tokio::time::timeout_at(deadline, rx.recv()).await {
+            msgs.push(m);
+        }
+        let mut incoming = Vec::new();
+        for m in msgs {
+            match m {
+                ThumbMsg::Want(k) => incoming.push(k),
+                ThumbMsg::Refresh => again_shown.extend(due_thumbs(
+                    &inner,
+                    &checked,
+                    thumbs::REFRESH_AGE_SECS,
+                    thumbs::REFRESH_AGE_SECS,
+                )),
+            }
         }
         incoming.sort();
         incoming.dedup();
         for k in incoming {
             later.remove(&k);
             tries.remove(&k);
-            if let Some((url, fresh)) = cached_thumb_url(&inner, &k) {
+            checked.remove(&k);
+            if let Some((url, fetched_at)) = cached_thumb_url(&inner, &k) {
                 let inner = inner.clone();
-                tokio::spawn(async move { fetch_image(&inner, k, &url).await });
-                if fresh {
+                tokio::spawn(async move { fetch_image(&inner, k, &url, false).await });
+                if crate::cache::now() - fetched_at <= k.kind.url_age_secs() {
+                    checked.insert(k, fetched_at);
                     continue;
                 }
                 stale.insert(k);
             }
+            pending.push(k);
+        }
+        for k in again_shown {
+            // Already on its way; the answer covers it.
+            if later.contains_key(&k) || pending.contains(&k) {
+                continue;
+            }
+            // Asking again at most once per check, even if the answer is lost.
+            checked.insert(k, crate::cache::now());
+            stale.insert(k);
             pending.push(k);
         }
         let now = tokio::time::Instant::now();
@@ -1646,6 +1717,7 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
                     match url {
                         Some(url) => {
                             tries.remove(&k);
+                            checked.insert(k, crate::cache::now());
                             let prev = inner
                                 .cache
                                 .get::<String>(Kind::ThumbUrl, AccountId::ANONYMOUS, &id);
@@ -1654,8 +1726,9 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
                             if was_stale && prev.is_some_and(|p| p.value == url) {
                                 continue;
                             }
+                            // A new image replacing one on screen: the UI asks for it again.
                             let inner = inner.clone();
-                            tokio::spawn(async move { fetch_image(&inner, k, &url).await });
+                            tokio::spawn(async move { fetch_image(&inner, k, &url, was_stale).await });
                         }
                         None if unavailable => {
                             tries.remove(&k);
@@ -1707,7 +1780,9 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbKe
     }
 }
 
-async fn fetch_image(inner: &Inner, k: ThumbKey, url: &str) {
+/// Load `url` as the image of `k`. `replaces` says an older image of `k` may be on screen,
+/// so the UI is told to ask for it again once this one is ready.
+async fn fetch_image(inner: &Inner, k: ThumbKey, url: &str, replaces: bool) {
     let bytes = match inner.disk.get(url) {
         Some(b) => b,
         None => match inner.anon.fetch_cdn(url).await {
@@ -1734,6 +1809,9 @@ async fn fetch_image(inner: &Inner, k: ThumbKey, url: &str) {
                 }
             }
             s.thumbs.insert(k, ThumbState::Ready(Arc::new(img)));
+            if replaces {
+                *s.thumb_revs.entry(k).or_default() += 1;
+            }
         }
         None => {
             inner.store.write().thumbs.insert(k, ThumbState::Unavailable);
@@ -1759,7 +1837,10 @@ impl Inner {
             for k in [ThumbKey::small(kind, id), ThumbKey::large(kind, id)] {
                 self.cache
                     .delete(Kind::ThumbUrl, AccountId::ANONYMOUS, &k.request_id());
+                // The webview may still hold the old one even if we don't: it asks again and
+                // waits for the new one.
                 s.thumbs.remove(&k);
+                *s.thumb_revs.entry(k).or_default() += 1;
                 budget.remove(&k);
             }
         }

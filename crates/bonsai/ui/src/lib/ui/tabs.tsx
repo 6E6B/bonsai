@@ -6,6 +6,9 @@ export interface TabItem {
   label: string
   /** Shown after the label, like a pending request count. Hidden when 0 or missing. */
   count?: number
+  /** The tab's content loaded empty. The label is muted but the tab stays and opens, so the
+   * tab row keeps the same shape from one page to the next. */
+  empty?: boolean
   disabled?: boolean
 }
 
@@ -27,7 +30,12 @@ export function Tabs(props: TabsProps) {
       <KTabs.List data-slot="list" aria-label={props["aria-label"]}>
         <For each={props.items}>
           {(t) => (
-            <KTabs.Trigger data-slot="trigger" value={t.value} disabled={t.disabled}>
+            <KTabs.Trigger
+              data-slot="trigger"
+              value={t.value}
+              disabled={t.disabled}
+              data-empty={t.empty ? "" : undefined}
+            >
               {t.label}
               <Show when={t.count}>
                 <span data-slot="count">{t.count}</span>

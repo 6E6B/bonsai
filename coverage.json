@@ -1498,7 +1498,7 @@
       "module": "avatar::v1",
       "path": "/v1/recent-items/{recentItemListType}/list",
       "summary": "Returns a list of recent items\r\nRecent items can be Assets or Outfits",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -5238,7 +5238,7 @@
       "module": "inventory::v2",
       "path": "/v2/users/{userId}/inventory",
       "summary": "Get user's inventory by multiple Roblox.Platform.Assets.AssetType.",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -7892,5 +7892,5 @@
     }
   ],
   "total": 789,
-  "used": 255
+  "used": 253
 }

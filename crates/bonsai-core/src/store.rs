@@ -430,6 +430,9 @@ pub struct StoreData {
     pub servers: HashMap<u64, Loadable<Vec<Server>>>,
     pub server_cursor: HashMap<u64, Option<String>>,
     pub thumbs: HashMap<ThumbKey, ThumbState>,
+    /// Bumped when an image changes during the run, so the UI asks for it again instead of
+    /// showing the copy it already has. Images that never changed are left out.
+    pub thumb_revs: HashMap<ThumbKey, u32>,
     pub remote: Loadable<RemoteResults>,
     pub login: Option<LoginState>,
     /// The "Sign in another device" dialog (see [`crate::signin`]).

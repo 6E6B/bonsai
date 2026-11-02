@@ -356,8 +356,57 @@ fn forum_comment(c: groups::undocumented::ForumComment) -> Option<ForumComment> 
         author: who.display_name.unwrap_or_default(),
         author_role: who.group_role_name.unwrap_or_default(),
         created: c.created_at.unwrap_or_default(),
-        text: c.content.and_then(|x| x.plain_text).unwrap_or_default(),
+        text: c.content.map(forum_text).unwrap_or_default(),
     })
+}
+
+/// A forum post or comment as plain text: `plainText`, or the text of its Slate document.
+fn forum_text(c: groups::undocumented::ForumContent) -> String {
+    if let Some(t) = c.plain_text.filter(|t| !t.is_empty()) {
+        return t;
+    }
+    let doc = match c.slate {
+        Some(serde_json::Value::String(s)) => serde_json::from_str(&s).unwrap_or_default(),
+        Some(v) => v,
+        None => return String::new(),
+    };
+    let children = doc.get("children").and_then(|c| c.as_array());
+    slate_text(children.map_or(&[][..], Vec::as_slice))
+}
+
+/// Joins Slate nodes like the site does: a newline before and after each block element.
+fn slate_text(nodes: &[serde_json::Value]) -> String {
+    const BLOCKS: [&str; 8] = [
+        "document",
+        "block-text",
+        "blockquote",
+        "heading-large",
+        "ordered-list",
+        "unordered-list",
+        "list-item",
+        "divider",
+    ];
+    let mut out = String::new();
+    let mut prev_block = false;
+    for n in nodes {
+        let block = n
+            .get("type")
+            .and_then(|t| t.as_str())
+            .is_some_and(|t| BLOCKS.contains(&t));
+        if !out.is_empty() && (block || prev_block) {
+            out.push('\n');
+        }
+        match (
+            n.get("text").and_then(|t| t.as_str()),
+            n.get("children").and_then(|c| c.as_array()),
+        ) {
+            (Some(t), _) => out.push_str(t),
+            (None, Some(c)) => out.push_str(&slate_text(c)),
+            (None, None) => {}
+        }
+        prev_block = block;
+    }
+    out
 }
 
 fn forum_post(p: groups::undocumented::ForumPost) -> Option<ForumPost> {
@@ -897,7 +946,7 @@ impl Core {
                     let first = cursor.is_none();
                     let p = groups::undocumented::GetForumPostsParams {
                         include_comment_count: Some(true),
-                        limit: Some(20),
+                        limit: Some(25),
                         cursor,
                     };
                     let r = groups::undocumented::get_forum_posts(c, group_id as i64, &cat, &p).await?;
@@ -957,7 +1006,7 @@ impl Core {
                 let (cat, post) = (cat.clone(), post.clone());
                 async move {
                     let p = groups::undocumented::GetForumCommentsParams {
-                        limit: Some(50),
+                        limit: Some(10),
                         cursor,
                     };
                     let r =
@@ -1668,6 +1717,38 @@ mod tests {
     use serde_json::json;
 
     #[test]
+    fn forum_text_reads_plain_text_then_slate() {
+        use groups::undocumented::ForumContent;
+        let plain = ForumContent {
+            plain_text: Some("hi".into()),
+            slate: Some(json!({"type": "document", "children": []})),
+        };
+        assert_eq!(forum_text(plain), "hi");
+        let doc = json!({"type": "document", "children": [
+            {"type": "block-text", "children": [{"text": "Hello "}, {"text": "there", "bold": true}]},
+            {"type": "unordered-list", "children": [
+                {"type": "list-item", "children": [{"type": "block-text", "children": [{"text": "one"}]}]},
+                {"type": "list-item", "children": [{"type": "block-text", "children": [{"text": "two"}]}]},
+            ]},
+        ]});
+        let object = ForumContent {
+            plain_text: Some(String::new()),
+            slate: Some(doc.clone()),
+        };
+        assert_eq!(forum_text(object), "Hello there\none\ntwo");
+        let string = ForumContent {
+            plain_text: None,
+            slate: Some(json!(doc.to_string())),
+        };
+        assert_eq!(forum_text(string), "Hello there\none\ntwo");
+        let broken = ForumContent {
+            plain_text: None,
+            slate: Some(json!("{not json")),
+        };
+        assert_eq!(forum_text(broken), "");
+    }
+
+    #[test]
     fn audit_lines() {
         assert_eq!(
             describe_audit(
@@ -1718,6 +1799,7 @@ mod tests {
                 id: Some("c".into()),
                 content: Some(groups::undocumented::ForumContent {
                     plain_text: Some("hello".into()),
+                    ..Default::default()
                 }),
                 ..Default::default()
             }),

@@ -2290,9 +2290,15 @@ async fn avatar_wear_outfits_and_rig() {
     c.set_emote(ME, 2, None).unwrap();
     wait_for(c, "emote cleared", toast("Emote slot cleared.")).await;
 
+    // Recent is kept locally: what was put on, newest first. Taking off and refused wears
+    // are not noted.
     let recent = poll(|| c.recent_items(ME)).await;
-    assert_eq!(recent.len(), 2);
-    assert!(!recent[0].outfit && recent[1].outfit);
+    let got: Vec<_> = recent
+        .iter()
+        .map(|r| (r.id, r.outfit, r.type_id, r.type_name.as_str()))
+        .collect();
+    assert_eq!(got, [(777, false, 2, "T-Shirt"), (24_477_597, true, 0, "")]);
+    assert_eq!(recent[1].name, "2015");
 
     // Body colors: only the named parts change; colors outside the palette are refused.
     use bonsai_core::avatar::{Part, Scale};
@@ -2474,6 +2480,61 @@ async fn thumbnail_seen_before_shows_without_network() {
         |s| matches!(s.thumbs.get(&key), Some(ThumbState::Ready(i)) if i.mime == "image/png"),
     )
     .await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn refresh_swaps_a_shown_avatar_for_its_new_render() {
+    let key = ThumbKey::small(ThumbKind::Headshot, 42);
+    let (old_url, new_url) = ("https://tr.rbxcdn.com/head-old", "https://tr.rbxcdn.com/head-new");
+    let fixture = Fixture {
+        interactions: vec![image_export_reply(&key.request_id(), "Completed", Some(new_url))],
+        ..Default::default()
+    };
+    let replay = Replay::from_fixture(&fixture).await;
+    let dir = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(dir.path());
+    let disk = DiskCache::new(&paths.thumbs_dir());
+    disk.put(old_url, &png());
+    let mut new = std::io::Cursor::new(Vec::new());
+    image::RgbaImage::from_pixel(4, 4, image::Rgba([1, 2, 3, 255]))
+        .write_to(&mut new, image::ImageFormat::Png)
+        .unwrap();
+    let new = new.into_inner();
+    disk.put(new_url, &new);
+    std::fs::create_dir_all(&paths.cache).unwrap();
+    // Looked up two minutes ago: still trusted, but old enough for a refresh to check.
+    Cache::open(&paths.db_file()).unwrap().put(
+        Kind::ThumbUrl,
+        AccountId::ANONYMOUS,
+        &key.request_id(),
+        &old_url,
+    );
+    rusqlite::Connection::open(paths.db_file())
+        .unwrap()
+        .execute("UPDATE entities SET fetched_at = fetched_at - 120", [])
+        .unwrap();
+    let r = rig(Base::Replay(replay.server.uri()), dir, Arc::default());
+    r.core.want_thumbs(&[key]);
+    wait_for(&r.core, "old image", |s| {
+        s.thumb(&key).is_some_and(|i| i.bytes == png())
+    })
+    .await;
+    assert!(
+        replay.requests().await.is_empty(),
+        "a trusted URL shows without a lookup"
+    );
+    assert!(r.core.store().thumb_revs.is_empty());
+
+    r.core.refresh_thumbs();
+    wait_for(&r.core, "new image", |s| {
+        s.thumb(&key).is_some_and(|i| i.bytes == new)
+    })
+    .await;
+    assert_eq!(r.core.store().thumb_revs.get(&key), Some(&1));
+    // Just checked: refreshing again asks nothing.
+    r.core.refresh_thumbs();
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    assert_eq!(replay.requests().await.len(), 1);
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -3161,97 +3222,6 @@ async fn theme_background_download_is_cached_for_offline_reuse() {
     assert_eq!(cached, bytes);
     assert_eq!(cached_mime, mime);
     assert!(r.core.background_image("file:///tmp/a.png").await.is_err());
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn wardrobe_indexes_all_pages_and_keeps_accounts_separate() {
-    use bonsai_core::inventory::InvSlot;
-    let mut fixture = replay::load("wardrobe");
-    for interaction in &mut fixture.interactions {
-        interaction.request.path = interaction.request.path.replace("9001", &ME.0.to_string());
-    }
-    let replay = Replay::from_fixture(&fixture).await;
-    let dir = tempfile::tempdir().unwrap();
-    let cookies = seeded(&dir);
-    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
-    let c = &r.core;
-    let start = Instant::now();
-    loop {
-        let resource = c.inventory(ME, ME.0, InvSlot::Wardrobe, false, false);
-        assert!(resource.error.is_none(), "{:?}", resource.error);
-        if let Some(page) = resource.data
-            && !resource.loading
-            && page.next.is_none()
-        {
-            assert_eq!(
-                page.items
-                    .iter()
-                    .map(|i| (i.item.id, i.asset_type))
-                    .collect::<Vec<_>>(),
-                vec![(90001, 8), (90004, 11)]
-            );
-            break;
-        }
-        assert!(start.elapsed() < Duration::from_secs(10));
-        tokio::time::sleep(Duration::from_millis(10)).await;
-    }
-    let other = c.inventory(ALT, ME.0, InvSlot::Wardrobe, false, false);
-    assert!(other.data.is_none());
-    assert!(other.error.is_some());
-    let anonymous = c.inventory(AccountId::ANONYMOUS, ME.0, InvSlot::Wardrobe, false, false);
-    assert!(anonymous.data.is_none());
-    assert!(anonymous.error.is_some());
-    let before = replay.requests().await.len();
-    assert_eq!(
-        c.inventory(ME, ME.0, InvSlot::Wardrobe, false, false)
-            .data
-            .unwrap()
-            .items
-            .len(),
-        2
-    );
-    assert_eq!(replay.requests().await.len(), before, "completed index is cached");
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn wardrobe_keeps_partial_results_and_stops_on_a_repeated_cursor() {
-    use bonsai_core::inventory::InvSlot;
-    let mut fixture = replay::load("wardrobe");
-    for interaction in &mut fixture.interactions {
-        interaction.request.path = interaction.request.path.replace("9001", &ME.0.to_string());
-    }
-    fixture.interactions[2].response.body["nextPageCursor"] = "page-two".into();
-    let replay = Replay::from_fixture(&fixture).await;
-    let dir = tempfile::tempdir().unwrap();
-    let cookies = seeded(&dir);
-    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
-    let start = Instant::now();
-    loop {
-        let resource = r.core.inventory(ME, ME.0, InvSlot::Wardrobe, false, false);
-        if let Some(error) = resource.error {
-            assert!(error.contains("repeated wardrobe cursor"));
-            assert_eq!(
-                resource.data.unwrap().items.len(),
-                1,
-                "keep the first page after a failed continuation"
-            );
-            break;
-        }
-        assert!(start.elapsed() < Duration::from_secs(10));
-        tokio::time::sleep(Duration::from_millis(10)).await;
-    }
-    let requests = replay.requests().await.len();
-    for _ in 0..5 {
-        let resource = r.core.inventory(ME, ME.0, InvSlot::Wardrobe, false, false);
-        assert!(!resource.loading);
-        assert!(resource.error.is_some());
-        tokio::time::sleep(Duration::from_millis(10)).await;
-    }
-    assert_eq!(
-        replay.requests().await.len(),
-        requests,
-        "a failed index does not spin on its cursor"
-    );
 }
 
 /// Synthetic batch replies exercise export selection without live Roblox/CDN requests.

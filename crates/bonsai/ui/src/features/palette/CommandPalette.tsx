@@ -255,6 +255,8 @@ export function CommandPalette() {
         <div class="flex items-center justify-between gap-2">
           <SegmentedControl
             size="sm"
+            stretch
+            class="min-w-0 flex-1"
             aria-label="Search in"
             options={scopes.map((s) => ({ value: s.value, label: s.label }))}
             value={scope()}

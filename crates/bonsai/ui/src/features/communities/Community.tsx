@@ -70,6 +70,8 @@ interface OpenPost {
   category: string
   id: string
   title: string
+  /** The post row as listed, so the thread shows its text before replies load. */
+  row: ForumPostRow
 }
 
 /** A community: header, shout, then about, games, store, forum, members, allies and enemies
@@ -711,7 +713,7 @@ function Forum(props: { groupId: number; canPost: boolean; canDelete: boolean; o
           <div class="flex flex-col">
             <VirtualList items={posts.items} estimateRowHeight={56}>
               {(p) => {
-                const open = () => props.onOpen({ category: category(), id: p.id, title: p.title })
+                const open = () => props.onOpen({ category: category(), id: p.id, title: p.title, row: p })
                 const repliesLabel = () => `${compact(p.replies)} ${p.replies === 1 ? "reply" : "replies"}`
                 const activeLabel = () => ago(ms(p.updated || p.created))
                 const rolePart = () => (p.authorRole ? ` · ${p.authorRole}` : "")
@@ -765,6 +767,11 @@ function Thread(props: { groupId: number; post: OpenPost; canReply: boolean; can
     ([g, c, p]) => commands.forumComments(g, c, p),
     emptyList<ForumCommentRow>,
   )
+  // The post's own text is its first comment; it shows above the replies, not among them.
+  const replies = createMemo(() => ({
+    ...list,
+    items: list.items.filter((c) => c.id !== props.post.row.firstComment),
+  }))
   const [reply, setReply] = createSignal("")
   const send = async () => {
     const text = reply().trim()
@@ -778,9 +785,24 @@ function Thread(props: { groupId: number; post: OpenPost; canReply: boolean; can
         <IconButton icon="chevron-left" label="Back to posts" onClick={() => props.onBack()} />
         <h2 class="truncate text-lg font-medium">{props.post.title}</h2>
       </div>
-      <ListState list={list} icon="chat" empty="No replies yet" more="comments">
+      <div class="flex items-start gap-3 border-b border-line pb-3">
+        <Avatar size="sm" name={props.post.row.author} src={thumbUrl("headshot", props.post.row.authorId)} />
+        <div class="flex min-w-0 flex-1 flex-col">
+          <span class="text-sm text-fg-muted">
+            <TextLink tone="name" onClick={() => run("user.open", String(props.post.row.authorId))}>
+              {props.post.row.author}
+            </TextLink>
+            <Show when={props.post.row.authorRole}> · {props.post.row.authorRole}</Show> ·{" "}
+            {ago(ms(props.post.row.created))}
+          </span>
+          <p class="whitespace-pre-wrap break-words">
+            <LinkedText text={props.post.row.text} />
+          </p>
+        </div>
+      </div>
+      <ListState list={replies()} icon="chat" empty="No replies yet" more="comments">
         <div class="flex flex-col gap-3">
-          <VirtualList items={list.items} estimateRowHeight={90} gap={12}>
+          <VirtualList items={replies().items} estimateRowHeight={90} gap={12}>
             {(c) => (
               <div class="flex items-start gap-3">
                 <Avatar size="sm" name={c.author} src={thumbUrl("headshot", c.authorId)} />

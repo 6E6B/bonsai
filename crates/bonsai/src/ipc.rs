@@ -66,6 +66,8 @@ pub struct WindowButtons {
     pub start: Vec<WindowButton>,
     /// Buttons at the right edge, in order.
     pub end: Vec<WindowButton>,
+    /// Title bar height in CSS px, matching the desktop's own title bars. 0 keeps the app's.
+    pub height: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Type)]
@@ -144,6 +146,9 @@ pub struct Shell {
     /// How the user arranged the sidebar.
     pub sidebar: SidebarView,
     pub look: Look,
+    /// Revisions of thumbnails that changed during the run, by `thumb://` path. `thumbUrl`
+    /// adds them so the webview loads the new image instead of its cached copy.
+    pub thumb_revs: std::collections::HashMap<String, u32>,
 }
 
 /// Display settings the whole window follows. Values as `settings.set` takes them.
@@ -1092,6 +1097,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                 hidden: p.hidden,
             }
         },
+        thumb_revs: s.thumb_revs.iter().map(|(k, r)| (k.path(), *r)).collect(),
         robux: s.active_data().and_then(|d| d.robux).map(|r| r as f64),
         unread: s
             .active_data()
@@ -1340,6 +1346,7 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
             let a = acting()?;
             core.send(Cmd::Refresh(a));
             core.reload_home(a);
+            core.refresh_thumbs();
             Ok(())
         }
         CommandId::Join | CommandId::JoinAs => {

@@ -225,14 +225,25 @@ const APPIMAGE_ONLY: &[&str] = &["APPDIR", "APPIMAGE", "ARGV0", "OWD", "PYTHONDO
 /// The AppImage runtime points `LD_LIBRARY_PATH`, `PATH`, `GIO_MODULE_DIR` and others into its
 /// mount so Bonsai finds its bundled libraries. Programs Bonsai starts inherit that and load the
 /// wrong glib: `flatpak`, and so Sober, dies with a symbol lookup error. This drops every list
-/// entry under `appdir`, removing a variable that is left empty, plus [`APPIMAGE_ONLY`].
+/// entry under `appdir` or another AppImage mount beside it, removing a variable that is left
+/// empty, plus [`APPIMAGE_ONLY`].
 /// Returns the changes: `Some` to set, `None` to remove.
 pub fn appimage_env_fixes(
     appdir: &str,
     vars: impl IntoIterator<Item = (String, String)>,
 ) -> Vec<(String, Option<String>)> {
     let appdir = appdir.trim_end_matches('/');
-    let inside = |p: &str| !appdir.is_empty() && (p == appdir || p.starts_with(&format!("{appdir}/")));
+    // An AppImage started from another one (the updater's restart does this) inherits that
+    // one's mount too, so strip every `.mount_*` next to `appdir`, not only `appdir`.
+    let mounts = appdir
+        .rsplit_once('/')
+        .map(|(parent, _)| format!("{parent}/.mount_"));
+    let inside = |p: &str| {
+        !appdir.is_empty()
+            && (p == appdir
+                || p.starts_with(&format!("{appdir}/"))
+                || mounts.as_deref().is_some_and(|m| p.starts_with(m)))
+    };
     let mut out = Vec::new();
     for (k, v) in vars {
         if APPIMAGE_ONLY.contains(&k.as_str()) {
@@ -282,6 +293,7 @@ mod tests {
             ("APPIMAGE", "/home/u/bonsai.appimage".into()),
             ("HOME", "/home/u".into()),
             ("OTHER", "/tmp/.mount_bonsaiXY/lib".into()),
+            ("KEEP", "/tmp/.mountain/lib:/opt/x".into()),
         ]
         .map(|(k, v)| (k.to_string(), v));
         let mut fixes = appimage_env_fixes(&format!("{m}/"), vars);
@@ -293,6 +305,7 @@ mod tests {
                 s("APPIMAGE", None),
                 s("GIO_MODULE_DIR", None),
                 s("LD_LIBRARY_PATH", None),
+                s("OTHER", None),
                 s("PATH", Some("/usr/local/bin:/usr/bin")),
                 s("PYTHONPATH", None),
                 s("XDG_DATA_DIRS", Some("/usr/share")),

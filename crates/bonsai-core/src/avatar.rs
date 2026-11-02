@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Core;
 use crate::core::Inner;
+use crate::market::ItemRef;
 use crate::res::{Key, Page, Res};
 use crate::thumbs::ThumbKind;
 
@@ -286,8 +287,9 @@ impl Rules {
     }
 }
 
-/// Something worn or used recently.
+/// Something put on recently.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Recent {
     pub id: u64,
     pub name: String,
@@ -614,6 +616,26 @@ async fn set_wearing(client: &Client, assets: Vec<avatar::v2::AssetWearModel>) -
     Ok(())
 }
 
+/// Local key of what an account put on lately.
+const RECENT_KEY: &str = "avatar_recent";
+const RECENT_WORN: usize = 120;
+
+/// Put `r` at the top of what `account` put on lately.
+fn note_worn(inner: &Inner, account: AccountId, r: Recent) {
+    let mut v = inner
+        .cache
+        .get::<Vec<Recent>>(crate::cache::Kind::Local, account, RECENT_KEY)
+        .map(|c| c.value)
+        .unwrap_or_default();
+    v.retain(|x| !(x.id == r.id && x.outfit == r.outfit));
+    v.insert(0, r);
+    v.truncate(RECENT_WORN);
+    inner
+        .cache
+        .put(crate::cache::Kind::Local, account, RECENT_KEY, &v);
+    inner.repaint();
+}
+
 async fn set_rig(client: &Client, rig: Rig) -> Result<(), Error> {
     avatar::v1::post_avatar_set_player_avatar_type(
         client,
@@ -701,30 +723,23 @@ impl Core {
         self.avatar_rules().data.map(|r| r.slots.clone())
     }
 
-    /// What `account` wore or used lately: items and outfits, newest first.
+    /// What `account` put on through Bonsai lately: items and outfits, newest first. Roblox
+    /// has no endpoint for this, so it is kept on this computer only.
     pub fn recent_items(&self, account: AccountId) -> Res<Vec<Recent>> {
         if account.is_anonymous() {
             return Res::default();
         }
-        self.inner
-            .res(Key::private(account, "avatar_recent", ""), AGE, |f| async move {
-                // List type 0 is every kind of item.
-                let r = avatar::v1::get_recent_items_by_recent_item_list_type_list(&f.client, 0).await?;
-                Ok(r.data
-                    .unwrap_or_default()
-                    .into_iter()
-                    .filter_map(|x| {
-                        let t = x.asset_type.unwrap_or_default();
-                        Some(Recent {
-                            id: u64::try_from(x.id?).ok()?,
-                            name: x.name.unwrap_or_default(),
-                            outfit: x.type_ == Some(2) || x.is_editable.is_some(),
-                            type_id: t.id.unwrap_or(0),
-                            type_name: t.name.unwrap_or_default(),
-                        })
-                    })
-                    .collect())
-            })
+        let mut v: Vec<Recent> = self.local(account, RECENT_KEY);
+        // Items are noted by id; their names come from the shared item cache.
+        for r in v.iter_mut().filter(|r| !r.outfit && r.name.is_empty()) {
+            if let Some(d) = self.item(ItemRef::asset(r.id)).data {
+                r.name = d.card.name.clone();
+            }
+        }
+        Res {
+            data: Some(std::sync::Arc::new(v)),
+            ..Default::default()
+        }
     }
 
     /// `account`'s outfits, newest first, a page at a time.
@@ -824,7 +839,9 @@ impl Core {
     /// Put `asset` on, or take it off when it is already worn. With its asset type known, a
     /// full slot drops its oldest item, as on the website.
     pub fn toggle_wear(&self, account: AccountId, asset: u64, type_id: Option<i64>) {
-        let max = type_id.and_then(|t| self.wear_slots()?.iter().find(|s| s.type_id == t).map(|s| s.max));
+        let slot = type_id.and_then(|t| self.wear_slots()?.into_iter().find(|s| s.type_id == t));
+        let max = slot.as_ref().map(|s| s.max);
+        let type_name = slot.map(|s| s.name).unwrap_or_default();
         self.inner.mutate(
             account,
             "change your avatar",
@@ -833,8 +850,22 @@ impl Core {
             move |f| async move {
                 let now = avatar::v1::get_avatar(&f.client).await?;
                 let assets = toggled(now.assets.unwrap_or_default(), asset, type_id, max);
+                let on = assets.iter().any(|a| a.id == Some(asset as i64));
                 set_wearing(&f.client, wear_list(assets)).await?;
                 forget_images(&f.inner, account.0);
+                if on {
+                    note_worn(
+                        &f.inner,
+                        account,
+                        Recent {
+                            id: asset,
+                            name: String::new(),
+                            outfit: false,
+                            type_id: type_id.unwrap_or(0),
+                            type_name,
+                        },
+                    );
+                }
                 Ok(())
             },
         );
@@ -875,6 +906,16 @@ impl Core {
                         .await?;
                 }
                 forget_images(&f.inner, account.0);
+                note_worn(
+                    &f.inner,
+                    account,
+                    Recent {
+                        id: outfit,
+                        name: o.name.unwrap_or_default(),
+                        outfit: true,
+                        ..Default::default()
+                    },
+                );
                 Ok(())
             },
         );

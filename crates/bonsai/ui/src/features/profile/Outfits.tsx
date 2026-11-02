@@ -6,7 +6,7 @@ import { commands, type List, type LookView, type OutfitView } from "~/lib/ipc/b
 import { ListState } from "~/lib/list-state"
 import { itemMenu, itemTarget } from "~/lib/menus"
 import { useLive } from "~/lib/store"
-import { thumbUrl } from "~/lib/thumb"
+import { thumbUrl, withRev } from "~/lib/thumb"
 import { Price, TILE_WIDTH } from "~/lib/tiles"
 import {
   Badge,
@@ -76,7 +76,7 @@ export function Outfits(props: { userId: number; mine: boolean; outfits: List<Ou
     if (id === NOW) return thumbUrl("avatar", props.userId, large)
     const url = thumbUrl("outfit", id, large)
     const rev = byId().get(id)?.rev
-    return url && rev ? `${url}?r=${rev}` : url
+    return url && withRev(url, rev)
   }
   /** Your own outfits can be worn from here, as the account they belong to. */
   const outfitMenu = (id: string): MenuEntry[] =>

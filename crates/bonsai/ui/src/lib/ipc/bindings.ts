@@ -1028,6 +1028,8 @@ export type ForumPostRow = {
 	locked: boolean,
 	unread: boolean,
 	text: string,
+	/**  The comment holding the post's own text; the thread view shows it above the replies. */
+	firstComment: string,
 };
 
 export type Friend = {
@@ -2217,6 +2219,11 @@ export type Shell = {
 	/**  How the user arranged the sidebar. */
 	sidebar: SidebarView,
 	look: Look,
+	/**
+	 *  Revisions of thumbnails that changed during the run, by `thumb://` path. `thumbUrl`
+	 *  adds them so the webview loads the new image instead of its cached copy.
+	 */
+	thumbRevs: { [key in string]: number },
 };
 
 export type ShoutView = {
@@ -2726,6 +2733,8 @@ export type WindowButtons = {
 	start: WindowButton[],
 	/**  Buttons at the right edge, in order. */
 	end: WindowButton[],
+	/**  Title bar height in CSS px, matching the desktop's own title bars. 0 keeps the app's. */
+	height: number,
 };
 
 /**  The main window's corners. Sent when they change; `window_frame` reads them at startup. */

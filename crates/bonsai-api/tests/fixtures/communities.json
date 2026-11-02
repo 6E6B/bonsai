@@ -524,7 +524,7 @@
         "path": "/v1/groups/7001/forums/cat-1/posts",
         "query": {
           "includeCommentCount": "true",
-          "limit": "20"
+          "limit": "25"
         }
       },
       "response": {
@@ -637,7 +637,7 @@
         "host": "groups.roblox.com",
         "path": "/v1/groups/7001/forums/cat-1/posts/post-2/comments",
         "query": {
-          "limit": "50"
+          "limit": "10"
         }
       },
       "response": {

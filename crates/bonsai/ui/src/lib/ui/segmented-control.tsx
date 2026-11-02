@@ -8,6 +8,8 @@ export interface SegmentedControlProps {
   onChange: (value: string) => void
   "aria-label": string
   size?: "sm" | "md"
+  /** Fill the container's width, splitting it evenly between the options. */
+  stretch?: boolean
   class?: string
 }
 
@@ -19,6 +21,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
     <KToggleGroup
       data-component="segmented-control"
       data-size={props.size ?? "md"}
+      data-stretch={props.stretch ? "" : undefined}
       class={props.class}
       aria-label={props["aria-label"]}
       value={props.value}

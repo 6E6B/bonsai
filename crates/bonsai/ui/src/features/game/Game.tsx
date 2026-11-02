@@ -78,7 +78,7 @@ const allSections = [
   { value: "wiki", label: "Wiki" },
 ]
 
-/** A list that has finished loading with nothing in it. Errors keep their tab so they show. */
+/** A list that has finished loading with nothing in it. Errors don't count, so they stand out. */
 const isEmpty = (l: { loading: boolean; error: string | null; items: unknown[] }) =>
   !l.loading && !l.error && l.items.length === 0
 
@@ -122,16 +122,21 @@ export default function Game() {
     return d ? { kind: "game", id: d.rootPlaceId, name: d.name, creator: d.creatorName, group: d.creatorIsGroup } : null
   })
   const [section, setSection] = createSignal("about")
+  // Every experience gets the same tabs; empty ones are muted and moved to the end, in order.
+  // Wiki is the exception: most experiences have no article, so it only shows when one exists.
   const sections = createMemo(() => {
-    const hidden = new Set<string>()
-    if (isEmpty(friendServers)) hidden.add("friends")
-    if (isEmpty(privateServers) && !offer.offer) hidden.add("private")
-    if (isEmpty(passes)) hidden.add("store")
-    if (isEmpty(badges)) hidden.add("badges")
-    if (isEmpty(events)) hidden.add("events")
-    if (isEmpty(recommended)) hidden.add("recommended")
-    if (!wiki.article) hidden.add("wiki")
-    return allSections.filter((t) => !hidden.has(t.value))
+    const empty = new Set<string>()
+    if (isEmpty(friendServers)) empty.add("friends")
+    if (isEmpty(privateServers) && !offer.offer) empty.add("private")
+    if (isEmpty(passes)) empty.add("store")
+    if (isEmpty(badges)) empty.add("badges")
+    if (isEmpty(events)) empty.add("events")
+    if (isEmpty(recommended)) empty.add("recommended")
+    const shown = allSections.filter((t) => t.value !== "wiki" || wiki.article)
+    return [
+      ...shown.filter((t) => !empty.has(t.value)),
+      ...shown.filter((t) => empty.has(t.value)).map((t) => ({ ...t, empty: true })),
+    ]
   })
   createEffect(() => {
     if (!sections().some((t) => t.value === section())) setSection("about")

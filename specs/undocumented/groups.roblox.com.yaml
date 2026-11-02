@@ -21,7 +21,7 @@ paths:
         "200": { description: OK, schema: { $ref: "#/definitions/ForumCategories" } }
   /v1/groups/{groupId}/forums/{categoryId}/posts:
     get:
-      # Captured 2026-10-13, GroupForums bundle (getForumPostsEndpoint, 10 per page). Category view.
+      # Captured 2026-10-13, GroupForums bundle (getForumPostsEndpoint, 10 per page; limit must be 10, 25, 50 or 100). Category view.
       x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
       x-rust-name: get_forum_posts
       summary: Posts in a forum category, newest activity first.
@@ -70,7 +70,7 @@ paths:
         "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
   /v1/groups/{groupId}/forums/{categoryId}/posts/{postId}/comments:
     get:
-      # Captured 2026-10-13, GroupForums bundle (getForumCommentsEndpoint, 10 per page). Post view.
+      # Captured 2026-10-13, GroupForums bundle (getForumCommentsEndpoint, 10 per page; the site sends limit=10, and 50 is rejected). Post view.
       x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
       x-rust-name: get_forum_comments
       summary: Comments on a post, oldest first. The first one is the post's own text.
@@ -161,6 +161,10 @@ definitions:
     type: object
     properties:
       plainText: { type: string }
+      # Rich text posts leave plainText empty and send a Slate document instead, as an object
+      # or a JSON string: {type: "document", children: [{type: "block-text", children:
+      # [{text: "..."}]}]}. Checked in the GroupForums bundle 2026-11-02.
+      slate: {}
   ForumCreator:
     type: object
     properties:

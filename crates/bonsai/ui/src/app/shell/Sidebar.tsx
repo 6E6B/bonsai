@@ -140,7 +140,11 @@ export function Sidebar(props: { compact: boolean }) {
       aria-label="Screens"
       data-dragging={dragging() ? "" : undefined}
       class="flex shrink-0 flex-col overflow-y-auto border-r border-line bg-deep p-2"
-      classList={{ "w-52": !props.compact, "w-12 items-center px-1.5": props.compact }}
+      classList={{
+        "w-52": !props.compact,
+        // Sized by the icon buttons so the padding is even; no scrollbar to eat the right side.
+        "items-center px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden": props.compact,
+      }}
     >
       <For each={groups}>
         {(g) => (
@@ -149,7 +153,7 @@ export function Sidebar(props: { compact: boolean }) {
               <div
                 data-group
                 class="relative flex flex-col gap-0.5"
-                classList={{ "mt-2 border-t border-line pt-2": group() !== rows()[0], "w-full": props.compact }}
+                classList={{ "mt-2 border-t border-line pt-2": group() !== rows()[0] }}
               >
                 <For each={group()}>
                   {(s) => (

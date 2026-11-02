@@ -56,6 +56,8 @@ pub struct ForumContent {
     #[serde(rename = "plainText")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plain_text: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slate: Option<serde_json::Value>,
 }
 
 /// `ForumCreator`
