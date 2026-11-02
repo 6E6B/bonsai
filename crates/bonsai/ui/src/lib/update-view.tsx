@@ -1,18 +1,18 @@
-import { Match, Show, Switch } from "solid-js"
+import { createEffect, Match, on, Show, Switch } from "solid-js"
 import { run } from "~/lib/commands/registry"
-import { Alert, Button, Card, Icon, Meter, SettingRow, Spinner } from "~/lib/ui"
+import { Alert, Button, dismissToast, Meter, SettingRow, Spinner, showToast } from "~/lib/ui"
 import { updateBusy, updateMessage, updates } from "~/lib/updates"
 
-function UpdateAction(props: { quiet?: boolean }) {
+function UpdateAction() {
   return (
     <Switch>
       <Match when={updates.phase === "available"}>
-        <Button size="sm" variant={props.quiet ? "secondary" : "primary"} onClick={() => run("app.download_update")}>
+        <Button size="sm" variant="primary" onClick={() => run("app.download_update")}>
           Download update
         </Button>
       </Match>
       <Match when={updates.phase === "ready"}>
-        <Button size="sm" variant={props.quiet ? "secondary" : "primary"} onClick={() => run("app.install_update")}>
+        <Button size="sm" variant="primary" onClick={() => run("app.install_update")}>
           Install and restart
         </Button>
       </Match>
@@ -25,31 +25,53 @@ function UpdateAction(props: { quiet?: boolean }) {
   )
 }
 
-/** Always visible above the page when an update is pending, even with the status bar hidden. */
-export function UpdateNotice() {
-  const pending = () => ["available", "downloading", "verifying", "ready", "installing"].includes(updates.phase)
-  return (
-    <Show when={pending()}>
-      <Card class="mx-4 mt-3 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
-        <span class="flex shrink-0 items-center text-fg-muted" aria-hidden="true">
-          <Show when={updateBusy(updates.phase)} fallback={<Icon name="download" />}>
-            <Spinner size="sm" />
-          </Show>
-        </span>
-        <div class="min-w-0 flex-1 text-sm" role="status">
-          <p class="font-medium">{updateMessage(updates)}</p>
-          <Show when={updates.error}>
-            <p class="text-fg-muted">{updates.error}</p>
-          </Show>
-        </div>
-        <div class="ml-auto flex shrink-0 items-center gap-2">
-          <Button size="sm" variant="ghost" onClick={() => run("nav.settings", "desktop/updates")}>
-            Details
-          </Button>
-          <UpdateAction quiet />
-        </div>
-      </Card>
-    </Show>
+/** Toasts when an update is found, when it is ready to install and when a download fails.
+ * Each one is shown once; a stale one is dismissed when the phase moves on. */
+export function useUpdateToasts() {
+  let shown = ""
+  let open: number | undefined
+  const close = () => {
+    if (open !== undefined) dismissToast(open)
+    open = undefined
+  }
+  createEffect(
+    on(
+      () => [updates.phase, updates.version] as const,
+      ([phase, version]) => {
+        const key = `${phase}:${version}`
+        if (key === shown) return
+        if (phase !== "available" && phase !== "ready") {
+          if (!updateBusy(phase)) close()
+          return
+        }
+        shown = key
+        close()
+        open = showToast({
+          title: updateMessage(updates),
+          persistent: true,
+          action:
+            phase === "available"
+              ? { label: "Download", onClick: () => run("app.download_update") }
+              : { label: "Install and restart", onClick: () => run("app.install_update") },
+        })
+      },
+    ),
+  )
+  createEffect(
+    on(
+      () => updates.error,
+      (error, prev) => {
+        if (!error || error === prev || updates.phase !== "available") return
+        close()
+        open = showToast({
+          title: "Update failed",
+          description: error,
+          variant: "error",
+          persistent: true,
+          action: { label: "Retry", onClick: () => run("app.download_update") },
+        })
+      },
+    ),
   )
 }
 

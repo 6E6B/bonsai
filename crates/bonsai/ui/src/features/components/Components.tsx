@@ -376,6 +376,17 @@ export default function Components() {
         <Button onClick={() => showToast({ title: "Failed", description: "Server error.", variant: "error" })}>
           Error
         </Button>
+        <Button
+          onClick={() =>
+            showToast({
+              title: "Bonsai 1.1.0 is available.",
+              persistent: true,
+              action: { label: "Download", onClick: () => showToast("Downloading") },
+            })
+          }
+        >
+          Action
+        </Button>
       </Section>
 
       <Section title="Tooltip">
