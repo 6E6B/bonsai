@@ -57,6 +57,8 @@
 
   /* The dropdown is portalled, so it is its own component. */
   [data-component="select-content"] {
+    /* Above dialogs (50), below toasts (60). Kobalte copies it to the popper wrapper. */
+    z-index: 55;
     min-width: var(--kb-popper-anchor-width);
     max-height: 320px;
     overflow-y: auto;

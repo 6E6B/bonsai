@@ -4,6 +4,8 @@
   }
 
   [data-component="tooltip"] {
+    /* Above dialogs (50), below toasts (60). Kobalte copies it to the popper wrapper. */
+    z-index: 55;
     display: flex;
     align-items: center;
     gap: 8px;
