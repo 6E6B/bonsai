@@ -122,7 +122,7 @@ export default function Game() {
     return d ? { kind: "game", id: d.rootPlaceId, name: d.name, creator: d.creatorName, group: d.creatorIsGroup } : null
   })
   const [section, setSection] = createSignal("about")
-  // Every experience gets the same tabs so they stay in the same place; empty ones are muted.
+  // Every experience gets the same tabs; empty ones are muted and moved to the end, in order.
   // Wiki is the exception: most experiences have no article, so it only shows when one exists.
   const sections = createMemo(() => {
     const empty = new Set<string>()
@@ -132,9 +132,11 @@ export default function Game() {
     if (isEmpty(badges)) empty.add("badges")
     if (isEmpty(events)) empty.add("events")
     if (isEmpty(recommended)) empty.add("recommended")
-    return allSections
-      .filter((t) => t.value !== "wiki" || wiki.article)
-      .map((t) => (empty.has(t.value) ? { ...t, empty: true } : t))
+    const shown = allSections.filter((t) => t.value !== "wiki" || wiki.article)
+    return [
+      ...shown.filter((t) => !empty.has(t.value)),
+      ...shown.filter((t) => empty.has(t.value)).map((t) => ({ ...t, empty: true })),
+    ]
   })
   createEffect(() => {
     if (!sections().some((t) => t.value === section())) setSection("about")
