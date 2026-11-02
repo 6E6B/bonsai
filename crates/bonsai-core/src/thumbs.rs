@@ -78,7 +78,9 @@ impl ThumbKind {
             (ThumbKind::Avatar, _) => "420x420",
             (ThumbKind::GameIcon, false) => "50x50",
             (ThumbKind::GameIcon, true) => "256x256",
-            (ThumbKind::GameThumbnail, _) => "768x432",
+            // The small one fills a screenshot strip; the large one the main view.
+            (ThumbKind::GameThumbnail, false) => "384x216",
+            (ThumbKind::GameThumbnail, true) => "768x432",
             (ThumbKind::Asset | ThumbKind::Bundle | ThumbKind::Outfit, false) => "150x150",
             (ThumbKind::Asset | ThumbKind::Bundle | ThumbKind::Outfit, true) => "420x420",
             (ThumbKind::GroupIcon, false) => "150x150",
@@ -170,7 +172,7 @@ pub async fn lookup(
     client: &Client,
     keys: &[ThumbKey],
 ) -> Result<Vec<(ThumbKey, Option<String>, bool)>, Error> {
-    // Keys whose kind uses one size for both (game thumbnails) share a request id. Ask once
+    // Keys whose kind uses one size for both (avatars) share a request id. Ask once
     // and answer every key with it; otherwise all but the first would look unavailable.
     let mut seen = std::collections::HashSet::new();
     let body: Vec<thumbnails::undocumented::BatchRequest> = keys

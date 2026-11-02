@@ -131,6 +131,8 @@ pub(crate) struct Inner {
     thumb_tx: mpsc::UnboundedSender<ThumbKey>,
     /// Which loaded thumbnails stay in memory.
     pub(crate) thumb_budget: Mutex<thumbs::Budget>,
+    /// Woken on every store change, so `thumb://` requests wait for their image without polling.
+    store_changed: tokio::sync::Notify,
     pub(crate) browser_tracker_id: u64,
     pub(crate) settings: RwLock<Settings>,
     pub(crate) themes: RwLock<crate::themes::Themes>,
@@ -239,6 +241,7 @@ impl Core {
             quick_poll: cfg.quick_poll,
             thumb_tx,
             thumb_budget: Mutex::new(Default::default()),
+            store_changed: tokio::sync::Notify::new(),
             browser_tracker_id: 100_000_000_000 + fastrand::u64(0..899_999_999_999),
             settings: RwLock::new(settings),
             themes: RwLock::new(themes),
@@ -521,6 +524,12 @@ impl Core {
         }
     }
 
+    /// Resolves after the next store change. Create it and `enable()` it before reading the
+    /// store, so a change between the read and the wait is not missed.
+    pub fn store_changed(&self) -> tokio::sync::futures::Notified<'_> {
+        self.inner.store_changed.notified()
+    }
+
     /// Ask for thumbnails; cheap to call every frame for visible rows.
     pub fn want_thumbs(&self, keys: &[ThumbKey]) {
         let missing: Vec<ThumbKey> = {
@@ -683,6 +692,7 @@ fn warm_store(cache: &Cache, s: &mut StoreData) {
 
 impl Inner {
     pub(crate) fn repaint(&self) {
+        self.store_changed.notify_waiters();
         (self.repaint)();
     }
 
@@ -1537,8 +1547,9 @@ impl Inner {
     }
 }
 
-/// Encoded thumbnails kept in memory. Older ones load again from disk when asked for.
-const THUMB_MEMORY_BYTES: usize = 64 << 20;
+/// Encoded thumbnails kept in memory. Older ones load again from disk when asked for. The
+/// webview keeps its own copy of what it shows, so this only has to cover a few screens.
+const THUMB_MEMORY_BYTES: usize = 16 << 20;
 
 /// A thumbnail URL looked up before whose image is still on disk, and whether it is fresh.
 fn cached_thumb_url(inner: &Inner, k: &ThumbKey) -> Option<(String, bool)> {
