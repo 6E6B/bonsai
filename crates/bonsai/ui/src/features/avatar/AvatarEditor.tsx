@@ -16,7 +16,7 @@ import {
 import { emptyList, ListState } from "~/lib/list-state"
 import { itemMenu } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
-import { thumbUrl } from "~/lib/thumb"
+import { thumbUrl, withRev } from "~/lib/thumb"
 import { ItemTile, TILE_WIDTH } from "~/lib/tiles"
 import {
   Button,
@@ -55,7 +55,7 @@ const sep: MenuEntry = { kind: "separator" }
 /** The image of an outfit, reloaded when the outfit list is read again. */
 const outfitImage = (o: OutfitView) => {
   const url = thumbUrl("outfit", o.id)
-  return url && `${url}?r=${o.rev}`
+  return url && withRev(url, o.rev)
 }
 
 /** Asset type id of an inventory slot key (`a<type>`). */
@@ -153,7 +153,7 @@ export default function AvatarEditor() {
     [...view.wearing].sort((a, b) => (b.layer ?? Number.NEGATIVE_INFINITY) - (a.layer ?? Number.NEGATIVE_INFINITY))
   const preview = () => {
     const url = shell.active !== null ? thumbUrl("avatar", shell.active, true) : undefined
-    return url && view.rev ? `${url}?r=${view.rev}` : url
+    return url && withRev(url, view.rev)
   }
 
   return (

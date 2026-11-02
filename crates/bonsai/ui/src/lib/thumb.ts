@@ -1,4 +1,5 @@
 import { convertFileSrc, isTauri } from "@tauri-apps/api/core"
+import { shell } from "~/lib/store"
 import type { WindowControlIcons } from "~/lib/ui"
 
 /** Thumbnail kinds served by the `thumb://` protocol (crates/bonsai/src/thumb.rs). */
@@ -14,11 +15,19 @@ export type ThumbKind =
   | "game_pass"
   | "outfit"
 
-/** URL for a thumbnail. Use it as an `<img src>`; the webview caches it. Undefined outside the
- * app (`bun run dev` in a browser), so components show their fallback. */
+/** URL for a thumbnail. Use it as an `<img src>`; the webview caches it. When the image changes
+ * during the run (`shell.thumbRevs`), the URL changes too, so the new one shows. Undefined outside
+ * the app (`bun run dev` in a browser), so components show their fallback. */
 export function thumbUrl(kind: ThumbKind, id: number | string, large = false) {
   if (!isTauri()) return undefined
-  return convertFileSrc(`${kind}.${id}.${large ? "l" : "s"}`, "thumb")
+  const path = `${kind}.${id}.${large ? "l" : "s"}`
+  return withRev(convertFileSrc(path, "thumb"), shell.thumbRevs[path])
+}
+
+/** `url` with a revision added, so a new revision loads afresh. Leaves it alone for none. */
+export function withRev(url: string, rev: number | null | undefined) {
+  if (!rev) return url
+  return `${url}${url.includes("?") ? "&" : "?"}r=${rev}`
 }
 
 /** URL for the background picture, an external HTTPS link loaded locally through the

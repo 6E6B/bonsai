@@ -65,10 +65,16 @@ impl ThumbKind {
     /// How long a looked-up URL is trusted. An older one still shows at once and is checked
     /// again in the background. Avatars change often; icons and item images rarely do.
     pub fn url_age_secs(self) -> i64 {
-        match self {
-            ThumbKind::Headshot | ThumbKind::Avatar | ThumbKind::Outfit => 24 * 3600,
-            _ => 7 * 24 * 3600,
+        if self.is_avatar() {
+            AVATAR_AGE_SECS
+        } else {
+            7 * 24 * 3600
         }
+    }
+    /// Images of a person's look, which change whenever they dress up. These are checked again
+    /// while shown, not only when first loaded.
+    pub fn is_avatar(self) -> bool {
+        matches!(self, ThumbKind::Headshot | ThumbKind::Avatar | ThumbKind::Outfit)
     }
     /// Sizes the API accepts for this type; we use one per kind per use.
     pub fn size(self, large: bool) -> &'static str {
@@ -142,6 +148,23 @@ impl ThumbKey {
         parts.next().is_none().then_some(Self { kind, id, large })
     }
 
+    /// The `thumb://` path that names this image, the inverse of [`ThumbKey::parse`].
+    pub fn path(&self) -> String {
+        let kind = match self.kind {
+            ThumbKind::Headshot => "headshot",
+            ThumbKind::Avatar => "avatar",
+            ThumbKind::GameIcon => "game_icon",
+            ThumbKind::GameThumbnail => "game_thumbnail",
+            ThumbKind::Asset => "asset",
+            ThumbKind::Bundle => "bundle",
+            ThumbKind::GroupIcon => "group_icon",
+            ThumbKind::BadgeIcon => "badge_icon",
+            ThumbKind::GamePass => "game_pass",
+            ThumbKind::Outfit => "outfit",
+        };
+        format!("{kind}.{}.{}", self.id, if self.large { "l" } else { "s" })
+    }
+
     /// The batch request id, also the key of its cached URL.
     pub fn request_id(&self) -> String {
         self.request_id_for(self.kind.size(self.large))
@@ -164,6 +187,39 @@ pub enum ThumbState {
     Ready(Arc<Image>),
     /// Blocked, moderated, or failed; the UI shows a placeholder.
     Unavailable,
+}
+
+/// How long an avatar image's URL is trusted, also while it is shown.
+pub const AVATAR_AGE_SECS: i64 = 3600;
+/// The signed-in accounts' own avatar images are checked this often while shown.
+pub const OWN_AVATAR_AGE_SECS: i64 = 5 * 60;
+/// A refresh skips images checked this recently, so pressing it again sends nothing.
+pub const REFRESH_AGE_SECS: i64 = 60;
+/// At most this many images are checked in one go: one batch request.
+pub const RECHECK_LIMIT: usize = 100;
+
+/// Shown avatar images whose URL is due to be checked again, newest loaded first and the
+/// accounts' own ones before anyone else's. `recent` lists the loaded images newest first;
+/// `checked` says when each URL was last confirmed, in Unix seconds. An own account's image
+/// is due after `own_age` seconds, everyone else's after `other_age`.
+pub(crate) fn due_for_check(
+    recent: &[ThumbKey],
+    checked: &std::collections::HashMap<ThumbKey, i64>,
+    own: &std::collections::HashSet<u64>,
+    now: i64,
+    own_age: i64,
+    other_age: i64,
+) -> Vec<ThumbKey> {
+    let is_own = |k: &ThumbKey| k.kind != ThumbKind::Outfit && own.contains(&k.id);
+    let due = |k: &ThumbKey| {
+        let age = if is_own(k) { own_age } else { other_age };
+        k.kind.is_avatar() && checked.get(k).is_none_or(|t| now - t >= age)
+    };
+    let (mut out, others): (Vec<ThumbKey>, Vec<ThumbKey>) =
+        recent.iter().copied().filter(due).partition(is_own);
+    out.extend(others);
+    out.truncate(RECHECK_LIMIT);
+    out
 }
 
 /// Look up URLs for keys. Returns `(key, Some(url))` for completed ones, `(key, None)` for
@@ -331,6 +387,11 @@ impl Budget {
         out
     }
 
+    /// Every loaded image, the most recently loaded first.
+    pub(crate) fn recent(&self) -> Vec<ThumbKey> {
+        self.order.values().rev().copied().collect()
+    }
+
     pub(crate) fn remove(&mut self, k: &ThumbKey) {
         if let Some((seq, b)) = self.by_key.remove(k) {
             self.order.remove(&seq);
@@ -403,6 +464,47 @@ mod tests {
         assert!(b.insert(k(4), 10, 25).is_empty());
         // One image over budget on its own is still kept.
         assert_eq!(b.insert(k(5), 100, 25), vec![k(3), k(4)]);
+    }
+
+    #[test]
+    fn paths_round_trip() {
+        for k in [
+            ThumbKey::small(ThumbKind::Headshot, 1),
+            ThumbKey::large(ThumbKind::GameThumbnail, 9_007_199_254_740_991),
+            ThumbKey::large(ThumbKind::Outfit, 42),
+        ] {
+            assert_eq!(ThumbKey::parse(&k.path()), Some(k));
+        }
+    }
+
+    #[test]
+    fn avatar_images_fall_due_own_accounts_first() {
+        let head = |id| ThumbKey::small(ThumbKind::Headshot, id);
+        let icon = ThumbKey::small(ThumbKind::GameIcon, 5);
+        let outfit = ThumbKey::large(ThumbKind::Outfit, 1);
+        let recent = [head(2), icon, outfit, head(3), head(1), head(4)];
+        let now = 10_000;
+        let checked = std::collections::HashMap::from([
+            (head(1), now - 400),  // own, past 5 minutes
+            (head(2), now - 400),  // someone else, within the hour
+            (head(3), now - 4000), // someone else, past the hour
+            (outfit, now - 400),   // an outfit id that matches an account id is not that account
+            (icon, 0),             // never checked again while shown
+        ]);
+        let own = std::collections::HashSet::from([1]);
+        let due = due_for_check(&recent, &checked, &own, now, 300, 3600);
+        // Head 4 was never confirmed, so it is due as well.
+        assert_eq!(due, vec![head(1), head(3), head(4)]);
+        assert!(
+            due_for_check(&recent, &checked, &own, now, 3600, 3600)
+                .iter()
+                .all(|k| *k != head(1))
+        );
+        let many: Vec<_> = (0..300).map(head).collect();
+        assert_eq!(
+            due_for_check(&many, &Default::default(), &own, now, 300, 3600).len(),
+            RECHECK_LIMIT
+        );
     }
 
     #[test]
