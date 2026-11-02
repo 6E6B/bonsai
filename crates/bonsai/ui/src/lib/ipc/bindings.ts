@@ -2726,6 +2726,8 @@ export type WindowButtons = {
 	start: WindowButton[],
 	/**  Buttons at the right edge, in order. */
 	end: WindowButton[],
+	/**  Title bar height in CSS px, matching the desktop's own title bars. 0 keeps the app's. */
+	height: number,
 };
 
 /**  The main window's corners. Sent when they change; `window_frame` reads them at startup. */
