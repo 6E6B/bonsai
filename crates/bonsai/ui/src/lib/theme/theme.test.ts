@@ -159,9 +159,9 @@ describe("resolve", () => {
   })
 
   it("breaks cycles through derived references", () => {
-    const t = resolve({ ...DARK, tokens: { "color-accent": "var(--color-presence-online)" } })
-    expect(t["color-accent"]).toBe(DARK.seeds.accent)
-    expect(t["color-presence-online"]).toBe("var(--color-accent)")
+    const t = resolve({ ...DARK, tokens: { "color-success": "var(--color-presence-game)" } })
+    expect(t["color-success"]).toBe(DARK.seeds.success)
+    expect(t["color-presence-game"]).toBe("var(--color-success)")
   })
 })
 
