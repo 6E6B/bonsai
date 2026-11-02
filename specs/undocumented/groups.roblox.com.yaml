@@ -70,7 +70,7 @@ paths:
         "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
   /v1/groups/{groupId}/forums/{categoryId}/posts/{postId}/comments:
     get:
-      # Captured 2026-10-13, GroupForums bundle (getForumCommentsEndpoint, 10 per page). Post view.
+      # Captured 2026-10-13, GroupForums bundle (getForumCommentsEndpoint, 10 per page; the site sends limit=10, and 50 is rejected). Post view.
       x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
       x-rust-name: get_forum_comments
       summary: Comments on a post, oldest first. The first one is the post's own text.

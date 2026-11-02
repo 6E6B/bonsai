@@ -957,7 +957,7 @@ impl Core {
                 let (cat, post) = (cat.clone(), post.clone());
                 async move {
                     let p = groups::undocumented::GetForumCommentsParams {
-                        limit: Some(50),
+                        limit: Some(10),
                         cursor,
                     };
                     let r =
