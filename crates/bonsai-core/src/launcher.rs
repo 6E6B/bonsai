@@ -149,7 +149,7 @@ pub struct SystemOpener {
 impl Opener for SystemOpener {
     fn open(&self, uri: &Secret) -> Result<(), String> {
         match self.command.as_deref().map(str::trim).filter(|c| !c.is_empty()) {
-            None => open::that_detached(uri.expose())
+            None => open_detached(uri.expose())
                 .map_err(|e| format!("no app is registered for roblox-player: links ({e})")),
             Some(cmd) => {
                 let mut parts: Vec<String> = cmd.split_whitespace().map(str::to_string).collect();
@@ -161,20 +161,83 @@ impl Opener for SystemOpener {
                     .map(|p| p.replace("{uri}", uri.expose()))
                     .collect();
                 let (prog, args) = parts.split_first().ok_or("empty player command")?;
-                std::process::Command::new(prog)
-                    .args(args)
-                    .stdout(std::process::Stdio::null())
-                    .stderr(std::process::Stdio::null())
-                    .spawn()
-                    .map(|_| ())
-                    .map_err(|e| format!("could not start {prog}: {e}"))
+                let mut cmd = std::process::Command::new(prog);
+                cmd.args(args);
+                spawn_reaped(&mut cmd).map_err(|e| format!("could not start {prog}: {e}"))
             }
         }
     }
     /// Always the default browser; the player command is only for `roblox-player:`.
     fn open_web(&self, url: &str) -> Result<(), String> {
-        open::that_detached(url).map_err(|e| format!("could not open the browser ({e})"))
+        open_detached(url).map_err(|e| format!("could not open the browser ({e})"))
     }
+}
+
+/// Opens a link or file with the system handler, detached from Bonsai.
+///
+/// Inside an AppImage the handler gets the environment from before the AppImage runtime
+/// changed it (see [`appimage_env_fixes`]); elsewhere this is [`open::that_detached`].
+pub fn open_detached(target: &str) -> std::io::Result<()> {
+    if std::env::var_os("APPDIR").is_none() {
+        return open::that_detached(target);
+    }
+    let mut last = None;
+    for mut cmd in open::commands(target) {
+        match spawn_reaped(&mut cmd) {
+            Ok(()) => return Ok(()),
+            Err(e) => last = Some(e),
+        }
+    }
+    Err(last.unwrap_or_else(|| std::io::Error::other("no opener found")))
+}
+
+/// Spawns with null stdio and the AppImage environment undone, and reaps the child on a
+/// background thread so it never lingers as a zombie.
+fn spawn_reaped(cmd: &mut std::process::Command) -> std::io::Result<()> {
+    if let Ok(appdir) = std::env::var("APPDIR") {
+        for (k, v) in appimage_env_fixes(&appdir, std::env::vars()) {
+            match v {
+                Some(v) => cmd.env(k, v),
+                None => cmd.env_remove(k),
+            };
+        }
+    }
+    let mut child = cmd
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()?;
+    std::thread::spawn(move || child.wait());
+    Ok(())
+}
+
+/// Variables the AppImage runtime sets for Bonsai itself that must not reach other programs.
+const APPIMAGE_ONLY: &[&str] = &["APPDIR", "APPIMAGE", "ARGV0", "OWD", "PYTHONDONTWRITEBYTECODE"];
+
+/// The AppImage runtime points `LD_LIBRARY_PATH`, `PATH`, `GIO_MODULE_DIR` and others into its
+/// mount so Bonsai finds its bundled libraries. Programs Bonsai starts inherit that and load the
+/// wrong glib: `flatpak`, and so Sober, dies with a symbol lookup error. This drops every list
+/// entry under `appdir`, removing a variable that is left empty, plus [`APPIMAGE_ONLY`].
+/// Returns the changes: `Some` to set, `None` to remove.
+pub fn appimage_env_fixes(
+    appdir: &str,
+    vars: impl IntoIterator<Item = (String, String)>,
+) -> Vec<(String, Option<String>)> {
+    let appdir = appdir.trim_end_matches('/');
+    let inside = |p: &str| !appdir.is_empty() && (p == appdir || p.starts_with(&format!("{appdir}/")));
+    let mut out = Vec::new();
+    for (k, v) in vars {
+        if APPIMAGE_ONLY.contains(&k.as_str()) {
+            out.push((k, None));
+            continue;
+        }
+        if !v.split(':').any(inside) {
+            continue;
+        }
+        let kept: Vec<&str> = v.split(':').filter(|p| !p.is_empty() && !inside(p)).collect();
+        out.push((k, (!kept.is_empty()).then(|| kept.join(":"))));
+    }
+    out
 }
 
 /// Records URIs instead of opening them (tests).
@@ -198,6 +261,36 @@ impl Opener for RecordingOpener {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn appimage_env_is_undone() {
+        let m = "/tmp/.mount_bonsaiX";
+        let vars = [
+            ("LD_LIBRARY_PATH", format!("{m}/usr/lib/:{m}/usr/lib32/")),
+            ("PATH", format!("{m}/usr/bin/:/usr/local/bin:/usr/bin")),
+            ("XDG_DATA_DIRS", format!("{m}/usr/share/:/usr/share")),
+            ("GIO_MODULE_DIR", format!("{m}//usr/lib/gio/modules")),
+            ("PYTHONPATH", format!("{m}/usr/share/pyshared/:")),
+            ("APPIMAGE", "/home/u/bonsai.appimage".into()),
+            ("HOME", "/home/u".into()),
+            ("OTHER", "/tmp/.mount_bonsaiXY/lib".into()),
+        ]
+        .map(|(k, v)| (k.to_string(), v));
+        let mut fixes = appimage_env_fixes(&format!("{m}/"), vars);
+        fixes.sort();
+        let s = |k: &str, v: Option<&str>| (k.to_string(), v.map(str::to_string));
+        assert_eq!(
+            fixes,
+            vec![
+                s("APPIMAGE", None),
+                s("GIO_MODULE_DIR", None),
+                s("LD_LIBRARY_PATH", None),
+                s("PATH", Some("/usr/local/bin:/usr/bin")),
+                s("PYTHONPATH", None),
+                s("XDG_DATA_DIRS", Some("/usr/share")),
+            ]
+        );
+    }
 
     #[test]
     fn uri_shape_for_each_mode() {

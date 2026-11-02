@@ -230,7 +230,8 @@ impl Core {
                 core.inner
                     .rt
                     .spawn_blocking(move || {
-                        open::that_detached(url).map_err(|_| "Could not open the system browser.".to_owned())
+                        crate::launcher::open_detached(&url)
+                            .map_err(|_| "Could not open the system browser.".to_owned())
                     })
                     .await
                     .map_err(|_| "Could not open browser.".to_owned())??;
