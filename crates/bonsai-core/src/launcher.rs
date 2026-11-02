@@ -2,7 +2,7 @@
 //! `roblox-player:` URI around a PlaceLauncher URL, and hand it to the OS (or a custom player
 //! command such as Sober).
 
-use bonsai_api::generated::{assetgame, auth};
+use bonsai_api::generated::{auth, www};
 use bonsai_api::{Client, Error, Secret};
 
 /// The four join modes.
@@ -57,7 +57,7 @@ pub fn uuid_v4() -> String {
 
 /// The PlaceLauncher URL the player will request.
 pub fn place_launcher_url(target: &JoinTarget, browser_tracker_id: u64, join_attempt_id: &str) -> String {
-    use assetgame::undocumented::{PlaceLauncherParams, PlaceLauncherRequest};
+    use www::undocumented::{PlaceLauncherParams, PlaceLauncherRequest};
     let mut p = PlaceLauncherParams {
         browser_tracker_id: Some(browser_tracker_id as i64),
         is_play_together_game: Some(false),
@@ -94,7 +94,7 @@ pub fn place_launcher_url(target: &JoinTarget, browser_tracker_id: u64, join_att
         }
     }
     // Building a request has no failure mode without a body.
-    assetgame::undocumented::place_launcher_request(&p)
+    www::undocumented::place_launcher_request(&p)
         .map(|r| r.url())
         .unwrap_or_default()
 }
@@ -115,13 +115,21 @@ pub fn launch_uri(
     ))
 }
 
-/// Ask Roblox for a one-shot ticket for this client's account.
+/// Ask Roblox for a one-shot ticket for this client's account. Like the site, first get a
+/// client assertion and send it with the ticket request: the player does not join with a
+/// ticket minted without one. A failed assertion still tries the ticket, as the site does.
 pub async fn mint_ticket(client: &Client) -> Result<Secret, Error> {
+    let client_assertion = auth::v1::get_client_assertion(client)
+        .await
+        .ok()
+        .and_then(|a| a.client_assertion)
+        .filter(|a| !a.is_empty());
     let req = auth::undocumented::post_authentication_ticket_request(
         &auth::undocumented::PostAuthenticationTicketParams {
             referer: "https://www.roblox.com/".into(),
             rbx_authentication_negotiation: Some("1".into()),
         },
+        &auth::undocumented::AuthenticationTicketRequest { client_assertion },
     )?;
     let resp = client.send(req).await?;
     resp.header("rbx-authentication-ticket")
@@ -227,7 +235,7 @@ mod tests {
         for (m, needle) in modes {
             let uri = launch_uri(&t, &m, 4242, 1_700_000_000_000, "en_us");
             let s = uri.expose();
-            assert!(s.starts_with("roblox-player:1+launchmode:play+gameinfo:TICKET+launchtime:1700000000000+placelauncherurl:https%3A%2F%2Fassetgame.roblox.com%2Fgame%2FPlaceLauncher.ashx%3F"), "{s}");
+            assert!(s.starts_with("roblox-player:1+launchmode:play+gameinfo:TICKET+launchtime:1700000000000+placelauncherurl:https%3A%2F%2Fwww.roblox.com%2FGame%2FPlaceLauncher.ashx%3F"), "{s}");
             assert!(s.contains(needle), "{needle} not in {s}");
             assert!(s.ends_with(
                 "+browsertrackerid:4242+robloxLocale:en_us+gameLocale:en_us+channel:+LaunchExp:InApp"

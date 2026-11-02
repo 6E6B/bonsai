@@ -78,6 +78,7 @@ async fn csrf_retry_on_auth_ticket() {
                     referer: "https://www.roblox.com/".into(),
                     rbx_authentication_negotiation: Some("1".into()),
                 },
+                &Default::default(),
             )
             .unwrap(),
         )
@@ -90,6 +91,35 @@ async fn csrf_retry_on_auth_ticket() {
     l.save(
         "auth_ticket",
         "POST without a token gets 403 + x-csrf-token, the retry gets the ticket header.",
+    );
+}
+
+/// The site's flow: a client assertion, posted as the ticket request's body. Not saved: the
+/// assertion is a credential. `client_assertion.json` is a synthetic fixture of the same shape.
+#[tokio::test]
+async fn auth_ticket_with_client_assertion() {
+    let l = live().await;
+    let a = auth::v1::get_client_assertion(&l.client).await.unwrap();
+    assert!(a.client_assertion.as_deref().is_some_and(|a| !a.is_empty()));
+    let resp = l
+        .client
+        .send(
+            auth::undocumented::post_authentication_ticket_request(
+                &auth::undocumented::PostAuthenticationTicketParams {
+                    referer: "https://www.roblox.com/".into(),
+                    rbx_authentication_negotiation: Some("1".into()),
+                },
+                &auth::undocumented::AuthenticationTicketRequest {
+                    client_assertion: a.client_assertion,
+                },
+            )
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert!(
+        resp.header("rbx-authentication-ticket")
+            .is_some_and(|t| !t.is_empty())
     );
 }
 

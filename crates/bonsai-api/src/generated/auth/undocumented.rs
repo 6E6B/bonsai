@@ -13,6 +13,16 @@ use crate::rt::{Client, FilePart, Method, Request, Result};
 /// Host for every operation in this module.
 pub const HOST: &str = "auth.roblox.com";
 
+/// `AuthenticationTicketRequest`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AuthenticationTicketRequest {
+    /// From GET /v1/client-assertion
+    #[serde(rename = "clientAssertion")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_assertion: Option<String>,
+}
+
 /// Query, header and form inputs for [`post_authentication_ticket`].
 #[derive(Debug, Clone, Default)]
 pub struct PostAuthenticationTicketParams {
@@ -26,14 +36,18 @@ pub struct PostAuthenticationTicketParams {
 ///
 /// Mint a one-shot authentication ticket for the game client. The ticket is returned in the 'rbx-authentication-ticket' response header.
 ///
-/// Undocumented; captured 2026-10-12, Play button on www.roblox.com/games/{placeId}.
-pub fn post_authentication_ticket_request(params: &PostAuthenticationTicketParams) -> Result<Request> {
+/// Undocumented; captured 2026-11-01, Play button on www.roblox.com/games/{placeId}.
+pub fn post_authentication_ticket_request(
+    params: &PostAuthenticationTicketParams,
+    body: &AuthenticationTicketRequest,
+) -> Result<Request> {
     let mut r = Request::new(Method::POST, HOST, "/v1/authentication-ticket".to_string());
     r.header("Referer", &params.referer);
     r.header(
         "RBXAuthenticationNegotiation",
         &params.rbx_authentication_negotiation,
     );
+    r.json(body)?;
     Ok(r)
 }
 
@@ -41,13 +55,14 @@ pub fn post_authentication_ticket_request(params: &PostAuthenticationTicketParam
 ///
 /// Mint a one-shot authentication ticket for the game client. The ticket is returned in the 'rbx-authentication-ticket' response header.
 ///
-/// Undocumented; captured 2026-10-12, Play button on www.roblox.com/games/{placeId}.
+/// Undocumented; captured 2026-11-01, Play button on www.roblox.com/games/{placeId}.
 pub async fn post_authentication_ticket(
     client: &Client,
     params: &PostAuthenticationTicketParams,
+    body: &AuthenticationTicketRequest,
 ) -> Result<()> {
     client
-        .send(post_authentication_ticket_request(params)?)
+        .send(post_authentication_ticket_request(params, body)?)
         .await?
         .unit()
 }

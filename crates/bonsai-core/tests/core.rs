@@ -250,7 +250,9 @@ fn repeat(f: &Fixture, n: usize) -> Fixture {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn launch_as_each_account_in_each_mode() {
-    let replay = Replay::from_fixture(&repeat(&replay::load("auth_ticket"), 5)).await;
+    let mut flow = replay::load("client_assertion");
+    flow.interactions.extend(replay::load("auth_ticket").interactions);
+    let replay = Replay::from_fixture(&repeat(&flow, 5)).await;
     let dir = tempfile::tempdir().unwrap();
     let cookies = seeded(&dir);
     let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
@@ -294,6 +296,20 @@ async fn launch_as_each_account_in_each_mode() {
             "{uri}"
         );
         assert!(uri.contains(needle), "{needle} not in {uri}");
+    }
+    // Every ticket request carries the client assertion, like the site's Play button.
+    let tickets: Vec<_> = replay
+        .server
+        .received_requests()
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|q| q.url.path().ends_with("/v1/authentication-ticket"))
+        .collect();
+    assert!(!tickets.is_empty());
+    for q in &tickets {
+        let body: serde_json::Value = serde_json::from_slice(&q.body).unwrap();
+        assert_eq!(body["clientAssertion"], "assertion-redacted");
     }
     wait_for(&r.core, "toasts", |s| s.toasts.len() == 4).await;
     assert!(
