@@ -23,6 +23,7 @@ mod thumb;
 mod titlebar;
 mod updater;
 mod vault;
+mod webview;
 mod wikiimg;
 
 pub fn run() {
@@ -87,6 +88,9 @@ pub fn run() {
             if let Some(w) = app.get_webview_window("main") {
                 if let Err(e) = schemes::allow(&w) {
                     tracing::warn!("could not allow the app's schemes: {e}");
+                }
+                if let Err(e) = webview::tune(&w) {
+                    tracing::warn!("could not set the webview cache model: {e}");
                 }
                 if let Err(e) = frame::init(&w) {
                     tracing::warn!("could not set up the window frame: {e}");

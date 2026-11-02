@@ -2,7 +2,8 @@
 //! like any image, with no base64 over IPC and no network access from the webview.
 //!
 //! URL path: `/<kind>.<id>.<s|l>`, like `/headshot.1.s`. The UI builds it in
-//! `ui/src/lib/thumb.ts`. A missing image is requested and the response waits for it.
+//! `ui/src/lib/thumb.ts`. A missing image is requested and the response waits for the store to change until it
+//! arrives.
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -14,7 +15,6 @@ use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 
 pub const SCHEME: &str = "thumb";
 
-const POLL: Duration = Duration::from_millis(50);
 const WAIT: Duration = Duration::from_secs(15);
 
 pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, res: UriSchemeResponder) {
@@ -41,10 +41,15 @@ pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, r
     };
     core.want_thumbs(&[key]);
     tauri::async_runtime::spawn(async move {
-        let mut waited = Duration::ZERO;
+        let deadline = tokio::time::Instant::now() + WAIT;
         loop {
-            let image = match core.store().thumbs.get(&key) {
-                Some(ThumbState::Ready(i)) => Some(i.clone()),
+            // Listen before reading, so a change in between still wakes us.
+            let mut changed = std::pin::pin!(core.store_changed());
+            changed.as_mut().enable();
+            // Copy the state out so the read lock is gone before `want_thumbs` writes.
+            let state = core.store().thumbs.get(&key).cloned();
+            let image = match state {
+                Some(ThumbState::Ready(i)) => Some(i),
                 Some(ThumbState::Unavailable) => {
                     return res.respond(status(StatusCode::NOT_FOUND));
                 }
@@ -58,11 +63,9 @@ pub fn handle<R: Runtime>(ctx: UriSchemeContext<'_, R>, req: Request<Vec<u8>>, r
             if let Some(image) = image {
                 return res.respond(serve(&image));
             }
-            if waited >= WAIT {
+            if tokio::time::timeout_at(deadline, changed).await.is_err() {
                 return res.respond(status(StatusCode::GATEWAY_TIMEOUT));
             }
-            tokio::time::sleep(POLL).await;
-            waited += POLL;
         }
     });
 }
