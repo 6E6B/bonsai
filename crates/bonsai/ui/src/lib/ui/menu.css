@@ -2,6 +2,8 @@
  * not an item has an icon. */
 @layer components {
   [data-component="menu"] {
+    /* Above dialogs (50), below toasts (60). Kobalte copies it to the popper wrapper. */
+    z-index: 55;
     min-width: 180px;
     max-width: 320px;
     /* Long menus (every open tab) scroll inside the window. */

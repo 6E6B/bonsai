@@ -1,6 +1,8 @@
 /* Emoji picker: a search field over a scrolling grid, in a popover. */
 @layer components {
   [data-component="emoji-picker"] {
+    /* Above dialogs (50), below toasts (60). Kobalte copies it to the popper wrapper. */
+    z-index: 55;
     display: flex;
     flex-direction: column;
     gap: 6px;
