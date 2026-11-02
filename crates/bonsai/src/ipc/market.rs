@@ -957,9 +957,7 @@ pub fn inventory_items(
     // Creator and price come from the catalog, a page (100 items) per request so the cache
     // keys stay put as pages load.
     let mut known: HashMap<ItemRef, CatalogItem> = HashMap::new();
-    // The wardrobe index already has names and types; do not crawl catalog metadata for every owned item.
-    let catalog_items = if slot == InvSlot::Wardrobe { &[][..] } else { items };
-    for chunk in catalog_items.chunks(100) {
+    for chunk in items.chunks(100) {
         let refs: Vec<ItemRef> = chunk.iter().map(|i| i.item).collect();
         if let Some(d) = core.items(&refs).data {
             known.extend(d.iter().map(|c| (c.item, c.clone())));

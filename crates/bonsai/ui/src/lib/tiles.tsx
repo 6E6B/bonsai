@@ -118,8 +118,6 @@ export function ItemTile(props: {
   showSerial?: boolean
   /** Show recent average price instead of the list price. */
   showRap?: boolean
-  /** Owned-item pickers do not need sale prices. */
-  showPrice?: boolean
   /** This screen's rows in the right-click menu. */
   menu?: ItemMenuExtras
   /** See `Tile`'s `fixed`. */
@@ -131,10 +129,8 @@ export function ItemTile(props: {
         title={props.item.name}
         subtitle={
           <span class="flex items-center gap-2">
-            <Show when={props.showPrice !== false}>
-              <Show when={props.showRap && props.item.rap} fallback={<Price amount={props.item.price} />}>
-                {(rap) => <Robux amount={rap()} />}
-              </Show>
+            <Show when={props.showRap && props.item.rap} fallback={<Price amount={props.item.price} />}>
+              {(rap) => <Robux amount={rap()} />}
             </Show>
             <Show when={props.item.values?.value}>{(v) => <ValueAmount amount={v()} compact />}</Show>
           </span>

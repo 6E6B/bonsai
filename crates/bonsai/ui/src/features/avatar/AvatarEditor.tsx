@@ -47,7 +47,6 @@ import { matchesWear, named, sortOptions } from "./wardrobe"
 const WARDROBE = "wardrobe"
 const OUTFITS = "outfits"
 const RECENT = "recent"
-const ALL_ITEMS = "all-items"
 const BODY = "body"
 
 const sep: MenuEntry = { kind: "separator" }
@@ -93,7 +92,6 @@ export default function AvatarEditor() {
   const [category, setCategory] = createSignal(RECENT)
   const categories = () => [
     { value: RECENT, label: "Recent" },
-    { value: ALL_ITEMS, label: "All items" },
     ...sections.items.map((s) => ({ value: s.name, label: s.name })),
   ]
   createEffect(() => {
@@ -367,13 +365,6 @@ export default function AvatarEditor() {
                 <TabPanel value={RECENT}>
                   <Recent />
                 </TabPanel>
-                <TabPanel value={ALL_ITEMS}>
-                  <Section
-                    section={{ name: "All items", slots: [{ value: "wardrobe", label: "All items" }] }}
-                    worn={view.wearing.map((w) => w.id)}
-                    global
-                  />
-                </TabPanel>
                 <For each={sections.items}>
                   {(s) => (
                     <TabPanel value={s.name}>
@@ -414,7 +405,7 @@ function NoMatches(props: { reset: () => void }) {
   )
 }
 
-function Section(props: { section: WardrobeSection; worn: number[]; global?: boolean }) {
+function Section(props: { section: WardrobeSection; worn: number[] }) {
   const [slot, setSlot] = createSignal(props.section.slots[0]?.value ?? "")
   createEffect(() => {
     if (!props.section.slots.some((s) => s.value === slot())) setSlot(props.section.slots[0]?.value ?? "")
@@ -472,36 +463,24 @@ function Section(props: { section: WardrobeSection; worn: number[]; global?: boo
                 { value: "unworn", label: "Not wearing" },
               ]}
             />
-            <Show when={!props.global}>
-              <Select
-                aria-label="Item filter"
-                value={kind()}
-                onChange={setKind}
-                options={[
-                  { value: "all", label: "Any item" },
-                  { value: "limited", label: "Limited" },
-                  { value: "copies", label: "Multiple copies" },
-                ]}
-              />
-            </Show>
+            <Select
+              aria-label="Item filter"
+              value={kind()}
+              onChange={setKind}
+              options={[
+                { value: "all", label: "Any item" },
+                { value: "limited", label: "Limited" },
+                { value: "copies", label: "Multiple copies" },
+              ]}
+            />
           </div>
-          <Show
-            when={props.global}
-            fallback={<ResultStatus shown={shown().length} loaded={items.list.items.length} more={items.list.more} />}
-          >
-            <p class="text-xs text-fg-muted" role="status">
-              {shown().length} of {items.list.items.length} items
-              <Show when={!items.list.error && (items.list.loading || items.list.more)}> · Indexing wardrobe…</Show>
-              <Show when={items.list.error}> · Index incomplete</Show>
-            </p>
-          </Show>
+          <ResultStatus shown={shown().length} loaded={items.list.items.length} more={items.list.more} />
           <ListState list={items.list} icon="avatar" empty="No items in this category" more={items.moreKey}>
             <Show when={shown().length} fallback={<NoMatches reset={reset} />}>
               <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
                 {(i) => (
                   <ItemTile
                     item={i}
-                    showPrice={!props.global}
                     selected={props.worn.includes(i.id)}
                     onClick={() => run("avatar.wear", `${i.id}:${i.assetType || slotType(slot())}`)}
                     menu={{

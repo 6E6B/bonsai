@@ -27,8 +27,6 @@ pub enum InvSlot {
     #[default]
     Collectibles,
     Asset(i32),
-    /// All asset types allowed by the avatar rules, indexed across pages.
-    Wardrobe,
     Bundle(i32),
     /// Badges, from the badges API ([`Core::user_badges`]).
     Badges,
@@ -43,7 +41,6 @@ impl InvSlot {
     pub fn key(self) -> String {
         match self {
             InvSlot::Collectibles => "collectibles".into(),
-            InvSlot::Wardrobe => "wardrobe".into(),
             InvSlot::Asset(t) => format!("a{t}"),
             InvSlot::Bundle(t) => format!("b{t}"),
             InvSlot::Badges => "badges".into(),
@@ -54,7 +51,6 @@ impl InvSlot {
     pub fn from_key(k: &str) -> Option<InvSlot> {
         match k {
             "collectibles" => return Some(InvSlot::Collectibles),
-            "wardrobe" => return Some(InvSlot::Wardrobe),
             "badges" => return Some(InvSlot::Badges),
             "passes" => return Some(InvSlot::Passes),
             "places" => return Some(InvSlot::Places),
@@ -312,15 +308,7 @@ impl Core {
                 let mut out = Vec::new();
                 let mut cursor = None;
                 for _ in 0..MAX_COLLECTIBLE_PAGES {
-                    let p = inventory_page(
-                        &f.client,
-                        user_id,
-                        InvSlot::Collectibles,
-                        false,
-                        cursor,
-                        Vec::new(),
-                    )
-                    .await?;
+                    let p = inventory_page(&f.client, user_id, InvSlot::Collectibles, false, cursor).await?;
                     out.extend(p.items);
                     cursor = p.next;
                     if cursor.is_none() {
@@ -484,59 +472,11 @@ async fn inventory_page(
     slot: InvSlot,
     oldest_first: bool,
     cursor: Option<String>,
-    wearable: Vec<inventory::v2::UserAssetItemModelV2AssetType>,
 ) -> Result<Page<InvItem>, Error> {
     let uid = user_id as i64;
     match slot {
         // Shown from their own lists.
         InvSlot::Badges | InvSlot::Passes | InvSlot::Places => Ok(Page::default()),
-        InvSlot::Wardrobe => {
-            if wearable.is_empty() {
-                return Ok(Page::default());
-            }
-            let r = inventory::v2::get_users_by_user_id_inventory(
-                c,
-                uid,
-                &inventory::v2::GetUsersByUserIdInventoryParams {
-                    asset_types: wearable.clone(),
-                    limit: Some(100),
-                    cursor: cursor.clone(),
-                    sort_order: Some(if oldest_first {
-                        inventory::v2::GetAssetsByAssetIdOwnersSortOrder::Asc
-                    } else {
-                        inventory::v2::GetAssetsByAssetIdOwnersSortOrder::Desc
-                    }),
-                    ..Default::default()
-                },
-            )
-            .await?;
-            if cursor.is_some() && r.next_page_cursor == cursor {
-                return Err(Error::Message(
-                    "Roblox returned a repeated wardrobe cursor.".into(),
-                ));
-            }
-            Ok(Page {
-                items: r
-                    .data
-                    .unwrap_or_default()
-                    .into_iter()
-                    .filter_map(|x| {
-                        let t = x.asset_type?;
-                        if !wearable.contains(&t) {
-                            return None;
-                        }
-                        Some(InvItem {
-                            item: ItemRef::asset(u64::try_from(x.asset_id?).ok()?),
-                            asset_type: t.value()? as i32,
-                            name: x.name.unwrap_or_default(),
-                            acquired: x.created.unwrap_or_default(),
-                            ..Default::default()
-                        })
-                    })
-                    .collect(),
-                next: r.next_page_cursor.filter(|c| !c.is_empty()),
-            })
-        }
         InvSlot::Collectibles => {
             let p = inventory::v1::GetUsersByUserIdAssetsCollectiblesParams {
                 limit: Some(100),
@@ -658,48 +598,10 @@ impl crate::core::Inner {
             "inventory",
             format!("{user_id}:{}:{}", slot.key(), oldest_first),
         );
-        let mut wearable = Vec::new();
-        let mut load_more = more;
-        if slot == InvSlot::Wardrobe {
-            // Wardrobe is private to its owner, even if their public inventory is visible.
-            if viewer.is_anonymous() || viewer.0 != user_id {
-                return Res {
-                    error: Some("Sign in to search your wardrobe.".into()),
-                    ..Default::default()
-                };
-            }
-            let rules = self.avatar_rules();
-            let Some(data) = rules.data else {
-                return Res {
-                    loading: rules.loading,
-                    error: rules.error,
-                    ..Default::default()
-                };
-            };
-            wearable = wardrobe_types(&data);
-            // Continue indexing while the screen asks for it. Never spin on a failed page.
-            load_more |= self
-                .res
-                .snapshot::<Page<InvItem>>(&key)
-                .is_none_or(|r| r.error.is_none());
-        }
-        self.paged(key, LIST_AGE, load_more, move |f, cursor| {
-            let wearable = wearable.clone();
-            async move { inventory_page(&f.client, user_id, slot, oldest_first, cursor, wearable).await }
+        self.paged(key, LIST_AGE, more, move |f, cursor| async move {
+            inventory_page(&f.client, user_id, slot, oldest_first, cursor).await
         })
     }
-}
-
-fn wardrobe_types(rules: &crate::avatar::Rules) -> Vec<inventory::v2::UserAssetItemModelV2AssetType> {
-    use inventory::v2::UserAssetItemModelV2AssetType as T;
-    let mut types = Vec::new();
-    for slot in &rules.slots {
-        let t = T::from_value(slot.type_id);
-        if slot.max > 0 && t != T::Unknown && !types.contains(&t) {
-            types.push(t);
-        }
-    }
-    types
 }
 
 #[cfg(test)]
@@ -711,7 +613,6 @@ mod tests {
     fn slot_keys_round_trip() {
         for s in [
             InvSlot::Collectibles,
-            InvSlot::Wardrobe,
             InvSlot::Asset(8),
             InvSlot::Bundle(1),
             InvSlot::Badges,
