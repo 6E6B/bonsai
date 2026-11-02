@@ -46,6 +46,10 @@
     color: var(--color-fg);
   }
 
+  [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"][data-empty]:not([data-selected]) {
+    color: var(--color-fg-faint);
+  }
+
   [data-component="tabs"] > [data-slot="list"] > [data-slot="trigger"][data-disabled] {
     opacity: 0.5;
   }

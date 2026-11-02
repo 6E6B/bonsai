@@ -576,12 +576,14 @@ export default function Components() {
           items={[
             { value: "servers", label: "Servers" },
             { value: "store", label: "Store" },
+            { value: "badges", label: "Badges", empty: true },
             { value: "requests", label: "Requests", count: 3 },
             { value: "admin", label: "Admin", disabled: true },
           ]}
         >
           <TabPanel value="servers">Servers panel</TabPanel>
           <TabPanel value="store">Store panel</TabPanel>
+          <TabPanel value="badges">No badges</TabPanel>
           <TabPanel value="requests">Requests panel</TabPanel>
         </Tabs>
       </Section>
