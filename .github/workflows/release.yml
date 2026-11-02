@@ -121,7 +121,9 @@ jobs:
             exit 1
           fi
           if [ -n "$BONSAI_UPDATER_PUBLIC_KEY" ] && [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            bun run tauri build $BUNDLE_ARGS --config '{"bundle":{"createUpdaterArtifacts":true}}'
+            # The bundler reads its own config, separately from the Rust updater's env var.
+            updater_config=$(bun -e 'console.log(JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.BONSAI_UPDATER_PUBLIC_KEY}}}))')
+            bun run tauri build $BUNDLE_ARGS --config "$updater_config"
           else
             bun run tauri build $BUNDLE_ARGS
           fi
