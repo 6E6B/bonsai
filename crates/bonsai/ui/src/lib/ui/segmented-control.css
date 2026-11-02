@@ -21,6 +21,18 @@
     font-size: var(--text-sm);
   }
 
+  [data-component="segmented-control"][data-stretch] {
+    display: flex;
+    flex-shrink: 1;
+    align-self: stretch;
+  }
+
+  [data-component="segmented-control"][data-stretch] [data-slot="item"] {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+  }
+
   [data-component="segmented-control"] [data-slot="item"] {
     display: inline-flex;
     align-items: center;

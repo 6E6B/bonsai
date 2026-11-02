@@ -600,6 +600,14 @@ export default function Components() {
           ]}
         />
         <SegmentedControl aria-label="Rig" size="sm" value="R15" onChange={noop} options={["R6", "R15"]} />
+        <SegmentedControl
+          aria-label="Stretched"
+          size="sm"
+          stretch
+          value="R15"
+          onChange={noop}
+          options={["R6", "R15", "Both"]}
+        />
         <ToggleButton icon="star" pressedIcon="star-fill" pressed={fav()} onChange={setFav}>
           Favorite
         </ToggleButton>
