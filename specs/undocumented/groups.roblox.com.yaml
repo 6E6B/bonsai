@@ -21,7 +21,7 @@ paths:
         "200": { description: OK, schema: { $ref: "#/definitions/ForumCategories" } }
   /v1/groups/{groupId}/forums/{categoryId}/posts:
     get:
-      # Captured 2026-10-13, GroupForums bundle (getForumPostsEndpoint, 10 per page). Category view.
+      # Captured 2026-10-13, GroupForums bundle (getForumPostsEndpoint, 10 per page; limit must be 10, 25, 50 or 100). Category view.
       x-captured: "2026-10-13, www.roblox.com/communities/{id}#!/forums"
       x-rust-name: get_forum_posts
       summary: Posts in a forum category, newest activity first.

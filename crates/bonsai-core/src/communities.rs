@@ -897,7 +897,7 @@ impl Core {
                     let first = cursor.is_none();
                     let p = groups::undocumented::GetForumPostsParams {
                         include_comment_count: Some(true),
-                        limit: Some(20),
+                        limit: Some(25),
                         cursor,
                     };
                     let r = groups::undocumented::get_forum_posts(c, group_id as i64, &cat, &p).await?;
