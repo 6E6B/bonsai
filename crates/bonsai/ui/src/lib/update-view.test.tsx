@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@solidjs/testing-library"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
-import { UpdateDetails, UpdateNotice } from "./update-view"
+import { Toaster } from "./ui"
+import { UpdateDetails, useUpdateToasts } from "./update-view"
 import { setUpdates } from "./updates"
 
 const run = vi.hoisted(() => vi.fn())
@@ -24,13 +25,17 @@ afterEach(() => {
   run.mockClear()
 })
 
-test("keeps background checks quiet and announces a pending update", () => {
-  const view = render(() => <UpdateNotice />)
-  expect(view.container.textContent).toBe("")
-  setUpdates("phase", "available")
-  expect(screen.getByText("Bonsai 1.1.0 is available.")).toBeTruthy()
+test("keeps background checks quiet and toasts a pending update", async () => {
+  render(() => {
+    useUpdateToasts()
+    return <Toaster />
+  })
+  setUpdates("error", "offline")
+  expect(screen.queryByText("Update failed")).toBeNull()
+  setUpdates({ error: null, phase: "available" })
+  expect(await screen.findByText("Bonsai 1.1.0 is available.")).toBeTruthy()
   expect(run).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole("button", { name: "Download update" }))
+  fireEvent.click(screen.getByRole("button", { name: "Download" }))
   expect(run).toHaveBeenCalledWith("app.download_update")
 })
 

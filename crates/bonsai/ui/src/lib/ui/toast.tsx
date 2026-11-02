@@ -1,6 +1,7 @@
 import { Toast as KToast, toaster } from "@kobalte/core/toast"
 import { createSignal, onCleanup, Show } from "solid-js"
 import { Portal } from "solid-js/web"
+import { Button } from "./button"
 import { Icon, type IconName } from "./icon"
 
 export type ToastVariant = "neutral" | "success" | "warning" | "error"
@@ -13,6 +14,10 @@ export interface ToastOptions {
   countdownSecs?: number
   /** Deduplication key (e.g. rate-limited host) to update an open countdown in place. */
   key?: string
+  /** One button in the toast. Clicking it runs `onClick` and dismisses the toast. */
+  action?: { label: string; onClick: () => void }
+  /** Stays open until dismissed. */
+  persistent?: boolean
 }
 
 const icons: Record<ToastVariant, IconName | undefined> = {
@@ -70,7 +75,7 @@ export function showToast(toast: string | ToastOptions) {
       return t.description
     }
     return (
-      <KToast toastId={p.toastId} persistent={secs > 0} data-component="toast" data-variant={variant}>
+      <KToast toastId={p.toastId} persistent={secs > 0 || t.persistent} data-component="toast" data-variant={variant}>
         <Show when={icons[variant]}>
           {(name) => (
             <span data-slot="icon">
@@ -81,6 +86,22 @@ export function showToast(toast: string | ToastOptions) {
         <div data-slot="body">
           <KToast.Title data-slot="title">{t.title}</KToast.Title>
           <Show when={desc()}>{(d) => <KToast.Description data-slot="description">{d()}</KToast.Description>}</Show>
+          <Show when={t.action}>
+            {(a) => (
+              <div data-slot="actions">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    toaster.dismiss(p.toastId)
+                    a().onClick()
+                  }}
+                >
+                  {a().label}
+                </Button>
+              </div>
+            )}
+          </Show>
         </div>
         <KToast.CloseButton data-slot="close" aria-label="Dismiss">
           <Icon name="x" size={12} />
