@@ -161,6 +161,10 @@ definitions:
     type: object
     properties:
       plainText: { type: string }
+      # Rich text posts leave plainText empty and send a Slate document instead, as an object
+      # or a JSON string: {type: "document", children: [{type: "block-text", children:
+      # [{text: "..."}]}]}. Checked in the GroupForums bundle 2026-11-02.
+      slate: {}
   ForumCreator:
     type: object
     properties:

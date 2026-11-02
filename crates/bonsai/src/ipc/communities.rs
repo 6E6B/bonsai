@@ -215,6 +215,8 @@ pub struct ForumPostRow {
     pub locked: bool,
     pub unread: bool,
     pub text: String,
+    /// The comment holding the post's own text; the thread view shows it above the replies.
+    pub first_comment: String,
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -558,6 +560,7 @@ pub fn forum_posts(core: State<'_, Arc<Core>>, group_id: Id, category: String) -
             locked: p.locked,
             unread: p.unread,
             text: p.text.clone(),
+            first_comment: p.first_comment.clone(),
         },
     )
 }

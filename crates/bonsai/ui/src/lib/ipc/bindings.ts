@@ -1028,6 +1028,8 @@ export type ForumPostRow = {
 	locked: boolean,
 	unread: boolean,
 	text: string,
+	/**  The comment holding the post's own text; the thread view shows it above the replies. */
+	firstComment: string,
 };
 
 export type Friend = {
