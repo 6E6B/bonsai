@@ -63,6 +63,8 @@
 
   /* The list is portalled, so it is its own component. */
   [data-component="combobox-content"] {
+    /* Above dialogs (50), below toasts (60). Kobalte copies it to the popper wrapper. */
+    z-index: 55;
     display: flex;
     flex-direction: column;
     gap: 4px;

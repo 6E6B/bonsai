@@ -226,11 +226,12 @@ export function HubDialogs() {
               </EmptyState>
             }
           >
-            <Alert title={hubUi.kind === "themes" ? "Share your theme with the community" : "Plugins require approval"}>
-              {hubUi.kind === "themes"
-                ? "This uploads a saved copy to the hub. Later edits stay private until you publish another version."
-                : "Your plugin files are packaged and sent for review. Set a new version in plugin.toml before submitting an update."}
-            </Alert>
+            <Show when={hubUi.kind === "plugins"}>
+              <Alert title="Plugins require approval">
+                Your plugin files are packaged and sent for review. Set a new version in plugin.toml before submitting
+                an update.
+              </Alert>
+            </Show>
             <Show when={!account.userId}>
               <Alert title="Sign in to publish">
                 Your GitHub account identifies you as the publisher. Your Roblox account is not used.
