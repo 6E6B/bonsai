@@ -60,7 +60,7 @@
   --shadow-on-media: drop-shadow(0 1px 1px #000000b3); /* bare marks on images, as a filter */
 
   /* ── Presence ── Dots on avatars. Roblox's own meanings: blue online, green in game. */
-  --color-presence-online: var(--color-accent);
+  --color-presence-online: #00a2ff;
   --color-presence-game: var(--color-success);
   --color-presence-studio: var(--color-warning);
   --color-presence-offline: var(--color-fg-faint);

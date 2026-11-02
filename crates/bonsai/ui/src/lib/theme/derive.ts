@@ -255,7 +255,7 @@ const FIXED: Tokens = {
   "color-verified": "#4d94ff", // Roblox's checkmark blue; matches assets/verified-badge.svg
   "color-media-chip": "#000000a6",
   "color-on-media": "#ffffff",
-  "color-presence-online": "var(--color-accent)",
+  "color-presence-online": "#00a2ff", // Roblox's online blue, not the accent
   "color-presence-game": "var(--color-success)",
   "color-presence-studio": "var(--color-warning)",
   "color-presence-offline": "var(--color-fg-faint)",
