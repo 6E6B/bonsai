@@ -140,6 +140,13 @@ impl Resources {
         }
     }
 
+    /// Mark one resource stale so the next frame refetches it.
+    pub(crate) fn invalidate_key(&self, key: &Key) {
+        if let Some(s) = self.slots.write().get_mut(key) {
+            s.stale = true;
+        }
+    }
+
     /// Change a cached value in place (optimistic updates after a write).
     pub(crate) fn update<T: Clone + Send + Sync + 'static>(&self, key: &Key, f: impl FnOnce(&mut T)) {
         let mut s = self.slots.write();
@@ -291,6 +298,13 @@ impl Inner {
             }
         });
         self.res.snapshot(&key).unwrap_or_default()
+    }
+
+    /// Something outside a fetch showed `key` is out of date: refetch it on the next read,
+    /// and drop the saved copy so a later load can't take it for fresh.
+    pub(crate) fn expire(&self, key: &Key) {
+        self.res.invalidate_key(key);
+        self.cache.delete(Kind::Res, key.account, &key.cache_id());
     }
 
     fn finish<T: Serialize + Send + Sync + 'static>(&self, k: &Key, r: Result<T, Error>) {
