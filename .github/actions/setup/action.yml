@@ -70,7 +70,7 @@ runs:
         key: ${{ inputs.cache-key }}
         # Native and universal builds need different sets of compiled dependencies.
         env-vars: BONSAI_CACHE_TARGETS
-        save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/ci-rust-cache' }}
+        save-if: ${{ github.ref == 'refs/heads/main' }}
         cache-on-failure: ${{ inputs.cache-on-failure }}
 
     - if: inputs.bun == 'true'
