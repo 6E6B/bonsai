@@ -847,7 +847,7 @@ impl Core {
             account,
             "change your avatar",
             "",
-            &[Effect::Kinds(&["avatar"])],
+            &[Effect::Avatar],
             move |f| async move {
                 let now = avatar::v1::get_avatar(&f.client).await?;
                 let assets = toggled(now.assets.unwrap_or_default(), asset, type_id, max);
@@ -878,7 +878,7 @@ impl Core {
             account,
             "wear the outfit",
             "Outfit on.",
-            &[Effect::Kinds(&["avatar"])],
+            &[Effect::Avatar],
             move |f| async move {
                 let o = rgb_outfit(&f.client, outfit).await?;
                 set_wearing(
@@ -933,7 +933,7 @@ impl Core {
             account,
             "save the outfit",
             "Outfit saved.",
-            &[Effect::Kinds(&["outfits"])],
+            &[Effect::Outfits],
             move |f| async move {
                 let now = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
                 avatar::v3::post_outfits_create(&f.client, &Default::default(), &current_look(now, name))
@@ -951,7 +951,7 @@ impl Core {
             account,
             "update the outfit",
             "Outfit updated.",
-            &[Effect::Kinds(&["outfits"])],
+            &[Effect::Outfits],
             move |f| async move {
                 let o = rgb_outfit(&f.client, outfit).await?;
                 let now = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
@@ -980,7 +980,7 @@ impl Core {
             account,
             "rename the outfit",
             "Outfit renamed.",
-            &[Effect::Kinds(&["outfits"])],
+            &[Effect::Outfits],
             move |f| async move {
                 // PATCH only the name, so colors and layered metadata remain untouched.
                 let body = avatar::v3::OutfitUpdateModelV3 {
@@ -1006,7 +1006,7 @@ impl Core {
             account,
             "delete the outfit",
             "Outfit deleted.",
-            &[Effect::Kinds(&["outfits"])],
+            &[Effect::Outfits],
             move |f| async move {
                 avatar::v1::post_outfits_by_user_outfit_id_delete(&f.client, outfit as i64).await?;
                 Ok(())
@@ -1029,7 +1029,7 @@ impl Core {
             account,
             "move the layer",
             "",
-            &[Effect::Kinds(&["avatar"])],
+            &[Effect::Avatar],
             move |f| async move {
                 let now = avatar::v1::get_avatar(&f.client).await?;
                 let assets =
@@ -1071,7 +1071,7 @@ impl Core {
             account,
             "change the body color",
             "",
-            &[Effect::Kinds(&["avatar"])],
+            &[Effect::Avatar],
             move |f| async move {
                 let now = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
                 let body = painted_rgb(now.body_color3s.unwrap_or_default(), &parts, &color);
@@ -1106,7 +1106,7 @@ impl Core {
             account,
             "change the body scale",
             "",
-            &[Effect::Kinds(&["avatar"])],
+            &[Effect::Avatar],
             move |f| async move {
                 let now = avatar::v1::get_avatar(&f.client).await?;
                 let mut s = now.scales.map(scales).unwrap_or_default();
@@ -1128,12 +1128,8 @@ impl Core {
             Some(_) => ("equip the emote", "Emote equipped."),
             None => ("clear the emote slot", "Emote slot cleared."),
         };
-        self.inner.mutate(
-            account,
-            doing,
-            done,
-            &[Effect::Kinds(&["avatar"])],
-            move |f| async move {
+        self.inner
+            .mutate(account, doing, done, &[Effect::Avatar], move |f| async move {
                 match asset {
                     Some(id) => {
                         avatar::undocumented::post_emote_equip(&f.client, id as i64, slot).await?;
@@ -1143,8 +1139,7 @@ impl Core {
                     }
                 }
                 Ok(())
-            },
-        );
+            });
         Ok(())
     }
 
@@ -1154,7 +1149,7 @@ impl Core {
             account,
             "redraw your avatar",
             "Avatar redrawn.",
-            &[Effect::Kinds(&["avatar"])],
+            &[Effect::Avatar],
             move |f| async move {
                 avatar::v1::post_avatar_redraw_thumbnail(&f.client).await?;
                 forget_images(&f.inner, account.0);
@@ -1169,7 +1164,7 @@ impl Core {
             account,
             "change the body type",
             "",
-            &[Effect::Kinds(&["avatar"])],
+            &[Effect::Avatar],
             move |f| async move {
                 let hidden: Vec<String> = if rig == Rig::R6 {
                     let now = avatar::v1::get_avatar(&f.client).await?;

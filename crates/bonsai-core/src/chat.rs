@@ -366,7 +366,7 @@ impl Core {
             account,
             "send the message",
             "",
-            &[Effect::Kinds(&["chat_messages", "chat_conversations"])],
+            &[Effect::Chat],
             move |f| async move {
                 let body = apis::undocumented::ChatSendRequest {
                     conversation_id: Some(conv.clone()),
@@ -537,7 +537,7 @@ impl Core {
             account,
             "start the chat",
             "",
-            &[Effect::Kinds(&["chat_conversations"])],
+            &[Effect::Chat],
             move |f| async move {
                 let settings = match settings {
                     Some(s) => (*s).clone(),
@@ -610,7 +610,7 @@ impl Core {
             account,
             "rename the chat",
             "Renamed",
-            &[Effect::Kinds(&["chat_conversations"])],
+            &[Effect::Chat],
             move |f| async move {
                 let settings = match settings {
                     Some(s) => (*s).clone(),
@@ -672,7 +672,7 @@ impl Core {
                 (false, true) => "You left the chat",
                 (false, false) => "Removed from the chat",
             },
-            &[Effect::Kinds(&["chat_conversations", "chat_messages"])],
+            &[Effect::Chat],
             move |f| async move {
                 let body = apis::undocumented::ChatUsersRequest {
                     conversation_id: Some(conv),

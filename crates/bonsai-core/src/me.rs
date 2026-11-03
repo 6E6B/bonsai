@@ -208,7 +208,7 @@ impl Core {
             account,
             "unlock the PIN",
             "PIN unlocked.",
-            &[Effect::Kinds(&["pin"])],
+            &[Effect::Pin],
             move |f| async move {
                 let body = auth::v1::AccountPinRequest {
                     pin: Some(pin),
@@ -227,7 +227,7 @@ impl Core {
             account,
             "lock the PIN",
             "PIN locked.",
-            &[Effect::Kinds(&["pin"])],
+            &[Effect::Pin],
             move |f| async move {
                 auth::v1::post_account_pin_lock(&f.client).await?;
                 Ok(())
@@ -383,7 +383,7 @@ impl Core {
             account,
             "change the setting",
             "",
-            &[Effect::Kinds(&["privacy"])],
+            &[Effect::Privacy],
             move |f| async move {
                 let body = std::collections::HashMap::from([(key, value)]);
                 let req = apis::undocumented::post_user_settings_request(&body)?;
@@ -404,7 +404,7 @@ impl Core {
             account,
             "change the display name",
             "Display name changed.",
-            &[],
+            &[Effect::Profile(account.0)],
             move |f| async move {
                 let id = account.0 as i64;
                 let p = users::v1::GetUsersByUserIdDisplayNamesValidateParams {

@@ -64,8 +64,6 @@ pub enum Effect {
     Privacy,
     /// Password, 2-step and session settings.
     Security,
-    /// Temporary: kinds a call site hasn't been moved to a named effect yet.
-    Kinds(&'static [&'static str]),
 }
 
 /// Resource kinds to mark stale for every key of the account (and the shared copy).
@@ -115,7 +113,6 @@ fn kinds(e: Effect) -> &'static [&'static str] {
         Effect::Pin => &["pin"],
         Effect::Privacy => &["privacy"],
         Effect::Security => &["security", "sessions"],
-        Effect::Kinds(k) => k,
     }
 }
 

@@ -538,18 +538,13 @@ impl Core {
 
     pub fn vote(&self, account: AccountId, universe_id: u64, up: bool) {
         self.set_game_state(account, universe_id, |s| s.vote = Some(up));
-        self.inner.mutate(
-            account,
-            "vote",
-            "",
-            &[Effect::Kinds(&["my_game_state"])],
-            move |f| async move {
+        self.inner
+            .mutate(account, "vote", "", &[Effect::GameState], move |f| async move {
                 let body = games::v1::SetUserGameVoteRequest { vote: Some(up) };
                 games::v1::patch_games_by_universe_id_user_votes(&f.client, universe_id as i64, &body)
                     .await?;
                 Ok(())
-            },
-        );
+            });
     }
 
     pub fn favorite(&self, account: AccountId, universe_id: u64, on: bool) {
@@ -558,7 +553,7 @@ impl Core {
             account,
             if on { "favorite" } else { "unfavorite" },
             "",
-            &[Effect::Kinds(&["my_game_state"])],
+            &[Effect::GameState],
             move |f| async move {
                 let body = games::v1::GameFavoritesRequest {
                     is_favorited: Some(on),
@@ -584,7 +579,7 @@ impl Core {
             } else {
                 ""
             },
-            &[Effect::Kinds(&["my_game_state"])],
+            &[Effect::GameState],
             move |f| async move {
                 let (u, g) = (account.0 as i64, universe_id as i64);
                 if on {
@@ -617,7 +612,7 @@ impl Core {
             } else {
                 ""
             },
-            &[Effect::Kinds(&["game_events"])],
+            &[Effect::GameEvents],
             move |f| async move {
                 let body = apis::undocumented::RsvpRequest {
                     rsvp_status: Some(if going { "going" } else { "notGoing" }.into()),
@@ -660,11 +655,7 @@ impl Core {
             account,
             "change the private server",
             done,
-            &[Effect::Kinds(&[
-                "server_config",
-                "private_servers",
-                "my_private_servers",
-            ])],
+            &[Effect::PrivateServers],
             move |f| async move {
                 let (c, id) = (&f.client, server_id as i64);
                 match change {

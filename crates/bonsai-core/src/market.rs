@@ -991,7 +991,7 @@ impl Core {
                 "unfavorite the item"
             },
             "",
-            &[Effect::Kinds(&["item_fav"])],
+            &[Effect::ItemFavorite],
             move |f| async move {
                 let (u, i) = (account.0 as i64, item.id as i64);
                 match (item.kind, on) {

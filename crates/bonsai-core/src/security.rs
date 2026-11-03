@@ -157,7 +157,7 @@ impl Core {
             account,
             "change the password",
             "Password changed. Other sessions were signed out.",
-            &[Effect::Kinds(&["security", "sessions"])],
+            &[Effect::Security],
             move |f| async move {
                 let body = auth::v2::PasswordChangeModel {
                     current_password: Some(current.expose().to_owned()),
@@ -179,12 +179,8 @@ impl Core {
         } else {
             ("turn off email codes", "Email codes are off.")
         };
-        self.inner.mutate(
-            account,
-            what,
-            done,
-            &[Effect::Kinds(&["security"])],
-            move |f| async move {
+        self.inner
+            .mutate(account, what, done, &[Effect::Security], move |f| async move {
                 let id = account.0 as i64;
                 let pw = Some(password.expose().to_owned());
                 if on {
@@ -207,8 +203,7 @@ impl Core {
                     .await?;
                 }
                 Ok(())
-            },
-        );
+            });
         Ok(())
     }
 
@@ -219,7 +214,7 @@ impl Core {
             account,
             "turn off the authenticator app",
             "Authenticator app codes are off.",
-            &[Effect::Kinds(&["security"])],
+            &[Effect::Security],
             move |f| async move {
                 let body = twostepverification::v1::DisableTwoStepVerificationRequest {
                     password: Some(password.expose().to_owned()),
@@ -252,7 +247,7 @@ impl Core {
             account,
             "remove the passkey",
             "Passkey removed.",
-            &[Effect::Kinds(&["security"])],
+            &[Effect::Security],
             move |f| async move {
                 let body = auth::v1::DeletePasskeysRequest {
                     credential_nicknames: Some(vec![name]),
