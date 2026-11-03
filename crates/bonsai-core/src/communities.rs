@@ -14,6 +14,7 @@ use bonsai_api::generated::{catalog, economy, games, groups};
 use serde::{Deserialize, Serialize};
 
 use crate::Core;
+use crate::effects::Effect;
 use crate::market::CatalogItem;
 use crate::people::Creation;
 use crate::res::{Key, Page, Res};
@@ -1219,12 +1220,7 @@ impl Core {
             account,
             "join the community",
             "",
-            &[
-                "community_membership",
-                "user_groups",
-                "community_pending",
-                "community",
-            ],
+            &[Effect::Membership],
             move |f| async move {
                 groups::v1::post_groups_by_group_id_users(
                     &f.client,
@@ -1249,7 +1245,7 @@ impl Core {
             account,
             "leave the community",
             "Left the community",
-            &["community_membership", "user_groups", "community"],
+            &[Effect::Membership],
             move |f| async move {
                 groups::v1::delete_groups_by_group_id_users_by_user_id(
                     &f.client,
@@ -1272,7 +1268,7 @@ impl Core {
             account,
             "leave the communities",
             &format!("Left {n} {}", if n == 1 { "community" } else { "communities" }),
-            &["community_membership", "user_groups", "community"],
+            &[Effect::Membership],
             move |f| async move {
                 for g in ids {
                     groups::v1::delete_groups_by_group_id_users_by_user_id(
@@ -1304,7 +1300,7 @@ impl Core {
             } else {
                 "Primary community cleared"
             },
-            &["community_membership", "user_groups"],
+            &[Effect::Membership],
             move |f| async move {
                 match group_id {
                     Some(g) => {
@@ -1334,7 +1330,7 @@ impl Core {
             } else {
                 "Shout posted"
             },
-            &["community", "community_audit"],
+            &[Effect::Community],
             move |f| async move {
                 groups::v1::patch_groups_by_group_id_status(&f.client, group_id as i64, &body).await?;
                 Ok(())
@@ -1367,7 +1363,7 @@ impl Core {
                 "decline the request"
             },
             &done,
-            &["community_requests", "community", "community_audit"],
+            &[Effect::Community],
             move |f| async move {
                 let c = &f.client;
                 let g = group_id as i64;
@@ -1403,7 +1399,7 @@ impl Core {
             account,
             "change the rank",
             "Rank changed",
-            &["community_members", "community_roles", "community_audit"],
+            &[Effect::Community],
             move |f| async move {
                 let body = groups::v1::UpdateUserRoleRequest {
                     role_id: Some(role_id as i64),
@@ -1425,12 +1421,7 @@ impl Core {
             account,
             "remove them",
             "Removed from the community",
-            &[
-                "community_members",
-                "community_roles",
-                "community_audit",
-                "community",
-            ],
+            &[Effect::Community, Effect::Membership],
             move |f| async move {
                 groups::v1::delete_groups_by_group_id_users_by_user_id(
                     &f.client,
@@ -1460,7 +1451,7 @@ impl Core {
             account,
             "change the setting",
             "Saved",
-            &["community_settings", "community_membership", "community"],
+            &[Effect::Community, Effect::Membership],
             move |f| async move {
                 groups::v1::patch_groups_by_group_id_settings(&f.client, group_id as i64, &body).await?;
                 Ok(())
@@ -1482,7 +1473,7 @@ impl Core {
             content: Some(text.trim().to_string()),
         };
         self.inner
-            .mutate(account, "post", "Posted", &["forum_posts"], move |f| async move {
+            .mutate(account, "post", "Posted", &[Effect::Forum], move |f| async move {
                 groups::undocumented::post_forum_post(&f.client, group_id as i64, &cat, &body).await?;
                 Ok(())
             });
@@ -1505,7 +1496,7 @@ impl Core {
             account,
             "reply",
             "Replied",
-            &["forum_comments", "forum_posts"],
+            &[Effect::Forum],
             move |f| async move {
                 groups::undocumented::post_forum_comment(&f.client, group_id as i64, &cat, &id, &body)
                     .await?;
@@ -1524,7 +1515,7 @@ impl Core {
             account,
             "delete the post",
             "Post deleted",
-            &["forum_posts", "community_audit"],
+            &[Effect::Forum],
             move |f| async move {
                 groups::undocumented::delete_forum_post(&f.client, group_id as i64, &cat, &id).await?;
                 Ok(())
@@ -1549,7 +1540,7 @@ impl Core {
             account,
             "delete the reply",
             "Reply deleted",
-            &["forum_comments", "forum_posts"],
+            &[Effect::Forum],
             move |f| async move {
                 groups::undocumented::delete_forum_comment(&f.client, group_id as i64, &cat, &post, &id)
                     .await?;
@@ -1579,7 +1570,7 @@ impl Core {
             account,
             "pay out",
             &format!("Paid out R$ {amount}"),
-            &["community_funds", "community_audit"],
+            &[Effect::CommunityFunds],
             move |f| async move {
                 groups::v1::post_groups_by_group_id_payouts(&f.client, group_id as i64, &body).await?;
                 Ok(())
@@ -1629,7 +1620,7 @@ impl Core {
             account,
             "change the recurring payouts",
             "Recurring payouts saved",
-            &["community_payouts", "community_audit"],
+            &[Effect::CommunityFunds],
             move |f| async move {
                 groups::v1::post_groups_by_group_id_payouts_recurring(&f.client, group_id as i64, &body)
                     .await?;
@@ -1649,7 +1640,7 @@ impl Core {
             account,
             what,
             done,
-            &["community_affiliates", "community_audit"],
+            &[Effect::Community],
             move |f| async move {
                 groups::v1::post_groups_by_group_id_relationships_by_group_relationship_type_by_related_group_id(
                     &f.client,
@@ -1682,7 +1673,7 @@ impl Core {
             account,
             what,
             done,
-            &["community_affiliates", "community_audit"],
+            &[Effect::Community],
             move |f| async move {
                 groups::v1::delete_groups_by_group_id_relationships_by_group_relationship_type_by_related_group_id(
                     &f.client,

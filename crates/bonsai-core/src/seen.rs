@@ -8,6 +8,7 @@ use bonsai_api::AccountId;
 
 use crate::cache::{Kind, now};
 use crate::core::Inner;
+use crate::effects::Effect;
 use crate::store::PresenceKind;
 
 pub(crate) const LAST_SEEN: &str = "last_seen";
@@ -46,6 +47,19 @@ pub fn removed(before: &[u64], after: &[u64], by_me: &HashSet<u64>) -> Vec<u64> 
         .collect()
 }
 
+/// Users who joined or left the friends list between `before` and `after`, with the same guard
+/// against an empty `after` as [`removed`].
+pub fn changed(before: &[u64], after: &[u64]) -> Vec<u64> {
+    if after.is_empty() && before.len() > 3 {
+        return Vec::new();
+    }
+    let b: HashSet<u64> = before.iter().copied().collect();
+    let a: HashSet<u64> = after.iter().copied().collect();
+    let mut out: Vec<u64> = b.symmetric_difference(&a).copied().collect();
+    out.sort_unstable();
+    out
+}
+
 impl Inner {
     /// Remember who `account` just saw online.
     pub(crate) fn note_presence(&self, account: AccountId, seen: &[(u64, PresenceKind)]) {
@@ -66,6 +80,14 @@ impl Inner {
     /// Compare a fresh friends list with the one before it and say who removed `account`.
     /// `before` is `None` on the first fetch ever, when there is nothing to compare with.
     pub(crate) fn note_friends(&self, account: AccountId, before: Option<&[u64]>, after: &[u64]) {
+        // Their friends list, friend count and our relation to them are cached too.
+        let moved: Vec<Effect> = before
+            .map(|b| changed(b, after))
+            .unwrap_or_default()
+            .into_iter()
+            .map(Effect::Friendship)
+            .collect();
+        self.apply(account, &moved);
         let (gone, unfriended) = {
             let mut s = self.store.write();
             let d = s.data.entry(account).or_default();
@@ -113,6 +135,14 @@ impl Inner {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn changed_lists_both_ways() {
+        assert_eq!(changed(&[1, 2, 3], &[2, 3, 4]), vec![1, 4]);
+        assert_eq!(changed(&[1, 2], &[1, 2]), Vec::<u64>::new());
+        assert_eq!(changed(&[1, 2, 3, 4], &[]), Vec::<u64>::new());
+        assert_eq!(changed(&[1], &[]), vec![1]);
+    }
 
     #[test]
     fn stamps_only_online_users() {

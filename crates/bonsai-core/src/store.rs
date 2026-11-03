@@ -243,7 +243,6 @@ pub enum SessionState {
 #[derive(Clone, Debug, Default)]
 pub struct AccountData {
     pub session: SessionState,
-    pub robux: Option<i64>,
     pub unread: Unread,
     pub friends: Loadable<Vec<u64>>,
     /// Presence as seen by this account.

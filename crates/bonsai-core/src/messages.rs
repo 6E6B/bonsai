@@ -9,6 +9,7 @@ use bonsai_api::generated::privatemessages;
 use serde::{Deserialize, Serialize};
 
 use crate::Core;
+use crate::effects::Effect;
 use crate::res::{Key, Page, Res};
 
 const AGE: i64 = 120;
@@ -208,7 +209,7 @@ impl Core {
             account,
             "update the message",
             "",
-            &["private_messages"],
+            &[Effect::Messages],
             move |f| async move {
                 let body = privatemessages::v1::BatchMessagesRequest {
                     message_ids: Some(ids),
@@ -234,7 +235,7 @@ impl Core {
                 "move the message back"
             },
             if archive { "Archived." } else { "Moved to Inbox." },
-            &["private_messages"],
+            &[Effect::Messages],
             move |f| async move {
                 let body = privatemessages::v1::BatchMessagesRequest {
                     message_ids: Some(ids),
@@ -298,7 +299,7 @@ impl Core {
             account,
             "clear notifications",
             "",
-            &["notifications"],
+            &[Effect::Notifications],
             move |f| async move {
                 notifications::v2::post_stream_notifications_clear_unread(&f.client).await?;
                 Ok(())

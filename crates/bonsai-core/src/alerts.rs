@@ -12,6 +12,7 @@ use serde_json::json;
 
 use crate::Core;
 use crate::core::Inner;
+use crate::effects::Effect;
 use crate::store::{Presence, PresenceKind, Unread};
 
 /// Alerts kept for the shell to pick up; older ones are dropped.
@@ -62,6 +63,29 @@ pub fn joined_games(before: &HashMap<u64, Presence>, after: &HashMap<u64, Presen
     ids
 }
 
+/// What a moved count says changed. The realtime hub usually got there first, but trades have
+/// no realtime event and the hub can be disconnected.
+pub fn count_effects(before: &Unread, after: &Unread) -> Vec<Effect> {
+    let mut out = Vec::new();
+    if before.friend_requests != after.friend_requests {
+        out.push(Effect::FriendRequests);
+    }
+    if before.trades != after.trades {
+        // A trade that left the inbound list may have been accepted elsewhere.
+        out.extend([Effect::Trades, Effect::Inventory, Effect::Robux]);
+    }
+    if before.messages != after.messages {
+        out.push(Effect::Messages);
+    }
+    if before.notifications != after.notifications {
+        out.push(Effect::Notifications);
+    }
+    if before.chat != after.chat {
+        out.push(Effect::Chat);
+    }
+    out
+}
+
 fn plural(n: i64, what: &str) -> String {
     if n == 1 {
         format!("1 {what}")
@@ -99,6 +123,7 @@ impl Inner {
     pub(crate) fn note_unread(&self, account: AccountId, now: Unread) {
         let before = self.alerts.lock().unread.insert(account, now);
         let Some(before) = before else { return };
+        self.apply(account, &count_effects(&before, &now));
         for (kind, text) in unread_alerts(&before, &now) {
             // Roblox's stream has friend requests but not trade offers.
             if kind == "trades" {
@@ -250,6 +275,26 @@ impl Core {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn moved_counts_say_what_changed() {
+        let a = Unread {
+            trades: 2,
+            chat: 1,
+            ..Default::default()
+        };
+        assert!(count_effects(&a, &a).is_empty());
+        let b = Unread {
+            trades: 1,
+            messages: 4,
+            chat: 1,
+            ..Default::default()
+        };
+        assert_eq!(
+            count_effects(&a, &b),
+            vec![Effect::Trades, Effect::Inventory, Effect::Robux, Effect::Messages]
+        );
+    }
 
     #[test]
     fn counts_that_went_up() {

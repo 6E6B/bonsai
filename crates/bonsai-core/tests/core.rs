@@ -57,6 +57,20 @@ async fn wait_for(core: &Core, what: &str, f: impl Fn(&StoreData) -> bool) {
     }
 }
 
+/// Wait until `core` shows `want` as the balance of `account`. Asking starts the load.
+async fn wait_robux(core: &Core, account: AccountId, want: i64) {
+    let start = Instant::now();
+    while core.robux(account).data.as_deref() != Some(&want) {
+        assert!(
+            start.elapsed() < Duration::from_secs(10),
+            "timed out waiting for a balance of {want}; have {:?}, toasts: {:?}",
+            core.robux(account),
+            core.store().toasts
+        );
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+}
+
 /// Two saved accounts with cookies and some cached data, no network.
 fn seeded(dir: &tempfile::TempDir) -> Arc<MemoryCookies> {
     let paths = Paths::in_dir(dir.path());
@@ -81,8 +95,8 @@ fn seeded(dir: &tempfile::TempDir) -> Arc<MemoryCookies> {
     list.save(&paths.accounts_file()).unwrap();
     std::fs::create_dir_all(&paths.cache).unwrap();
     let cache = Cache::open(&paths.db_file()).unwrap();
-    cache.put(Kind::Robux, ME, "robux", &10_i64);
-    cache.put(Kind::Robux, ALT, "robux", &20_i64);
+    cache.put(Kind::Res, ME, "robux:", &10_i64);
+    cache.put(Kind::Res, ALT, "robux:", &20_i64);
     cache.put(
         Kind::Unread,
         ALT,
@@ -147,12 +161,12 @@ async fn paste_cookie_validates_then_confirms() {
             .is_some_and(|d| d.unread.friend_requests == 1 && d.friends.data.is_some())
     })
     .await;
+    wait_robux(&r.core, ME, 0).await;
     let s = r.core.store();
     assert_eq!(s.active_id(), Some(ME));
     assert!(s.login.is_none());
     let d = s.account_data(ME).unwrap();
     assert_eq!(d.session, SessionState::Ok);
-    assert_eq!(d.robux, Some(0));
     assert_eq!(d.unread.messages, 1);
     assert_eq!(d.friends.data.as_deref(), Some(&[][..]));
     assert!(matches!(
@@ -199,7 +213,6 @@ async fn switching_renders_from_cache_without_network() {
     let r = rig(Base::Replay(url), dir, cookies);
     let assert_alt_cache = || {
         let s = r.core.store();
-        assert_eq!(s.account_data(ALT).unwrap().robux, Some(20));
         assert_eq!(s.account_data(ALT).unwrap().unread.messages, 3);
         assert_eq!(
             s.account_data(ALT).unwrap().friends.data.as_deref(),
@@ -208,6 +221,7 @@ async fn switching_renders_from_cache_without_network() {
     };
     assert_eq!(r.core.store().active_id(), Some(ME));
     assert_alt_cache();
+    wait_robux(&r.core, ALT, 20).await;
     assert!(r.core.switch(ALT));
     // Check the visible state as soon as switch returns, without awaiting a refresh.
     // A frame-sized wall-clock budget also measures disk and scheduler delays in CI.
@@ -218,7 +232,7 @@ async fn switching_renders_from_cache_without_network() {
     assert_alt_cache();
     assert!(r.core.switch_last());
     assert_eq!(r.core.store().active_id(), Some(ME));
-    assert_eq!(r.core.store().account_data(ME).unwrap().robux, Some(10));
+    wait_robux(&r.core, ME, 10).await;
     assert!(!r.core.switch(AccountId(42)));
     assert_eq!(r.core.store().active_id(), Some(ME));
     // Survives a restart.
@@ -364,7 +378,7 @@ async fn expired_session_marks_only_that_account() {
         SessionState::NoCookie
     );
     // Cached data stays visible.
-    assert_eq!(r.core.store().account_data(ME).unwrap().robux, Some(10));
+    wait_robux(&r.core, ME, 10).await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -1113,10 +1127,7 @@ async fn buying_items_resale_copies_and_passes() {
     // From the creator: sale details first, then the purchase, then the new balance.
     c.buy_item(ME, silly.into(), "Silly Fun".into(), 0, Seller::Creator);
     wait_for(c, "bought item", toast("Bought Silly Fun.")).await;
-    wait_for(c, "balance", |s| {
-        s.account_data(ME).and_then(|d| d.robux) == Some(90)
-    })
-    .await;
+    wait_robux(c, ME, 90).await;
 
     // The cheapest resale copy, refused for the balance.
     c.buy_item(ME, valk.into(), "Valkyrie Helm".into(), 279_900, Seller::Cheapest);
@@ -1129,10 +1140,7 @@ async fn buying_items_resale_copies_and_passes() {
 
     c.buy_pass(ME, 3_714_256_301, "1.25x Candy Multiplier".into(), 50);
     wait_for(c, "bought pass", toast("Bought 1.25x Candy Multiplier.")).await;
-    wait_for(c, "balance", |s| {
-        s.account_data(ME).and_then(|d| d.robux) == Some(40)
-    })
-    .await;
+    wait_robux(c, ME, 40).await;
     c.buy_pass(ME, 3_714_256_301, "1.25x Candy Multiplier".into(), 50);
     wait_for(
         c,
@@ -2558,7 +2566,7 @@ async fn disk_cache_measures_and_clears_but_keeps_local_data() {
     wait_for(c, "cleared", |s| s.cache_usage.is_some_and(|u| u.images == 0)).await;
     let cache = Cache::open(&paths.db_file()).unwrap();
     assert!(cache.get::<String>(Kind::Local, ME, "drafts").is_some());
-    assert!(cache.get::<i64>(Kind::Robux, ME, "robux").is_none());
+    assert!(cache.get::<i64>(Kind::Res, ME, "robux:").is_none());
 }
 
 #[tokio::test(flavor = "multi_thread")]

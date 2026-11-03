@@ -6,9 +6,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 
-use bonsai_api::generated::{
-    apis, economy, friends, games, notifications, presence, privatemessages, trades, users,
-};
+use bonsai_api::generated::{apis, friends, games, notifications, presence, privatemessages, trades, users};
 use bonsai_api::{AccountId, Base, Client, Error, RateLimiter, Secret};
 use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 use tokio::sync::mpsc;
@@ -16,6 +14,7 @@ use tokio::sync::mpsc;
 use crate::account::{AccountMeta, ColorTag, CookieStore, Paths, parse_cookie_input};
 use crate::cache::{Cache, Kind};
 use crate::launcher::{self, JoinTarget, Opener};
+use crate::res::Key;
 use crate::settings::Settings;
 use crate::store::*;
 use crate::thumbs::{self, DiskCache, ThumbKey, ThumbState};
@@ -661,9 +660,6 @@ fn warm_store(cache: &Cache, s: &mut StoreData) {
     let ids: Vec<AccountId> = s.accounts.accounts.iter().map(|a| a.id).collect();
     for id in ids {
         let d = s.data.entry(id).or_default();
-        if let Some(r) = cache.get::<i64>(Kind::Robux, id, "robux") {
-            d.robux = Some(r.value);
-        }
         if let Some(u) = cache.get::<Unread>(Kind::Unread, id, "unread") {
             d.unread = u.value;
         }
@@ -1078,15 +1074,9 @@ impl Inner {
             }
         }
         self.save_accounts();
-        let (robux, unread) = tokio::join!(economy::v1::get_user_currency(&c), self.unread(&c));
-        match robux {
-            Ok(r) => {
-                let r = r.robux.unwrap_or_default();
-                self.store.write().data.entry(id).or_default().robux = Some(r);
-                self.cache.put(Kind::Robux, id, "robux", &r);
-            }
-            Err(e) => self.note_error(id, &e),
-        }
+        // Signing in or coming back to an account: show the balance as it is now.
+        self.expire(&Key::private(id, "robux", ""));
+        let unread = self.unread(&c).await;
         self.store.write().data.entry(id).or_default().unread = unread;
         self.cache.put(Kind::Unread, id, "unread", &unread);
         self.note_unread(id, unread);

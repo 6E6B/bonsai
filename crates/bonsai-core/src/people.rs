@@ -11,6 +11,7 @@ use bonsai_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
 use crate::Core;
+use crate::effects::Effect;
 use crate::res::{Key, Page, Res};
 use crate::store::{Presence, PresenceKind, UserInfo};
 
@@ -682,7 +683,7 @@ impl Core {
             account,
             "send the friend request",
             "Friend request sent",
-            &["relation", "profile"],
+            &[Effect::Friendship(user_id)],
             move |f| async move {
                 let body = friends::undocumented::FriendshipRequest {
                     friendship_origin_source_type: Some("UserProfile".into()),
@@ -703,7 +704,7 @@ impl Core {
             account,
             "remove the friend",
             "Removed from friends",
-            &["relation", "profile", "friends_of"],
+            &[Effect::Friendship(user_id)],
             move |f| async move {
                 friends::undocumented::post_unfriend(&f.client, user_id as i64).await?;
                 Ok(())
@@ -717,7 +718,7 @@ impl Core {
             account,
             "accept the request",
             "Friend request accepted",
-            &["relation", "profile", "friend_requests", "friends_of"],
+            &[Effect::Friendship(user_id), Effect::FriendRequests],
             move |f| async move {
                 friends::undocumented::post_accept_friend_request(&f.client, user_id as i64).await?;
                 Ok(())
@@ -731,7 +732,7 @@ impl Core {
             account,
             "decline the request",
             "",
-            &["relation", "friend_requests"],
+            &[Effect::FriendRequests],
             move |f| async move {
                 friends::undocumented::post_decline_friend_request(&f.client, user_id as i64).await?;
                 Ok(())
@@ -750,7 +751,7 @@ impl Core {
             account,
             "decline the requests",
             "All friend requests declined",
-            &["relation", "friend_requests"],
+            &[Effect::FriendRequests],
             move |f| async move {
                 friends::undocumented::post_decline_all_friend_requests(&f.client).await?;
                 Ok(())
@@ -765,7 +766,7 @@ impl Core {
             account,
             "follow",
             "",
-            &["relation", "profile", "followings"],
+            &[Effect::Follow(user_id)],
             move |f| async move {
                 let r = friends::v1::post_users_by_target_user_id_follow(
                     &f.client,
@@ -788,7 +789,7 @@ impl Core {
             account,
             "unfollow",
             "",
-            &["relation", "profile", "followings"],
+            &[Effect::Follow(user_id)],
             move |f| async move {
                 friends::v1::post_users_by_target_user_id_unfollow(&f.client, user_id as i64).await?;
                 Ok(())
@@ -802,7 +803,11 @@ impl Core {
             account,
             "block",
             "Blocked",
-            &["relation", "blocked"],
+            &[
+                Effect::Block(user_id),
+                Effect::Friendship(user_id),
+                Effect::Follow(user_id),
+            ],
             move |f| async move {
                 apis::undocumented::post_block_user(&f.client, user_id as i64).await?;
                 Ok(())
@@ -821,7 +826,11 @@ impl Core {
             account,
             "unblock",
             "Unblocked",
-            &["relation", "blocked"],
+            &[
+                Effect::Block(user_id),
+                Effect::Friendship(user_id),
+                Effect::Follow(user_id),
+            ],
             move |f| async move {
                 apis::undocumented::post_unblock_user(&f.client, user_id as i64).await?;
                 Ok(())

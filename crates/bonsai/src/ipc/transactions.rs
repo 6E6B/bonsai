@@ -260,7 +260,7 @@ pub fn transactions_view(core: State<'_, Arc<Core>>, q: TxQuery) -> TxView {
     let rows = matching(&l, &q);
     let s = sums(rows.iter().copied());
     let balance = match scope {
-        Scope::Me => core.store().data.get(&a).and_then(|d| d.robux).map(|r| r as f64),
+        Scope::Me => core.robux(a).data.map(|r| *r as f64),
         Scope::Group(g) => core.community_funds(a, g).data.map(|r| *r as f64),
     };
     let mut kinds: Vec<TxKind> = l.rows.iter().map(|r| r.kind).collect();
@@ -381,19 +381,17 @@ pub struct AccountTotalsView {
 #[specta::specta]
 pub fn transaction_accounts(core: State<'_, Arc<Core>>, period: String) -> Vec<AccountTotalsView> {
     let p = Period::from_key(&period).unwrap_or_default();
-    let accounts: Vec<(AccountId, String, Option<i64>)> = {
+    let accounts: Vec<(AccountId, String)> = {
         let s = core.store();
         s.accounts
             .accounts
             .iter()
-            .map(|m| {
-                let name = m.label.clone().unwrap_or_else(|| m.display_name.clone());
-                (m.id, name, s.data.get(&m.id).and_then(|d| d.robux))
-            })
+            .map(|m| (m.id, m.label.clone().unwrap_or_else(|| m.display_name.clone())))
             .collect()
     };
     accounts
         .into_iter()
+        .map(|(a, name)| (a, name, core.robux(a).data.map(|r| *r)))
         .map(|(a, name, robux)| AccountTotalsView {
             id: Id(a.0),
             name,

@@ -10,6 +10,7 @@ use bonsai_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
 use crate::Core;
+use crate::effects::Effect;
 use crate::market::{ItemKind, ItemRef};
 use crate::res::{Key, Page, Res};
 use crate::values::ValueTable;
@@ -457,7 +458,7 @@ impl Core {
             account,
             "delete the item",
             "Deleted from your inventory",
-            &["inventory", "owns"],
+            &[Effect::Inventory],
             move |f| async move {
                 inventory::v2::delete_inventory_asset_by_asset_id(&f.client, asset_id as i64).await?;
                 Ok(())

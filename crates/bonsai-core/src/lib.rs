@@ -15,6 +15,7 @@ pub mod core;
 pub mod dependencies;
 mod discord;
 pub mod discover;
+pub mod effects;
 pub mod experience;
 pub mod feed;
 pub mod fmt;

@@ -12,6 +12,7 @@ use bonsai_api::AccountId;
 use bonsai_api::generated::{apis, badges, followings, games, www};
 use serde::{Deserialize, Serialize};
 
+use crate::effects::Effect;
 use crate::launcher::JoinTarget;
 use crate::people::Badge;
 use crate::res::{Key, Page, Res};
@@ -538,7 +539,7 @@ impl Core {
     pub fn vote(&self, account: AccountId, universe_id: u64, up: bool) {
         self.set_game_state(account, universe_id, |s| s.vote = Some(up));
         self.inner
-            .mutate(account, "vote", "", &["my_game_state"], move |f| async move {
+            .mutate(account, "vote", "", &[Effect::GameState], move |f| async move {
                 let body = games::v1::SetUserGameVoteRequest { vote: Some(up) };
                 games::v1::patch_games_by_universe_id_user_votes(&f.client, universe_id as i64, &body)
                     .await?;
@@ -552,7 +553,7 @@ impl Core {
             account,
             if on { "favorite" } else { "unfavorite" },
             "",
-            &["my_game_state"],
+            &[Effect::GameState],
             move |f| async move {
                 let body = games::v1::GameFavoritesRequest {
                     is_favorited: Some(on),
@@ -578,7 +579,7 @@ impl Core {
             } else {
                 ""
             },
-            &["my_game_state"],
+            &[Effect::GameState],
             move |f| async move {
                 let (u, g) = (account.0 as i64, universe_id as i64);
                 if on {
@@ -611,7 +612,7 @@ impl Core {
             } else {
                 ""
             },
-            &["game_events"],
+            &[Effect::GameEvents],
             move |f| async move {
                 let body = apis::undocumented::RsvpRequest {
                     rsvp_status: Some(if going { "going" } else { "notGoing" }.into()),
@@ -628,7 +629,7 @@ impl Core {
             account,
             "buy the private server",
             "Private server bought.",
-            &["private_servers", "robux"],
+            &[Effect::PrivateServers, Effect::Robux],
             move |f| async move {
                 let body = games::v1::CreateVipServersRequest {
                     expected_price: Some(price),
@@ -654,7 +655,7 @@ impl Core {
             account,
             "change the private server",
             done,
-            &["server_config", "private_servers", "my_private_servers"],
+            &[Effect::PrivateServers],
             move |f| async move {
                 let (c, id) = (&f.client, server_id as i64);
                 match change {
