@@ -7,6 +7,7 @@ use bonsai_api::generated::trades;
 use serde::{Deserialize, Serialize};
 
 use crate::Core;
+use crate::effects::Effect;
 use crate::market::{ItemKind, ItemRef};
 use crate::res::{Key, Page, Res};
 use crate::store::UserInfo;
@@ -501,7 +502,7 @@ impl Core {
             account,
             "accept the trade",
             "Trade accepted",
-            &["trades", "trade", "tradable", "collectibles"],
+            &[Effect::Trades, Effect::Inventory, Effect::Robux],
             move |f| async move {
                 trades::v1::post_trades_by_trade_id_accept(&f.client, trade_id as i64).await?;
                 f.inner.refresh_unread(account).await;
@@ -516,7 +517,7 @@ impl Core {
             account,
             "decline the trade",
             "Trade declined",
-            &["trades", "trade"],
+            &[Effect::Trades],
             move |f| async move {
                 trades::v1::post_trades_by_trade_id_decline(&f.client, trade_id as i64).await?;
                 f.inner.refresh_unread(account).await;
@@ -539,7 +540,7 @@ impl Core {
             account,
             "send the trade",
             done,
-            &["trades", "trade"],
+            &[Effect::Trades],
             move |f| async move {
                 let offer = |user: u64, items: &[TradeItem], robux: i64| trades::v2::TradeOfferRequest {
                     user_id: Some(user as i64),

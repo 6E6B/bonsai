@@ -8,27 +8,19 @@
 //! `TwoStepVerificationRequired` reason in the body has no challenge to answer, so the user is
 //! sent to the website.
 
-use bonsai_api::generated::{apis, economy};
+use bonsai_api::generated::apis;
 use bonsai_api::{AccountId, Client, Error};
 
 use crate::Core;
-use crate::cache::Kind;
+use crate::effects::Effect;
 use crate::fmt;
 use crate::launcher::uuid_v4;
 
 /// Robux, as `expectedCurrency`.
 const ROBUX: i32 = 1;
 
-/// Kinds that can change when something is bought.
-const BOUGHT: &[&str] = &[
-    "owns",
-    "game_passes",
-    "item",
-    "items",
-    "resellers",
-    "collectibles",
-    "tradable",
-];
+/// What buying something changes.
+const BOUGHT: &[Effect] = &[Effect::Robux, Effect::Inventory, Effect::Market];
 
 /// Whose copy of an item to buy.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -184,7 +176,6 @@ impl Core {
                     apis::undocumented::post_purchase_game_pass(&f.client, product_id as i64, &body).await?;
                 Outcome::from(r).result()?;
                 f.inner.toast(Some(account), format!("Bought {name}."), false);
-                refresh_robux(&f.inner, account, &f.client).await;
                 Ok(())
             });
     }
@@ -259,18 +250,8 @@ impl Core {
                     format!("Bought {name}.")
                 };
                 f.inner.toast(Some(account), text, false);
-                refresh_robux(&f.inner, account, c).await;
                 Ok(())
             });
-    }
-}
-
-/// Fetch the balance again so the status bar shows what's left.
-pub(crate) async fn refresh_robux(inner: &crate::core::Inner, account: AccountId, c: &Client) {
-    if let Ok(r) = economy::v1::get_user_currency(c).await {
-        let r = r.robux.unwrap_or_default();
-        inner.store.write().data.entry(account).or_default().robux = Some(r);
-        inner.cache.put(Kind::Robux, account, "robux", &r);
     }
 }
 

@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use crate::Core;
 use crate::cache::{Kind, now};
 use crate::core::Inner;
+use crate::effects::Effect;
 use crate::res::{Key, Page, Res};
 use crate::store::UserInfo;
 
@@ -365,7 +366,7 @@ impl Core {
             account,
             "send the message",
             "",
-            &["chat_messages", "chat_conversations"],
+            &[Effect::Kinds(&["chat_messages", "chat_conversations"])],
             move |f| async move {
                 let body = apis::undocumented::ChatSendRequest {
                     conversation_id: Some(conv.clone()),
@@ -536,7 +537,7 @@ impl Core {
             account,
             "start the chat",
             "",
-            &["chat_conversations"],
+            &[Effect::Kinds(&["chat_conversations"])],
             move |f| async move {
                 let settings = match settings {
                     Some(s) => (*s).clone(),
@@ -609,7 +610,7 @@ impl Core {
             account,
             "rename the chat",
             "Renamed",
-            &["chat_conversations"],
+            &[Effect::Kinds(&["chat_conversations"])],
             move |f| async move {
                 let settings = match settings {
                     Some(s) => (*s).clone(),
@@ -671,7 +672,7 @@ impl Core {
                 (false, true) => "You left the chat",
                 (false, false) => "Removed from the chat",
             },
-            &["chat_conversations", "chat_messages"],
+            &[Effect::Kinds(&["chat_conversations", "chat_messages"])],
             move |f| async move {
                 let body = apis::undocumented::ChatUsersRequest {
                     conversation_id: Some(conv),
@@ -795,13 +796,12 @@ impl Inner {
                         }
                         self.note_chat(acc, sender, &conv);
                     }
-                    self.res.invalidate(acc, "chat_conversations");
-                    self.res.invalidate(acc, "chat_messages");
+                    self.apply(acc, &[Effect::Chat]);
                     self.spawn_unread(acc);
                 }
             }
             "NotificationStream" => {
-                self.res.invalidate(acc, "notifications");
+                self.apply(acc, &[Effect::Notifications]);
                 self.spawn_unread(acc);
                 if kind == "newnotification" {
                     let me = self.clone();
@@ -809,12 +809,11 @@ impl Inner {
                 }
             }
             "MessageNotification" | "PrivateMessageNotifications" => {
-                self.res.invalidate(acc, "private_messages");
+                self.apply(acc, &[Effect::Messages]);
                 self.spawn_unread(acc);
             }
             "FriendshipNotifications" => {
-                self.res.invalidate(acc, "friend_requests");
-                self.res.invalidate(acc, "relation");
+                self.apply(acc, &[Effect::FriendRequests]);
                 self.spawn_unread(acc);
                 // Someone added or removed you: re-read the list so a removal is noticed now.
                 if kind.starts_with("friendshipdestroyed") || kind.starts_with("friendshipcreated") {

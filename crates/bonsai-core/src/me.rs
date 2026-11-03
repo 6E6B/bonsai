@@ -2,18 +2,22 @@
 //! settings, the display name, private servers across experiences, and the local disk cache.
 
 use bonsai_api::generated::{
-    accountinformation, accountsettings, apis, auth, games, premiumfeatures, users, voice,
+    accountinformation, accountsettings, apis, auth, economy, games, premiumfeatures, users, voice,
 };
 use bonsai_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
 use crate::Core;
+use crate::effects::Effect;
 use crate::res::{Key, Page, Res};
 use crate::store::UserInfo;
 
 const INFO_AGE: i64 = 300;
 const LIST_AGE: i64 = 300;
 const PIN_AGE: i64 = 60;
+/// Purchases, sales and trades mark the balance stale through [`Effect::Robux`]; this catches
+/// spending done outside the app.
+const ROBUX_AGE: i64 = 300;
 
 /// What Roblox has on file for the signed-in account. Parts Roblox didn't answer stay empty.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -164,6 +168,21 @@ fn pin_deadline(v: Option<f64>, now: i64) -> i64 {
 }
 
 impl Core {
+    /// The account's Robux balance.
+    pub fn robux(&self, account: AccountId) -> Res<i64> {
+        if account.is_anonymous() {
+            return Res::default();
+        }
+        self.inner.res(
+            Key::private(account, "robux", ""),
+            ROBUX_AGE,
+            move |f| async move {
+                let r = economy::v1::get_user_currency(&f.client).await?;
+                Ok(r.robux.unwrap_or_default())
+            },
+        )
+    }
+
     /// Whether the account PIN is on and unlocked.
     pub fn pin_status(&self, account: AccountId) -> Res<PinStatus> {
         if account.is_anonymous() {
@@ -189,7 +208,7 @@ impl Core {
             account,
             "unlock the PIN",
             "PIN unlocked.",
-            &["pin"],
+            &[Effect::Kinds(&["pin"])],
             move |f| async move {
                 let body = auth::v1::AccountPinRequest {
                     pin: Some(pin),
@@ -208,7 +227,7 @@ impl Core {
             account,
             "lock the PIN",
             "PIN locked.",
-            &["pin"],
+            &[Effect::Kinds(&["pin"])],
             move |f| async move {
                 auth::v1::post_account_pin_lock(&f.client).await?;
                 Ok(())
@@ -364,7 +383,7 @@ impl Core {
             account,
             "change the setting",
             "",
-            &["privacy"],
+            &[Effect::Kinds(&["privacy"])],
             move |f| async move {
                 let body = std::collections::HashMap::from([(key, value)]);
                 let req = apis::undocumented::post_user_settings_request(&body)?;

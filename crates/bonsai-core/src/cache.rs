@@ -30,7 +30,6 @@ pub enum Kind {
     // private
     Me,
     Friends,
-    Robux,
     Home,
     Unread,
     Favorites,
@@ -56,7 +55,6 @@ impl Kind {
             Kind::Search => "search",
             Kind::Me => "me",
             Kind::Friends => "friends",
-            Kind::Robux => "robux",
             Kind::Home => "home",
             Kind::Unread => "unread",
             Kind::Favorites => "favorites",
@@ -377,6 +375,21 @@ impl Cache {
             "DELETE FROM entities WHERE kind = ?1 AND account = ?2 AND id = ?3",
             params![kind.name(), Self::account_for(kind, account), id],
         );
+    }
+
+    /// Keep the row but mark it as fetched long ago, so the next load shows it and refetches.
+    /// With `prefix`, every row whose id starts with `id`.
+    pub fn age_out(&self, kind: Kind, account: AccountId, id: &str, prefix: bool) {
+        let sql = if prefix {
+            "UPDATE entities SET fetched_at = 0
+             WHERE kind = ?1 AND account = ?2 AND substr(id, 1, length(?3)) = ?3"
+        } else {
+            "UPDATE entities SET fetched_at = 0 WHERE kind = ?1 AND account = ?2 AND id = ?3"
+        };
+        let _ = self
+            .db
+            .lock()
+            .execute(sql, params![kind.name(), Self::account_for(kind, account), id]);
     }
 
     /// Every row of a kind for an account (for warming the in-memory store at start).

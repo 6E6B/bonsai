@@ -12,6 +12,7 @@ use serde_json::json;
 
 use crate::Core;
 use crate::core::Inner;
+use crate::effects::Effect;
 use crate::store::{Presence, PresenceKind, Unread};
 
 /// Alerts kept for the shell to pick up; older ones are dropped.
@@ -62,25 +63,25 @@ pub fn joined_games(before: &HashMap<u64, Presence>, after: &HashMap<u64, Presen
     ids
 }
 
-/// Cached lists to refetch because their count moved. The realtime hub usually got there first,
-/// but trades have no realtime event and the hub can be disconnected.
-pub fn stale_kinds(before: &Unread, after: &Unread) -> Vec<&'static str> {
+/// What a moved count says changed. The realtime hub usually got there first, but trades have
+/// no realtime event and the hub can be disconnected.
+pub fn count_effects(before: &Unread, after: &Unread) -> Vec<Effect> {
     let mut out = Vec::new();
     if before.friend_requests != after.friend_requests {
-        out.extend(["friend_requests", "relation"]);
+        out.push(Effect::FriendRequests);
     }
     if before.trades != after.trades {
         // A trade that left the inbound list may have been accepted elsewhere.
-        out.extend(["trades", "trade", "collectibles"]);
+        out.extend([Effect::Trades, Effect::Inventory, Effect::Robux]);
     }
     if before.messages != after.messages {
-        out.push("private_messages");
+        out.push(Effect::Messages);
     }
     if before.notifications != after.notifications {
-        out.push("notifications");
+        out.push(Effect::Notifications);
     }
     if before.chat != after.chat {
-        out.extend(["chat_conversations", "chat_messages"]);
+        out.push(Effect::Chat);
     }
     out
 }
@@ -122,13 +123,7 @@ impl Inner {
     pub(crate) fn note_unread(&self, account: AccountId, now: Unread) {
         let before = self.alerts.lock().unread.insert(account, now);
         let Some(before) = before else { return };
-        let stale = stale_kinds(&before, &now);
-        for kind in &stale {
-            self.res.invalidate(account, kind);
-        }
-        if !stale.is_empty() {
-            self.repaint();
-        }
+        self.apply(account, &count_effects(&before, &now));
         for (kind, text) in unread_alerts(&before, &now) {
             // Roblox's stream has friend requests but not trade offers.
             if kind == "trades" {
@@ -282,13 +277,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn moved_counts_mark_lists_stale() {
+    fn moved_counts_say_what_changed() {
         let a = Unread {
             trades: 2,
             chat: 1,
             ..Default::default()
         };
-        assert!(stale_kinds(&a, &a).is_empty());
+        assert!(count_effects(&a, &a).is_empty());
         let b = Unread {
             trades: 1,
             messages: 4,
@@ -296,8 +291,8 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            stale_kinds(&a, &b),
-            vec!["trades", "trade", "collectibles", "private_messages"]
+            count_effects(&a, &b),
+            vec![Effect::Trades, Effect::Inventory, Effect::Robux, Effect::Messages]
         );
     }
 

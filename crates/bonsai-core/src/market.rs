@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Core;
 use crate::cache::{Kind, now};
+use crate::effects::Effect;
 use crate::fmt;
 use crate::res::{Key, Page, Res};
 
@@ -990,7 +991,7 @@ impl Core {
                 "unfavorite the item"
             },
             "",
-            &["item_fav"],
+            &[Effect::Kinds(&["item_fav"])],
             move |f| async move {
                 let (u, i) = (account.0 as i64, item.id as i64);
                 match (item.kind, on) {

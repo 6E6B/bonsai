@@ -1098,7 +1098,11 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
             }
         },
         thumb_revs: s.thumb_revs.iter().map(|(k, r)| (k.path(), *r)).collect(),
-        robux: s.active_data().and_then(|d| d.robux).map(|r| r as f64),
+        robux: s
+            .accounts
+            .active
+            .and_then(|a| core.robux(a).data)
+            .map(|r| *r as f64),
         unread: s
             .active_data()
             .map(|d| {

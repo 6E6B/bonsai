@@ -20,6 +20,7 @@ use serde::de::DeserializeOwned;
 
 use crate::cache::{Kind, now};
 use crate::core::Inner;
+use crate::effects::Effect;
 
 /// Errors are retried at most this often.
 const ERROR_BACKOFF_SECS: i64 = 30;
@@ -300,11 +301,17 @@ impl Inner {
         self.res.snapshot(&key).unwrap_or_default()
     }
 
-    /// Something outside a fetch showed `key` is out of date: refetch it on the next read,
-    /// and drop the saved copy so a later load can't take it for fresh.
+    /// Something outside a fetch showed `key` is out of date: refetch it on the next read, and
+    /// age the saved copy so a later load shows it but doesn't take it for fresh.
     pub(crate) fn expire(&self, key: &Key) {
         self.res.invalidate_key(key);
-        self.cache.delete(Kind::Res, key.account, &key.cache_id());
+        self.cache.age_out(Kind::Res, key.account, &key.cache_id(), false);
+    }
+
+    /// [`Inner::expire`] for every resource of `kind` that `account` has.
+    pub(crate) fn expire_kind(&self, account: AccountId, kind: &str) {
+        self.res.invalidate(account, kind);
+        self.cache.age_out(Kind::Res, account, &format!("{kind}:"), true);
     }
 
     fn finish<T: Serialize + Send + Sync + 'static>(&self, k: &Key, r: Result<T, Error>) {
@@ -424,13 +431,13 @@ impl Inner {
     }
 
     /// Run a user-initiated write as `account`. Shows `done` on success (if not empty) or the
-    /// error, then marks `invalidate` kinds stale so screens refetch.
+    /// error, then applies `effects` so screens refetch what it changed.
     pub(crate) fn mutate<F, Fut>(
         self: &Arc<Self>,
         account: AccountId,
         what: &str,
         done: &str,
-        invalidate: &[&'static str],
+        effects: &[Effect],
         f: F,
     ) where
         F: FnOnce(Fetch) -> Fut + Send + 'static,
@@ -439,7 +446,7 @@ impl Inner {
         let inner = self.clone();
         let what = what.to_string();
         let done = done.to_string();
-        let invalidate: Vec<&'static str> = invalidate.to_vec();
+        let effects: Vec<Effect> = effects.to_vec();
         self.store.write().jobs += 1;
         self.rt.spawn(async move {
             let r = match inner.client(account).filter(|c| c.signed_in()) {
@@ -467,10 +474,7 @@ impl Inner {
                     inner.toast(Some(account), format!("Could not {what}: {msg}"), true);
                 }
             }
-            for k in invalidate {
-                inner.res.invalidate(account, k);
-                inner.res.invalidate(AccountId::ANONYMOUS, k);
-            }
+            inner.apply(account, &effects);
             {
                 let mut s = inner.store.write();
                 s.jobs = s.jobs.saturating_sub(1);

@@ -8,7 +8,7 @@ use bonsai_api::AccountId;
 
 use crate::cache::{Kind, now};
 use crate::core::Inner;
-use crate::res::Key;
+use crate::effects::Effect;
 use crate::store::PresenceKind;
 
 pub(crate) const LAST_SEEN: &str = "last_seen";
@@ -80,18 +80,14 @@ impl Inner {
     /// Compare a fresh friends list with the one before it and say who removed `account`.
     /// `before` is `None` on the first fetch ever, when there is nothing to compare with.
     pub(crate) fn note_friends(&self, account: AccountId, before: Option<&[u64]>, after: &[u64]) {
-        // Their friends list, friend count and our relation to them are cached too; drop those
-        // so their profile doesn't keep showing the old friendship.
-        let moved = before.map(|b| changed(b, after)).unwrap_or_default();
-        for id in &moved {
-            self.expire(&Key::shared("friends_of", id));
-            self.expire(&Key::shared("profile", id));
-            self.expire(&Key::private(account, "relation", id));
-        }
-        if !moved.is_empty() {
-            self.res.invalidate(account, "friends_search");
-            self.repaint();
-        }
+        // Their friends list, friend count and our relation to them are cached too.
+        let moved: Vec<Effect> = before
+            .map(|b| changed(b, after))
+            .unwrap_or_default()
+            .into_iter()
+            .map(Effect::Friendship)
+            .collect();
+        self.apply(account, &moved);
         let (gone, unfriended) = {
             let mut s = self.store.write();
             let d = s.data.entry(account).or_default();
