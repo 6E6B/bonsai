@@ -183,10 +183,10 @@ impl Opener for SystemOpener {
 
 /// Opens a link or file with the system handler, detached from Bonsai.
 ///
-/// Inside an AppImage the handler gets the environment from before the AppImage runtime
-/// changed it (see [`appimage_env_fixes`]); elsewhere this is [`open::that_detached`].
+/// The handler gets the environment from before Bonsai and the AppImage runtime changed it
+/// (see [`launch_env_fixes`]). With nothing to undo this is [`open::that_detached`].
 pub fn open_detached(target: &str) -> std::io::Result<()> {
-    if std::env::var_os("APPDIR").is_none() {
+    if launch_env_fixes(std::env::vars()).is_empty() {
         return open::that_detached(target);
     }
     let mut last = None;
@@ -199,16 +199,14 @@ pub fn open_detached(target: &str) -> std::io::Result<()> {
     Err(last.unwrap_or_else(|| std::io::Error::other("no opener found")))
 }
 
-/// Spawns with null stdio and the AppImage environment undone, and reaps the child on a
+/// Spawns with null stdio and Bonsai's environment changes undone, and reaps the child on a
 /// background thread so it never lingers as a zombie.
 fn spawn_reaped(cmd: &mut std::process::Command) -> std::io::Result<()> {
-    if let Ok(appdir) = std::env::var("APPDIR") {
-        for (k, v) in appimage_env_fixes(&appdir, std::env::vars()) {
-            match v {
-                Some(v) => cmd.env(k, v),
-                None => cmd.env_remove(k),
-            };
-        }
+    for (k, v) in launch_env_fixes(std::env::vars()) {
+        match v {
+            Some(v) => cmd.env(k, v),
+            None => cmd.env_remove(k),
+        };
     }
     let mut child = cmd
         .stdin(std::process::Stdio::null())
@@ -217,6 +215,29 @@ fn spawn_reaped(cmd: &mut std::process::Command) -> std::io::Result<()> {
         .spawn()?;
     std::thread::spawn(move || child.wait());
     Ok(())
+}
+
+/// NVIDIA driver switch that `main` turns on for WebKitGTK on Wayland.
+pub const NV_EXPLICIT_SYNC: &str = "__NV_DISABLE_EXPLICIT_SYNC";
+/// Set next to [`NV_EXPLICIT_SYNC`] when Bonsai, not the user, set it.
+pub const NV_EXPLICIT_SYNC_MARKER: &str = "BONSAI_SET_NV_DISABLE_EXPLICIT_SYNC";
+
+/// Environment changes that undo what Bonsai and the AppImage runtime did to Bonsai's own
+/// environment, for programs Bonsai starts. The explicit sync workaround is only for
+/// WebKitGTK; games running with it (Sober through flatpak) crash on NVIDIA after a while.
+/// A value the user set themselves is passed on. Returns `Some` to set, `None` to remove.
+pub fn launch_env_fixes(vars: impl IntoIterator<Item = (String, String)>) -> Vec<(String, Option<String>)> {
+    let vars: Vec<(String, String)> = vars.into_iter().collect();
+    let has = |k: &str| vars.iter().any(|(n, _)| n == k);
+    let mut out = Vec::new();
+    if has(NV_EXPLICIT_SYNC_MARKER) {
+        out.push((NV_EXPLICIT_SYNC_MARKER.to_string(), None));
+        out.push((NV_EXPLICIT_SYNC.to_string(), None));
+    }
+    if let Some((_, appdir)) = vars.iter().find(|(k, _)| k == "APPDIR") {
+        out.extend(appimage_env_fixes(appdir, vars.clone()));
+    }
+    out
 }
 
 /// Variables the AppImage runtime sets for Bonsai itself that must not reach other programs.
@@ -311,6 +332,20 @@ mod tests {
                 s("XDG_DATA_DIRS", Some("/usr/share")),
             ]
         );
+    }
+
+    #[test]
+    fn nv_workaround_is_undone_only_when_ours() {
+        let v = |pairs: &[(&str, &str)]| {
+            pairs
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect::<Vec<_>>()
+        };
+        let ours = launch_env_fixes(v(&[(NV_EXPLICIT_SYNC, "1"), (NV_EXPLICIT_SYNC_MARKER, "1")]));
+        assert!(ours.contains(&(NV_EXPLICIT_SYNC.to_string(), None)));
+        assert!(ours.contains(&(NV_EXPLICIT_SYNC_MARKER.to_string(), None)));
+        assert!(launch_env_fixes(v(&[(NV_EXPLICIT_SYNC, "1"), ("HOME", "/home/u")])).is_empty());
     }
 
     #[test]
