@@ -62,6 +62,29 @@ pub fn joined_games(before: &HashMap<u64, Presence>, after: &HashMap<u64, Presen
     ids
 }
 
+/// Cached lists to refetch because their count moved. The realtime hub usually got there first,
+/// but trades have no realtime event and the hub can be disconnected.
+pub fn stale_kinds(before: &Unread, after: &Unread) -> Vec<&'static str> {
+    let mut out = Vec::new();
+    if before.friend_requests != after.friend_requests {
+        out.extend(["friend_requests", "relation"]);
+    }
+    if before.trades != after.trades {
+        // A trade that left the inbound list may have been accepted elsewhere.
+        out.extend(["trades", "trade", "collectibles"]);
+    }
+    if before.messages != after.messages {
+        out.push("private_messages");
+    }
+    if before.notifications != after.notifications {
+        out.push("notifications");
+    }
+    if before.chat != after.chat {
+        out.extend(["chat_conversations", "chat_messages"]);
+    }
+    out
+}
+
 fn plural(n: i64, what: &str) -> String {
     if n == 1 {
         format!("1 {what}")
@@ -99,6 +122,13 @@ impl Inner {
     pub(crate) fn note_unread(&self, account: AccountId, now: Unread) {
         let before = self.alerts.lock().unread.insert(account, now);
         let Some(before) = before else { return };
+        let stale = stale_kinds(&before, &now);
+        for kind in &stale {
+            self.res.invalidate(account, kind);
+        }
+        if !stale.is_empty() {
+            self.repaint();
+        }
         for (kind, text) in unread_alerts(&before, &now) {
             // Roblox's stream has friend requests but not trade offers.
             if kind == "trades" {
@@ -250,6 +280,26 @@ impl Core {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn moved_counts_mark_lists_stale() {
+        let a = Unread {
+            trades: 2,
+            chat: 1,
+            ..Default::default()
+        };
+        assert!(stale_kinds(&a, &a).is_empty());
+        let b = Unread {
+            trades: 1,
+            messages: 4,
+            chat: 1,
+            ..Default::default()
+        };
+        assert_eq!(
+            stale_kinds(&a, &b),
+            vec!["trades", "trade", "collectibles", "private_messages"]
+        );
+    }
 
     #[test]
     fn counts_that_went_up() {

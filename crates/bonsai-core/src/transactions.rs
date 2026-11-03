@@ -1175,6 +1175,11 @@ impl Inner {
             }
         });
         if let Some(n) = notice {
+            // The sale moved the balance and, for a limited, the inventory.
+            crate::purchase::refresh_robux(self, a, c).await;
+            for kind in ["collectibles", "tx_totals"] {
+                self.res.invalidate(a, kind);
+            }
             self.toast(Some(a), n.clone(), false);
             self.note(a, "account", "Sale", n.clone(), None);
             self.alert(a, "sales", "Sale", n);

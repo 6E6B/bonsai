@@ -266,7 +266,7 @@ impl Core {
 }
 
 /// Fetch the balance again so the status bar shows what's left.
-async fn refresh_robux(inner: &crate::core::Inner, account: AccountId, c: &Client) {
+pub(crate) async fn refresh_robux(inner: &crate::core::Inner, account: AccountId, c: &Client) {
     if let Ok(r) = economy::v1::get_user_currency(c).await {
         let r = r.robux.unwrap_or_default();
         inner.store.write().data.entry(account).or_default().robux = Some(r);
