@@ -14,7 +14,7 @@ on:
 concurrency:
   # Serialize manual and tag runs so they cannot race to create the same release.
   group: validate-release-caches-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -72,7 +72,7 @@ jobs:
           fi
 
   build:
-    name: First build (${{ matrix.name }})
+    name: Cached build (${{ matrix.name }})
     needs: version
     strategy:
       fail-fast: false
@@ -132,79 +132,6 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.artifact }}
-          if-no-files-found: error
-          retention-days: 14
-          path: |
-            target/**/release/bundle/deb/*.deb
-            target/**/release/bundle/appimage/*.AppImage
-            target/**/release/bundle/rpm/*.rpm
-            target/**/release/bundle/nsis/*.exe
-            target/**/release/bundle/msi/*.msi
-            target/**/release/bundle/dmg/*.dmg
-            target/**/release/bundle/**/*.sig
-            target/**/release/bundle/macos/*.app.tar.gz
-
-  warm:
-    name: Cached build (${{ matrix.name }})
-    needs: [version, build]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Oldest supported Ubuntu, so the .deb and AppImage run on older glibc.
-          - name: Linux x64
-            os: ubuntu-22.04
-            artifact: bonsai-linux-x64
-            args: --bundles deb,appimage,rpm
-          - name: Windows x64
-            os: windows-latest
-            artifact: bonsai-windows-x64
-            args: --bundles nsis,msi
-          - name: macOS universal
-            os: macos-latest
-            artifact: bonsai-macos-universal
-            args: --target universal-apple-darwin --bundles app,dmg
-            rust-targets: aarch64-apple-darwin x86_64-apple-darwin
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - uses: ./.github/actions/setup
-        with:
-          rust-targets: ${{ matrix.rust-targets }}
-          cache-key: release
-          cache-on-failure: false
-
-      - name: Build installers
-        working-directory: crates/bonsai/ui
-        shell: bash
-        env:
-          BUNDLE_ARGS: ${{ matrix.args }}
-          CREATE_RELEASE: ${{ needs.version.outputs.create_release }}
-          # linuxdeploy is itself an AppImage; runners have no FUSE.
-          APPIMAGE_EXTRACT_AND_RUN: 1
-          BONSAI_UPDATER_PUBLIC_KEY: ${{ vars.BONSAI_UPDATER_PUBLIC_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-          if [ "$CREATE_RELEASE" = true ] && { [ -z "$BONSAI_UPDATER_PUBLIC_KEY" ] || [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; }; then
-            echo "::error::Release updates require BONSAI_UPDATER_PUBLIC_KEY and TAURI_SIGNING_PRIVATE_KEY. See docs/updates.md."
-            exit 1
-          fi
-          if [ -n "$BONSAI_UPDATER_PUBLIC_KEY" ] && [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            # The bundler reads its own config, separately from the Rust updater's env var.
-            updater_config=$(bun -e 'console.log(JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.BONSAI_UPDATER_PUBLIC_KEY}}}))')
-            bun run tauri build $BUNDLE_ARGS --config "$updater_config"
-          else
-            bun run tauri build $BUNDLE_ARGS
-          fi
-
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: ${{ matrix.artifact }}-cached
           if-no-files-found: error
           retention-days: 14
           path: |
