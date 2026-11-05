@@ -2733,7 +2733,7 @@ export type WindowButtons = {
 	start: WindowButton[],
 	/**  Buttons at the right edge, in order. */
 	end: WindowButton[],
-	/**  Title bar height in CSS px, matching the desktop's own title bars. 0 keeps the app's. */
+	/**  Title bar height in CSS px, based on the desktop's own title bars. 0 keeps the app's. */
 	height: number,
 };
 

@@ -7,9 +7,9 @@
 //! `wicon://` serves the icons: URL path `/<minimize|maximize|restore|close>`. The UI uses them
 //! as CSS masks, so they take the theme's text color.
 //!
-//! The bar is as tall as the desktop's own title bars: on KDE, KWin's Breeze title bar (28px);
-//! elsewhere, a GTK header bar in the current GTK theme (47px with Adwaita, its bottom border
-//! included).
+//! The bar follows the desktop's own title bars: on KDE, KWin's Breeze title bar (28px);
+//! elsewhere, a GTK header bar in the current GTK theme, capped at `GTK_MAX_HEIGHT` because
+//! Adwaita's 47px is too tall for this app.
 //!
 //! The icons, layout and height are read once at startup.
 
@@ -126,7 +126,7 @@ fn is_kde() -> bool {
 }
 
 /// The natural height of a GTK header bar holding a title and the window buttons, in the current
-/// GTK theme. 0 when it can't be measured.
+/// GTK theme, at most [`GTK_MAX_HEIGHT`]. 0 when it can't be measured.
 #[cfg(target_os = "linux")]
 fn headerbar_height() -> u32 {
     use gtk::prelude::*;
@@ -141,7 +141,7 @@ fn headerbar_height() -> u32 {
     let (_, natural) = bar.preferred_height();
     // SAFETY: `w` was created here and nothing else holds it.
     unsafe { w.destroy() };
-    sane(natural)
+    sane(natural).min(GTK_MAX_HEIGHT)
 }
 
 /// A measured height, or 0 when it is outside what any desktop uses.
@@ -156,6 +156,11 @@ fn sane(px: i32) -> u32 {
 /// KWin's Breeze title bar at its defaults, in CSS px.
 #[cfg(target_os = "linux")]
 const KDE_HEIGHT: u32 = 28;
+
+/// The tallest bar a GTK theme gets, in CSS px, border included. Leaves about 8px above and below
+/// the 24px Adwaita-style buttons, the same as their side padding.
+#[cfg(target_os = "linux")]
+const GTK_MAX_HEIGHT: u32 = 40;
 
 /// Splits a GTK decoration layout like `icon:minimize,maximize,close` into the buttons at the
 /// start and at the end of the bar. Entries other than the three buttons (`icon`, `menu`,
