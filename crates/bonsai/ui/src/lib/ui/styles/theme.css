@@ -20,10 +20,10 @@
    * Near-flat: chrome sits only a shade below the page and borders separate the regions.
    * Lightness is saved for things that sit on top: cards, then popovers. Big steps between
    * chrome and page make the page read as a lit hole in a dark frame. */
-  --color-deep: #222420; /* window chrome: sidebar, title bar */
-  --color-canvas: #30332e; /* page background */
-  --color-surface: #373a35; /* cards and panels on the page */
-  --color-raised: #3d3f3b; /* popovers, dialogs, toasts */
+  --color-deep: #1a1d1b; /* window chrome: sidebar, title bar */
+  --color-canvas: #252926; /* page background */
+  --color-surface: #2d312e; /* cards and panels on the page */
+  --color-raised: #323633; /* popovers, dialogs, toasts */
   --color-hover: #ffffff0f; /* overlay for hover, layered over any fill */
   --color-active: #ffffff1a; /* overlay for pressed or selected */
   --color-field: #ffffff0d; /* text inputs, select triggers, checkbox and radio; translucent so it sits a step above any surface */
@@ -32,8 +32,8 @@
 
   /* ── Text ── */
   --color-fg: #fafafa;
-  --color-fg-muted: #b5b6b5;
-  --color-fg-faint: #8c8e8b;
+  --color-fg-muted: #b2b3b2;
+  --color-fg-faint: #868886;
 
   /* ── Lines ── */
   --color-line: #ffffff1a;
@@ -74,7 +74,7 @@
   --color-tag-purple: #9b6bff;
   --color-tag-pink: #ef6bb4;
 
-  --color-track: #6c6e6a; /* switch track when off */
+  --color-track: #646765; /* switch track when off */
   --color-knob: #f2f2f2; /* switch thumb, radio dot */
   --color-knob-edge: #ffffff;
   --color-hover-on-fill: #ffffff1f; /* overlays on contrast and accent fills */
