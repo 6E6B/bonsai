@@ -85,7 +85,7 @@ const DEFAULT_SHADOW: ShadowSeeds = { depth: 1, ring: 1, highlight: 1 }
 
 export const DEFAULT_SEEDS: Record<Base, Seeds> = {
   dark: {
-    background: "#1e1e1e",
+    background: "#30332e",
     foreground: "#fafafa",
     accent: "#4ace51",
     success: "#3fbf7f",
