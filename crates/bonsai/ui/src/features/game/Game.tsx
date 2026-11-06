@@ -330,12 +330,15 @@ function when(iso: string, fmt: (ms: number) => string) {
 
 function HeaderSkeleton() {
   return (
-    <div class="grid grid-cols-1 gap-4 @xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-      <Skeleton class="aspect-video w-full max-w-md rounded-md" />
-      <div class="flex flex-col gap-3">
-        <Skeleton class="h-8 w-2/3 rounded-md" />
-        <Skeleton class="h-10 w-full rounded-md" />
-        <Skeleton class="h-32 w-full rounded-md" />
+    <div class="@container">
+      <div class="grid grid-cols-1 items-start gap-4 @xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+        <Skeleton class="order-last aspect-video w-full max-w-md rounded-md @xl:order-none @xl:max-w-none" />
+        <div class="flex flex-col gap-3">
+          <Skeleton class="h-8 w-2/3 rounded-md" />
+          <Skeleton class="h-4 w-1/3" />
+          <Skeleton class="h-8 w-full rounded-md" />
+          <Skeleton class="h-14 w-full rounded-md" />
+        </div>
       </div>
     </div>
   )

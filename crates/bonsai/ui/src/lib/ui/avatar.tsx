@@ -22,13 +22,15 @@ export interface AvatarProps extends ComponentProps<"span"> {
 export function Avatar(props: AvatarProps) {
   const standalone = !useImageMenu()
   const [local, rest] = splitProps(props, ["name", "src", "size", "presence", "count"])
-  const initials = () =>
-    local.name
-      .split(/[\s_]+/)
-      .filter(Boolean)
+  // Initials come from words that start with a letter, so "Player 100" is "P", not "P1".
+  const initials = () => {
+    const words = local.name.split(/[\s_]+/).filter(Boolean)
+    const lettered = words.filter((w) => /^\p{L}/u.test(w))
+    return (lettered.length > 0 ? lettered : words)
       .slice(0, 2)
       .map((w) => w[0]?.toUpperCase())
       .join("")
+  }
   return (
     <ImageMenu src={local.src}>
       <span

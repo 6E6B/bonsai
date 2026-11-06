@@ -39,6 +39,7 @@ import { registerWikiCommands } from "~/lib/wiki-panels"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
 import { useWindowFrame } from "./frame"
+import { ScreenError } from "./ScreenError"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
 import { ApproveCode } from "./shell/ApproveCode"
@@ -560,13 +561,7 @@ export function Layout(props: ParentProps) {
                     <AutomationDialog />
                     <BudgetDialog />
                     <SecurityDialog />
-                    <ErrorBoundary
-                      fallback={(err) => (
-                        <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
-                          {String(err?.stack ?? err)}
-                        </pre>
-                      )}
-                    >
+                    <ErrorBoundary fallback={(err, reset) => <ScreenError error={err} reset={reset} />}>
                       {props.children}
                     </ErrorBoundary>
                   </div>

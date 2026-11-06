@@ -9,7 +9,8 @@ export interface DialogOptions {
   /** Accessible name when there is no title. */
   label?: string
   size?: "sm" | "md" | "lg"
-  /** `top` sits near the top of the window, for command bars and pickers. */
+  /** `top` sits near the top of the window, for command bars and pickers. It opens and closes
+   * without animation: these are summoned from the keyboard many times a day. */
   position?: "center" | "top"
   class?: string
   /** Called when the dialog closes for any reason: Escape, the close button, `close()`, or
@@ -27,7 +28,7 @@ export function Dialog(props: DialogProps) {
   return (
     <KDialog open={local.open} onOpenChange={local.onOpenChange}>
       <KDialog.Portal>
-        <KDialog.Overlay data-component="dialog-overlay" />
+        <KDialog.Overlay data-component="dialog-overlay" data-position={opts.position ?? "center"} />
         <div data-component="dialog-positioner" data-position={opts.position ?? "center"}>
           <KDialog.Content
             data-component="dialog"

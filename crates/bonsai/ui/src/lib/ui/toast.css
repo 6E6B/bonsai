@@ -31,7 +31,7 @@
     border-radius: var(--radius-lg);
     background: var(--color-raised);
     box-shadow: var(--shadow-popover);
-    animation: toast-in 200ms var(--ease);
+    animation: toast-in var(--duration-slow) var(--ease);
   }
 
   [data-component="toast"][data-variant="success"] {
@@ -47,7 +47,7 @@
   }
 
   [data-component="toast"][data-closed] {
-    animation: toast-out 120ms var(--ease) forwards;
+    animation: toast-out var(--duration) var(--ease) forwards;
   }
 
   [data-component="toast"][data-swipe="move"] {
@@ -56,11 +56,11 @@
 
   [data-component="toast"][data-swipe="cancel"] {
     transform: translateX(0);
-    transition: transform 200ms var(--ease);
+    transition: transform var(--duration-slow) var(--ease);
   }
 
   [data-component="toast"][data-swipe="end"] {
-    animation: toast-swipe-out 120ms var(--ease) forwards;
+    animation: toast-swipe-out var(--duration) var(--ease) forwards;
   }
 
   /* Same line box as the title, so the icon centers on the first line. */
