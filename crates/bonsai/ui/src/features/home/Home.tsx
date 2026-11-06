@@ -16,9 +16,9 @@ import {
   IconButton,
   ListItem,
   Page,
-  PersonTile,
   SectionHeader,
   Shelf,
+  Tile,
   Tooltip,
   VirtualGrid,
   VirtualList,
@@ -74,15 +74,15 @@ export default function Home() {
                 </Button>
               }
             />
-            <Shelf itemWidth="6rem">
+            <Shelf itemWidth="7rem">
               <For each={online()}>
                 {(f) => (
                   <ContextMenu items={userMenu(f.id, { friend: true })}>
-                    <PersonTile
-                      name={f.displayName}
-                      username={f.name}
-                      presence={f.presence}
+                    <Tile
+                      title={f.displayName}
+                      subtitle={f.presence === "studio" ? "In Studio" : `@${f.name}`}
                       src={thumbUrl("headshot", f.id, true)}
+                      fallback="user"
                       onClick={() => run("user.open", String(f.id))}
                     />
                   </ContextMenu>
