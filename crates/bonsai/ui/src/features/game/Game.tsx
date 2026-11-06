@@ -1,5 +1,5 @@
 import { useParams } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
 import { handle, run } from "~/lib/commands/registry"
@@ -676,9 +676,14 @@ function StorePanel(props: { list: List<PassRow> }) {
               )}
             </Show>
             <div class="flex items-center justify-between">
-              <Show when={p.price !== null} fallback={<span class="text-sm text-fg-muted">Off sale</span>}>
-                <Robux amount={p.price ?? 0} />
-              </Show>
+              <Switch fallback={<Robux amount={p.price ?? 0} />}>
+                <Match when={p.price === null}>
+                  <span class="text-sm text-fg-muted">Off sale</span>
+                </Match>
+                <Match when={p.price === 0}>
+                  <span class="text-sm">Free</span>
+                </Match>
+              </Switch>
               <Show when={p.owned}>
                 <Badge variant="success">Owned</Badge>
               </Show>

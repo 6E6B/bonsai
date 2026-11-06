@@ -1,4 +1,4 @@
-import { Show } from "solid-js"
+import { Match, Show, Switch } from "solid-js"
 import { assetIcon } from "~/lib/asset-icon"
 import { run } from "~/lib/commands/registry"
 import { compact, percent } from "~/lib/format"
@@ -158,11 +158,16 @@ export function ItemTile(props: {
   )
 }
 
-/** A catalog price: Robux, or "Off sale" when the item can't be bought. */
+/** A catalog price: Robux, "Free" at 0, or "Off sale" when the item can't be bought. */
 export function Price(props: { amount: number | null; class?: string }) {
   return (
-    <Show when={props.amount !== null} fallback={<span class={props.class}>Off sale</span>}>
-      <Robux class={props.class} amount={props.amount} />
-    </Show>
+    <Switch fallback={<Robux class={props.class} amount={props.amount} />}>
+      <Match when={props.amount === null}>
+        <span class={props.class}>Off sale</span>
+      </Match>
+      <Match when={props.amount === 0}>
+        <span class={props.class}>Free</span>
+      </Match>
+    </Switch>
   )
 }
