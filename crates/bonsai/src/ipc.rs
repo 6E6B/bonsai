@@ -1560,7 +1560,7 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 Some("requests") => drop(core.friend_requests(acting()?, true)),
                 Some("followers") => drop(core.followers(acting()?, user, true)),
                 Some("following") => drop(core.followings(acting()?, user, true)),
-                Some("friends") => drop(core.friends_of(user, true)),
+                Some("friends") => drop(core.friends_of(acting()?, user, true)),
                 // A friends search on a profile: `friends:<query>`.
                 Some(a) if a.starts_with("friends:") => {
                     drop(core.search_friends_of(acting()?, user, &a[8..], true))
@@ -2209,7 +2209,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
     let (mutual_friends, mutual_more) = if mine || account == AccountId::ANONYMOUS {
         (None, false)
     } else {
-        match core.friends_of(uid, false).data {
+        match core.friends_of(account, uid, false).data {
             Some(page) => {
                 let n = own_friends(&core, account)
                     .map(|own| page.items.iter().filter(|id| own.contains(id)).count() as u32);
@@ -2555,7 +2555,7 @@ pub fn profile_people(
             signed_in(&|a| core.search_friends_of(a, uid, &query, false))
         }
         "friends" => {
-            let mut l = List::paged(core.friends_of(uid, false), |id| *id);
+            let mut l = signed_in(&|a| core.friends_of(a, uid, false));
             l.items = bonsai_core::people::mutuals_first(&l.items, &own).0;
             l
         }
