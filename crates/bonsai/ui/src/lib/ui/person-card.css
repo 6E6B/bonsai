@@ -6,7 +6,11 @@
     min-width: 0;
   }
 
+  /* The picture is inset evenly from the card's corner and rounded to match it: its radius is the
+   * card's minus the inset, so the two corners share a center. */
   [data-component="person-card"] {
+    --person-card-inset: 4px;
+
     position: relative;
     display: flex;
     align-items: center;
@@ -24,7 +28,7 @@
     align-items: center;
     gap: 10px;
     min-width: 0;
-    padding: 8px 10px;
+    padding: var(--person-card-inset) 10px var(--person-card-inset) var(--person-card-inset);
     border: 0;
     border-radius: inherit;
     background: none;
@@ -41,6 +45,10 @@
 
   [data-component="person-card"] [data-component="avatar"] {
     --avatar-ring: var(--color-surface);
+  }
+
+  [data-component="person-card"] [data-component="avatar"] [data-slot="frame"] {
+    border-radius: max(0px, calc(var(--radius-lg) - var(--person-card-inset)));
   }
 
   [data-component="person-card"] [data-slot="text"] {
