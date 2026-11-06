@@ -46,10 +46,6 @@
     --avatar-ring: var(--color-surface);
   }
 
-  [data-component="person-card"] [data-component="avatar"] [data-slot="frame"] {
-    border-radius: var(--radius-md);
-  }
-
   [data-component="person-card"] [data-slot="text"] {
     display: flex;
     flex-direction: column;
