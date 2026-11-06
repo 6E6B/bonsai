@@ -76,7 +76,6 @@ export default function Notifications() {
   return (
     <Page
       title="Notifications"
-      width="narrow"
       actions={
         <>
           <SegmentedControl

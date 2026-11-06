@@ -28,7 +28,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `NavItem` | Sidebar rows and short in-screen lists (Settings). `compact` for the collapsed sidebar. |
 | `CategoryNav` | A category tree in a side panel (Marketplace, Inventory): sections, one open group, arrow keys. |
 | `TabStrip` | The open tabs above the page. One per window, driven by `~/lib/tabs`. |
-| `Tabs` + `TabPanel` | Sub-sections of one screen (Servers / Store / Badges). Wire `[` and `]` with `useSubTabs`. A screen whose top level is tabs has no page title; its buttons go in `actions`, on the tab row. |
+| `Tabs` + `TabPanel` | Sub-sections of one screen (Servers / Store / Badges). Wire `[` and `]` with `useSubTabs`. A screen whose top level is tabs still has its page title above them; the tab buttons go in `actions`, on the tab row. |
 | `SegmentedControl` | One of 2–5 options shown in place: server sort, R6/R15, chart. |
 
 ### Inputs
@@ -78,7 +78,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 
 | Component | Use it for |
 |---|---|
-| `Page` | The frame of every non-split screen: padding, max width, heading with actions. |
+| `Page` | The frame of every screen that is not a `Split` or `SidePage`: fills the window with one set of insets, heading with actions. Every screen has a title except entity pages (game, profile, item) whose own header names them. List-and-detail screens use `Split`, with the title at the top of the side pane. |
 | `SectionHeader` | Headings with optional meta and actions: `page`, `section`, or `group` (the small "In game · 2" label). |
 | `Card` | A raised panel grouping related content: stats, trade sides. `nested` for a card inside a card: the control fill, like a secondary button. |
 | `SettingsGroup` | A titled panel of settings, a line between each row. Rows are `SettingRow` (label and description left, control right; `layout="stacked"` for full-width controls) or `SettingSwitch`. `list` for a panel of `ListItem`s. |

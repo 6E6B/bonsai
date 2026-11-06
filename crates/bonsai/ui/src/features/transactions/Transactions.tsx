@@ -164,7 +164,7 @@ export default function Transactions() {
   onCleanup(() => clearInterval(clock))
 
   return (
-    <Page width="wide">
+    <Page title="Transactions">
       <Show
         when={view.signedIn}
         fallback={<EmptyState icon="dollar" title="No account" description={view.error ?? undefined} />}

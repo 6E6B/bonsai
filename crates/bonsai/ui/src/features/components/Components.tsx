@@ -36,6 +36,7 @@ import {
   Menu,
   Meter,
   NavItem,
+  Page,
   PersonCard,
   PersonTile,
   Pips,
@@ -208,9 +209,10 @@ export default function Components() {
   const confirm = useConfirm()
 
   return (
-    <div class="flex max-w-4xl flex-col gap-10 p-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl font-medium">Components</h1>
+    <Page
+      title="Components"
+      class="gap-10"
+      actions={
         <Select
           aria-label="Theme"
           size="sm"
@@ -218,8 +220,8 @@ export default function Components() {
           defaultValue="system"
           onChange={(v) => applyAppearance(v as Mode)}
         />
-      </div>
-
+      }
+    >
       <Section title="Button">
         <For each={buttonVariants}>{(v) => <Button variant={v}>{v}</Button>}</For>
       </Section>
@@ -933,6 +935,6 @@ export default function Components() {
         <Spinner />
         <Spinner size="lg" />
       </Section>
-    </div>
+    </Page>
   )
 }

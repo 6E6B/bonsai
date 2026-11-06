@@ -8,8 +8,6 @@ export interface PageProps extends ParentProps {
   meta?: JSX.Element
   /** Buttons on the right of the heading. */
   actions?: JSX.Element
-  /** `narrow` for reading (settings, messages), `wide` for grids, `full` for split views. */
-  width?: "narrow" | "wide" | "full"
   class?: string
 }
 
@@ -91,11 +89,11 @@ export function SideMain(props: ParentProps<{ class?: string }>) {
   )
 }
 
-/** The frame of a screen: padding, max width and the heading. Lay out the body with Tailwind
- * in `class`. */
+/** The frame of every screen that is not a `Split` or `SidePage`: the heading, then the body,
+ * filling the window with the same insets everywhere. Lay out the body with Tailwind in `class`. */
 export function Page(props: PageProps) {
   return (
-    <div data-component="page" data-width={props.width ?? "wide"} class={props.class}>
+    <div data-component="page" class={props.class}>
       <Show when={props.title}>
         {(t) => <SectionHeader title={t()} meta={props.meta} actions={props.actions} size="page" />}
       </Show>

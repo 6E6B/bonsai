@@ -85,7 +85,6 @@ export default function Communities() {
     <Page
       title="Communities"
       meta={mine.items.length || undefined}
-      width="narrow"
       actions={
         <Show
           when={selecting()}
