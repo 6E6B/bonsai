@@ -16,9 +16,8 @@ import {
   IconButton,
   ListItem,
   Page,
+  PersonCard,
   SectionHeader,
-  Shelf,
-  Tile,
   Tooltip,
   VirtualGrid,
   VirtualList,
@@ -74,21 +73,19 @@ export default function Home() {
                 </Button>
               }
             />
-            <Shelf itemWidth="7rem">
-              <For each={online()}>
-                {(f) => (
-                  <ContextMenu items={userMenu(f.id, { friend: true })}>
-                    <Tile
-                      title={f.displayName}
-                      subtitle={f.presence === "studio" ? "In Studio" : `@${f.name}`}
-                      src={thumbUrl("headshot", f.id, true)}
-                      fallback="user"
-                      onClick={() => run("user.open", String(f.id))}
-                    />
-                  </ContextMenu>
-                )}
-              </For>
-            </Shelf>
+            <VirtualGrid items={online()} minItemWidth={192} estimateRowHeight={56} gap={8}>
+              {(f) => (
+                <ContextMenu items={userMenu(f.id, { friend: true })}>
+                  <PersonCard
+                    name={f.displayName}
+                    src={thumbUrl("headshot", f.id)}
+                    presence={f.presence}
+                    subtitle={f.presence === "studio" ? "In Studio" : `@${f.name}`}
+                    onClick={() => run("user.open", String(f.id))}
+                  />
+                </ContextMenu>
+              )}
+            </VirtualGrid>
           </section>
         </Show>
         <Show when={shell.look.homeContinue && home.recent.length > 0}>
