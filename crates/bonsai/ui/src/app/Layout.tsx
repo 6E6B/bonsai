@@ -60,9 +60,8 @@ import { VaultForm } from "./shell/VaultForm"
 /**
  * The window:
  *
- *   title bar (app name, window controls)
- *   rail | top bar (sidebar toggle, command bar, notifications, drawer toggle)
- *        | sidebar | tab strip
+ *   title bar (app name, sidebar toggle, command bar, notifications, drawer toggle, window controls)
+ *   rail | sidebar | tab strip
  *        |         | page    | drawer
  *   status bar
  *
@@ -71,6 +70,10 @@ import { VaultForm } from "./shell/VaultForm"
 /** Below this window width (CSS px at zoom 1) the sidebar starts collapsed, until the user
  * toggles it. The drawer (friends) starts hidden at any width. */
 const NARROW = 1280
+/** Screens with their own side panel. In `auto` mode the sidebar is icons there, so the two
+ * panels don't take a third of the window. */
+const OWN_PANEL = ["/marketplace", "/inventory", "/settings"]
+const hasOwnPanel = (path: string) => OWN_PANEL.some((p) => path === p || path.startsWith(`${p}/`))
 
 export function Layout(props: ParentProps) {
   useUpdates()
@@ -88,7 +91,8 @@ export function Layout(props: ParentProps) {
   const [preview, setPreview] = createSignal<{ id: number; bundle: boolean } | null>(null)
   const compact = () => {
     const mode = shell.look.sidebarMode
-    return mode === "auto" ? width() / zoom() < NARROW : mode === "collapsed"
+    if (mode === "auto") return width() / zoom() < NARROW || hasOwnPanel(location.pathname)
+    return mode === "collapsed"
   }
   const drawer = () => shell.look.drawer
 
@@ -532,11 +536,12 @@ export function Layout(props: ParentProps) {
       data-status-bar={shell.look.statusBar ? "" : undefined}
       class="flex h-full min-h-0 flex-col bg-deep text-fg"
     >
-      <TitleBar />
+      <TitleBar>
+        <TopBar drawer={drawer()} />
+      </TitleBar>
       <div class="flex min-h-0 flex-1">
         <AccountRail />
         <div class="flex min-w-0 flex-1 flex-col">
-          <TopBar drawer={drawer()} />
           <div class="flex min-h-0 flex-1">
             <Sidebar compact={compact()} />
             <div ref={column} class="relative isolate flex min-w-0 flex-1 flex-col">

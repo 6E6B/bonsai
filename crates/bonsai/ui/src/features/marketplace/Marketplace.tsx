@@ -100,11 +100,9 @@ export default function Marketplace() {
 
   return (
     <SidePage>
-      <SidePanel
-        class="w-56"
-        header={<SectionHeader title="Marketplace" size="page" />}
-        footer={
-          <Show when={!wishlistOpen()}>
+      <SidePanel class="w-56" header={<SectionHeader title="Marketplace" size="page" />}>
+        <Show when={!wishlistOpen()}>
+          <div class="flex flex-col gap-2 border-b border-line px-2 pb-3">
             <SectionHeader
               title="Filters"
               size="group"
@@ -154,9 +152,8 @@ export default function Marketplace() {
             <Switch checked={offSale()} onChange={(on) => setParams({ offsale: on ? "1" : null }, { replace: true })}>
               Include off sale
             </Switch>
-          </Show>
-        }
-      >
+          </div>
+        </Show>
         <CategoryNav
           aria-label="Categories"
           sections={sections()}

@@ -151,22 +151,25 @@ export default function Friends() {
   }
 
   return (
-    <Page
-      title="Friends"
-      width="narrow"
-      actions={
-        <Button
-          icon="user-plus"
-          onClick={async () => {
-            const user = await prompt({ title: "Add friend", label: "Username or ID", submit: "Send request" })
-            if (user) void run("user.add_friend", user)
-          }}
-        >
-          Add friend
-        </Button>
-      }
-    >
-      <Tabs aria-label="Friends sections" items={sections()} value={section()} onChange={setSection}>
+    <Page width="narrow">
+      <Tabs
+        aria-label="Friends sections"
+        items={sections()}
+        value={section()}
+        onChange={setSection}
+        actions={
+          <Button
+            size="sm"
+            icon="user-plus"
+            onClick={async () => {
+              const user = await prompt({ title: "Add friend", label: "Username or ID", submit: "Send request" })
+              if (user) void run("user.add_friend", user)
+            }}
+          >
+            Add friend
+          </Button>
+        }
+      >
         <div class="flex items-center gap-2 pt-3">
           <TextField
             class="flex-1"

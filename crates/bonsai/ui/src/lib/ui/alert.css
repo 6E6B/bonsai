@@ -1,7 +1,7 @@
 @layer components {
   [data-component="alert"] {
-    --alert-tone: var(--color-accent);
-    --alert-bg: var(--color-accent-soft);
+    --alert-tone: var(--color-fg);
+    --alert-bg: var(--color-hover);
 
     display: flex;
     align-items: center;

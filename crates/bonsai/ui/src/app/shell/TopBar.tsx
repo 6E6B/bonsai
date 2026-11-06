@@ -4,19 +4,20 @@ import { wroteRecently } from "~/lib/plugins"
 import { shell } from "~/lib/store"
 import { IconButton, SearchButton, Tooltip } from "~/lib/ui"
 
-/** Above the page: sidebar toggle, the command bar trigger, the plugin kill switch while a
- * plugin has written recently, notifications and the drawer toggle. */
+/** The controls in the title bar: sidebar toggle, the command bar trigger, the plugin kill
+ * switch while a plugin has written recently, notifications and the drawer toggle. Space
+ * around them drags the window. */
 export function TopBar(props: { drawer: boolean }) {
   const keys = () => shortcutOf("palette.open")?.split("+")
   const [now, setNow] = createSignal(Date.now())
   const timer = setInterval(() => setNow(Date.now()), 10_000)
   onCleanup(() => clearInterval(timer))
   return (
-    <header class="flex h-11 shrink-0 items-center gap-2 border-b border-line bg-deep px-3">
+    <div data-tauri-drag-region class="flex min-w-0 flex-1 items-center gap-2 px-2">
       <Tooltip content="Toggle sidebar" keys={[shortcutOf("view.sidebar") ?? ""]} placement="bottom">
         <IconButton icon="sidebar" label="Toggle sidebar" onClick={() => run("view.sidebar")} />
       </Tooltip>
-      <div class="flex flex-1 justify-center">
+      <div data-tauri-drag-region class="flex min-w-0 flex-1 justify-center">
         <SearchButton
           class="max-w-xl"
           placeholder="Search, paste a link, or type > for commands"
@@ -51,6 +52,6 @@ export function TopBar(props: { drawer: boolean }) {
           onClick={() => run("view.drawer")}
         />
       </Tooltip>
-    </header>
+    </div>
   )
 }

@@ -606,6 +606,11 @@ export default function Components() {
           aria-label="Example"
           value={tab()}
           onChange={setTab}
+          actions={
+            <Button size="sm" icon="plus">
+              New
+            </Button>
+          }
           items={[
             { value: "servers", label: "Servers" },
             { value: "store", label: "Store" },

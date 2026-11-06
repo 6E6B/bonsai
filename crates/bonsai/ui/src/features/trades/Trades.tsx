@@ -1,6 +1,6 @@
 import { createEffect, createSignal, For, Show } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { run } from "~/lib/commands/registry"
+import { menuItem, run } from "~/lib/commands/registry"
 import { ago, date } from "~/lib/format"
 import {
   commands,
@@ -28,6 +28,7 @@ import {
   Icon,
   IconButton,
   ListItem,
+  Menu,
   Pane,
   Robux,
   SectionHeader,
@@ -38,7 +39,6 @@ import {
   TextField,
   TextLink,
   Thumbnail,
-  Tooltip,
   usePrompt,
   VirtualList,
 } from "~/lib/ui"
@@ -96,12 +96,15 @@ export default function Trades() {
           size="page"
           actions={
             <>
-              <Tooltip content="Robux transactions">
-                <IconButton icon="transactions" label="Robux transactions" onClick={() => run("nav.transactions")} />
-              </Tooltip>
-              <Tooltip content="Copy as CSV">
-                <IconButton icon="copy" label="Copy as CSV" onClick={() => run("trade.export")} />
-              </Tooltip>
+              <Menu
+                icon="more"
+                label="More trade actions"
+                placement="bottom-end"
+                items={[
+                  menuItem("nav.transactions", { label: "Robux transactions", icon: "transactions" }),
+                  menuItem("trade.export", { label: "Copy trades as CSV", icon: "copy" }),
+                ]}
+              />
               <Button
                 icon="plus"
                 onClick={async () => {

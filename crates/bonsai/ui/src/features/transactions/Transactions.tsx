@@ -32,7 +32,6 @@ import {
   SegmentedControl,
   Select,
   Skeleton,
-  Spinner,
   Stat,
   Switch,
   showToast,
@@ -165,30 +164,7 @@ export default function Transactions() {
   onCleanup(() => clearInterval(clock))
 
   return (
-    <Page
-      title="Transactions"
-      width="wide"
-      meta={<SyncLine view={view} now={now()} />}
-      actions={
-        <div class="flex items-center gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            icon="refresh"
-            loading={view.syncing}
-            onClick={() => run("transactions.sync")}
-          >
-            Sync
-          </Button>
-          <Button size="sm" variant="ghost" icon="download" onClick={() => run("transactions.export")}>
-            Save CSV
-          </Button>
-          <Button size="sm" variant="ghost" icon="copy" onClick={() => run("transactions.copy_csv")}>
-            Copy CSV
-          </Button>
-        </div>
-      }
-    >
+    <Page width="wide">
       <Show
         when={view.signedIn}
         fallback={<EmptyState icon="dollar" title="No account" description={view.error ?? undefined} />}
@@ -223,6 +199,25 @@ export default function Transactions() {
               />
             </div>
           </Show>
+          <div class="ml-auto flex items-center gap-1">
+            <SyncLine view={view} now={now()} />
+            <Button
+              class="ml-2"
+              size="sm"
+              variant="ghost"
+              icon="refresh"
+              loading={view.syncing}
+              onClick={() => run("transactions.sync")}
+            >
+              Sync
+            </Button>
+            <Button size="sm" variant="ghost" icon="download" onClick={() => run("transactions.export")}>
+              Save CSV
+            </Button>
+            <Button size="sm" variant="ghost" icon="copy" onClick={() => run("transactions.copy_csv")}>
+              Copy CSV
+            </Button>
+          </div>
         </div>
         <Tabs aria-label="Transactions view" items={sections} value={section()} onChange={setSection}>
           <TabPanel value="ledger">
@@ -249,25 +244,16 @@ export default function Transactions() {
 }
 
 function SyncLine(props: { view: TxView; now: number }) {
-  return (
-    <span class="flex items-center gap-2 text-sm text-fg-muted">
-      <Show when={props.view.syncing}>
-        <Spinner size="sm" />
-      </Show>
-      <Show
-        when={props.view.syncedAt}
-        fallback={
-          <Show when={props.view.syncing} fallback={<span>Not synced yet</span>}>
-            <span>Syncing</span>
-          </Show>
-        }
-      >
-        {(t) => <span>Synced {ago(t(), props.now)}</span>}
-      </Show>
-      <span>· {full(props.view.ledgerCount)} saved</span>
-      <Show when={props.view.oldest}>{(o) => <span>· back to {date(o())}</span>}</Show>
-    </span>
-  )
+  // The Sync button's spinner says when a sync is running, so this line doesn't.
+  const synced = () => {
+    if (props.view.syncedAt) return `Synced ${ago(props.view.syncedAt, props.now)}`
+    return props.view.syncing ? "" : "Not synced yet"
+  }
+  const text = () =>
+    [synced(), `${full(props.view.ledgerCount)} saved`, props.view.oldest && `back to ${date(props.view.oldest)}`]
+      .filter(Boolean)
+      .join(" · ")
+  return <span class="text-sm text-fg-muted tabular-nums">{text()}</span>
 }
 
 /** Roblox's totals for site periods, else sums of the ledger rows in range. A type tile
@@ -533,7 +519,7 @@ function Ledger(props: {
   ]
 
   return (
-    <div class="flex flex-col gap-3">
+    <div class="@container flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Select
           aria-label="Type"
@@ -568,7 +554,8 @@ function Ledger(props: {
           {full(props.view.matched)} of {full(props.view.ledgerCount)}
         </span>
       </div>
-      <div class="grid grid-cols-[minmax(0,1fr)_17rem] items-start gap-4">
+      {/* The details sit beside the table when there's room for both, else under it. */}
+      <div class="grid items-start gap-4 @5xl:grid-cols-[minmax(0,1fr)_17rem]">
         <div data-cursor-list class="flex min-w-0 flex-col gap-2">
           <DataTable
             aria-label="Transactions"
@@ -579,8 +566,21 @@ function Ledger(props: {
             selected={current()?.id}
             onRowClick={(r) => setCursor(props.view.rows.indexOf(r))}
             empty={
-              <Show when={!props.view.syncing} fallback={<Skeleton class="h-64 w-full rounded-md" />}>
-                <EmptyState icon="dollar" title="No transactions match" />
+              <Show
+                when={!props.view.syncing}
+                fallback={
+                  <EmptyState
+                    icon="dollar"
+                    title="Syncing transactions"
+                    description="They show here as they arrive. The first sync can take a few minutes."
+                  />
+                }
+              >
+                <EmptyState
+                  icon="dollar"
+                  title={props.view.ledgerCount > 0 ? "No transactions match" : "No transactions saved yet"}
+                  description={props.view.ledgerCount > 0 ? "Change the period or clear the filters." : undefined}
+                />
               </Show>
             }
           />

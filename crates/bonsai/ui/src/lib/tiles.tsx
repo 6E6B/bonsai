@@ -142,9 +142,7 @@ export function ItemTile(props: {
         marker={marker(props.item.values) ? <ValueMarker tag={props.item.values as ValueTag} /> : undefined}
         badge={
           props.item.limited ? (
-            <Badge variant="success">
-              {props.showSerial && props.item.serial ? `#${props.item.serial}` : "Limited"}
-            </Badge>
+            <Badge>{props.showSerial && props.item.serial ? `#${props.item.serial}` : "Limited"}</Badge>
           ) : props.showSerial && (props.item.copies ?? 1) > 1 ? (
             <Badge>{`x${props.item.copies}`}</Badge>
           ) : undefined

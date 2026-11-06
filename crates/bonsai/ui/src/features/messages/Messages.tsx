@@ -250,7 +250,7 @@ export default function Messages() {
                   </Alert>
                 </Show>
                 <Divider />
-                <p class="whitespace-pre-line break-words">
+                <p class="max-w-[70ch] whitespace-pre-line break-words">
                   <LinkedText text={m().body} />
                 </p>
                 <For each={experienceLinks(m().body)}>{(id) => <ExperienceCard placeId={id} />}</For>

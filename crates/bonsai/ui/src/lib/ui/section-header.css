@@ -17,7 +17,7 @@
   }
 
   [data-component="section-header"][data-size="page"] [data-slot="title"] {
-    font-size: var(--text-xl);
+    font-size: var(--text-2xl);
   }
 
   [data-component="section-header"][data-size="group"] {

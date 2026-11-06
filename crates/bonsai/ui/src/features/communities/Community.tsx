@@ -98,19 +98,22 @@ export default function Community() {
   const me = () => view.me
   const member = () => Boolean(me()?.role)
   const [section, setSection] = createSignal("about")
-  const sections = () => [
-    { value: "about", label: "About" },
-    { value: "games", label: "Games" },
-    { value: "store", label: "Store" },
-    { value: "forum", label: "Forum", disabled: !me()?.viewForums },
-    { value: "members", label: "Members", disabled: me() !== null && !me()?.canViewMembers },
-    { value: "allies", label: "Allies" },
-    { value: "enemies", label: "Enemies" },
-    { value: "requests", label: "Join requests", disabled: !me()?.manageRequests },
-    { value: "audit", label: "Audit log", disabled: !me()?.viewAuditLog },
-    { value: "revenue", label: "Revenue", disabled: !me()?.viewPayouts && !me()?.spendFunds },
-    { value: "settings", label: "Settings", disabled: !me()?.manageSettings },
-  ]
+  const sections = () =>
+    [
+      { value: "about", label: "About" },
+      { value: "games", label: "Games" },
+      { value: "store", label: "Store" },
+      { value: "forum", label: "Forum", disabled: !me()?.viewForums },
+      { value: "members", label: "Members", disabled: me() !== null && !me()?.canViewMembers },
+      { value: "allies", label: "Allies" },
+      { value: "enemies", label: "Enemies" },
+      { value: "requests", label: "Join requests", disabled: !me()?.manageRequests },
+      { value: "audit", label: "Audit log", disabled: !me()?.viewAuditLog },
+      { value: "revenue", label: "Revenue", disabled: !me()?.viewPayouts && !me()?.spendFunds },
+      { value: "settings", label: "Settings", disabled: !me()?.manageSettings },
+    ]
+      // Tabs the user can't open are hidden, not greyed out.
+      .filter((t) => !t.disabled || t.value === section())
   useSubTabs(sections, section, setSection)
   const affiliates = useLive(
     () => (section() === "allies" || section() === "enemies" ? groupId() : 0),

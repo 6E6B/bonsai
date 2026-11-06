@@ -99,9 +99,12 @@ export default function Values() {
         </Show>
       }
       actions={
-        <Switch checked={shell.itemValues} onChange={() => run("market.values")}>
-          Show values
-        </Switch>
+        // While values are off, the empty state's button turns them on.
+        <Show when={shell.itemValues}>
+          <Switch checked onChange={() => run("market.values")}>
+            Show values
+          </Switch>
+        </Show>
       }
     >
       <Show

@@ -239,22 +239,20 @@ function Browser(props: { userId: number; mine: boolean; owner: string; other: J
             <Totals userId={props.userId} />
           </>
         }
-        footer={
-          <>
-            <Show when={hasItems()}>
-              <SectionHeader title="Filters" size="group" />
-              <Select
-                size="sm"
-                aria-label="Show"
-                value={filter()}
-                onChange={(v) => void run("inventory.filter", v)}
-                options={filters()}
-              />
-            </Show>
-            <div class="-mx-2">{props.other}</div>
-          </>
-        }
+        footer={<div class="-mx-2">{props.other}</div>}
       >
+        <Show when={hasItems()}>
+          <div class="flex flex-col gap-2 border-b border-line px-2 pb-3">
+            <SectionHeader title="Filters" size="group" />
+            <Select
+              size="sm"
+              aria-label="Show"
+              value={filter()}
+              onChange={(v) => void run("inventory.filter", v)}
+              options={filters()}
+            />
+          </div>
+        </Show>
         <CategoryNav
           aria-label="Categories"
           sections={sections()}

@@ -54,7 +54,7 @@
     min-width: 18px;
     padding: 0 5px;
     border-radius: var(--radius-full);
-    background: var(--color-accent);
+    background: var(--color-danger);
     color: var(--color-on-accent);
     font-size: var(--text-xs);
     font-weight: 600;
