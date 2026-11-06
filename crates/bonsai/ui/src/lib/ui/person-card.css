@@ -9,7 +9,7 @@
   /* The picture is inset evenly from the card's corner and rounded to match it: its radius is the
    * card's minus the inset, so the two corners share a center. */
   [data-component="person-card"] {
-    --person-card-inset: 4px;
+    --person-card-inset: 6px;
 
     position: relative;
     display: flex;
