@@ -25,7 +25,8 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | Component | Use it for |
 |---|---|
 | `RailItem` | One account slot in the far-left rail: active marker, color tag, tooltip with its `Ctrl+N`. |
-| `NavItem` | Sidebar rows and in-screen category lists (Marketplace, Inventory, Settings). `compact` for the collapsed sidebar. |
+| `NavItem` | Sidebar rows and short in-screen lists (Settings). `compact` for the collapsed sidebar. |
+| `CategoryNav` | A category tree in a side panel (Marketplace, Inventory): sections, one open group, arrow keys. |
 | `TabStrip` | The open tabs above the page. One per window, driven by `~/lib/tabs`. |
 | `Tabs` + `TabPanel` | Sub-sections of one screen (Servers / Store / Badges). Wire `[` and `]` with `useSubTabs`. |
 | `SegmentedControl` | One of 2–5 options shown in place: server sort, R6/R15, chart. |

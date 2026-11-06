@@ -8,6 +8,8 @@ import {
   Badge,
   Button,
   Card,
+  CategoryNav,
+  type CategorySection,
   Checkbox,
   Clamp,
   Collapsible,
@@ -156,10 +158,30 @@ const galleryThemes = [
   },
 ]
 
+const categorySections: CategorySection[] = [
+  { items: [{ value: "collectibles", label: "Collectibles" }] },
+  {
+    label: "Avatar",
+    items: [
+      { value: "heads", label: "Heads" },
+      {
+        label: "Accessories",
+        children: [
+          { value: "head", label: "Head" },
+          { value: "face", label: "Face" },
+          { value: "neck", label: "Neck" },
+        ],
+      },
+    ],
+  },
+  { items: [{ value: "wishlist", label: "Wishlist", icon: "heart" }] },
+]
+
 const galleryFonts = ["Inter", "Space Grotesk", "IBM Plex Sans", "Manrope", "Work Sans"]
 
 export default function Components() {
   const [height, setHeight] = createSignal(100)
+  const [category, setCategory] = createSignal("face")
   const [volume, setVolume] = createSignal(60)
   const [quality, setQuality] = createSignal(1)
   const [swatch, setSwatch] = createSignal("var(--color-accent)")
@@ -540,6 +562,17 @@ export default function Components() {
         <div class="flex flex-col gap-0.5 bg-deep p-2">
           <NavItem compact label="Home" icon="home" active onClick={noop} />
           <NavItem compact label="Messages" icon="messages" count={3} onClick={noop} />
+        </div>
+      </Section>
+
+      <Section title="Category nav">
+        <div class="w-56 rounded-md border border-line p-2">
+          <CategoryNav
+            aria-label="Categories"
+            sections={categorySections}
+            selected={category()}
+            onSelect={setCategory}
+          />
         </div>
       </Section>
 

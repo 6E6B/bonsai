@@ -13,6 +13,8 @@ export {
   type IconButtonProps,
 } from "./button"
 export { Card } from "./card"
+export { CategoryNav, type CategoryNavProps } from "./category-nav"
+export type { CategoryChild, CategoryNode, CategorySection } from "./category-tree"
 export { Checkbox, type CheckboxProps } from "./checkbox"
 export { Clamp, type ClampProps } from "./clamp"
 export { Collapsible, type CollapsibleProps } from "./collapsible"
@@ -34,7 +36,7 @@ export { ContextMenu, type ContextMenuProps, ImageMenu, Menu, type MenuEntry, ty
 export { Meter, type MeterProps } from "./meter"
 export { NavItem, type NavItemProps } from "./nav-item"
 export type { Option } from "./options"
-export { Page, type PageProps, Pane, Split } from "./page"
+export { Page, type PageProps, Pane, SideMain, SidePage, SidePanel, Split } from "./page"
 export { PersonCard, type PersonCardProps } from "./person-card"
 export { PersonTile, type PersonTileProps } from "./person-tile"
 export { Pips, type PipsProps } from "./pips"

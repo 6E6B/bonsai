@@ -1,0 +1,133 @@
+@layer components {
+  [data-component="category-nav"] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  [data-component="category-nav"] [data-slot="section"] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  [data-component="category-nav"] [data-slot="section"][data-rule]:not(:has(> [data-slot="section-label"])) {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-line);
+  }
+
+  [data-component="category-nav"] [data-slot="section-label"] {
+    padding: 12px 8px 4px;
+    color: var(--color-fg-faint);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  [data-component="category-nav"] [data-slot="section"]:first-child [data-slot="section-label"] {
+    padding-top: 0;
+  }
+
+  [data-component="category-nav"] [data-slot="row"] {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: var(--control-lg);
+    padding: 0 4px 0 8px;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--color-fg-muted);
+    font-weight: 500;
+    text-align: left;
+    cursor: default;
+    transition:
+      background-color var(--duration) var(--ease),
+      color var(--duration) var(--ease);
+  }
+
+  [data-component="category-nav"] [data-slot="row"]:hover {
+    background: var(--color-hover);
+    color: var(--color-fg);
+  }
+
+  [data-component="category-nav"] [data-slot="row"]:focus-visible {
+    outline-offset: -2px;
+  }
+
+  [data-component="category-nav"] [data-slot="row"][data-active] {
+    background: var(--color-active);
+    color: var(--color-fg);
+  }
+
+  /* A closed group holding the selection: says where you are without looking selected. */
+  [data-component="category-nav"] [data-slot="row"][data-contains] {
+    color: var(--color-fg);
+  }
+
+  [data-component="category-nav"] [data-slot="label"] {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-component="category-nav"] [data-slot="chevron"] {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-sm);
+    height: var(--control-sm);
+    border-radius: var(--radius-sm);
+    color: var(--color-fg-faint);
+  }
+
+  [data-component="category-nav"] [data-slot="chevron"]:hover {
+    background: var(--color-hover);
+    color: var(--color-fg);
+  }
+
+  [data-component="category-nav"] [data-slot="chevron"] [data-component="icon"] {
+    transition: transform var(--duration) var(--ease);
+  }
+
+  [data-component="category-nav"] [data-slot="chevron"][data-open] [data-component="icon"] {
+    transform: rotate(90deg);
+  }
+
+  /* Nested rows hang off a guide under the parent's text; the selected one lights its segment. */
+  [data-component="category-nav"] [data-slot="children"] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0 0 4px 13px;
+    padding-left: 6px;
+    border-left: 1px solid var(--color-line);
+  }
+
+  [data-component="category-nav"] [data-slot="row"][data-child] {
+    position: relative;
+    height: var(--control-md);
+    font-weight: 400;
+  }
+
+  [data-component="category-nav"] [data-slot="row"][data-child][data-active]::before {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: -7px;
+    width: 1px;
+    background: var(--color-accent);
+    content: "";
+  }
+
+  [data-component="category-nav"] [data-slot="error"] {
+    padding: 4px 8px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+}

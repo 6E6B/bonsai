@@ -83,6 +83,12 @@
     scrollbar-gutter: auto;
   }
 
+  /* Side panels touch the edge and take their height from the scroller. */
+  [data-scroller]:has([data-component="side-page"]) {
+    container-type: size;
+    scrollbar-gutter: stable;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 1px;

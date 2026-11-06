@@ -526,6 +526,8 @@ commands! {
     Orbit3d => "avatar.orbit", "Move the 3D camera (left, right, up, down, in, out or reset)", ["camera", "rotate", "orbit", "zoom", "turn", "reset", "3d", "avatar"], Text, Read, [];
 
     SearchMarketplace => "market.search", "Search the Marketplace", ["catalog", "shop", "items", "find item"], Text, Read, [];
+    MarketCategory => "market.category", "Open a Marketplace category or the wishlist", ["catalog", "category", "browse", "shop", "wishlist"], Text, Local, [];
+    ClearMarketFilters => "market.clear_filters", "Clear the Marketplace filters", ["catalog", "filters", "reset", "clear", "price", "creator"], None, Local, [];
     BuyItem => "market.buy", "Buy this item", ["buy", "purchase", "get"], None, Write(Value), [];
     BuyItemAs => "market.buy_as", "Buy this item as another account", ["buy", "purchase", "alt", "as"], Account, Write(Value), [];
     BuyResale => "market.buy_resale", "Buy a reseller's copy", ["buy", "resale", "reseller", "limited", "copy"], Text, Write(Value), [];
@@ -545,6 +547,7 @@ commands! {
     PriceHistoryView => "market.history_view", "Show price history as a chart or a table (chart, table; no argument toggles)", ["price history", "chart", "table", "sales", "limited"], Text, Local, [];
     SearchAuditLog => "group.audit_search", "Search the community audit log", ["audit", "log", "search", "performer", "community", "group"], Text, Read, [];
     ViewInventory => "inventory.view", "Open a user's inventory", ["inventory", "items", "collectibles", "limiteds"], User, Read, [];
+    InventoryCategory => "inventory.category", "Open an inventory category", ["inventory", "category", "collectibles", "badges", "passes", "places"], Text, Local, [];
     DeleteInventoryItem => "inventory.delete", "Delete an item from your inventory", ["delete", "remove", "inventory"], Text, Write(Value), [];
     SortInventory => "inventory.sort", "Sort the inventory (newest, oldest, price_asc, price_desc, rap, value, demand)", ["inventory", "sort", "order", "price", "rap", "oldest", "newest"], Text, Local, [];
     FilterInventory => "inventory.filter", "Filter the inventory (all, limited, wearing, copies, for_sale)", ["inventory", "filter", "show only", "limited", "wearing", "duplicates"], Text, Local, [];

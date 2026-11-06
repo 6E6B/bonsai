@@ -26,6 +26,7 @@ import { setClockFormat, setFormatLocale, setRelativeDates } from "~/lib/format"
 import { registerHubCommands } from "~/lib/hub"
 import { commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
+import { WISHLIST } from "~/lib/market-category"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { playlists, shell, startSync } from "~/lib/store"
 import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
@@ -33,6 +34,7 @@ import { shownBackground } from "~/lib/theme"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { useUpdateToasts } from "~/lib/update-view"
 import { useUpdates } from "~/lib/updates"
+import { withParams } from "~/lib/url-params"
 import { registerWikiCommands } from "~/lib/wiki-panels"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
@@ -298,9 +300,12 @@ export function Layout(props: ParentProps) {
       if (t) setPreview(t)
       else showToast("Preview takes an item ID, item:<id> or bundle:<id>")
     }),
-    handle("market.search", (q) =>
-      navigate(q?.trim() ? `/marketplace?q=${encodeURIComponent(q.trim())}` : "/marketplace"),
-    ),
+    handle("market.search", (q) => {
+      // Searching keeps the category and filters, but the wishlist has no search box.
+      const wishlist = new URLSearchParams(location.search).get("cat") === WISHLIST
+      navigate(withParams(location, "/marketplace", { q: q?.trim() || null, ...(wishlist ? { cat: null } : {}) }))
+    }),
+    handle("market.category", (c) => navigate(withParams(location, "/marketplace", { cat: c?.trim() || null }))),
     handle("user.nickname", editAbout("nickname")),
     handle("user.note", editAbout("note")),
     handle("playlist.new", newPlaylist),
@@ -339,6 +344,10 @@ export function Layout(props: ParentProps) {
     handle("inventory.view", (who) =>
       navigate(who?.trim() ? `/inventory/${encodeURIComponent(who.trim())}` : "/inventory"),
     ),
+    handle("inventory.category", (slot) => {
+      const path = location.pathname.startsWith("/inventory") ? location.pathname : "/inventory"
+      navigate(withParams(location, path, { slot: slot?.trim() || null }))
+    }),
     handle("group.open", open("/communities")),
     handle("group.search", (q) =>
       navigate(q?.trim() ? `/communities?q=${encodeURIComponent(q.trim())}` : "/communities"),

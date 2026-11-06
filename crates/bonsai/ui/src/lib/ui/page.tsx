@@ -41,6 +41,56 @@ export function Pane(
   )
 }
 
+/** A browsing screen: `SidePanel`s beside a `SideMain`. Unlike `Split`, the page itself scrolls
+ * and the panels stick to the view, so long grids keep the tab's scroll position. */
+export function SidePage(props: ParentProps<{ class?: string }>) {
+  return (
+    <div data-component="side-page" class={props.class}>
+      {props.children}
+    </div>
+  )
+}
+
+/** A full-height panel of a `SidePage`: give it a width in `class`. `header` and `footer` stay put
+ * while the children scroll. `edge="end"` for details on the right. */
+export function SidePanel(
+  props: ParentProps<{
+    edge?: "start" | "end"
+    as?: "div" | "aside"
+    header?: JSX.Element
+    footer?: JSX.Element
+    class?: string
+    "aria-label"?: string
+  }>,
+) {
+  return (
+    <Dynamic
+      component={props.as ?? "div"}
+      data-component="side-panel"
+      data-edge={props.edge ?? "start"}
+      class={props.class}
+      aria-label={props["aria-label"]}
+    >
+      <Show when={props.header}>
+        <div data-slot="header">{props.header}</div>
+      </Show>
+      <div data-slot="body">{props.children}</div>
+      <Show when={props.footer}>
+        <div data-slot="footer">{props.footer}</div>
+      </Show>
+    </Dynamic>
+  )
+}
+
+/** The scrolling content of a `SidePage`, with the same insets as a `Page`. */
+export function SideMain(props: ParentProps<{ class?: string }>) {
+  return (
+    <div data-component="side-main" class={props.class}>
+      {props.children}
+    </div>
+  )
+}
+
 /** The frame of a screen: padding, max width and the heading. Lay out the body with Tailwind
  * in `class`. */
 export function Page(props: PageProps) {
