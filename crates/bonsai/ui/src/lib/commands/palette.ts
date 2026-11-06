@@ -313,6 +313,20 @@ export interface SectionInput {
   commands: PaletteEntry[]
   friends: PalettePerson[]
   remote: PaletteEntry[]
+  /** Rows picked lately, newest first (`remember`). Shown for an empty query. */
+  recent?: PaletteEntry[]
+  /** Command ids of the screens to offer under "Go to" for an empty query, in sidebar order. */
+  places?: string[]
+}
+
+/** How many rows `remember` keeps. */
+const RECENT = 5
+
+/** `recent` with `entry` moved to the front. Rows that ask for an argument aren't kept: the
+ * row alone doesn't say what was typed. */
+export function remember(recent: PaletteEntry[], entry: PaletteEntry): PaletteEntry[] {
+  if (entry.ask) return recent
+  return [entry, ...recent.filter((e) => e.key !== entry.key)].slice(0, RECENT)
 }
 
 /** Rows per group when searching everything; a scope shows all of its results. */
@@ -333,7 +347,29 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
     if (rows.length) out.push({ title, rows })
   }
 
-  if (input.scope === "commands" || (all && !text)) {
+  if (all && !text) {
+    // Recent command rows are looked up again, so renamed or removed ones (a deleted theme)
+    // follow the registry. Results and friends are kept as they were.
+    const byKey = new Map(input.commands.map((e) => [e.key, e]))
+    const recent = (input.recent ?? []).flatMap((e) => {
+      const now = byKey.get(e.key)
+      return now ? [now] : e.entity ? [e] : []
+    })
+    const seen = new Set(recent.map((e) => e.key))
+    const places = (input.places ?? []).flatMap((id) => {
+      const e = byKey.get(id)
+      return e && !seen.has(e.key) ? [e] : []
+    })
+    for (const e of places) seen.add(e.key)
+    add("Recent", recent)
+    add("Go to", places)
+    add(
+      "Commands",
+      input.commands.filter((e) => !seen.has(e.key)),
+    )
+    return out
+  }
+  if (input.scope === "commands") {
     add("Commands", filterEntries(input.commands, text))
     return out
   }

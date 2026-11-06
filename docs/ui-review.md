@@ -19,23 +19,23 @@ Check an item off when it ships.
   One neutral count pill everywhere; coloured only for unread.
 - [x] **Selected rows.** In Messages, Trades and Chat the selected row looks like a hovered row.
   Mark it with an accent bar.
-- [ ] **Skeletons.** Discover and Pass skeletons are big blocks unlike the loaded layout. Build them
+- [x] **Skeletons.** Discover and Pass skeletons are big blocks unlike the loaded layout. Build them
   from the same shelf and tile shapes.
 - [x] **Heading hierarchy.** Page titles (18px) barely differ from section titles (15px). Where page
   titles stay, make them larger.
 
 ## Screens
 
-- [ ] **Home.** The Continue row leaves a quarter of the width empty; let it fill. Add a Friends
+- [x] **Home.** The Continue row leaves a quarter of the width empty; let it fill. Add a Friends
   online row.
 - [x] **Friends.** Rows are two lines with empty space beside them. Show the game a friend is in
   and a Join button. (Already shown for friends in a game; the mocked build had none.)
-- [ ] **Notifications.** Group by day (Today, Yesterday, earlier) and mark unread rows.
+- [x] **Notifications.** Group by day (Today, Yesterday, earlier) and mark unread rows.
 - [x] **Communities.** Show the user's role in each community. (Already in the subtitle.)
 - [x] **Marketplace, Inventory.** "Limited" and serial tags on every tile are noise; use the neutral
   media-chip style. The Filters block pinned to the bottom of the side panel covers categories on
   short windows; move it to the top of the panel.
-- [ ] **Item page.** The details card wraps "Updated" onto its own row. Use a layout that fits.
+- [x] **Item page.** The details card wraps "Updated" onto its own row. Use a layout that fits.
 - [x] **Transactions.** At 1024px wide the table squashes headers to "E" and "W": drop columns or
   move the detail pane below. The empty table has no message. "Syncing" and the Sync spinner say
   the same thing. Three toolbar rows can be two.
@@ -48,7 +48,7 @@ Check an item off when it ships.
 - [x] **Community.** Tabs the user can't use (Join requests, Audit log, Revenue, Settings) show
   greyed out. Hide them.
 - [x] **Settings.** "Accounts on this com…" is cut off; call it "Saved accounts".
-- [ ] **Command palette.** An empty query says "No matches". Show recent places and suggested
-  commands.
+- [x] **Command palette.** An empty query says "No matches". Show recent places and suggested
+  commands. (Without a query it listed every command; the mocked build has no registry.)
 - [x] **`/overview`.** A static replica of an unrelated product page ships in release builds.
   Limit it to dev builds.

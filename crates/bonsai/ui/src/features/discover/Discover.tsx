@@ -2,7 +2,7 @@ import { createMemo, createSignal, For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { type ChartPage, commands, type DiscoverView, type GameCard } from "~/lib/ipc/bindings"
 import { shell, useLive } from "~/lib/store"
-import { GameTile, TILE_WIDTH, tileGrid } from "~/lib/tiles"
+import { GameTile, ShelfSkeleton, TILE_WIDTH, TileSkeleton, tileGrid } from "~/lib/tiles"
 import {
   Alert,
   Button,
@@ -11,7 +11,6 @@ import {
   Page,
   SectionHeader,
   Select,
-  Skeleton,
   Switch,
   Tooltip,
   VirtualGrid,
@@ -105,10 +104,7 @@ function Charts(props: { view: DiscoverView; keep: (g: GameCard) => boolean; onO
     <Show
       when={props.view.charts.length > 0}
       fallback={
-        <Show
-          when={!props.view.loading}
-          fallback={<For each={[0, 1, 2]}>{() => <Skeleton class="h-48 w-full rounded-md" />}</For>}
-        >
+        <Show when={!props.view.loading} fallback={<ShelfSkeleton />}>
           <Show when={props.view.error} fallback={<EmptyState icon="discover" title="No charts" />}>
             {(e) => (
               <Alert variant="danger" title="Couldn't load charts">
@@ -185,7 +181,14 @@ function FullChart(props: {
           estimateRowHeight={170}
           gap={12}
           empty={
-            <Show when={!page.loading} fallback={<Skeleton class="h-48 w-full rounded-md" />}>
+            <Show
+              when={!page.loading}
+              fallback={
+                <div class={tileGrid}>
+                  <For each={Array.from({ length: 24 })}>{() => <TileSkeleton />}</For>
+                </div>
+              }
+            >
               <EmptyState icon="search" title="No experiences match" description="Try another genre." />
             </Show>
           }
