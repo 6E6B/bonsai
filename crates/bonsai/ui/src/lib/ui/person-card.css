@@ -52,9 +52,11 @@
     min-width: 0;
   }
 
+  /* Tight lines so the name and the line under it read as one block. */
   [data-component="person-card"] [data-slot="title"],
   [data-component="person-card"] [data-slot="subtitle"] {
     overflow: hidden;
+    line-height: var(--text-sm--line-height);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
