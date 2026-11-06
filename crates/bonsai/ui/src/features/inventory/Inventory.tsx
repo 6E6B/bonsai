@@ -43,7 +43,6 @@ import {
   Thumbnail,
   Tile,
   Tooltip,
-  usePrompt,
   VirtualGrid,
 } from "~/lib/ui"
 import { paramOf, useParamDraft } from "~/lib/url-params"
@@ -90,35 +89,21 @@ export default function Inventory() {
   )
   const userId = () => (who() ? lookup.id : shell.active)
   const mine = () => shell.accounts.some((a) => a.id === userId())
-  const prompt = usePrompt()
   useValuesRefresh()
   const owner = () => (who() && !mine() ? decodeURIComponent(who()) : "")
-  const other = (
-    <Button
-      size="sm"
-      variant="ghost"
-      icon="search"
-      onClick={async () => {
-        const user = await prompt({ title: "Open an inventory", label: "Username or ID", submit: "Open" })
-        if (user) void run("inventory.view", user)
-      }}
-    >
-      Someone else's
-    </Button>
-  )
 
   return (
     <Show
       when={userId()}
       fallback={
-        <Page title={owner() ? `Inventory of ${owner()}` : "Inventory"} actions={other}>
+        <Page title={owner() ? `Inventory of ${owner()}` : "Inventory"}>
           <Show when={lookup.error ?? (!who() && "Add an account to see your inventory.")} fallback={<span />}>
             {(e) => <EmptyState icon="inventory" title={e()} />}
           </Show>
         </Page>
       }
     >
-      {(id) => <Browser userId={id()} mine={mine()} owner={owner()} other={other} />}
+      {(id) => <Browser userId={id()} mine={mine()} owner={owner()} />}
     </Show>
   )
 }
@@ -189,7 +174,7 @@ function useWardrobe(own: () => boolean) {
   }
 }
 
-function Browser(props: { userId: number; mine: boolean; owner: string; other: JSX.Element }) {
+function Browser(props: { userId: number; mine: boolean; owner: string }) {
   const [params, setParams] = useSearchParams()
   const categories = useLive(() => props.userId, commands.inventoryCategories, emptyList<InvCategoryView>)
   const param = () => paramOf(params.slot)
@@ -239,7 +224,6 @@ function Browser(props: { userId: number; mine: boolean; owner: string; other: J
             <Totals userId={props.userId} />
           </>
         }
-        footer={<div class="-mx-2">{props.other}</div>}
       >
         <Show when={hasItems()}>
           <div class="flex flex-col gap-2 border-b border-line px-2 pb-3">

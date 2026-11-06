@@ -75,7 +75,6 @@ export default function Wiki() {
   return (
     <Page
       title="Wiki"
-      meta={<span class="text-sm text-fg-muted">{source()} · from Fandom</span>}
       actions={
         <Show when={other()}>
           <Button size="sm" variant="ghost" icon="wiki" onClick={() => openArticle(mainPage(wiki()))}>

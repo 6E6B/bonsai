@@ -3,18 +3,7 @@ import { run } from "~/lib/commands/registry"
 import { type ChartPage, commands, type DiscoverView, type GameCard } from "~/lib/ipc/bindings"
 import { shell, useLive } from "~/lib/store"
 import { GameTile, ShelfSkeleton, TILE_WIDTH, TileSkeleton, tileGrid } from "~/lib/tiles"
-import {
-  Alert,
-  Button,
-  EmptyState,
-  IconButton,
-  Page,
-  SectionHeader,
-  Select,
-  Switch,
-  Tooltip,
-  VirtualGrid,
-} from "~/lib/ui"
+import { Alert, Button, EmptyState, IconButton, Page, SectionHeader, Select, Switch, VirtualGrid } from "~/lib/ui"
 
 const ALL_GENRES = "All genres"
 /** Games a chart shows before "See all". */
@@ -42,17 +31,7 @@ export default function Discover() {
   const filter = (kind: string) => view.filters.find((f) => f.kind === kind)
 
   return (
-    <Page
-      title="Discover"
-      class="!gap-3"
-      actions={
-        <Tooltip content="Search experiences in the command bar with g:">
-          <Button icon="search" onClick={() => run("palette.open")}>
-            Search
-          </Button>
-        </Tooltip>
-      }
-    >
+    <Page title="Discover" class="!gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Show when={filter("device")}>
           {(f) => (
