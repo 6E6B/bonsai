@@ -140,11 +140,12 @@
 
   [data-component="avatar"]:not([data-size="xs"], [data-size="sm"])
     [data-slot="presence"][data-presence="studio"]::before {
+    /* Cut from a layer covering the whole dot so it is centered exactly; a small rotated box
+     * lands on rounded pixels and sits off center. */
     content: "";
-    width: calc(var(--avatar-dot) * 0.34);
-    height: calc(var(--avatar-dot) * 0.34);
-    border-radius: 1px;
-    transform: rotate(45deg);
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(50% 26%, 74% 50%, 50% 74%, 26% 50%);
   }
 
   [data-component="avatar"] [data-slot="count"] {
