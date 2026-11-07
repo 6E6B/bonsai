@@ -132,7 +132,7 @@ export default function Trades() {
             class="flex-1"
             icon="search"
             aria-label="Search trades"
-            placeholder="Search by partner"
+            placeholder="Search by player"
             value={query()}
             onChange={(v) => {
               setQuery(v)
