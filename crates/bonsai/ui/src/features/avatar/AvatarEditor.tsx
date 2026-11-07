@@ -155,14 +155,7 @@ export default function AvatarEditor() {
   }
 
   return (
-    <Page
-      actions={
-        <>
-          <IconButton icon="refresh" label="Redraw avatar image" onClick={() => run("avatar.redraw")} />
-          <Button onClick={saveOutfit}>Save as outfit</Button>
-        </>
-      }
-    >
+    <Page>
       <div class="flex flex-col items-start gap-6 lg:flex-row">
         <aside class="flex w-64 max-w-full shrink-0 flex-col gap-3 lg:sticky lg:top-4">
           <AvatarViewer
@@ -293,7 +286,20 @@ export default function AvatarEditor() {
         </aside>
 
         <div class="flex w-full min-w-0 flex-1 flex-col gap-3">
-          <Tabs aria-label="Wardrobe" items={tabs()} value={section()} onChange={setSection}>
+          <Tabs
+            aria-label="Wardrobe"
+            items={tabs()}
+            value={section()}
+            onChange={setSection}
+            actions={
+              <>
+                <IconButton size="sm" icon="refresh" label="Redraw avatar image" onClick={() => run("avatar.redraw")} />
+                <Button size="sm" icon="plus" onClick={saveOutfit}>
+                  Save as outfit
+                </Button>
+              </>
+            }
+          >
             <TabPanel value={OUTFITS}>
               <div class="flex flex-col gap-3">
                 <div class="flex flex-wrap items-center gap-2">
