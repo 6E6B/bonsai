@@ -2115,6 +2115,11 @@ export type ServerRow = {
 	fps: number | null,
 	/**  Friends of the active account in it. */
 	friends: Id[],
+	/**
+	 *  The first few players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
+	 *  player tokens (signed out).
+	 */
+	players: Id[],
 };
 
 /**

@@ -1601,6 +1601,29 @@ pub(crate) fn thumb_client(inner: &Inner) -> Client {
         .unwrap_or_else(|| inner.anon.clone())
 }
 
+/// The player tokens behind the [`ThumbKind::Player`] keys in `batch`, by id, from the server
+/// lists in the store. A token no longer listed is left out, and its image is unavailable.
+fn player_tokens(inner: &Inner, batch: &[ThumbKey]) -> HashMap<u64, String> {
+    let wanted: HashSet<u64> = batch
+        .iter()
+        .filter(|k| k.kind == thumbs::ThumbKind::Player)
+        .map(|k| k.id)
+        .collect();
+    if wanted.is_empty() {
+        return HashMap::new();
+    }
+    let s = inner.store.read();
+    s.servers
+        .values()
+        .filter_map(|l| l.data.as_ref())
+        .flatten()
+        .flat_map(|srv| &srv.player_tokens)
+        .map(|t| (thumbs::player_token_id(t), t))
+        .filter(|(id, _)| wanted.contains(id))
+        .map(|(id, t)| (id, t.clone()))
+        .collect()
+}
+
 async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbMsg>) {
     let mut pending: Vec<ThumbKey> = Vec::new();
     // Keys already shown from a stale cached URL and waiting to be checked again. A failed
@@ -1693,9 +1716,11 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbMs
         let mut again: Vec<(ThumbKey, bool)> = Vec::new();
         let mut wait = None;
         let client = thumb_client(&inner);
-        let mut res = thumbs::lookup(&client, &batch).await;
+        let tokens = player_tokens(&inner, &batch);
+        let token = |k: &ThumbKey| tokens.get(&k.id).cloned();
+        let mut res = thumbs::lookup(&client, &batch, token).await;
         if matches!(res, Err(Error::Unauthorized)) && client.signed_in() {
-            res = thumbs::lookup(&inner.anon, &batch).await;
+            res = thumbs::lookup(&inner.anon, &batch, token).await;
         }
         match res {
             Ok(found) => {

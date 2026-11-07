@@ -719,7 +719,13 @@ pub struct ServerRow {
     pub fps: Option<f64>,
     /// Friends of the active account in it.
     pub friends: Vec<Id>,
+    /// The first few players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
+    /// player tokens (signed out).
+    pub players: Vec<Id>,
 }
+
+/// How many player faces a server row previews.
+const SERVER_PLAYER_PREVIEW: usize = 8;
 
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -1880,6 +1886,12 @@ pub fn game_servers(core: State<'_, Arc<Core>>, place_id: Id) -> Servers {
                 ping: v.ping.map(|p| p.max(0) as u32),
                 fps: v.fps,
                 friends: v.friends.iter().copied().map(Id).collect(),
+                players: v
+                    .player_tokens
+                    .iter()
+                    .take(SERVER_PLAYER_PREVIEW)
+                    .map(|t| Id(bonsai_core::thumbs::player_token_id(t)))
+                    .collect(),
             })
             .collect(),
     }
@@ -2099,6 +2111,7 @@ pub fn game_friend_servers(core: State<'_, Arc<Core>>, place_id: Id) -> List<Ser
         ping: v.ping.map(|p| p.max(0) as u32),
         fps: None,
         friends: v.friends.iter().copied().map(Id).collect(),
+        players: Vec::new(),
     })
 }
 

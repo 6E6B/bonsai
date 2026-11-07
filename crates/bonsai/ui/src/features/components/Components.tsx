@@ -5,6 +5,7 @@ import {
   Alert,
   AudioPlayer,
   Avatar,
+  AvatarStack,
   Badge,
   Button,
   Card,
@@ -240,6 +241,19 @@ export default function Components() {
         <Avatar size="sm" name="Builderman" />
         <Avatar name="Roblox" />
         <Avatar size="lg" name="Bonsai App" />
+      </Section>
+
+      <Section title="Avatar stack">
+        <AvatarStack
+          items={[
+            { name: "Builderman", label: "Builderman", highlight: true },
+            { name: "Player" },
+            { name: "Player" },
+            { name: "Player" },
+          ]}
+          total={27}
+        />
+        <AvatarStack on="canvas" size="md" items={[{ name: "Roblox" }, { name: "Bonsai App" }]} />
       </Section>
 
       <Section title="Badge">

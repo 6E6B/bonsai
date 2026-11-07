@@ -3,6 +3,7 @@
 export { Alert, type AlertProps, type AlertVariant } from "./alert"
 export { type AudioControl, AudioPlayer, type AudioPlayerProps } from "./audio-player"
 export { Avatar, type AvatarProps, type Presence } from "./avatar"
+export { AvatarStack, type AvatarStackItem, type AvatarStackProps } from "./avatar-stack"
 export { Badge, type BadgeProps, type BadgeVariant } from "./badge"
 export {
   Button,
