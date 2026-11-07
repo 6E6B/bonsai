@@ -49,6 +49,9 @@ impl CoreConfig {
                 RateLimiter::default()
                     .with_host("presence.roblox.com", 1.0, 3.0)
                     .with_host("friends.roblox.com", 2.0, 6.0)
+                    // Thumbnail images: static files, and a screen of avatars is a hundred of
+                    // them. At the default rate they appear one by one over many seconds.
+                    .with_host("tr.rbxcdn.com", 40.0, 80.0)
                     // Transactions answer 429 after about 8 quick calls; 1.5 s apart still
                     // tripped it. The sustained limit isn't known.
                     .with_route("apis.roblox.com", "/transaction-records/", 0.4, 4.0),

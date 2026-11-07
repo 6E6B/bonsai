@@ -437,7 +437,7 @@ function serverFaces(s: ServerRow): AvatarStackItem[] {
       src: thumbUrl("headshot", f),
       highlight: true,
     })),
-    ...s.players.map((p) => ({ name: "Player", src: thumbUrl("player", p) })),
+    ...s.players.map((p) => ({ name: "", src: thumbUrl("player", p) })),
   ]
 }
 
@@ -463,7 +463,7 @@ function ServersPanel(props: { placeId: number; max: number }) {
     {
       key: "players",
       label: "Players",
-      width: "minmax(8rem, 1fr)",
+      width: "minmax(3rem, 1fr)",
       cell: (s) => <AvatarStack items={serverFaces(s)} total={Math.max(s.playing, s.friends.length)} />,
     },
     {
@@ -483,7 +483,7 @@ function ServersPanel(props: { placeId: number; max: number }) {
     {
       key: "actions",
       label: "",
-      width: "9.5rem",
+      width: "6.5rem",
       align: "end",
       cell: (s) => (
         <>
@@ -493,12 +493,16 @@ function ServersPanel(props: { placeId: number; max: number }) {
             label="Copy invite link"
             onClick={() => run("game.copy_server_link", s.jobId)}
           />
-          <Menu size="sm" items={joinAsItems("game.join_job", s.jobId)}>
-            Join as…
-          </Menu>
           <Button size="sm" onClick={() => run("game.join_job", s.jobId)}>
             Join
           </Button>
+          <Menu
+            size="sm"
+            icon="chevron-down"
+            label="Join as…"
+            placement="bottom-end"
+            items={joinAsItems("game.join_job", s.jobId)}
+          />
         </>
       ),
     },

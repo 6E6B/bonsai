@@ -10,6 +10,12 @@
     min-width: 0;
   }
 
+  /* Fills its cell and shows as many faces as fit; the count is worked out in script. */
+  [data-component="avatar-stack"][data-fit] {
+    width: 100%;
+    overflow: hidden;
+  }
+
   [data-component="avatar-stack"][data-on="canvas"] {
     --avatar-stack-ring: var(--color-canvas);
   }

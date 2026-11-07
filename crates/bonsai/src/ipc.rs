@@ -719,13 +719,13 @@ pub struct ServerRow {
     pub fps: Option<f64>,
     /// Friends of the active account in it.
     pub friends: Vec<Id>,
-    /// The first few players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
+    /// The first players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
     /// player tokens (signed out).
     pub players: Vec<Id>,
 }
 
-/// How many player faces a server row previews.
-const SERVER_PLAYER_PREVIEW: usize = 8;
+/// How many player faces a server row can preview. The row shows as many as fit.
+const SERVER_PLAYER_PREVIEW: usize = 40;
 
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]

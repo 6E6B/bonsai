@@ -2116,7 +2116,7 @@ export type ServerRow = {
 	/**  Friends of the active account in it. */
 	friends: Id[],
 	/**
-	 *  The first few players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
+	 *  The first players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
 	 *  player tokens (signed out).
 	 */
 	players: Id[],
