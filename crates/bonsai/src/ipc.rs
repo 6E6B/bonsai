@@ -1459,6 +1459,10 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 "Copied invite link.",
             )
         }
+        CommandId::CopyJobId => {
+            let job = arg().ok_or_else(|| "Which server?".to_owned())?;
+            copy(app, core, job.trim().to_owned(), "Copied job id.")
+        }
         // From a plugin: "place price name", at the price it looked up. On the experience page
         // the UI handles it with a dialog that shows the price.
         CommandId::BuyPrivateServer => {

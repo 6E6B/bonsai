@@ -467,6 +467,7 @@ commands! {
     JoinRandomServer => "game.join_random", "Join random server", ["random", "server"], None, Write(Social), [];
     JoinJobId => "game.join_job", "Join server by job id", ["job", "instance", "server id"], Text, Write(Social), [];
     CopyServerLink => "game.copy_server_link", "Copy server invite link", ["invite", "share", "server"], None, Read, [];
+    CopyJobId => "game.copy_job_id", "Copy server job id", ["job", "instance", "server id", "copy"], None, Read, [];
     FindUser => "user.find", "Find which server a user is in", ["find", "where", "server"], User, Read, [];
     OpenProfile => "user.open", "Open profile", ["profile", "user", "player"], User, Read, [];
     ShowFriendsOf => "user.friends", "Show a user's friends", ["friends", "connections", "mutuals", "mutual friends"], User, Read, [];

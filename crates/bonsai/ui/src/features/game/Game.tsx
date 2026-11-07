@@ -22,6 +22,7 @@ import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { entityMenu, joinAsItems, playlistItems } from "~/lib/menus"
 import { ServerControls } from "~/lib/private-server"
+import { serverName } from "~/lib/server-name"
 import { friends, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
@@ -47,7 +48,6 @@ import {
   ListItem,
   MediaFrame,
   Menu,
-  Meter,
   Page,
   Robux,
   Select,
@@ -441,6 +441,30 @@ function serverFaces(s: ServerRow): AvatarStackItem[] {
   ]
 }
 
+/** A server's shared name from its job id. Hover shows the job id; click copies it. */
+function ServerName(props: { jobId: string }) {
+  return (
+    <Tooltip
+      class="min-w-0"
+      content={
+        <span class="flex flex-col gap-0.5">
+          <span class="font-mono text-xs">{props.jobId}</span>
+          <span class="text-xs">Click to copy</span>
+        </span>
+      }
+    >
+      <button
+        type="button"
+        class="block max-w-full cursor-copy truncate text-left"
+        aria-label={`${serverName(props.jobId)}, copy job id`}
+        onClick={() => run("game.copy_job_id", props.jobId)}
+      >
+        {serverName(props.jobId)}
+      </button>
+    </Tooltip>
+  )
+}
+
 function ServersPanel(props: { placeId: number; max: number }) {
   const list = useLive(
     () => props.placeId,
@@ -461,6 +485,12 @@ function ServersPanel(props: { placeId: number; max: number }) {
 
   const columns: Column<ServerRow>[] = [
     {
+      key: "name",
+      label: "Server",
+      width: "minmax(6rem, 1fr)",
+      cell: (s) => <ServerName jobId={s.jobId} />,
+    },
+    {
       key: "players",
       label: "Players",
       // Roblox sends five player tokens a server, so the faces need little room.
@@ -468,10 +498,15 @@ function ServersPanel(props: { placeId: number; max: number }) {
       cell: (s) => <AvatarStack items={serverFaces(s)} total={Math.max(s.playing, s.friends.length)} />,
     },
     {
-      key: "fill",
+      key: "count",
       label: "",
-      width: "minmax(6rem, 1fr)",
-      cell: (s) => <Meter class="w-full" label="Players" value={s.playing} max={s.maxPlayers} tone="capacity" />,
+      width: "3.5rem",
+      align: "end",
+      cell: (s) => (
+        <span classList={{ "tabular-nums": true, "text-warning": s.maxPlayers > 0 && s.playing >= s.maxPlayers }}>
+          {s.playing}/{s.maxPlayers}
+        </span>
+      ),
     },
     { key: "ping", label: "Ping", width: "4rem", align: "end", cell: (s) => (s.ping === null ? "–" : `${s.ping} ms`) },
     {
@@ -927,7 +962,7 @@ function FriendServersPanel(props: { list: List<ServerRow> }) {
               />
             }
             title={s.friends.map(friendName).join(", ") || "Friends"}
-            subtitle={`${s.playing} of ${s.maxPlayers} players${s.ping === null ? "" : ` · ${s.ping} ms`}`}
+            subtitle={`${serverName(s.jobId)} · ${s.playing} of ${s.maxPlayers} players${s.ping === null ? "" : ` · ${s.ping} ms`}`}
             actions={
               <>
                 <Menu size="sm" items={joinAsItems("game.join_job", s.jobId)}>
