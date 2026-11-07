@@ -60,7 +60,7 @@ import { VaultForm } from "./shell/VaultForm"
 /**
  * The window:
  *
- *   title bar (app name, sidebar toggle, command bar, notifications, drawer toggle, window controls)
+ *   title bar (app name, command bar, notifications, drawer toggle, window controls)
  *   rail | sidebar | tab strip
  *        |         | page    | drawer
  *   status bar

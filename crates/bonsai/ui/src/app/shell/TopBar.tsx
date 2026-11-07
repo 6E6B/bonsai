@@ -4,7 +4,7 @@ import { wroteRecently } from "~/lib/plugins"
 import { shell } from "~/lib/store"
 import { IconButton, SearchButton, Tooltip } from "~/lib/ui"
 
-/** The controls in the title bar: sidebar toggle, the command bar trigger, the plugin kill
+/** The controls in the title bar: the command bar trigger, the plugin kill
  * switch while a plugin has written recently, notifications and the drawer toggle. Space
  * around them drags the window. */
 export function TopBar(props: { drawer: boolean }) {
@@ -14,9 +14,6 @@ export function TopBar(props: { drawer: boolean }) {
   onCleanup(() => clearInterval(timer))
   return (
     <div data-tauri-drag-region class="flex min-w-0 flex-1 items-center gap-2 px-2">
-      <Tooltip content="Toggle sidebar" keys={[shortcutOf("view.sidebar") ?? ""]} placement="bottom">
-        <IconButton icon="sidebar" label="Toggle sidebar" onClick={() => run("view.sidebar")} />
-      </Tooltip>
       <div data-tauri-drag-region class="flex min-w-0 flex-1 justify-center">
         <SearchButton
           class="max-w-xl"
