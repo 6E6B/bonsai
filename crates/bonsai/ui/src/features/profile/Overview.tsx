@@ -39,6 +39,7 @@ import {
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
 import { TradingCard } from "./Trading"
+import { SHOWN, wornKind, wornSummary } from "./wearing"
 
 /** Entry widths for each row: tiles match `tileGrid`; people and badges are narrower. */
 const TILE = 128
@@ -278,8 +279,11 @@ export function BadgeTile(props: { badge: UserBadge }) {
   )
 }
 
-/** Their avatar as it is now, with the items on it. The Outfits tab has the 3D view and more. */
+/** Their avatar as it is now, with the accessories and clothing on it. Body parts and animations
+ * look alike and say little at this size, so they are only counted; the Outfits tab lists them. */
 function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }) {
+  const shown = () => props.look.items.filter((i) => SHOWN.has(wornKind(i.assetType)))
+  const hidden = () => wornSummary(props.look.items.filter((i) => !SHOWN.has(wornKind(i.assetType))))
   return (
     <Card class="flex flex-col gap-3 px-3.5 py-3">
       <div class="flex items-center justify-between gap-2">
@@ -296,9 +300,9 @@ function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }
       <button type="button" class="self-center" onClick={props.onSeeAll}>
         <Thumbnail class="w-48" alt="Avatar" src={thumbUrl("avatar", props.userId, true)} fallback="avatar" />
       </button>
-      <Show when={props.look.items.length > 0}>
+      <Show when={shown().length > 0}>
         <div class="grid grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] gap-1.5">
-          <For each={props.look.items}>
+          <For each={shown()}>
             {(i) => (
               <ContextMenu items={itemMenu(i.id, i.bundle, i.assetType)}>
                 <Tooltip content={i.name} class="grid">
@@ -310,6 +314,13 @@ function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }
             )}
           </For>
         </div>
+      </Show>
+      <Show when={hidden()}>
+        {(h) => (
+          <button type="button" class="self-start text-sm text-fg-muted hover:text-fg" onClick={props.onSeeAll}>
+            {h()}
+          </button>
+        )}
       </Show>
     </Card>
   )

@@ -25,6 +25,27 @@ export function wornKind(assetType: number): WornKind {
   return "other"
 }
 
+/** Kinds worth a thumbnail on the profile overview. Body parts and animations mostly render as
+ * the same blank figure, so the overview only counts them. */
+export const SHOWN: ReadonlySet<WornKind> = new Set<WornKind>(["accessories", "clothing", "other"])
+
+const nouns: Partial<Record<WornKind, [string, string]>> = {
+  body: ["body part", "body parts"],
+  animations: ["animation", "animations"],
+}
+
+/** "3 body parts and 7 animations", for items the overview leaves out. Empty when none are. */
+export function wornSummary<T extends { assetType: number }>(items: T[]) {
+  const parts = order.flatMap((kind) => {
+    const n = items.filter((i) => wornKind(i.assetType) === kind).length
+    if (n === 0) return []
+    const [one, many] = nouns[kind] ?? [labels[kind].toLowerCase(), labels[kind].toLowerCase()]
+    return [`${n} ${n === 1 ? one : many}`]
+  })
+  if (parts.length < 2) return parts.join("")
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`
+}
+
 /** Items split into groups, clothing first, keeping Roblox's order inside each. Empty groups
  * are left out. */
 export function wornGroups<T extends { assetType: number }>(items: T[]) {

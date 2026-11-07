@@ -1,8 +1,9 @@
 import { useParams } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js"
 import { useCommandContext, useListCursor } from "~/lib/commands/hooks"
-import { menuItem, run } from "~/lib/commands/registry"
+import { handle, menuItem, run } from "~/lib/commands/registry"
 import type { GameCard, PlaylistView } from "~/lib/ipc/bindings"
+import { rank } from "~/lib/search"
 import { playlists } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile, TILE_WIDTH } from "~/lib/tiles"
@@ -14,14 +15,16 @@ import {
   Menu,
   Page,
   Pane,
+  Select,
   Split,
+  showToast,
   TextField,
   Thumbnail,
   Toolbar,
   Tooltip,
   VirtualGrid,
 } from "~/lib/ui"
-import { searchGames } from "./filter"
+import { ALL_GENRES, genreOptions, isSort, type PlaylistSort, SORTS, shapeGames } from "./filter"
 
 const experiences = (n: number) => `${n} ${n === 1 ? "experience" : "experiences"}`
 
@@ -43,10 +46,11 @@ function Cover(props: { games: GameCard[]; class: string }) {
 }
 
 /** Game playlists of the active account: the lists on the left, the open one on the right,
- * searchable by name or creator. J/K move between lists. */
+ * searchable by name or creator, sortable and filterable by genre. J/K move between lists. */
 export default function Playlists() {
   const params = useParams<{ id?: string }>()
-  const lists = () => playlists.lists
+  const [listQuery, setListQuery] = createSignal("")
+  const lists = createMemo(() => rank(playlists.lists, listQuery(), (l) => [l.name]))
   const index = createMemo(() => {
     const i = lists().findIndex((p) => String(p.id) === params.id)
     return i < 0 ? 0 : i
@@ -55,19 +59,43 @@ export default function Playlists() {
   createEffect(() => setCursor(index()))
   const open = () => lists()[Math.min(cursor(), lists().length - 1)]
   const [query, setQuery] = createSignal("")
+  const [sort, setSort] = createSignal<PlaylistSort>("added")
+  const [genre, setGenre] = createSignal(ALL_GENRES)
   createEffect(
     on(
       () => open()?.id,
-      () => setQuery(""),
+      () => {
+        setQuery("")
+        setGenre(ALL_GENRES)
+      },
     ),
   )
-  const shown = createMemo(() => searchGames(open()?.games ?? [], query()))
+  const genres = createMemo(() => genreOptions(open()?.games ?? []))
+  const shown = createMemo(() => shapeGames(open()?.games ?? [], { query: query(), sort: sort(), genre: genre() }))
+  onCleanup(
+    handle("playlist.sort", (a) => {
+      if (a && isSort(a)) setSort(a)
+      else showToast(`Sort by one of: ${SORTS.map((s) => s.value).join(", ")}`)
+    }),
+  )
+  onCleanup(
+    handle("playlist.genre", (a) => {
+      const g = genres().find((o) => o.value.toLowerCase() === (a ?? ALL_GENRES).trim().toLowerCase())
+      if (g) setGenre(g.value)
+      else
+        showToast(
+          `Show one of: ${genres()
+            .map((o) => o.value)
+            .join(", ")}`,
+        )
+    }),
+  )
   useCommandContext(() => (open() ? `playlist:${open()?.id}` : null))
   useListCursor({ count: () => lists().length, index: cursor, setIndex: setCursor })
 
   return (
     <Show
-      when={open()}
+      when={playlists.lists.length > 0}
       fallback={
         <Page>
           <EmptyState
@@ -83,16 +111,28 @@ export default function Playlists() {
         </Page>
       }
     >
-      {(p) => (
-        <Split>
-          <Pane side class="w-72">
-            <Toolbar
-              actions={
-                <Tooltip content="New playlist">
-                  <IconButton size="sm" icon="plus" label="New playlist" onClick={() => run("playlist.new")} />
-                </Tooltip>
-              }
+      <Split>
+        <Pane side class="w-72">
+          <Toolbar
+            actions={
+              <Tooltip content="New playlist">
+                <IconButton size="sm" icon="plus" label="New playlist" onClick={() => run("playlist.new")} />
+              </Tooltip>
+            }
+          >
+            <TextField
+              class="flex-1"
+              icon="search"
+              aria-label="Search playlists"
+              placeholder="Search playlists"
+              value={listQuery()}
+              onChange={(v) => {
+                setListQuery(v)
+                setCursor(0)
+              }}
             />
+          </Toolbar>
+          <Show when={lists().length > 0} fallback={<EmptyState icon="search" title="No playlists match" />}>
             <nav aria-label="Playlists" class="flex flex-col gap-0.5">
               <For each={lists()}>
                 {(l, i) => (
@@ -106,54 +146,74 @@ export default function Playlists() {
                 )}
               </For>
             </nav>
-          </Pane>
-          <Pane class="gap-5">
-            <Header list={p()} />
-            <Show
-              when={p().games.length > 0}
-              fallback={
-                <EmptyState
-                  class="mt-12"
-                  icon="game"
-                  title="Nothing here yet"
-                  description="Right-click an experience and choose Add to playlist."
-                />
-              }
-            >
-              <div class="flex flex-col gap-3">
-                <TextField
-                  class="w-full"
-                  icon="search"
-                  aria-label="Search this playlist"
-                  placeholder="Search by name or creator"
-                  value={query()}
-                  onChange={setQuery}
-                />
-                <Show
-                  when={shown().length > 0}
-                  fallback={<EmptyState class="mt-12" icon="search" title="No experiences match" />}
-                >
-                  <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={190} gap={12}>
-                    {(g) => (
-                      <GameTile
-                        game={g}
-                        menu={[
-                          { kind: "separator" },
-                          menuItem("playlist.remove", {
-                            arg: `${p().id} ${g.placeId}`,
-                            icon: "x",
-                            label: "Remove from playlist",
-                          }),
-                        ]}
+          </Show>
+        </Pane>
+        <Show when={open()} fallback={<Pane />}>
+          {(p) => (
+            <Pane class="gap-5">
+              <Header list={p()} />
+              <Show
+                when={p().games.length > 0}
+                fallback={
+                  <EmptyState
+                    class="mt-12"
+                    icon="game"
+                    title="Nothing here yet"
+                    description="Right-click an experience and choose Add to playlist."
+                  />
+                }
+              >
+                <div class="flex flex-col gap-3">
+                  <div class="flex gap-2">
+                    <TextField
+                      class="flex-1"
+                      icon="search"
+                      aria-label="Search this playlist"
+                      placeholder="Search by name or creator"
+                      value={query()}
+                      onChange={setQuery}
+                    />
+                    <Show when={genres().length > 2}>
+                      <Select
+                        aria-label="Genre"
+                        value={genre()}
+                        onChange={(v) => void run("playlist.genre", v)}
+                        options={genres()}
                       />
-                    )}
-                  </VirtualGrid>
-                </Show>
-              </div>
-            </Show>
-          </Pane>
-        </Split>
-      )}
+                    </Show>
+                    <Select
+                      aria-label="Sort"
+                      value={sort()}
+                      onChange={(v) => void run("playlist.sort", v)}
+                      options={SORTS}
+                    />
+                  </div>
+                  <Show
+                    when={shown().length > 0}
+                    fallback={<EmptyState class="mt-12" icon="search" title="No experiences match" />}
+                  >
+                    <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={190} gap={12}>
+                      {(g) => (
+                        <GameTile
+                          game={g}
+                          menu={[
+                            { kind: "separator" },
+                            menuItem("playlist.remove", {
+                              arg: `${p().id} ${g.placeId}`,
+                              icon: "x",
+                              label: "Remove from playlist",
+                            }),
+                          ]}
+                        />
+                      )}
+                    </VirtualGrid>
+                  </Show>
+                </div>
+              </Show>
+            </Pane>
+          )}
+        </Show>
+      </Split>
     </Show>
   )
 }

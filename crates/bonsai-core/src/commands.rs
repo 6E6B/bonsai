@@ -479,6 +479,8 @@ commands! {
     AcceptFriend => "user.accept_friend", "Accept friend request", ["accept", "request"], User, Write(Social), [];
     DeclineFriend => "user.decline_friend", "Decline friend request", ["decline", "ignore", "request"], User, Write(Social), [];
     DeclineAllFriends => "friends.decline_all", "Ignore all friend requests", ["decline", "ignore", "requests"], None, Write(Social), [];
+    SortFriends => "friends.sort", "Sort the friends list (status, name; requests: newest, oldest, mutuals, name)", ["friends", "sort", "order", "name", "status", "requests", "mutuals"], Text, Local, [];
+    FilterFriends => "friends.show", "Filter friends by status (all, online, game, studio, offline; followers: not_followed)", ["friends", "filter", "show only", "online", "in game", "offline", "studio", "followers"], Text, Local, [];
     Follow => "user.follow", "Follow", ["follow"], User, Write(Social), [];
     Unfollow => "user.unfollow", "Unfollow", ["unfollow"], User, Write(Social), [];
     SetNickname => "user.nickname", "Set a nickname for someone (user, then nickname; empty clears)", ["nickname", "alias", "name", "friend"], Text, Write(Harmless), [];
@@ -494,6 +496,8 @@ commands! {
     OpenPlaylist => "playlist.open", "Open playlist", ["playlist", "list", "collection"], Playlist, Read, [];
     RenamePlaylist => "playlist.rename", "Rename playlist", ["playlist", "list", "rename", "name"], Playlist, Write(Harmless), [];
     DeletePlaylist => "playlist.delete", "Delete playlist", ["playlist", "list", "delete", "remove"], Playlist, Write(Harmless), [];
+    SortPlaylist => "playlist.sort", "Sort this playlist (added, name, playing, rating, creator)", ["playlist", "sort", "order", "name", "playing", "rating", "creator"], Text, Local, [];
+    FilterPlaylistGenre => "playlist.genre", "Show one genre in this playlist (a genre, or all)", ["playlist", "filter", "genre", "show only"], Text, Local, [];
     NotifyGame => "game.notify", "Turn update notifications on or off", ["notify", "follow", "bell", "updates"], None, Write(Harmless), [];
     NotifyEvent => "game.event_notify", "Notify me about an event", ["event", "rsvp", "notify", "remind"], Text, Write(Harmless), [];
     BuyPass => "game.buy_pass", "Buy a pass", ["pass", "gamepass", "store", "buy", "purchase"], Text, Write(Value), [];
@@ -599,6 +603,8 @@ commands! {
     PeekNotifications => "notifications.peek", "Show recent notifications", ["notifications", "bell", "alerts", "recent", "popout"], None, Local, [];
 
     SearchCommunities => "group.search", "Search communities", ["groups", "communities", "find group"], Text, Read, [];
+    SortCommunities => "group.sort", "Sort your communities (default, name, members, fewest, role)", ["groups", "communities", "sort", "order", "members", "role"], Text, Local, [];
+    FilterCommunities => "group.show", "Filter your communities (all, verified, primary)", ["groups", "communities", "filter", "show only", "verified", "primary"], Text, Local, [];
     JoinCommunity => "group.join", "Join this community", ["join", "group", "community"], Text, Write(Social), [];
     LeaveCommunity => "group.leave", "Leave a community", ["leave", "group", "community"], Text, Write(Social), [];
     SetPrimaryCommunity => "group.primary", "Make or clear primary community", ["primary", "group", "community", "main"], Text, Write(Social), [];

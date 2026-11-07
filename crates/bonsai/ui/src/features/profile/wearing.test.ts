@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { wornGroups, wornKind } from "./wearing"
+import { wornGroups, wornKind, wornSummary } from "./wearing"
 
 const item = (assetType: number, id = 0) => ({ assetType, id })
 
@@ -24,5 +24,16 @@ describe("wornGroups", () => {
 
   it("is empty for nothing worn", () => {
     expect(wornGroups([])).toEqual([])
+  })
+})
+
+describe("wornSummary", () => {
+  it("counts each kind with singular and plural nouns", () => {
+    expect(wornSummary([item(17), item(53), item(54)])).toBe("1 body part and 2 animations")
+    expect(wornSummary([item(17), item(27), item(53), item(0)])).toBe("2 body parts, 1 animation and 1 other")
+  })
+
+  it("is empty for nothing left out", () => {
+    expect(wornSummary([])).toBe("")
   })
 })

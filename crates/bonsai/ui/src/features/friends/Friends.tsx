@@ -1,10 +1,9 @@
-import { createMemo, createSignal, Match, Show, Switch } from "solid-js"
+import { createMemo, createSignal, Match, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { run } from "~/lib/commands/registry"
-import { commands, type Person, type Presence } from "~/lib/ipc/bindings"
+import { handle, run } from "~/lib/commands/registry"
+import { commands, type Person } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
 import { joinUser, presenceText, userMenu } from "~/lib/menus"
-import { rank } from "~/lib/search"
 import { friends, shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
@@ -15,6 +14,8 @@ import {
   IconButton,
   ListItem,
   Page,
+  Select,
+  showToast,
   TabPanel,
   Tabs,
   TextField,
@@ -22,25 +23,10 @@ import {
   usePrompt,
   VirtualGrid,
 } from "~/lib/ui"
+import { pick, type Row, type Section, shapePeople, showOptions, sortOptions } from "./shape"
 
 /** Narrowest a row gets before the grid drops a column: room for a name and two buttons. */
 const ROW_WIDTH = 340
-
-interface Row {
-  id: number
-  name: string
-  displayName: string
-  presence: Presence
-  /** Experience name when in game. */
-  place?: string
-  placeId?: number
-  /** Second line for people lists: mutual friends. */
-  note?: string
-  /** What the active account calls them. Shown as the title, and matched by the filter. */
-  nickname?: string
-  /** Whether the active account follows them, on Followers. */
-  following?: boolean
-}
 
 const fromPerson = (p: Person): Row => ({
   id: p.id,
@@ -49,13 +35,19 @@ const fromPerson = (p: Person): Row => ({
   presence: "offline",
   note: p.mutuals.length > 0 ? `${p.mutuals.length} mutual: ${p.mutuals.slice(0, 3).join(", ")}` : undefined,
   following: p.following ?? undefined,
+  mutuals: p.mutuals.length,
+  sentAt: p.sentAt ?? undefined,
 })
 
-/** Friends, requests, followers, following and blocked users, with a filter and keyboard
- * cursor (J / K / H / L / Enter). As many columns as fit. */
+/** Friends, requests, followers, following and blocked users, with search, sort, a status
+ * filter and keyboard cursor (J / K / H / L / Enter). As many columns as fit. */
 export default function Friends() {
-  const [section, setSection] = createSignal<string>("friends")
+  const [section, setSection] = createSignal<Section>("friends")
   const [query, setQuery] = createSignal("")
+  const [sort, setSort] = createSignal("")
+  const [show, setShow] = createSignal("")
+  const sorts = () => sortOptions(section())
+  const shows = () => showOptions(section())
   const [cursor, setCursor] = createSignal(0)
   const [columns, setColumns] = createSignal(1)
   const prompt = usePrompt()
@@ -75,7 +67,7 @@ export default function Friends() {
     { value: "blocked", label: "Blocked" },
   ]
   useSubTabs(sections, section, (v) => {
-    setSection(v)
+    setSection(v as Section)
     setCursor(0)
   })
 
@@ -89,8 +81,31 @@ export default function Friends() {
             nickname: f.nickname ?? undefined,
           }))
         : people.items.map(fromPerson)
-    return rank(list, query(), (f) => [f.nickname, f.displayName, f.name])
+    return shapePeople(list, section(), { query: query(), sort: sort(), show: show() })
   })
+  onCleanup(
+    handle("friends.sort", (a) => {
+      if (a && sorts().some((o) => o.value === a)) setSort(a)
+      else
+        showToast(
+          `Sort by one of: ${sorts()
+            .map((o) => o.value)
+            .join(", ")}`,
+        )
+    }),
+  )
+  onCleanup(
+    handle("friends.show", (a) => {
+      if (shows().length === 0) showToast("This list has no filter")
+      else if (!a || shows().some((o) => o.value === a)) setShow(a || "all")
+      else
+        showToast(
+          `Show one of: ${shows()
+            .map((o) => o.value)
+            .join(", ")}`,
+        )
+    }),
+  )
 
   useListCursor({
     count: () => shown().length,
@@ -161,7 +176,7 @@ export default function Friends() {
         aria-label="Friends sections"
         items={sections()}
         value={section()}
-        onChange={setSection}
+        onChange={(v) => setSection(v as Section)}
         actions={
           <Button
             size="sm"
@@ -183,6 +198,20 @@ export default function Friends() {
             placeholder="Filter by name"
             value={query()}
             onChange={setQuery}
+          />
+          <Show when={shows().length > 0}>
+            <Select
+              aria-label="Show"
+              value={pick(shows(), show())}
+              onChange={(v) => void run("friends.show", v)}
+              options={shows()}
+            />
+          </Show>
+          <Select
+            aria-label="Sort"
+            value={pick(sorts(), sort())}
+            onChange={(v) => void run("friends.sort", v)}
+            options={sorts()}
           />
           <Switch>
             <Match when={section() === "requests" && requests.items.length > 0}>
