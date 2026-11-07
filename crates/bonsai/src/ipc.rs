@@ -66,8 +66,6 @@ pub struct WindowButtons {
     pub start: Vec<WindowButton>,
     /// Buttons at the right edge, in order.
     pub end: Vec<WindowButton>,
-    /// Title bar height in CSS px, based on the desktop's own title bars. 0 keeps the app's.
-    pub height: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Type)]

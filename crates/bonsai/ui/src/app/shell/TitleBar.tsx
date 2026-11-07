@@ -7,7 +7,7 @@ import { windowIcons } from "~/lib/thumb"
 import { WindowControls } from "~/lib/ui"
 
 /** Outside the app (`bun run dev`), the bundled buttons on the right. */
-const BROWSER: WindowButtons = { style: "builtin", start: [], end: ["minimize", "maximize", "close"], height: 0 }
+const BROWSER: WindowButtons = { style: "builtin", start: [], end: ["minimize", "maximize", "close"] }
 
 /** The window's title bar (native decorations are off): the app name, version, `children` (the
  * layout passes `TopBar`) and window controls. Empty space drags the window; double-click
@@ -15,8 +15,8 @@ const BROWSER: WindowButtons = { style: "builtin", start: [], end: ["minimize", 
  * its parts carry it too.
  *
  * On Linux the buttons follow the desktop: its symbolic icons, styled like Adwaita or Breeze,
- * on the side and in the order of its button layout, and the bar's height follows its title
- * bars (see `titlebar.rs`). */
+ * on the side and in the order of its button layout (see `titlebar.rs`). The bar is
+ * `--titlebar-h` tall on every desktop. */
 export function TitleBar(props: ParentProps) {
   // The workspace version from Cargo.toml. Not available under `bun run dev` in a browser.
   const [version] = createResource(() => (isTauri() ? getVersion() : Promise.resolve("")))
@@ -52,8 +52,6 @@ export function TitleBar(props: ParentProps) {
       data-tauri-drag-region
       data-window-corner="top"
       class="flex h-(--titlebar-h) shrink-0 items-center border-b border-line bg-deep"
-      // At least tall enough for the command bar with even space around it.
-      style={{ "--titlebar-h": `${Math.max(buttons()?.height ?? 0, 40)}px` }}
     >
       {controls(buttons()?.start ?? [])}
       {/* The left inset matches the space above and below the text (bar minus border and line). */}

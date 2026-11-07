@@ -130,6 +130,7 @@ export const UNTHEMED: Readonly<Record<string, string>> = {
   "control-sm": "density setting",
   "control-md": "density setting",
   "control-lg": "density setting",
+  "titlebar-h": "window chrome; same in every theme",
   duration: "motion",
   "duration-slow": "motion",
   ease: "motion",

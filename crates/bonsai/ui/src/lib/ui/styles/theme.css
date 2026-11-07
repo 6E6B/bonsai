@@ -135,6 +135,10 @@
     --control-md: 28px;
     --control-lg: 32px;
 
+    /* The window's title bar, border included. Tall enough for the command bar with even space
+     * around it, and about 8px above and below the 24px Adwaita-style window buttons. */
+    --titlebar-h: 40px;
+
     --duration: 120ms;
     --duration-slow: 200ms; /* drawn marks: the checkbox check */
     --ease: cubic-bezier(0.2, 0, 0, 1);
