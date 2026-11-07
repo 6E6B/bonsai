@@ -285,29 +285,41 @@ function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }
   const shown = () => props.look.items.filter((i) => SHOWN.has(wornKind(i.assetType)))
   const hidden = () => wornSummary(props.look.items.filter((i) => !SHOWN.has(wornKind(i.assetType))))
   return (
-    <Card class="flex flex-col gap-3 px-3.5 py-3">
-      <div class="flex items-center justify-between gap-2">
-        <h3 class="text-sm font-medium text-fg-muted">
-          Wearing
-          <Show when={props.look.items.length > 0}>
-            <span class="ml-1.5 text-fg-faint">{props.look.items.length}</span>
-          </Show>
-        </h3>
-        <Button size="sm" variant="ghost" onClick={props.onSeeAll}>
-          Outfits
-        </Button>
+    <Card class="flex flex-col">
+      <div class="flex flex-col gap-1 px-3.5 py-3">
+        <SectionHeader
+          title="Wearing"
+          meta={props.look.items.length > 0 ? props.look.items.length : undefined}
+          size="group"
+          actions={
+            <Button size="sm" variant="ghost" onClick={props.onSeeAll}>
+              Outfits
+            </Button>
+          }
+        />
+        {/* No frame of its own: the figure stands on the card, so the card doesn't read as boxes in a box. */}
+        <button type="button" class="-mx-1.5 grid" onClick={props.onSeeAll}>
+          <Thumbnail
+            class="w-full bg-transparent bg-none shadow-none"
+            alt="Avatar"
+            src={thumbUrl("avatar", props.userId, true)}
+            fallback="avatar"
+          />
+        </button>
       </div>
-      <button type="button" class="self-center" onClick={props.onSeeAll}>
-        <Thumbnail class="w-48" alt="Avatar" src={thumbUrl("avatar", props.userId, true)} fallback="avatar" />
-      </button>
       <Show when={shown().length > 0}>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] gap-1.5">
+        <div class="grid grid-cols-4 gap-2 border-t border-line px-3.5 py-3">
           <For each={shown()}>
             {(i) => (
               <ContextMenu items={itemMenu(i.id, i.bundle, i.assetType)}>
                 <Tooltip content={i.name} class="grid">
-                  <button type="button" onClick={() => run("market.open", itemTarget(i.id, i.bundle))}>
+                  <button
+                    type="button"
+                    class="group relative grid rounded-lg"
+                    onClick={() => run("market.open", itemTarget(i.id, i.bundle))}
+                  >
                     <Thumbnail class="w-full" alt={i.name} src={thumbUrl("asset", i.id)} fallback="avatar" />
+                    <span class="pointer-events-none absolute inset-0 rounded-lg group-hover:bg-hover" />
                   </button>
                 </Tooltip>
               </ContextMenu>
@@ -317,8 +329,13 @@ function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }
       </Show>
       <Show when={hidden()}>
         {(h) => (
-          <button type="button" class="self-start text-sm text-fg-muted hover:text-fg" onClick={props.onSeeAll}>
+          <button
+            type="button"
+            class="flex items-center justify-between gap-2 border-t border-line px-3.5 py-2.5 text-left text-sm text-fg-muted hover:text-fg"
+            onClick={props.onSeeAll}
+          >
             {h()}
+            <Icon name="chevron-right" size={14} />
           </button>
         )}
       </Show>
