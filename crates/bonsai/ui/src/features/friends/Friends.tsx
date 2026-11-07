@@ -236,6 +236,7 @@ export default function Friends() {
                       .filter(Boolean)
                       .join(" · ")}
                     dim={f.presence === "offline" && section() === "friends"}
+                    actionsOnHover={section() === "friends"}
                     onClick={() => {
                       setCursor(i)
                       void run("user.open", String(f.id))
