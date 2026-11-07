@@ -12,7 +12,8 @@ export interface AvatarProps extends ComponentProps<"span"> {
   name: string
   src?: string
   size?: "xs" | "sm" | "md" | "lg" | "xl"
-  /** Shows a presence dot in the bottom-right corner. */
+  /** Shows a presence ring around the picture and a dot in the bottom-right corner. The dot
+   * has a play mark in game and a diamond in Studio, and is hollow when offline. */
   presence?: Presence
   /** Shows an unread count in the top-right corner. Hidden when 0. */
   count?: number
@@ -22,13 +23,15 @@ export interface AvatarProps extends ComponentProps<"span"> {
 export function Avatar(props: AvatarProps) {
   const standalone = !useImageMenu()
   const [local, rest] = splitProps(props, ["name", "src", "size", "presence", "count"])
-  const initials = () =>
-    local.name
-      .split(/[\s_]+/)
-      .filter(Boolean)
+  // Initials come from words that start with a letter, so "Player 100" is "P", not "P1".
+  const initials = () => {
+    const words = local.name.split(/[\s_]+/).filter(Boolean)
+    const lettered = words.filter((w) => /^\p{L}/u.test(w))
+    return (lettered.length > 0 ? lettered : words)
       .slice(0, 2)
       .map((w) => w[0]?.toUpperCase())
       .join("")
+  }
   return (
     <ImageMenu src={local.src}>
       <span
@@ -44,6 +47,9 @@ export function Avatar(props: AvatarProps) {
           <Show when={local.src}>{(src) => <KImage.Img data-slot="image" src={src()} alt={local.name} />}</Show>
           <KImage.Fallback data-slot="fallback">{initials()}</KImage.Fallback>
         </KImage>
+        <Show when={local.presence !== "offline" && local.presence}>
+          {(p) => <span data-slot="ring" data-presence={p()} aria-hidden="true" />}
+        </Show>
         <Show when={local.presence}>
           {(p) => <span data-slot="presence" data-presence={p()} role="img" aria-label={p()} />}
         </Show>

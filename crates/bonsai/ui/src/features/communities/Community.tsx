@@ -20,6 +20,7 @@ import {
 import { Description, LinkedText } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { entityMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
@@ -98,19 +99,22 @@ export default function Community() {
   const me = () => view.me
   const member = () => Boolean(me()?.role)
   const [section, setSection] = createSignal("about")
-  const sections = () => [
-    { value: "about", label: "About" },
-    { value: "games", label: "Games" },
-    { value: "store", label: "Store" },
-    { value: "forum", label: "Forum", disabled: !me()?.viewForums },
-    { value: "members", label: "Members", disabled: me() !== null && !me()?.canViewMembers },
-    { value: "allies", label: "Allies" },
-    { value: "enemies", label: "Enemies" },
-    { value: "requests", label: "Join requests", disabled: !me()?.manageRequests },
-    { value: "audit", label: "Audit log", disabled: !me()?.viewAuditLog },
-    { value: "revenue", label: "Revenue", disabled: !me()?.viewPayouts && !me()?.spendFunds },
-    { value: "settings", label: "Settings", disabled: !me()?.manageSettings },
-  ]
+  const sections = () =>
+    [
+      { value: "about", label: "About" },
+      { value: "games", label: "Games" },
+      { value: "store", label: "Store" },
+      { value: "forum", label: "Forum", disabled: !me()?.viewForums },
+      { value: "members", label: "Members", disabled: me() !== null && !me()?.canViewMembers },
+      { value: "allies", label: "Allies" },
+      { value: "enemies", label: "Enemies" },
+      { value: "requests", label: "Join requests", disabled: !me()?.manageRequests },
+      { value: "audit", label: "Audit log", disabled: !me()?.viewAuditLog },
+      { value: "revenue", label: "Revenue", disabled: !me()?.viewPayouts && !me()?.spendFunds },
+      { value: "settings", label: "Settings", disabled: !me()?.manageSettings },
+    ]
+      // Tabs the user can't open are hidden, not greyed out.
+      .filter((t) => !t.disabled || t.value === section())
   useSubTabs(sections, section, setSection)
   const affiliates = useLive(
     () => (section() === "allies" || section() === "enemies" ? groupId() : 0),
@@ -409,12 +413,7 @@ function Members(props: { groupId: number; myRank: number; canRank: boolean; can
     emptyList<MemberRow>,
   )
   const [filter, setFilter] = createSignal("")
-  const shown = createMemo(() => {
-    const q = filter().trim().toLowerCase()
-    return members.items.filter(
-      (m) => !q || m.name.toLowerCase().includes(q) || m.displayName.toLowerCase().includes(q),
-    )
-  })
+  const shown = createMemo(() => rank(members.items, filter(), (m) => [m.displayName, m.name]))
   // You can move people below your own rank, to roles below your own rank.
   const ranked = () => roles.items.filter((r) => r.rank > 0)
   const canTouch = () => (role()?.rank ?? 255) < props.myRank

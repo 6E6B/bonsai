@@ -5,6 +5,7 @@ import { menuItem, run } from "~/lib/commands/registry"
 import { commands, type List, type LookView, type OutfitView } from "~/lib/ipc/bindings"
 import { ListState } from "~/lib/list-state"
 import { itemMenu, itemTarget } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { thumbUrl, withRev } from "~/lib/thumb"
 import { Price, TILE_WIDTH } from "~/lib/tiles"
@@ -60,8 +61,7 @@ export function Outfits(props: { userId: number; mine: boolean; outfits: List<Ou
   const outfit = () => props.outfits.items.find((o) => o.id === picked())
   /** "Wearing now" first, then outfits matching the filter. */
   const entries = createMemo(() => {
-    const q = query().trim().toLowerCase()
-    const rows = props.outfits.items.filter((o) => !q || o.name.toLowerCase().includes(q))
+    const rows = rank(props.outfits.items, query(), (o) => [o.name])
     return [NOW, ...rows.map((o) => o.id)]
   })
   const byId = createMemo(() => new Map(props.outfits.items.map((o) => [o.id, o])))

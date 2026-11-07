@@ -1,0 +1,66 @@
+/* Avatar stack. Faces overlap by a third and are ringed in the background color (`data-on`) so
+ * each edge reads. */
+@layer components {
+  [data-component="avatar-stack"] {
+    --avatar-stack-size: 20px;
+    --avatar-stack-ring: var(--color-surface);
+
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  /* Fills its cell and shows as many faces as fit; the count is worked out in script. */
+  [data-component="avatar-stack"][data-fit] {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  [data-component="avatar-stack"][data-on="canvas"] {
+    --avatar-stack-ring: var(--color-canvas);
+  }
+
+  [data-component="avatar-stack"][data-size="xs"] {
+    --avatar-stack-size: 16px;
+  }
+
+  [data-component="avatar-stack"][data-size="md"] {
+    --avatar-stack-size: 28px;
+  }
+
+  [data-component="avatar-stack"] > * + * {
+    margin-inline-start: calc(var(--avatar-stack-size) / -3);
+  }
+
+  [data-component="avatar-stack"] [data-slot="face"] [data-slot="frame"] {
+    box-shadow: 0 0 0 1.5px var(--avatar-stack-ring);
+  }
+
+  [data-component="avatar-stack"] [data-slot="face"][data-highlight] [data-slot="frame"] {
+    box-shadow:
+      0 0 0 1.5px var(--color-accent),
+      0 0 0 3px var(--avatar-stack-ring);
+  }
+
+  /* Highlighted faces sit above their neighbours so the ring is whole. */
+  [data-component="avatar-stack"] [data-slot="face"][data-highlight] {
+    z-index: 1;
+  }
+
+  [data-component="avatar-stack"] [data-slot="more"] {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--avatar-stack-size);
+    height: var(--avatar-stack-size);
+    padding: 0 5px;
+    border-radius: var(--radius-full);
+    background: var(--color-control);
+    box-shadow: 0 0 0 1.5px var(--avatar-stack-ring);
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+}

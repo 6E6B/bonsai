@@ -18,11 +18,11 @@ import {
   EmptyState,
   ListItem,
   Pane,
-  SectionHeader,
   Split,
   showToast,
   Tabs,
   TextField,
+  Toolbar,
   VerifiedBadge,
   VirtualList,
 } from "~/lib/ui"
@@ -131,9 +131,7 @@ export default function Messages() {
   return (
     <Split>
       <Pane side class="w-88">
-        <SectionHeader
-          title="Messages"
-          size="page"
+        <Toolbar
           actions={
             <>
               <Button size="sm" onClick={() => (selecting() ? stopSelecting() : setSelecting(true))}>
@@ -144,15 +142,17 @@ export default function Messages() {
               </Button>
             </>
           }
-        />
+        >
+          <TextField
+            class="flex-1"
+            icon="search"
+            aria-label="Search loaded messages"
+            placeholder="Search messages"
+            value={query()}
+            onChange={setQuery}
+          />
+        </Toolbar>
         <Tabs aria-label="Mailbox" items={sections()} value={box()} onChange={pick} />
-        <TextField
-          icon="search"
-          aria-label="Search messages"
-          placeholder="Search loaded messages"
-          value={query()}
-          onChange={setQuery}
-        />
         <Show when={selecting()}>
           <div class="flex flex-wrap items-center gap-2 px-2 py-1">
             <Checkbox
@@ -250,7 +250,7 @@ export default function Messages() {
                   </Alert>
                 </Show>
                 <Divider />
-                <p class="whitespace-pre-line break-words">
+                <p class="max-w-[70ch] whitespace-pre-line break-words">
                   <LinkedText text={m().body} />
                 </p>
                 <For each={experienceLinks(m().body)}>{(id) => <ExperienceCard placeId={id} />}</For>

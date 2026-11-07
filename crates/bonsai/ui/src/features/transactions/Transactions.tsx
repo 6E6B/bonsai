@@ -2,7 +2,7 @@ import { createMemo, createResource, createSignal, For, type JSX, onCleanup, Sho
 import { createStore, unwrap } from "solid-js/store"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
 import { handle, run } from "~/lib/commands/registry"
-import { ago, date, dateTime, full } from "~/lib/format"
+import { date, dateTime, full } from "~/lib/format"
 import {
   type AccountTotalsView,
   commands,
@@ -32,7 +32,6 @@ import {
   SegmentedControl,
   Select,
   Skeleton,
-  Spinner,
   Stat,
   Switch,
   showToast,
@@ -41,6 +40,7 @@ import {
   TextField,
   TextLink,
   Thumbnail,
+  Toolbar,
 } from "~/lib/ui"
 import {
   barWidths,
@@ -160,41 +160,34 @@ export default function Transactions() {
     for (const f of off) f()
   })
 
-  const [now, setNow] = createSignal(Date.now())
-  const clock = setInterval(() => setNow(Date.now()), 15_000)
-  onCleanup(() => clearInterval(clock))
-
   return (
-    <Page
-      title="Transactions"
-      width="wide"
-      meta={<SyncLine view={view} now={now()} />}
-      actions={
-        <div class="flex items-center gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            icon="refresh"
-            loading={view.syncing}
-            onClick={() => run("transactions.sync")}
-          >
-            Sync
-          </Button>
-          <Button size="sm" variant="ghost" icon="download" onClick={() => run("transactions.export")}>
-            Save CSV
-          </Button>
-          <Button size="sm" variant="ghost" icon="copy" onClick={() => run("transactions.copy_csv")}>
-            Copy CSV
-          </Button>
-        </div>
-      }
-    >
+    <Page>
       <Show
         when={view.signedIn}
         fallback={<EmptyState icon="dollar" title="No account" description={view.error ?? undefined} />}
       >
         {/* What the page shows: whose money, over which period. Every tab below follows it. */}
-        <div class="flex flex-wrap items-center gap-2">
+        <Toolbar
+          actions={
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                icon="refresh"
+                loading={view.syncing}
+                onClick={() => run("transactions.sync")}
+              >
+                Sync
+              </Button>
+              <Button size="sm" variant="ghost" icon="download" onClick={() => run("transactions.export")}>
+                Save CSV
+              </Button>
+              <Button size="sm" variant="ghost" icon="copy" onClick={() => run("transactions.copy_csv")}>
+                Copy CSV
+              </Button>
+            </>
+          }
+        >
           <Select
             class="w-44"
             aria-label="Whose transactions"
@@ -223,7 +216,7 @@ export default function Transactions() {
               />
             </div>
           </Show>
-        </div>
+        </Toolbar>
         <Tabs aria-label="Transactions view" items={sections} value={section()} onChange={setSection}>
           <TabPanel value="ledger">
             <div class="flex flex-col gap-4">
@@ -248,35 +241,12 @@ export default function Transactions() {
   )
 }
 
-function SyncLine(props: { view: TxView; now: number }) {
-  return (
-    <span class="flex items-center gap-2 text-sm text-fg-muted">
-      <Show when={props.view.syncing}>
-        <Spinner size="sm" />
-      </Show>
-      <Show
-        when={props.view.syncedAt}
-        fallback={
-          <Show when={props.view.syncing} fallback={<span>Not synced yet</span>}>
-            <span>Syncing</span>
-          </Show>
-        }
-      >
-        {(t) => <span>Synced {ago(t(), props.now)}</span>}
-      </Show>
-      <span>· {full(props.view.ledgerCount)} saved</span>
-      <Show when={props.view.oldest}>{(o) => <span>· back to {date(o())}</span>}</Show>
-    </span>
-  )
-}
-
 /** Roblox's totals for site periods, else sums of the ledger rows in range. A type tile
  * filters the table to that type. */
 function Summary(props: { view: TxView; query: Required<TxQuery>; onKind: (k: string) => void }) {
   const filtered = () => !!(props.query.kind || props.query.text || props.query.minAmount || props.query.pendingOnly)
   // Filters only apply to the ledger, so show its sums when one is on.
   const t = () => (filtered() ? props.view.sums : (props.view.roblox ?? props.view.sums))
-  const fromRoblox = () => !filtered() && props.view.roblox !== null
   const net = () => (t().incoming ?? 0) + (t().outgoing ?? 0)
   const covers = () =>
     periodLabel(props.query.period) ??
@@ -324,9 +294,6 @@ function Summary(props: { view: TxView; query: Required<TxQuery>; onKind: (k: st
       <div class="flex flex-col gap-2 border-t border-line px-4 py-3">
         <div class="flex items-baseline justify-between gap-3 text-xs">
           <span class="font-medium text-fg-muted">By type · {covers()}</span>
-          <span class="text-fg-faint">
-            {fromRoblox() ? "Totals from Roblox" : "Sums of saved transactions that match"}
-          </span>
         </div>
         <Show
           when={t().byKind.length > 0}
@@ -533,7 +500,7 @@ function Ledger(props: {
   ]
 
   return (
-    <div class="flex flex-col gap-3">
+    <div class="@container flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Select
           aria-label="Type"
@@ -568,7 +535,8 @@ function Ledger(props: {
           {full(props.view.matched)} of {full(props.view.ledgerCount)}
         </span>
       </div>
-      <div class="grid grid-cols-[minmax(0,1fr)_17rem] items-start gap-4">
+      {/* The details sit beside the table when there's room for both, else under it. */}
+      <div class="grid items-start gap-4 @5xl:grid-cols-[minmax(0,1fr)_17rem]">
         <div data-cursor-list class="flex min-w-0 flex-col gap-2">
           <DataTable
             aria-label="Transactions"
@@ -579,8 +547,21 @@ function Ledger(props: {
             selected={current()?.id}
             onRowClick={(r) => setCursor(props.view.rows.indexOf(r))}
             empty={
-              <Show when={!props.view.syncing} fallback={<Skeleton class="h-64 w-full rounded-md" />}>
-                <EmptyState icon="dollar" title="No transactions match" />
+              <Show
+                when={!props.view.syncing}
+                fallback={
+                  <EmptyState
+                    icon="dollar"
+                    title="Syncing transactions"
+                    description="They show here as they arrive. The first sync can take a few minutes."
+                  />
+                }
+              >
+                <EmptyState
+                  icon="dollar"
+                  title={props.view.ledgerCount > 0 ? "No transactions match" : "No transactions saved yet"}
+                  description={props.view.ledgerCount > 0 ? "Change the period or clear the filters." : undefined}
+                />
               </Show>
             }
           />

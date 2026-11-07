@@ -58,6 +58,8 @@ pub struct BatchRequest {
     #[serde(rename = "targetId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub target_id: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token: Option<String>,
     /// AvatarHeadShot, Avatar, GameIcon, GameThumbnail, Asset, BundleThumbnail, GroupIcon, BadgeIcon, GamePass, Outfit
     #[serde(rename = "type")]
     #[serde(skip_serializing_if = "Option::is_none")]

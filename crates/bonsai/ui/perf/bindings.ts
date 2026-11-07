@@ -2,10 +2,12 @@
 import type { commands as realCommands } from "../src/lib/ipc/bindings"
 import {
   badges,
+  catalogCategories,
   chatLines,
   conversations,
   games,
   groups,
+  inventoryCategories,
   items,
   list,
   look,
@@ -51,11 +53,26 @@ const fixtures = {
   profileLook: () => look,
   outfitLook: () => look,
   people: () => list(people.map((p) => ({ ...p, mutuals: [], sentAt: null }))),
-  catalogCategories: () => list([{ name: "All", taxonomy: "all", subcategories: [] }]),
+  catalogCategories: () => list(catalogCategories),
   catalogOptions: () => ({
-    sorts: [{ value: "relevance", label: "Relevance" }],
-    sales: [{ value: "all", label: "All" }],
+    sorts: [
+      { value: "relevance", label: "Relevance" },
+      { value: "price_asc", label: "Price, low to high" },
+    ],
+    sales: [
+      { value: "all", label: "All" },
+      { value: "limited", label: "Limited" },
+    ],
   }),
+  inventoryCategories: () => list(inventoryCategories),
+  inventoryTotals: () => ({ loading: false, items: 42, rap: 128400, value: 151000, onHold: 0 }),
+  inventoryItems: () => ({ list: list(items), moreKey: "" }),
+  inventoryBadges: () => ({ list: list(badges), moreKey: "" }),
+  inventoryPasses: () => ({ list: list([]), moreKey: "" }),
+  inventoryPlaces: () => ({ list: list([]), moreKey: "" }),
+  avatar: () => ({ loading: false, error: null, rig: "", wearing: [], emotes: [], colors: [], scales: [], rev: null }),
+  wardrobe: () => list([]),
+  findUser: () => ({ loading: false, error: null, id: 100 }),
   catalogSearch: () => ({ list: list(items), moreKey: "" }),
   wishlist: () => list(items),
   itemPage: () => ({

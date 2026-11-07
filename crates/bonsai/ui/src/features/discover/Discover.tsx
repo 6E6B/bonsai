@@ -2,20 +2,8 @@ import { createMemo, createSignal, For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { type ChartPage, commands, type DiscoverView, type GameCard } from "~/lib/ipc/bindings"
 import { shell, useLive } from "~/lib/store"
-import { GameTile, TILE_WIDTH, tileGrid } from "~/lib/tiles"
-import {
-  Alert,
-  Button,
-  EmptyState,
-  IconButton,
-  Page,
-  SectionHeader,
-  Select,
-  Skeleton,
-  Switch,
-  Tooltip,
-  VirtualGrid,
-} from "~/lib/ui"
+import { GameTile, ShelfSkeleton, TILE_WIDTH, TileSkeleton, tileGrid } from "~/lib/tiles"
+import { Alert, Button, EmptyState, IconButton, Page, SectionHeader, Select, Switch, VirtualGrid } from "~/lib/ui"
 
 const ALL_GENRES = "All genres"
 /** Games a chart shows before "See all". */
@@ -43,17 +31,7 @@ export default function Discover() {
   const filter = (kind: string) => view.filters.find((f) => f.kind === kind)
 
   return (
-    <Page
-      title="Discover"
-      class="!gap-3"
-      actions={
-        <Tooltip content="Search experiences in the command bar with g:">
-          <Button icon="search" onClick={() => run("palette.open")}>
-            Search
-          </Button>
-        </Tooltip>
-      }
-    >
+    <Page class="!gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Show when={filter("device")}>
           {(f) => (
@@ -105,10 +83,7 @@ function Charts(props: { view: DiscoverView; keep: (g: GameCard) => boolean; onO
     <Show
       when={props.view.charts.length > 0}
       fallback={
-        <Show
-          when={!props.view.loading}
-          fallback={<For each={[0, 1, 2]}>{() => <Skeleton class="h-48 w-full rounded-md" />}</For>}
-        >
+        <Show when={!props.view.loading} fallback={<ShelfSkeleton />}>
           <Show when={props.view.error} fallback={<EmptyState icon="discover" title="No charts" />}>
             {(e) => (
               <Alert variant="danger" title="Couldn't load charts">
@@ -185,7 +160,14 @@ function FullChart(props: {
           estimateRowHeight={170}
           gap={12}
           empty={
-            <Show when={!page.loading} fallback={<Skeleton class="h-48 w-full rounded-md" />}>
+            <Show
+              when={!page.loading}
+              fallback={
+                <div class={tileGrid}>
+                  <For each={Array.from({ length: 24 })}>{() => <TileSkeleton />}</For>
+                </div>
+              }
+            >
               <EmptyState icon="search" title="No experiences match" description="Try another genre." />
             </Show>
           }

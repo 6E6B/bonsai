@@ -1,4 +1,5 @@
 import type { LimitedVersion, ValueDemand, ValueRow, ValueTag, ValueTrend } from "~/lib/ipc/bindings"
+import { matches as matchesText } from "~/lib/search"
 import type { IconName } from "~/lib/ui"
 
 /** Named next to every value. Values are a third party's opinion, not Roblox data. */
@@ -93,7 +94,7 @@ export interface ValueFilter {
 }
 
 const matches = (r: ValueRow, q: string) =>
-  !q || r.name.toLowerCase().includes(q) || r.acronym.toLowerCase() === q || String(r.id) === q
+  !q || r.acronym.toLowerCase() === q || String(r.id) === q || matchesText([r.name], q)
 
 const shows = (r: ValueRow, s: ValueShow) => {
   switch (s) {

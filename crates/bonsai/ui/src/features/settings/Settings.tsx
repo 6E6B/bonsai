@@ -75,7 +75,6 @@ export default function Settings() {
   const navigate = useNavigate()
   const prefs = usePrefsSource()
   const section = createMemo(() => settingsSection(params.section))
-  const current = () => settingsSections.find((s) => s.value === section())
   const active = () => shell.accounts.find((a) => a.id === shell.active)
   const [query, setQuery] = createSignal("")
   const results = createMemo(() => searchSettings(prefs, query()))
@@ -84,7 +83,6 @@ export default function Settings() {
   return (
     <Split>
       <Pane side as="nav" class="w-64 gap-0.5" aria-label="Settings sections">
-        <SectionHeader title="Settings" size="page" class="mb-2" />
         <TextField
           size="sm"
           icon="search"
@@ -136,7 +134,6 @@ export default function Settings() {
       </Pane>
       <Pane>
         <div class="flex max-w-2xl flex-col gap-6">
-          <SectionHeader title={current()?.label ?? "Settings"} size="page" />
           <PrefsProvider prefs={prefs}>
             <Dynamic component={pages[section()]} />
           </PrefsProvider>

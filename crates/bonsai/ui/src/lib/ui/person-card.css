@@ -6,7 +6,10 @@
     min-width: 0;
   }
 
+  /* The picture is inset evenly from the card's edges. */
   [data-component="person-card"] {
+    --person-card-inset: 6px;
+
     position: relative;
     display: flex;
     align-items: center;
@@ -24,7 +27,7 @@
     align-items: center;
     gap: 10px;
     min-width: 0;
-    padding: 8px 10px;
+    padding: var(--person-card-inset) 10px var(--person-card-inset) var(--person-card-inset);
     border: 0;
     border-radius: inherit;
     background: none;
@@ -49,9 +52,11 @@
     min-width: 0;
   }
 
+  /* Tight lines so the name and the line under it read as one block. */
   [data-component="person-card"] [data-slot="title"],
   [data-component="person-card"] [data-slot="subtitle"] {
     overflow: hidden;
+    line-height: var(--text-sm--line-height);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

@@ -235,7 +235,7 @@ pub const PREFS: &[Pref] = &[
         "sidebar_mode",
         "layout",
         "Sidebar",
-        "Automatic collapses it to icons when the window is narrow. Ctrl+B switches it.",
+        "Automatic collapses it to icons when the window is narrow, and on screens with their own side panel. Ctrl+B switches it.",
         &["sidebar", "collapse", "icons", "narrow"],
         PrefKind::Choice(SIDEBAR_MODES),
     ),

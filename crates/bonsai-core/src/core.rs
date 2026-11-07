@@ -49,6 +49,9 @@ impl CoreConfig {
                 RateLimiter::default()
                     .with_host("presence.roblox.com", 1.0, 3.0)
                     .with_host("friends.roblox.com", 2.0, 6.0)
+                    // Thumbnail images: static files, and a screen of avatars is a hundred of
+                    // them. At the default rate they appear one by one over many seconds.
+                    .with_host("tr.rbxcdn.com", 40.0, 80.0)
                     // Transactions answer 429 after about 8 quick calls; 1.5 s apart still
                     // tripped it. The sustained limit isn't known.
                     .with_route("apis.roblox.com", "/transaction-records/", 0.4, 4.0),
@@ -686,6 +689,13 @@ fn warm_store(cache: &Cache, s: &mut StoreData) {
         if let Some(r) = cache.get::<Vec<u64>>(Kind::Recent, id, "recent") {
             d.recent = r.value;
         }
+        if let Some(r) = cache.get::<Vec<crate::recent_servers::RecentServer>>(
+            Kind::Local,
+            id,
+            crate::recent_servers::RECENT_SERVERS,
+        ) {
+            d.recent_servers = r.value;
+        }
         if let Some(w) = cache.get::<Vec<crate::market::WishItem>>(Kind::Wishlist, id, "wishlist") {
             d.wishlist = w.value;
         }
@@ -1197,6 +1207,9 @@ impl Inner {
         let universes: Vec<u64> = all.values().filter_map(|p| p.universe_id).collect();
         let seen: Vec<_> = all.iter().map(|(u, p)| (*u, p.kind)).collect();
         self.note_presence(id, &seen);
+        if let Some(me) = all.get(&id.0) {
+            self.note_own_presence(id, me);
+        }
         let before = {
             let mut s = self.store.write();
             let d = s.data.entry(id).or_default();
@@ -1414,7 +1427,7 @@ impl Inner {
         }
     }
 
-    pub(crate) async fn launch(&self, account: AccountId, target: JoinTarget) {
+    pub(crate) async fn launch(self: &Arc<Self>, account: AccountId, target: JoinTarget) {
         let name = self
             .store
             .read()
@@ -1461,6 +1474,7 @@ impl Inner {
                         self.cache.put(Kind::Recent, account, "recent", &r);
                     }
                 }
+                self.watch_launch(account);
                 self.toast(Some(account), format!("Starting Roblox as {name}"), false);
             }
             Err(e) => self.toast(Some(account), e, true),
@@ -1601,6 +1615,29 @@ pub(crate) fn thumb_client(inner: &Inner) -> Client {
         .unwrap_or_else(|| inner.anon.clone())
 }
 
+/// The player tokens behind the [`ThumbKind::Player`] keys in `batch`, by id, from the server
+/// lists in the store. A token no longer listed is left out, and its image is unavailable.
+fn player_tokens(inner: &Inner, batch: &[ThumbKey]) -> HashMap<u64, String> {
+    let wanted: HashSet<u64> = batch
+        .iter()
+        .filter(|k| k.kind == thumbs::ThumbKind::Player)
+        .map(|k| k.id)
+        .collect();
+    if wanted.is_empty() {
+        return HashMap::new();
+    }
+    let s = inner.store.read();
+    s.servers
+        .values()
+        .filter_map(|l| l.data.as_ref())
+        .flatten()
+        .flat_map(|srv| &srv.player_tokens)
+        .map(|t| (thumbs::player_token_id(t), t))
+        .filter(|(id, _)| wanted.contains(id))
+        .map(|(id, t)| (id, t.clone()))
+        .collect()
+}
+
 async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbMsg>) {
     let mut pending: Vec<ThumbKey> = Vec::new();
     // Keys already shown from a stale cached URL and waiting to be checked again. A failed
@@ -1693,9 +1730,11 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbMs
         let mut again: Vec<(ThumbKey, bool)> = Vec::new();
         let mut wait = None;
         let client = thumb_client(&inner);
-        let mut res = thumbs::lookup(&client, &batch).await;
+        let tokens = player_tokens(&inner, &batch);
+        let token = |k: &ThumbKey| tokens.get(&k.id).cloned();
+        let mut res = thumbs::lookup(&client, &batch, token).await;
         if matches!(res, Err(Error::Unauthorized)) && client.signed_in() {
-            res = thumbs::lookup(&inner.anon, &batch).await;
+            res = thumbs::lookup(&inner.anon, &batch, token).await;
         }
         match res {
             Ok(found) => {

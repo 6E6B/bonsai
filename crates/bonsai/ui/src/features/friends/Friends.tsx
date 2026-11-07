@@ -1,7 +1,7 @@
-import { createMemo, createSignal, Match, Show, Switch } from "solid-js"
+import { createMemo, createSignal, Match, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { run } from "~/lib/commands/registry"
-import { commands, type Person, type Presence } from "~/lib/ipc/bindings"
+import { handle, run } from "~/lib/commands/registry"
+import { commands, type Person } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
 import { joinUser, presenceText, userMenu } from "~/lib/menus"
 import { friends, shell, useLive } from "~/lib/store"
@@ -14,29 +14,19 @@ import {
   IconButton,
   ListItem,
   Page,
+  Select,
+  showToast,
   TabPanel,
   Tabs,
   TextField,
   Tooltip,
   usePrompt,
-  VirtualList,
+  VirtualGrid,
 } from "~/lib/ui"
+import { pick, type Row, type Section, shapePeople, showOptions, sortOptions } from "./shape"
 
-interface Row {
-  id: number
-  name: string
-  displayName: string
-  presence: Presence
-  /** Experience name when in game. */
-  place?: string
-  placeId?: number
-  /** Second line for people lists: mutual friends. */
-  note?: string
-  /** What the active account calls them. Shown as the title, and matched by the filter. */
-  nickname?: string
-  /** Whether the active account follows them, on Followers. */
-  following?: boolean
-}
+/** Narrowest a row gets before the grid drops a column: room for a name and two buttons. */
+const ROW_WIDTH = 340
 
 const fromPerson = (p: Person): Row => ({
   id: p.id,
@@ -45,14 +35,21 @@ const fromPerson = (p: Person): Row => ({
   presence: "offline",
   note: p.mutuals.length > 0 ? `${p.mutuals.length} mutual: ${p.mutuals.slice(0, 3).join(", ")}` : undefined,
   following: p.following ?? undefined,
+  mutuals: p.mutuals.length,
+  sentAt: p.sentAt ?? undefined,
 })
 
-/** Friends, requests, followers, following and blocked users, with a filter and keyboard
- * cursor (J / K / Enter). */
+/** Friends, requests, followers, following and blocked users, with search, sort, a status
+ * filter and keyboard cursor (J / K / H / L / Enter). As many columns as fit. */
 export default function Friends() {
-  const [section, setSection] = createSignal<string>("friends")
+  const [section, setSection] = createSignal<Section>("friends")
   const [query, setQuery] = createSignal("")
+  const [sort, setSort] = createSignal("")
+  const [show, setShow] = createSignal("")
+  const sorts = () => sortOptions(section())
+  const shows = () => showOptions(section())
   const [cursor, setCursor] = createSignal(0)
+  const [columns, setColumns] = createSignal(1)
   const prompt = usePrompt()
   useCommandContext(() => (shell.active === null ? "" : `user:${shell.active}`))
   const people = useLive(
@@ -70,12 +67,11 @@ export default function Friends() {
     { value: "blocked", label: "Blocked" },
   ]
   useSubTabs(sections, section, (v) => {
-    setSection(v)
+    setSection(v as Section)
     setCursor(0)
   })
 
   const shown = createMemo(() => {
-    const q = query().trim().toLowerCase()
     const list: Row[] =
       section() === "friends"
         ? friends.friends.map((f) => ({
@@ -85,13 +81,37 @@ export default function Friends() {
             nickname: f.nickname ?? undefined,
           }))
         : people.items.map(fromPerson)
-    return q ? list.filter((f) => `${f.name} ${f.displayName} ${f.nickname ?? ""}`.toLowerCase().includes(q)) : list
+    return shapePeople(list, section(), { query: query(), sort: sort(), show: show() })
   })
+  onCleanup(
+    handle("friends.sort", (a) => {
+      if (a && sorts().some((o) => o.value === a)) setSort(a)
+      else
+        showToast(
+          `Sort by one of: ${sorts()
+            .map((o) => o.value)
+            .join(", ")}`,
+        )
+    }),
+  )
+  onCleanup(
+    handle("friends.show", (a) => {
+      if (shows().length === 0) showToast("This list has no filter")
+      else if (!a || shows().some((o) => o.value === a)) setShow(a || "all")
+      else
+        showToast(
+          `Show one of: ${shows()
+            .map((o) => o.value)
+            .join(", ")}`,
+        )
+    }),
+  )
 
   useListCursor({
     count: () => shown().length,
     index: cursor,
     setIndex: setCursor,
+    columns,
     onOpen: (i) => {
       const f = shown()[i]
       if (f) void run("user.open", String(f.id))
@@ -151,22 +171,25 @@ export default function Friends() {
   }
 
   return (
-    <Page
-      title="Friends"
-      width="narrow"
-      actions={
-        <Button
-          icon="user-plus"
-          onClick={async () => {
-            const user = await prompt({ title: "Add friend", label: "Username or ID", submit: "Send request" })
-            if (user) void run("user.add_friend", user)
-          }}
-        >
-          Add friend
-        </Button>
-      }
-    >
-      <Tabs aria-label="Friends sections" items={sections()} value={section()} onChange={setSection}>
+    <Page>
+      <Tabs
+        aria-label="Friends sections"
+        items={sections()}
+        value={section()}
+        onChange={(v) => setSection(v as Section)}
+        actions={
+          <Button
+            size="sm"
+            icon="user-plus"
+            onClick={async () => {
+              const user = await prompt({ title: "Add friend", label: "Username or ID", submit: "Send request" })
+              if (user) void run("user.add_friend", user)
+            }}
+          >
+            Add friend
+          </Button>
+        }
+      >
         <div class="flex items-center gap-2 pt-3">
           <TextField
             class="flex-1"
@@ -176,6 +199,20 @@ export default function Friends() {
             value={query()}
             onChange={setQuery}
           />
+          <Show when={shows().length > 0}>
+            <Select
+              aria-label="Show"
+              value={pick(shows(), show())}
+              onChange={(v) => void run("friends.show", v)}
+              options={shows()}
+            />
+          </Show>
+          <Select
+            aria-label="Sort"
+            value={pick(sorts(), sort())}
+            onChange={(v) => void run("friends.sort", v)}
+            options={sorts()}
+          />
           <Switch>
             <Match when={section() === "requests" && requests.items.length > 0}>
               <Button onClick={() => run("friends.decline_all")}>Ignore all</Button>
@@ -184,11 +221,13 @@ export default function Friends() {
         </div>
         <TabPanel value={section()}>
           <div data-cursor-list>
-            <VirtualList
+            <VirtualGrid
               items={shown()}
               activeIndex={cursor()}
-              estimateRowHeight={44}
-              gap={0}
+              onColumns={setColumns}
+              minItemWidth={ROW_WIDTH}
+              estimateRowHeight={48}
+              gap={4}
               empty={
                 <Show
                   when={section() === "friends" || !people.loading}
@@ -226,6 +265,7 @@ export default function Friends() {
                       .filter(Boolean)
                       .join(" · ")}
                     dim={f.presence === "offline" && section() === "friends"}
+                    actionsOnHover={section() === "friends"}
                     onClick={() => {
                       setCursor(i)
                       void run("user.open", String(f.id))
@@ -234,7 +274,7 @@ export default function Friends() {
                   />
                 </ContextMenu>
               )}
-            </VirtualList>
+            </VirtualGrid>
           </div>
           <Show when={section() !== "friends" && people.more}>
             <Button class="mt-2" variant="ghost" disabled={people.loading} onClick={() => run("list.more", section())}>

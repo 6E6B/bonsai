@@ -17,11 +17,13 @@
   [data-component="empty-state"] [data-slot="title"] {
     color: var(--color-fg);
     font-weight: 500;
+    text-wrap: balance;
   }
 
   [data-component="empty-state"] [data-slot="description"] {
     max-width: 360px;
     color: var(--color-fg-muted);
+    text-wrap: pretty;
   }
 
   [data-component="empty-state"] [data-slot="actions"] {

@@ -40,14 +40,17 @@
     transition:
       background-color var(--duration) var(--ease),
       box-shadow var(--duration) var(--ease),
-      color var(--duration) var(--ease);
+      color var(--duration) var(--ease),
+      scale var(--duration) var(--ease);
   }
 
   [data-component="button"]:hover:not(:disabled) {
     background-image: linear-gradient(var(--button-hover), var(--button-hover)), var(--button-sheen);
   }
 
+  /* A slight press so a click is felt, not only seen. */
   [data-component="button"]:active:not(:disabled) {
+    scale: 0.97;
     background-image: linear-gradient(var(--button-pressed), var(--button-pressed)), var(--button-sheen);
   }
 

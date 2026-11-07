@@ -1,6 +1,6 @@
-import { createEffect, createSignal, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { run } from "~/lib/commands/registry"
+import { menuItem, run } from "~/lib/commands/registry"
 import { ago, date } from "~/lib/format"
 import {
   commands,
@@ -15,6 +15,7 @@ import {
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { itemMenu, itemTarget } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
@@ -28,6 +29,7 @@ import {
   Icon,
   IconButton,
   ListItem,
+  Menu,
   Pane,
   Robux,
   SectionHeader,
@@ -38,6 +40,7 @@ import {
   TextField,
   TextLink,
   Thumbnail,
+  Toolbar,
   Tooltip,
   usePrompt,
   VirtualList,
@@ -85,35 +88,58 @@ export default function Trades() {
     commands.tradeEligibility,
     (): Eligibility => ({ loading: true, canTrade: true, reason: "" }),
   )
-  const open = () => rows.list.items[cursor()]
-  useListCursor({ count: () => rows.list.items.length, index: cursor, setIndex: setCursor })
+  const [query, setQuery] = createSignal("")
+  const shown = createMemo(() =>
+    rank(
+      rows.list.items,
+      query(),
+      (t) => [t.partnerDisplay, t.partnerName],
+      (t) => t.partnerId,
+    ),
+  )
+  const open = () => shown()[cursor()]
+  useListCursor({ count: () => shown().length, index: cursor, setIndex: setCursor })
 
   return (
     <Split>
       <Pane side class="w-88">
-        <SectionHeader
-          title="Trades"
-          size="page"
+        <Toolbar
           actions={
             <>
-              <Tooltip content="Robux transactions">
-                <IconButton icon="transactions" label="Robux transactions" onClick={() => run("nav.transactions")} />
+              <Menu
+                icon="more"
+                label="More trade actions"
+                placement="bottom-end"
+                items={[
+                  menuItem("nav.transactions", { label: "Robux transactions", icon: "transactions" }),
+                  menuItem("trade.export", { label: "Copy trades as CSV", icon: "copy" }),
+                ]}
+              />
+              <Tooltip content="New trade">
+                <IconButton
+                  icon="plus"
+                  label="New trade"
+                  onClick={async () => {
+                    const user = await prompt({ title: "New trade", label: "Username or ID", submit: "Start" })
+                    if (user) void run("trade.new", user)
+                  }}
+                />
               </Tooltip>
-              <Tooltip content="Copy as CSV">
-                <IconButton icon="copy" label="Copy as CSV" onClick={() => run("trade.export")} />
-              </Tooltip>
-              <Button
-                icon="plus"
-                onClick={async () => {
-                  const user = await prompt({ title: "New trade", label: "Username or ID", submit: "Start" })
-                  if (user) void run("trade.new", user)
-                }}
-              >
-                New
-              </Button>
             </>
           }
-        />
+        >
+          <TextField
+            class="flex-1"
+            icon="search"
+            aria-label="Search trades"
+            placeholder="Search by player"
+            value={query()}
+            onChange={(v) => {
+              setQuery(v)
+              setCursor(0)
+            }}
+          />
+        </Toolbar>
         <Show when={!can.loading && !can.canTrade && can.reason}>
           <Alert variant="warning" title="Can't trade">
             {can.reason}
@@ -122,7 +148,12 @@ export default function Trades() {
         <Tabs aria-label="Trade status" items={sections} value={section()} onChange={pick} />
         <ListState list={rows.list} icon="trades" empty={`No ${section()} trades`} more={rows.moreKey}>
           <div data-cursor-list class="flex flex-col">
-            <VirtualList items={rows.list.items} activeIndex={cursor()} estimateRowHeight={56}>
+            <VirtualList
+              items={shown()}
+              activeIndex={cursor()}
+              estimateRowHeight={56}
+              empty={<EmptyState icon="search" title="No trades match" />}
+            >
               {(t, i) => (
                 <ListItem
                   data-index={i}
@@ -417,10 +448,7 @@ function Picker(props: { userId: number; chosen: TradeItemView[]; onPick: (i: Tr
   )
   const [q, setQ] = createSignal("")
   const shown = () => {
-    const s = q().trim().toLowerCase()
-    return res.list.items.filter(
-      (i) => !s || i.name.toLowerCase().includes(s) || (i.serial !== null && `#${i.serial}`.includes(s)),
-    )
+    return rank(res.list.items, q(), (i) => [i.name, i.serial !== null ? `#${i.serial}` : null])
   }
   createEffect(() => {
     props.userId

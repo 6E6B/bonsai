@@ -120,7 +120,7 @@ fn kinds(e: Effect) -> &'static [&'static str] {
 fn keys(account: AccountId, e: Effect) -> Vec<Key> {
     match e {
         Effect::Friendship(id) => vec![
-            Key::shared("friends_of", id),
+            Key::private(account, "friends_of", id),
             Key::shared("profile", id),
             Key::private(account, "relation", id),
         ],
@@ -165,7 +165,7 @@ mod tests {
     fn friendship_touches_both_sides() {
         let a = AccountId(1);
         let k = keys(a, Effect::Friendship(7));
-        assert!(k.contains(&Key::shared("friends_of", 7)));
+        assert!(k.contains(&Key::private(a, "friends_of", 7)));
         assert!(k.contains(&Key::private(a, "relation", 7)));
     }
 

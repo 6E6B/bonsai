@@ -1,0 +1,43 @@
+@layer components {
+  [data-component="toolbar"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    min-height: var(--control-md);
+  }
+
+  [data-component="toolbar"] > [data-slot="start"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    flex: 1 1 auto;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  [data-component="toolbar"] > [data-slot="start"]:empty {
+    display: none;
+  }
+
+  [data-component="toolbar"] > [data-slot="actions"] {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    margin-inline-start: auto;
+  }
+
+  /* A ghost button has no visible edge, so its text or icon is what lines up. Pull the last one
+   * out by its padding so it sits on the same right edge as the content below. */
+  [data-component="toolbar"] > [data-slot="actions"] > [data-component="button"][data-variant="ghost"]:last-child {
+    margin-inline-end: calc(-1 * var(--button-px));
+  }
+
+  [data-component="toolbar"]
+    > [data-slot="actions"]
+    > [data-component="button"][data-variant="ghost"][data-icon-only]:last-child {
+    margin-inline-end: calc((var(--button-height) - 16px) / -2);
+  }
+}

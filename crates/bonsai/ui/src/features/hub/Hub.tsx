@@ -95,18 +95,21 @@ export default function Hub() {
           ]}
         />
       </div>
-      <span class="text-sm text-fg-muted" aria-live="polite">
-        {data.items.length} {hubUi.kind} on this page<Show when={data.loading}> · Loading</Show>
-        <Show when={data.busy}> · Working</Show>
+      <span class="text-sm text-fg-muted empty:hidden" aria-live="polite">
+        <Show when={data.loading}>Loading</Show>
+        <Show when={data.busy && !data.loading}>Working</Show>
       </span>
       <Show
         when={data.items.length > 0}
         fallback={
-          <EmptyState
-            icon={hubUi.kind === "themes" ? "palette" : "plugin"}
-            title={data.loading ? "Loading hub" : "No releases found"}
-            description="Try another search or refresh the hub."
-          />
+          // The banner above already says why the hub can't list anything.
+          <Show when={data.configured && !data.error}>
+            <EmptyState
+              icon={hubUi.kind === "themes" ? "palette" : "plugin"}
+              title={data.loading ? "Loading hub" : "No releases found"}
+              description={data.loading ? undefined : "Try another search or refresh the hub."}
+            />
+          </Show>
         }
       >
         <VirtualGrid items={data.items} minItemWidth={288} estimateRowHeight={240} gap={12}>
@@ -179,41 +182,31 @@ export default function Hub() {
           </Button>
         </div>
       </Show>
-      <Show when={hubUi.kind === "plugins"}>
-        <div class="flex items-center justify-between gap-3 border-t border-line pt-3">
-          <span class="text-xs text-fg-muted">Permissions are reviewed before installation.</span>
-          <Button size="sm" variant="ghost" disabled={!data.configured} onClick={() => run("hub.revocations")}>
-            Check installed releases
-          </Button>
-        </div>
-      </Show>
     </div>
   )
   return (
-    <Page
-      title="Hub"
-      actions={
-        <>
-          <IconButton
-            size="sm"
-            icon="refresh"
-            label="Refresh hub"
-            disabled={!data.configured || data.loading}
-            onClick={() => run("hub.refresh")}
-          />
-          <Button
-            size="sm"
-            onClick={() =>
-              run(hubUi.kind === "themes" ? "nav.themes" : "nav.settings", hubUi.kind === "themes" ? null : "plugins")
-            }
-          >
-            {hubUi.kind === "themes" ? "My themes" : "Installed plugins"}
-          </Button>
-        </>
-      }
-    >
+    <Page>
       <Tabs
         aria-label="Hub section"
+        actions={
+          <>
+            <IconButton
+              size="sm"
+              icon="refresh"
+              label="Refresh hub"
+              disabled={!data.configured || data.loading}
+              onClick={() => run("hub.refresh")}
+            />
+            <Button
+              size="sm"
+              onClick={() =>
+                run(hubUi.kind === "themes" ? "nav.themes" : "nav.settings", hubUi.kind === "themes" ? null : "plugins")
+              }
+            >
+              {hubUi.kind === "themes" ? "My themes" : "Installed plugins"}
+            </Button>
+          </>
+        }
         value={section() === "publisher" ? "publisher" : hubUi.kind}
         items={[
           { value: "themes", label: "Themes" },
@@ -231,7 +224,7 @@ export default function Hub() {
         <Show when={!data.configured || data.error || data.signingIn || data.revoked.length > 0}>
           <div class="flex flex-col gap-3 pt-3">
             <Show when={!data.configured}>
-              <Alert title="Hub is unavailable">
+              <Alert variant="warning" title="Hub is unavailable">
                 You can still manage your installed themes and plugins while the hub is unavailable.
               </Alert>
             </Show>

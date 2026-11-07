@@ -66,8 +66,6 @@ pub struct WindowButtons {
     pub start: Vec<WindowButton>,
     /// Buttons at the right edge, in order.
     pub end: Vec<WindowButton>,
-    /// Title bar height in CSS px, matching the desktop's own title bars. 0 keeps the app's.
-    pub height: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Type)]
@@ -719,7 +717,13 @@ pub struct ServerRow {
     pub fps: Option<f64>,
     /// Friends of the active account in it.
     pub friends: Vec<Id>,
+    /// The first players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
+    /// player tokens (signed out).
+    pub players: Vec<Id>,
 }
+
+/// How many player faces a server row can preview. The row shows as many as fit.
+const SERVER_PLAYER_PREVIEW: usize = 40;
 
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -774,6 +778,8 @@ pub struct ProfileView {
     /// What the active account calls them, and its private note about them.
     pub nickname: Option<String>,
     pub note: Option<String>,
+    /// Roblox says the active account can't see their inventory. False while that is checked.
+    pub inventory_private: bool,
 }
 
 /// Who saw a user online last.
@@ -1389,8 +1395,15 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
             Ok(())
         }
         CommandId::JoinJobId => {
-            let (place_id, _) = page()?;
-            let job_id = arg().ok_or_else(|| "Which server?".to_owned())?.trim().to_owned();
+            // `<job id> <place>` for a server in another place of the experience; else the
+            // page's place.
+            let a = arg().ok_or_else(|| "Which server?".to_owned())?;
+            let mut parts = a.split_whitespace();
+            let job_id = parts.next().ok_or_else(|| "Which server?".to_owned())?.to_owned();
+            let place_id = match parts.next() {
+                Some(p) => parse_id(Some(p.to_owned()), "place")?,
+                None => page()?.0,
+            };
             core.send(Cmd::Launch {
                 account: acting()?,
                 target: JoinTarget::Server { place_id, job_id },
@@ -1452,6 +1465,10 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 links::server_invite(place, job.trim()),
                 "Copied invite link.",
             )
+        }
+        CommandId::CopyJobId => {
+            let job = arg().ok_or_else(|| "Which server?".to_owned())?;
+            copy(app, core, job.trim().to_owned(), "Copied job id.")
         }
         // From a plugin: "place price name", at the price it looked up. On the experience page
         // the UI handles it with a dialog that shows the price.
@@ -1540,6 +1557,8 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         // List and sub-tab keys are handled by the screen showing one. Elsewhere they do nothing.
         CommandId::ListDown
         | CommandId::ListUp
+        | CommandId::ListLeft
+        | CommandId::ListRight
         | CommandId::ListOpen
         | CommandId::ListSelect
         | CommandId::NextSubTab
@@ -1560,7 +1579,7 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 Some("requests") => drop(core.friend_requests(acting()?, true)),
                 Some("followers") => drop(core.followers(acting()?, user, true)),
                 Some("following") => drop(core.followings(acting()?, user, true)),
-                Some("friends") => drop(core.friends_of(user, true)),
+                Some("friends") => drop(core.friends_of(acting()?, user, true)),
                 // A friends search on a profile: `friends:<query>`.
                 Some(a) if a.starts_with("friends:") => {
                     drop(core.search_friends_of(acting()?, user, &a[8..], true))
@@ -1869,20 +1888,63 @@ pub fn game_servers(core: State<'_, Arc<Core>>, place_id: Id) -> Servers {
         error: l.error.clone(),
         fetched_at: (l.fetched_at > 0).then_some(l.fetched_at as f64 * 1000.0),
         more: s.server_cursor.get(&place_id.0).is_some_and(Option::is_some),
-        servers: l
-            .data
+        servers: l.data.iter().flatten().map(server_row).collect(),
+    }
+}
+
+fn server_row(v: &bonsai_core::store::Server) -> ServerRow {
+    ServerRow {
+        job_id: v.job_id.clone(),
+        playing: v.playing.max(0) as u32,
+        max_players: v.max_players.max(0) as u32,
+        ping: v.ping.map(|p| p.max(0) as u32),
+        fps: v.fps,
+        friends: v.friends.iter().copied().map(Id).collect(),
+        players: v
+            .player_tokens
             .iter()
-            .flatten()
-            .map(|v| ServerRow {
-                job_id: v.job_id.clone(),
-                playing: v.playing.max(0) as u32,
-                max_players: v.max_players.max(0) as u32,
-                ping: v.ping.map(|p| p.max(0) as u32),
-                fps: v.fps,
-                friends: v.friends.iter().copied().map(Id).collect(),
-            })
+            .take(SERVER_PLAYER_PREVIEW)
+            .map(|t| Id(bonsai_core::thumbs::player_token_id(t)))
             .collect(),
     }
+}
+
+/// A public server the active account played in over the last day.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentServerRow {
+    pub job_id: String,
+    /// The place it runs, which may be a sub-place of the page's experience.
+    pub place_id: Id,
+    /// Last seen in it, in ms since the epoch.
+    pub last_seen: f64,
+    /// The server as it is in the loaded list, when it is there.
+    pub server: Option<ServerRow>,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn game_recent_servers(core: State<'_, Arc<Core>>, place_id: Id) -> Vec<RecentServerRow> {
+    let account = viewer(&core);
+    if account.is_anonymous() {
+        return Vec::new();
+    }
+    let recent = core.recent_servers(account, place_id.0);
+    let s = core.store();
+    recent
+        .into_iter()
+        .map(|r| RecentServerRow {
+            server: s
+                .servers
+                .get(&r.place_id)
+                .and_then(|l| l.data.as_ref())
+                .and_then(|l| l.iter().find(|v| v.job_id == r.job_id))
+                .map(server_row),
+            job_id: r.job_id,
+            place_id: Id(r.place_id),
+            last_seen: r.last_seen as f64 * 1000.0,
+        })
+        .collect()
 }
 
 /// Remote results for the command bar.
@@ -2099,6 +2161,7 @@ pub fn game_friend_servers(core: State<'_, Arc<Core>>, place_id: Id) -> List<Ser
         ping: v.ping.map(|p| p.max(0) as u32),
         fps: None,
         friends: v.friends.iter().copied().map(Id).collect(),
+        players: Vec::new(),
     })
 }
 
@@ -2209,7 +2272,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
     let (mutual_friends, mutual_more) = if mine || account == AccountId::ANONYMOUS {
         (None, false)
     } else {
-        match core.friends_of(uid, false).data {
+        match core.friends_of(account, uid, false).data {
             Some(page) => {
                 let n = own_friends(&core, account)
                     .map(|own| page.items.iter().filter(|id| own.contains(id)).count() as u32);
@@ -2268,6 +2331,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
         favorites_received,
         nickname: Some(note.nickname).filter(|n| !n.is_empty()),
         note: Some(note.note).filter(|n| !n.is_empty()),
+        inventory_private: core.can_view_inventory(account, uid).data.as_deref() == Some(&false),
     }
 }
 
@@ -2403,10 +2467,11 @@ pub fn profile_collectibles(core: State<'_, Arc<Core>>, user_id: Id) -> List<Ite
     let can = core.can_view_inventory(account, user_id.0);
     match can.data.as_deref() {
         Some(true) => {}
+        // `ProfileView::inventory_private` says why it's empty.
         Some(false) => {
             return List {
                 loading: false,
-                error: Some("Their inventory is private.".to_owned()),
+                error: None,
                 items: Vec::new(),
                 more: false,
             };
@@ -2555,7 +2620,7 @@ pub fn profile_people(
             signed_in(&|a| core.search_friends_of(a, uid, &query, false))
         }
         "friends" => {
-            let mut l = List::paged(core.friends_of(uid, false), |id| *id);
+            let mut l = signed_in(&|a| core.friends_of(a, uid, false));
             l.items = bonsai_core::people::mutuals_first(&l.items, &own).0;
             l
         }
@@ -2859,6 +2924,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             home,
             game,
             game_servers,
+            game_recent_servers,
             game_private_servers,
             game_friend_servers,
             creator_bio,

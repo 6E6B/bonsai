@@ -59,6 +59,12 @@
     left: 4px;
   }
 
+  /* Over a picture every badge is the same quiet chip, whatever its variant elsewhere. */
+  [data-component="tile"] [data-slot="badge"] [data-component="badge"] {
+    --badge-bg: var(--color-media-chip);
+    --badge-fg: var(--color-on-media);
+  }
+
   /* Bare marks on the picture, no chip. A drop shadow keeps them readable on light pictures. */
   [data-component="tile"] [data-slot="marker"] {
     --pips-empty: color-mix(in srgb, var(--color-on-media) 30%, transparent);

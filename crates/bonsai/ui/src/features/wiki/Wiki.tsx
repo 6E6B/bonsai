@@ -17,14 +17,16 @@ import {
   Skeleton,
   TextField,
   Thumbnail,
+  Toolbar,
   VirtualList,
 } from "~/lib/ui"
 import { kindLabel, mainPage, ROBLOX_WIKI, type WikiSearchView } from "~/lib/wiki"
-import { openArticle, useWikiPage, WikiOff } from "~/lib/wiki-panels"
+import { openArticle, useWikiPage, WikiOff, WikiState, WikiSummary } from "~/lib/wiki-panels"
 import { sampleSearch } from "~/lib/wiki-sample"
 
 /** Search the Roblox Wiki on Fandom, or with `?w=jailbreak` an experience's own wiki. Results
- * open in the article screen. */
+ * open in the article screen. When there is room, the result under the cursor shows beside the
+ * list: a click previews it and a second click, or Enter, opens it. */
 export default function Wiki() {
   const [params] = useSearchParams()
   const wiki = () => (typeof params.w === "string" && params.w ? params.w : ROBLOX_WIKI)
@@ -62,6 +64,28 @@ export default function Wiki() {
         ? { wiki: wiki(), enabled: true, loading: Boolean(searched()), error: null, hits: [] }
         : sampleSearch(searched(), wiki()),
   )
+  // Wide enough for the list and a readable preview beside it.
+  const [wide, setWide] = createSignal(false)
+  const measure = (el: HTMLElement) => {
+    const ro = new ResizeObserver(([e]) => setWide(e.contentRect.width >= PREVIEW_AT))
+    ro.observe(el)
+    onCleanup(() => ro.disconnect())
+  }
+  // Fetch the preview once the cursor settles, not for every row J passes.
+  const [previewed, setPreviewed] = createSignal("")
+  createEffect(() => {
+    const t = wide() ? (view.hits[cursor()]?.title ?? "") : ""
+    const timer = setTimeout(() => setPreviewed(t), 200)
+    onCleanup(() => clearTimeout(timer))
+  })
+  const preview = useWikiPage(previewed)
+  // With a preview, the first click shows a result and a second one opens it.
+  const pick = (i: number) => {
+    const h = view.hits[i]
+    if (h && (!wide() || i === cursor())) void openArticle(h.title)
+    setCursor(i)
+  }
+
   useListCursor({
     count: () => view.hits.length,
     index: cursor,
@@ -73,81 +97,101 @@ export default function Wiki() {
   })
 
   return (
-    <Page
-      title="Wiki"
-      meta={<span class="text-sm text-fg-muted">{source()} · from Fandom</span>}
-      actions={
-        <Show when={other()}>
-          <Button size="sm" variant="ghost" icon="wiki" onClick={() => openArticle(mainPage(wiki()))}>
-            Main page
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => run("wiki.search", query())}>
-            Search the Roblox Wiki
-          </Button>
-        </Show>
-      }
-    >
+    <Page>
       <Switch>
         <Match when={!view.enabled}>
           <WikiOff />
         </Match>
         <Match when>
-          <TextField
-            icon="search"
-            placeholder={other() ? `Search the ${source()}` : "Search items, experiences, players and more"}
-            value={query()}
-            onChange={(v) => {
-              setQuery(v)
-              setCursor(0)
-            }}
-            autofocus
-          />
-          <Switch>
-            <Match when={!searched() && other()}>
-              <EmptyState
-                icon="wiki"
-                title={`Search the ${source()}`}
-                description="An experience's own wiki on Fandom, written by its players."
-              />
-            </Match>
-            <Match when={!searched()}>
-              <EmptyState
-                icon="wiki"
-                title="Search the Roblox Wiki"
-                description="Articles about items, experiences, players, events and Roblox's history, written by the community on Fandom. Items also have a Wiki tab on their page when there is an article."
-              />
-            </Match>
-            <Match when={view.hits.length > 0}>
-              <div class="flex flex-col" data-cursor-list>
+          <Toolbar
+            actions={
+              <Show when={other()}>
+                <Button size="sm" variant="ghost" icon="wiki" onClick={() => openArticle(mainPage(wiki()))}>
+                  Main page
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => run("wiki.search", query())}>
+                  Search the Roblox Wiki
+                </Button>
+              </Show>
+            }
+          >
+            <TextField
+              class="flex-1"
+              icon="search"
+              placeholder={other() ? `Search the ${source()}` : "Search items, experiences, players and more"}
+              value={query()}
+              onChange={(v) => {
+                setQuery(v)
+                setCursor(0)
+              }}
+              autofocus
+            />
+          </Toolbar>
+          <div ref={measure} class="flex flex-col">
+            <Switch>
+              <Match when={!searched() && other()}>
+                <EmptyState
+                  icon="wiki"
+                  title={`Search the ${source()}`}
+                  description="An experience's own wiki on Fandom, written by its players."
+                />
+              </Match>
+              <Match when={!searched()}>
+                <EmptyState
+                  icon="wiki"
+                  title="Search the Roblox Wiki"
+                  description="Articles about items, experiences, players, events and Roblox's history, written by the community on Fandom. Items also have a Wiki tab on their page when there is an article."
+                />
+              </Match>
+              <Match when={view.hits.length > 0}>
                 <SectionHeader size="group" title={`${view.hits.length} articles`} />
-                <VirtualList items={view.hits} activeIndex={cursor()} estimateRowHeight={72}>
-                  {(h, i) => <HitRow hit={h} index={i} selected={i === cursor()} />}
-                </VirtualList>
-              </div>
-            </Match>
-            <Match when={view.loading}>
-              <div class="flex flex-col gap-2">
-                <For each={[0, 1, 2, 3]}>{() => <Skeleton class="h-12 w-full" />}</For>
-              </div>
-            </Match>
-            <Match when={view.error}>
-              {(e) => (
-                <Alert variant="danger" title="Couldn't search the wiki">
-                  {e()}
-                </Alert>
-              )}
-            </Match>
-            <Match when>
-              <EmptyState icon="wiki" title="No articles found" description="Try another name or spelling." />
-            </Match>
-          </Switch>
+                <div class="flex items-start gap-4">
+                  <div
+                    class={wide() ? "flex w-104 shrink-0 flex-col" : "flex min-w-0 flex-1 flex-col"}
+                    data-cursor-list
+                  >
+                    <VirtualList items={view.hits} activeIndex={cursor()} estimateRowHeight={72}>
+                      {(h, i) => <HitRow hit={h} index={i} selected={i === cursor()} onClick={() => pick(i)} />}
+                    </VirtualList>
+                  </div>
+                  <Show when={wide()}>
+                    <aside class="sticky top-0 flex min-w-0 flex-1 flex-col" aria-label="Preview">
+                      <Show when={previewed()}>
+                        <WikiState view={preview}>
+                          {(a) => <WikiSummary view={preview} article={a} facts={8} />}
+                        </WikiState>
+                      </Show>
+                    </aside>
+                  </Show>
+                </div>
+              </Match>
+              <Match when={view.loading}>
+                <div class="flex flex-col gap-2">
+                  <For each={[0, 1, 2, 3]}>{() => <Skeleton class="h-12 w-full" />}</For>
+                </div>
+              </Match>
+              <Match when={view.error}>
+                {(e) => (
+                  <Alert variant="danger" title="Couldn't search the wiki">
+                    {e()}
+                  </Alert>
+                )}
+              </Match>
+              <Match when>
+                <EmptyState icon="wiki" title="No articles found" description="Try another name or spelling." />
+              </Match>
+            </Switch>
+          </div>
         </Match>
       </Switch>
     </Page>
   )
 }
 
-function HitRow(props: { hit: WikiHit; index: number; selected: boolean }) {
+/** Results column plus a preview at least this wide, in px. */
+const PREVIEW_AT = 880
+
+function HitRow(props: { hit: WikiHit; index: number; selected: boolean; onClick: () => void }) {
   const edited = () => Date.parse(props.hit.edited)
   return (
     <ListItem
@@ -166,7 +210,7 @@ function HitRow(props: { hit: WikiHit; index: number; selected: boolean }) {
           <span class="text-xs">edited {ago(edited())}</span>
         </Show>
       }
-      onClick={() => void openArticle(props.hit.title)}
+      onClick={props.onClick}
     />
   )
 }

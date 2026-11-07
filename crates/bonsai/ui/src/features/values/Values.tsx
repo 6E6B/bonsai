@@ -1,7 +1,7 @@
-import { createEffect, createMemo, createResource, createSignal, on, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createResource, createSignal, on, Show } from "solid-js"
 import { useListCursor } from "~/lib/commands/hooks"
 import { run } from "~/lib/commands/registry"
-import { ago, full } from "~/lib/format"
+import { full } from "~/lib/format"
 import { commands, type LimitedVersion, type ValueRow, type ValuesStatus } from "~/lib/ipc/bindings"
 import { itemMenu, itemTarget } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
@@ -82,26 +82,15 @@ export default function Values() {
       },
     ),
   )
-  const [now, setNow] = createSignal(Date.now())
-  const clock = setInterval(() => setNow(Date.now()), 15_000)
-  onCleanup(() => clearInterval(clock))
-
   return (
     <Page
-      title="Values"
-      meta={
-        <Show when={status.fetchedAt}>
-          {(t) => (
-            <span class="text-sm text-fg-muted">
-              {VALUES_SOURCE} · updated {ago(t(), now())}
-            </span>
-          )}
-        </Show>
-      }
       actions={
-        <Switch checked={shell.itemValues} onChange={() => run("market.values")}>
-          Show values
-        </Switch>
+        // While values are off, the empty state's button turns them on.
+        shell.itemValues && (
+          <Switch checked onChange={() => run("market.values")}>
+            Show values
+          </Switch>
+        )
       }
     >
       <Show

@@ -5,9 +5,12 @@ import {
   Alert,
   AudioPlayer,
   Avatar,
+  AvatarStack,
   Badge,
   Button,
   Card,
+  CategoryNav,
+  type CategorySection,
   Checkbox,
   Clamp,
   Collapsible,
@@ -34,9 +37,11 @@ import {
   Menu,
   Meter,
   NavItem,
+  Page,
   PersonCard,
   PersonTile,
   Pips,
+  Popover,
   RadioGroup,
   RailItem,
   Robux,
@@ -65,6 +70,7 @@ import {
   Thumbnail,
   Tile,
   ToggleButton,
+  Toolbar,
   Tooltip,
   useConfirm,
   usePrompt,
@@ -156,10 +162,30 @@ const galleryThemes = [
   },
 ]
 
+const categorySections: CategorySection[] = [
+  { items: [{ value: "collectibles", label: "Collectibles" }] },
+  {
+    label: "Avatar",
+    items: [
+      { value: "heads", label: "Heads" },
+      {
+        label: "Accessories",
+        children: [
+          { value: "head", label: "Head" },
+          { value: "face", label: "Face" },
+          { value: "neck", label: "Neck" },
+        ],
+      },
+    ],
+  },
+  { items: [{ value: "wishlist", label: "Wishlist", icon: "heart" }] },
+]
+
 const galleryFonts = ["Inter", "Space Grotesk", "IBM Plex Sans", "Manrope", "Work Sans"]
 
 export default function Components() {
   const [height, setHeight] = createSignal(100)
+  const [category, setCategory] = createSignal("face")
   const [volume, setVolume] = createSignal(60)
   const [quality, setQuality] = createSignal(1)
   const [swatch, setSwatch] = createSignal("var(--color-accent)")
@@ -171,6 +197,7 @@ export default function Components() {
   const [fontQuery, setFontQuery] = createSignal("")
   const [open, setOpen] = createSignal(false)
   const [emojiOpen, setEmojiOpen] = createSignal(false)
+  const [popoverOpen, setPopoverOpen] = createSignal(false)
   const [emoji, setEmoji] = createSignal("🙂")
   const [tab, setTab] = createSignal("servers")
   const [strip, setStrip] = createSignal("b")
@@ -186,9 +213,9 @@ export default function Components() {
   const confirm = useConfirm()
 
   return (
-    <div class="flex max-w-4xl flex-col gap-10 p-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl font-medium">Components</h1>
+    <Page
+      class="gap-10"
+      actions={
         <Select
           aria-label="Theme"
           size="sm"
@@ -196,8 +223,8 @@ export default function Components() {
           defaultValue="system"
           onChange={(v) => applyAppearance(v as Mode)}
         />
-      </div>
-
+      }
+    >
       <Section title="Button">
         <For each={buttonVariants}>{(v) => <Button variant={v}>{v}</Button>}</For>
       </Section>
@@ -218,6 +245,19 @@ export default function Components() {
         <Avatar size="lg" name="Bonsai App" />
       </Section>
 
+      <Section title="Avatar stack">
+        <AvatarStack
+          items={[
+            { name: "Builderman", label: "Builderman", highlight: true },
+            { name: "Player" },
+            { name: "Player" },
+            { name: "Player" },
+          ]}
+          total={27}
+        />
+        <AvatarStack on="canvas" size="md" items={[{ name: "Roblox" }, { name: "Bonsai App" }]} />
+      </Section>
+
       <Section title="Badge">
         <For each={badgeVariants}>{(v) => <Badge variant={v}>{v}</Badge>}</For>
       </Section>
@@ -236,6 +276,29 @@ export default function Components() {
           onPick={setEmoji}
         />
         <span class="text-2xl">{emoji()}</span>
+      </Section>
+
+      <Section title="Popover">
+        <Popover
+          open={popoverOpen()}
+          onOpenChange={setPopoverOpen}
+          placement="bottom-start"
+          title="Notifications"
+          actions={
+            <Button size="sm" variant="ghost" icon="check">
+              Mark all read
+            </Button>
+          }
+          footer={
+            <Button size="sm" variant="ghost" onClick={() => setPopoverOpen(false)}>
+              See all notifications
+            </Button>
+          }
+          trigger={(p) => <IconButton {...p} icon="bell" label="Notifications" />}
+        >
+          <ListItem unread title="Builderman sent you a friend request" meta="2m" onClick={() => {}} />
+          <ListItem title="Your trade was accepted" subtitle="2 items for 3 items" meta="1h" onClick={() => {}} />
+        </Popover>
       </Section>
 
       <Section title="Theme card">
@@ -543,6 +606,17 @@ export default function Components() {
         </div>
       </Section>
 
+      <Section title="Category nav">
+        <div class="w-56 rounded-md border border-line p-2">
+          <CategoryNav
+            aria-label="Categories"
+            sections={categorySections}
+            selected={category()}
+            onSelect={setCategory}
+          />
+        </div>
+      </Section>
+
       <Section title="Search button">
         <SearchButton
           class="max-w-md"
@@ -573,6 +647,11 @@ export default function Components() {
           aria-label="Example"
           value={tab()}
           onChange={setTab}
+          actions={
+            <Button size="sm" icon="plus">
+              New
+            </Button>
+          }
           items={[
             { value: "servers", label: "Servers" },
             { value: "store", label: "Store" },
@@ -684,9 +763,11 @@ export default function Components() {
         </div>
       </Section>
 
-      <Section title="Section header">
+      <Section title="Toolbar and section headers">
         <div class="flex w-full flex-col gap-2">
-          <SectionHeader title="Page title" size="page" actions={<Button size="sm">Action</Button>} />
+          <Toolbar actions={<Button size="sm">Action</Button>}>
+            <TextField icon="search" aria-label="Filter" placeholder="Filter" />
+          </Toolbar>
           <SectionHeader title="Section" meta="61 servers" />
           <SectionHeader title="In game" meta={2} size="group" />
         </div>
@@ -895,6 +976,6 @@ export default function Components() {
         <Spinner />
         <Spinner size="lg" />
       </Section>
-    </div>
+    </Page>
   )
 }

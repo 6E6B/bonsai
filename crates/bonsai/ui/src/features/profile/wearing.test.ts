@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { wornGroups, wornKind } from "./wearing"
+import { pageOf, wornGroups, wornKind } from "./wearing"
 
 const item = (assetType: number, id = 0) => ({ assetType, id })
 
@@ -24,5 +24,23 @@ describe("wornGroups", () => {
 
   it("is empty for nothing worn", () => {
     expect(wornGroups([])).toEqual([])
+  })
+})
+
+describe("pageOf", () => {
+  const nine = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+  it("slices one page and counts the pages", () => {
+    expect(pageOf(nine, 0, 8)).toEqual({ items: [1, 2, 3, 4, 5, 6, 7, 8], page: 0, pages: 2 })
+    expect(pageOf(nine, 1, 8)).toEqual({ items: [9], page: 1, pages: 2 })
+  })
+
+  it("clamps a page past the end or before the start", () => {
+    expect(pageOf(nine, 5, 8).page).toBe(1)
+    expect(pageOf(nine, -1, 8).page).toBe(0)
+  })
+
+  it("has one empty page for nothing", () => {
+    expect(pageOf([], 3, 8)).toEqual({ items: [], page: 0, pages: 1 })
   })
 })

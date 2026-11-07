@@ -17,6 +17,7 @@ import {
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { userMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
@@ -27,6 +28,7 @@ import {
   Button,
   Card,
   ContextMenu,
+  EmptyState,
   IconButton,
   ListItem,
   Menu,
@@ -103,6 +105,7 @@ export default function Profile() {
       favoritesReceived: null,
       nickname: null,
       note: null,
+      inventoryPrivate: false,
     }),
   )
   const creations = useLive(userId, commands.profileCreations, emptyList<GameCard>)
@@ -152,14 +155,22 @@ export default function Profile() {
     const name = view.user?.name
     return name ? { kind: "user", id: userId(), name } : null
   })
+  // Every profile gets the same tabs; empty ones are muted and moved to the end, in order, like
+  // on experiences. A private inventory counts as empty. Wiki only shows when it has an article.
   const sections = createMemo(() => {
-    const hidden = new Set<string>()
-    if (shownGameLists().length === 0) hidden.add("experiences")
-    if (isEmpty(badges)) hidden.add("badges")
-    if (isEmpty(groups)) hidden.add("communities")
-    if (isEmpty(collectibles)) hidden.add("items")
-    if (!wiki.article) hidden.add("wiki")
-    return allSections.filter((t) => !hidden.has(t.value))
+    const empty = new Set<string>()
+    const u = view.user
+    if (u && u.friends === 0 && u.followers === 0 && u.following === 0) empty.add("connections")
+    if (isEmpty(outfits)) empty.add("outfits")
+    if (shownGameLists().length === 0) empty.add("experiences")
+    if (isEmpty(badges)) empty.add("badges")
+    if (isEmpty(groups)) empty.add("communities")
+    if (view.inventoryPrivate || isEmpty(collectibles)) empty.add("items")
+    const shown = allSections.filter((t) => t.value !== "wiki" || wiki.article)
+    return [
+      ...shown.filter((t) => !empty.has(t.value)),
+      ...shown.filter((t) => empty.has(t.value)).map((t) => ({ ...t, empty: true })),
+    ]
   })
   createEffect(() => {
     if (!sections().some((t) => t.value === section())) setSection("about")
@@ -254,26 +265,12 @@ export default function Profile() {
                     <Button icon="avatar" onClick={() => run("nav.avatar")}>
                       Edit avatar
                     </Button>
-                    <Tooltip content="Inventory">
-                      <IconButton
-                        variant="secondary"
-                        icon="inventory"
-                        label="Inventory"
-                        onClick={() => run("inventory.view", id())}
-                      />
-                    </Tooltip>
+                    <InventoryButton id={id()} private={view.inventoryPrivate} />
                   </>
                 }
               >
                 <FriendButton status={rel()?.friend ?? "none"} id={id()} />
-                <Tooltip content="Inventory">
-                  <IconButton
-                    variant="secondary"
-                    icon="inventory"
-                    label="Inventory"
-                    onClick={() => run("inventory.view", id())}
-                  />
-                </Tooltip>
+                <InventoryButton id={id()} private={view.inventoryPrivate} />
                 <Tooltip content="Message">
                   <IconButton
                     variant="secondary"
@@ -371,7 +368,7 @@ export default function Profile() {
           <Groups list={groups} />
         </TabPanel>
         <TabPanel value="items">
-          <Collectibles list={collectibles} />
+          <Collectibles list={collectibles} private={view.inventoryPrivate} />
         </TabPanel>
       </Tabs>
     </Page>
@@ -398,6 +395,23 @@ function FriendButton(props: { status: string; id: string }) {
         <Button disabled>Request sent</Button>
       </Show>
     </Show>
+  )
+}
+
+/** Opens their inventory. Greyed out, with a tooltip saying why, when it's private. */
+function InventoryButton(props: { id: string; private: boolean }) {
+  return (
+    <Tooltip content={props.private ? "Their inventory is private" : "Inventory"}>
+      <IconButton
+        variant="secondary"
+        icon="inventory"
+        label="Inventory"
+        disabled={props.private}
+        // A disabled button gets no hover, so let the tooltip's wrapper have it.
+        class={props.private ? "pointer-events-none" : undefined}
+        onClick={() => run("inventory.view", props.id)}
+      />
+    </Tooltip>
   )
 }
 
@@ -492,14 +506,19 @@ function Groups(props: { list: List<GroupCard> }) {
   )
 }
 
-function Collectibles(props: { list: List<ItemCard> }) {
+function Collectibles(props: { list: List<ItemCard>; private: boolean }) {
   const list = props.list
   return (
-    <ListState list={list} icon="inventory" empty="No collectibles">
-      <VirtualGrid items={list.items} minItemWidth={TILE_WIDTH} estimateRowHeight={190} gap={12}>
-        {(i) => <ItemTile item={i} showSerial showRap />}
-      </VirtualGrid>
-    </ListState>
+    <Show
+      when={!props.private}
+      fallback={<EmptyState icon="lock" title="Inventory is private" description="They've hidden their items." />}
+    >
+      <ListState list={list} icon="inventory" empty="No collectibles">
+        <VirtualGrid items={list.items} minItemWidth={TILE_WIDTH} estimateRowHeight={190} gap={12}>
+          {(i) => <ItemTile item={i} showSerial showRap />}
+        </VirtualGrid>
+      </ListState>
+    </Show>
   )
 }
 
@@ -544,10 +563,8 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
   const shown = createMemo(() => {
     let rows = list.items
     if (friends() && mutualOnly() === "mutual") rows = rows.filter((p) => p.friend)
-    const q = query().trim().toLowerCase()
     // Friends are already searched on Roblox; this only filters the other lists.
-    if (q && !friends()) rows = rows.filter((p) => `${p.name} ${p.displayName}`.toLowerCase().includes(q))
-    return rows
+    return friends() ? rows : rank(rows, query(), (p) => [p.displayName, p.name])
   })
   useListCursor({
     count: () => shown().length,

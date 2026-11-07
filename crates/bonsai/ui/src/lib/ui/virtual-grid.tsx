@@ -26,6 +26,8 @@ export interface VirtualGridProps<T> {
   gap?: number
   /** Keep a keyboard cursor visible, even when its row has not mounted yet. */
   activeIndex?: number
+  /** Called with the column count whenever it changes, for a keyboard cursor that moves by rows. */
+  onColumns?: (columns: number) => void
   itemKey?: (item: T) => string | number
   followEnd?: boolean
   /** Shown when `items` is empty. */
@@ -42,6 +44,7 @@ export function VirtualGrid<T>(props: VirtualGridProps<T>) {
   const gap = () => props.gap ?? 8
   const columns = createMemo(() => (props.minItemWidth ? gridColumns(width(), props.minItemWidth, gap()) : 1))
   const rows = createMemo(() => toRows(props.items, columns()))
+  createEffect(() => props.onColumns?.(columns()))
 
   const keys = createMemo(() => (props.itemKey ? rows().map((row) => props.itemKey?.(row[0]) ?? 0) : undefined))
 

@@ -209,6 +209,7 @@ async fn core_signin_calls() {
             size: Some("150x150".into()),
             format: Some("webp".into()),
             is_circular: Some(false),
+            token: None,
         }],
     )
     .await

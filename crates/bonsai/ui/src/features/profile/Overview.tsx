@@ -1,4 +1,4 @@
-import { For, type JSX, Show } from "solid-js"
+import { createEffect, createSignal, For, type JSX, on, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { ago, compact, date, percent } from "~/lib/format"
 import {
@@ -39,6 +39,7 @@ import {
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
 import { TradingCard } from "./Trading"
+import { pageOf, SHOWN, wornKind } from "./wearing"
 
 /** Entry widths for each row: tiles match `tileGrid`; people and badges are narrower. */
 const TILE = 128
@@ -278,37 +279,94 @@ export function BadgeTile(props: { badge: UserBadge }) {
   )
 }
 
-/** Their avatar as it is now, with the items on it. The Outfits tab has the 3D view and more. */
+/** Worn items on one page of the Wearing card: two rows of four. */
+const WORN_PAGE = 8
+
+/** Their avatar as it is now, with the accessories and clothing on it, two rows at a time. Body
+ * parts and animations look alike and say little at this size, so they are left out; the Outfits
+ * tab lists them. */
 function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }) {
+  const [index, setIndex] = createSignal(0)
+  createEffect(
+    on(
+      () => props.userId,
+      () => setIndex(0),
+      { defer: true },
+    ),
+  )
+  const shown = () => props.look.items.filter((i) => SHOWN.has(wornKind(i.assetType)))
+  const page = () => pageOf(shown(), index(), WORN_PAGE)
   return (
-    <Card class="flex flex-col gap-3 px-3.5 py-3">
-      <div class="flex items-center justify-between gap-2">
-        <h3 class="text-sm font-medium text-fg-muted">
-          Wearing
-          <Show when={props.look.items.length > 0}>
-            <span class="ml-1.5 text-fg-faint">{props.look.items.length}</span>
-          </Show>
-        </h3>
-        <Button size="sm" variant="ghost" onClick={props.onSeeAll}>
-          Outfits
-        </Button>
+    <Card class="flex flex-col">
+      <div class="flex flex-col gap-1 px-3.5 py-3">
+        <SectionHeader
+          title="Wearing"
+          meta={props.look.items.length > 0 ? props.look.items.length : undefined}
+          size="group"
+          actions={
+            <Button size="sm" variant="ghost" onClick={props.onSeeAll}>
+              Outfits
+            </Button>
+          }
+        />
+        {/* No frame of its own: the figure stands on the card, so the card doesn't read as boxes in a box. */}
+        <button type="button" class="-mx-1.5 grid" onClick={props.onSeeAll}>
+          <Thumbnail
+            class="w-full bg-transparent bg-none shadow-none"
+            alt="Avatar"
+            src={thumbUrl("avatar", props.userId, true)}
+            fallback="avatar"
+          />
+        </button>
       </div>
-      <button type="button" class="self-center" onClick={props.onSeeAll}>
-        <Thumbnail class="w-48" alt="Avatar" src={thumbUrl("avatar", props.userId, true)} fallback="avatar" />
-      </button>
-      <Show when={props.look.items.length > 0}>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(3rem,1fr))] gap-1.5">
-          <For each={props.look.items}>
-            {(i) => (
-              <ContextMenu items={itemMenu(i.id, i.bundle, i.assetType)}>
-                <Tooltip content={i.name} class="grid">
-                  <button type="button" onClick={() => run("market.open", itemTarget(i.id, i.bundle))}>
-                    <Thumbnail class="w-full" alt={i.name} src={thumbUrl("asset", i.id)} fallback="avatar" />
-                  </button>
+      <Show when={shown().length > 0}>
+        <div class="flex flex-col gap-2 border-t border-line px-3.5 py-3">
+          {/* Always two rows tall, so paging to a short last page doesn't move what's below. */}
+          <div class="grid grid-cols-4 content-start gap-2" classList={{ "aspect-[2/1]": page().pages > 1 }}>
+            <For each={page().items}>
+              {(i) => (
+                <ContextMenu items={itemMenu(i.id, i.bundle, i.assetType)}>
+                  <Tooltip content={i.name} class="grid">
+                    <button
+                      type="button"
+                      class="group relative grid rounded-lg"
+                      onClick={() => run("market.open", itemTarget(i.id, i.bundle))}
+                    >
+                      <Thumbnail class="w-full" alt={i.name} src={thumbUrl("asset", i.id)} fallback="avatar" />
+                      <span class="pointer-events-none absolute inset-0 rounded-lg group-hover:bg-hover" />
+                    </button>
+                  </Tooltip>
+                </ContextMenu>
+              )}
+            </For>
+          </div>
+          <Show when={page().pages > 1}>
+            <div class="-my-1 flex items-center justify-between gap-2">
+              <span class="text-sm text-fg-muted tabular-nums">
+                {page().page + 1} of {page().pages}
+              </span>
+              <span class="-mr-1.5 flex items-center">
+                <Tooltip content="Previous">
+                  <IconButton
+                    size="sm"
+                    icon="chevron-left"
+                    label="Previous"
+                    disabled={page().page === 0}
+                    onClick={() => setIndex(page().page - 1)}
+                  />
                 </Tooltip>
-              </ContextMenu>
-            )}
-          </For>
+                <Tooltip content="Next">
+                  <IconButton
+                    size="sm"
+                    icon="chevron-right"
+                    label="Next"
+                    disabled={page().page === page().pages - 1}
+                    onClick={() => setIndex(page().page + 1)}
+                  />
+                </Tooltip>
+              </span>
+            </div>
+          </Show>
         </div>
       </Show>
     </Card>

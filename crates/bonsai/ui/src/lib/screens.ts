@@ -85,7 +85,10 @@ export const screens: Screen[] = [
   { command: "nav.themes", label: "Themes", icon: "palette", path: "/themes", sidebar: false },
   { command: "nav.settings", label: "Settings", icon: "settings", path: "/settings", sidebar: "bottom" },
   { command: "nav.components", label: "Components", icon: "grid", path: "/components", sidebar: false },
-  { command: "nav.overview", label: "Overview", icon: "grid", path: "/overview", sidebar: false },
+  // A layout experiment; dev builds only.
+  ...(import.meta.env.DEV
+    ? [{ command: "nav.overview", label: "Overview", icon: "grid", path: "/overview", sidebar: false } satisfies Screen]
+    : []),
 ]
 
 /** The sidebar name of a screen, as the `view.sidebar_*` commands take it: `nav.friends` → `friends`. */

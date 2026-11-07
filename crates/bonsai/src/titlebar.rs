@@ -7,11 +7,7 @@
 //! `wicon://` serves the icons: URL path `/<minimize|maximize|restore|close>`. The UI uses them
 //! as CSS masks, so they take the theme's text color.
 //!
-//! The bar is as tall as the desktop's own title bars: on KDE, KWin's Breeze title bar (28px);
-//! elsewhere, a GTK header bar in the current GTK theme (47px with Adwaita, its bottom border
-//! included).
-//!
-//! The icons, layout and height are read once at startup.
+//! The icons and layout are read once at startup.
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -51,7 +47,6 @@ impl Default for Titlebar {
                     WindowButton::Maximize,
                     WindowButton::Close,
                 ],
-                height: 0,
             },
             files: Vec::new(),
             maximized: AtomicBool::new(false),
@@ -72,7 +67,6 @@ impl Titlebar {
         if let Some(layout) = settings.gtk_decoration_layout() {
             (t.buttons.start, t.buttons.end) = parse_layout(&layout);
         }
-        t.buttons.height = if is_kde() { KDE_HEIGHT } else { headerbar_height() };
         let Some(theme) = gtk::IconTheme::default() else {
             return t;
         };
@@ -118,44 +112,6 @@ impl Titlebar {
         self.maximized.load(Ordering::Relaxed)
     }
 }
-
-/// Whether the session is KDE Plasma, whose title bars KWin draws, not GTK.
-#[cfg(target_os = "linux")]
-fn is_kde() -> bool {
-    std::env::var("XDG_CURRENT_DESKTOP").is_ok_and(|d| d.split(':').any(|d| d.eq_ignore_ascii_case("KDE")))
-}
-
-/// The natural height of a GTK header bar holding a title and the window buttons, in the current
-/// GTK theme. 0 when it can't be measured.
-#[cfg(target_os = "linux")]
-fn headerbar_height() -> u32 {
-    use gtk::prelude::*;
-
-    let w = gtk::Window::new(gtk::WindowType::Toplevel);
-    let bar = gtk::HeaderBar::new();
-    bar.set_show_close_button(true);
-    bar.set_title(Some("Bonsai"));
-    w.set_titlebar(Some(&bar));
-    // Hidden widgets measure 0. The window itself is never shown.
-    bar.show_all();
-    let (_, natural) = bar.preferred_height();
-    // SAFETY: `w` was created here and nothing else holds it.
-    unsafe { w.destroy() };
-    sane(natural)
-}
-
-/// A measured height, or 0 when it is outside what any desktop uses.
-#[cfg(target_os = "linux")]
-fn sane(px: i32) -> u32 {
-    u32::try_from(px)
-        .ok()
-        .filter(|px| (20..=80).contains(px))
-        .unwrap_or(0)
-}
-
-/// KWin's Breeze title bar at its defaults, in CSS px.
-#[cfg(target_os = "linux")]
-const KDE_HEIGHT: u32 = 28;
 
 /// Splits a GTK decoration layout like `icon:minimize,maximize,close` into the buttons at the
 /// start and at the end of the bar. Entries other than the three buttons (`icon`, `menu`,

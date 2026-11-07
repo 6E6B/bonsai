@@ -283,10 +283,11 @@ impl Core {
         self.inner.friend_requests(account, more)
     }
 
-    /// Friends of any user (ids; names come from [`Core::want_users`]).
-    pub fn friends_of(&self, user_id: u64, more: bool) -> Res<Page<u64>> {
+    /// Friends of any user (ids; names come from [`Core::want_users`]). Roblox only serves
+    /// these to a signed-in viewer.
+    pub fn friends_of(&self, viewer: AccountId, user_id: u64, more: bool) -> Res<Page<u64>> {
         self.inner.paged(
-            Key::shared("friends_of", user_id),
+            Key::private(viewer, "friends_of", user_id),
             LIST_AGE,
             more,
             move |f, cursor| async move {

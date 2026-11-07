@@ -1,4 +1,5 @@
 import { createEffect, createMemo, createSignal, For, Match, onMount, Show, Switch } from "solid-js"
+import { createStore } from "solid-js/store"
 import { filterEntries } from "~/lib/commands/filter"
 import {
   argEntries,
@@ -11,6 +12,7 @@ import {
   paletteEntries,
   paletteSections,
   parseScope,
+  remember,
   remoteEntries,
   remoteQuery,
   type Scope,
@@ -18,11 +20,14 @@ import {
 } from "~/lib/commands/palette"
 import { command, commandList, run } from "~/lib/commands/registry"
 import { commands, type PluginView, type PrefView, type RemoteSearch, type ThemeView } from "~/lib/ipc/bindings"
-import { screenKey, sidebarScreens } from "~/lib/screens"
+import { screenKey, screens, sidebarGroups, sidebarScreens } from "~/lib/screens"
 import { friends, playlists, shell, useLive } from "~/lib/store"
 import { tabLabel, tabs } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Icon, Kbd, SegmentedControl, Spinner, TextField, Thumbnail, useDialog } from "~/lib/ui"
+
+/** Rows picked from the command bar this session, newest first, per account. */
+const [recents, setRecents] = createStore<Record<string, PaletteEntry[]>>({})
 
 /** The command bar. Typing searches commands, friends and Roblox (people, experiences,
  * communities, items) at once; ←/→, Tab or a prefix (`@`, `g:`, `#`, `i:`, `>`) narrows it to one.
@@ -68,6 +73,14 @@ export function CommandPalette() {
     })),
   )
 
+  const account = () => String(shell.active ?? 0)
+  const places = createMemo(() => [
+    ...sidebarGroups(screens, shell.sidebar)
+      .flat()
+      .map((s) => s.command),
+    "nav.settings",
+  ])
+
   const [scope, setScope] = createSignal<Scope>("all")
   const [query, setQuery] = createSignal("")
   /** A command waiting for its argument. */
@@ -103,6 +116,8 @@ export function CommandPalette() {
       commands: entries(),
       friends: people(),
       remote: remoteRows(),
+      recent: recents[account()],
+      places: places(),
     })
   })
   const rows = createMemo(() => flatRows(sections()))
@@ -170,6 +185,7 @@ export function CommandPalette() {
       input?.focus()
       return
     }
+    if (!nested()) setRecents(account(), (r) => remember(r ?? [], e))
     dialog.close()
     void run(e.id, e.arg)
   }
@@ -221,6 +237,7 @@ export function CommandPalette() {
     if (asking()) return "Type, then press Enter"
     if (remote.loading) return "Searching…"
     const t = query().trim()
+    if (t.length === 0) return "Type to search"
     if (scope() !== "commands" && t.length > 0 && remoteQuery(scope(), t) === "")
       return "Type 3 letters to search Roblox"
     return "No matches"

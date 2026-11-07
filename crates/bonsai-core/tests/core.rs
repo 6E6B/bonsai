@@ -733,7 +733,7 @@ async fn people_profile_lists_and_relation() {
     assert_eq!(followers.items.len(), 100);
     assert!(followers.next.is_some());
     assert!(poll(|| c.followings(ME, 156, false)).await.items.len() > 10);
-    assert!(poll(|| c.friends_of(156, false)).await.items.is_empty());
+    assert!(poll(|| c.friends_of(ME, 156, false)).await.items.is_empty());
     assert!(poll(|| c.username_history(156)).await.is_empty());
     let groups = poll(|| c.user_groups(1)).await;
     assert!(groups.iter().any(|g| g.name == "Roblox Wiki"));

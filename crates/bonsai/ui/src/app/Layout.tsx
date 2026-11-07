@@ -26,6 +26,7 @@ import { setClockFormat, setFormatLocale, setRelativeDates } from "~/lib/format"
 import { registerHubCommands } from "~/lib/hub"
 import { commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
+import { WISHLIST } from "~/lib/market-category"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { playlists, shell, startSync } from "~/lib/store"
 import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
@@ -33,10 +34,12 @@ import { shownBackground } from "~/lib/theme"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { useUpdateToasts } from "~/lib/update-view"
 import { useUpdates } from "~/lib/updates"
+import { withParams } from "~/lib/url-params"
 import { registerWikiCommands } from "~/lib/wiki-panels"
 import { stepZoom } from "~/lib/zoom"
 import { useAppearance } from "./appearance"
 import { useWindowFrame } from "./frame"
+import { ScreenError } from "./ScreenError"
 import { AccountRail } from "./shell/AccountRail"
 import { AddAccount, type AddMode } from "./shell/AddAccount"
 import { ApproveCode } from "./shell/ApproveCode"
@@ -57,9 +60,8 @@ import { VaultForm } from "./shell/VaultForm"
 /**
  * The window:
  *
- *   title bar (app name, window controls)
- *   rail | top bar (sidebar toggle, command bar, notifications, drawer toggle)
- *        | sidebar | tab strip
+ *   title bar (app name, command bar, notifications, drawer toggle, window controls)
+ *   rail | sidebar | tab strip
  *        |         | page    | drawer
  *   status bar
  *
@@ -68,6 +70,10 @@ import { VaultForm } from "./shell/VaultForm"
 /** Below this window width (CSS px at zoom 1) the sidebar starts collapsed, until the user
  * toggles it. The drawer (friends) starts hidden at any width. */
 const NARROW = 1280
+/** Screens with their own side panel. In `auto` mode the sidebar is icons there, so the two
+ * panels don't take a third of the window. */
+const OWN_PANEL = ["/marketplace", "/inventory", "/settings"]
+const hasOwnPanel = (path: string) => OWN_PANEL.some((p) => path === p || path.startsWith(`${p}/`))
 
 export function Layout(props: ParentProps) {
   useUpdates()
@@ -85,7 +91,8 @@ export function Layout(props: ParentProps) {
   const [preview, setPreview] = createSignal<{ id: number; bundle: boolean } | null>(null)
   const compact = () => {
     const mode = shell.look.sidebarMode
-    return mode === "auto" ? width() / zoom() < NARROW : mode === "collapsed"
+    if (mode === "auto") return width() / zoom() < NARROW || hasOwnPanel(location.pathname)
+    return mode === "collapsed"
   }
   const drawer = () => shell.look.drawer
 
@@ -298,9 +305,12 @@ export function Layout(props: ParentProps) {
       if (t) setPreview(t)
       else showToast("Preview takes an item ID, item:<id> or bundle:<id>")
     }),
-    handle("market.search", (q) =>
-      navigate(q?.trim() ? `/marketplace?q=${encodeURIComponent(q.trim())}` : "/marketplace"),
-    ),
+    handle("market.search", (q) => {
+      // Searching keeps the category and filters, but the wishlist has no search box.
+      const wishlist = new URLSearchParams(location.search).get("cat") === WISHLIST
+      navigate(withParams(location, "/marketplace", { q: q?.trim() || null, ...(wishlist ? { cat: null } : {}) }))
+    }),
+    handle("market.category", (c) => navigate(withParams(location, "/marketplace", { cat: c?.trim() || null }))),
     handle("user.nickname", editAbout("nickname")),
     handle("user.note", editAbout("note")),
     handle("playlist.new", newPlaylist),
@@ -339,6 +349,10 @@ export function Layout(props: ParentProps) {
     handle("inventory.view", (who) =>
       navigate(who?.trim() ? `/inventory/${encodeURIComponent(who.trim())}` : "/inventory"),
     ),
+    handle("inventory.category", (slot) => {
+      const path = location.pathname.startsWith("/inventory") ? location.pathname : "/inventory"
+      navigate(withParams(location, path, { slot: slot?.trim() || null }))
+    }),
     handle("group.open", open("/communities")),
     handle("group.search", (q) =>
       navigate(q?.trim() ? `/communities?q=${encodeURIComponent(q.trim())}` : "/communities"),
@@ -522,11 +536,12 @@ export function Layout(props: ParentProps) {
       data-status-bar={shell.look.statusBar ? "" : undefined}
       class="flex h-full min-h-0 flex-col bg-deep text-fg"
     >
-      <TitleBar />
+      <TitleBar>
+        <TopBar drawer={drawer()} />
+      </TitleBar>
       <div class="flex min-h-0 flex-1">
         <AccountRail />
         <div class="flex min-w-0 flex-1 flex-col">
-          <TopBar drawer={drawer()} />
           <div class="flex min-h-0 flex-1">
             <Sidebar compact={compact()} />
             <div ref={column} class="relative isolate flex min-w-0 flex-1 flex-col">
@@ -551,13 +566,7 @@ export function Layout(props: ParentProps) {
                     <AutomationDialog />
                     <BudgetDialog />
                     <SecurityDialog />
-                    <ErrorBoundary
-                      fallback={(err) => (
-                        <pre class="whitespace-pre-wrap p-6 font-mono text-sm text-danger">
-                          {String(err?.stack ?? err)}
-                        </pre>
-                      )}
-                    >
+                    <ErrorBoundary fallback={(err, reset) => <ScreenError error={err} reset={reset} />}>
                       {props.children}
                     </ErrorBoundary>
                   </div>

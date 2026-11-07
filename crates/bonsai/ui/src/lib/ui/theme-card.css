@@ -65,6 +65,15 @@
     border-radius: var(--radius-md);
     background: var(--color-surface);
     box-shadow: var(--shadow-control);
+    opacity: 0;
+    transition: opacity var(--duration) var(--ease);
+  }
+
+  /* The buttons cover the preview, so they show only while the card is pointed at, focused or
+   * its menu is open. */
+  [data-component="theme-card"]:is(:hover, :focus-within) > [data-slot="actions"],
+  [data-component="theme-card"] > [data-slot="actions"]:has([data-expanded]) {
+    opacity: 1;
   }
 
   [data-component="theme-card"] [data-slot="side"] {

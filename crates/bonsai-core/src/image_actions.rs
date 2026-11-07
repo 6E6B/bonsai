@@ -79,6 +79,7 @@ impl Core {
                         size: Some(size.into()),
                         format: Some("webp".into()),
                         is_circular: Some(false),
+                        token: None,
                     }];
                     let mut response = thumbnails::undocumented::post_batch(&client, &request).await;
                     if matches!(response, Err(Error::Unauthorized)) && client.signed_in() {

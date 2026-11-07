@@ -1,11 +1,11 @@
-import { createMemo, For, Show } from "solid-js"
+import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
-import type { Friend } from "~/lib/ipc/bindings"
+import type { Friend, GameCard } from "~/lib/ipc/bindings"
 import { gameMenu, joinUser, userMenu } from "~/lib/menus"
 import { type GameGroup, groupByGame } from "~/lib/presence"
 import { friends, shell, useHome } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { GameIcon, GameTile, tileGrid, wideTileGrid } from "~/lib/tiles"
+import { GameIcon, GameTile, ShelfSkeleton, tileGrid } from "~/lib/tiles"
 import {
   Alert,
   Avatar,
@@ -16,8 +16,8 @@ import {
   IconButton,
   ListItem,
   Page,
+  PersonCard,
   SectionHeader,
-  Skeleton,
   Tooltip,
   VirtualGrid,
   VirtualList,
@@ -27,6 +27,7 @@ import {
 export default function Home() {
   const home = useHome()
   const playing = () => friends.friends.filter((f) => f.presence === "game")
+  const online = () => friends.friends.filter((f) => f.presence === "online" || f.presence === "studio")
   const games = createMemo(() => groupByGame(playing()))
   return (
     <Show
@@ -44,15 +45,7 @@ export default function Home() {
         </EmptyState>
       }
     >
-      <Page
-        title="Home"
-        class="gap-6"
-        actions={
-          <Button icon="refresh" disabled={home.loading} onClick={() => run("view.refresh")}>
-            Refresh
-          </Button>
-        }
-      >
+      <Page class="gap-6">
         <Show when={shell.look.homeFriends && playing().length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader title="Friends playing" meta={playing().length} />
@@ -61,12 +54,36 @@ export default function Home() {
             </VirtualGrid>
           </section>
         </Show>
+        <Show when={shell.look.homeFriends && online().length > 0}>
+          <section class="flex flex-col gap-2">
+            <SectionHeader
+              title="Friends online"
+              meta={online().length}
+              actions={
+                <Button variant="ghost" size="sm" onClick={() => run("nav.friends")}>
+                  See all
+                </Button>
+              }
+            />
+            <VirtualGrid items={online()} minItemWidth={192} estimateRowHeight={56} gap={8}>
+              {(f) => (
+                <ContextMenu items={userMenu(f.id, { friend: true })}>
+                  <PersonCard
+                    name={f.displayName}
+                    src={thumbUrl("headshot", f.id)}
+                    presence={f.presence}
+                    subtitle={f.presence === "studio" ? "In Studio" : `@${f.name}`}
+                    onClick={() => run("user.open", String(f.id))}
+                  />
+                </ContextMenu>
+              )}
+            </VirtualGrid>
+          </section>
+        </Show>
         <Show when={shell.look.homeContinue && home.recent.length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader title="Continue" />
-            <div class={wideTileGrid}>
-              <For each={home.recent.slice(0, 8)}>{(g) => <GameTile game={g} shape="wide" />}</For>
-            </div>
+            <ContinueRow games={home.recent.slice(0, 8)} />
           </section>
         </Show>
         <Show when={shell.look.homeFavorites && home.favorites.length > 0}>
@@ -94,9 +111,7 @@ export default function Home() {
             )}
           </Show>
           <Show when={home.sorts.length === 0 && home.loading}>
-            <div class={tileGrid}>
-              <For each={Array.from({ length: 12 })}>{() => <Skeleton class="aspect-square w-full rounded-md" />}</For>
-            </div>
+            <ShelfSkeleton shelves={2} />
           </Show>
           <For each={home.sorts}>
             {(sort) => (
@@ -119,6 +134,28 @@ export default function Home() {
         </Show>
       </Page>
     </Show>
+  )
+}
+
+const WIDE_TILE = 192
+const GAP = 12
+
+/** One row of wide tiles that fills the width: as many as fit, stretched to the edge, so a few
+ * recent games don't leave a hole at the end. */
+function ContinueRow(props: { games: GameCard[] }) {
+  let row!: HTMLDivElement
+  const [room, setRoom] = createSignal(4)
+  onMount(() => {
+    const ro = new ResizeObserver(() => setRoom(Math.max(1, Math.floor((row.clientWidth + GAP) / (WIDE_TILE + GAP)))))
+    ro.observe(row)
+    onCleanup(() => ro.disconnect())
+  })
+  // Two or fewer would stretch into banners; keep them at the normal width.
+  const cols = () => (props.games.length > 2 ? Math.min(room(), props.games.length) : room())
+  return (
+    <div ref={row} class="grid gap-x-3" style={{ "grid-template-columns": `repeat(${cols()}, minmax(0, 1fr))` }}>
+      <For each={props.games.slice(0, cols())}>{(g) => <GameTile game={g} shape="wide" />}</For>
+    </div>
   )
 }
 
