@@ -41,6 +41,7 @@ export { Page, type PageProps, Pane, SideMain, SidePage, SidePanel, Split } from
 export { PersonCard, type PersonCardProps } from "./person-card"
 export { PersonTile, type PersonTileProps } from "./person-tile"
 export { Pips, type PipsProps } from "./pips"
+export { Popover, type PopoverProps } from "./popover"
 export { type ConfirmOptions, type PromptOptions, useConfirm, usePrompt } from "./prompt"
 export { RadioGroup, type RadioGroupProps } from "./radio-group"
 export { RailItem, type RailItemProps, type TagColor } from "./rail-item"

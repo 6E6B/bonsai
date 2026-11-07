@@ -1,4 +1,5 @@
 import { createSignal, onCleanup, Show } from "solid-js"
+import { NotificationsButton } from "~/features/notifications/Popout"
 import { run, shortcutOf } from "~/lib/commands/registry"
 import { wroteRecently } from "~/lib/plugins"
 import { shell } from "~/lib/store"
@@ -31,13 +32,7 @@ export function TopBar(props: { drawer: boolean }) {
           <IconButton icon="plugin" label="Stop all plugins" variant="danger" onClick={() => run("plugins.stop_all")} />
         </Tooltip>
       </Show>
-      <Tooltip content={`Notifications (${shell.unread.notifications} unread)`} placement="bottom">
-        <IconButton
-          icon={shell.unread.notifications > 0 ? "bell-fill" : "bell"}
-          label="Notifications"
-          onClick={() => run("nav.notifications")}
-        />
-      </Tooltip>
+      <NotificationsButton />
       <Tooltip content="Join the Bonsai Discord" placement="bottom">
         <IconButton icon="discord" label="Join the Bonsai Discord" onClick={() => run("help.discord")} />
       </Tooltip>

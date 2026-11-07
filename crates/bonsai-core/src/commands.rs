@@ -596,6 +596,7 @@ commands! {
     CopyDiscordInvite => "help.discord_copy", "Copy the Bonsai Discord invite", ["discord", "invite", "copy", "link"], None, Read, [];
     OpenDiscordBrowser => "help.discord_browser", "Open the Bonsai Discord invite in browser", ["discord", "invite", "browser", "web"], None, Read, [];
     GoNotifications => "nav.notifications", "Go to Notifications", ["notifications", "bell", "alerts"], None, Read, [];
+    PeekNotifications => "notifications.peek", "Show recent notifications", ["notifications", "bell", "alerts", "recent", "popout"], None, Local, [];
 
     SearchCommunities => "group.search", "Search communities", ["groups", "communities", "find group"], Text, Read, [];
     JoinCommunity => "group.join", "Join this community", ["join", "group", "community"], Text, Write(Social), [];

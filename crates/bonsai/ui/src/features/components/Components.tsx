@@ -41,6 +41,7 @@ import {
   PersonCard,
   PersonTile,
   Pips,
+  Popover,
   RadioGroup,
   RailItem,
   Robux,
@@ -196,6 +197,7 @@ export default function Components() {
   const [fontQuery, setFontQuery] = createSignal("")
   const [open, setOpen] = createSignal(false)
   const [emojiOpen, setEmojiOpen] = createSignal(false)
+  const [popoverOpen, setPopoverOpen] = createSignal(false)
   const [emoji, setEmoji] = createSignal("🙂")
   const [tab, setTab] = createSignal("servers")
   const [strip, setStrip] = createSignal("b")
@@ -274,6 +276,29 @@ export default function Components() {
           onPick={setEmoji}
         />
         <span class="text-2xl">{emoji()}</span>
+      </Section>
+
+      <Section title="Popover">
+        <Popover
+          open={popoverOpen()}
+          onOpenChange={setPopoverOpen}
+          placement="bottom-start"
+          title="Notifications"
+          actions={
+            <Button size="sm" variant="ghost" icon="check">
+              Mark all read
+            </Button>
+          }
+          footer={
+            <Button size="sm" variant="ghost" onClick={() => setPopoverOpen(false)}>
+              See all notifications
+            </Button>
+          }
+          trigger={(p) => <IconButton {...p} icon="bell" label="Notifications" />}
+        >
+          <ListItem unread title="Builderman sent you a friend request" meta="2m" onClick={() => {}} />
+          <ListItem title="Your trade was accepted" subtitle="2 items for 3 items" meta="1h" onClick={() => {}} />
+        </Popover>
       </Section>
 
       <Section title="Theme card">

@@ -8,12 +8,7 @@ import { emptyList, ListState } from "~/lib/list-state"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Button, Icon, ListItem, Page, SectionHeader, SegmentedControl, Select, VirtualList } from "~/lib/ui"
-import { categoryArg, groupByDay, openCommand, shownNotifications } from "./filter"
-
-const ms = (iso: string) => {
-  const t = Date.parse(iso)
-  return Number.isNaN(t) ? 0 : t
-}
+import { categoryArg, groupByDay, notificationTime, openCommand, shownNotifications } from "./filter"
 
 /** The notification stream. Enter opens what a notification is about: its page on the website,
  * or the person it's about. Clicking a row, or X, expands text that is cut off; click a row
@@ -44,7 +39,7 @@ export default function Notifications() {
     ),
   )
   const shown = createMemo(() => shownNotifications(res.list.items, { view: view(), category: category() }))
-  const days = createMemo(() => groupByDay(shown(), (n) => ms(n.when), Date.now()))
+  const days = createMemo(() => groupByDay(shown(), (n) => notificationTime(n.when), Date.now()))
   const openAt = (i: number) => {
     const n = shown()[i]
     const c = n && openCommand(n)
@@ -129,7 +124,7 @@ export default function Notifications() {
                       }
                       title={n.title}
                       subtitle={n.body || undefined}
-                      meta={ago(ms(n.when))}
+                      meta={ago(notificationTime(n.when))}
                       onClick={() => {
                         setCursor(i)
                         if (!toggleAt(i)) openAt(i)

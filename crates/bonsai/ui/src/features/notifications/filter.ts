@@ -1,3 +1,9 @@
+/** A notification's time in ms, 0 when it doesn't parse. */
+export function notificationTime(iso: string) {
+  const t = Date.parse(iso)
+  return Number.isNaN(t) ? 0 : t
+}
+
 /** Which notifications the list shows: all or unread only, optionally one category. */
 export interface NotificationView {
   view: string
