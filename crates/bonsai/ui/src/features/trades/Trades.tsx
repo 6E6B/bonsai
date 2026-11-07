@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
 import { menuItem, run } from "~/lib/commands/registry"
 import { ago, date } from "~/lib/format"
@@ -41,6 +41,7 @@ import {
   TextLink,
   Thumbnail,
   Toolbar,
+  Tooltip,
   usePrompt,
   VirtualList,
 } from "~/lib/ui"
@@ -87,8 +88,17 @@ export default function Trades() {
     commands.tradeEligibility,
     (): Eligibility => ({ loading: true, canTrade: true, reason: "" }),
   )
-  const open = () => rows.list.items[cursor()]
-  useListCursor({ count: () => rows.list.items.length, index: cursor, setIndex: setCursor })
+  const [query, setQuery] = createSignal("")
+  const shown = createMemo(() =>
+    rank(
+      rows.list.items,
+      query(),
+      (t) => [t.partnerDisplay, t.partnerName],
+      (t) => t.partnerId,
+    ),
+  )
+  const open = () => shown()[cursor()]
+  useListCursor({ count: () => shown().length, index: cursor, setIndex: setCursor })
 
   return (
     <Split>
@@ -105,18 +115,31 @@ export default function Trades() {
                   menuItem("trade.export", { label: "Copy trades as CSV", icon: "copy" }),
                 ]}
               />
-              <Button
-                icon="plus"
-                onClick={async () => {
-                  const user = await prompt({ title: "New trade", label: "Username or ID", submit: "Start" })
-                  if (user) void run("trade.new", user)
-                }}
-              >
-                New
-              </Button>
+              <Tooltip content="New trade">
+                <IconButton
+                  icon="plus"
+                  label="New trade"
+                  onClick={async () => {
+                    const user = await prompt({ title: "New trade", label: "Username or ID", submit: "Start" })
+                    if (user) void run("trade.new", user)
+                  }}
+                />
+              </Tooltip>
             </>
           }
-        />
+        >
+          <TextField
+            class="flex-1"
+            icon="search"
+            aria-label="Search trades"
+            placeholder="Search by partner"
+            value={query()}
+            onChange={(v) => {
+              setQuery(v)
+              setCursor(0)
+            }}
+          />
+        </Toolbar>
         <Show when={!can.loading && !can.canTrade && can.reason}>
           <Alert variant="warning" title="Can't trade">
             {can.reason}
@@ -125,7 +148,12 @@ export default function Trades() {
         <Tabs aria-label="Trade status" items={sections} value={section()} onChange={pick} />
         <ListState list={rows.list} icon="trades" empty={`No ${section()} trades`} more={rows.moreKey}>
           <div data-cursor-list class="flex flex-col">
-            <VirtualList items={rows.list.items} activeIndex={cursor()} estimateRowHeight={56}>
+            <VirtualList
+              items={shown()}
+              activeIndex={cursor()}
+              estimateRowHeight={56}
+              empty={<EmptyState icon="search" title="No trades match" />}
+            >
               {(t, i) => (
                 <ListItem
                   data-index={i}

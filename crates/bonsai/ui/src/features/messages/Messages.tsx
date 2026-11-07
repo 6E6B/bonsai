@@ -142,15 +142,17 @@ export default function Messages() {
               </Button>
             </>
           }
-        />
+        >
+          <TextField
+            class="flex-1"
+            icon="search"
+            aria-label="Search loaded messages"
+            placeholder="Search messages"
+            value={query()}
+            onChange={setQuery}
+          />
+        </Toolbar>
         <Tabs aria-label="Mailbox" items={sections()} value={box()} onChange={pick} />
-        <TextField
-          icon="search"
-          aria-label="Search messages"
-          placeholder="Search loaded messages"
-          value={query()}
-          onChange={setQuery}
-        />
         <Show when={selecting()}>
           <div class="flex flex-wrap items-center gap-2 px-2 py-1">
             <Checkbox
