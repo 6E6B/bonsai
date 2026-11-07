@@ -13,6 +13,7 @@ import {
   type List,
   type PassRow,
   type PrivateServerRow,
+  type RecentServerRow,
   type ServerOffer,
   type ServerRow,
   type Servers,
@@ -51,6 +52,7 @@ import {
   Meter,
   Page,
   Robux,
+  SectionHeader,
   Select,
   Skeleton,
   Stat,
@@ -466,6 +468,66 @@ function ServerName(props: { jobId: string }) {
   )
 }
 
+/** A recent server's `game.join_job` argument: its job id and place, which may be a sub-place. */
+const recentKey = (r: RecentServerRow) => `${r.jobId} ${r.placeId}`
+
+/** Servers the account played in over the last day. Players and fill show when the server is
+ * in the loaded list. */
+const recentColumns: Column<RecentServerRow>[] = [
+  { key: "name", label: "Server", width: "10rem", cell: (r) => <ServerName jobId={r.jobId} /> },
+  {
+    key: "players",
+    label: "Players",
+    width: "8.5rem",
+    cell: (r) => (
+      <Show when={r.server} fallback={<span class="text-fg-muted">–</span>}>
+        {(s) => <AvatarStack items={serverFaces(s())} total={Math.max(s().playing, s().friends.length)} />}
+      </Show>
+    ),
+  },
+  {
+    key: "fill",
+    label: "",
+    width: "minmax(6rem, 1fr)",
+    cell: (r) => (
+      <Show when={r.server}>
+        {(s) => <Meter class="w-full" label="Players" value={s().playing} max={s().maxPlayers} tone="capacity" />}
+      </Show>
+    ),
+  },
+  {
+    key: "played",
+    label: "Played",
+    width: "7.5rem",
+    align: "end",
+    cell: (r) => (
+      <Show when={r.lastSeen} fallback="–">
+        {(t) => <span class="text-fg-muted">{ago(t())}</span>}
+      </Show>
+    ),
+  },
+  {
+    key: "actions",
+    label: "",
+    width: "6.5rem",
+    align: "end",
+    cell: (r) => (
+      <>
+        <Button size="sm" onClick={() => run("game.join_job", recentKey(r))}>
+          Join
+        </Button>
+        <Menu
+          size="sm"
+          icon="chevron-down"
+          label="Join as…"
+          placement="bottom-end"
+          items={joinAsItems("game.join_job", recentKey(r))}
+        />
+      </>
+    ),
+  },
+]
+
 function ServersPanel(props: { placeId: number; max: number }) {
   const list = useLive(
     () => props.placeId,
@@ -475,6 +537,12 @@ function ServersPanel(props: { placeId: number; max: number }) {
   const [sort, setSort] = createSignal("friends")
   const [hideFull, setHideFull] = createSignal(false)
   const [friendsOnly, setFriendsOnly] = createSignal(false)
+  const recent = useLive(
+    () => props.placeId,
+    async (id) => ({ items: await commands.gameRecentServers(id) }),
+    () => ({ items: [] as RecentServerRow[] }),
+  )
+  // The `game.join_job` argument of the row the cursor is on, in either table.
   const [selected, setSelected] = createSignal<string>()
   onCleanup(handle("game.join_server", () => selected() && run("game.join_job", selected() ?? null)))
 
@@ -543,6 +611,19 @@ function ServersPanel(props: { placeId: number; max: number }) {
 
   return (
     <div class="flex flex-col gap-3">
+      <Show when={recent.items.length > 0}>
+        <div class="flex flex-col gap-1.5">
+          <SectionHeader title="Recent" meta={recent.items.length} size="group" />
+          <DataTable
+            aria-label="Recent servers"
+            columns={recentColumns}
+            rows={recent.items}
+            rowKey={recentKey}
+            selected={selected()}
+            onRowClick={(r) => setSelected(recentKey(r))}
+          />
+        </div>
+      </Show>
       <Toolbar
         actions={
           <>

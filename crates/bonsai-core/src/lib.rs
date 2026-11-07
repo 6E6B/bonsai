@@ -32,6 +32,7 @@ pub mod playlists;
 pub mod plugins;
 pub mod prefs;
 pub mod purchase;
+pub mod recent_servers;
 mod remote;
 pub mod res;
 pub mod resolve;

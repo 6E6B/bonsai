@@ -24,6 +24,7 @@ export const commands = {
 	home: () => __TAURI_INVOKE<Home>("home"),
 	game: (placeId: Id) => __TAURI_INVOKE<Game>("game", { placeId }),
 	gameServers: (placeId: Id) => __TAURI_INVOKE<Servers>("game_servers", { placeId }),
+	gameRecentServers: (placeId: Id) => __TAURI_INVOKE<RecentServerRow[]>("game_recent_servers", { placeId }),
 	gamePrivateServers: (placeId: Id) => __TAURI_INVOKE<List<PrivateServerRow>>("game_private_servers", { placeId }),
 	/**  Servers of a place with friends of the active account in them. */
 	gameFriendServers: (placeId: Id) => __TAURI_INVOKE<List<ServerRow>>("game_friend_servers", { placeId }),
@@ -1977,6 +1978,17 @@ export type ProposedView = {
 	tier: number,
 	/**  What it may cost: "Up to R$ 50", "R$ 100" or "1 trade". */
 	cost: string | null,
+};
+
+/**  A public server the active account played in over the last day. */
+export type RecentServerRow = {
+	jobId: string,
+	/**  The place it runs, which may be a sub-place of the page's experience. */
+	placeId: Id,
+	/**  Last seen in it, in ms since the epoch. */
+	lastSeen: number | null,
+	/**  The server as it is in the loaded list, when it is there. */
+	server: ServerRow | null,
 };
 
 export type RecentView = {

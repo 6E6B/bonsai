@@ -1395,8 +1395,15 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
             Ok(())
         }
         CommandId::JoinJobId => {
-            let (place_id, _) = page()?;
-            let job_id = arg().ok_or_else(|| "Which server?".to_owned())?.trim().to_owned();
+            // `<job id> <place>` for a server in another place of the experience; else the
+            // page's place.
+            let a = arg().ok_or_else(|| "Which server?".to_owned())?;
+            let mut parts = a.split_whitespace();
+            let job_id = parts.next().ok_or_else(|| "Which server?".to_owned())?.to_owned();
+            let place_id = match parts.next() {
+                Some(p) => parse_id(Some(p.to_owned()), "place")?,
+                None => page()?.0,
+            };
             core.send(Cmd::Launch {
                 account: acting()?,
                 target: JoinTarget::Server { place_id, job_id },
@@ -1879,26 +1886,63 @@ pub fn game_servers(core: State<'_, Arc<Core>>, place_id: Id) -> Servers {
         error: l.error.clone(),
         fetched_at: (l.fetched_at > 0).then_some(l.fetched_at as f64 * 1000.0),
         more: s.server_cursor.get(&place_id.0).is_some_and(Option::is_some),
-        servers: l
-            .data
+        servers: l.data.iter().flatten().map(server_row).collect(),
+    }
+}
+
+fn server_row(v: &bonsai_core::store::Server) -> ServerRow {
+    ServerRow {
+        job_id: v.job_id.clone(),
+        playing: v.playing.max(0) as u32,
+        max_players: v.max_players.max(0) as u32,
+        ping: v.ping.map(|p| p.max(0) as u32),
+        fps: v.fps,
+        friends: v.friends.iter().copied().map(Id).collect(),
+        players: v
+            .player_tokens
             .iter()
-            .flatten()
-            .map(|v| ServerRow {
-                job_id: v.job_id.clone(),
-                playing: v.playing.max(0) as u32,
-                max_players: v.max_players.max(0) as u32,
-                ping: v.ping.map(|p| p.max(0) as u32),
-                fps: v.fps,
-                friends: v.friends.iter().copied().map(Id).collect(),
-                players: v
-                    .player_tokens
-                    .iter()
-                    .take(SERVER_PLAYER_PREVIEW)
-                    .map(|t| Id(bonsai_core::thumbs::player_token_id(t)))
-                    .collect(),
-            })
+            .take(SERVER_PLAYER_PREVIEW)
+            .map(|t| Id(bonsai_core::thumbs::player_token_id(t)))
             .collect(),
     }
+}
+
+/// A public server the active account played in over the last day.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentServerRow {
+    pub job_id: String,
+    /// The place it runs, which may be a sub-place of the page's experience.
+    pub place_id: Id,
+    /// Last seen in it, in ms since the epoch.
+    pub last_seen: f64,
+    /// The server as it is in the loaded list, when it is there.
+    pub server: Option<ServerRow>,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn game_recent_servers(core: State<'_, Arc<Core>>, place_id: Id) -> Vec<RecentServerRow> {
+    let account = viewer(&core);
+    if account.is_anonymous() {
+        return Vec::new();
+    }
+    let recent = core.recent_servers(account, place_id.0);
+    let s = core.store();
+    recent
+        .into_iter()
+        .map(|r| RecentServerRow {
+            server: s
+                .servers
+                .get(&r.place_id)
+                .and_then(|l| l.data.as_ref())
+                .and_then(|l| l.iter().find(|v| v.job_id == r.job_id))
+                .map(server_row),
+            job_id: r.job_id,
+            place_id: Id(r.place_id),
+            last_seen: r.last_seen as f64 * 1000.0,
+        })
+        .collect()
 }
 
 /// Remote results for the command bar.
@@ -2876,6 +2920,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             home,
             game,
             game_servers,
+            game_recent_servers,
             game_private_servers,
             game_friend_servers,
             creator_bio,

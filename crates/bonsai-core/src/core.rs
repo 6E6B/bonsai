@@ -689,6 +689,13 @@ fn warm_store(cache: &Cache, s: &mut StoreData) {
         if let Some(r) = cache.get::<Vec<u64>>(Kind::Recent, id, "recent") {
             d.recent = r.value;
         }
+        if let Some(r) = cache.get::<Vec<crate::recent_servers::RecentServer>>(
+            Kind::Local,
+            id,
+            crate::recent_servers::RECENT_SERVERS,
+        ) {
+            d.recent_servers = r.value;
+        }
         if let Some(w) = cache.get::<Vec<crate::market::WishItem>>(Kind::Wishlist, id, "wishlist") {
             d.wishlist = w.value;
         }
@@ -1200,6 +1207,9 @@ impl Inner {
         let universes: Vec<u64> = all.values().filter_map(|p| p.universe_id).collect();
         let seen: Vec<_> = all.iter().map(|(u, p)| (*u, p.kind)).collect();
         self.note_presence(id, &seen);
+        if let Some(me) = all.get(&id.0) {
+            self.note_own_presence(id, me);
+        }
         let before = {
             let mut s = self.store.write();
             let d = s.data.entry(id).or_default();
@@ -1417,7 +1427,7 @@ impl Inner {
         }
     }
 
-    pub(crate) async fn launch(&self, account: AccountId, target: JoinTarget) {
+    pub(crate) async fn launch(self: &Arc<Self>, account: AccountId, target: JoinTarget) {
         let name = self
             .store
             .read()
@@ -1464,6 +1474,7 @@ impl Inner {
                         self.cache.put(Kind::Recent, account, "recent", &r);
                     }
                 }
+                self.watch_launch(account);
                 self.toast(Some(account), format!("Starting Roblox as {name}"), false);
             }
             Err(e) => self.toast(Some(account), e, true),
