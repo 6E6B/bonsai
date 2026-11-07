@@ -103,6 +103,7 @@ jobs:
         with:
           rust-targets: ${{ matrix.rust-targets }}
           cache-key: release
+          cache-on-failure: false
 
       - name: Build installers
         working-directory: crates/bonsai/ui
