@@ -48,6 +48,7 @@ import {
   ListItem,
   MediaFrame,
   Menu,
+  Meter,
   Page,
   Robux,
   Select,
@@ -487,7 +488,8 @@ function ServersPanel(props: { placeId: number; max: number }) {
     {
       key: "name",
       label: "Server",
-      width: "minmax(6rem, 1fr)",
+      // Fits the longest name, "Wandering Albatross".
+      width: "10rem",
       cell: (s) => <ServerName jobId={s.jobId} />,
     },
     {
@@ -498,15 +500,10 @@ function ServersPanel(props: { placeId: number; max: number }) {
       cell: (s) => <AvatarStack items={serverFaces(s)} total={Math.max(s.playing, s.friends.length)} />,
     },
     {
-      key: "count",
+      key: "fill",
       label: "",
-      width: "3.5rem",
-      align: "end",
-      cell: (s) => (
-        <span classList={{ "tabular-nums": true, "text-warning": s.maxPlayers > 0 && s.playing >= s.maxPlayers }}>
-          {s.playing}/{s.maxPlayers}
-        </span>
-      ),
+      width: "minmax(6rem, 1fr)",
+      cell: (s) => <Meter class="w-full" label="Players" value={s.playing} max={s.maxPlayers} tone="capacity" />,
     },
     { key: "ping", label: "Ping", width: "4rem", align: "end", cell: (s) => (s.ping === null ? "–" : `${s.ping} ms`) },
     {
