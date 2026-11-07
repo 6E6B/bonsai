@@ -778,6 +778,8 @@ pub struct ProfileView {
     /// What the active account calls them, and its private note about them.
     pub nickname: Option<String>,
     pub note: Option<String>,
+    /// Roblox says the active account can't see their inventory. False while that is checked.
+    pub inventory_private: bool,
 }
 
 /// Who saw a user online last.
@@ -2329,6 +2331,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
         favorites_received,
         nickname: Some(note.nickname).filter(|n| !n.is_empty()),
         note: Some(note.note).filter(|n| !n.is_empty()),
+        inventory_private: core.can_view_inventory(account, uid).data.as_deref() == Some(&false),
     }
 }
 
@@ -2464,10 +2467,11 @@ pub fn profile_collectibles(core: State<'_, Arc<Core>>, user_id: Id) -> List<Ite
     let can = core.can_view_inventory(account, user_id.0);
     match can.data.as_deref() {
         Some(true) => {}
+        // `ProfileView::inventory_private` says why it's empty.
         Some(false) => {
             return List {
                 loading: false,
-                error: Some("Their inventory is private.".to_owned()),
+                error: None,
                 items: Vec::new(),
                 more: false,
             };

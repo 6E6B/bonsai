@@ -1968,6 +1968,8 @@ export type ProfileView = {
 	/**  What the active account calls them, and its private note about them. */
 	nickname: string | null,
 	note: string | null,
+	/**  Roblox says the active account can't see their inventory. False while that is checked. */
+	inventoryPrivate: boolean,
 };
 
 /**  One action in the action dialog. */
