@@ -182,14 +182,6 @@ export default function Hub() {
           </Button>
         </div>
       </Show>
-      <Show when={hubUi.kind === "plugins"}>
-        <div class="flex items-center justify-between gap-3 border-t border-line pt-3">
-          <span class="text-xs text-fg-muted">Permissions are reviewed before installation.</span>
-          <Button size="sm" variant="ghost" disabled={!data.configured} onClick={() => run("hub.revocations")}>
-            Check installed releases
-          </Button>
-        </div>
-      </Show>
     </div>
   )
   return (
