@@ -42,7 +42,10 @@
     outline-offset: -2px;
   }
 
+  /* A little larger than md, so the picture and its ring sit inside the card with room to spare. */
   [data-component="person-card"] [data-component="avatar"] {
+    --avatar-size: 32px;
+    --avatar-dot: 11px;
     --avatar-ring: var(--color-surface);
   }
 
