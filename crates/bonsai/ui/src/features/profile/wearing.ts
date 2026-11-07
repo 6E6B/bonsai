@@ -29,21 +29,12 @@ export function wornKind(assetType: number): WornKind {
  * the same blank figure, so the overview only counts them. */
 export const SHOWN: ReadonlySet<WornKind> = new Set<WornKind>(["accessories", "clothing", "other"])
 
-const nouns: Partial<Record<WornKind, [string, string]>> = {
-  body: ["body part", "body parts"],
-  animations: ["animation", "animations"],
-}
-
-/** "3 body parts and 7 animations", for items the overview leaves out. Empty when none are. */
-export function wornSummary<T extends { assetType: number }>(items: T[]) {
-  const parts = order.flatMap((kind) => {
-    const n = items.filter((i) => wornKind(i.assetType) === kind).length
-    if (n === 0) return []
-    const [one, many] = nouns[kind] ?? [labels[kind].toLowerCase(), labels[kind].toLowerCase()]
-    return [`${n} ${n === 1 ? one : many}`]
-  })
-  if (parts.length < 2) return parts.join("")
-  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`
+/** One page of `size` items. `index` is clamped to the pages there are, so a list that shrank
+ * under the pager still shows its last page. There is always at least one page. */
+export function pageOf<T>(items: T[], index: number, size: number) {
+  const pages = Math.max(1, Math.ceil(items.length / size))
+  const page = Math.min(Math.max(0, index), pages - 1)
+  return { items: items.slice(page * size, (page + 1) * size), page, pages }
 }
 
 /** Items split into groups, clothing first, keeping Roblox's order inside each. Empty groups
