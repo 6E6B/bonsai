@@ -653,6 +653,8 @@ commands! {
     PrevSubTab => "view.prev_subtab", "Previous sub-tab", ["tab", "previous"], None, Read, [Shortcut::key("OpenBracket")];
     ListDown => "list.down", "Move down", ["next"], None, Read, [Shortcut::key("J")];
     ListUp => "list.up", "Move up", ["previous"], None, Read, [Shortcut::key("K")];
+    ListLeft => "list.left", "Move left", ["previous", "left"], None, Read, [Shortcut::key("H")];
+    ListRight => "list.right", "Move right", ["next", "right"], None, Read, [Shortcut::key("L")];
     ListOpen => "list.open", "Open selected", ["open"], None, Read, [Shortcut::key("Enter")];
     ListSelect => "list.select", "Select for bulk action", ["select", "mark"], None, Read, [Shortcut::key("X")];
 

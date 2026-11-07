@@ -20,10 +20,13 @@ import {
   TextField,
   Thumbnail,
   VerifiedBadge,
-  VirtualList,
+  VirtualGrid,
 } from "~/lib/ui"
 
-/** Your communities, with search and bulk leave for cleanup. Checkboxes show only while
+/** Narrowest a row gets before the grid drops a column. */
+const ROW_WIDTH = 300
+
+/** Your communities, in as many columns as fit, with search and bulk leave for cleanup. Checkboxes show only while
  * selecting, which the Select button or X on a row starts. With `?q=`, shows search results
  * across all communities instead. */
 export default function Communities() {
@@ -35,6 +38,7 @@ export default function Communities() {
   const [picked, setPicked] = createSignal<Set<number>>(new Set())
   const [selecting, setSelecting] = createSignal(false)
   const [cursor, setCursor] = createSignal(0)
+  const [columns, setColumns] = createSignal(1)
   const shown = createMemo(() => rank(mine.items, query(), (c) => [c.name]))
   const toggle = (id: number, on: boolean) =>
     setPicked((s) => {
@@ -52,6 +56,7 @@ export default function Communities() {
     count: () => (searched() ? 0 : shown().length),
     index: cursor,
     setIndex: setCursor,
+    columns,
     onOpen: (i) => {
       const c = shown()[i]
       if (c) void run("group.open", String(c.id))
@@ -128,10 +133,13 @@ export default function Communities() {
     return (
       <ListState list={mine} icon="communities" empty="Not in any communities">
         <div data-cursor-list class="flex flex-col">
-          <VirtualList
+          <VirtualGrid
             items={shown()}
             activeIndex={cursor()}
+            onColumns={setColumns}
+            minItemWidth={ROW_WIDTH}
             estimateRowHeight={56}
+            gap={4}
             empty={<EmptyState icon="communities" title="No communities match" />}
           >
             {(c, i) => (
@@ -178,7 +186,7 @@ export default function Communities() {
                 />
               </ContextMenu>
             )}
-          </VirtualList>
+          </VirtualGrid>
         </div>
       </ListState>
     )
@@ -198,7 +206,7 @@ function Results(props: { query: string; onClear: () => void }) {
       </div>
       <ListState list={list} icon="search" empty="No communities found">
         <div class="flex flex-col">
-          <VirtualList items={list.items} estimateRowHeight={56}>
+          <VirtualGrid items={list.items} minItemWidth={ROW_WIDTH} estimateRowHeight={56} gap={4}>
             {(c) => (
               <ContextMenu
                 items={[menuItem("group.open", { arg: String(c.id), icon: "communities" }), shareMenu(`group:${c.id}`)]}
@@ -215,7 +223,7 @@ function Results(props: { query: string; onClear: () => void }) {
                 />
               </ContextMenu>
             )}
-          </VirtualList>
+          </VirtualGrid>
         </div>
       </ListState>
     </div>

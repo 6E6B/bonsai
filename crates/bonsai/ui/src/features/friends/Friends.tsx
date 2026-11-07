@@ -20,8 +20,11 @@ import {
   TextField,
   Tooltip,
   usePrompt,
-  VirtualList,
+  VirtualGrid,
 } from "~/lib/ui"
+
+/** Narrowest a row gets before the grid drops a column: room for a name and two buttons. */
+const ROW_WIDTH = 340
 
 interface Row {
   id: number
@@ -49,11 +52,12 @@ const fromPerson = (p: Person): Row => ({
 })
 
 /** Friends, requests, followers, following and blocked users, with a filter and keyboard
- * cursor (J / K / Enter). */
+ * cursor (J / K / H / L / Enter). As many columns as fit. */
 export default function Friends() {
   const [section, setSection] = createSignal<string>("friends")
   const [query, setQuery] = createSignal("")
   const [cursor, setCursor] = createSignal(0)
+  const [columns, setColumns] = createSignal(1)
   const prompt = usePrompt()
   useCommandContext(() => (shell.active === null ? "" : `user:${shell.active}`))
   const people = useLive(
@@ -92,6 +96,7 @@ export default function Friends() {
     count: () => shown().length,
     index: cursor,
     setIndex: setCursor,
+    columns,
     onOpen: (i) => {
       const f = shown()[i]
       if (f) void run("user.open", String(f.id))
@@ -187,11 +192,13 @@ export default function Friends() {
         </div>
         <TabPanel value={section()}>
           <div data-cursor-list>
-            <VirtualList
+            <VirtualGrid
               items={shown()}
               activeIndex={cursor()}
-              estimateRowHeight={44}
-              gap={0}
+              onColumns={setColumns}
+              minItemWidth={ROW_WIDTH}
+              estimateRowHeight={48}
+              gap={4}
               empty={
                 <Show
                   when={section() === "friends" || !people.loading}
@@ -237,7 +244,7 @@ export default function Friends() {
                   />
                 </ContextMenu>
               )}
-            </VirtualList>
+            </VirtualGrid>
           </div>
           <Show when={section() !== "friends" && people.more}>
             <Button class="mt-2" variant="ghost" disabled={people.loading} onClick={() => run("list.more", section())}>

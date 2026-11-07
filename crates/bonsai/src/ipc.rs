@@ -1555,6 +1555,8 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         // List and sub-tab keys are handled by the screen showing one. Elsewhere they do nothing.
         CommandId::ListDown
         | CommandId::ListUp
+        | CommandId::ListLeft
+        | CommandId::ListRight
         | CommandId::ListOpen
         | CommandId::ListSelect
         | CommandId::NextSubTab
