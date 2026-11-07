@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
+import { createMemo, createSignal, Index, onCleanup, onMount, Show } from "solid-js"
 import { Avatar } from "./avatar"
 import { Tooltip } from "./tooltip"
 
@@ -70,17 +70,19 @@ export function AvatarStack(props: AvatarStackProps) {
       data-fit={fits() || undefined}
       class={props.class}
     >
-      <For each={shown()}>
+      {/* By position, not by object: callers often build the items afresh, and recreating a face
+          makes its picture load again. */}
+      <Index each={shown()}>
         {(p) => (
           <Show
-            when={p.label}
+            when={p().label}
             fallback={
               <Avatar
                 data-slot="face"
-                data-highlight={p.highlight || undefined}
+                data-highlight={p().highlight || undefined}
                 size={props.size ?? "sm"}
-                name={p.name}
-                src={p.src}
+                name={p().name}
+                src={p().src}
               />
             }
           >
@@ -88,16 +90,16 @@ export function AvatarStack(props: AvatarStackProps) {
               <Tooltip content={label()}>
                 <Avatar
                   data-slot="face"
-                  data-highlight={p.highlight || undefined}
+                  data-highlight={p().highlight || undefined}
                   size={props.size ?? "sm"}
-                  name={p.name}
-                  src={p.src}
+                  name={p().name}
+                  src={p().src}
                 />
               </Tooltip>
             )}
           </Show>
         )}
-      </For>
+      </Index>
       <Show when={rest() > 0}>
         <span data-slot="more">+{rest()}</span>
       </Show>

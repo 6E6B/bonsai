@@ -463,13 +463,14 @@ function ServersPanel(props: { placeId: number; max: number }) {
     {
       key: "players",
       label: "Players",
-      width: "minmax(3rem, 1fr)",
+      // Roblox sends five player tokens a server, so the faces need little room.
+      width: "8.5rem",
       cell: (s) => <AvatarStack items={serverFaces(s)} total={Math.max(s.playing, s.friends.length)} />,
     },
     {
       key: "fill",
       label: "",
-      width: "7rem",
+      width: "minmax(6rem, 1fr)",
       cell: (s) => <Meter class="w-full" label="Players" value={s.playing} max={s.maxPlayers} tone="capacity" />,
     },
     { key: "ping", label: "Ping", width: "4rem", align: "end", cell: (s) => (s.ping === null ? "–" : `${s.ping} ms`) },
