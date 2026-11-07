@@ -6,6 +6,7 @@ import { compact } from "~/lib/format"
 import { type CommunityHit, commands, type GroupCard } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { shareMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
@@ -34,10 +35,7 @@ export default function Communities() {
   const [picked, setPicked] = createSignal<Set<number>>(new Set())
   const [selecting, setSelecting] = createSignal(false)
   const [cursor, setCursor] = createSignal(0)
-  const shown = createMemo(() => {
-    const q = query().trim().toLowerCase()
-    return mine.items.filter((c) => !q || c.name.toLowerCase().includes(q))
-  })
+  const shown = createMemo(() => rank(mine.items, query(), (c) => [c.name]))
   const toggle = (id: number, on: boolean) =>
     setPicked((s) => {
       const next = new Set(s)

@@ -1,6 +1,7 @@
 import { createMemo, createSignal, onCleanup, Show } from "solid-js"
 import { menuItem, run } from "~/lib/commands/registry"
 import { type AppSettings, commands, type ThemeView } from "~/lib/ipc/bindings"
+import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { parseTheme, resolve, type Theme } from "~/lib/theme"
 import {
@@ -43,11 +44,10 @@ export default function Themes() {
     const out: Row[] = installed.map((t) => ({ ...t, onDisk: true, theme: parseTheme(t.doc) }))
     for (const d of Object.values(drafts))
       if (!d.onDisk) out.push({ ...d.theme, builtin: false, onDisk: false, theme: d.theme })
-    const q = query().trim().toLowerCase()
-    return out.filter(
-      (r) =>
-        (base() === "all" || r.base === base()) &&
-        (!q || r.name.toLowerCase().includes(q) || r.author.toLowerCase().includes(q)),
+    return rank(
+      out.filter((r) => base() === "all" || r.base === base()),
+      query(),
+      (r) => [r.name, r.author],
     )
   })
 

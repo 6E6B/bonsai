@@ -4,6 +4,7 @@ import { run } from "~/lib/commands/registry"
 import { commands, type Person, type Presence } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
 import { joinUser, presenceText, userMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { friends, shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
@@ -75,7 +76,6 @@ export default function Friends() {
   })
 
   const shown = createMemo(() => {
-    const q = query().trim().toLowerCase()
     const list: Row[] =
       section() === "friends"
         ? friends.friends.map((f) => ({
@@ -85,7 +85,7 @@ export default function Friends() {
             nickname: f.nickname ?? undefined,
           }))
         : people.items.map(fromPerson)
-    return q ? list.filter((f) => `${f.name} ${f.displayName} ${f.nickname ?? ""}`.toLowerCase().includes(q)) : list
+    return rank(list, query(), (f) => [f.nickname, f.displayName, f.name])
   })
 
   useListCursor({

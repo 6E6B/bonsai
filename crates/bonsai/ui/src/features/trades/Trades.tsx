@@ -15,6 +15,7 @@ import {
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { itemMenu, itemTarget } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
@@ -419,10 +420,7 @@ function Picker(props: { userId: number; chosen: TradeItemView[]; onPick: (i: Tr
   )
   const [q, setQ] = createSignal("")
   const shown = () => {
-    const s = q().trim().toLowerCase()
-    return res.list.items.filter(
-      (i) => !s || i.name.toLowerCase().includes(s) || (i.serial !== null && `#${i.serial}`.includes(s)),
-    )
+    return rank(res.list.items, q(), (i) => [i.name, i.serial !== null ? `#${i.serial}` : null])
   }
   createEffect(() => {
     props.userId

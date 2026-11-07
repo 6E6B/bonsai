@@ -1,4 +1,5 @@
 import type { Arg, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
+import { rank } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
 import type { ThumbKind } from "~/lib/thumb"
 import { filterEntries } from "./filter"
@@ -284,8 +285,9 @@ export function remoteEntries(rows: RemoteRow[]): PaletteEntry[] {
   })
 }
 
-const matchesPerson = (p: PalettePerson, q: string) =>
-  p.name.toLowerCase().includes(q) || p.displayName.toLowerCase().includes(q)
+/** `people` matching `query`, best match first. */
+const searchPeople = (people: readonly PalettePerson[], query: string) =>
+  rank(people, query, (p) => [p.displayName, p.name])
 
 /** A person as a row that opens their profile. */
 export function personEntry(p: PalettePerson): PaletteEntry {
@@ -386,7 +388,7 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
 
   const shownPeople = new Set<number>()
   if (all || input.scope === "people") {
-    const friends = input.friends.filter((p) => matchesPerson(p, q)).slice(0, all ? PER_GROUP : 10)
+    const friends = searchPeople(input.friends, q).slice(0, all ? PER_GROUP : 10)
     for (const f of friends) shownPeople.add(f.id)
     add("Friends", friends.map(personEntry))
   }
@@ -464,10 +466,10 @@ export function argEntries(
   const out: PaletteEntry[] = []
   const user = command.ask === "user"
   if ((user || command.ask === "gameOrFriend") && q) {
-    const matches = people
-      .filter((p) => user || p.inGame)
-      .filter((p) => matchesPerson(p, q))
-      .slice(0, limit)
+    const matches = searchPeople(
+      people.filter((p) => user || p.inGame),
+      q,
+    ).slice(0, limit)
     for (const p of matches)
       out.push({
         ...personEntry(p),

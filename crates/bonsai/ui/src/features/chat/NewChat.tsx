@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createSignal, on, Show } from "solid-js"
 import { commands } from "~/lib/ipc/bindings"
+import { rank } from "~/lib/search"
 import { friends, shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Button, Checkbox, ListItem, showToast, TextField, VirtualList } from "~/lib/ui"
@@ -24,10 +25,7 @@ export function NewChat(props: { onDone: (started: boolean) => void }) {
   const [name, setName] = createSignal("")
   const [busy, setBusy] = createSignal(false)
   const shown = createMemo(() => {
-    const q = query().trim().toLowerCase()
-    return friends.friends
-      .filter((f) => !q || f.displayName.toLowerCase().includes(q) || f.name.toLowerCase().includes(q))
-      .slice(0, 100)
+    return rank(friends.friends, query(), (f) => [f.displayName, f.name]).slice(0, 100)
   })
   const toggle = (id: number) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
   const start = async () => {

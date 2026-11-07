@@ -17,6 +17,7 @@ import {
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { userMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
@@ -544,10 +545,8 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
   const shown = createMemo(() => {
     let rows = list.items
     if (friends() && mutualOnly() === "mutual") rows = rows.filter((p) => p.friend)
-    const q = query().trim().toLowerCase()
     // Friends are already searched on Roblox; this only filters the other lists.
-    if (q && !friends()) rows = rows.filter((p) => `${p.name} ${p.displayName}`.toLowerCase().includes(q))
-    return rows
+    return friends() ? rows : rank(rows, query(), (p) => [p.displayName, p.name])
   })
   useListCursor({
     count: () => shown().length,

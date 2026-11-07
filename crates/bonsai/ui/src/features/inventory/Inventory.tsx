@@ -19,6 +19,7 @@ import {
 import { IdFact, ItemPreview, PreviewDescription, PreviewHeader, wantsPreview } from "~/lib/item-preview"
 import { emptyList, ListState } from "~/lib/list-state"
 import { gameMenu, type ItemMenuExtras, itemTarget, shareMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { ItemTile, Price, TILE_WIDTH } from "~/lib/tiles"
@@ -48,7 +49,7 @@ import {
 import { paramOf, useParamDraft } from "~/lib/url-params"
 import { useValuesRefresh } from "~/lib/value-tags"
 import { VALUES_SOURCE } from "~/lib/values"
-import { FILTERS, type InvFilter, isFilter, matches, shapeInventory, slotAssetType } from "./filter"
+import { FILTERS, type InvFilter, isFilter, searchItems, shapeInventory, slotAssetType } from "./filter"
 import { findSlot, inventorySections } from "./sections"
 
 const COLLECTIBLES = "collectibles"
@@ -468,8 +469,6 @@ function Items(props: {
   )
 }
 
-const byName = (name: string, id: number, query: string) => matches({ id, name, creator: "" }, query)
-
 function Badges(props: {
   userId: number
   query: string
@@ -479,7 +478,14 @@ function Badges(props: {
   const res = useLive(() => props.userId, commands.inventoryBadges, pagedEmpty<UserBadge>)
   createEffect(() => props.onLoad(res.list.items))
   onCleanup(() => props.onLoad([]))
-  const shown = createMemo(() => res.list.items.filter((b) => byName(b.name, b.id, props.query)))
+  const shown = createMemo(() =>
+    rank(
+      res.list.items,
+      props.query,
+      (b) => [b.name],
+      (b) => b.id,
+    ),
+  )
   return (
     <ListState list={res.list} icon="badge" empty="No badges" more={res.moreKey} autoMore>
       <VirtualGrid
@@ -524,7 +530,7 @@ function Passes(props: {
   const res = useLive(() => props.userId, commands.inventoryPasses, pagedEmpty<PassCard>)
   createEffect(() => props.onLoad(res.list.items))
   onCleanup(() => props.onLoad([]))
-  const shown = createMemo(() => res.list.items.filter((p) => matches(p, props.query)))
+  const shown = createMemo(() => searchItems(res.list.items, props.query))
   return (
     <ListState list={res.list} icon="game" empty="No passes" more={res.moreKey}>
       <VirtualGrid
@@ -569,7 +575,14 @@ function Places(props: {
   const res = useLive(() => props.userId, commands.inventoryPlaces, pagedEmpty<PlaceCard>)
   createEffect(() => props.onLoad(res.list.items))
   onCleanup(() => props.onLoad([]))
-  const shown = createMemo(() => res.list.items.filter((p) => byName(p.name, p.placeId, props.query)))
+  const shown = createMemo(() =>
+    rank(
+      res.list.items,
+      props.query,
+      (p) => [p.name],
+      (p) => p.placeId,
+    ),
+  )
   return (
     <ListState
       list={res.list}

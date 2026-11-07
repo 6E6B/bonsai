@@ -20,6 +20,7 @@ import {
 import { Description, LinkedText } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { entityMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
@@ -412,12 +413,7 @@ function Members(props: { groupId: number; myRank: number; canRank: boolean; can
     emptyList<MemberRow>,
   )
   const [filter, setFilter] = createSignal("")
-  const shown = createMemo(() => {
-    const q = filter().trim().toLowerCase()
-    return members.items.filter(
-      (m) => !q || m.name.toLowerCase().includes(q) || m.displayName.toLowerCase().includes(q),
-    )
-  })
+  const shown = createMemo(() => rank(members.items, filter(), (m) => [m.displayName, m.name]))
   // You can move people below your own rank, to roles below your own rank.
   const ranked = () => roles.items.filter((r) => r.rank > 0)
   const canTouch = () => (role()?.rank ?? 255) < props.myRank
