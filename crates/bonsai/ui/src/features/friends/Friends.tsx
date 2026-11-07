@@ -151,7 +151,7 @@ export default function Friends() {
   }
 
   return (
-    <Page title="Friends">
+    <Page>
       <Tabs
         aria-label="Friends sections"
         items={sections()}

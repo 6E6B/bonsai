@@ -75,8 +75,7 @@ export default function Notifications() {
 
   return (
     <Page
-      title="Notifications"
-      actions={
+      toolbar={
         <>
           <SegmentedControl
             aria-label="Show"
@@ -96,6 +95,10 @@ export default function Notifications() {
             onChange={(c) => run("notifications.category", c === "all" ? "" : c)}
             options={[{ value: "all", label: "All categories" }, ...(categories() ?? [])]}
           />
+        </>
+      }
+      actions={
+        <>
           <Button onClick={() => run("notifications.mark_read")} icon="check">
             Mark all read
           </Button>

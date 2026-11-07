@@ -68,6 +68,7 @@ import {
   Thumbnail,
   Tile,
   ToggleButton,
+  Toolbar,
   Tooltip,
   useConfirm,
   usePrompt,
@@ -210,7 +211,6 @@ export default function Components() {
 
   return (
     <Page
-      title="Components"
       class="gap-10"
       actions={
         <Select
@@ -724,9 +724,11 @@ export default function Components() {
         </div>
       </Section>
 
-      <Section title="Section header">
+      <Section title="Toolbar and section headers">
         <div class="flex w-full flex-col gap-2">
-          <SectionHeader title="Page title" size="page" actions={<Button size="sm">Action</Button>} />
+          <Toolbar actions={<Button size="sm">Action</Button>}>
+            <TextField icon="search" aria-label="Filter" placeholder="Filter" />
+          </Toolbar>
           <SectionHeader title="Section" meta="61 servers" />
           <SectionHeader title="In game" meta={2} size="group" />
         </div>

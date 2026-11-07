@@ -1,12 +1,11 @@
 import { type JSX, type ParentProps, Show } from "solid-js"
 import { Dynamic } from "solid-js/web"
-import { SectionHeader } from "./section-header"
+import { Toolbar } from "./toolbar"
 
 export interface PageProps extends ParentProps {
-  /** Page heading. Entity pages with their own header leave it out. */
-  title?: string
-  meta?: JSX.Element
-  /** Buttons on the right of the heading. */
+  /** Filters, search and counts in the toolbar, on the left. */
+  toolbar?: JSX.Element
+  /** Buttons on the right of the toolbar. */
   actions?: JSX.Element
   class?: string
 }
@@ -89,13 +88,14 @@ export function SideMain(props: ParentProps<{ class?: string }>) {
   )
 }
 
-/** The frame of every screen that is not a `Split` or `SidePage`: the heading, then the body,
- * filling the window with the same insets everywhere. Lay out the body with Tailwind in `class`. */
+/** The frame of every screen that is not a `Split` or `SidePage`: fills the window with the same
+ * insets everywhere. There is no title, since the tab names the screen. A `Toolbar` comes first
+ * when the screen has controls. Lay out the body with Tailwind in `class`. */
 export function Page(props: PageProps) {
   return (
     <div data-component="page" class={props.class}>
-      <Show when={props.title}>
-        {(t) => <SectionHeader title={t()} meta={props.meta} actions={props.actions} size="page" />}
+      <Show when={props.toolbar || props.actions}>
+        <Toolbar actions={props.actions}>{props.toolbar}</Toolbar>
       </Show>
       {props.children}
     </div>

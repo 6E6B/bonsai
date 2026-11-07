@@ -21,11 +21,11 @@ import {
   Menu,
   type MenuEntry,
   Pane,
-  SectionHeader,
   Skeleton,
   Split,
   showToast,
   TextField,
+  Toolbar,
   useDialog,
   usePrompt,
   VirtualList,
@@ -112,18 +112,16 @@ export default function Chat() {
   return (
     <Split>
       <Pane side class="w-80">
-        <SectionHeader
-          title="Chat"
-          size="page"
-          actions={<IconButton icon="plus" label="New chat" onClick={() => run("chat.new_group")} />}
-        />
-        <TextField
-          icon="search"
-          aria-label="Search conversations"
-          placeholder="Search by friend or group name"
-          value={query()}
-          onChange={setQuery}
-        />
+        <Toolbar actions={<IconButton icon="plus" label="New chat" onClick={() => run("chat.new_group")} />}>
+          <TextField
+            class="flex-1"
+            icon="search"
+            aria-label="Search conversations"
+            placeholder="Search by friend or group name"
+            value={query()}
+            onChange={setQuery}
+          />
+        </Toolbar>
         <ListState list={list.list} icon="chat" empty="No conversations" more={list.moreKey}>
           <div data-cursor-list class="flex flex-col">
             <VirtualList

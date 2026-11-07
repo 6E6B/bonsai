@@ -84,14 +84,13 @@ export default function Values() {
   )
   return (
     <Page
-      title="Values"
       actions={
         // While values are off, the empty state's button turns them on.
-        <Show when={shell.itemValues}>
+        shell.itemValues && (
           <Switch checked onChange={() => run("market.values")}>
             Show values
           </Switch>
-        </Show>
+        )
       }
     >
       <Show

@@ -83,8 +83,23 @@ export default function Communities() {
 
   return (
     <Page
-      title="Communities"
-      meta={mine.items.length || undefined}
+      toolbar={
+        <form
+          class="flex-1"
+          onSubmit={(e) => {
+            e.preventDefault()
+            search()
+          }}
+        >
+          <TextField
+            icon="search"
+            aria-label="Filter communities"
+            placeholder="Filter, or press Enter to search all communities"
+            value={query()}
+            onChange={setQuery}
+          />
+        </form>
+      }
       actions={
         <Show
           when={selecting()}
@@ -105,20 +120,6 @@ export default function Communities() {
         </Show>
       }
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          search()
-        }}
-      >
-        <TextField
-          icon="search"
-          aria-label="Filter communities"
-          placeholder="Filter, or press Enter to search all communities"
-          value={query()}
-          onChange={setQuery}
-        />
-      </form>
       <Show when={searched()} fallback={<MyList />}>
         {(q) => <Results query={q()} onClear={() => navigate("/communities")} />}
       </Show>

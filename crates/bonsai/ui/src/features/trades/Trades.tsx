@@ -39,6 +39,7 @@ import {
   TextField,
   TextLink,
   Thumbnail,
+  Toolbar,
   usePrompt,
   VirtualList,
 } from "~/lib/ui"
@@ -91,9 +92,7 @@ export default function Trades() {
   return (
     <Split>
       <Pane side class="w-88">
-        <SectionHeader
-          title="Trades"
-          size="page"
+        <Toolbar
           actions={
             <>
               <Menu

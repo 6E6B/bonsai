@@ -18,11 +18,11 @@ import {
   EmptyState,
   ListItem,
   Pane,
-  SectionHeader,
   Split,
   showToast,
   Tabs,
   TextField,
+  Toolbar,
   VerifiedBadge,
   VirtualList,
 } from "~/lib/ui"
@@ -131,9 +131,7 @@ export default function Messages() {
   return (
     <Split>
       <Pane side class="w-88">
-        <SectionHeader
-          title="Messages"
-          size="page"
+        <Toolbar
           actions={
             <>
               <Button size="sm" onClick={() => (selecting() ? stopSelecting() : setSelecting(true))}>

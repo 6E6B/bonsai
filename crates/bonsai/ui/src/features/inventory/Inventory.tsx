@@ -96,7 +96,7 @@ export default function Inventory() {
     <Show
       when={userId()}
       fallback={
-        <Page title={owner() ? `Inventory of ${owner()}` : "Inventory"}>
+        <Page>
           <Show when={lookup.error ?? (!who() && "Add an account to see your inventory.")} fallback={<span />}>
             {(e) => <EmptyState icon="inventory" title={e()} />}
           </Show>
@@ -217,7 +217,6 @@ function Browser(props: { userId: number; mine: boolean; owner: string }) {
         class="w-56"
         header={
           <>
-            <SectionHeader title="Inventory" size="page" />
             <Show when={props.owner}>
               <span class="truncate text-sm text-fg-muted">of {props.owner}</span>
             </Show>

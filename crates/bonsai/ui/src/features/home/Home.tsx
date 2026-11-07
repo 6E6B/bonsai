@@ -45,7 +45,7 @@ export default function Home() {
         </EmptyState>
       }
     >
-      <Page title="Home" class="gap-6">
+      <Page class="gap-6">
         <Show when={shell.look.homeFriends && playing().length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader title="Friends playing" meta={playing().length} />

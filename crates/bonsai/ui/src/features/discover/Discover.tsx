@@ -31,7 +31,7 @@ export default function Discover() {
   const filter = (kind: string) => view.filters.find((f) => f.kind === kind)
 
   return (
-    <Page title="Discover" class="!gap-3">
+    <Page class="!gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <Show when={filter("device")}>
           {(f) => (

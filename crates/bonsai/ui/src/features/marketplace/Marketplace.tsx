@@ -100,7 +100,7 @@ export default function Marketplace() {
 
   return (
     <SidePage>
-      <SidePanel class="w-56" header={<SectionHeader title="Marketplace" size="page" />}>
+      <SidePanel class="w-56">
         <Show when={!wishlistOpen()}>
           <div class="flex flex-col gap-2 border-b border-line px-2 pb-3">
             <SectionHeader

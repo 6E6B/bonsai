@@ -193,7 +193,7 @@ export default function Hub() {
     </div>
   )
   return (
-    <Page title="Hub">
+    <Page>
       <Tabs
         aria-label="Hub section"
         actions={

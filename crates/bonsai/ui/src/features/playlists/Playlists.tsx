@@ -14,10 +14,10 @@ import {
   Menu,
   Page,
   Pane,
-  SectionHeader,
   Split,
   TextField,
   Thumbnail,
+  Toolbar,
   Tooltip,
   VirtualGrid,
 } from "~/lib/ui"
@@ -69,7 +69,7 @@ export default function Playlists() {
     <Show
       when={open()}
       fallback={
-        <Page title="Playlists">
+        <Page>
           <EmptyState
             class="mt-24"
             icon="playlist"
@@ -86,9 +86,7 @@ export default function Playlists() {
       {(p) => (
         <Split>
           <Pane side class="w-72">
-            <SectionHeader
-              title="Playlists"
-              size="page"
+            <Toolbar
               actions={
                 <Tooltip content="New playlist">
                   <IconButton size="sm" icon="plus" label="New playlist" onClick={() => run("playlist.new")} />

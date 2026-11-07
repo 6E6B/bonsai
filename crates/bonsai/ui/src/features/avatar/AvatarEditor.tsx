@@ -156,7 +156,6 @@ export default function AvatarEditor() {
 
   return (
     <Page
-      title="Avatar"
       actions={
         <>
           <IconButton icon="refresh" label="Redraw avatar image" onClick={() => run("avatar.redraw")} />

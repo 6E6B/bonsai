@@ -17,6 +17,7 @@ import {
   Skeleton,
   TextField,
   Thumbnail,
+  Toolbar,
   VirtualList,
 } from "~/lib/ui"
 import { kindLabel, mainPage, ROBLOX_WIKI, type WikiSearchView } from "~/lib/wiki"
@@ -73,34 +74,36 @@ export default function Wiki() {
   })
 
   return (
-    <Page
-      title="Wiki"
-      actions={
-        <Show when={other()}>
-          <Button size="sm" variant="ghost" icon="wiki" onClick={() => openArticle(mainPage(wiki()))}>
-            Main page
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => run("wiki.search", query())}>
-            Search the Roblox Wiki
-          </Button>
-        </Show>
-      }
-    >
+    <Page>
       <Switch>
         <Match when={!view.enabled}>
           <WikiOff />
         </Match>
         <Match when>
-          <TextField
-            icon="search"
-            placeholder={other() ? `Search the ${source()}` : "Search items, experiences, players and more"}
-            value={query()}
-            onChange={(v) => {
-              setQuery(v)
-              setCursor(0)
-            }}
-            autofocus
-          />
+          <Toolbar
+            actions={
+              <Show when={other()}>
+                <Button size="sm" variant="ghost" icon="wiki" onClick={() => openArticle(mainPage(wiki()))}>
+                  Main page
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => run("wiki.search", query())}>
+                  Search the Roblox Wiki
+                </Button>
+              </Show>
+            }
+          >
+            <TextField
+              class="flex-1"
+              icon="search"
+              placeholder={other() ? `Search the ${source()}` : "Search items, experiences, players and more"}
+              value={query()}
+              onChange={(v) => {
+                setQuery(v)
+                setCursor(0)
+              }}
+              autofocus
+            />
+          </Toolbar>
           <Switch>
             <Match when={!searched() && other()}>
               <EmptyState

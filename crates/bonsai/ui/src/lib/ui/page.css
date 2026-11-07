@@ -74,6 +74,11 @@
     overflow-y: auto;
   }
 
+  /* Without a header, the body starts at the same inset as a page. */
+  [data-component="side-panel"] > [data-slot="body"]:first-child {
+    padding-top: 16px;
+  }
+
   [data-component="side-panel"][data-edge="end"] > [data-slot="body"] {
     padding: 16px 12px;
   }

@@ -74,7 +74,6 @@ export default function Themes() {
 
   return (
     <Page
-      title="Themes"
       actions={
         <>
           <Button size="sm" onClick={() => run("nav.hub")}>
