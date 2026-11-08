@@ -17,60 +17,60 @@ import {
 
 /** Rolimons' view of a trader: what their limiteds are worth, their leaderboard rank and the
  * badges Rolimons gave them, with the source and age always shown. While values are off it is
- * one line offering to turn them on. */
+ * one line offering to turn them on. Hidden when Rolimons hasn't scanned the player. */
 export function TradingCard(props: { view: TraderView; enabled: boolean }) {
+  const unscanned = () => props.enabled && props.view.stats !== null && !props.view.stats.tracked
   return (
-    <Card class="flex flex-col gap-3 px-3.5 py-3">
-      <div class="flex flex-wrap items-center gap-1.5">
-        <h3 class="text-sm font-medium text-fg-muted">Trading</h3>
-        <Tooltip content={`Data from ${VALUES_SOURCE}, a third-party site`} class="inline-flex">
-          <span class="flex items-center gap-1 text-xs text-fg-faint">
-            <Icon name="rolimons" size={12} />
-            {VALUES_SOURCE}
-          </span>
-        </Tooltip>
-        <Show when={props.view.stats?.tracked && props.view.stats}>{(s) => <Flags stats={s()} />}</Show>
-        <Show when={props.view.stats?.updatedAt}>
-          {(t) => (
-            <span class="ml-auto text-xs text-fg-faint" title={date(t())}>
-              Updated {ago(t())}
+    <Show when={!unscanned()}>
+      <Card class="flex flex-col gap-3 px-3.5 py-3">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <h3 class="text-sm font-medium text-fg-muted">Trading</h3>
+          <Tooltip content={`Data from ${VALUES_SOURCE}, a third-party site`} class="inline-flex">
+            <span class="flex items-center gap-1 text-xs text-fg-faint">
+              <Icon name="rolimons" size={12} />
+              {VALUES_SOURCE}
             </span>
-          )}
-        </Show>
-      </div>
-      <Show
-        when={props.enabled}
-        fallback={
-          <span class="text-sm text-fg-muted">
-            Value, rank and badges from {VALUES_SOURCE}.{" "}
-            <TextLink onClick={() => run("market.values")}>Turn on</TextLink>
-          </span>
-        }
-      >
+          </Tooltip>
+          <Show when={props.view.stats?.tracked && props.view.stats}>{(s) => <Flags stats={s()} />}</Show>
+          <Show when={props.view.stats?.updatedAt}>
+            {(t) => (
+              <span class="ml-auto text-xs text-fg-faint" title={date(t())}>
+                Updated {ago(t())}
+              </span>
+            )}
+          </Show>
+        </div>
         <Show
-          when={props.view.stats}
+          when={props.enabled}
           fallback={
-            <Show when={props.view.error} fallback={<Skeleton class="h-12 w-full rounded-md" />}>
-              <span class="text-sm text-fg-muted">Trading data unavailable.</span>
-            </Show>
+            <span class="text-sm text-fg-muted">
+              Value, rank and badges from {VALUES_SOURCE}.{" "}
+              <TextLink onClick={() => run("market.values")}>Turn on</TextLink>
+            </span>
           }
         >
-          {(s) => (
-            <Show
-              when={s().tracked}
-              fallback={<span class="text-sm text-fg-muted">{VALUES_SOURCE} hasn't scanned this player.</span>}
-            >
-              <Numbers stats={s()} />
-              <Show when={s().badges.length > 0}>
-                <div class="flex flex-wrap gap-1.5">
-                  <For each={rarestFirst(topBadges(s().badges))}>{(b) => <RoliBadge shown={b} />}</For>
-                </div>
+          <Show
+            when={props.view.stats}
+            fallback={
+              <Show when={props.view.error} fallback={<Skeleton class="h-12 w-full rounded-md" />}>
+                <span class="text-sm text-fg-muted">Trading data unavailable.</span>
               </Show>
-            </Show>
-          )}
+            }
+          >
+            {(s) => (
+              <>
+                <Numbers stats={s()} />
+                <Show when={s().badges.length > 0}>
+                  <div class="flex flex-wrap gap-1.5">
+                    <For each={rarestFirst(topBadges(s().badges))}>{(b) => <RoliBadge shown={b} />}</For>
+                  </div>
+                </Show>
+              </>
+            )}
+          </Show>
         </Show>
-      </Show>
-    </Card>
+      </Card>
+    </Show>
   )
 }
 
