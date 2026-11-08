@@ -131,7 +131,7 @@ function Browser(props: { rows: ValueRow[] }) {
   const [version, setVersion] = createSignal<LimitedVersion | "all">("all")
   const [show, setShow] = createSignal<ValueShow>("all")
   const [sort, setSort] = createSignal<ValueSort>("worth")
-  const [cursor, setCursor] = createSignal(0)
+  const [cursor, setCursor] = createSignal(-1)
   const shown = createMemo(() =>
     shapeValues(props.rows, { query: query(), version: version(), show: show(), sort: sort() }),
   )

@@ -81,17 +81,7 @@
   }
 
   [data-component="data-table"] [data-slot="row"][data-selected] {
-    background: var(--color-accent-soft);
-  }
-
-  [data-component="data-table"] [data-slot="row"][data-selected]::before {
-    position: absolute;
-    inset-block: 6px;
-    inset-inline-start: 0;
-    width: 2px;
-    border-radius: var(--radius-full);
-    background: var(--color-accent);
-    content: "";
+    background: var(--color-active);
   }
 
   [data-component="data-table"] [data-slot="td"] {
