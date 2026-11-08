@@ -56,7 +56,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `VirtualGrid` | Growing tile grids: inventory, catalog, outfits, game stores and recommendations. Measures rows and adapts the column count. |
 | `VirtualShelf` | Horizontal collections with expensive tiles, such as profile preview shelves. Fixed item widths, measured height, fades and arrow controls. |
 | `PersonCard` | A person in a grid of compact cards: friends playing. A `Card` with avatar, name, one muted line, an optional trailing action. |
-| `PersonTile` | A person as a tile: big round headshot, display name, @username. Friends rows on a profile and Home. `stack` for several people together, like friends in one game. |
+| `PersonTile` | A person as a tile: big round headshot, display name, @username. Friends rows on a profile and Home. |
 | `Tile` | A picture with a title: games, items, outfits, communities. `selected` for worn or picked items. |
 | `Shelf` | A short, fixed horizontal strip. Use `VirtualShelf` for data collections. |
 | `MediaFrame` | An image with previous and next arrows and a counter laid over it. |
