@@ -25,9 +25,16 @@ export function wornKind(assetType: number): WornKind {
   return "other"
 }
 
-/** Kinds worth a thumbnail on the profile overview. Body parts and animations mostly render as
- * the same blank figure, so the overview only counts them. */
-export const SHOWN: ReadonlySet<WornKind> = new Set<WornKind>(["accessories", "clothing", "other"])
+// Head, Face and DynamicHead: body parts that look different from one another.
+const HEADS = new Set([17, 18, 79])
+
+/** Whether an item gets a thumbnail on the profile overview. Accessories, clothing, heads and
+ * faces do. Other body parts and animations mostly render as the same blank figure, so the
+ * overview only counts them. */
+export function shownOnOverview(assetType: number) {
+  const kind = wornKind(assetType)
+  return HEADS.has(assetType) || (kind !== "body" && kind !== "animations")
+}
 
 /** One page of `size` items. `index` is clamped to the pages there are, so a list that shrank
  * under the pager still shows its last page. There is always at least one page. */

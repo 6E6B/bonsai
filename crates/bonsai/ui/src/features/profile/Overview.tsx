@@ -39,7 +39,7 @@ import {
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
 import { TradingCard } from "./Trading"
-import { pageOf, SHOWN, wornKind } from "./wearing"
+import { pageOf, shownOnOverview } from "./wearing"
 
 /** Entry widths for each row: tiles match `tileGrid`; people and badges are narrower. */
 const TILE = 128
@@ -283,9 +283,9 @@ export function BadgeTile(props: { badge: UserBadge }) {
 /** Worn items on one page of the Wearing card: two rows of four. */
 const WORN_PAGE = 8
 
-/** Their avatar as it is now, with the accessories and clothing on it, two rows at a time. Body
- * parts and animations look alike and say little at this size, so they are left out; the Outfits
- * tab lists them. */
+/** Their avatar as it is now, with the accessories, clothing, head and face on it, two rows at a
+ * time. Other body parts and animations look alike and say little at this size, so they are left
+ * out; the Outfits tab lists them. */
 function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }) {
   const [index, setIndex] = createSignal(0)
   createEffect(
@@ -295,7 +295,7 @@ function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }
       { defer: true },
     ),
   )
-  const shown = () => props.look.items.filter((i) => SHOWN.has(wornKind(i.assetType)))
+  const shown = () => props.look.items.filter((i) => shownOnOverview(i.assetType))
   const page = () => pageOf(shown(), index(), WORN_PAGE)
   return (
     <Card class="flex flex-col">
