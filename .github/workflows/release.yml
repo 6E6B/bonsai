@@ -1,9 +1,7 @@
-# Builds installers and prepares a draft release from a tag or the Run workflow button.
+# Builds installers and prepares a draft release only from the Run workflow button.
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
     inputs:
       create_release:
@@ -12,7 +10,7 @@ on:
         default: true
 
 concurrency:
-  # Serialize manual and tag runs so they cannot race to create the same release.
+  # Serialize manual runs so they cannot race to create the same release.
   group: release
   cancel-in-progress: false
 
@@ -38,7 +36,7 @@ jobs:
           fetch-depth: 0
       - id: version
         env:
-          CREATE_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') || inputs.create_release }}
+          CREATE_RELEASE: ${{ inputs.create_release }}
           BONSAI_UPDATER_PUBLIC_KEY: ${{ vars.BONSAI_UPDATER_PUBLIC_KEY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |

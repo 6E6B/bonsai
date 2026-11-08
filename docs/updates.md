@@ -48,8 +48,9 @@ rerunning; do not publish it with missing assets.
 
 For test installers without a release, uncheck **Create a draft release**. Downloads
 appear under **Artifacts** on the run page. These test builds may be unsigned if signing
-is not configured, and unsigned builds cannot receive in-app updates. Pushing a matching
-`v<version>` tag still starts the signed draft-release flow.
+is not configured, and unsigned builds cannot receive in-app updates. Release builds run
+only through **Run workflow**; merging pull requests, pushing tags and publishing releases
+do not start another release build.
 
 Release builds fail if signing configuration is missing.
 Keep the same key for subsequent releases. Changing the compiled verification key
