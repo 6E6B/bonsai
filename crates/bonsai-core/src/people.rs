@@ -344,7 +344,7 @@ impl Core {
                     ..Default::default()
                 };
                 let r =
-                    users::v1::get_users_by_user_id_username_history(&f.client, user_id as i64, &p).await?;
+                    users::v1::get_users_by_user_id_username_history(&f.public(), user_id as i64, &p).await?;
                 Ok(r.data
                     .unwrap_or_default()
                     .into_iter()
@@ -361,7 +361,8 @@ impl Core {
             PROFILE_AGE,
             move |f| async move {
                 let p = groups::v1::GetUsersByUserIdGroupsRolesParams::default();
-                let r = groups::v1::get_users_by_user_id_groups_roles(&f.client, user_id as i64, &p).await?;
+                let r =
+                    groups::v1::get_users_by_user_id_groups_roles(&f.public(), user_id as i64, &p).await?;
                 let mut v: Vec<GroupRole> = r
                     .data
                     .unwrap_or_default()
@@ -416,7 +417,7 @@ impl Core {
                     limit: Some(50),
                     ..Default::default()
                 };
-                let r = games::v2::get_users_by_user_id_games(&f.client, user_id as i64, &p).await?;
+                let r = games::v2::get_users_by_user_id_games(&f.public(), user_id as i64, &p).await?;
                 Ok(r.data
                     .unwrap_or_default()
                     .into_iter()
@@ -941,7 +942,7 @@ impl crate::core::Inner {
             Key::shared("profile", user_id),
             PROFILE_AGE,
             move |f| async move {
-                let u = users::v1::get_users_by_user_id(&f.client, user_id as i64).await?;
+                let u = users::v1::get_users_by_user_id(&f.public(), user_id as i64).await?;
                 Ok(Profile {
                     id: user_id,
                     name: u.name.unwrap_or_default(),
@@ -965,7 +966,7 @@ impl crate::core::Inner {
             PROFILE_AGE,
             move |f| async move {
                 let id = user_id as i64;
-                let c = &f.client;
+                let c = &f.public();
                 let (fr, fo, fg) = tokio::join!(
                     friends::v1::get_users_by_user_id_friends_count(c, id),
                     friends::v1::get_users_by_target_user_id_followers_count(c, id),

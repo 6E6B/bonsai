@@ -57,7 +57,15 @@ impl CoreConfig {
                     .with_route("apis.roblox.com", "/transaction-records/", 0.4, 4.0)
                     // User names for whole lists. Roblox allows 10,000 a minute; keep them
                     // from queueing behind chat and explore on the shared apis bucket.
-                    .with_route("apis.roblox.com", "/user-profile-api/", 10.0, 20.0),
+                    .with_route("apis.roblox.com", "/user-profile-api/", 10.0, 20.0)
+                    // Past names: 5 a minute signed in, 1 signed out. On the host bucket a spent
+                    // quota held every users.roblox.com call, profile headers included.
+                    .with_route(
+                        "users.roblox.com",
+                        "/v1/users/*/username-history",
+                        5.0 / 60.0,
+                        4.0,
+                    ),
             ),
             background: true,
             // What the site uses.
@@ -1640,9 +1648,11 @@ fn due_thumbs(
     thumbs::due_for_check(&recent, checked, &own, crate::cache::now(), own_age, other_age)
 }
 
-/// Who looks thumbnails up: the first signed-in account, since Roblox allows a signed-in user
-/// more than an anonymous IP. The images are public, so the cache stays shared.
-pub(crate) fn thumb_client(inner: &Inner) -> Client {
+/// Who fetches public data (thumbnails, profiles, avatars): the first signed-in account, since
+/// Roblox allows a signed-in user far more than an anonymous IP (outfits and past names: 1 a
+/// minute signed out). The data is public, so the cache stays shared. Anonymous when no one is
+/// signed in.
+pub(crate) fn public_client(inner: &Inner) -> Client {
     let s = inner.store.read();
     let clients = inner.clients.read();
     clients
@@ -1767,7 +1777,7 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbMs
         // Retry these, counting a try (`true`), or after `wait` without counting one.
         let mut again: Vec<(ThumbKey, bool)> = Vec::new();
         let mut wait = None;
-        let client = thumb_client(&inner);
+        let client = public_client(&inner);
         let tokens = player_tokens(&inner, &batch);
         let token = |k: &ThumbKey| tokens.get(&k.id).cloned();
         let mut res = thumbs::lookup(&client, &batch, token).await;

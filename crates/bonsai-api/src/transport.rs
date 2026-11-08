@@ -150,7 +150,8 @@ impl RateLimiter {
 
     /// A bucket for paths under `prefix` on `host`, apart from the rest of the host. Meant for
     /// endpoints that answer 429 after a few calls: the limiter paces them, and a 429 there is
-    /// not retried by [`Client::send`] (retrying only extends the block).
+    /// not retried by [`Client::send`] (retrying only extends the block). A `*` in `prefix`
+    /// stands for one path segment, like an id: `/v1/users/*/username-history`.
     pub fn with_route(mut self, host: &str, prefix: &str, rate_per_sec: f64, burst: f64) -> Self {
         self.overrides
             .insert(format!("{host}{prefix}"), (rate_per_sec, burst));
@@ -164,7 +165,7 @@ impl RateLimiter {
         match self
             .routes
             .iter()
-            .find(|(h, p)| h == host && path.starts_with(p.as_str()))
+            .find(|(h, p)| h == host && route_matches(p, path))
         {
             Some((h, p)) => (format!("{h}{p}"), true),
             None => (host.to_string(), false),
@@ -307,6 +308,25 @@ impl RateLimiter {
         };
         self.note_hold(host, held);
     }
+}
+
+/// Whether `path` starts with route `prefix`, where each `*` in it is one non-empty segment.
+fn route_matches(prefix: &str, path: &str) -> bool {
+    let mut rest = path;
+    for (i, part) in prefix.split('*').enumerate() {
+        if i > 0 {
+            let end = rest.find('/').unwrap_or(rest.len());
+            if end == 0 {
+                return false;
+            }
+            rest = &rest[end..];
+        }
+        match rest.strip_prefix(part) {
+            Some(r) => rest = r,
+            None => return false,
+        }
+    }
+    true
 }
 
 /// A limiter wait or hold at least this long is logged, and a hold this long is shown.
@@ -1303,5 +1323,19 @@ mod tests {
             l.reserve("api.x").is_zero(),
             "a 429 on the route leaves the host alone"
         );
+    }
+
+    #[test]
+    fn route_stars_match_one_segment() {
+        let l = RateLimiter::new(10.0, 10.0).with_route("users.x", "/v1/users/*/username-history", 1.0, 1.0);
+        let route = "users.x/v1/users/*/username-history";
+        assert_eq!(l.bucket("users.x", "/v1/users/23/username-history").0, route);
+        assert_eq!(l.bucket("users.x", "/v1/users/23").0, "users.x");
+        assert_eq!(l.bucket("users.x", "/v1/users//username-history").0, "users.x");
+        assert_eq!(l.bucket("users.x", "/v1/users/2/3/username-history").0, "users.x");
+        // A spent quota there leaves the profile itself alone.
+        l.observe(route, 0, Duration::from_secs(30));
+        assert!(!l.held_for(route).is_zero());
+        assert!(l.reserve("users.x").is_zero());
     }
 }

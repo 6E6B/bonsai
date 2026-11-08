@@ -11,7 +11,7 @@ use bonsai_api::{AccountId, Error};
 
 use crate::Core;
 use crate::cache::Kind;
-use crate::core::thumb_client;
+use crate::core::public_client;
 use crate::thumbs::{Image, ThumbKey, ThumbState, sniff};
 
 pub struct ThumbnailImage {
@@ -56,7 +56,7 @@ impl Core {
     /// public URLs and image bytes share the thumb:// disk cache.
     pub async fn thumbnail_image(&self, key: ThumbKey) -> Result<ThumbnailImage, String> {
         let sizes = key.kind.export_sizes();
-        let client = thumb_client(&self.inner);
+        let client = public_client(&self.inner);
         let result = async {
             for &size in sizes {
                 let request_id = key.request_id_for(size);
