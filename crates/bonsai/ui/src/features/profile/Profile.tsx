@@ -232,7 +232,7 @@ export default function Profile() {
                     <Badge variant="danger">Banned</Badge>
                   </Show>
                 </h1>
-                <span class="truncate text-fg-muted">
+                <span class={u().verified ? "truncate text-verified-muted" : "truncate text-fg-muted"}>
                   @{u().name}
                   <Show when={view.nickname}>
                     {(n) => (

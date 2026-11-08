@@ -44,6 +44,7 @@ export const TOKENS: readonly Token[] = [
     ["color-on-accent", "Text on fills"],
     ["color-contrast", "Primary button"],
     ["color-verified", "Verified names"],
+    ["color-verified-muted", "Verified usernames"],
   ]),
   ...t("Status", "color", [
     ["color-success", "Success"],

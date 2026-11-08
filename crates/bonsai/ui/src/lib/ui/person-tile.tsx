@@ -34,7 +34,7 @@ export function PersonTile(props: PersonTileProps) {
         </Show>
       </span>
       <Show when={props.username}>
-        <span data-slot="username" title={`@${props.username}`}>
+        <span data-slot="username" data-verified={props.verified ? "" : undefined} title={`@${props.username}`}>
           @{props.username}
         </span>
       </Show>

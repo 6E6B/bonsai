@@ -1,5 +1,5 @@
 @layer components {
-  /* The asset fill (#4d94ff) is a shade lighter than --color-verified, the colour of verified names. */
+  /* The asset fill (#4d94ff) is --color-verified, the colour of verified names. */
   [data-component="verified-badge"] {
     display: inline-block;
     flex-shrink: 0;

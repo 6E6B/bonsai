@@ -376,7 +376,7 @@ function Members(props: { groupId: number; myRank: number; canRank: boolean; can
           <Show when={m.verified}>
             <VerifiedBadge />
           </Show>
-          <span class="truncate text-fg-muted">@{m.name}</span>
+          <span class={m.verified ? "truncate text-verified-muted" : "truncate text-fg-muted"}>@{m.name}</span>
         </>
       ),
     },

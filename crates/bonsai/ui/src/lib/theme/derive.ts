@@ -252,7 +252,8 @@ function shadow(layers: Layer[], seeds: ShadowSeeds): string {
 
 /* ── Constants ── Same in both bases unless a theme pins them. */
 const FIXED: Tokens = {
-  "color-verified": "#3a7fe6", // verified names; a shade darker than the badge fill (#4d94ff)
+  "color-verified": "#4d94ff", // verified names; the badge fill
+  "color-verified-muted": "#3a7fe6", // a verified user's @username under their name
   "color-media-chip": "#000000a6",
   "color-on-media": "#ffffff",
   "color-presence-online": "#00a2ff", // Roblox's online blue, not the accent
