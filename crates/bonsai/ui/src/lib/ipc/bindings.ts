@@ -1918,6 +1918,8 @@ export type ProfileHead = {
 	created: string,
 	verified: boolean,
 	banned: boolean,
+	/**  Has Roblox Premium. */
+	premium: boolean,
 	/**  Counts; `None` when Roblox didn't say. */
 	friends: number | null,
 	followers: number | null,

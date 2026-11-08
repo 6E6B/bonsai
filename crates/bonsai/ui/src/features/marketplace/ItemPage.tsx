@@ -34,6 +34,7 @@ import {
   Icon,
   Menu,
   Page,
+  PremiumBadge,
   Robux,
   Stat,
   showToast,
@@ -245,7 +246,10 @@ export default function ItemPage() {
                   <h1 class="truncate text-2xl font-medium">{item().name}</h1>
                   <Show when={item().limited}>{(l) => <Badge variant="success">{l()}</Badge>}</Show>
                   <Show when={item().premiumOnly}>
-                    <Badge>Premium</Badge>
+                    <Badge>
+                      <PremiumBadge bare size={12} class="-ml-0.5 mr-1" />
+                      Premium
+                    </Badge>
                   </Show>
                   <Show when={item().publicDomain}>
                     <Badge>Free to take</Badge>

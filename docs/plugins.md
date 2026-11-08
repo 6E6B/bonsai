@@ -328,7 +328,7 @@ like the rest of the app. Private reads need `read.account` for `ctx.account`.
 
 | Read | Takes | Returns |
 |---|---|---|
-| `ctx.user(id)` | user id | `id, name, display_name, description, created, verified, banned, friends, followers, following` |
+| `ctx.user(id)` | user id | `id, name, display_name, description, created, verified, banned, premium, friends, followers, following` |
 | `ctx.game(id)` | place id | `universe_id, place_id, name, description, ...`, or nil if there is none |
 | `ctx.item(id, kind)` | asset id, `kind` `"asset"` (default) or `"bundle"` | the item's catalog details |
 | `ctx.presence(ids)` | up to 100 user ids | a list of `id, status, place_id, universe_id, location` |

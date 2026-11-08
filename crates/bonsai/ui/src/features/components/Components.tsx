@@ -42,6 +42,7 @@ import {
   PersonTile,
   Pips,
   Popover,
+  PremiumBadge,
   RadioGroup,
   RailItem,
   Robux,
@@ -872,7 +873,7 @@ export default function Components() {
       </Section>
 
       <Section title="Stat, meter, robux, link">
-        <Card class="grid w-full grid-cols-5 gap-4 p-3">
+        <Card class="grid w-full grid-cols-6 gap-4 p-3">
           <Stat label="Playing">1,037</Stat>
           <Stat label="Visits">7.3M</Stat>
           <Stat label="Balance" size="lg">
@@ -884,6 +885,14 @@ export default function Components() {
                 Tilework
               </TextLink>
               <VerifiedBadge />
+            </span>
+          </Stat>
+          <Stat label="Premium user">
+            <span class="flex items-center gap-1">
+              <TextLink tone="name" onClick={noop}>
+                builderman
+              </TextLink>
+              <PremiumBadge />
             </span>
           </Stat>
           <Stat label="Fake creator">

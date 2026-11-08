@@ -33,6 +33,7 @@ import {
   ListItem,
   Menu,
   Page,
+  PremiumBadge,
   Robux,
   SegmentedControl,
   Select,
@@ -222,11 +223,14 @@ export default function Profile() {
                 presence={view.presence}
                 src={thumbUrl("headshot", userId(), true)}
               />
-              <div class="flex min-w-0 flex-col gap-0.5">
-                <h1 class="flex items-center gap-2 truncate text-2xl font-semibold">
+              <div class="flex min-w-0 flex-col">
+                <h1 class="flex items-center gap-2 truncate text-2xl leading-tight font-semibold">
                   <span class="truncate">{u().displayName}</span>
                   <Show when={u().verified}>
                     <VerifiedBadge size={18} />
+                  </Show>
+                  <Show when={u().premium}>
+                    <PremiumBadge size={18} />
                   </Show>
                   <Show when={u().banned}>
                     <Badge variant="danger">Banned</Badge>

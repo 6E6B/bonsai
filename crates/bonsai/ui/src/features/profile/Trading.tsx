@@ -2,7 +2,7 @@ import { For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { ago, date } from "~/lib/format"
 import type { TraderStats, TraderView } from "~/lib/ipc/bindings"
-import { Badge, Card, Icon, Robux, Skeleton, Stat, TextLink, Tooltip } from "~/lib/ui"
+import { Badge, Card, Icon, PremiumBadge, Robux, Skeleton, Stat, TextLink, Tooltip } from "~/lib/ui"
 import { ValueAmount } from "~/lib/value-tags"
 import { VALUES_SOURCE } from "~/lib/values"
 import {
@@ -89,7 +89,10 @@ function Flags(props: { stats: TraderStats }) {
         </Tooltip>
       </Show>
       <Show when={props.stats.premium}>
-        <Badge>Premium</Badge>
+        <Badge>
+          <PremiumBadge bare size={12} class="-ml-0.5 mr-1" />
+          Premium
+        </Badge>
       </Show>
     </>
   )

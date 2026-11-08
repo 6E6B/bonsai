@@ -3,7 +3,7 @@ import { run } from "~/lib/commands/registry"
 import { countdown, date } from "~/lib/format"
 import { type AccountInfoView, commands, type PinView, type SecurityView, type SessionsView } from "~/lib/ipc/bindings"
 import { shell, useLive } from "~/lib/store"
-import { Badge, Button, SettingRow, SettingsGroup, Skeleton, usePrompt } from "~/lib/ui"
+import { Badge, Button, PremiumBadge, SettingRow, SettingsGroup, Skeleton, usePrompt } from "~/lib/ui"
 import { Verified, WebButton } from "./shared"
 
 const activeAccount = () => shell.accounts.find((a) => a.id === shell.active)
@@ -114,7 +114,10 @@ export function ProfileSection() {
         <SettingRow label="Premium">
           <Show when={info.premium !== null} fallback={value(() => null, "Unknown")}>
             <Show when={info.premium} fallback={<span class="text-fg-muted">No</span>}>
-              <Badge variant="accent">{info.premiumPlan ?? "Premium"}</Badge>
+              <Badge variant="accent">
+                <PremiumBadge bare size={12} class="-ml-0.5 mr-1" />
+                {info.premiumPlan ?? "Premium"}
+              </Badge>
               <Show when={day(info.premiumRenews)}>{(d) => <span class="text-fg-muted">Renews {d()}</span>}</Show>
               <Show when={!info.premiumRenews && day(info.premiumExpires)}>
                 {(d) => <span class="text-fg-muted">Ends {d()}</span>}

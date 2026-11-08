@@ -854,6 +854,8 @@ pub struct ProfileHead {
     pub created: String,
     pub verified: bool,
     pub banned: bool,
+    /// Has Roblox Premium.
+    pub premium: bool,
     /// Counts; `None` when Roblox didn't say.
     pub friends: Option<u32>,
     pub followers: Option<u32>,
@@ -2312,6 +2314,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
             created: u.created.clone(),
             verified: u.verified,
             banned: u.banned,
+            premium: u.premium,
             friends: count(u.friends),
             followers: count(u.followers),
             following: count(u.following),

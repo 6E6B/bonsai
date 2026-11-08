@@ -6,7 +6,7 @@
 
 use std::collections::HashMap;
 
-use bonsai_api::generated::{apis, badges, friends, games, groups, presence, users};
+use bonsai_api::generated::{apis, badges, friends, games, groups, premiumfeatures, presence, users};
 use bonsai_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
@@ -26,6 +26,9 @@ pub struct Profile {
     pub created: String,
     pub verified: bool,
     pub banned: bool,
+    /// Has Roblox Premium. False when Roblox wouldn't say.
+    #[serde(default)]
+    pub premium: bool,
     /// The counts are -1 until they load, or when Roblox didn't send them. They come from a
     /// slower host than the rest, so they load on their own and never hold up the header.
     pub friends: i64,
@@ -942,7 +945,12 @@ impl crate::core::Inner {
             Key::shared("profile", user_id),
             PROFILE_AGE,
             move |f| async move {
-                let u = users::v1::get_users_by_user_id(&f.public(), user_id as i64).await?;
+                let c = &f.public();
+                let (u, premium) = tokio::join!(
+                    users::v1::get_users_by_user_id(c, user_id as i64),
+                    premiumfeatures::undocumented::get_has_premium(c, user_id as i64),
+                );
+                let u = u?;
                 Ok(Profile {
                     id: user_id,
                     name: u.name.unwrap_or_default(),
@@ -951,6 +959,7 @@ impl crate::core::Inner {
                     created: u.created.unwrap_or_default(),
                     verified: u.has_verified_badge.unwrap_or(false),
                     banned: u.is_banned.unwrap_or(false),
+                    premium: premium.unwrap_or(false),
                     friends: -1,
                     followers: -1,
                     following: -1,

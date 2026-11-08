@@ -345,6 +345,7 @@ fn user_view(p: &Profile) -> Value {
         "created": time(&p.created),
         "verified": p.verified,
         "banned": p.banned,
+        "premium": p.premium,
         "friends": count(p.friends),
         "followers": count(p.followers),
         "following": count(p.following),
