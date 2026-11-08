@@ -45,7 +45,6 @@ import {
   Tooltip,
   VerifiedBadge,
   VirtualGrid,
-  VirtualList,
 } from "~/lib/ui"
 import { rolimonsFailed, VALUES_SOURCE } from "~/lib/values"
 import { useWikiAbout, WikiSummary, WikiTab } from "~/lib/wiki-panels"
@@ -536,7 +535,10 @@ const emptyText: Record<PeopleList, string> = {
   following: "Not following anyone",
 }
 
-/** Their friends, followers or following, J / K / Enter to move and open. Friends are
+/** Narrowest a person row gets before the grid drops a column, matching the Friends screen. */
+const PERSON_WIDTH = 340
+
+/** Their friends, followers or following, J / K / H / L / Enter to move and open. Friends are
  * searched on Roblox (so it finds people on pages not loaded yet) and list mutual friends
  * first; followers and following can only be filtered by what has loaded. */
 function Connections(props: { userId: number; list: PeopleList; onList: (l: PeopleList) => void; mine: boolean }) {
@@ -544,6 +546,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
   const [searched, setSearched] = createSignal("")
   const [mutualOnly, setMutualOnly] = createSignal("all")
   const [cursor, setCursor] = createSignal(0)
+  const [columns, setColumns] = createSignal(1)
   const friends = () => props.list === "friends"
   // Search Roblox once typing pauses, not on every key.
   createEffect(() => {
@@ -570,6 +573,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
     count: () => shown().length,
     index: cursor,
     setIndex: setCursor,
+    columns,
     onOpen: (i) => {
       const p = shown()[i]
       if (p) void run("user.open", String(p.id))
@@ -618,7 +622,14 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
         autoMore
       >
         <div data-cursor-list>
-          <VirtualList items={shown()} activeIndex={cursor()} estimateRowHeight={44} gap={0}>
+          <VirtualGrid
+            items={shown()}
+            activeIndex={cursor()}
+            onColumns={setColumns}
+            minItemWidth={PERSON_WIDTH}
+            estimateRowHeight={48}
+            gap={4}
+          >
             {(p, i) => (
               <ContextMenu items={userMenu(p.id, { friend: p.friend, following: p.following ?? undefined })}>
                 <ListItem
@@ -638,20 +649,6 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                       <Badge variant="accent">{tag()}</Badge>
                     </Show>
                   }
-                  actions={
-                    <Show when={p.following !== null}>
-                      <Button
-                        size="sm"
-                        variant={p.following ? "ghost" : "secondary"}
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          void run(p.following ? "user.unfollow" : "user.follow", String(p.id))
-                        }}
-                      >
-                        {p.following ? "Following" : "Follow"}
-                      </Button>
-                    </Show>
-                  }
                   onClick={() => {
                     setCursor(i)
                     void run("user.open", String(p.id))
@@ -659,7 +656,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                 />
               </ContextMenu>
             )}
-          </VirtualList>
+          </VirtualGrid>
         </div>
       </ListState>
     </div>
