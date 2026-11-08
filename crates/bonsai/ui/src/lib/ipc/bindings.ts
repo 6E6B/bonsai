@@ -869,6 +869,8 @@ export type Connection = {
 	friend: boolean,
 	/**  Known only for the active account's friends; offline for everyone else. */
 	presence: Presence,
+	/**  The game they're in, when they're a friend in one and it can be named. */
+	place: string | null,
 	/**
 	 *  Whether the active account follows them. `None` for yourself, when signed out, or until
 	 *  it has loaded.

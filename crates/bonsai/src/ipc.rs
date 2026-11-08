@@ -962,6 +962,8 @@ pub struct Connection {
     pub friend: bool,
     /// Known only for the active account's friends; offline for everyone else.
     pub presence: Presence,
+    /// The game they're in, when they're a friend in one and it can be named.
+    pub place: Option<String>,
     /// Whether the active account follows them. `None` for yourself, when signed out, or until
     /// it has loaded.
     pub following: Option<bool>,
@@ -2638,10 +2640,11 @@ pub fn profile_people(
     if which == "friends" && query.trim().is_empty() {
         ids = bonsai_core::people::mutuals_first(&ids, &own).0;
     }
-    let (items, unnamed) = {
+    let (items, unnamed, games) = {
         let s = core.store();
         let presence = account.and_then(|a| s.account_data(a)).map(|d| &d.presence);
         let mut unnamed = Vec::new();
+        let mut games = Vec::new();
         let items = ids
             .iter()
             .map(|id| {
@@ -2650,23 +2653,31 @@ pub fn profile_people(
                     unnamed.push(*id);
                 }
                 let friend = own.contains(id);
+                let p = presence.filter(|_| friend).and_then(|p| p.get(id));
+                let place = p.filter(|p| p.kind == PresenceKind::InGame).and_then(|p| {
+                    let game = p.universe_id.and_then(|u| s.games.get(&u));
+                    if game.is_none() {
+                        games.extend(p.universe_id);
+                    }
+                    game.map(|g| g.name.clone())
+                        .or_else(|| (!p.last_location.is_empty()).then(|| p.last_location.clone()))
+                });
                 Connection {
                     id: Id(*id),
                     name: u.map(|u| u.name.clone()).unwrap_or_default(),
                     display_name: u.map(|u| u.display_name.clone()).unwrap_or_default(),
                     verified: u.is_some_and(|u| u.verified),
                     friend,
-                    presence: presence
-                        .filter(|_| friend)
-                        .and_then(|p| p.get(id))
-                        .map_or(Presence::Offline, |p| p.kind.into()),
+                    presence: p.map_or(Presence::Offline, |p| p.kind.into()),
+                    place,
                     following: follows.get(id).copied(),
                 }
             })
             .collect();
-        (items, unnamed)
+        (items, unnamed, games)
     };
     core.want_users(&unnamed);
+    core.want_universes(&games);
     List {
         loading: list.loading,
         error: list.error,

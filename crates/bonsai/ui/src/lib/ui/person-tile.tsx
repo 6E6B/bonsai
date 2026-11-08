@@ -12,12 +12,15 @@ export interface PersonTileProps {
   src?: string
   presence?: Presence
   verified?: boolean
+  /** A third line under the username, such as the game they're in. */
+  status?: string
   onClick: () => void
   class?: string
 }
 
 /** A person as a tile: a large round headshot with their display name and @username under it,
- * like the friends row on a roblox.com profile. Put it in a `Shelf` or a grid. */
+ * like the friends row on a roblox.com profile, and an optional status line (the game they're
+ * in) under that. Put it in a `Shelf` or a grid. */
 export function PersonTile(props: PersonTileProps) {
   return (
     <KButton data-component="person-tile" class={props.class} onClick={props.onClick}>
@@ -33,6 +36,11 @@ export function PersonTile(props: PersonTileProps) {
       <Show when={props.username}>
         <span data-slot="username" title={`@${props.username}`}>
           @{props.username}
+        </span>
+      </Show>
+      <Show when={props.status}>
+        <span data-slot="status" title={props.status}>
+          {props.status}
         </span>
       </Show>
     </KButton>

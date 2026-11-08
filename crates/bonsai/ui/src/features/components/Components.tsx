@@ -827,7 +827,15 @@ export default function Components() {
           <PersonCard name="Seraphon" presence="online" subtitle="Online" onClick={noop} />
         </div>
         <div class="flex gap-3">
-          <PersonTile class="w-24" name="Tilework" username="tilework" presence="game" verified onClick={noop} />
+          <PersonTile
+            class="w-24"
+            name="Tilework"
+            username="tilework"
+            presence="game"
+            status="Brick Plaza"
+            verified
+            onClick={noop}
+          />
           <PersonTile class="w-24" name="Seraphon" username="seraphon" presence="online" onClick={noop} />
         </div>
       </Section>
