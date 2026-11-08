@@ -1,9 +1,11 @@
 import type {
+  CategoryView,
   ChatLine,
   Connection,
   ConversationRow,
   GameCard,
   GroupCard,
+  InvCategoryView,
   ItemCard,
   List,
   LookView,
@@ -26,6 +28,7 @@ export const people = rows<Connection>((id) => ({
   verified: false,
   friend: true,
   presence: "online",
+  place: null,
   following: false,
 }))
 export const games = rows<GameCard>((id) => ({
@@ -101,6 +104,7 @@ export const profile: ProfileView = {
   favoritesReceived: 100,
   nickname: null,
   note: null,
+  inventoryPrivate: false,
 }
 
 const created = "2026-01-01T12:00:00Z"
@@ -176,3 +180,137 @@ export const themes = rows<ThemeView>((id) => ({
   builtin: false,
   doc: "",
 }))
+
+const choices = (prefix: string, labels: string[]) => labels.map((label, i) => ({ value: `${prefix}-${i}`, label }))
+const slots = (entries: [string, number][]) => entries.map(([label, id]) => ({ value: `a${id}`, label }))
+
+// Same names and order as the recorded responses in crates/bonsai-api/tests/fixtures/market.json.
+export const catalogCategories: CategoryView[] = [
+  { name: "All", taxonomy: "all", subcategories: [] },
+  { name: "Body", taxonomy: "body", subcategories: choices("body", ["Full Bodies", "Hair", "Heads"]) },
+  {
+    name: "Clothing",
+    taxonomy: "clothing",
+    subcategories: choices("clothing", [
+      "Shirts",
+      "T-Shirts",
+      "Sweaters",
+      "Jackets",
+      "Pants",
+      "Dresses & Skirts",
+      "Bodysuits",
+      "Shorts",
+      "Shoes",
+      "Classic Shirts",
+      "Classic T-Shirts",
+      "Classic Pants",
+    ]),
+  },
+  {
+    name: "Accessories",
+    taxonomy: "accessories",
+    subcategories: choices("accessories", [
+      "Head",
+      "Face",
+      "Neck Accessory",
+      "Shoulder Accessory",
+      "Front Accessory",
+      "Back Accessory",
+      "Waist Accessory",
+      "Gear",
+    ]),
+  },
+  { name: "Backgrounds", taxonomy: "backgrounds", subcategories: [] },
+  { name: "Animations", taxonomy: "animations", subcategories: choices("animations", ["Bundles", "Emotes"]) },
+  {
+    name: "Makeup",
+    taxonomy: "makeup",
+    subcategories: choices("makeup", ["Eyes", "Lips", "Face", "Eyelashes", "Eyebrows"]),
+  },
+]
+
+export const inventoryCategories: InvCategoryView[] = [
+  { name: "Collectibles", slots: [{ value: "collectibles", label: "Collectibles" }] },
+  { name: "Decals", slots: slots([["Decals", 13]]) },
+  { name: "Models & Packages", slots: slots([["Models & Packages", 10]]) },
+  { name: "Plugins", slots: slots([["Plugins", 38]]) },
+  { name: "Animations", slots: slots([["Animations", 24]]) },
+  { name: "Audio", slots: slots([["Audio", 3]]) },
+  { name: "Meshes", slots: slots([["Meshes", 40]]) },
+  { name: "Heads", slots: slots([["Heads", 79]]) },
+  { name: "Video", slots: slots([["Video", 62]]) },
+  { name: "Bundles", slots: [{ value: "b1", label: "Body Parts" }] },
+  {
+    name: "Accessories",
+    slots: slots([
+      ["Head", 8],
+      ["Face", 42],
+      ["Neck", 43],
+      ["Shoulder", 44],
+      ["Front", 45],
+      ["Back", 46],
+      ["Waist", 47],
+      ["Gear", 19],
+    ]),
+  },
+  {
+    name: "Classic Clothing",
+    slots: slots([
+      ["Classic T-shirts", 2],
+      ["Classic Shirts", 11],
+      ["Classic Pants", 12],
+    ]),
+  },
+  { name: "Hair", slots: slots([["Hair", 41]]) },
+  {
+    name: "Tops",
+    slots: slots([
+      ["T-shirts", 65],
+      ["Shirts", 64],
+      ["Sweaters", 68],
+      ["Jackets", 67],
+    ]),
+  },
+  {
+    name: "Bottoms",
+    slots: slots([
+      ["Pants", 66],
+      ["Shorts", 69],
+      ["Skirts", 72],
+    ]),
+  },
+  {
+    name: "Shoes",
+    slots: slots([
+      ["Left Shoe", 70],
+      ["Right Shoe", 71],
+    ]),
+  },
+  { name: "Emotes", slots: slots([["Emotes", 61]]) },
+  { name: "Backgrounds", slots: slots([["Backgrounds", 88]]) },
+  {
+    name: "Makeup",
+    slots: slots([
+      ["Eyes", 89],
+      ["Lips", 90],
+      ["Faces", 91],
+      ["Eyelash Accessory", 92],
+      ["Eyebrow Accessory", 93],
+    ]),
+  },
+  { name: "Places", slots: [{ value: "places", label: "Places" }] },
+  { name: "Badges", slots: [{ value: "badges", label: "Badges" }] },
+  { name: "Passes", slots: [{ value: "passes", label: "Passes" }] },
+  {
+    name: "Avatar Animations",
+    slots: slots([
+      ["Run", 53],
+      ["Walk", 55],
+      ["Fall", 50],
+      ["Jump", 52],
+      ["Idle", 51],
+      ["Swim", 54],
+      ["Climb", 48],
+    ]),
+  },
+]

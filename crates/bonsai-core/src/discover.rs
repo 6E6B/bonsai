@@ -115,7 +115,8 @@ impl Core {
                 };
                 // Deprecated in the tracker with no replacement; the site still uses it (DECISIONS #38).
                 #[allow(deprecated)]
-                let r = games::v2::get_users_by_user_id_favorite_games(&f.client, user_id as i64, &p).await?;
+                let r =
+                    games::v2::get_users_by_user_id_favorite_games(&f.public(), user_id as i64, &p).await?;
                 Ok(Page {
                     items: r
                         .data

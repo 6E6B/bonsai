@@ -467,7 +467,7 @@ commands! {
     JoinRandomServer => "game.join_random", "Join random server", ["random", "server"], None, Write(Social), [];
     JoinJobId => "game.join_job", "Join server by job id", ["job", "instance", "server id"], Text, Write(Social), [];
     CopyServerLink => "game.copy_server_link", "Copy server invite link", ["invite", "share", "server"], None, Read, [];
-    FindUser => "user.find", "Find which server a user is in", ["find", "where", "server"], User, Read, [];
+    CopyJobId => "game.copy_job_id", "Copy server job id", ["job", "instance", "server id", "copy"], None, Read, [];
     OpenProfile => "user.open", "Open profile", ["profile", "user", "player"], User, Read, [];
     ShowFriendsOf => "user.friends", "Show a user's friends", ["friends", "connections", "mutuals", "mutual friends"], User, Read, [];
     ShowFollowersOf => "user.followers", "Show a user's followers", ["followers", "fans"], User, Read, [];
@@ -478,6 +478,8 @@ commands! {
     AcceptFriend => "user.accept_friend", "Accept friend request", ["accept", "request"], User, Write(Social), [];
     DeclineFriend => "user.decline_friend", "Decline friend request", ["decline", "ignore", "request"], User, Write(Social), [];
     DeclineAllFriends => "friends.decline_all", "Ignore all friend requests", ["decline", "ignore", "requests"], None, Write(Social), [];
+    SortFriends => "friends.sort", "Sort the friends list (status, name; requests: newest, oldest, mutuals, name)", ["friends", "sort", "order", "name", "status", "requests", "mutuals"], Text, Local, [];
+    FilterFriends => "friends.show", "Filter friends by status (all, online, game, studio, offline; followers: not_followed)", ["friends", "filter", "show only", "online", "in game", "offline", "studio", "followers"], Text, Local, [];
     Follow => "user.follow", "Follow", ["follow"], User, Write(Social), [];
     Unfollow => "user.unfollow", "Unfollow", ["unfollow"], User, Write(Social), [];
     SetNickname => "user.nickname", "Set a nickname for someone (user, then nickname; empty clears)", ["nickname", "alias", "name", "friend"], Text, Write(Harmless), [];
@@ -493,6 +495,8 @@ commands! {
     OpenPlaylist => "playlist.open", "Open playlist", ["playlist", "list", "collection"], Playlist, Read, [];
     RenamePlaylist => "playlist.rename", "Rename playlist", ["playlist", "list", "rename", "name"], Playlist, Write(Harmless), [];
     DeletePlaylist => "playlist.delete", "Delete playlist", ["playlist", "list", "delete", "remove"], Playlist, Write(Harmless), [];
+    SortPlaylist => "playlist.sort", "Sort this playlist (added, name, playing, rating, creator)", ["playlist", "sort", "order", "name", "playing", "rating", "creator"], Text, Local, [];
+    FilterPlaylistGenre => "playlist.genre", "Show one genre in this playlist (a genre, or all)", ["playlist", "filter", "genre", "show only"], Text, Local, [];
     NotifyGame => "game.notify", "Turn update notifications on or off", ["notify", "follow", "bell", "updates"], None, Write(Harmless), [];
     NotifyEvent => "game.event_notify", "Notify me about an event", ["event", "rsvp", "notify", "remind"], Text, Write(Harmless), [];
     BuyPass => "game.buy_pass", "Buy a pass", ["pass", "gamepass", "store", "buy", "purchase"], Text, Write(Value), [];
@@ -526,6 +530,8 @@ commands! {
     Orbit3d => "avatar.orbit", "Move the 3D camera (left, right, up, down, in, out or reset)", ["camera", "rotate", "orbit", "zoom", "turn", "reset", "3d", "avatar"], Text, Read, [];
 
     SearchMarketplace => "market.search", "Search the Marketplace", ["catalog", "shop", "items", "find item"], Text, Read, [];
+    MarketCategory => "market.category", "Open a Marketplace category or the wishlist", ["catalog", "category", "browse", "shop", "wishlist"], Text, Local, [];
+    ClearMarketFilters => "market.clear_filters", "Clear the Marketplace filters", ["catalog", "filters", "reset", "clear", "price", "creator"], None, Local, [];
     BuyItem => "market.buy", "Buy this item", ["buy", "purchase", "get"], None, Write(Value), [];
     BuyItemAs => "market.buy_as", "Buy this item as another account", ["buy", "purchase", "alt", "as"], Account, Write(Value), [];
     BuyResale => "market.buy_resale", "Buy a reseller's copy", ["buy", "resale", "reseller", "limited", "copy"], Text, Write(Value), [];
@@ -545,6 +551,7 @@ commands! {
     PriceHistoryView => "market.history_view", "Show price history as a chart or a table (chart, table; no argument toggles)", ["price history", "chart", "table", "sales", "limited"], Text, Local, [];
     SearchAuditLog => "group.audit_search", "Search the community audit log", ["audit", "log", "search", "performer", "community", "group"], Text, Read, [];
     ViewInventory => "inventory.view", "Open a user's inventory", ["inventory", "items", "collectibles", "limiteds"], User, Read, [];
+    InventoryCategory => "inventory.category", "Open an inventory category", ["inventory", "category", "collectibles", "badges", "passes", "places"], Text, Local, [];
     DeleteInventoryItem => "inventory.delete", "Delete an item from your inventory", ["delete", "remove", "inventory"], Text, Write(Value), [];
     SortInventory => "inventory.sort", "Sort the inventory (newest, oldest, price_asc, price_desc, rap, value, demand)", ["inventory", "sort", "order", "price", "rap", "oldest", "newest"], Text, Local, [];
     FilterInventory => "inventory.filter", "Filter the inventory (all, limited, wearing, copies, for_sale)", ["inventory", "filter", "show only", "limited", "wearing", "duplicates"], Text, Local, [];
@@ -582,7 +589,6 @@ commands! {
     ReplyMessage => "message.reply", "Reply to the message (in chat)", ["reply", "respond", "message"], Text, Write(Social), [Shortcut::shift("R")];
     ToggleMessageRead => "message.toggle_read", "Mark message read or unread", ["read", "unread", "message"], Text, Write(Harmless), [Shortcut::key("U")];
     ArchiveMessage => "message.archive", "Archive message, or move it back to Inbox", ["archive", "unarchive", "message"], Text, Write(Harmless), [Shortcut::key("E")];
-    SelectAllMessages => "message.select_all", "Select all loaded messages, or clear the selection", ["select all", "bulk", "messages"], None, Read, [];
     MarkAllMessagesRead => "message.mark_all_read", "Mark all messages read", ["read all", "messages", "inbox"], None, Write(Harmless), [];
     FilterNotifications => "notifications.filter", "Show all or only unread notifications (all, unread; no argument toggles)", ["notifications", "unread", "filter", "bell"], Text, Local, [];
     FilterNotificationCategory => "notifications.category", "Show one notification category (friends, trades, communities, experiences, account, messages, other; no argument shows all)", ["notifications", "category", "filter", "friends", "trades", "security", "robux", "group", "experience"], Text, Local, [];
@@ -592,12 +598,14 @@ commands! {
     CopyDiscordInvite => "help.discord_copy", "Copy the Bonsai Discord invite", ["discord", "invite", "copy", "link"], None, Read, [];
     OpenDiscordBrowser => "help.discord_browser", "Open the Bonsai Discord invite in browser", ["discord", "invite", "browser", "web"], None, Read, [];
     GoNotifications => "nav.notifications", "Go to Notifications", ["notifications", "bell", "alerts"], None, Read, [];
+    PeekNotifications => "notifications.peek", "Show recent notifications", ["notifications", "bell", "alerts", "recent", "popout"], None, Local, [];
 
     SearchCommunities => "group.search", "Search communities", ["groups", "communities", "find group"], Text, Read, [];
+    SortCommunities => "group.sort", "Sort your communities (default, name, members, fewest, role)", ["groups", "communities", "sort", "order", "members", "role"], Text, Local, [];
+    FilterCommunities => "group.show", "Filter your communities (all, verified, primary)", ["groups", "communities", "filter", "show only", "verified", "primary"], Text, Local, [];
     JoinCommunity => "group.join", "Join this community", ["join", "group", "community"], Text, Write(Social), [];
     LeaveCommunity => "group.leave", "Leave a community", ["leave", "group", "community"], Text, Write(Social), [];
     SetPrimaryCommunity => "group.primary", "Make or clear primary community", ["primary", "group", "community", "main"], Text, Write(Social), [];
-    PostShout => "group.shout", "Post a shout", ["shout", "status", "announce", "group"], Text, Write(Social), [];
     AcceptJoinRequest => "group.accept_request", "Accept join request", ["accept", "join request", "group"], User, Write(Social), [];
     DeclineJoinRequest => "group.decline_request", "Decline join request", ["decline", "join request", "group"], User, Write(Social), [];
     AcceptSelectedRequests => "group.accept_selected", "Accept selected join requests", ["accept", "bulk", "join requests"], None, Write(Social), [];
@@ -648,6 +656,8 @@ commands! {
     PrevSubTab => "view.prev_subtab", "Previous sub-tab", ["tab", "previous"], None, Read, [Shortcut::key("OpenBracket")];
     ListDown => "list.down", "Move down", ["next"], None, Read, [Shortcut::key("J")];
     ListUp => "list.up", "Move up", ["previous"], None, Read, [Shortcut::key("K")];
+    ListLeft => "list.left", "Move left", ["previous", "left"], None, Read, [Shortcut::key("H")];
+    ListRight => "list.right", "Move right", ["next", "right"], None, Read, [Shortcut::key("L")];
     ListOpen => "list.open", "Open selected", ["open"], None, Read, [Shortcut::key("Enter")];
     ListSelect => "list.select", "Select for bulk action", ["select", "mark"], None, Read, [Shortcut::key("X")];
 
@@ -1002,7 +1012,6 @@ mod tests {
             CommandId::Unfriend,
             CommandId::Block,
             CommandId::SendChat,
-            CommandId::PostShout,
         ] {
             assert_eq!(tier(id), Some(Tier::Social), "{}", id.key());
         }

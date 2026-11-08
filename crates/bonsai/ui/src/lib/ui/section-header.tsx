@@ -7,7 +7,7 @@ export interface SectionHeaderProps {
   /** Buttons on the right. */
   actions?: JSX.Element
   /** `group` is the small label above a run of list rows ("In game · 2"). */
-  size?: "page" | "section" | "group"
+  size?: "section" | "group"
   class?: string
 }
 

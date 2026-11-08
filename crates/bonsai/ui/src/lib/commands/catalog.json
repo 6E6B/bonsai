@@ -1,0 +1,4893 @@
+{
+  "commands": [
+    {
+      "arg": "none",
+      "id": "vault.enable",
+      "keywords": [
+        "vault",
+        "pin",
+        "encrypt",
+        "lock"
+      ],
+      "title": "Protect all accounts with a PIN"
+    },
+    {
+      "arg": "none",
+      "id": "vault.unlock",
+      "keywords": [
+        "vault",
+        "pin",
+        "unlock"
+      ],
+      "title": "Unlock Bonsai"
+    },
+    {
+      "arg": "none",
+      "id": "vault.lock",
+      "keywords": [
+        "vault",
+        "pin",
+        "lock"
+      ],
+      "title": "Lock Bonsai"
+    },
+    {
+      "arg": "none",
+      "id": "vault.change",
+      "keywords": [
+        "vault",
+        "pin",
+        "password"
+      ],
+      "title": "Change Bonsai PIN"
+    },
+    {
+      "arg": "none",
+      "id": "vault.disable",
+      "keywords": [
+        "vault",
+        "pin",
+        "disable"
+      ],
+      "title": "Turn off Bonsai PIN protection"
+    },
+    {
+      "arg": "none",
+      "id": "vault.forget",
+      "keywords": [
+        "vault",
+        "pin",
+        "forget",
+        "reset",
+        "recovery"
+      ],
+      "title": "Reset all local accounts after forgetting PIN"
+    },
+    {
+      "arg": "none",
+      "id": "palette.open",
+      "keywords": [
+        "palette",
+        "search",
+        "find"
+      ],
+      "title": "Search or run a command"
+    },
+    {
+      "arg": "none",
+      "id": "help.shortcuts",
+      "keywords": [
+        "help",
+        "keys",
+        "keyboard"
+      ],
+      "title": "Show keyboard shortcuts"
+    },
+    {
+      "arg": "account",
+      "id": "account.switch",
+      "keywords": [
+        "switch",
+        "account",
+        "acc"
+      ],
+      "title": "Switch account"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_last",
+      "keywords": [
+        "switch",
+        "previous",
+        "back"
+      ],
+      "title": "Switch to last used account"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_1",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 1"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_2",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 2"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_3",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 3"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_4",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 4"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_5",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 5"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_6",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 6"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_7",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 7"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_8",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 8"
+    },
+    {
+      "arg": "none",
+      "id": "account.switch_9",
+      "keywords": [
+        "switch"
+      ],
+      "title": "Switch to account 9"
+    },
+    {
+      "arg": "none",
+      "id": "account.add",
+      "keywords": [
+        "sign in",
+        "login",
+        "cookie",
+        "new account"
+      ],
+      "title": "Add account"
+    },
+    {
+      "arg": "none",
+      "id": "account.quick_sign_in",
+      "keywords": [
+        "sign in",
+        "login",
+        "code",
+        "quick",
+        "new account"
+      ],
+      "title": "Add account with quick sign-in"
+    },
+    {
+      "arg": "text",
+      "id": "account.approve_code",
+      "keywords": [
+        "quick sign-in",
+        "code",
+        "another device",
+        "approve",
+        "login",
+        "cross-device"
+      ],
+      "title": "Sign in another device with a code"
+    },
+    {
+      "arg": "none",
+      "id": "account.sign_in_browser",
+      "keywords": [
+        "sign in",
+        "login",
+        "browser",
+        "password",
+        "new account"
+      ],
+      "title": "Add account with Roblox sign-in page"
+    },
+    {
+      "arg": "text",
+      "id": "account.rename",
+      "keywords": [
+        "label",
+        "rename",
+        "account"
+      ],
+      "title": "Rename account (local label)"
+    },
+    {
+      "arg": "color",
+      "id": "account.color",
+      "keywords": [
+        "color",
+        "colour",
+        "tag"
+      ],
+      "title": "Set account color tag"
+    },
+    {
+      "arg": "none",
+      "id": "account.move_up",
+      "keywords": [
+        "reorder",
+        "order"
+      ],
+      "title": "Move account up in the rail"
+    },
+    {
+      "arg": "none",
+      "id": "account.move_down",
+      "keywords": [
+        "reorder",
+        "order"
+      ],
+      "title": "Move account down in the rail"
+    },
+    {
+      "arg": "none",
+      "id": "account.copy_name",
+      "keywords": [
+        "copy",
+        "username",
+        "name"
+      ],
+      "title": "Copy account username"
+    },
+    {
+      "arg": "account",
+      "id": "account.remove",
+      "keywords": [
+        "delete",
+        "forget",
+        "remove"
+      ],
+      "title": "Remove account from this app"
+    },
+    {
+      "arg": "none",
+      "id": "account.sign_out",
+      "keywords": [
+        "logout",
+        "log out",
+        "sign out"
+      ],
+      "title": "Sign out"
+    },
+    {
+      "arg": "none",
+      "id": "account.sign_out_others",
+      "keywords": [
+        "logout",
+        "sessions",
+        "devices",
+        "security"
+      ],
+      "title": "Sign out of all other sessions"
+    },
+    {
+      "arg": "none",
+      "id": "account.unlock_pin",
+      "keywords": [
+        "pin",
+        "unlock",
+        "parental",
+        "settings"
+      ],
+      "title": "Unlock account PIN"
+    },
+    {
+      "arg": "none",
+      "id": "account.lock_pin",
+      "keywords": [
+        "pin",
+        "lock",
+        "parental"
+      ],
+      "title": "Lock account PIN"
+    },
+    {
+      "arg": "none",
+      "id": "security.change_password",
+      "keywords": [
+        "password",
+        "security",
+        "sign in"
+      ],
+      "title": "Change password"
+    },
+    {
+      "arg": "none",
+      "id": "security.authenticator_on",
+      "keywords": [
+        "two-step",
+        "2sv",
+        "2fa",
+        "totp",
+        "authenticator",
+        "security"
+      ],
+      "title": "Turn on authenticator app codes"
+    },
+    {
+      "arg": "none",
+      "id": "security.authenticator_off",
+      "keywords": [
+        "two-step",
+        "2sv",
+        "2fa",
+        "totp",
+        "authenticator",
+        "security"
+      ],
+      "title": "Turn off authenticator app codes"
+    },
+    {
+      "arg": "none",
+      "id": "security.email_codes_on",
+      "keywords": [
+        "two-step",
+        "2sv",
+        "2fa",
+        "email",
+        "security"
+      ],
+      "title": "Turn on email codes"
+    },
+    {
+      "arg": "none",
+      "id": "security.email_codes_off",
+      "keywords": [
+        "two-step",
+        "2sv",
+        "2fa",
+        "email",
+        "security"
+      ],
+      "title": "Turn off email codes"
+    },
+    {
+      "arg": "none",
+      "id": "security.recovery_codes",
+      "keywords": [
+        "two-step",
+        "2sv",
+        "backup codes",
+        "recovery",
+        "security"
+      ],
+      "title": "Make new recovery codes"
+    },
+    {
+      "arg": "text",
+      "id": "security.remove_passkey",
+      "keywords": [
+        "passkey",
+        "security key",
+        "webauthn",
+        "security"
+      ],
+      "title": "Remove a passkey (name)"
+    },
+    {
+      "arg": "text",
+      "id": "account.display_name",
+      "keywords": [
+        "display name",
+        "nickname",
+        "name"
+      ],
+      "title": "Change display name"
+    },
+    {
+      "arg": "text",
+      "id": "privacy.set",
+      "keywords": [
+        "privacy",
+        "who can",
+        "inventory",
+        "trade",
+        "chat",
+        "join"
+      ],
+      "title": "Change a privacy setting (setting, then value)"
+    },
+    {
+      "arg": "none",
+      "id": "account.replace_cookie",
+      "keywords": [
+        "expired",
+        "session",
+        "cookie"
+      ],
+      "title": "Paste a new cookie for this account"
+    },
+    {
+      "arg": "none",
+      "id": "nav.home",
+      "keywords": [
+        "home"
+      ],
+      "title": "Go to Home"
+    },
+    {
+      "arg": "none",
+      "id": "nav.discover",
+      "keywords": [
+        "discover",
+        "charts",
+        "sorts"
+      ],
+      "title": "Go to Discover"
+    },
+    {
+      "arg": "none",
+      "id": "nav.avatar",
+      "keywords": [
+        "avatar",
+        "outfit",
+        "wear"
+      ],
+      "title": "Go to Avatar"
+    },
+    {
+      "arg": "none",
+      "id": "nav.marketplace",
+      "keywords": [
+        "catalog",
+        "shop",
+        "items"
+      ],
+      "title": "Go to Marketplace"
+    },
+    {
+      "arg": "none",
+      "id": "nav.inventory",
+      "keywords": [
+        "inventory",
+        "items"
+      ],
+      "title": "Go to Inventory"
+    },
+    {
+      "arg": "none",
+      "id": "nav.trades",
+      "keywords": [
+        "trades",
+        "trading"
+      ],
+      "title": "Go to Trades"
+    },
+    {
+      "arg": "none",
+      "id": "nav.values",
+      "keywords": [
+        "values",
+        "rolimons",
+        "limiteds",
+        "rap",
+        "demand",
+        "worth"
+      ],
+      "title": "Go to Values (Rolimons)"
+    },
+    {
+      "arg": "none",
+      "id": "nav.transactions",
+      "keywords": [
+        "transactions",
+        "robux",
+        "sales",
+        "purchases",
+        "spending",
+        "income",
+        "stipend",
+        "ledger",
+        "money"
+      ],
+      "title": "Go to Transactions"
+    },
+    {
+      "arg": "none",
+      "id": "nav.messages",
+      "keywords": [
+        "messages",
+        "inbox",
+        "pm"
+      ],
+      "title": "Go to Messages"
+    },
+    {
+      "arg": "none",
+      "id": "nav.communities",
+      "keywords": [
+        "groups",
+        "communities"
+      ],
+      "title": "Go to Communities"
+    },
+    {
+      "arg": "none",
+      "id": "nav.profile",
+      "keywords": [
+        "profile",
+        "me"
+      ],
+      "title": "Go to your profile"
+    },
+    {
+      "arg": "none",
+      "id": "nav.friends",
+      "keywords": [
+        "friends",
+        "connections",
+        "requests",
+        "followers"
+      ],
+      "title": "Go to Friends"
+    },
+    {
+      "arg": "settingsSection",
+      "id": "nav.settings",
+      "keywords": [
+        "settings",
+        "preferences",
+        "options"
+      ],
+      "title": "Settings"
+    },
+    {
+      "arg": "text",
+      "id": "game.open",
+      "keywords": [
+        "game",
+        "experience",
+        "place",
+        "open"
+      ],
+      "title": "Open experience"
+    },
+    {
+      "arg": "text",
+      "id": "market.open",
+      "keywords": [
+        "item",
+        "asset",
+        "bundle",
+        "pass",
+        "open"
+      ],
+      "title": "Open item"
+    },
+    {
+      "arg": "text",
+      "id": "market.preview",
+      "keywords": [
+        "item",
+        "asset",
+        "bundle",
+        "preview",
+        "peek",
+        "details",
+        "inspect",
+        "side"
+      ],
+      "title": "Preview item in a side panel"
+    },
+    {
+      "arg": "text",
+      "id": "group.open",
+      "keywords": [
+        "group",
+        "community",
+        "open"
+      ],
+      "title": "Open community"
+    },
+    {
+      "arg": "none",
+      "id": "nav.playlists",
+      "keywords": [
+        "playlists",
+        "lists",
+        "collections",
+        "games",
+        "saved"
+      ],
+      "title": "Go to Playlists"
+    },
+    {
+      "arg": "none",
+      "id": "nav.wiki",
+      "keywords": [
+        "wiki",
+        "fandom",
+        "article",
+        "lore",
+        "trivia",
+        "guide",
+        "history"
+      ],
+      "title": "Go to Wiki"
+    },
+    {
+      "arg": "text",
+      "id": "wiki.open",
+      "keywords": [
+        "wiki",
+        "fandom",
+        "article",
+        "page"
+      ],
+      "title": "Open wiki article"
+    },
+    {
+      "arg": "text",
+      "id": "wiki.search",
+      "keywords": [
+        "wiki",
+        "fandom",
+        "search",
+        "look up",
+        "lookup"
+      ],
+      "title": "Search the wiki"
+    },
+    {
+      "arg": "none",
+      "id": "wiki.article",
+      "keywords": [
+        "wiki",
+        "fandom",
+        "article",
+        "about",
+        "history",
+        "trivia",
+        "lore"
+      ],
+      "title": "Read the wiki article about this"
+    },
+    {
+      "arg": "text",
+      "id": "wiki.open_site",
+      "keywords": [
+        "wiki",
+        "fandom",
+        "browser",
+        "web",
+        "site"
+      ],
+      "title": "Open wiki article on Fandom"
+    },
+    {
+      "arg": "text",
+      "id": "wiki.open_link",
+      "keywords": [
+        "wiki",
+        "fandom",
+        "link",
+        "browser",
+        "web",
+        "source",
+        "reference"
+      ],
+      "title": "Open link from wiki article"
+    },
+    {
+      "arg": "none",
+      "id": "wiki.toggle",
+      "keywords": [
+        "wiki",
+        "fandom",
+        "article",
+        "enable",
+        "disable"
+      ],
+      "title": "Turn wiki articles from Fandom on or off"
+    },
+    {
+      "arg": "none",
+      "id": "nav.components",
+      "keywords": [
+        "components",
+        "gallery",
+        "ui",
+        "design"
+      ],
+      "title": "Go to Components (UI gallery)"
+    },
+    {
+      "arg": "none",
+      "id": "nav.overview",
+      "keywords": [
+        "overview",
+        "console",
+        "clone",
+        "test",
+        "card"
+      ],
+      "title": "Go to Overview (console clone test)"
+    },
+    {
+      "arg": "none",
+      "id": "nav.hub",
+      "keywords": [
+        "hub",
+        "themes",
+        "plugins",
+        "browse",
+        "community"
+      ],
+      "title": "Go to Theme and Plugin Hub"
+    },
+    {
+      "arg": "none",
+      "id": "hub.refresh",
+      "keywords": [
+        "hub",
+        "reload",
+        "search"
+      ],
+      "title": "Refresh hub"
+    },
+    {
+      "arg": "text",
+      "id": "hub.details",
+      "keywords": [
+        "hub",
+        "release",
+        "permissions"
+      ],
+      "title": "View hub release details"
+    },
+    {
+      "arg": "text",
+      "id": "hub.publish",
+      "keywords": [
+        "hub",
+        "publish",
+        "theme",
+        "plugin",
+        "upload"
+      ],
+      "title": "Publish to hub"
+    },
+    {
+      "arg": "text",
+      "id": "hub.publish_theme",
+      "keywords": [
+        "hub",
+        "theme",
+        "release"
+      ],
+      "title": "Publish theme release"
+    },
+    {
+      "arg": "text",
+      "id": "hub.publish_plugin",
+      "keywords": [
+        "hub",
+        "plugin",
+        "review"
+      ],
+      "title": "Submit plugin release for review"
+    },
+    {
+      "arg": "text",
+      "id": "hub.install",
+      "keywords": [
+        "hub",
+        "install",
+        "update",
+        "download"
+      ],
+      "title": "Review hub installation or update"
+    },
+    {
+      "arg": "none",
+      "id": "hub.sign_in",
+      "keywords": [
+        "hub",
+        "account",
+        "oauth",
+        "publisher",
+        "github"
+      ],
+      "title": "Sign into Bonsai Hub with GitHub"
+    },
+    {
+      "arg": "none",
+      "id": "hub.sign_out",
+      "keywords": [
+        "hub",
+        "logout",
+        "session"
+      ],
+      "title": "Sign out of Bonsai Hub"
+    },
+    {
+      "arg": "none",
+      "id": "hub.submissions",
+      "keywords": [
+        "hub",
+        "pending",
+        "status",
+        "moderation"
+      ],
+      "title": "Refresh your hub submissions"
+    },
+    {
+      "arg": "text",
+      "id": "hub.delete",
+      "keywords": [
+        "hub",
+        "delete",
+        "publisher"
+      ],
+      "title": "Delete your hub content"
+    },
+    {
+      "arg": "text",
+      "id": "hub.unlist",
+      "keywords": [
+        "hub",
+        "unlist",
+        "publisher"
+      ],
+      "title": "Unlist your hub content"
+    },
+    {
+      "arg": "text",
+      "id": "hub.report",
+      "keywords": [
+        "hub",
+        "report",
+        "moderation",
+        "abuse"
+      ],
+      "title": "Report hub content"
+    },
+    {
+      "arg": "none",
+      "id": "hub.revocations",
+      "keywords": [
+        "hub",
+        "plugin",
+        "revoked",
+        "security"
+      ],
+      "title": "Check installed plugins for revocations"
+    },
+    {
+      "arg": "none",
+      "id": "nav.themes",
+      "keywords": [
+        "themes",
+        "appearance",
+        "colors",
+        "palette",
+        "editor",
+        "customize"
+      ],
+      "title": "Go to Themes"
+    },
+    {
+      "arg": "none",
+      "id": "view.drawer",
+      "keywords": [
+        "friends",
+        "chat",
+        "drawer",
+        "panel"
+      ],
+      "title": "Toggle friends and chat drawer"
+    },
+    {
+      "arg": "none",
+      "id": "view.sidebar",
+      "keywords": [
+        "sidebar",
+        "collapse"
+      ],
+      "title": "Collapse or expand the sidebar"
+    },
+    {
+      "arg": "screen",
+      "id": "view.sidebar_toggle",
+      "keywords": [
+        "sidebar",
+        "hide",
+        "show",
+        "remove",
+        "customize",
+        "screens"
+      ],
+      "title": "Show or hide in the sidebar"
+    },
+    {
+      "arg": "screen",
+      "id": "view.sidebar_up",
+      "keywords": [
+        "sidebar",
+        "reorder",
+        "order",
+        "customize"
+      ],
+      "title": "Move up in the sidebar"
+    },
+    {
+      "arg": "screen",
+      "id": "view.sidebar_down",
+      "keywords": [
+        "sidebar",
+        "reorder",
+        "order",
+        "customize"
+      ],
+      "title": "Move down in the sidebar"
+    },
+    {
+      "arg": "text",
+      "id": "view.sidebar_order",
+      "keywords": [
+        "sidebar",
+        "reorder",
+        "order",
+        "customize"
+      ],
+      "title": "Set sidebar order (screens, in order)"
+    },
+    {
+      "arg": "none",
+      "id": "view.sidebar_reset",
+      "keywords": [
+        "sidebar",
+        "reset",
+        "default",
+        "customize"
+      ],
+      "title": "Reset sidebar order and hidden screens"
+    },
+    {
+      "arg": "mode",
+      "id": "view.theme",
+      "keywords": [
+        "theme",
+        "mode",
+        "dark",
+        "light",
+        "system",
+        "appearance"
+      ],
+      "title": "Light, dark or follow the system"
+    },
+    {
+      "arg": "theme",
+      "id": "theme.apply",
+      "keywords": [
+        "theme",
+        "color",
+        "colour",
+        "appearance",
+        "skin",
+        "palette"
+      ],
+      "title": "Use theme"
+    },
+    {
+      "arg": "none",
+      "id": "theme.cycle",
+      "keywords": [
+        "theme",
+        "cycle",
+        "switch",
+        "appearance"
+      ],
+      "title": "Next theme"
+    },
+    {
+      "arg": "theme",
+      "id": "theme.delete",
+      "keywords": [
+        "theme",
+        "remove"
+      ],
+      "title": "Delete theme"
+    },
+    {
+      "arg": "theme",
+      "id": "theme.duplicate",
+      "keywords": [
+        "theme",
+        "copy",
+        "clone",
+        "new"
+      ],
+      "title": "Duplicate theme"
+    },
+    {
+      "arg": "font",
+      "id": "theme.font",
+      "keywords": [
+        "theme",
+        "font",
+        "typeface",
+        "google",
+        "text"
+      ],
+      "title": "Theme font"
+    },
+    {
+      "arg": "font",
+      "id": "theme.mono_font",
+      "keywords": [
+        "theme",
+        "font",
+        "mono",
+        "monospace",
+        "code",
+        "google"
+      ],
+      "title": "Theme code font"
+    },
+    {
+      "arg": "none",
+      "id": "theme.new",
+      "keywords": [
+        "theme",
+        "create",
+        "make",
+        "editor",
+        "custom"
+      ],
+      "title": "New theme"
+    },
+    {
+      "arg": "theme",
+      "id": "theme.edit",
+      "keywords": [
+        "theme",
+        "editor",
+        "customize",
+        "colors",
+        "change"
+      ],
+      "title": "Edit theme"
+    },
+    {
+      "arg": "text",
+      "id": "theme.save",
+      "keywords": [
+        "theme",
+        "save",
+        "editor"
+      ],
+      "title": "Save theme"
+    },
+    {
+      "arg": "theme",
+      "id": "theme.rename",
+      "keywords": [
+        "theme",
+        "name",
+        "rename"
+      ],
+      "title": "Rename theme"
+    },
+    {
+      "arg": "none",
+      "id": "theme.revert",
+      "keywords": [
+        "theme",
+        "discard",
+        "revert",
+        "reset",
+        "editor"
+      ],
+      "title": "Discard unsaved theme changes"
+    },
+    {
+      "arg": "none",
+      "id": "theme.undo",
+      "keywords": [
+        "theme",
+        "undo",
+        "editor"
+      ],
+      "title": "Undo theme change"
+    },
+    {
+      "arg": "none",
+      "id": "theme.redo",
+      "keywords": [
+        "theme",
+        "redo",
+        "editor"
+      ],
+      "title": "Redo theme change"
+    },
+    {
+      "arg": "none",
+      "id": "theme.fix_contrast",
+      "keywords": [
+        "theme",
+        "contrast",
+        "readable",
+        "accessibility",
+        "fix",
+        "wcag"
+      ],
+      "title": "Fix low contrast in the theme"
+    },
+    {
+      "arg": "text",
+      "id": "theme.import",
+      "keywords": [
+        "theme",
+        "import",
+        "install",
+        "add",
+        "load",
+        "file",
+        "code",
+        "paste",
+        "share",
+        "bonsaitheme"
+      ],
+      "title": "Import theme (paste a code or a file path)"
+    },
+    {
+      "arg": "theme",
+      "id": "theme.export",
+      "keywords": [
+        "theme",
+        "export",
+        "save",
+        "file",
+        "share",
+        "bonsaitheme",
+        "backup"
+      ],
+      "title": "Save theme to a file"
+    },
+    {
+      "arg": "theme",
+      "id": "theme.copy_code",
+      "keywords": [
+        "theme",
+        "share",
+        "code",
+        "copy",
+        "export",
+        "send"
+      ],
+      "title": "Copy theme code"
+    },
+    {
+      "arg": "text",
+      "id": "plugin.install",
+      "keywords": [
+        "plugin",
+        "install",
+        "add",
+        "extension",
+        "addon",
+        "luau",
+        "folder",
+        "package",
+        "bonsaiplugin"
+      ],
+      "title": "Install plugin (a .bonsaiplugin file or folder path)"
+    },
+    {
+      "arg": "text",
+      "id": "plugin.load_unpacked",
+      "keywords": [
+        "plugin",
+        "unpacked",
+        "develop",
+        "dev",
+        "load",
+        "folder",
+        "luau"
+      ],
+      "title": "Load unpacked plugin for development (a folder path)"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.enable",
+      "keywords": [
+        "plugin",
+        "enable",
+        "on",
+        "start",
+        "extension"
+      ],
+      "title": "Turn on plugin"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.disable",
+      "keywords": [
+        "plugin",
+        "disable",
+        "off",
+        "stop",
+        "extension"
+      ],
+      "title": "Turn off plugin"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.reload",
+      "keywords": [
+        "plugin",
+        "reload",
+        "restart",
+        "refresh",
+        "develop"
+      ],
+      "title": "Reload plugin"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.review",
+      "keywords": [
+        "plugin",
+        "permissions",
+        "review",
+        "update",
+        "agree"
+      ],
+      "title": "Review plugin permissions"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.pack",
+      "keywords": [
+        "plugin",
+        "pack",
+        "package",
+        "export",
+        "share",
+        "zip",
+        "bonsaiplugin",
+        "develop"
+      ],
+      "title": "Pack plugin into a .bonsaiplugin file"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.remove",
+      "keywords": [
+        "plugin",
+        "remove",
+        "uninstall",
+        "delete"
+      ],
+      "title": "Remove plugin"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.grant",
+      "keywords": [
+        "plugin",
+        "account",
+        "allow",
+        "grant",
+        "permission"
+      ],
+      "title": "Let plugin use this account"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.revoke",
+      "keywords": [
+        "plugin",
+        "account",
+        "revoke",
+        "deny",
+        "permission"
+      ],
+      "title": "Stop plugin using this account"
+    },
+    {
+      "arg": "text",
+      "id": "plugin.set",
+      "keywords": [
+        "plugin",
+        "setting",
+        "option",
+        "config",
+        "preference"
+      ],
+      "title": "Change plugin setting (plugin, setting, value; no value resets it)"
+    },
+    {
+      "arg": "text",
+      "id": "plugin.cap",
+      "keywords": [
+        "plugin",
+        "cap",
+        "limit",
+        "rate",
+        "hour",
+        "automation"
+      ],
+      "title": "Lower a plugin's hourly cap (plugin, action, number)"
+    },
+    {
+      "arg": "plugin",
+      "id": "plugin.budget",
+      "keywords": [
+        "plugin",
+        "budget",
+        "robux",
+        "spend",
+        "limit",
+        "day",
+        "trade",
+        "payout",
+        "automation"
+      ],
+      "title": "Set a plugin's daily budget on this account"
+    },
+    {
+      "arg": "none",
+      "id": "plugins.allow_automation",
+      "keywords": [
+        "plugin",
+        "automation",
+        "automate",
+        "unattended",
+        "bot",
+        "allow"
+      ],
+      "title": "Allow plugin automation on this account"
+    },
+    {
+      "arg": "none",
+      "id": "plugins.block_automation",
+      "keywords": [
+        "plugin",
+        "automation",
+        "automate",
+        "unattended",
+        "bot",
+        "block",
+        "off"
+      ],
+      "title": "Turn off plugin automation on this account"
+    },
+    {
+      "arg": "none",
+      "id": "plugins.stop_all",
+      "keywords": [
+        "plugin",
+        "stop",
+        "kill",
+        "panic",
+        "disable",
+        "halt",
+        "automation"
+      ],
+      "title": "Stop all plugins"
+    },
+    {
+      "arg": "none",
+      "id": "plugins.activity",
+      "keywords": [
+        "plugin",
+        "activity",
+        "log",
+        "history",
+        "automation",
+        "writes"
+      ],
+      "title": "Show plugin activity"
+    },
+    {
+      "arg": "text",
+      "id": "view.background",
+      "keywords": [
+        "background",
+        "wallpaper",
+        "picture",
+        "image",
+        "photo",
+        "gif",
+        "url",
+        "link",
+        "appearance"
+      ],
+      "title": "Set background picture (HTTPS image link)"
+    },
+    {
+      "arg": "none",
+      "id": "view.background_clear",
+      "keywords": [
+        "background",
+        "wallpaper",
+        "picture",
+        "remove",
+        "clear",
+        "appearance"
+      ],
+      "title": "Remove background picture"
+    },
+    {
+      "arg": "text",
+      "id": "view.background_level",
+      "keywords": [
+        "background",
+        "wallpaper",
+        "opacity",
+        "transparency",
+        "see-through",
+        "fade",
+        "blur",
+        "dim",
+        "saturation",
+        "tint",
+        "vignette",
+        "scanlines",
+        "crt",
+        "grain",
+        "noise",
+        "effect",
+        "appearance"
+      ],
+      "title": "Background level (image, panels, blur, dim, saturation, tint, vignette, scanlines or grain, then a number)"
+    },
+    {
+      "arg": "none",
+      "id": "view.background_effects_reset",
+      "keywords": [
+        "background",
+        "wallpaper",
+        "effects",
+        "blur",
+        "scanlines",
+        "reset",
+        "clear",
+        "appearance"
+      ],
+      "title": "Reset background effects"
+    },
+    {
+      "arg": "text",
+      "id": "view.density",
+      "keywords": [
+        "density",
+        "compact",
+        "comfortable",
+        "dense",
+        "spacing"
+      ],
+      "title": "Density (compact or comfortable)"
+    },
+    {
+      "arg": "none",
+      "id": "view.zoom_in",
+      "keywords": [
+        "scale",
+        "bigger",
+        "font"
+      ],
+      "title": "Zoom in"
+    },
+    {
+      "arg": "none",
+      "id": "view.zoom_out",
+      "keywords": [
+        "scale",
+        "smaller",
+        "font"
+      ],
+      "title": "Zoom out"
+    },
+    {
+      "arg": "none",
+      "id": "view.zoom_reset",
+      "keywords": [
+        "scale"
+      ],
+      "title": "Reset zoom"
+    },
+    {
+      "arg": "none",
+      "id": "window.minimize",
+      "keywords": [
+        "minimize",
+        "hide"
+      ],
+      "title": "Minimize window"
+    },
+    {
+      "arg": "none",
+      "id": "window.maximize",
+      "keywords": [
+        "maximize",
+        "restore",
+        "fullscreen"
+      ],
+      "title": "Maximize or restore window"
+    },
+    {
+      "arg": "none",
+      "id": "tab.new",
+      "keywords": [
+        "tab",
+        "open"
+      ],
+      "title": "New tab"
+    },
+    {
+      "arg": "tab",
+      "id": "tab.switch",
+      "keywords": [
+        "tab",
+        "go",
+        "find"
+      ],
+      "title": "Switch to tab"
+    },
+    {
+      "arg": "none",
+      "id": "tab.close",
+      "keywords": [
+        "close"
+      ],
+      "title": "Close tab"
+    },
+    {
+      "arg": "none",
+      "id": "tab.close_others",
+      "keywords": [
+        "close",
+        "tabs",
+        "others"
+      ],
+      "title": "Close other tabs"
+    },
+    {
+      "arg": "none",
+      "id": "tab.close_right",
+      "keywords": [
+        "close",
+        "tabs",
+        "right"
+      ],
+      "title": "Close tabs to the right"
+    },
+    {
+      "arg": "none",
+      "id": "tab.pin",
+      "keywords": [
+        "pin",
+        "unpin",
+        "tab"
+      ],
+      "title": "Pin or unpin tab"
+    },
+    {
+      "arg": "none",
+      "id": "tab.duplicate",
+      "keywords": [
+        "copy",
+        "clone",
+        "tab"
+      ],
+      "title": "Duplicate tab"
+    },
+    {
+      "arg": "none",
+      "id": "tab.next",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Next tab"
+    },
+    {
+      "arg": "none",
+      "id": "tab.prev",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Previous tab"
+    },
+    {
+      "arg": "none",
+      "id": "tab.move_right",
+      "keywords": [
+        "reorder",
+        "tab"
+      ],
+      "title": "Move tab right"
+    },
+    {
+      "arg": "none",
+      "id": "tab.move_left",
+      "keywords": [
+        "reorder",
+        "tab"
+      ],
+      "title": "Move tab left"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_1",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Go to tab 1"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_2",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Go to tab 2"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_3",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Go to tab 3"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_4",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Go to tab 4"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_5",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Go to tab 5"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_6",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Go to tab 6"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_7",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Go to tab 7"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_8",
+      "keywords": [
+        "tab"
+      ],
+      "title": "Go to tab 8"
+    },
+    {
+      "arg": "none",
+      "id": "tab.go_last",
+      "keywords": [
+        "tab",
+        "end"
+      ],
+      "title": "Go to last tab"
+    },
+    {
+      "arg": "none",
+      "id": "tab.reopen",
+      "keywords": [
+        "undo",
+        "tab"
+      ],
+      "title": "Reopen closed tab"
+    },
+    {
+      "arg": "gameOrFriend",
+      "id": "game.join",
+      "keywords": [
+        "join",
+        "play",
+        "launch"
+      ],
+      "title": "Join"
+    },
+    {
+      "arg": "gameOrFriend",
+      "id": "game.join_as",
+      "keywords": [
+        "join",
+        "alt",
+        "as"
+      ],
+      "title": "Join as another account"
+    },
+    {
+      "arg": "none",
+      "id": "game.join_server",
+      "keywords": [
+        "server",
+        "join"
+      ],
+      "title": "Join selected server"
+    },
+    {
+      "arg": "none",
+      "id": "game.join_best",
+      "keywords": [
+        "best",
+        "ping",
+        "server"
+      ],
+      "title": "Join best server for me"
+    },
+    {
+      "arg": "none",
+      "id": "game.join_smallest",
+      "keywords": [
+        "small",
+        "empty",
+        "server"
+      ],
+      "title": "Join smallest server"
+    },
+    {
+      "arg": "none",
+      "id": "game.join_random",
+      "keywords": [
+        "random",
+        "server"
+      ],
+      "title": "Join random server"
+    },
+    {
+      "arg": "text",
+      "id": "game.join_job",
+      "keywords": [
+        "job",
+        "instance",
+        "server id"
+      ],
+      "title": "Join server by job id"
+    },
+    {
+      "arg": "none",
+      "id": "game.copy_server_link",
+      "keywords": [
+        "invite",
+        "share",
+        "server"
+      ],
+      "title": "Copy server invite link"
+    },
+    {
+      "arg": "none",
+      "id": "game.copy_job_id",
+      "keywords": [
+        "job",
+        "instance",
+        "server id",
+        "copy"
+      ],
+      "title": "Copy server job id"
+    },
+    {
+      "arg": "user",
+      "id": "user.open",
+      "keywords": [
+        "profile",
+        "user",
+        "player"
+      ],
+      "title": "Open profile"
+    },
+    {
+      "arg": "user",
+      "id": "user.friends",
+      "keywords": [
+        "friends",
+        "connections",
+        "mutuals",
+        "mutual friends"
+      ],
+      "title": "Show a user's friends"
+    },
+    {
+      "arg": "user",
+      "id": "user.followers",
+      "keywords": [
+        "followers",
+        "fans"
+      ],
+      "title": "Show a user's followers"
+    },
+    {
+      "arg": "user",
+      "id": "user.following",
+      "keywords": [
+        "following",
+        "followings",
+        "follows"
+      ],
+      "title": "Show who a user follows"
+    },
+    {
+      "arg": "user",
+      "id": "user.add_friend",
+      "keywords": [
+        "friend",
+        "connect",
+        "request"
+      ],
+      "title": "Add friend"
+    },
+    {
+      "arg": "user",
+      "id": "user.add_friend_as",
+      "keywords": [
+        "friend",
+        "connect",
+        "request",
+        "alt",
+        "as"
+      ],
+      "title": "Add friend as another account"
+    },
+    {
+      "arg": "user",
+      "id": "user.unfriend",
+      "keywords": [
+        "unfriend",
+        "remove",
+        "connection"
+      ],
+      "title": "Remove friend"
+    },
+    {
+      "arg": "user",
+      "id": "user.accept_friend",
+      "keywords": [
+        "accept",
+        "request"
+      ],
+      "title": "Accept friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.decline_friend",
+      "keywords": [
+        "decline",
+        "ignore",
+        "request"
+      ],
+      "title": "Decline friend request"
+    },
+    {
+      "arg": "none",
+      "id": "friends.decline_all",
+      "keywords": [
+        "decline",
+        "ignore",
+        "requests"
+      ],
+      "title": "Ignore all friend requests"
+    },
+    {
+      "arg": "text",
+      "id": "friends.sort",
+      "keywords": [
+        "friends",
+        "sort",
+        "order",
+        "name",
+        "status",
+        "requests",
+        "mutuals"
+      ],
+      "title": "Sort the friends list (status, name; requests: newest, oldest, mutuals, name)"
+    },
+    {
+      "arg": "text",
+      "id": "friends.show",
+      "keywords": [
+        "friends",
+        "filter",
+        "show only",
+        "online",
+        "in game",
+        "offline",
+        "studio",
+        "followers"
+      ],
+      "title": "Filter friends by status (all, online, game, studio, offline; followers: not_followed)"
+    },
+    {
+      "arg": "user",
+      "id": "user.follow",
+      "keywords": [
+        "follow"
+      ],
+      "title": "Follow"
+    },
+    {
+      "arg": "user",
+      "id": "user.unfollow",
+      "keywords": [
+        "unfollow"
+      ],
+      "title": "Unfollow"
+    },
+    {
+      "arg": "text",
+      "id": "user.nickname",
+      "keywords": [
+        "nickname",
+        "alias",
+        "name",
+        "friend"
+      ],
+      "title": "Set a nickname for someone (user, then nickname; empty clears)"
+    },
+    {
+      "arg": "text",
+      "id": "user.note",
+      "keywords": [
+        "note",
+        "notes",
+        "memo",
+        "friend"
+      ],
+      "title": "Write a private note about someone (user, then note; empty clears)"
+    },
+    {
+      "arg": "user",
+      "id": "user.block",
+      "keywords": [
+        "block"
+      ],
+      "title": "Block user"
+    },
+    {
+      "arg": "user",
+      "id": "user.unblock",
+      "keywords": [
+        "unblock"
+      ],
+      "title": "Unblock user"
+    },
+    {
+      "arg": "none",
+      "id": "game.like",
+      "keywords": [
+        "like",
+        "thumbs up",
+        "vote",
+        "upvote"
+      ],
+      "title": "Like this experience"
+    },
+    {
+      "arg": "none",
+      "id": "game.dislike",
+      "keywords": [
+        "dislike",
+        "thumbs down",
+        "vote",
+        "downvote"
+      ],
+      "title": "Dislike this experience"
+    },
+    {
+      "arg": "none",
+      "id": "game.favorite",
+      "keywords": [
+        "favorite",
+        "favourite",
+        "star"
+      ],
+      "title": "Favorite or unfavorite this experience"
+    },
+    {
+      "arg": "text",
+      "id": "playlist.new",
+      "keywords": [
+        "playlist",
+        "list",
+        "collection",
+        "create",
+        "new"
+      ],
+      "title": "New game playlist"
+    },
+    {
+      "arg": "playlist",
+      "id": "playlist.add",
+      "keywords": [
+        "playlist",
+        "list",
+        "collection",
+        "add",
+        "save"
+      ],
+      "title": "Add this experience to a playlist"
+    },
+    {
+      "arg": "text",
+      "id": "playlist.remove",
+      "keywords": [
+        "playlist",
+        "list",
+        "remove"
+      ],
+      "title": "Remove experience from playlist (playlist, then place)"
+    },
+    {
+      "arg": "playlist",
+      "id": "playlist.open",
+      "keywords": [
+        "playlist",
+        "list",
+        "collection"
+      ],
+      "title": "Open playlist"
+    },
+    {
+      "arg": "playlist",
+      "id": "playlist.rename",
+      "keywords": [
+        "playlist",
+        "list",
+        "rename",
+        "name"
+      ],
+      "title": "Rename playlist"
+    },
+    {
+      "arg": "playlist",
+      "id": "playlist.delete",
+      "keywords": [
+        "playlist",
+        "list",
+        "delete",
+        "remove"
+      ],
+      "title": "Delete playlist"
+    },
+    {
+      "arg": "text",
+      "id": "playlist.sort",
+      "keywords": [
+        "playlist",
+        "sort",
+        "order",
+        "name",
+        "playing",
+        "rating",
+        "creator"
+      ],
+      "title": "Sort this playlist (added, name, playing, rating, creator)"
+    },
+    {
+      "arg": "text",
+      "id": "playlist.genre",
+      "keywords": [
+        "playlist",
+        "filter",
+        "genre",
+        "show only"
+      ],
+      "title": "Show one genre in this playlist (a genre, or all)"
+    },
+    {
+      "arg": "none",
+      "id": "game.notify",
+      "keywords": [
+        "notify",
+        "follow",
+        "bell",
+        "updates"
+      ],
+      "title": "Turn update notifications on or off"
+    },
+    {
+      "arg": "text",
+      "id": "game.event_notify",
+      "keywords": [
+        "event",
+        "rsvp",
+        "notify",
+        "remind"
+      ],
+      "title": "Notify me about an event"
+    },
+    {
+      "arg": "text",
+      "id": "game.buy_pass",
+      "keywords": [
+        "pass",
+        "gamepass",
+        "store",
+        "buy",
+        "purchase"
+      ],
+      "title": "Buy a pass"
+    },
+    {
+      "arg": "text",
+      "id": "game.buy_private_server",
+      "keywords": [
+        "private server",
+        "vip",
+        "buy",
+        "create"
+      ],
+      "title": "Buy a private server"
+    },
+    {
+      "arg": "text",
+      "id": "game.join_private_server",
+      "keywords": [
+        "private server",
+        "vip",
+        "join"
+      ],
+      "title": "Join a private server"
+    },
+    {
+      "arg": "text",
+      "id": "server.rename",
+      "keywords": [
+        "private server",
+        "vip",
+        "name"
+      ],
+      "title": "Rename private server (id, then name)"
+    },
+    {
+      "arg": "text",
+      "id": "server.toggle_active",
+      "keywords": [
+        "private server",
+        "vip",
+        "active",
+        "disable"
+      ],
+      "title": "Turn private server on or off"
+    },
+    {
+      "arg": "text",
+      "id": "server.new_link",
+      "keywords": [
+        "private server",
+        "vip",
+        "link",
+        "invite",
+        "regenerate"
+      ],
+      "title": "Make a new private server link"
+    },
+    {
+      "arg": "text",
+      "id": "server.toggle_friends",
+      "keywords": [
+        "private server",
+        "vip",
+        "friends",
+        "allow"
+      ],
+      "title": "Let friends join private server"
+    },
+    {
+      "arg": "text",
+      "id": "server.add_user",
+      "keywords": [
+        "private server",
+        "vip",
+        "whitelist",
+        "invite",
+        "allow"
+      ],
+      "title": "Let someone into a private server (id, then user)"
+    },
+    {
+      "arg": "text",
+      "id": "server.remove_user",
+      "keywords": [
+        "private server",
+        "vip",
+        "whitelist",
+        "remove"
+      ],
+      "title": "Take someone off a private server (id, then user)"
+    },
+    {
+      "arg": "text",
+      "id": "server.toggle_renew",
+      "keywords": [
+        "private server",
+        "vip",
+        "subscription",
+        "renew",
+        "cancel"
+      ],
+      "title": "Turn private server renewal on or off"
+    },
+    {
+      "arg": "text",
+      "id": "list.more",
+      "keywords": [
+        "more",
+        "next page",
+        "load"
+      ],
+      "title": "Load more"
+    },
+    {
+      "arg": "none",
+      "id": "game.refresh_servers",
+      "keywords": [
+        "reload",
+        "servers"
+      ],
+      "title": "Refresh server list"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.wear",
+      "keywords": [
+        "wear",
+        "equip",
+        "remove",
+        "take off",
+        "avatar"
+      ],
+      "title": "Wear or take off an item"
+    },
+    {
+      "arg": "outfit",
+      "id": "avatar.outfit",
+      "keywords": [
+        "outfit",
+        "wear",
+        "costume",
+        "avatar"
+      ],
+      "title": "Wear an outfit"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.save_outfit",
+      "keywords": [
+        "outfit",
+        "save",
+        "create",
+        "avatar"
+      ],
+      "title": "Save current look as an outfit"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.rig",
+      "keywords": [
+        "r6",
+        "r15",
+        "rig",
+        "body",
+        "avatar"
+      ],
+      "title": "Switch body type (R6 or R15)"
+    },
+    {
+      "arg": "outfit",
+      "id": "avatar.update_outfit",
+      "keywords": [
+        "outfit",
+        "overwrite",
+        "replace",
+        "save",
+        "avatar"
+      ],
+      "title": "Update outfit with current look"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.rename_outfit",
+      "keywords": [
+        "outfit",
+        "rename",
+        "name",
+        "avatar"
+      ],
+      "title": "Rename outfit (id, then name)"
+    },
+    {
+      "arg": "outfit",
+      "id": "avatar.delete_outfit",
+      "keywords": [
+        "outfit",
+        "delete",
+        "remove",
+        "avatar"
+      ],
+      "title": "Delete outfit"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.layer",
+      "keywords": [
+        "layer",
+        "order",
+        "layered clothing",
+        "on top",
+        "under",
+        "avatar"
+      ],
+      "title": "Move layered clothing up or down (item id, then up or down)"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.color",
+      "keywords": [
+        "skin",
+        "color",
+        "colour",
+        "tone",
+        "body",
+        "avatar"
+      ],
+      "title": "Set body color (color id or #RRGGBB, optionally part:color)"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.scale",
+      "keywords": [
+        "height",
+        "width",
+        "head",
+        "proportion",
+        "body type",
+        "scale",
+        "size",
+        "avatar"
+      ],
+      "title": "Set body scale (scale, then value)"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.emote",
+      "keywords": [
+        "emote",
+        "hotbar",
+        "slot",
+        "dance",
+        "avatar"
+      ],
+      "title": "Put an emote in a hotbar slot (slot 1-8, then item id; slot alone clears it)"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.redraw",
+      "keywords": [
+        "redraw",
+        "refresh",
+        "thumbnail",
+        "render",
+        "avatar"
+      ],
+      "title": "Redraw avatar image"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.view_3d",
+      "keywords": [
+        "3d",
+        "2d",
+        "model",
+        "render",
+        "preview",
+        "spin",
+        "avatar"
+      ],
+      "title": "Show the avatar in 3D or as an image"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.default_view",
+      "keywords": [
+        "3d",
+        "2d",
+        "default",
+        "model",
+        "image",
+        "setting",
+        "avatar"
+      ],
+      "title": "Open avatars in 3D or as an image (3d or 2d)"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.play",
+      "keywords": [
+        "animation",
+        "emote",
+        "dance",
+        "play",
+        "pose",
+        "3d",
+        "avatar"
+      ],
+      "title": "Play an animation in the 3D view (idle, walk, run, jump, fall, climb, swim, or an emote id)"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.orbit",
+      "keywords": [
+        "camera",
+        "rotate",
+        "orbit",
+        "zoom",
+        "turn",
+        "reset",
+        "3d",
+        "avatar"
+      ],
+      "title": "Move the 3D camera (left, right, up, down, in, out or reset)"
+    },
+    {
+      "arg": "text",
+      "id": "market.search",
+      "keywords": [
+        "catalog",
+        "shop",
+        "items",
+        "find item"
+      ],
+      "title": "Search the Marketplace"
+    },
+    {
+      "arg": "text",
+      "id": "market.category",
+      "keywords": [
+        "catalog",
+        "category",
+        "browse",
+        "shop",
+        "wishlist"
+      ],
+      "title": "Open a Marketplace category or the wishlist"
+    },
+    {
+      "arg": "none",
+      "id": "market.clear_filters",
+      "keywords": [
+        "catalog",
+        "filters",
+        "reset",
+        "clear",
+        "price",
+        "creator"
+      ],
+      "title": "Clear the Marketplace filters"
+    },
+    {
+      "arg": "none",
+      "id": "market.buy",
+      "keywords": [
+        "buy",
+        "purchase",
+        "get"
+      ],
+      "title": "Buy this item"
+    },
+    {
+      "arg": "account",
+      "id": "market.buy_as",
+      "keywords": [
+        "buy",
+        "purchase",
+        "alt",
+        "as"
+      ],
+      "title": "Buy this item as another account"
+    },
+    {
+      "arg": "text",
+      "id": "market.buy_resale",
+      "keywords": [
+        "buy",
+        "resale",
+        "reseller",
+        "limited",
+        "copy"
+      ],
+      "title": "Buy a reseller's copy"
+    },
+    {
+      "arg": "none",
+      "id": "market.favorite",
+      "keywords": [
+        "favorite",
+        "favourite",
+        "star"
+      ],
+      "title": "Favorite or unfavorite this item"
+    },
+    {
+      "arg": "none",
+      "id": "market.wishlist",
+      "keywords": [
+        "wishlist",
+        "want",
+        "save",
+        "watch"
+      ],
+      "title": "Add to or remove from wishlist"
+    },
+    {
+      "arg": "text",
+      "id": "market.template",
+      "keywords": [
+        "template",
+        "download",
+        "save",
+        "shirt",
+        "pants",
+        "t-shirt",
+        "clothing",
+        "image"
+      ],
+      "title": "Download clothing template"
+    },
+    {
+      "arg": "text",
+      "id": "market.template_masked",
+      "keywords": [
+        "template",
+        "masked",
+        "mask",
+        "download",
+        "save",
+        "shirt",
+        "pants",
+        "clothing",
+        "clean"
+      ],
+      "title": "Download clothing template, masked"
+    },
+    {
+      "arg": "none",
+      "id": "market.values",
+      "keywords": [
+        "values",
+        "rolimons",
+        "worth",
+        "rap"
+      ],
+      "title": "Turn item values from Rolimons on or off"
+    },
+    {
+      "arg": "text",
+      "id": "market.history_range",
+      "keywords": [
+        "price history",
+        "chart",
+        "range",
+        "rap",
+        "sales",
+        "limited"
+      ],
+      "title": "Set the price history range (7d, 30d, 90d, 1y, all; no argument cycles)"
+    },
+    {
+      "arg": "text",
+      "id": "market.history_zoom",
+      "keywords": [
+        "price history",
+        "chart",
+        "zoom",
+        "pan",
+        "limited"
+      ],
+      "title": "Zoom the price history chart (in, out, reset)"
+    },
+    {
+      "arg": "none",
+      "id": "market.try_on",
+      "keywords": [
+        "try on",
+        "preview",
+        "wear",
+        "fit",
+        "3d",
+        "avatar"
+      ],
+      "title": "Try on this item in 3D"
+    },
+    {
+      "arg": "text",
+      "id": "market.dependency_uses",
+      "keywords": [
+        "dependencies",
+        "references",
+        "property",
+        "inspect",
+        "mesh",
+        "texture"
+      ],
+      "title": "Inspect a dependency's references"
+    },
+    {
+      "arg": "text",
+      "id": "market.dependencies_search",
+      "keywords": [
+        "dependencies",
+        "filter",
+        "mesh",
+        "texture",
+        "search"
+      ],
+      "title": "Search this item's dependencies"
+    },
+    {
+      "arg": "none",
+      "id": "market.dependencies",
+      "keywords": [
+        "dependencies",
+        "mesh",
+        "texture",
+        "assets",
+        "references",
+        "model"
+      ],
+      "title": "View this item's dependencies"
+    },
+    {
+      "arg": "none",
+      "id": "market.play_audio",
+      "keywords": [
+        "play",
+        "pause",
+        "audio",
+        "sound",
+        "music",
+        "listen"
+      ],
+      "title": "Play or pause this sound"
+    },
+    {
+      "arg": "text",
+      "id": "market.history_scale",
+      "keywords": [
+        "price history",
+        "chart",
+        "log",
+        "scale",
+        "limited"
+      ],
+      "title": "Show the price history on a log or linear scale (log, linear; no argument toggles)"
+    },
+    {
+      "arg": "text",
+      "id": "market.history_view",
+      "keywords": [
+        "price history",
+        "chart",
+        "table",
+        "sales",
+        "limited"
+      ],
+      "title": "Show price history as a chart or a table (chart, table; no argument toggles)"
+    },
+    {
+      "arg": "text",
+      "id": "group.audit_search",
+      "keywords": [
+        "audit",
+        "log",
+        "search",
+        "performer",
+        "community",
+        "group"
+      ],
+      "title": "Search the community audit log"
+    },
+    {
+      "arg": "user",
+      "id": "inventory.view",
+      "keywords": [
+        "inventory",
+        "items",
+        "collectibles",
+        "limiteds"
+      ],
+      "title": "Open a user's inventory"
+    },
+    {
+      "arg": "text",
+      "id": "inventory.category",
+      "keywords": [
+        "inventory",
+        "category",
+        "collectibles",
+        "badges",
+        "passes",
+        "places"
+      ],
+      "title": "Open an inventory category"
+    },
+    {
+      "arg": "text",
+      "id": "inventory.delete",
+      "keywords": [
+        "delete",
+        "remove",
+        "inventory"
+      ],
+      "title": "Delete an item from your inventory"
+    },
+    {
+      "arg": "text",
+      "id": "inventory.sort",
+      "keywords": [
+        "inventory",
+        "sort",
+        "order",
+        "price",
+        "rap",
+        "oldest",
+        "newest"
+      ],
+      "title": "Sort the inventory (newest, oldest, price_asc, price_desc, rap, value, demand)"
+    },
+    {
+      "arg": "text",
+      "id": "inventory.filter",
+      "keywords": [
+        "inventory",
+        "filter",
+        "show only",
+        "limited",
+        "wearing",
+        "duplicates"
+      ],
+      "title": "Filter the inventory (all, limited, wearing, copies, for_sale)"
+    },
+    {
+      "arg": "text",
+      "id": "inventory.inspect",
+      "keywords": [
+        "inventory",
+        "inspect",
+        "details",
+        "drawer",
+        "info"
+      ],
+      "title": "Inspect an inventory item"
+    },
+    {
+      "arg": "user",
+      "id": "trade.new",
+      "keywords": [
+        "trade",
+        "offer",
+        "new trade"
+      ],
+      "title": "Send a trade to"
+    },
+    {
+      "arg": "text",
+      "id": "trade.accept",
+      "keywords": [
+        "accept",
+        "trade"
+      ],
+      "title": "Accept trade"
+    },
+    {
+      "arg": "text",
+      "id": "trade.decline",
+      "keywords": [
+        "decline",
+        "trade",
+        "cancel"
+      ],
+      "title": "Decline trade"
+    },
+    {
+      "arg": "text",
+      "id": "trade.counter",
+      "keywords": [
+        "counter",
+        "trade"
+      ],
+      "title": "Counter trade"
+    },
+    {
+      "arg": "none",
+      "id": "trade.send",
+      "keywords": [
+        "send",
+        "trade",
+        "offer"
+      ],
+      "title": "Send the trade you're making"
+    },
+    {
+      "arg": "none",
+      "id": "trade.export",
+      "keywords": [
+        "export",
+        "csv",
+        "history",
+        "copy"
+      ],
+      "title": "Copy the trade list as CSV"
+    },
+    {
+      "arg": "text",
+      "id": "transactions.period",
+      "keywords": [
+        "transactions",
+        "period",
+        "range",
+        "month",
+        "year",
+        "all time"
+      ],
+      "title": "Set the transactions period (day, week, month, year, all; no argument cycles)"
+    },
+    {
+      "arg": "text",
+      "id": "transactions.type",
+      "keywords": [
+        "transactions",
+        "type",
+        "filter",
+        "sales",
+        "purchases",
+        "stipends",
+        "payouts"
+      ],
+      "title": "Show one transaction type (sales, purchases, stipends, ...; empty shows all)"
+    },
+    {
+      "arg": "text",
+      "id": "transactions.scope",
+      "keywords": [
+        "transactions",
+        "community",
+        "group",
+        "revenue",
+        "funds"
+      ],
+      "title": "Show your transactions or a community's (me, or a community name or ID)"
+    },
+    {
+      "arg": "text",
+      "id": "transactions.range",
+      "keywords": [
+        "transactions",
+        "dates",
+        "from",
+        "to",
+        "between"
+      ],
+      "title": "Show transactions between two dates (2026-01-01..2026-03-31; empty clears)"
+    },
+    {
+      "arg": "text",
+      "id": "transactions.pending",
+      "keywords": [
+        "transactions",
+        "pending",
+        "held",
+        "escrow"
+      ],
+      "title": "Show only pending Robux, or everything (no argument toggles)"
+    },
+    {
+      "arg": "none",
+      "id": "transactions.sync",
+      "keywords": [
+        "transactions",
+        "refresh",
+        "reload",
+        "sync"
+      ],
+      "title": "Sync transactions now"
+    },
+    {
+      "arg": "none",
+      "id": "transactions.load_older",
+      "keywords": [
+        "transactions",
+        "history",
+        "older",
+        "backfill",
+        "all"
+      ],
+      "title": "Fetch older transaction history"
+    },
+    {
+      "arg": "none",
+      "id": "transactions.stop",
+      "keywords": [
+        "transactions",
+        "stop",
+        "cancel"
+      ],
+      "title": "Stop fetching older transactions"
+    },
+    {
+      "arg": "none",
+      "id": "transactions.export",
+      "keywords": [
+        "transactions",
+        "export",
+        "csv",
+        "save",
+        "download"
+      ],
+      "title": "Save the shown transactions as CSV"
+    },
+    {
+      "arg": "none",
+      "id": "transactions.copy_csv",
+      "keywords": [
+        "transactions",
+        "export",
+        "csv",
+        "copy"
+      ],
+      "title": "Copy the shown transactions as CSV"
+    },
+    {
+      "arg": "user",
+      "id": "user.message",
+      "keywords": [
+        "chat",
+        "message",
+        "dm",
+        "pm",
+        "whisper"
+      ],
+      "title": "Message (chat)"
+    },
+    {
+      "arg": "none",
+      "id": "chat.new_group",
+      "keywords": [
+        "new chat",
+        "group chat",
+        "compose",
+        "new message"
+      ],
+      "title": "Start a chat or group chat"
+    },
+    {
+      "arg": "text",
+      "id": "chat.send",
+      "keywords": [
+        "send",
+        "say"
+      ],
+      "title": "Send chat message"
+    },
+    {
+      "arg": "text",
+      "id": "chat.resend",
+      "keywords": [
+        "resend",
+        "retry",
+        "failed",
+        "chat"
+      ],
+      "title": "Send a failed chat message again"
+    },
+    {
+      "arg": "text",
+      "id": "chat.discard",
+      "keywords": [
+        "discard",
+        "delete",
+        "failed",
+        "chat"
+      ],
+      "title": "Discard a failed chat message"
+    },
+    {
+      "arg": "none",
+      "id": "chat.members",
+      "keywords": [
+        "members",
+        "participants",
+        "people",
+        "group"
+      ],
+      "title": "View chat members"
+    },
+    {
+      "arg": "text",
+      "id": "chat.rename",
+      "keywords": [
+        "rename",
+        "title",
+        "chat"
+      ],
+      "title": "Rename this group chat"
+    },
+    {
+      "arg": "user",
+      "id": "chat.add_people",
+      "keywords": [
+        "add",
+        "invite",
+        "chat"
+      ],
+      "title": "Add people to this chat"
+    },
+    {
+      "arg": "user",
+      "id": "chat.remove_person",
+      "keywords": [
+        "remove",
+        "kick",
+        "chat"
+      ],
+      "title": "Remove someone from this chat"
+    },
+    {
+      "arg": "none",
+      "id": "chat.leave",
+      "keywords": [
+        "leave",
+        "exit",
+        "chat"
+      ],
+      "title": "Leave this group chat"
+    },
+    {
+      "arg": "none",
+      "id": "chat.pin",
+      "keywords": [
+        "pin",
+        "unpin",
+        "chat"
+      ],
+      "title": "Pin or unpin this chat"
+    },
+    {
+      "arg": "text",
+      "id": "chat.share_experience",
+      "keywords": [
+        "share",
+        "experience",
+        "game",
+        "link",
+        "chat"
+      ],
+      "title": "Share an experience in this chat (link or ID)"
+    },
+    {
+      "arg": "none",
+      "id": "chat.emoji",
+      "keywords": [
+        "emoji",
+        "emoticon",
+        "smiley",
+        "chat"
+      ],
+      "title": "Insert an emoji"
+    },
+    {
+      "arg": "text",
+      "id": "message.reply",
+      "keywords": [
+        "reply",
+        "respond",
+        "message"
+      ],
+      "title": "Reply to the message (in chat)"
+    },
+    {
+      "arg": "text",
+      "id": "message.toggle_read",
+      "keywords": [
+        "read",
+        "unread",
+        "message"
+      ],
+      "title": "Mark message read or unread"
+    },
+    {
+      "arg": "text",
+      "id": "message.archive",
+      "keywords": [
+        "archive",
+        "unarchive",
+        "message"
+      ],
+      "title": "Archive message, or move it back to Inbox"
+    },
+    {
+      "arg": "none",
+      "id": "message.mark_all_read",
+      "keywords": [
+        "read all",
+        "messages",
+        "inbox"
+      ],
+      "title": "Mark all messages read"
+    },
+    {
+      "arg": "text",
+      "id": "notifications.filter",
+      "keywords": [
+        "notifications",
+        "unread",
+        "filter",
+        "bell"
+      ],
+      "title": "Show all or only unread notifications (all, unread; no argument toggles)"
+    },
+    {
+      "arg": "text",
+      "id": "notifications.category",
+      "keywords": [
+        "notifications",
+        "category",
+        "filter",
+        "friends",
+        "trades",
+        "security",
+        "robux",
+        "group",
+        "experience"
+      ],
+      "title": "Show one notification category (friends, trades, communities, experiences, account, messages, other; no argument shows all)"
+    },
+    {
+      "arg": "none",
+      "id": "notifications.mark_read",
+      "keywords": [
+        "notifications",
+        "bell",
+        "clear",
+        "read"
+      ],
+      "title": "Mark notifications read"
+    },
+    {
+      "arg": "none",
+      "id": "nav.chat",
+      "keywords": [
+        "chat",
+        "conversations"
+      ],
+      "title": "Go to Chat"
+    },
+    {
+      "arg": "none",
+      "id": "help.discord",
+      "keywords": [
+        "discord",
+        "support",
+        "community",
+        "feedback",
+        "server"
+      ],
+      "title": "Join the Bonsai Discord"
+    },
+    {
+      "arg": "none",
+      "id": "help.discord_copy",
+      "keywords": [
+        "discord",
+        "invite",
+        "copy",
+        "link"
+      ],
+      "title": "Copy the Bonsai Discord invite"
+    },
+    {
+      "arg": "none",
+      "id": "help.discord_browser",
+      "keywords": [
+        "discord",
+        "invite",
+        "browser",
+        "web"
+      ],
+      "title": "Open the Bonsai Discord invite in browser"
+    },
+    {
+      "arg": "none",
+      "id": "nav.notifications",
+      "keywords": [
+        "notifications",
+        "bell",
+        "alerts"
+      ],
+      "title": "Go to Notifications"
+    },
+    {
+      "arg": "none",
+      "id": "notifications.peek",
+      "keywords": [
+        "notifications",
+        "bell",
+        "alerts",
+        "recent",
+        "popout"
+      ],
+      "title": "Show recent notifications"
+    },
+    {
+      "arg": "text",
+      "id": "group.search",
+      "keywords": [
+        "groups",
+        "communities",
+        "find group"
+      ],
+      "title": "Search communities"
+    },
+    {
+      "arg": "text",
+      "id": "group.sort",
+      "keywords": [
+        "groups",
+        "communities",
+        "sort",
+        "order",
+        "members",
+        "role"
+      ],
+      "title": "Sort your communities (default, name, members, fewest, role)"
+    },
+    {
+      "arg": "text",
+      "id": "group.show",
+      "keywords": [
+        "groups",
+        "communities",
+        "filter",
+        "show only",
+        "verified",
+        "primary"
+      ],
+      "title": "Filter your communities (all, verified, primary)"
+    },
+    {
+      "arg": "text",
+      "id": "group.join",
+      "keywords": [
+        "join",
+        "group",
+        "community"
+      ],
+      "title": "Join this community"
+    },
+    {
+      "arg": "text",
+      "id": "group.leave",
+      "keywords": [
+        "leave",
+        "group",
+        "community"
+      ],
+      "title": "Leave a community"
+    },
+    {
+      "arg": "text",
+      "id": "group.primary",
+      "keywords": [
+        "primary",
+        "group",
+        "community",
+        "main"
+      ],
+      "title": "Make or clear primary community"
+    },
+    {
+      "arg": "user",
+      "id": "group.accept_request",
+      "keywords": [
+        "accept",
+        "join request",
+        "group"
+      ],
+      "title": "Accept join request"
+    },
+    {
+      "arg": "user",
+      "id": "group.decline_request",
+      "keywords": [
+        "decline",
+        "join request",
+        "group"
+      ],
+      "title": "Decline join request"
+    },
+    {
+      "arg": "none",
+      "id": "group.accept_selected",
+      "keywords": [
+        "accept",
+        "bulk",
+        "join requests"
+      ],
+      "title": "Accept selected join requests"
+    },
+    {
+      "arg": "none",
+      "id": "group.decline_selected",
+      "keywords": [
+        "decline",
+        "bulk",
+        "join requests"
+      ],
+      "title": "Decline selected join requests"
+    },
+    {
+      "arg": "text",
+      "id": "group.change_rank",
+      "keywords": [
+        "rank",
+        "role",
+        "promote",
+        "demote",
+        "group"
+      ],
+      "title": "Change a member's rank"
+    },
+    {
+      "arg": "user",
+      "id": "group.kick",
+      "keywords": [
+        "kick",
+        "exile",
+        "remove",
+        "group"
+      ],
+      "title": "Remove a member from the community"
+    },
+    {
+      "arg": "text",
+      "id": "group.new_post",
+      "keywords": [
+        "forum",
+        "post",
+        "wall",
+        "group"
+      ],
+      "title": "New forum post"
+    },
+    {
+      "arg": "text",
+      "id": "group.reply",
+      "keywords": [
+        "reply",
+        "forum",
+        "comment"
+      ],
+      "title": "Reply to the open forum post"
+    },
+    {
+      "arg": "text",
+      "id": "group.delete_post",
+      "keywords": [
+        "delete",
+        "forum",
+        "post"
+      ],
+      "title": "Delete a forum post"
+    },
+    {
+      "arg": "text",
+      "id": "group.delete_reply",
+      "keywords": [
+        "delete",
+        "forum",
+        "reply",
+        "comment"
+      ],
+      "title": "Delete a forum reply"
+    },
+    {
+      "arg": "none",
+      "id": "group.leave_selected",
+      "keywords": [
+        "leave",
+        "cleanup",
+        "bulk",
+        "groups"
+      ],
+      "title": "Leave the selected communities"
+    },
+    {
+      "arg": "none",
+      "id": "group.export_members",
+      "keywords": [
+        "export",
+        "csv",
+        "members",
+        "group"
+      ],
+      "title": "Copy loaded members as CSV"
+    },
+    {
+      "arg": "text",
+      "id": "group.setting",
+      "keywords": [
+        "settings",
+        "approval",
+        "group",
+        "community"
+      ],
+      "title": "Turn a community setting on or off"
+    },
+    {
+      "arg": "text",
+      "id": "group.payout",
+      "keywords": [
+        "payout",
+        "pay",
+        "robux",
+        "funds",
+        "revenue",
+        "group"
+      ],
+      "title": "Pay out Robux to a member (user, then amount)"
+    },
+    {
+      "arg": "text",
+      "id": "group.recurring_payouts",
+      "keywords": [
+        "payout",
+        "recurring",
+        "split",
+        "percentage",
+        "revenue",
+        "funds",
+        "group"
+      ],
+      "title": "Set recurring payouts (user:percent, …)"
+    },
+    {
+      "arg": "text",
+      "id": "group.ally",
+      "keywords": [
+        "ally",
+        "allies",
+        "affiliate",
+        "group",
+        "community"
+      ],
+      "title": "Send an ally request to a community"
+    },
+    {
+      "arg": "text",
+      "id": "group.remove_ally",
+      "keywords": [
+        "ally",
+        "allies",
+        "affiliate",
+        "remove",
+        "group"
+      ],
+      "title": "Remove an ally"
+    },
+    {
+      "arg": "text",
+      "id": "group.enemy",
+      "keywords": [
+        "enemy",
+        "enemies",
+        "affiliate",
+        "group",
+        "community"
+      ],
+      "title": "Declare a community an enemy"
+    },
+    {
+      "arg": "text",
+      "id": "group.remove_enemy",
+      "keywords": [
+        "enemy",
+        "enemies",
+        "affiliate",
+        "remove",
+        "group"
+      ],
+      "title": "Remove an enemy"
+    },
+    {
+      "arg": "text",
+      "id": "search.open",
+      "keywords": [
+        "search",
+        "find",
+        "results",
+        "people",
+        "experiences",
+        "groups",
+        "marketplace"
+      ],
+      "title": "Search Roblox (results page)"
+    },
+    {
+      "arg": "none",
+      "id": "search.clear_history",
+      "keywords": [
+        "search",
+        "history",
+        "recent",
+        "clear"
+      ],
+      "title": "Clear recent searches"
+    },
+    {
+      "arg": "none",
+      "id": "image.save",
+      "keywords": [
+        "image",
+        "thumbnail",
+        "picture",
+        "save",
+        "download",
+        "render"
+      ],
+      "title": "Save Image As…"
+    },
+    {
+      "arg": "none",
+      "id": "image.copy",
+      "keywords": [
+        "image",
+        "thumbnail",
+        "picture",
+        "copy",
+        "clipboard"
+      ],
+      "title": "Copy Image"
+    },
+    {
+      "arg": "none",
+      "id": "image.copy_url",
+      "keywords": [
+        "image",
+        "thumbnail",
+        "picture",
+        "copy",
+        "url",
+        "link"
+      ],
+      "title": "Copy Image URL"
+    },
+    {
+      "arg": "none",
+      "id": "entity.copy_id",
+      "keywords": [
+        "copy",
+        "id"
+      ],
+      "title": "Copy ID"
+    },
+    {
+      "arg": "none",
+      "id": "entity.copy_link",
+      "keywords": [
+        "copy",
+        "link",
+        "url"
+      ],
+      "title": "Copy link"
+    },
+    {
+      "arg": "none",
+      "id": "entity.open_website",
+      "keywords": [
+        "browser",
+        "web",
+        "site"
+      ],
+      "title": "Open on website"
+    },
+    {
+      "arg": "none",
+      "id": "entity.report",
+      "keywords": [
+        "report",
+        "abuse"
+      ],
+      "title": "Report (on the website)"
+    },
+    {
+      "arg": "none",
+      "id": "view.refresh",
+      "keywords": [
+        "reload"
+      ],
+      "title": "Refresh"
+    },
+    {
+      "arg": "text",
+      "id": "app.player_command",
+      "keywords": [
+        "launch",
+        "player",
+        "sober",
+        "flatpak",
+        "wine",
+        "command"
+      ],
+      "title": "Set how Roblox is launched (empty for the default)"
+    },
+    {
+      "arg": "text",
+      "id": "app.format_locale",
+      "keywords": [
+        "language",
+        "locale",
+        "region",
+        "format",
+        "date",
+        "number"
+      ],
+      "title": "Set number and date format (e.g. de-DE; empty for the system's)"
+    },
+    {
+      "arg": "text",
+      "id": "app.notify",
+      "keywords": [
+        "notifications",
+        "alerts",
+        "desktop",
+        "mute",
+        "sales"
+      ],
+      "title": "Turn a notification kind on or off (friend_joins, trades, chats, friend_requests, experience_updates, sales, plugins)"
+    },
+    {
+      "arg": "setting",
+      "id": "settings.set",
+      "keywords": [
+        "setting",
+        "preference",
+        "option",
+        "change",
+        "turn on",
+        "turn off"
+      ],
+      "title": "Change a setting"
+    },
+    {
+      "arg": "setting",
+      "id": "settings.reset",
+      "keywords": [
+        "reset",
+        "default",
+        "restore",
+        "settings"
+      ],
+      "title": "Reset settings to their defaults"
+    },
+    {
+      "arg": "text",
+      "id": "shortcuts.set",
+      "keywords": [
+        "shortcut",
+        "keybinding",
+        "hotkey",
+        "rebind",
+        "keys"
+      ],
+      "title": "Change a command's shortcut"
+    },
+    {
+      "arg": "none",
+      "id": "shortcuts.reset",
+      "keywords": [
+        "shortcut",
+        "keybinding",
+        "hotkey",
+        "default",
+        "reset"
+      ],
+      "title": "Reset all shortcuts"
+    },
+    {
+      "arg": "none",
+      "id": "settings.export",
+      "keywords": [
+        "export",
+        "backup",
+        "save",
+        "settings",
+        "file",
+        "move"
+      ],
+      "title": "Save settings to a file"
+    },
+    {
+      "arg": "none",
+      "id": "settings.import",
+      "keywords": [
+        "import",
+        "restore",
+        "load",
+        "settings",
+        "file",
+        "backup"
+      ],
+      "title": "Load settings from a file"
+    },
+    {
+      "arg": "none",
+      "id": "app.check_updates",
+      "keywords": [
+        "update",
+        "upgrade",
+        "version",
+        "release"
+      ],
+      "title": "Check for Bonsai updates"
+    },
+    {
+      "arg": "none",
+      "id": "app.download_update",
+      "keywords": [
+        "update",
+        "download",
+        "upgrade"
+      ],
+      "title": "Download Bonsai update"
+    },
+    {
+      "arg": "none",
+      "id": "app.install_update",
+      "keywords": [
+        "update",
+        "install",
+        "restart",
+        "upgrade"
+      ],
+      "title": "Install Bonsai update and restart"
+    },
+    {
+      "arg": "none",
+      "id": "app.copy_diagnostics",
+      "keywords": [
+        "diagnostics",
+        "debug",
+        "bug",
+        "report",
+        "version",
+        "about",
+        "support"
+      ],
+      "title": "Copy diagnostics for a bug report"
+    },
+    {
+      "arg": "none",
+      "id": "app.clear_cache",
+      "keywords": [
+        "cache",
+        "clear",
+        "disk",
+        "storage"
+      ],
+      "title": "Clear cached data and images"
+    },
+    {
+      "arg": "none",
+      "id": "view.next_subtab",
+      "keywords": [
+        "tab",
+        "next"
+      ],
+      "title": "Next sub-tab"
+    },
+    {
+      "arg": "none",
+      "id": "view.prev_subtab",
+      "keywords": [
+        "tab",
+        "previous"
+      ],
+      "title": "Previous sub-tab"
+    },
+    {
+      "arg": "none",
+      "id": "list.down",
+      "keywords": [
+        "next"
+      ],
+      "title": "Move down"
+    },
+    {
+      "arg": "none",
+      "id": "list.up",
+      "keywords": [
+        "previous"
+      ],
+      "title": "Move up"
+    },
+    {
+      "arg": "none",
+      "id": "list.left",
+      "keywords": [
+        "previous",
+        "left"
+      ],
+      "title": "Move left"
+    },
+    {
+      "arg": "none",
+      "id": "list.right",
+      "keywords": [
+        "next",
+        "right"
+      ],
+      "title": "Move right"
+    },
+    {
+      "arg": "none",
+      "id": "list.open",
+      "keywords": [
+        "open"
+      ],
+      "title": "Open selected"
+    },
+    {
+      "arg": "none",
+      "id": "list.select",
+      "keywords": [
+        "select",
+        "mark"
+      ],
+      "title": "Select for bulk action"
+    },
+    {
+      "arg": "none",
+      "id": "app.quit",
+      "keywords": [
+        "exit",
+        "close"
+      ],
+      "title": "Quit"
+    }
+  ],
+  "prefs": [
+    {
+      "key": "mode",
+      "keywords": [
+        "theme",
+        "dark",
+        "light",
+        "system"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "System",
+          "value": "system"
+        },
+        {
+          "label": "Dark",
+          "value": "dark"
+        },
+        {
+          "label": "Light",
+          "value": "light"
+        }
+      ],
+      "section": "appearance",
+      "title": "Mode"
+    },
+    {
+      "key": "density",
+      "keywords": [
+        "compact",
+        "comfortable",
+        "spacing"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "Comfortable",
+          "value": "comfortable"
+        },
+        {
+          "label": "Compact",
+          "value": "compact"
+        }
+      ],
+      "section": "appearance",
+      "title": "Density"
+    },
+    {
+      "key": "ui_scale",
+      "keywords": [
+        "zoom",
+        "scale",
+        "size",
+        "larger",
+        "smaller"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "67%",
+          "value": "67"
+        },
+        {
+          "label": "75%",
+          "value": "75"
+        },
+        {
+          "label": "80%",
+          "value": "80"
+        },
+        {
+          "label": "90%",
+          "value": "90"
+        },
+        {
+          "label": "100%",
+          "value": "100"
+        },
+        {
+          "label": "110%",
+          "value": "110"
+        },
+        {
+          "label": "125%",
+          "value": "125"
+        },
+        {
+          "label": "150%",
+          "value": "150"
+        },
+        {
+          "label": "175%",
+          "value": "175"
+        },
+        {
+          "label": "200%",
+          "value": "200"
+        }
+      ],
+      "section": "appearance",
+      "title": "Zoom"
+    },
+    {
+      "key": "motion",
+      "keywords": [
+        "animation",
+        "reduce motion",
+        "transition",
+        "accessibility"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "System",
+          "value": "system"
+        },
+        {
+          "label": "Reduced",
+          "value": "reduce"
+        },
+        {
+          "label": "Full",
+          "value": "full"
+        }
+      ],
+      "section": "appearance",
+      "title": "Motion"
+    },
+    {
+      "key": "status_bar",
+      "keywords": [
+        "footer",
+        "bottom",
+        "bar",
+        "hide"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "appearance",
+      "title": "Status bar"
+    },
+    {
+      "key": "player_command",
+      "keywords": [
+        "launch",
+        "player",
+        "sober",
+        "flatpak",
+        "wine"
+      ],
+      "kind": "text",
+      "options": [],
+      "section": "general",
+      "title": "Launch Roblox with"
+    },
+    {
+      "key": "avatar_view",
+      "keywords": [
+        "3d",
+        "2d",
+        "model",
+        "image",
+        "avatar"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "Image",
+          "value": "2d"
+        },
+        {
+          "label": "3D",
+          "value": "3d"
+        }
+      ],
+      "section": "general",
+      "title": "Avatars"
+    },
+    {
+      "key": "format_locale",
+      "keywords": [
+        "language",
+        "locale",
+        "region",
+        "date",
+        "number"
+      ],
+      "kind": "text",
+      "options": [],
+      "section": "general",
+      "title": "Number and date format"
+    },
+    {
+      "key": "time_format",
+      "keywords": [
+        "time",
+        "12 hour",
+        "24 hour",
+        "am",
+        "pm",
+        "clock"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "Automatic",
+          "value": "auto"
+        },
+        {
+          "label": "12-hour",
+          "value": "12h"
+        },
+        {
+          "label": "24-hour",
+          "value": "24h"
+        }
+      ],
+      "section": "general",
+      "title": "Clock"
+    },
+    {
+      "key": "relative_dates",
+      "keywords": [
+        "ago",
+        "date",
+        "time",
+        "relative",
+        "absolute"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "general",
+      "title": "Relative times"
+    },
+    {
+      "key": "start_screen",
+      "keywords": [
+        "start",
+        "startup",
+        "launch",
+        "restore",
+        "tabs",
+        "session"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "Home",
+          "value": "home"
+        },
+        {
+          "label": "Friends",
+          "value": "friends"
+        },
+        {
+          "label": "Discover",
+          "value": "discover"
+        },
+        {
+          "label": "Marketplace",
+          "value": "marketplace"
+        },
+        {
+          "label": "Avatar",
+          "value": "avatar"
+        },
+        {
+          "label": "Inventory",
+          "value": "inventory"
+        },
+        {
+          "label": "Trades",
+          "value": "trades"
+        },
+        {
+          "label": "Chat",
+          "value": "chat"
+        },
+        {
+          "label": "Communities",
+          "value": "communities"
+        },
+        {
+          "label": "Tabs from last time",
+          "value": "last"
+        }
+      ],
+      "section": "layout",
+      "title": "Open on launch"
+    },
+    {
+      "key": "sidebar_mode",
+      "keywords": [
+        "sidebar",
+        "collapse",
+        "icons",
+        "narrow"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "Automatic",
+          "value": "auto"
+        },
+        {
+          "label": "Expanded",
+          "value": "expanded"
+        },
+        {
+          "label": "Collapsed",
+          "value": "collapsed"
+        }
+      ],
+      "section": "layout",
+      "title": "Sidebar"
+    },
+    {
+      "key": "drawer",
+      "keywords": [
+        "drawer",
+        "panel",
+        "friends",
+        "chat",
+        "right"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "layout",
+      "title": "Friends and chat drawer"
+    },
+    {
+      "key": "home.friends",
+      "keywords": [
+        "home",
+        "friends",
+        "playing",
+        "row"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "layout",
+      "title": "Friends playing"
+    },
+    {
+      "key": "home.continue_playing",
+      "keywords": [
+        "home",
+        "recent",
+        "continue",
+        "row"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "layout",
+      "title": "Continue"
+    },
+    {
+      "key": "home.favorites",
+      "keywords": [
+        "home",
+        "favorites",
+        "row"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "layout",
+      "title": "Favorites"
+    },
+    {
+      "key": "home.recommended",
+      "keywords": [
+        "home",
+        "recommended",
+        "feed",
+        "sorts",
+        "row"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "layout",
+      "title": "Recommended"
+    },
+    {
+      "key": "notify.friend_joins",
+      "keywords": [
+        "friends",
+        "presence",
+        "join"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Friends joining games"
+    },
+    {
+      "key": "notify.friend_requests",
+      "keywords": [
+        "friends",
+        "request"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Friend requests"
+    },
+    {
+      "key": "notify.chats",
+      "keywords": [
+        "chat",
+        "message"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Chat messages"
+    },
+    {
+      "key": "notify.trades",
+      "keywords": [
+        "trade",
+        "offer"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Trade offers"
+    },
+    {
+      "key": "notify.sales",
+      "keywords": [
+        "sale",
+        "sold",
+        "robux"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Sales"
+    },
+    {
+      "key": "notify.experience_updates",
+      "keywords": [
+        "experience",
+        "game",
+        "update"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Experience updates"
+    },
+    {
+      "key": "notify.plugins",
+      "keywords": [
+        "plugin",
+        "extension",
+        "alert"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Plugin alerts"
+    },
+    {
+      "key": "quiet_hours",
+      "keywords": [
+        "quiet",
+        "do not disturb",
+        "dnd",
+        "night",
+        "silent",
+        "schedule"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Quiet hours"
+    },
+    {
+      "key": "quiet_start",
+      "keywords": [
+        "quiet",
+        "start",
+        "night"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "00:00",
+          "value": "0"
+        },
+        {
+          "label": "01:00",
+          "value": "1"
+        },
+        {
+          "label": "02:00",
+          "value": "2"
+        },
+        {
+          "label": "03:00",
+          "value": "3"
+        },
+        {
+          "label": "04:00",
+          "value": "4"
+        },
+        {
+          "label": "05:00",
+          "value": "5"
+        },
+        {
+          "label": "06:00",
+          "value": "6"
+        },
+        {
+          "label": "07:00",
+          "value": "7"
+        },
+        {
+          "label": "08:00",
+          "value": "8"
+        },
+        {
+          "label": "09:00",
+          "value": "9"
+        },
+        {
+          "label": "10:00",
+          "value": "10"
+        },
+        {
+          "label": "11:00",
+          "value": "11"
+        },
+        {
+          "label": "12:00",
+          "value": "12"
+        },
+        {
+          "label": "13:00",
+          "value": "13"
+        },
+        {
+          "label": "14:00",
+          "value": "14"
+        },
+        {
+          "label": "15:00",
+          "value": "15"
+        },
+        {
+          "label": "16:00",
+          "value": "16"
+        },
+        {
+          "label": "17:00",
+          "value": "17"
+        },
+        {
+          "label": "18:00",
+          "value": "18"
+        },
+        {
+          "label": "19:00",
+          "value": "19"
+        },
+        {
+          "label": "20:00",
+          "value": "20"
+        },
+        {
+          "label": "21:00",
+          "value": "21"
+        },
+        {
+          "label": "22:00",
+          "value": "22"
+        },
+        {
+          "label": "23:00",
+          "value": "23"
+        }
+      ],
+      "section": "notifications",
+      "title": "Quiet from"
+    },
+    {
+      "key": "quiet_end",
+      "keywords": [
+        "quiet",
+        "end",
+        "morning"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "00:00",
+          "value": "0"
+        },
+        {
+          "label": "01:00",
+          "value": "1"
+        },
+        {
+          "label": "02:00",
+          "value": "2"
+        },
+        {
+          "label": "03:00",
+          "value": "3"
+        },
+        {
+          "label": "04:00",
+          "value": "4"
+        },
+        {
+          "label": "05:00",
+          "value": "5"
+        },
+        {
+          "label": "06:00",
+          "value": "6"
+        },
+        {
+          "label": "07:00",
+          "value": "7"
+        },
+        {
+          "label": "08:00",
+          "value": "8"
+        },
+        {
+          "label": "09:00",
+          "value": "9"
+        },
+        {
+          "label": "10:00",
+          "value": "10"
+        },
+        {
+          "label": "11:00",
+          "value": "11"
+        },
+        {
+          "label": "12:00",
+          "value": "12"
+        },
+        {
+          "label": "13:00",
+          "value": "13"
+        },
+        {
+          "label": "14:00",
+          "value": "14"
+        },
+        {
+          "label": "15:00",
+          "value": "15"
+        },
+        {
+          "label": "16:00",
+          "value": "16"
+        },
+        {
+          "label": "17:00",
+          "value": "17"
+        },
+        {
+          "label": "18:00",
+          "value": "18"
+        },
+        {
+          "label": "19:00",
+          "value": "19"
+        },
+        {
+          "label": "20:00",
+          "value": "20"
+        },
+        {
+          "label": "21:00",
+          "value": "21"
+        },
+        {
+          "label": "22:00",
+          "value": "22"
+        },
+        {
+          "label": "23:00",
+          "value": "23"
+        }
+      ],
+      "section": "notifications",
+      "title": "Quiet until"
+    },
+    {
+      "key": "mute_in_game",
+      "keywords": [
+        "game",
+        "playing",
+        "mute",
+        "silent",
+        "do not disturb"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Mute while playing"
+    },
+    {
+      "key": "notify_sound",
+      "keywords": [
+        "sound",
+        "audio",
+        "chime",
+        "ding"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "Sound"
+    },
+    {
+      "key": "notify_in_front",
+      "keywords": [
+        "focused",
+        "foreground",
+        "always"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "notifications",
+      "title": "While the app is in front"
+    },
+    {
+      "key": "tray",
+      "keywords": [
+        "tray",
+        "system tray",
+        "notification area",
+        "menu bar",
+        "icon"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "desktop",
+      "title": "Tray icon"
+    },
+    {
+      "key": "close_to_tray",
+      "keywords": [
+        "close",
+        "minimize",
+        "background",
+        "keep running",
+        "tray"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "desktop",
+      "title": "Close to tray"
+    },
+    {
+      "key": "start_on_login",
+      "keywords": [
+        "autostart",
+        "startup",
+        "login",
+        "boot",
+        "launch"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "desktop",
+      "title": "Start on login"
+    },
+    {
+      "key": "update_downloads",
+      "keywords": [
+        "updates",
+        "download",
+        "background",
+        "automatic"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "desktop",
+      "title": "Download updates automatically"
+    },
+    {
+      "key": "update_checks",
+      "keywords": [
+        "updates",
+        "upgrade",
+        "version",
+        "release",
+        "automatic"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "desktop",
+      "title": "Check for updates automatically"
+    },
+    {
+      "key": "start_hidden",
+      "keywords": [
+        "hidden",
+        "minimized",
+        "silent",
+        "tray",
+        "startup"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "desktop",
+      "title": "Start in the tray"
+    },
+    {
+      "key": "item_values",
+      "keywords": [
+        "values",
+        "rolimons",
+        "worth",
+        "rap"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "data",
+      "title": "Item values"
+    },
+    {
+      "key": "wiki",
+      "keywords": [
+        "wiki",
+        "fandom",
+        "article",
+        "trivia",
+        "history"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "data",
+      "title": "Wiki articles"
+    },
+    {
+      "key": "cache_days",
+      "keywords": [
+        "cache",
+        "keep",
+        "age",
+        "days",
+        "storage",
+        "disk"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "1 week",
+          "value": "7"
+        },
+        {
+          "label": "1 month",
+          "value": "30"
+        },
+        {
+          "label": "3 months",
+          "value": "90"
+        },
+        {
+          "label": "1 year",
+          "value": "365"
+        }
+      ],
+      "section": "data",
+      "title": "Keep unused data for"
+    },
+    {
+      "key": "image_cache_mb",
+      "keywords": [
+        "cache",
+        "images",
+        "thumbnails",
+        "size",
+        "limit",
+        "storage",
+        "disk"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "256 MB",
+          "value": "256"
+        },
+        {
+          "label": "512 MB",
+          "value": "512"
+        },
+        {
+          "label": "1 GB",
+          "value": "1024"
+        },
+        {
+          "label": "2 GB",
+          "value": "2048"
+        },
+        {
+          "label": "4 GB",
+          "value": "4096"
+        }
+      ],
+      "section": "data",
+      "title": "Image cache size"
+    },
+    {
+      "key": "background_accounts",
+      "keywords": [
+        "background",
+        "realtime",
+        "unread",
+        "accounts",
+        "presence"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "accounts",
+      "title": "Keep other accounts live"
+    },
+    {
+      "key": "vault_idle_minutes",
+      "keywords": [
+        "pin",
+        "vault",
+        "lock",
+        "timeout",
+        "idle",
+        "security"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "1 minute",
+          "value": "1"
+        },
+        {
+          "label": "5 minutes",
+          "value": "5"
+        },
+        {
+          "label": "15 minutes",
+          "value": "15"
+        },
+        {
+          "label": "30 minutes",
+          "value": "30"
+        },
+        {
+          "label": "1 hour",
+          "value": "60"
+        }
+      ],
+      "section": "accounts",
+      "title": "Lock after inactivity"
+    },
+    {
+      "key": "account_accent",
+      "keywords": [
+        "accent",
+        "color",
+        "colour",
+        "tag",
+        "theme"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "accounts",
+      "title": "Account color as accent"
+    }
+  ]
+}

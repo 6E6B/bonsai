@@ -1,4 +1,4 @@
-import { Show } from "solid-js"
+import { For, Match, Show, Switch } from "solid-js"
 import { assetIcon } from "~/lib/asset-icon"
 import { run } from "~/lib/commands/registry"
 import { compact, percent } from "~/lib/format"
@@ -6,7 +6,19 @@ import type { GameCard, ValueTag } from "~/lib/ipc/bindings"
 import { wantsPreview } from "~/lib/item-preview"
 import { gameMenu, type ItemMenuExtras, itemMenu, itemTarget, joinUser } from "~/lib/menus"
 import { thumbUrl } from "~/lib/thumb"
-import { Badge, Button, ContextMenu, Icon, ListItem, type MenuEntry, Robux, Thumbnail, Tile, Tooltip } from "~/lib/ui"
+import {
+  Badge,
+  Button,
+  ContextMenu,
+  Icon,
+  ListItem,
+  type MenuEntry,
+  Robux,
+  Skeleton,
+  Thumbnail,
+  Tile,
+  Tooltip,
+} from "~/lib/ui"
 import { ValueAmount, ValueMarker } from "~/lib/value-tags"
 
 /** Grid classes for tiles, so every screen's tiles are the same size. `tileGrid` for square
@@ -15,6 +27,36 @@ export const tileGrid = "grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap
 export const wideTileGrid = "grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-x-3 gap-y-4"
 /** `minItemWidth` for a `VirtualGrid` of square tiles; matches `tileGrid`. */
 export const TILE_WIDTH = 128
+
+/** A tile's shape while it loads: the image, a title line and a subtitle line. */
+export function TileSkeleton(props: { shape?: "square" | "wide" }) {
+  return (
+    <div class="flex flex-col gap-1.5">
+      <Skeleton class={`${props.shape === "wide" ? "aspect-video" : "aspect-square"} w-full rounded-md`} />
+      <Skeleton class="mt-0.5 h-3.5 w-4/5" />
+      <Skeleton class="h-3 w-1/2" />
+    </div>
+  )
+}
+
+/** Placeholder sections shaped like loaded shelves: a heading over one row of tiles. The row
+ * clips, so it fills any width with whole tiles. */
+export function ShelfSkeleton(props: { shelves?: number; tiles?: number }) {
+  return (
+    <div class="flex flex-col gap-6" aria-hidden="true">
+      <For each={Array.from({ length: props.shelves ?? 3 })}>
+        {() => (
+          <section class="flex flex-col gap-2">
+            <Skeleton class="h-5 w-40" />
+            <div class={`${tileGrid} grid-rows-[auto] auto-rows-[0] gap-y-0 overflow-hidden`}>
+              <For each={Array.from({ length: props.tiles ?? 12 })}>{() => <TileSkeleton />}</For>
+            </div>
+          </section>
+        )}
+      </For>
+    </div>
+  )
+}
 
 /** A game in a grid. Click opens it; right-click for join and copy, plus `menu` rows. */
 export function GameTile(props: { game: GameCard; shape?: "square" | "wide"; menu?: MenuEntry[] }) {
@@ -142,9 +184,7 @@ export function ItemTile(props: {
         marker={marker(props.item.values) ? <ValueMarker tag={props.item.values as ValueTag} /> : undefined}
         badge={
           props.item.limited ? (
-            <Badge variant="success">
-              {props.showSerial && props.item.serial ? `#${props.item.serial}` : "Limited"}
-            </Badge>
+            <Badge>{props.showSerial && props.item.serial ? `#${props.item.serial}` : "Limited"}</Badge>
           ) : props.showSerial && (props.item.copies ?? 1) > 1 ? (
             <Badge>{`x${props.item.copies}`}</Badge>
           ) : undefined
@@ -158,11 +198,16 @@ export function ItemTile(props: {
   )
 }
 
-/** A catalog price: Robux, or "Off sale" when the item can't be bought. */
+/** A catalog price: Robux, "Free" at 0, or "Off sale" when the item can't be bought. */
 export function Price(props: { amount: number | null; class?: string }) {
   return (
-    <Show when={props.amount !== null} fallback={<span class={props.class}>Off sale</span>}>
-      <Robux class={props.class} amount={props.amount} />
-    </Show>
+    <Switch fallback={<Robux class={props.class} amount={props.amount} />}>
+      <Match when={props.amount === null}>
+        <span class={props.class}>Off sale</span>
+      </Match>
+      <Match when={props.amount === 0}>
+        <span class={props.class}>Free</span>
+      </Match>
+    </Switch>
   )
 }

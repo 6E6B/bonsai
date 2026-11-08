@@ -4,20 +4,7 @@
     flex-direction: column;
     gap: 16px;
     width: 100%;
-    max-width: 1280px;
-    margin-inline: auto;
     padding: 16px 20px 32px;
-  }
-
-  [data-component="page"][data-width="narrow"] {
-    max-width: 880px;
-  }
-
-  [data-component="page"][data-width="full"] {
-    flex: 1;
-    max-width: none;
-    min-height: 0;
-    padding: 0;
   }
 
   /* Split screens (Messages, Trades, Chat, Settings): each pane scrolls on its own and has the
@@ -42,5 +29,83 @@
   [data-component="pane"][data-side] {
     flex: none;
     border-right: 1px solid var(--color-line);
+  }
+
+  /* Browsing screens (Marketplace, Inventory): the page scrolls, the panels stay in view. The
+   * scroller is their size container (base.css), so 100cqh is exactly its height at any zoom. */
+  [data-component="side-page"] {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  [data-component="side-panel"] {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    height: 100cqh;
+  }
+
+  [data-component="side-panel"][data-edge="start"] {
+    border-right: 1px solid var(--color-line);
+  }
+
+  [data-component="side-panel"][data-edge="end"] {
+    border-left: 1px solid var(--color-line);
+  }
+
+  [data-component="side-panel"] > [data-slot="header"] {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 16px 10px;
+  }
+
+  [data-component="side-panel"] > [data-slot="body"] {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 120px;
+    padding: 0 8px 12px;
+    overflow-y: auto;
+  }
+
+  /* A header whose contents all render nothing (e.g. no totals yet) takes no space. */
+  [data-component="side-panel"] > [data-slot="header"]:empty {
+    display: none;
+  }
+
+  /* Without a header, the body starts at the same inset as a page. */
+  [data-component="side-panel"] > [data-slot="body"]:first-child,
+  [data-component="side-panel"] > [data-slot="header"]:empty + [data-slot="body"] {
+    padding-top: 16px;
+  }
+
+  [data-component="side-panel"][data-edge="end"] > [data-slot="body"] {
+    padding: 16px 12px;
+  }
+
+  [data-component="side-panel"] > [data-slot="footer"] {
+    display: flex;
+    flex: 0 1 auto;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    padding: 10px 16px 12px;
+    overflow-y: auto;
+    border-top: 1px solid var(--color-line);
+  }
+
+  [data-component="side-main"] {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px 20px 32px;
   }
 }

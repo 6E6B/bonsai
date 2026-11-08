@@ -1,6 +1,7 @@
 import { For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { dateTime, full } from "~/lib/format"
+import { hubPlugins } from "~/lib/hub"
 import { type ActivityView, commands, type Id, type PluginBudgetView, type PluginView } from "~/lib/ipc/bindings"
 import { byTier, pluginStates, tiers } from "~/lib/plugins"
 import { shell, useLive } from "~/lib/store"
@@ -45,12 +46,14 @@ export function PluginsSection() {
         description="Plugins run in a sandbox with no access to your cookies, files or the network."
         actions={
           <>
-            <Button size="sm" onClick={() => run("nav.hub")}>
-              Browse hub
-            </Button>
-            <Button size="sm" onClick={() => run("hub.publish", JSON.stringify({ kind: "plugins" }))}>
-              Publish to hub
-            </Button>
+            <Show when={hubPlugins}>
+              <Button size="sm" onClick={() => run("nav.hub")}>
+                Browse hub
+              </Button>
+              <Button size="sm" onClick={() => run("hub.publish", JSON.stringify({ kind: "plugins" }))}>
+                Publish to hub
+              </Button>
+            </Show>
             <Button size="sm" icon="plus" onClick={() => run("plugin.install")}>
               Install from folder
             </Button>

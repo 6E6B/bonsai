@@ -25,9 +25,10 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | Component | Use it for |
 |---|---|
 | `RailItem` | One account slot in the far-left rail: active marker, color tag, tooltip with its `Ctrl+N`. |
-| `NavItem` | Sidebar rows and in-screen category lists (Marketplace, Inventory, Settings). `compact` for the collapsed sidebar. |
+| `NavItem` | Sidebar rows and short in-screen lists (Settings). `compact` for the collapsed sidebar. |
+| `CategoryNav` | A category tree in a side panel (Marketplace, Inventory): sections, one open group, arrow keys. |
 | `TabStrip` | The open tabs above the page. One per window, driven by `~/lib/tabs`. |
-| `Tabs` + `TabPanel` | Sub-sections of one screen (Servers / Store / Badges). Wire `[` and `]` with `useSubTabs`. |
+| `Tabs` + `TabPanel` | Sub-sections of one screen (Servers / Store / Badges). Wire `[` and `]` with `useSubTabs`. When a screen's top level is tabs, its buttons go in `actions`, on the tab row. |
 | `SegmentedControl` | One of 2–5 options shown in place: server sort, R6/R15, chart. |
 
 ### Inputs
@@ -55,7 +56,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `VirtualGrid` | Growing tile grids: inventory, catalog, outfits, game stores and recommendations. Measures rows and adapts the column count. |
 | `VirtualShelf` | Horizontal collections with expensive tiles, such as profile preview shelves. Fixed item widths, measured height, fades and arrow controls. |
 | `PersonCard` | A person in a grid of compact cards: friends playing. A `Card` with avatar, name, one muted line, an optional trailing action. |
-| `PersonTile` | A person as a tile: big round headshot, display name, @username. Friends rows on a profile. |
+| `PersonTile` | A person as a tile: big round headshot, display name, @username. Friends rows on a profile and Home. `stack` for several people together, like friends in one game. |
 | `Tile` | A picture with a title: games, items, outfits, communities. `selected` for worn or picked items. |
 | `Shelf` | A short, fixed horizontal strip. Use `VirtualShelf` for data collections. |
 | `MediaFrame` | An image with previous and next arrows and a counter laid over it. |
@@ -77,8 +78,9 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 
 | Component | Use it for |
 |---|---|
-| `Page` | The frame of every non-split screen: padding, max width, heading with actions. |
-| `SectionHeader` | Headings with optional meta and actions: `page`, `section`, or `group` (the small "In game · 2" label). |
+| `Page` | The frame of every screen that is not a `Split` or `SidePage`: fills the window with one set of insets. Screens have no title, since the tab names them. `toolbar` and `actions` make a `Toolbar` at the top when the screen has controls. Entity pages (game, profile, item) start with their own header. |
+| `Toolbar` | The row of controls at the top of a page or pane: filters, search and counts on the left, buttons on the right. Leave it out when a screen has no controls. |
+| `SectionHeader` | Headings inside a screen, with optional meta and actions: `section` or `group` (the small "In game · 2" label). |
 | `Card` | A raised panel grouping related content: stats, trade sides. `nested` for a card inside a card: the control fill, like a secondary button. |
 | `SettingsGroup` | A titled panel of settings, a line between each row. Rows are `SettingRow` (label and description left, control right; `layout="stacked"` for full-width controls) or `SettingSwitch`. `list` for a panel of `ListItem`s. |
 | `Divider` | A line between groups in a row or column. |
@@ -163,7 +165,7 @@ Loaded by `styles/base.css`.
 
 Feature code uses these components instead of creating its own virtualizer. Keep bounded forms, settings controls, small palettes, selected trade items and short preview grids in ordinary flow. Windowing those can cost more than it saves and can discard form state.
 
-`VirtualList` and `VirtualGrid` take items and a renderer `(item, index)`. Put selection, expansion, drafts and checked items in the feature's store, not inside disposable row components. Pass `activeIndex` for keyboard cursors so movement can scroll to an unmounted row. The shared focus handling retains a focused row when scrolling and lets Tab advance across virtual windows. Tables use their existing `selected` key for cursor scrolling. Tile grids preload two extra rows; text lists preload six. Nested collections initialize from the surrounding scrollbar's actual offset so mounting a child does not reset the page.
+`VirtualList` and `VirtualGrid` take items and a renderer `(item, index)`. Put selection, expansion, drafts and checked items in the feature's store, not inside disposable row components. Pass `activeIndex` for keyboard cursors so movement can scroll to an unmounted row. For a cursor over a multi-column `VirtualGrid`, pass `onColumns` and hand the count to `useListCursor`'s `columns`, so J / K move by rows and H / L move sideways. The shared focus handling retains a focused row when scrolling and lets Tab advance across virtual windows. Tables use their existing `selected` key for cursor scrolling. Tile grids preload two extra rows; text lists preload six. Nested collections initialize from the surrounding scrollbar's actual offset so mounting a child does not reset the page.
 
 For chat history, use `VirtualList` with `followEnd` and a stable `itemKey`. TanStack's keyed end anchoring preserves the reading position when older rows are prepended, and follows appended rows only when the reader is near the end. Use normal vertical scrolling, not a reversed flex scroller. The minimum TanStack version is now 3.13.40, already present in the lockfile, for its native anchoring support.
 

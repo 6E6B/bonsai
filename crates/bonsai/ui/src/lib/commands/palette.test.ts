@@ -8,6 +8,7 @@ import {
   paletteEntries,
   paletteSections,
   parseScope,
+  remember,
   remoteEntries,
   remoteQuery,
 } from "./palette"
@@ -218,6 +219,28 @@ describe("paletteSections", () => {
     expect(s.map((x) => x.title)).toEqual(["Commands"])
   })
 
+  it("starts an empty query with recent rows and places, without repeats", () => {
+    const go = paletteEntries([cmd("Go to Friends", "none"), cmd("Go to Home", "none"), cmd("Zoom in", "none")], [])
+    const [friendsRow, homeRow, zoomRow] = go
+    const luke = user(2, "Luke")
+    const s = paletteSections({
+      ...input,
+      commands: go,
+      text: "",
+      recent: [luke, zoomRow, { ...homeRow, key: "gone" }],
+      places: [friendsRow.id, zoomRow.id],
+    })
+    expect(s.map((x) => x.title)).toEqual(["Recent", "Go to", "Commands"])
+    expect(s[0].rows).toEqual([luke, zoomRow])
+    expect(s[1].rows).toEqual([friendsRow])
+    expect(s[2].rows).toEqual([homeRow])
+  })
+
+  it("keeps searching every command in the Commands scope", () => {
+    const s = paletteSections({ ...input, scope: "commands", text: "", recent: [user(2, "Luke")] })
+    expect(s.map((x) => x.title)).toEqual(["Commands"])
+  })
+
   it("puts title matches first, then friends, then Roblox results without repeating friends", () => {
     const s = paletteSections({ ...input, text: "lu" })
     expect(s.map((x) => x.title)).toEqual(["Friends", "People"])
@@ -229,6 +252,25 @@ describe("paletteSections", () => {
   it("shows one kind of result in a scope", () => {
     const s = paletteSections({ ...input, scope: "people", text: "zoom" })
     expect(s.map((x) => x.title)).toEqual(["People"])
+  })
+})
+
+describe("remember", () => {
+  const rows = paletteEntries(
+    [cmd("A", "none"), cmd("B", "none"), cmd("C", "none"), cmd("D", "none"), cmd("E", "none"), cmd("F", "none")],
+    [],
+  )
+
+  it("moves a row to the front and keeps five", () => {
+    let r: PaletteEntry[] = []
+    for (const e of rows) r = remember(r, e)
+    expect(r.map((e) => e.title)).toEqual(["F", "E", "D", "C", "B"])
+    expect(remember(r, rows[3]).map((e) => e.title)).toEqual(["D", "F", "E", "C", "B"])
+  })
+
+  it("skips rows that ask for an argument", () => {
+    const ask = paletteEntries([cmd("Open profile", "user")], [])[0]
+    expect(remember([], ask)).toEqual([])
   })
 })
 

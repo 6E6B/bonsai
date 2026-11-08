@@ -204,6 +204,13 @@ pub(crate) struct Fetch {
 }
 
 impl Fetch {
+    /// A signed-in account's client, for public data under a [`Key::shared`] key, which
+    /// `client` fetches anonymously. See [`crate::core::public_client`]. Only for endpoints that
+    /// answer everyone the same: the result is shared by every account.
+    pub fn public(&self) -> Client {
+        crate::core::public_client(&self.inner)
+    }
+
     /// Remember user names seen in a response so lists can show them without another call.
     pub fn note_users(&self, users: impl IntoIterator<Item = crate::store::UserInfo>) {
         let mut s = self.inner.store.write();

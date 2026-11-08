@@ -1,4 +1,5 @@
 import type { ItemCard } from "~/lib/ipc/bindings"
+import { matches as matchesText, rank } from "~/lib/search"
 import { demandLevel, worth } from "~/lib/values"
 
 export type InvFilter = "all" | "limited" | "wearing" | "copies" | "for_sale"
@@ -13,12 +14,22 @@ export const FILTERS: { value: InvFilter; label: string }[] = [
 
 export const isFilter = (v: string): v is InvFilter => FILTERS.some((f) => f.value === v)
 
-/** Text search over loaded items: name or creator contains it, or it is the item's id. */
-export function matches(i: Pick<ItemCard, "id" | "name" | "creator">, query: string): boolean {
-  const q = query.trim().toLowerCase()
-  if (!q) return true
-  return i.name.toLowerCase().includes(q) || i.creator.toLowerCase().includes(q) || String(i.id) === q
+type Searched = Pick<ItemCard, "id" | "name" | "creator">
+
+/** Text search over loaded items: every word is in the name or creator, or it is the item's id. */
+export function matches(i: Searched, query: string): boolean {
+  const q = query.trim()
+  return !q || String(i.id) === q || matchesText([i.name, i.creator], q)
 }
+
+/** Loaded items matching `query`, best match first (see `rank`). */
+export const searchItems = <T extends Searched>(items: readonly T[], query: string): T[] =>
+  rank(
+    items,
+    query,
+    (i) => [i.name, i.creator],
+    (i) => i.id,
+  )
 
 function keep(i: ItemCard, f: InvFilter, worn: ReadonlySet<number>): boolean {
   if (f === "limited") return i.limited
@@ -30,13 +41,17 @@ function keep(i: ItemCard, f: InvFilter, worn: ReadonlySet<number>): boolean {
 
 const demandOf = (i: ItemCard) => (i.values?.demand ? demandLevel(i.values.demand) : 0)
 
-/** Loaded items after search, filter and sort. `newest` and `oldest` keep the server's order.
- * Price sorts use RAP for collectibles; items without a price go last either way. */
+/** Loaded items after search, filter and sort. `newest` and `oldest` keep the server's order,
+ * except that a search under the default `newest` puts the best matches first; any other sort
+ * the user picked wins over relevance. Price sorts use RAP for collectibles; items without a
+ * price go last either way. */
 export function shapeInventory(
   items: readonly ItemCard[],
   o: { query: string; filter: InvFilter; sort: string; worn: ReadonlySet<number>; collectibles: boolean },
 ): ItemCard[] {
-  const list = items.filter((i) => matches(i, o.query) && keep(i, o.filter, o.worn))
+  const kept = items.filter((i) => keep(i, o.filter, o.worn))
+  if (o.sort === "newest") return searchItems(kept, o.query)
+  const list = kept.filter((i) => matches(i, o.query))
   const cost = (i: ItemCard) => (o.collectibles ? (i.rap ?? i.price) : i.price)
   const by = (f: (a: ItemCard, b: ItemCard) => number) => list.sort(f)
   if (o.sort === "price_asc")

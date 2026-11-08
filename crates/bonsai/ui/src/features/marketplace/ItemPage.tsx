@@ -35,7 +35,6 @@ import {
   Menu,
   Page,
   Robux,
-  Skeleton,
   Stat,
   showToast,
   TabPanel,
@@ -51,6 +50,7 @@ import {
 import { DemandPips, TrendMark, useValuesRefresh, ValueAmount, ValueFlags } from "~/lib/value-tags"
 import { rapGap, VALUES_SOURCE, versionLabel } from "~/lib/values"
 import { useWikiAbout, WikiTab } from "~/lib/wiki-panels"
+import { DetailSkeleton } from "./DetailSkeleton"
 import { Dependencies } from "./ItemDependencies"
 import { PriceHistory } from "./PriceHistory"
 
@@ -200,7 +200,7 @@ export default function ItemPage() {
       <Show
         when={info()}
         fallback={
-          <Show when={view.error} fallback={<Skeleton class="h-72 w-full rounded-md" />}>
+          <Show when={view.error} fallback={<DetailSkeleton />}>
             {(e) => <span class="text-fg-muted">{e()}</span>}
           </Show>
         }
@@ -362,7 +362,7 @@ export default function ItemPage() {
               <Show when={item().description}>
                 {(d) => <Description text={d()} class="max-w-prose text-fg-muted" />}
               </Show>
-              <Card class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-4 p-3">
+              <Card class="flex flex-wrap gap-x-10 gap-y-3 p-3">
                 <Stat label={item().bundle ? "Bundle ID" : "Asset ID"}>{item().id}</Stat>
                 <Stat label="Type">{item().typeName}</Stat>
                 <Show when={item().category}>{(c) => <Stat label="Category">{c()}</Stat>}</Show>

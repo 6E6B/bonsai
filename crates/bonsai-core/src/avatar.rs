@@ -786,7 +786,7 @@ impl Core {
         self.inner
             .res(Key::shared("user_look", user_id), AGE, move |f| async move {
                 Ok(look(
-                    avatar::v1::get_users_by_user_id_avatar(&f.client, user_id as i64).await?,
+                    avatar::v1::get_users_by_user_id_avatar(&f.public(), user_id as i64).await?,
                 ))
             })
     }
@@ -800,7 +800,7 @@ impl Core {
             more,
             move |f, cursor| async move {
                 let r = avatar::v2::get_avatar_users_by_user_id_outfits(
-                    &f.client,
+                    &f.public(),
                     user_id as i64,
                     &avatar::v2::GetAvatarUsersByUserIdOutfitsParams {
                         pagination_token: cursor,
@@ -833,7 +833,7 @@ impl Core {
     pub fn outfit(&self, outfit: u64) -> Res<Look> {
         self.inner
             .res(Key::shared("outfit", outfit), AGE, move |f| async move {
-                Ok(rgb_outfit_look(rgb_outfit(&f.client, outfit).await?))
+                Ok(rgb_outfit_look(rgb_outfit(&f.public(), outfit).await?))
             })
     }
 

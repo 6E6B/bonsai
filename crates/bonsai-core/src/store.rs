@@ -261,6 +261,8 @@ pub struct AccountData {
     /// Local wishlist, newest first.
     pub wishlist: Vec<crate::market::WishItem>,
     pub last_launch: Option<String>,
+    /// Public servers this account played in over the last day, newest first. Local.
+    pub recent_servers: Vec<crate::recent_servers::RecentServer>,
     /// Connected to the realtime hub.
     pub realtime: bool,
     /// Who is typing, per conversation: user id -> until (unix ms). From realtime.

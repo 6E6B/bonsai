@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::Core;
 use crate::effects::Effect;
 use crate::res::{Key, Page, Res};
-use crate::store::{Presence, PresenceKind, UserInfo};
+use crate::store::{Presence, UserInfo};
 
 /// Profile header data, shared by every viewer.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -26,6 +26,16 @@ pub struct Profile {
     pub created: String,
     pub verified: bool,
     pub banned: bool,
+    /// The counts are -1 until they load, or when Roblox didn't send them. They come from a
+    /// slower host than the rest, so they load on their own and never hold up the header.
+    pub friends: i64,
+    pub followers: i64,
+    pub following: i64,
+}
+
+/// A user's friend, follower and following counts, -1 where Roblox didn't send one.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProfileCounts {
     pub friends: i64,
     pub followers: i64,
     pub following: i64,
@@ -137,7 +147,7 @@ const LIST_AGE: i64 = 300;
 const RELATION_AGE: i64 = 60;
 
 impl Core {
-    /// Profile header for any user.
+    /// Profile header for any user. See [`Inner::profile`].
     pub fn profile(&self, user_id: u64) -> Res<Profile> {
         self.inner.profile(user_id)
     }
@@ -221,72 +231,16 @@ impl Core {
         )
     }
 
-    /// Asks where a user is right now and says so in a toast. Presence changes by the minute,
-    /// so this skips the cache, then marks it stale so an open profile picks up the answer.
-    pub fn find_user(&self, account: AccountId, user_id: u64) {
-        let inner = self.inner.clone();
-        let Some(client) = inner.client(account) else {
-            self.notice("No account to ask with.", true);
-            return;
-        };
-        inner.store.write().jobs += 1;
-        self.inner.rt.spawn(async move {
-            let body = presence::v1::UserPresenceRequest {
-                user_ids: Some(vec![user_id as i64]),
-            };
-            match presence::v1::post_presence_users(&client, &body).await {
-                Ok(r) => {
-                    let p = r
-                        .user_presences
-                        .unwrap_or_default()
-                        .into_iter()
-                        .find_map(Presence::from_api)
-                        .map(|(_, p)| p)
-                        .unwrap_or_default();
-                    inner.note_presence(account, &[(user_id, p.kind)]);
-                    let text = {
-                        let s = inner.store.read();
-                        let name = s
-                            .users
-                            .get(&user_id)
-                            .map(|u| u.display_name.clone())
-                            .filter(|n| !n.is_empty())
-                            .unwrap_or_else(|| format!("User {user_id}"));
-                        let game = p
-                            .universe_id
-                            .and_then(|u| s.games.get(&u))
-                            .map(|g| g.name.as_str());
-                        whereabouts(&name, &p, game)
-                    };
-                    inner.toast(Some(account), text, false);
-                    inner.res.invalidate(account, "presence");
-                }
-                Err(e) => {
-                    inner.note_error(account, &e);
-                    inner.toast(
-                        Some(account),
-                        format!("Could not find them: {}", e.user_message()),
-                        true,
-                    );
-                }
-            }
-            {
-                let mut s = inner.store.write();
-                s.jobs = s.jobs.saturating_sub(1);
-            }
-            inner.repaint();
-        });
-    }
-
     /// Pending friend requests to `account`, newest first.
     pub fn friend_requests(&self, account: AccountId, more: bool) -> Res<Page<FriendRequest>> {
         self.inner.friend_requests(account, more)
     }
 
-    /// Friends of any user (ids; names come from [`Core::want_users`]).
-    pub fn friends_of(&self, user_id: u64, more: bool) -> Res<Page<u64>> {
+    /// Friends of any user (ids; names come from [`Core::want_users`]). Roblox only serves
+    /// these to a signed-in viewer.
+    pub fn friends_of(&self, viewer: AccountId, user_id: u64, more: bool) -> Res<Page<u64>> {
         self.inner.paged(
-            Key::shared("friends_of", user_id),
+            Key::private(viewer, "friends_of", user_id),
             LIST_AGE,
             more,
             move |f, cursor| async move {
@@ -390,7 +344,7 @@ impl Core {
                     ..Default::default()
                 };
                 let r =
-                    users::v1::get_users_by_user_id_username_history(&f.client, user_id as i64, &p).await?;
+                    users::v1::get_users_by_user_id_username_history(&f.public(), user_id as i64, &p).await?;
                 Ok(r.data
                     .unwrap_or_default()
                     .into_iter()
@@ -407,7 +361,8 @@ impl Core {
             PROFILE_AGE,
             move |f| async move {
                 let p = groups::v1::GetUsersByUserIdGroupsRolesParams::default();
-                let r = groups::v1::get_users_by_user_id_groups_roles(&f.client, user_id as i64, &p).await?;
+                let r =
+                    groups::v1::get_users_by_user_id_groups_roles(&f.public(), user_id as i64, &p).await?;
                 let mut v: Vec<GroupRole> = r
                     .data
                     .unwrap_or_default()
@@ -462,7 +417,7 @@ impl Core {
                     limit: Some(50),
                     ..Default::default()
                 };
-                let r = games::v2::get_users_by_user_id_games(&f.client, user_id as i64, &p).await?;
+                let r = games::v2::get_users_by_user_id_games(&f.public(), user_id as i64, &p).await?;
                 Ok(r.data
                     .unwrap_or_default()
                     .into_iter()
@@ -907,25 +862,6 @@ fn captcha() -> Error {
     Error::Message("Roblox wants a captcha for this. Do it once on the website, then try again.".into())
 }
 
-/// One line saying where a user is. `game` is the experience's name when it is cached.
-fn whereabouts(name: &str, p: &Presence, game: Option<&str>) -> String {
-    match p.kind {
-        PresenceKind::InGame => {
-            let game = game
-                .or_else(|| (!p.last_location.is_empty()).then_some(p.last_location.as_str()))
-                .unwrap_or("an experience");
-            if p.job_id.is_some() {
-                format!("{name} is in {game}. Use Join to follow them.")
-            } else {
-                format!("{name} is in {game}. Their server is hidden from you.")
-            }
-        }
-        PresenceKind::InStudio => format!("{name} is in Studio."),
-        PresenceKind::Online => format!("{name} is online, not in an experience."),
-        PresenceKind::Offline | PresenceKind::Invisible => format!("{name} is offline."),
-    }
-}
-
 impl crate::core::Inner {
     /// Pending friend requests to `account`, newest first.
     pub(crate) fn friend_requests(
@@ -978,21 +914,35 @@ impl crate::core::Inner {
         )
     }
 
-    /// Profile header for any user.
+    /// Profile header for any user. Names and bio come from users.roblox.com; the counts come
+    /// from friends.roblox.com, which is paced much slower and is often busy with friend
+    /// lists, so they are a separate resource and the header shows without them.
     pub(crate) fn profile(self: &std::sync::Arc<Self>, user_id: u64) -> Res<Profile> {
+        let r = self.profile_head(user_id);
+        let c = self.profile_counts(user_id);
+        Res {
+            data: r.data.map(|p| {
+                let mut p = (*p).clone();
+                let n = c.data.as_deref().copied();
+                p.friends = n.map_or(-1, |n| n.friends);
+                p.followers = n.map_or(-1, |n| n.followers);
+                p.following = n.map_or(-1, |n| n.following);
+                std::sync::Arc::new(p)
+            }),
+            // Plugins wait for `loading` to clear, so they still get the counts.
+            loading: r.loading || c.loading,
+            error: r.error,
+            fetched_at: r.fetched_at,
+        }
+    }
+
+    /// [`Inner::profile`] without the counts.
+    fn profile_head(self: &std::sync::Arc<Self>, user_id: u64) -> Res<Profile> {
         self.res(
             Key::shared("profile", user_id),
             PROFILE_AGE,
             move |f| async move {
-                let id = user_id as i64;
-                let c = &f.client;
-                let (u, fr, fo, fg) = tokio::join!(
-                    users::v1::get_users_by_user_id(c, id),
-                    friends::v1::get_users_by_user_id_friends_count(c, id),
-                    friends::v1::get_users_by_target_user_id_followers_count(c, id),
-                    friends::v1::get_users_by_target_user_id_followings_count(c, id),
-                );
-                let u = u?;
+                let u = users::v1::get_users_by_user_id(&f.public(), user_id as i64).await?;
                 Ok(Profile {
                     id: user_id,
                     name: u.name.unwrap_or_default(),
@@ -1001,6 +951,28 @@ impl crate::core::Inner {
                     created: u.created.unwrap_or_default(),
                     verified: u.has_verified_badge.unwrap_or(false),
                     banned: u.is_banned.unwrap_or(false),
+                    friends: -1,
+                    followers: -1,
+                    following: -1,
+                })
+            },
+        )
+    }
+
+    /// A user's friend, follower and following counts.
+    fn profile_counts(self: &std::sync::Arc<Self>, user_id: u64) -> Res<ProfileCounts> {
+        self.res(
+            Key::shared("profile_counts", user_id),
+            PROFILE_AGE,
+            move |f| async move {
+                let id = user_id as i64;
+                let c = &f.public();
+                let (fr, fo, fg) = tokio::join!(
+                    friends::v1::get_users_by_user_id_friends_count(c, id),
+                    friends::v1::get_users_by_target_user_id_followers_count(c, id),
+                    friends::v1::get_users_by_target_user_id_followings_count(c, id),
+                );
+                Ok(ProfileCounts {
                     friends: fr.ok().and_then(|r| r.count).unwrap_or(-1) as i64,
                     followers: fo.ok().and_then(|r| r.count).unwrap_or(-1),
                     following: fg.ok().and_then(|r| r.count).unwrap_or(-1),
@@ -1028,27 +1000,5 @@ mod tests {
         assert_eq!(clip("abcdef", 3), "abc");
         assert_eq!(clip("ab cd", 3), "ab");
         assert_eq!(clip("ééé", 2), "éé");
-    }
-
-    #[test]
-    fn whereabouts_lines() {
-        let mut p = Presence {
-            kind: PresenceKind::InGame,
-            last_location: "Obby".into(),
-            ..Default::default()
-        };
-        assert_eq!(
-            whereabouts("Ann", &p, None),
-            "Ann is in Obby. Their server is hidden from you."
-        );
-        p.job_id = Some("abc".into());
-        assert_eq!(
-            whereabouts("Ann", &p, Some("Tower")),
-            "Ann is in Tower. Use Join to follow them."
-        );
-        p.last_location.clear();
-        assert!(whereabouts("Ann", &p, None).contains("an experience"));
-        p.kind = PresenceKind::Invisible;
-        assert_eq!(whereabouts("Ann", &p, None), "Ann is offline.");
     }
 }

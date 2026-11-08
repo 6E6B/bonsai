@@ -41,6 +41,16 @@ describe("shapeInventory", () => {
     item({ id: 4, limited: true, rap: 100, price: 2000 }),
   ]
 
+  it("ranks search matches under the default sort and keeps a picked sort", () => {
+    const named = [
+      item({ id: 1, name: "Red Valkyrie", price: 5 }),
+      item({ id: 2, name: "Valkyrie Helm", price: 9 }),
+      item({ id: 3, name: "Sparkle Time Fedora", price: 1 }),
+    ]
+    expect(ids(shapeInventory(named, { ...opts, query: "valk" }))).toEqual([2, 1])
+    expect(ids(shapeInventory(named, { ...opts, query: "valk", sort: "price_asc" }))).toEqual([1, 2])
+  })
+
   it("filters", () => {
     expect(ids(shapeInventory(list, { ...opts, filter: "limited" }))).toEqual([2, 4])
     expect(ids(shapeInventory(list, { ...opts, filter: "copies" }))).toEqual([1])

@@ -695,33 +695,6 @@
     },
     {
       "request": {
-        "method": "PATCH",
-        "host": "groups.roblox.com",
-        "path": "/v1/groups/7001/status",
-        "headers": {
-          "x-csrf-token": "csrf-token-redacted"
-        }
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "body": {
-          "body": "New shout",
-          "poster": {
-            "userId": 1000001,
-            "username": "TestUser",
-            "displayName": "Test User",
-            "hasVerifiedBadge": false,
-            "buildersClubMembershipType": 0
-          },
-          "updated": "2026-10-13T12:00:00.000Z"
-        }
-      }
-    },
-    {
-      "request": {
         "method": "POST",
         "host": "groups.roblox.com",
         "path": "/v1/groups/7001/join-requests/users/2000003",

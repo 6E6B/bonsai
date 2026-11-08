@@ -85,7 +85,7 @@ const DEFAULT_SHADOW: ShadowSeeds = { depth: 1, ring: 1, highlight: 1 }
 
 export const DEFAULT_SEEDS: Record<Base, Seeds> = {
   dark: {
-    background: "#1a1a1a",
+    background: "#252926",
     foreground: "#fafafa",
     accent: "#4ace51",
     success: "#3fbf7f",
@@ -252,7 +252,7 @@ function shadow(layers: Layer[], seeds: ShadowSeeds): string {
 
 /* ── Constants ── Same in both bases unless a theme pins them. */
 const FIXED: Tokens = {
-  "color-verified": "#4d94ff", // Roblox's checkmark blue; matches assets/verified-badge.svg
+  "color-verified": "#3a7fe6", // verified names; a shade darker than the badge fill (#4d94ff)
   "color-media-chip": "#000000a6",
   "color-on-media": "#ffffff",
   "color-presence-online": "#00a2ff", // Roblox's online blue, not the accent

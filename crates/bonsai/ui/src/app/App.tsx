@@ -1,5 +1,5 @@
 import { Route, Router } from "@solidjs/router"
-import { lazy } from "solid-js"
+import { lazy, Show } from "solid-js"
 import { DialogProvider, Toaster } from "~/lib/ui"
 import { Layout } from "./Layout"
 import { VaultGate } from "./VaultGate"
@@ -31,7 +31,8 @@ const Components = lazy(() => import("~/features/components/Components"))
 const Playlists = lazy(() => import("~/features/playlists/Playlists"))
 const Wiki = lazy(() => import("~/features/wiki/Wiki"))
 const WikiArticle = lazy(() => import("~/features/wiki/Article"))
-const Overview = lazy(() => import("~/features/overview/Overview"))
+// A layout experiment; left out of release builds.
+const Overview = import.meta.env.DEV ? lazy(() => import("~/features/overview/Overview")) : undefined
 
 export function App() {
   return (
@@ -66,7 +67,7 @@ export function App() {
           <Route path="/wiki" component={Wiki} />
           <Route path="/wiki/:slug" component={WikiArticle} />
           <Route path="/components" component={Components} />
-          <Route path="/overview" component={Overview} />
+          <Show when={Overview}>{(c) => <Route path="/overview" component={c()} />}</Show>
         </Router>
       </VaultGate>
       <Toaster />

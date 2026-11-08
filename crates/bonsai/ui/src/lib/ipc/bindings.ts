@@ -24,6 +24,7 @@ export const commands = {
 	home: () => __TAURI_INVOKE<Home>("home"),
 	game: (placeId: Id) => __TAURI_INVOKE<Game>("game", { placeId }),
 	gameServers: (placeId: Id) => __TAURI_INVOKE<Servers>("game_servers", { placeId }),
+	gameRecentServers: (placeId: Id) => __TAURI_INVOKE<RecentServerRow[]>("game_recent_servers", { placeId }),
 	gamePrivateServers: (placeId: Id) => __TAURI_INVOKE<List<PrivateServerRow>>("game_private_servers", { placeId }),
 	/**  Servers of a place with friends of the active account in them. */
 	gameFriendServers: (placeId: Id) => __TAURI_INVOKE<List<ServerRow>>("game_friend_servers", { placeId }),
@@ -833,7 +834,6 @@ export type CommunityInfo = {
 	verified: boolean,
 	publicEntry: boolean,
 	locked: boolean,
-	shout: ShoutView | null,
 };
 
 /**  A game pass sold in one of the community's experiences. */
@@ -869,6 +869,8 @@ export type Connection = {
 	friend: boolean,
 	/**  Known only for the active account's friends; offline for everyone else. */
 	presence: Presence,
+	/**  The game they're in, when they're a friend in one and it can be named. */
+	place: string | null,
 	/**
 	 *  Whether the active account follows them. `None` for yourself, when signed out, or until
 	 *  it has loaded.
@@ -1498,7 +1500,6 @@ export type MyMembership = {
 	pending: boolean,
 	owner: boolean,
 	canViewMembers: boolean,
-	postShout: boolean,
 	changeRank: boolean,
 	removeMembers: boolean,
 	/**  Accept and decline join requests. */
@@ -1967,6 +1968,8 @@ export type ProfileView = {
 	/**  What the active account calls them, and its private note about them. */
 	nickname: string | null,
 	note: string | null,
+	/**  Roblox says the active account can't see their inventory. False while that is checked. */
+	inventoryPrivate: boolean,
 };
 
 /**  One action in the action dialog. */
@@ -1977,6 +1980,17 @@ export type ProposedView = {
 	tier: number,
 	/**  What it may cost: "Up to R$ 50", "R$ 100" or "1 trade". */
 	cost: string | null,
+};
+
+/**  A public server the active account played in over the last day. */
+export type RecentServerRow = {
+	jobId: string,
+	/**  The place it runs, which may be a sub-place of the page's experience. */
+	placeId: Id,
+	/**  Last seen in it, in ms since the epoch. */
+	lastSeen: number | null,
+	/**  The server as it is in the loaded list, when it is there. */
+	server: ServerRow | null,
 };
 
 export type RecentView = {
@@ -2115,6 +2129,11 @@ export type ServerRow = {
 	fps: number | null,
 	/**  Friends of the active account in it. */
 	friends: Id[],
+	/**
+	 *  The first players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
+	 *  player tokens (signed out).
+	 */
+	players: Id[],
 };
 
 /**
@@ -2224,16 +2243,6 @@ export type Shell = {
 	 *  adds them so the webview loads the new image instead of its cached copy.
 	 */
 	thumbRevs: { [key in string]: number },
-};
-
-export type ShoutView = {
-	text: string,
-	posterId: Id,
-	poster: string,
-	posterUsername: string,
-	posterVerified: boolean,
-	/**  ISO date-time. */
-	updated: string,
 };
 
 export type SideView = {
@@ -2733,8 +2742,6 @@ export type WindowButtons = {
 	start: WindowButton[],
 	/**  Buttons at the right edge, in order. */
 	end: WindowButton[],
-	/**  Title bar height in CSS px, matching the desktop's own title bars. 0 keeps the app's. */
-	height: number,
 };
 
 /**  The main window's corners. Sent when they change; `window_frame` reads them at startup. */

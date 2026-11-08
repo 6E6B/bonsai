@@ -20,6 +20,7 @@ import {
 import { Description, LinkedText } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { entityMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
@@ -33,7 +34,6 @@ import {
   Clamp,
   type Column,
   DataTable,
-  Icon,
   IconButton,
   ListItem,
   Menu,
@@ -74,7 +74,7 @@ interface OpenPost {
   row: ForumPostRow
 }
 
-/** A community: header, shout, then about, games, store, forum, members, allies and enemies
+/** A community: header, then about, games, store, forum, members, allies and enemies
  * and, with the right permissions, join requests, audit log, revenue and settings. */
 export default function Community() {
   const params = useParams()
@@ -98,19 +98,22 @@ export default function Community() {
   const me = () => view.me
   const member = () => Boolean(me()?.role)
   const [section, setSection] = createSignal("about")
-  const sections = () => [
-    { value: "about", label: "About" },
-    { value: "games", label: "Games" },
-    { value: "store", label: "Store" },
-    { value: "forum", label: "Forum", disabled: !me()?.viewForums },
-    { value: "members", label: "Members", disabled: me() !== null && !me()?.canViewMembers },
-    { value: "allies", label: "Allies" },
-    { value: "enemies", label: "Enemies" },
-    { value: "requests", label: "Join requests", disabled: !me()?.manageRequests },
-    { value: "audit", label: "Audit log", disabled: !me()?.viewAuditLog },
-    { value: "revenue", label: "Revenue", disabled: !me()?.viewPayouts && !me()?.spendFunds },
-    { value: "settings", label: "Settings", disabled: !me()?.manageSettings },
-  ]
+  const sections = () =>
+    [
+      { value: "about", label: "About" },
+      { value: "games", label: "Games" },
+      { value: "store", label: "Store" },
+      { value: "forum", label: "Forum", disabled: !me()?.viewForums },
+      { value: "members", label: "Members", disabled: me() !== null && !me()?.canViewMembers },
+      { value: "allies", label: "Allies" },
+      { value: "enemies", label: "Enemies" },
+      { value: "requests", label: "Join requests", disabled: !me()?.manageRequests },
+      { value: "audit", label: "Audit log", disabled: !me()?.viewAuditLog },
+      { value: "revenue", label: "Revenue", disabled: !me()?.viewPayouts && !me()?.spendFunds },
+      { value: "settings", label: "Settings", disabled: !me()?.manageSettings },
+    ]
+      // Tabs the user can't open are hidden, not greyed out.
+      .filter((t) => !t.disabled || t.value === section())
   useSubTabs(sections, section, setSection)
   const affiliates = useLive(
     () => (section() === "allies" || section() === "enemies" ? groupId() : 0),
@@ -121,16 +124,6 @@ export default function Community() {
   const prompt = usePrompt()
   const dialog = useDialog()
   const id = () => String(groupId())
-  const newShout = async () => {
-    const text = await prompt({
-      title: "Post a shout",
-      label: "Shout",
-      placeholder: "Leave empty to clear it",
-      submit: "Post",
-    })
-    if (text !== null) void run("group.shout", text)
-  }
-
   // With an argument these run at once (after confirming); without one they ask first.
   onCleanup(
     handle("group.payout", (arg) => {
@@ -259,51 +252,6 @@ export default function Community() {
         )}
       </Show>
 
-      <Show when={view.info?.shout || me()?.postShout}>
-        <Card class="flex items-start gap-3 p-3">
-          <Show
-            when={view.info?.shout}
-            fallback={
-              <>
-                <Icon name="megaphone" class="mt-0.5 text-fg-muted" />
-                <p class="flex-1 text-fg-muted">No shout</p>
-              </>
-            }
-          >
-            {(s) => (
-              <>
-                <Avatar size="sm" name={s().poster} src={thumbUrl("headshot", s().posterId)} />
-                <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <div class="flex flex-wrap items-center gap-1.5 text-sm text-fg-muted">
-                    <TextLink
-                      tone={s().posterVerified ? "verified" : "name"}
-                      onClick={() => run("user.open", String(s().posterId))}
-                    >
-                      {s().poster}
-                    </TextLink>
-                    <Show when={s().posterVerified}>
-                      <VerifiedBadge />
-                    </Show>
-                    <Show when={s().posterUsername}>
-                      <span>@{s().posterUsername}</span>
-                    </Show>
-                    <span>· {ago(ms(s().updated))}</span>
-                  </div>
-                  <p class="whitespace-pre-wrap break-words">
-                    <LinkedText text={s().text} />
-                  </p>
-                </div>
-              </>
-            )}
-          </Show>
-          <Show when={me()?.postShout}>
-            <Button size="sm" onClick={newShout}>
-              New shout
-            </Button>
-          </Show>
-        </Card>
-      </Show>
-
       <Tabs aria-label="Community sections" items={sections()} value={section()} onChange={setSection}>
         <TabPanel value="about" class="flex flex-col gap-3">
           <Show when={view.info?.description}>
@@ -409,12 +357,7 @@ function Members(props: { groupId: number; myRank: number; canRank: boolean; can
     emptyList<MemberRow>,
   )
   const [filter, setFilter] = createSignal("")
-  const shown = createMemo(() => {
-    const q = filter().trim().toLowerCase()
-    return members.items.filter(
-      (m) => !q || m.name.toLowerCase().includes(q) || m.displayName.toLowerCase().includes(q),
-    )
-  })
+  const shown = createMemo(() => rank(members.items, filter(), (m) => [m.displayName, m.name]))
   // You can move people below your own rank, to roles below your own rank.
   const ranked = () => roles.items.filter((r) => r.rank > 0)
   const canTouch = () => (role()?.rank ?? 255) < props.myRank

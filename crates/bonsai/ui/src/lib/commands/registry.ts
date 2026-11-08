@@ -31,10 +31,14 @@ const [list, setList] = createSignal<CommandInfo[]>([])
 
 export const commandList = list
 
+/** Commands for screens that only exist in dev builds. */
+const DEV_ONLY = new Set(["nav.overview"])
+
 export async function loadCommands() {
   // `bun run dev` in a plain browser has no backend, so no registry.
   if (!isTauri()) return
-  setList(await ipc.commands())
+  const all = await ipc.commands()
+  setList(import.meta.env.DEV ? all : all.filter((c) => !DEV_ONLY.has(c.id)))
 }
 
 // A hot reload in `bun run app` starts this module over with an empty list, and the layout only

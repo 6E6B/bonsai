@@ -14,6 +14,7 @@ export type ThumbKind =
   | "badge_icon"
   | "game_pass"
   | "outfit"
+  | "player"
 
 /** URL for a thumbnail. Use it as an `<img src>`; the webview caches it. When the image changes
  * during the run (`shell.thumbRevs`), the URL changes too, so the new one shows. Undefined outside

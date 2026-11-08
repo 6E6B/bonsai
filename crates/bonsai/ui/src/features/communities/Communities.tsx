@@ -16,15 +16,21 @@ import {
   EmptyState,
   ListItem,
   Page,
+  Select,
+  showToast,
   TextField,
   Thumbnail,
   VerifiedBadge,
-  VirtualList,
+  VirtualGrid,
 } from "~/lib/ui"
+import { isShow, isSort, SHOWS, SORTS, shapeCommunities } from "./shape"
 
-/** Your communities, with search and bulk leave for cleanup. Checkboxes show only while
- * selecting, which the Select button or X on a row starts. With `?q=`, shows search results
- * across all communities instead. */
+/** Narrowest a row gets before the grid drops a column. */
+const ROW_WIDTH = 300
+
+/** Your communities, as many columns as fit, with search and bulk leave for cleanup. Checkboxes
+ * show only while selecting, which X on a row starts. With `?q=`, shows search results across
+ * all communities instead. */
 export default function Communities() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -34,10 +40,22 @@ export default function Communities() {
   const [picked, setPicked] = createSignal<Set<number>>(new Set())
   const [selecting, setSelecting] = createSignal(false)
   const [cursor, setCursor] = createSignal(0)
-  const shown = createMemo(() => {
-    const q = query().trim().toLowerCase()
-    return mine.items.filter((c) => !q || c.name.toLowerCase().includes(q))
-  })
+  const [columns, setColumns] = createSignal(1)
+  const [sort, setSort] = createSignal("default")
+  const [show, setShow] = createSignal("all")
+  const shown = createMemo(() => shapeCommunities(mine.items, { query: query(), sort: sort(), show: show() }))
+  onCleanup(
+    handle("group.sort", (a) => {
+      if (a && isSort(a)) setSort(a)
+      else showToast(`Sort by one of: ${SORTS.map((s) => s.value).join(", ")}`)
+    }),
+  )
+  onCleanup(
+    handle("group.show", (a) => {
+      if (!a || isShow(a)) setShow(a || "all")
+      else showToast(`Show one of: ${SHOWS.map((s) => s.value).join(", ")}`)
+    }),
+  )
   const toggle = (id: number, on: boolean) =>
     setPicked((s) => {
       const next = new Set(s)
@@ -54,6 +72,7 @@ export default function Communities() {
     count: () => (searched() ? 0 : shown().length),
     index: cursor,
     setIndex: setCursor,
+    columns,
     onOpen: (i) => {
       const c = shown()[i]
       if (c) void run("group.open", String(c.id))
@@ -83,21 +102,30 @@ export default function Communities() {
 
   return (
     <Page
-      title="Communities"
-      meta={mine.items.length || undefined}
-      width="narrow"
-      actions={
-        <Show
-          when={selecting()}
-          fallback={
-            <>
-              <Button onClick={() => setSelecting(true)}>Select</Button>
-              <Button icon="search" onClick={search}>
-                Find communities
-              </Button>
-            </>
-          }
+      toolbar={
+        <form
+          class="flex flex-1 gap-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            search()
+          }}
         >
+          <TextField
+            class="flex-1"
+            icon="search"
+            aria-label="Filter communities"
+            placeholder="Filter, or press Enter to search all communities"
+            value={query()}
+            onChange={setQuery}
+          />
+          <Show when={!searched()}>
+            <Select aria-label="Show" value={show()} onChange={(v) => void run("group.show", v)} options={SHOWS} />
+            <Select aria-label="Sort" value={sort()} onChange={(v) => void run("group.sort", v)} options={SORTS} />
+          </Show>
+        </form>
+      }
+      actions={
+        <Show when={selecting()}>
           <span class="text-fg-muted">{picked().size} selected</span>
           <Button variant="danger" disabled={picked().size === 0} onClick={() => run("group.leave_selected")}>
             Leave
@@ -106,20 +134,6 @@ export default function Communities() {
         </Show>
       }
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          search()
-        }}
-      >
-        <TextField
-          icon="search"
-          aria-label="Filter communities"
-          placeholder="Filter, or press Enter to search all communities"
-          value={query()}
-          onChange={setQuery}
-        />
-      </form>
       <Show when={searched()} fallback={<MyList />}>
         {(q) => <Results query={q()} onClear={() => navigate("/communities")} />}
       </Show>
@@ -130,10 +144,13 @@ export default function Communities() {
     return (
       <ListState list={mine} icon="communities" empty="Not in any communities">
         <div data-cursor-list class="flex flex-col">
-          <VirtualList
+          <VirtualGrid
             items={shown()}
             activeIndex={cursor()}
+            onColumns={setColumns}
+            minItemWidth={ROW_WIDTH}
             estimateRowHeight={56}
+            gap={4}
             empty={<EmptyState icon="communities" title="No communities match" />}
           >
             {(c, i) => (
@@ -180,7 +197,7 @@ export default function Communities() {
                 />
               </ContextMenu>
             )}
-          </VirtualList>
+          </VirtualGrid>
         </div>
       </ListState>
     )
@@ -200,7 +217,7 @@ function Results(props: { query: string; onClear: () => void }) {
       </div>
       <ListState list={list} icon="search" empty="No communities found">
         <div class="flex flex-col">
-          <VirtualList items={list.items} estimateRowHeight={56}>
+          <VirtualGrid items={list.items} minItemWidth={ROW_WIDTH} estimateRowHeight={56} gap={4}>
             {(c) => (
               <ContextMenu
                 items={[menuItem("group.open", { arg: String(c.id), icon: "communities" }), shareMenu(`group:${c.id}`)]}
@@ -217,7 +234,7 @@ function Results(props: { query: string; onClear: () => void }) {
                 />
               </ContextMenu>
             )}
-          </VirtualList>
+          </VirtualGrid>
         </div>
       </ListState>
     </div>

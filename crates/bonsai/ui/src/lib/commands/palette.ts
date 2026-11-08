@@ -1,7 +1,8 @@
 import type { Arg, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
+import { rank } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
 import type { ThumbKind } from "~/lib/thumb"
-import { filterEntries } from "./filter"
+import { type Ranked, rankScored } from "./match"
 
 /** A row in the command bar. Picking it runs `id` with `arg`, or, when `ask` is set, asks for
  * the argument first. */
@@ -36,6 +37,8 @@ export interface PalettePerson {
   id: number
   name: string
   displayName: string
+  /** What the active account calls them in this app. */
+  nickname?: string | null
   /** In a game, so `game.join` can follow them. */
   inGame?: boolean
   presence?: Presence
@@ -284,8 +287,9 @@ export function remoteEntries(rows: RemoteRow[]): PaletteEntry[] {
   })
 }
 
-const matchesPerson = (p: PalettePerson, q: string) =>
-  p.name.toLowerCase().includes(q) || p.displayName.toLowerCase().includes(q)
+/** `people` matching `query`, best match first. */
+const searchPeople = (people: readonly PalettePerson[], query: string) =>
+  rank(people, query, (p) => [p.displayName, p.nickname, p.name])
 
 /** A person as a row that opens their profile. */
 export function personEntry(p: PalettePerson): PaletteEntry {
@@ -313,10 +317,42 @@ export interface SectionInput {
   commands: PaletteEntry[]
   friends: PalettePerson[]
   remote: PaletteEntry[]
+  /** Rows picked lately, newest first (`remember`). Shown for an empty query. */
+  recent?: PaletteEntry[]
+  /** Command ids of the screens to offer under "Go to" for an empty query, in sidebar order. */
+  places?: string[]
+  /** Commands with their argument typed inline (`intentRows`), ranked with the commands. */
+  intents?: Ranked<PaletteEntry>[]
+  /** Extra score for a row from what was picked before (`booster`), by row key. */
+  boost?: (key: string) => number
+}
+
+/** How many rows `remember` keeps. */
+const RECENT = 5
+
+/** `recent` with `entry` moved to the front. Rows that ask for an argument aren't kept: the
+ * row alone doesn't say what was typed. */
+export function remember(recent: PaletteEntry[], entry: PaletteEntry): PaletteEntry[] {
+  if (entry.ask) return recent
+  return [entry, ...recent.filter((e) => e.key !== entry.key)].slice(0, RECENT)
 }
 
 /** Rows per group when searching everything; a scope shows all of its results. */
 const PER_GROUP = 4
+
+/** A screen is what a short query most often means; a single setting's value rarely is. */
+const SCREEN = 30
+const SETTING_VALUE = -40
+
+/** How much more or less likely a command row is, before looking at the query. */
+function prior(e: PaletteEntry): number {
+  if (e.arg === null && e.id.startsWith("nav.")) return SCREEN
+  if (e.id === "settings.set") return SETTING_VALUE
+  return 0
+}
+
+/** Commands shown above friends and Roblox results when searching everything. */
+const TOP_COMMANDS = 4
 
 /** Order of Roblox result groups. Titles come from bonsai-core's `Group::title`. */
 const REMOTE_GROUPS = ["Pasted link", "People", "Experiences", "Communities", "Marketplace"]
@@ -333,24 +369,56 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
     if (rows.length) out.push({ title, rows })
   }
 
-  if (input.scope === "commands" || (all && !text)) {
-    add("Commands", filterEntries(input.commands, text))
+  if (all && !text) {
+    // Recent command rows are looked up again, so renamed or removed ones (a deleted theme)
+    // follow the registry. Results and friends are kept as they were.
+    const byKey = new Map(input.commands.map((e) => [e.key, e]))
+    const recent = (input.recent ?? []).flatMap((e) => {
+      const now = byKey.get(e.key)
+      return now ? [now] : e.entity ? [e] : []
+    })
+    const seen = new Set(recent.map((e) => e.key))
+    const places = (input.places ?? []).flatMap((id) => {
+      const e = byKey.get(id)
+      return e && !seen.has(e.key) ? [e] : []
+    })
+    for (const e of places) seen.add(e.key)
+    add("Recent", recent)
+    add("Go to", places)
+    add(
+      "Commands",
+      input.commands.filter((e) => !seen.has(e.key)),
+    )
+    return out
+  }
+  const ranked = () => {
+    const boost = input.boost
+    const scored = rankScored(input.commands, text, (e) => prior(e) + (boost?.(e.key) ?? 0))
+    const intents = (input.intents ?? []).map((r) => ({ ...r, score: r.score + (boost?.(r.entry.key) ?? 0) }))
+    return [...intents, ...scored].sort((a, b) => b.score - a.score)
+  }
+  if (input.scope === "commands") {
+    add(
+      "Commands",
+      ranked().map((r) => r.entry),
+    )
     return out
   }
 
   let rest: PaletteEntry[] = []
   if (all) {
-    const matched = filterEntries(input.commands, text)
-    const terms = q.split(/\s+/)
-    const inTitle = (e: PaletteEntry) => terms.every((t) => e.title.toLowerCase().includes(t))
-    const top = matched.filter(inTitle).slice(0, 3)
-    add("Commands", top)
-    rest = matched.filter((e) => !top.includes(e))
+    const matched = ranked()
+    const top = matched.filter((r) => r.strong).slice(0, TOP_COMMANDS)
+    add(
+      "Commands",
+      top.map((r) => r.entry),
+    )
+    rest = matched.filter((r) => !top.includes(r)).map((r) => r.entry)
   }
 
   const shownPeople = new Set<number>()
   if (all || input.scope === "people") {
-    const friends = input.friends.filter((p) => matchesPerson(p, q)).slice(0, all ? PER_GROUP : 10)
+    const friends = searchPeople(input.friends, q).slice(0, all ? PER_GROUP : 10)
     for (const f of friends) shownPeople.add(f.id)
     add("Friends", friends.map(personEntry))
   }
@@ -383,7 +451,6 @@ const ACTIONS: Record<RemoteKind, Action[]> = {
     { id: "user.message", arg: (e) => String(e.id) },
     { id: "trade.new", arg: (e) => String(e.id) },
     { id: "inventory.view", arg: (e) => String(e.id) },
-    { id: "user.find", arg: (e) => String(e.id) },
     { id: "user.add_friend", arg: (e) => String(e.id) },
     { id: "user.follow", arg: (e) => String(e.id) },
     { id: "user.block", arg: (e) => String(e.id) },
@@ -428,10 +495,10 @@ export function argEntries(
   const out: PaletteEntry[] = []
   const user = command.ask === "user"
   if ((user || command.ask === "gameOrFriend") && q) {
-    const matches = people
-      .filter((p) => user || p.inGame)
-      .filter((p) => matchesPerson(p, q))
-      .slice(0, limit)
+    const matches = searchPeople(
+      people.filter((p) => user || p.inGame),
+      q,
+    ).slice(0, limit)
     for (const p of matches)
       out.push({
         ...personEntry(p),

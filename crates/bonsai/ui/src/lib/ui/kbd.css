@@ -2,7 +2,7 @@
   [data-component="kbd"] {
     display: inline-flex;
     flex-shrink: 0;
-    gap: 2px;
+    gap: 4px;
   }
 
   [data-component="kbd"] [data-slot="key"] {

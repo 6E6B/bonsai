@@ -1,33 +1,36 @@
-import { createMemo, For, Show } from "solid-js"
+import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
-import type { Friend } from "~/lib/ipc/bindings"
-import { gameMenu, joinUser, userMenu } from "~/lib/menus"
-import { type GameGroup, groupByGame } from "~/lib/presence"
+import type { Friend, GameCard } from "~/lib/ipc/bindings"
+import { userMenu } from "~/lib/menus"
+import { groupByGame } from "~/lib/presence"
 import { friends, shell, useHome } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { GameIcon, GameTile, tileGrid, wideTileGrid } from "~/lib/tiles"
+import { GameTile, ShelfSkeleton, tileGrid } from "~/lib/tiles"
 import {
   Alert,
-  Avatar,
   Button,
-  Card,
   ContextMenu,
   EmptyState,
-  IconButton,
-  ListItem,
+  type MenuEntry,
   Page,
+  PersonTile,
   SectionHeader,
-  Skeleton,
-  Tooltip,
-  VirtualGrid,
-  VirtualList,
+  VirtualShelf,
 } from "~/lib/ui"
 
 /** Landing screen: who is playing what, what you played last, and the Roblox home sorts. */
 export default function Home() {
   const home = useHome()
   const playing = () => friends.friends.filter((f) => f.presence === "game")
-  const games = createMemo(() => groupByGame(playing()))
+  const online = () => friends.friends.filter((f) => f.presence === "online" || f.presence === "studio")
+  const offline = () => friends.friends.filter((f) => f.presence === "offline")
+  // One tile per experience friends are in, biggest group first, then one per friend online,
+  // then offline friends, like the friends row on roblox.com.
+  const strip = createMemo(() => [
+    ...groupByGame(playing()).map((g) => g.users),
+    ...online().map((f) => [f]),
+    ...offline().map((f) => [f]),
+  ])
   return (
     <Show
       when={shell.accounts.length > 0}
@@ -44,29 +47,27 @@ export default function Home() {
         </EmptyState>
       }
     >
-      <Page
-        title="Home"
-        class="gap-6"
-        actions={
-          <Button icon="refresh" disabled={home.loading} onClick={() => run("view.refresh")}>
-            Refresh
-          </Button>
-        }
-      >
-        <Show when={shell.look.homeFriends && playing().length > 0}>
+      <Page class="gap-6">
+        <Show when={shell.look.homeFriends && strip().length > 0}>
           <section class="flex flex-col gap-2">
-            <SectionHeader title="Friends playing" meta={playing().length} />
-            <VirtualGrid items={games()} minItemWidth={256} estimateRowHeight={180} gap={8}>
-              {(g) => <PlayingGroup group={g} />}
-            </VirtualGrid>
+            <SectionHeader
+              title="Friends"
+              meta={friends.friends.length}
+              actions={
+                <Button variant="ghost" size="sm" onClick={() => run("nav.friends")}>
+                  See all
+                </Button>
+              }
+            />
+            <VirtualShelf items={strip()} itemWidth={PERSON_WIDTH} aria-label="Friends">
+              {(users) => <FriendTile users={users} />}
+            </VirtualShelf>
           </section>
         </Show>
         <Show when={shell.look.homeContinue && home.recent.length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader title="Continue" />
-            <div class={wideTileGrid}>
-              <For each={home.recent.slice(0, 8)}>{(g) => <GameTile game={g} shape="wide" />}</For>
-            </div>
+            <ContinueRow games={home.recent.slice(0, 8)} />
           </section>
         </Show>
         <Show when={shell.look.homeFavorites && home.favorites.length > 0}>
@@ -94,9 +95,7 @@ export default function Home() {
             )}
           </Show>
           <Show when={home.sorts.length === 0 && home.loading}>
-            <div class={tileGrid}>
-              <For each={Array.from({ length: 12 })}>{() => <Skeleton class="aspect-square w-full rounded-md" />}</For>
-            </div>
+            <ShelfSkeleton shelves={2} />
           </Show>
           <For each={home.sorts}>
             {(sort) => (
@@ -122,51 +121,56 @@ export default function Home() {
   )
 }
 
-/** One experience and the friends in it. The header opens the experience; each friend row
- * opens the friend, with Join on hover. */
-function PlayingGroup(props: { group: GameGroup<Friend> }) {
-  const header = () => (
-    <ListItem
-      class="rounded-sm"
-      leading={<GameIcon universeId={props.group.universeId} />}
-      title={props.group.name}
-      subtitle={props.group.users.length === 1 ? "1 friend" : `${props.group.users.length} friends`}
-      onClick={props.group.placeId ? () => run("game.open", String(props.group.placeId)) : undefined}
-    />
-  )
+const WIDE_TILE = 192
+const GAP = 12
+
+/** One row of wide tiles that fills the width: as many as fit, stretched to the edge, so a few
+ * recent games don't leave a hole at the end. */
+function ContinueRow(props: { games: GameCard[] }) {
+  let row!: HTMLDivElement
+  const [room, setRoom] = createSignal(4)
+  onMount(() => {
+    const ro = new ResizeObserver(() => setRoom(Math.max(1, Math.floor((row.clientWidth + GAP) / (WIDE_TILE + GAP)))))
+    ro.observe(row)
+    onCleanup(() => ro.disconnect())
+  })
+  // Two or fewer would stretch into banners; keep them at the normal width.
+  const cols = () => (props.games.length > 2 ? Math.min(room(), props.games.length) : room())
   return (
-    <Card class="flex min-w-0 flex-col p-1">
-      <Show when={props.group.placeId} fallback={header()}>
-        {(placeId) => <ContextMenu items={gameMenu(placeId())}>{header()}</ContextMenu>}
-      </Show>
-      <VirtualList items={props.group.users} estimateRowHeight={40}>
-        {(f) => (
-          <ContextMenu items={userMenu(f.id, { friend: true, inGame: true, placeId: f.placeId })}>
-            <ListItem
-              class="rounded-sm"
-              leading={
-                // As wide as the game icon above, so the names line up with the game's.
-                <span class="flex w-8 justify-center">
-                  <Avatar name={f.displayName} src={thumbUrl("headshot", f.id)} />
-                </span>
-              }
-              title={f.displayName}
-              onClick={() => run("user.open", String(f.id))}
-              actionsOnHover
-              actions={
-                <Tooltip content="Join">
-                  <IconButton
-                    size="sm"
-                    icon="play"
-                    label={`Join ${f.displayName}`}
-                    onClick={() => run("game.join", joinUser(f.id))}
-                  />
-                </Tooltip>
-              }
-            />
-          </ContextMenu>
-        )}
-      </VirtualList>
-    </Card>
+    <div ref={row} class="grid gap-x-3" style={{ "grid-template-columns": `repeat(${cols()}, minmax(0, 1fr))` }}>
+      <For each={props.games.slice(0, cols())}>{(g) => <GameTile game={g} shape="wide" />}</For>
+    </div>
+  )
+}
+
+/** A little wider than a friend on a profile, for more room between pictures. */
+const PERSON_WIDTH = 104
+
+const nameOf = (f: Friend) => f.nickname || f.displayName
+
+const menuFor = (f: Friend) => userMenu(f.id, { friend: true, inGame: f.presence === "game", placeId: f.placeId })
+
+/** A friend as on a profile, or friends in the same experience as one tile: the first one's
+ * picture and name, the others as small faces under the game. Right-click a shared tile for
+ * each friend's menu. */
+function FriendTile(props: { users: Friend[] }) {
+  const first = () => props.users[0]
+  const others = () => props.users.slice(1)
+  const menu = (): MenuEntry[] =>
+    others().length === 0
+      ? menuFor(first())
+      : props.users.map((f) => ({ kind: "submenu", label: nameOf(f), icon: "user", items: menuFor(f) }))
+  return (
+    <ContextMenu items={menu()}>
+      <PersonTile
+        name={nameOf(first())}
+        username={first().name || undefined}
+        src={thumbUrl("headshot", first().id, true)}
+        presence={first().presence}
+        status={first().presence === "game" ? first().status : undefined}
+        stack={others().map((f) => ({ name: nameOf(f), src: thumbUrl("headshot", f.id, true) }))}
+        onClick={() => run("user.open", String(first().id))}
+      />
+    </ContextMenu>
   )
 }

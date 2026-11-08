@@ -7,13 +7,8 @@ import { commands, type NotificationRow, type Paged } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Button, Icon, ListItem, Page, SegmentedControl, Select, VirtualList } from "~/lib/ui"
-import { categoryArg, openCommand, shownNotifications } from "./filter"
-
-const ms = (iso: string) => {
-  const t = Date.parse(iso)
-  return Number.isNaN(t) ? 0 : t
-}
+import { Avatar, Button, Icon, ListItem, Page, SectionHeader, SegmentedControl, Select, VirtualList } from "~/lib/ui"
+import { categoryArg, groupByDay, notificationTime, openCommand, shownNotifications } from "./filter"
 
 /** The notification stream. Enter opens what a notification is about: its page on the website,
  * or the person it's about. Clicking a row, or X, expands text that is cut off; click a row
@@ -44,6 +39,7 @@ export default function Notifications() {
     ),
   )
   const shown = createMemo(() => shownNotifications(res.list.items, { view: view(), category: category() }))
+  const days = createMemo(() => groupByDay(shown(), (n) => notificationTime(n.when), Date.now()))
   const openAt = (i: number) => {
     const n = shown()[i]
     const c = n && openCommand(n)
@@ -74,9 +70,7 @@ export default function Notifications() {
 
   return (
     <Page
-      title="Notifications"
-      width="narrow"
-      actions={
+      toolbar={
         <>
           <SegmentedControl
             aria-label="Show"
@@ -96,6 +90,10 @@ export default function Notifications() {
             onChange={(c) => run("notifications.category", c === "all" ? "" : c)}
             options={[{ value: "all", label: "All categories" }, ...(categories() ?? [])]}
           />
+        </>
+      }
+      actions={
+        <>
           <Button onClick={() => run("notifications.mark_read")} icon="check">
             Mark all read
           </Button>
@@ -104,25 +102,37 @@ export default function Notifications() {
     >
       <ListState list={res.list} icon="bell" empty="You're all caught up" more={res.moreKey}>
         <div data-cursor-list class="flex flex-col">
-          <VirtualList items={shown()} activeIndex={cursor()} estimateRowHeight={56}>
-            {(n, i) => (
-              <ListItem
-                data-index={i}
-                selected={i === cursor()}
-                expanded={open[n.id]}
-                leading={
-                  <Show when={n.userId} fallback={<Icon name="bell" class="m-1.5 text-fg-muted" />}>
-                    {(id) => <Avatar name={n.title} src={thumbUrl("headshot", id())} />}
-                  </Show>
-                }
-                title={n.title}
-                subtitle={n.body || undefined}
-                meta={ago(ms(n.when))}
-                onClick={() => {
-                  setCursor(i)
-                  if (!toggleAt(i)) openAt(i)
+          <VirtualList items={days().rows} activeIndex={days().positions[cursor()]} estimateRowHeight={56}>
+            {(row) => (
+              <Show
+                when={row.item !== undefined && row}
+                fallback={<SectionHeader class="px-2 pt-3" size="group" title={row.heading ?? ""} />}
+              >
+                {(r) => {
+                  const n = r().item
+                  const i = r().index
+                  return (
+                    <ListItem
+                      data-index={i}
+                      selected={i === cursor()}
+                      unread={!n.read}
+                      expanded={open[n.id]}
+                      leading={
+                        <Show when={n.userId} fallback={<Icon name="bell" class="m-1.5 text-fg-muted" />}>
+                          {(id) => <Avatar name={n.title} src={thumbUrl("headshot", id())} />}
+                        </Show>
+                      }
+                      title={n.title}
+                      subtitle={n.body || undefined}
+                      meta={ago(notificationTime(n.when))}
+                      onClick={() => {
+                        setCursor(i)
+                        if (!toggleAt(i)) openAt(i)
+                      }}
+                    />
+                  )
                 }}
-              />
+              </Show>
             )}
           </VirtualList>
         </div>

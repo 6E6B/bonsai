@@ -73,6 +73,11 @@ impl Hub {
         ))
     }
 }
+/// Plugin browsing, installs and submissions on the hub are switched off for now.
+/// Themes are unaffected, and revocation checks for installed plugins still run.
+pub const PLUGINS_ENABLED: bool = false;
+const PLUGINS_OFF: &str = "Plugins are not available on the hub yet.";
+
 pub fn query_key(q: &Query) -> String {
     serde_json::to_string(q).unwrap_or_default()
 }
@@ -94,6 +99,13 @@ pub struct Target {
 
 impl Core {
     pub fn hub_catalog(self: &Arc<Self>, query: Query) -> Catalog {
+        if !PLUGINS_ENABLED && query.kind == Kind::Plugins {
+            return Catalog {
+                loaded: true,
+                error: Some(PLUGINS_OFF.into()),
+                ..Default::default()
+            };
+        }
         let key = query_key(&query);
         let should_load = {
             let mut state = self.inner.hub.state.write();
@@ -339,6 +351,9 @@ impl Core {
         Ok(())
     }
     pub fn hub_install(self: &Arc<Self>, target: Target) -> Result<(), String> {
+        if !PLUGINS_ENABLED && target.kind == Kind::Plugins {
+            return Err(PLUGINS_OFF.into());
+        }
         let client = self.inner.hub.client.clone().ok_or("Hub is not configured.")?;
         {
             let mut state = self.inner.hub.state.write();
@@ -369,6 +384,7 @@ impl Core {
                             .await
                             .map_err(|_| "Could not stage theme.".to_owned())??;
                     }
+                    Kind::Plugins if !PLUGINS_ENABLED => return Err(PLUGINS_OFF.into()),
                     Kind::Plugins => {
                         if entry.api_version != Some(1) {
                             return Err("Plugin requires an unsupported API version.".into());
@@ -449,6 +465,9 @@ impl Core {
         })
     }
     pub fn hub_publish_plugin(self: &Arc<Self>, publish: Publish) -> Result<(), String> {
+        if !PLUGINS_ENABLED {
+            return Err(PLUGINS_OFF.into());
+        }
         let (client, session) = self.inner.hub.credentials()?;
         let meta = Metadata {
             name: publish.name,

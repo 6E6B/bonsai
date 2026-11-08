@@ -10,7 +10,8 @@ import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { Price } from "~/lib/tiles"
-import { Button, Card, Menu, Page, Skeleton, Stat, TextLink, Thumbnail } from "~/lib/ui"
+import { Button, Card, Menu, Page, Stat, TextLink, Thumbnail } from "~/lib/ui"
+import { DetailSkeleton } from "./DetailSkeleton"
 
 const ms = (iso: string) => {
   const t = Date.parse(iso)
@@ -36,7 +37,7 @@ export default function PassPage() {
       <Show
         when={view.info}
         fallback={
-          <Show when={view.error} fallback={<Skeleton class="h-72 w-full rounded-md" />}>
+          <Show when={view.error} fallback={<DetailSkeleton />}>
             {(e) => <span class="text-fg-muted">{e()}</span>}
           </Show>
         }
@@ -67,7 +68,7 @@ export default function PassPage() {
               <Show when={p().description.trim()}>
                 {(d) => <Description text={d()} class="max-w-prose text-fg-muted" />}
               </Show>
-              <Card class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-4 p-3">
+              <Card class="flex flex-wrap gap-x-10 gap-y-3 p-3">
                 <Stat label="Pass ID">{p().id}</Stat>
                 <Stat label="Price">{p().priceLabel}</Stat>
                 <Show when={p().sales > 0}>

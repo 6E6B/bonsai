@@ -45,6 +45,12 @@
     animation: ui-fade-out var(--duration) var(--ease);
   }
 
+  /* Command bars and pickers come from the keyboard dozens of times a day; they appear at once. */
+  [data-component="dialog-overlay"][data-position="top"],
+  [data-component="dialog-positioner"][data-position="top"] > [data-component="dialog"] {
+    animation: none;
+  }
+
   [data-component="dialog"][data-size="sm"] {
     --dialog-width: 360px;
   }

@@ -525,8 +525,6 @@ pub(super) fn run(
             core.archive_messages(a, ids, tab != "archive");
             Ok(())
         })(),
-        // Handled by the Messages screen, which owns the selection.
-        C::SelectAllMessages => Err("Open Messages first.".to_owned()),
         C::ChatMembers => Err("Open a group chat first.".to_owned()),
         C::ChatEmoji => Err("Open a conversation first.".to_owned()),
         C::ShareExperience => (|| {

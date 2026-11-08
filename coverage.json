@@ -4928,7 +4928,7 @@
       "module": "groups::v1",
       "path": "/v1/groups/{groupId}/status",
       "summary": "Sets group status",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -6748,7 +6748,7 @@
       "module": "users::v1",
       "path": "/v1/users",
       "summary": "Get users by ids.",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -7298,6 +7298,16 @@
       "module": "apis::undocumented",
       "path": "/user-blocking-api/v1/users/{userId}/unblock-user",
       "summary": "Unblock a user. The body is a bare string like \"Successfully unblocked user ...\".",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "post_user_profiles",
+      "host": "apis.roblox.com",
+      "method": "POST",
+      "module": "apis::undocumented",
+      "path": "/user-profile-api/v1/user/profiles/get-profiles",
+      "summary": "Names and badges of up to 200 users by id. No sign-in needed.",
       "used": true
     },
     {
@@ -7891,6 +7901,6 @@
       "used": true
     }
   ],
-  "total": 789,
-  "used": 253
+  "total": 790,
+  "used": 252
 }

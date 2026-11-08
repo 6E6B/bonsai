@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { categoryArg, openCommand, shownNotifications } from "./filter"
+import { categoryArg, dayLabel, groupByDay, openCommand, shownNotifications } from "./filter"
 
 const items = [
   { id: "a", read: false, category: "friends" },
@@ -39,5 +39,36 @@ describe("openCommand", () => {
     expect(openCommand(n)).toBeNull()
     expect(openCommand({ ...n, id: "app:1:0" })).toEqual(["nav.trades"])
     expect(openCommand({ ...n, id: "app:1:0", category: "account" })).toEqual(["nav.transactions"])
+  })
+})
+
+describe("groupByDay", () => {
+  const now = new Date(2026, 10, 6, 15, 0).getTime()
+  const at = (d: number, h = 12) => new Date(2026, 10, d, h).getTime()
+
+  it("labels days relative to now", () => {
+    expect(dayLabel(at(6, 0), now)).toBe("Today")
+    expect(dayLabel(at(5, 23), now)).toBe("Yesterday")
+    expect(dayLabel(at(1), now)).toBe("This week")
+    expect(dayLabel(new Date(2026, 9, 20).getTime(), now)).toBe("Older")
+  })
+
+  it("puts a heading before each group and maps positions", () => {
+    const items = [at(6), at(6, 9), at(5), at(1)]
+    const { rows, positions } = groupByDay(items, (t) => t, now)
+    expect(rows.map((r) => ("heading" in r ? r.heading : r.index))).toEqual([
+      "Today",
+      0,
+      1,
+      "Yesterday",
+      2,
+      "This week",
+      3,
+    ])
+    expect(positions).toEqual([1, 2, 4, 6])
+  })
+
+  it("is empty for no items", () => {
+    expect(groupByDay([], () => 0, now)).toEqual({ rows: [], positions: [] })
   })
 })

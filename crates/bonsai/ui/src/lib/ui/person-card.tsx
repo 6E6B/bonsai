@@ -24,7 +24,7 @@ export function PersonCard(props: PersonCardProps) {
     <Card class={props.class}>
       <div data-component="person-card">
         <KButton data-slot="main" onClick={props.onClick}>
-          <Avatar size="lg" name={props.name} src={props.src} presence={props.presence} />
+          <Avatar size="md" name={props.name} src={props.src} presence={props.presence} />
           <span data-slot="text">
             <span data-slot="title">{props.name}</span>
             <Show when={props.subtitle}>

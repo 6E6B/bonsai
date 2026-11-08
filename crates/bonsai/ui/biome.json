@@ -6,6 +6,7 @@
       "!dist",
       "!**/perf-results",
       "!src/lib/ipc/bindings.ts",
+      "!src/lib/commands/catalog.json",
       "!src/lib/ui/assets",
       "!src/lib/avatar3d/engine"
     ]

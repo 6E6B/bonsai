@@ -1,5 +1,5 @@
 import { useParams } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
 import { handle, run } from "~/lib/commands/registry"
@@ -13,6 +13,7 @@ import {
   type List,
   type PassRow,
   type PrivateServerRow,
+  type RecentServerRow,
   type ServerOffer,
   type ServerRow,
   type Servers,
@@ -22,6 +23,7 @@ import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { entityMenu, joinAsItems, playlistItems } from "~/lib/menus"
 import { ServerControls } from "~/lib/private-server"
+import { serverName } from "~/lib/server-name"
 import { friends, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
@@ -29,6 +31,8 @@ import { GameTile } from "~/lib/tiles"
 import {
   Alert,
   Avatar,
+  AvatarStack,
+  type AvatarStackItem,
   Badge,
   Button,
   Card,
@@ -48,7 +52,8 @@ import {
   Meter,
   Page,
   Robux,
-  SegmentedControl,
+  SectionHeader,
+  Select,
   Skeleton,
   Stat,
   showToast,
@@ -58,6 +63,7 @@ import {
   TextLink,
   Thumbnail,
   ToggleButton,
+  Toolbar,
   Tooltip,
   useDialog,
   VerifiedBadge,
@@ -330,12 +336,15 @@ function when(iso: string, fmt: (ms: number) => string) {
 
 function HeaderSkeleton() {
   return (
-    <div class="grid grid-cols-1 gap-4 @xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-      <Skeleton class="aspect-video w-full max-w-md rounded-md" />
-      <div class="flex flex-col gap-3">
-        <Skeleton class="h-8 w-2/3 rounded-md" />
-        <Skeleton class="h-10 w-full rounded-md" />
-        <Skeleton class="h-32 w-full rounded-md" />
+    <div class="@container">
+      <div class="grid grid-cols-1 items-start gap-4 @xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+        <Skeleton class="order-last aspect-video w-full max-w-md rounded-md @xl:order-none @xl:max-w-none" />
+        <div class="flex flex-col gap-3">
+          <Skeleton class="h-8 w-2/3 rounded-md" />
+          <Skeleton class="h-4 w-1/3" />
+          <Skeleton class="h-8 w-full rounded-md" />
+          <Skeleton class="h-14 w-full rounded-md" />
+        </div>
       </div>
     </div>
   )
@@ -407,18 +416,117 @@ function MediaStrip(props: { media: GameView["media"]; universeId: number; name:
  * items; keeps showing them while a refresh is in flight. */
 
 const sorts = [
-  { value: "friends", label: "Friends" },
-  { value: "ping", label: "Ping" },
-  { value: "players", label: "Players" },
-  { value: "free", label: "Free slots" },
+  { value: "friends", label: "Friends first" },
+  { value: "ping", label: "Lowest ping" },
+  { value: "most", label: "Most players" },
+  { value: "fewest", label: "Fewest players" },
 ]
 
 const byServer: Record<string, (a: ServerRow, b: ServerRow) => number> = {
-  friends: (a, b) => b.friends.length - a.friends.length,
+  friends: (a, b) => b.friends.length - a.friends.length || b.playing - a.playing,
   ping: (a, b) => (a.ping ?? Number.MAX_SAFE_INTEGER) - (b.ping ?? Number.MAX_SAFE_INTEGER),
-  players: (a, b) => b.playing - a.playing,
-  free: (a, b) => b.maxPlayers - b.playing - (a.maxPlayers - a.playing),
+  most: (a, b) => b.playing - a.playing,
+  fewest: (a, b) => a.playing - b.playing,
 }
+
+const friendName = (id: number) => friends.friends.find((f) => f.id === id)?.displayName ?? String(id)
+
+/** Faces for a server row: friends first, ringed and named, then the other players. */
+function serverFaces(s: ServerRow): AvatarStackItem[] {
+  return [
+    ...s.friends.map((f) => ({
+      name: friendName(f),
+      label: friendName(f),
+      src: thumbUrl("headshot", f),
+      highlight: true,
+    })),
+    ...s.players.map((p) => ({ name: "", src: thumbUrl("player", p) })),
+  ]
+}
+
+/** A server's shared name from its job id. Hover shows the job id; click copies it. */
+function ServerName(props: { jobId: string }) {
+  return (
+    <Tooltip
+      class="min-w-0"
+      content={
+        <span class="flex flex-col gap-0.5">
+          <span class="font-mono text-xs">{props.jobId}</span>
+          <span class="text-xs">Click to copy</span>
+        </span>
+      }
+    >
+      <button
+        type="button"
+        class="block max-w-full cursor-copy truncate text-left"
+        aria-label={`${serverName(props.jobId)}, copy job id`}
+        onClick={() => run("game.copy_job_id", props.jobId)}
+      >
+        {serverName(props.jobId)}
+      </button>
+    </Tooltip>
+  )
+}
+
+/** A recent server's `game.join_job` argument: its job id and place, which may be a sub-place. */
+const recentKey = (r: RecentServerRow) => `${r.jobId} ${r.placeId}`
+
+/** Servers the account played in over the last day. Players and fill show when the server is
+ * in the loaded list. */
+const recentColumns: Column<RecentServerRow>[] = [
+  { key: "name", label: "Server", width: "10rem", cell: (r) => <ServerName jobId={r.jobId} /> },
+  {
+    key: "players",
+    label: "Players",
+    width: "8.5rem",
+    cell: (r) => (
+      <Show when={r.server} fallback={<span class="text-fg-muted">–</span>}>
+        {(s) => <AvatarStack items={serverFaces(s())} total={Math.max(s().playing, s().friends.length)} />}
+      </Show>
+    ),
+  },
+  {
+    key: "fill",
+    label: "",
+    width: "minmax(6rem, 1fr)",
+    cell: (r) => (
+      <Show when={r.server}>
+        {(s) => <Meter class="w-full" label="Players" value={s().playing} max={s().maxPlayers} tone="capacity" />}
+      </Show>
+    ),
+  },
+  {
+    key: "played",
+    label: "Played",
+    width: "7.5rem",
+    align: "end",
+    cell: (r) => (
+      <Show when={r.lastSeen} fallback="–">
+        {(t) => <span class="text-fg-muted">{ago(t())}</span>}
+      </Show>
+    ),
+  },
+  {
+    key: "actions",
+    label: "",
+    width: "6.5rem",
+    align: "end",
+    cell: (r) => (
+      <>
+        <Button size="sm" onClick={() => run("game.join_job", recentKey(r))}>
+          Join
+        </Button>
+        <Menu
+          size="sm"
+          icon="chevron-down"
+          label="Join as…"
+          placement="bottom-end"
+          items={joinAsItems("game.join_job", recentKey(r))}
+        />
+      </>
+    ),
+  },
+]
 
 function ServersPanel(props: { placeId: number; max: number }) {
   const list = useLive(
@@ -427,48 +535,56 @@ function ServersPanel(props: { placeId: number; max: number }) {
     (): Servers => ({ loading: true, error: null, fetchedAt: null, servers: [], more: false }),
   )
   const [sort, setSort] = createSignal("friends")
-  const [reversed, setReversed] = createSignal(false)
   const [hideFull, setHideFull] = createSignal(false)
   const [friendsOnly, setFriendsOnly] = createSignal(false)
+  const recent = useLive(
+    () => props.placeId,
+    async (id) => ({ items: await commands.gameRecentServers(id) }),
+    () => ({ items: [] as RecentServerRow[] }),
+  )
+  // The `game.join_job` argument of the row the cursor is on, in either table.
   const [selected, setSelected] = createSignal<string>()
   onCleanup(handle("game.join_server", () => selected() && run("game.join_job", selected() ?? null)))
 
   const shown = createMemo(() =>
     list.servers
       .filter((s) => (!hideFull() || s.playing < s.maxPlayers) && (!friendsOnly() || s.friends.length > 0))
-      .sort((a, b) => (reversed() ? -1 : 1) * byServer[sort()](a, b)),
+      .sort(byServer[sort()]),
   )
-
-  const friendName = (id: number) => friends.friends.find((f) => f.id === id)?.displayName ?? String(id)
 
   const columns: Column<ServerRow>[] = [
     {
+      key: "name",
+      label: "Server",
+      // Fits the longest name, "Wandering Albatross".
+      width: "10rem",
+      cell: (s) => <ServerName jobId={s.jobId} />,
+    },
+    {
       key: "players",
       label: "Players",
-      width: "9rem",
+      // Roblox sends five player tokens a server, so the faces need little room.
+      width: "8.5rem",
+      cell: (s) => <AvatarStack items={serverFaces(s)} total={Math.max(s.playing, s.friends.length)} />,
+    },
+    {
+      key: "fill",
+      label: "",
+      width: "minmax(6rem, 1fr)",
       cell: (s) => <Meter class="w-full" label="Players" value={s.playing} max={s.maxPlayers} tone="capacity" />,
     },
-    { key: "ping", label: "Ping", width: "4rem", cell: (s) => (s.ping === null ? "–" : `${s.ping} ms`) },
-    { key: "fps", label: "FPS", width: "3rem", cell: (s) => (s.fps === null ? "–" : Math.round(s.fps)) },
+    { key: "ping", label: "Ping", width: "4rem", align: "end", cell: (s) => (s.ping === null ? "–" : `${s.ping} ms`) },
     {
-      key: "friends",
-      label: "Friends",
-      width: "minmax(6rem, 1fr)",
-      cell: (s) => (
-        <For each={s.friends}>
-          {(f) => (
-            <Tooltip content={friendName(f)}>
-              <Avatar size="xs" name={friendName(f)} src={thumbUrl("headshot", f)} />
-            </Tooltip>
-          )}
-        </For>
-      ),
+      key: "fps",
+      label: "FPS",
+      width: "3rem",
+      align: "end",
+      cell: (s) => (s.fps === null ? "–" : Math.round(s.fps)),
     },
-    { key: "id", label: "Server", width: "5.5rem", mono: true, cell: (s) => s.jobId.slice(0, 8) },
     {
       key: "actions",
       label: "",
-      width: "10rem",
+      width: "6.5rem",
       align: "end",
       cell: (s) => (
         <>
@@ -478,12 +594,16 @@ function ServersPanel(props: { placeId: number; max: number }) {
             label="Copy invite link"
             onClick={() => run("game.copy_server_link", s.jobId)}
           />
-          <Menu size="sm" items={joinAsItems("game.join_job", s.jobId)}>
-            Join as…
-          </Menu>
           <Button size="sm" onClick={() => run("game.join_job", s.jobId)}>
             Join
           </Button>
+          <Menu
+            size="sm"
+            icon="chevron-down"
+            label="Join as…"
+            placement="bottom-end"
+            items={joinAsItems("game.join_job", s.jobId)}
+          />
         </>
       ),
     },
@@ -491,41 +611,54 @@ function ServersPanel(props: { placeId: number; max: number }) {
 
   return (
     <div class="flex flex-col gap-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <Button onClick={() => run("game.join_best")}>Join best for me</Button>
-        <Button onClick={() => run("game.join_smallest")}>Smallest</Button>
-        <Button onClick={() => run("game.join_random")}>Random</Button>
-        <span class="ml-auto text-sm text-fg-muted">
-          {shown().length} of {list.servers.length} servers
-          <Show when={list.fetchedAt}>{(t) => ` · ${ago(t())}`}</Show>
-        </span>
-        <Button icon="refresh" disabled={list.loading} onClick={() => run("game.refresh_servers")}>
-          Refresh
-        </Button>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-sm text-fg-muted">Sort</span>
-        <SegmentedControl aria-label="Sort servers" size="sm" value={sort()} onChange={setSort} options={sorts} />
-        <Tooltip content={reversed() ? "Reversed order" : "Normal order"}>
-          <ToggleButton
-            size="sm"
-            variant="ghost"
-            icon="sort-desc"
-            pressedIcon="sort-asc"
-            pressed={reversed()}
-            onChange={setReversed}
-          >
-            Reverse
-          </ToggleButton>
-        </Tooltip>
-        <Divider orientation="vertical" />
+      <Show when={recent.items.length > 0}>
+        <div class="flex flex-col gap-1.5">
+          <SectionHeader title="Recent" meta={recent.items.length} size="group" />
+          <DataTable
+            aria-label="Recent servers"
+            columns={recentColumns}
+            rows={recent.items}
+            rowKey={recentKey}
+            selected={selected()}
+            onRowClick={(r) => setSelected(recentKey(r))}
+          />
+        </div>
+      </Show>
+      <Toolbar
+        actions={
+          <>
+            <Button size="sm" variant="primary" onClick={() => run("game.join_best")}>
+              Join best
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => run("game.join_smallest")}>
+              Smallest
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => run("game.join_random")}>
+              Random
+            </Button>
+            <IconButton
+              size="sm"
+              icon="refresh"
+              label="Refresh"
+              disabled={list.loading}
+              onClick={() => run("game.refresh_servers")}
+            />
+          </>
+        }
+      >
+        <Select class="w-40" size="sm" aria-label="Sort servers" options={sorts} value={sort()} onChange={setSort} />
         <Checkbox checked={hideFull()} onChange={setHideFull}>
           Hide full
         </Checkbox>
         <Checkbox checked={friendsOnly()} onChange={setFriendsOnly}>
           Friends only
         </Checkbox>
-      </div>
+        <span class="text-sm text-fg-muted">
+          <Show when={shown().length !== list.servers.length}>{shown().length} of </Show>
+          {list.servers.length} servers
+          <Show when={list.fetchedAt}>{(t) => ` · ${ago(t())}`}</Show>
+        </span>
+      </Toolbar>
       <Show when={list.error}>
         {(e) => (
           <Alert variant="danger" title="Couldn't load servers">
@@ -676,9 +809,14 @@ function StorePanel(props: { list: List<PassRow> }) {
               )}
             </Show>
             <div class="flex items-center justify-between">
-              <Show when={p.price !== null} fallback={<span class="text-sm text-fg-muted">Off sale</span>}>
-                <Robux amount={p.price ?? 0} />
-              </Show>
+              <Switch fallback={<Robux amount={p.price ?? 0} />}>
+                <Match when={p.price === null}>
+                  <span class="text-sm text-fg-muted">Off sale</span>
+                </Match>
+                <Match when={p.price === 0}>
+                  <span class="text-sm">Free</span>
+                </Match>
+              </Switch>
               <Show when={p.owned}>
                 <Badge variant="success">Owned</Badge>
               </Show>
@@ -885,21 +1023,24 @@ function AboutPanel(props: { game: GameView; wiki: WikiPageView }) {
 /** Servers with friends of the active account in them, from Roblox's friends' server list. */
 function FriendServersPanel(props: { list: List<ServerRow> }) {
   const list = props.list
-  const friendName = (id: number) => friends.friends.find((f) => f.id === id)?.displayName ?? String(id)
   return (
     <ListState list={list} icon="friends" empty="No friends are playing">
       <VirtualList items={list.items} estimateRowHeight={64}>
         {(s) => (
           <ListItem
             leading={
-              <div class="flex -space-x-1.5">
-                <For each={s.friends.slice(0, 4)}>
-                  {(f) => <Avatar size="sm" name={friendName(f)} src={thumbUrl("headshot", f)} />}
-                </For>
-              </div>
+              <AvatarStack
+                on="canvas"
+                max={4}
+                items={s.friends.map((f) => ({
+                  name: friendName(f),
+                  label: friendName(f),
+                  src: thumbUrl("headshot", f),
+                }))}
+              />
             }
             title={s.friends.map(friendName).join(", ") || "Friends"}
-            subtitle={`${s.playing} of ${s.maxPlayers} players${s.ping === null ? "" : ` · ${s.ping} ms`}`}
+            subtitle={`${serverName(s.jobId)} · ${s.playing} of ${s.maxPlayers} players${s.ping === null ? "" : ` · ${s.ping} ms`}`}
             actions={
               <>
                 <Menu size="sm" items={joinAsItems("game.join_job", s.jobId)}>

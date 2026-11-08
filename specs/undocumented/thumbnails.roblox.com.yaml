@@ -28,6 +28,9 @@ definitions:
     properties:
       requestId: { type: string }
       targetId: { type: integer, format: int64 }
+      # In place of targetId: a player token from a game server list (playerTokens), as in the
+      # tracker's thumbnails/v1.json batch request.
+      token: { type: string }
       type: { type: string, description: "AvatarHeadShot, Avatar, GameIcon, GameThumbnail, Asset, BundleThumbnail, GroupIcon, BadgeIcon, GamePass, Outfit" }
       size: { type: string, description: "e.g. 48x48, 150x150, 420x420" }
       format: { type: string, description: "webp or png" }

@@ -17,10 +17,9 @@ Features beyond the website, with the command that reaches each.
 | Marketplace results in the command bar (`i:`) | Command bar | Search the Marketplace |
 | Chat with live typing, unread counts and pinned chats (local) | Messages → Chat | Pin or unpin this chat |
 | Per-chat drafts that survive restarts and account switches | Messages → Chat | — |
-| Experience links in chat, messages, forums and shouts show a card with Join | Messages, Communities | — |
+| Experience links in chat, messages and forums show a card with Join | Messages, Communities | — |
 | Join the person you're chatting with in their game | Messages → Chat header | — |
 | Private message search, bulk select, keyboard triage (j/k, x, e, u, r) | Messages → Inbox | Archive / Mark read or unread / Reply |
-| Shouts feed across your communities with new markers | Communities → Shouts | — |
 | Your other accounts' roles on every community page and list | Communities | — |
 | Leave several communities in one confirmed action | Communities → Your communities → Select | Leave the selected communities |
 | Member list CSV export | Community → Members | Copy loaded members as CSV |

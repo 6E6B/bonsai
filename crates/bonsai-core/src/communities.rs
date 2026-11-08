@@ -1,4 +1,4 @@
-//! Communities (groups): details and shout, your membership and permissions, members by role,
+//! Communities (groups): details, your membership and permissions, members by role,
 //! forums (they replaced the wall), experiences, store, affiliates, and the admin views (join
 //! requests, audit log, settings, funds and payouts).
 //!
@@ -39,20 +39,6 @@ pub struct Community {
     pub public_entry: bool,
     /// Locked or deactivated by Roblox.
     pub locked: bool,
-    pub shout: Option<Shout>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
-pub struct Shout {
-    pub text: String,
-    pub poster_id: u64,
-    pub poster: String,
-    #[serde(default)]
-    pub poster_username: String,
-    #[serde(default)]
-    pub poster_verified: bool,
-    /// ISO date-time of the last change.
-    pub updated: String,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -67,8 +53,6 @@ pub struct Role {
 /// What the viewing account may do in a community.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Perms {
-    pub post_shout: bool,
-    pub view_shout: bool,
     pub change_rank: bool,
     pub remove_members: bool,
     pub ban_members: bool,
@@ -502,7 +486,7 @@ pub fn describe_audit(action: &str, d: &serde_json::Value) -> String {
 }
 
 impl Core {
-    /// A community's page header: name, owner, members, shout.
+    /// A community's page header: name, owner, members.
     pub fn community(&self, group_id: u64) -> Res<Community> {
         self.inner.res(
             Key::shared("community", group_id),
@@ -510,9 +494,6 @@ impl Core {
             move |f| async move {
                 let g = groups::v1::get_groups_by_group_id(&f.client, group_id as i64).await?;
                 let (owner_id, owner_name, owner_display, owner_verified) = user_of(g.owner);
-                let shout = g
-                    .shout
-                    .filter(|s| s.body_.as_deref().is_some_and(|b| !b.trim().is_empty()));
                 Ok(Community {
                     id: group_id,
                     name: g.name.unwrap_or_default(),
@@ -528,17 +509,6 @@ impl Core {
                     verified: g.has_verified_badge.unwrap_or(false),
                     public_entry: g.public_entry_allowed.unwrap_or(false),
                     locked: g.is_locked.unwrap_or(false) || g.is_deactivated.unwrap_or(false),
-                    shout: shout.map(|s| {
-                        let (poster_id, name, display, poster_verified) = user_of(s.poster);
-                        Shout {
-                            text: s.body_.unwrap_or_default(),
-                            poster_id,
-                            poster: if display.is_empty() { name.clone() } else { display },
-                            poster_username: name,
-                            poster_verified,
-                            updated: s.updated.or(s.created).unwrap_or_default(),
-                        }
-                    }),
                 })
             },
         )
@@ -558,7 +528,6 @@ impl Core {
                 };
                 let m = groups::v1::get_groups_by_group_id_membership(&f.client, group_id as i64, &p).await?;
                 let p = m.permissions.unwrap_or_default();
-                let posts = p.group_posts_permissions.unwrap_or_default();
                 let mem = p.group_membership_permissions.unwrap_or_default();
                 let man = p.group_management_permissions.unwrap_or_default();
                 let eco = p.group_economy_permissions.unwrap_or_default();
@@ -575,8 +544,6 @@ impl Core {
                     funds_visible: b(m.are_group_funds_visible),
                     games_visible: m.are_group_games_visible.unwrap_or(true),
                     perms: Perms {
-                        post_shout: b(posts.post_to_status),
-                        view_shout: posts.view_status.unwrap_or(true),
                         change_rank: b(mem.change_rank),
                         remove_members: b(mem.remove_members),
                         ban_members: b(mem.ban_members),
@@ -1195,24 +1162,6 @@ impl Core {
             .collect()
     }
 
-    // ---- shouts you haven't seen (local) ----
-
-    /// When you last looked at each community's shout (ISO time of the shout you saw).
-    pub fn seen_shouts(&self, account: AccountId) -> HashMap<String, String> {
-        self.local(account, "seen_shouts")
-    }
-
-    /// Note the current shout of a community as seen.
-    pub fn mark_shout_seen(&self, account: AccountId, group_id: u64, updated: &str) {
-        let mut m = self.seen_shouts(account);
-        let k = group_id.to_string();
-        if m.get(&k).map(String::as_str) == Some(updated) {
-            return;
-        }
-        m.insert(k, updated.to_string());
-        self.set_local(account, "seen_shouts", &m);
-    }
-
     // ---- user actions ----
 
     pub fn join_community(&self, account: AccountId, group_id: u64) {
@@ -1313,26 +1262,6 @@ impl Core {
                         groups::v1::delete_user_groups_primary(&f.client).await?;
                     }
                 }
-                Ok(())
-            },
-        );
-    }
-
-    pub fn post_shout(&self, account: AccountId, group_id: u64, text: &str) {
-        let body = groups::v1::PostGroupStatusRequest {
-            message: Some(text.trim().to_string()),
-        };
-        self.inner.mutate(
-            account,
-            "post the shout",
-            if text.trim().is_empty() {
-                "Shout cleared"
-            } else {
-                "Shout posted"
-            },
-            &[Effect::Community],
-            move |f| async move {
-                groups::v1::patch_groups_by_group_id_status(&f.client, group_id as i64, &body).await?;
                 Ok(())
             },
         );

@@ -108,11 +108,15 @@ test("Tab reaches shelf items outside the initial window", async ({ page }) => {
 test("cursor moves beyond unmounted rows and scrolling retains focused controls", async ({ page }) => {
   await page.goto("/friends?rows=2000")
   await settle(page)
+  const columns = await page
+    .locator('[data-component="virtual-grid"] [data-slot="row"]')
+    .first()
+    .evaluate((row) => getComputedStyle(row).gridTemplateColumns.split(" ").length)
   await page.evaluate(async () => {
     for (let i = 0; i < 150; i++) await window.__bonsaiPerf.moveCursor(1)
   })
   const selected = page.locator('[data-component="list-item"][data-selected]')
-  await expect(selected).toHaveAttribute("data-index", "150")
+  await expect(selected).toHaveAttribute("data-index", String(150 * columns))
   await expect(selected).toBeInViewport()
   const button = selected.getByRole("button").first()
   await button.focus()
@@ -196,46 +200,30 @@ test("Tab crosses the virtual table window", async ({ page }) => {
   expect(await table.locator("tbody tr").count()).toBeLessThan(70)
 })
 
-test("Home windows many game groups and their nested friend rows", async ({ page }) => {
+test("Home windows game groups in its friends shelf and reaches the last group", async ({ page }) => {
   await page.goto("/?rows=500&playing=groups")
-  await expect(page.getByText("Fixture Game 1000", { exact: true })).toBeVisible()
-  const main = page.getByRole("main")
+  const shelf = page.getByRole("region", { name: "Friends", exact: true })
+  await expect(shelf.getByText("Fixture Game 1000", { exact: true })).toBeVisible()
   await settle(page)
-  expect(await main.locator('[data-component="list-item"]').count()).toBeLessThan(150)
-  // Friends playing is followed by capped home sections, so stop at the end of its own grid.
-  const grid = main.locator('[data-component="virtual-grid"]').first()
-  await expect(async () => {
-    await grid.evaluate((el) => {
-      const scroller = el.closest("[data-scroller]")
-      if (scroller)
-        scroller.scrollTop =
-          el.getBoundingClientRect().bottom -
-          scroller.getBoundingClientRect().top +
-          scroller.scrollTop -
-          scroller.clientHeight
-    })
-    await settle(page)
-    await expect(page.getByText("Fixture Game 1099", { exact: true })).toBeInViewport()
-  }).toPass({ timeout: 10_000 })
+  expect(await shelf.locator('[data-component="person-tile"]').count()).toBeLessThan(20)
+  await shelf.focus()
+  await page.keyboard.press("End")
+  await expect(shelf.getByText("Fixture Game 1099", { exact: true })).toBeInViewport()
+  await expect(shelf.getByText("Player 595", { exact: true })).toBeVisible()
+  expect(await shelf.locator('[data-component="person-tile"]').count()).toBeLessThan(20)
 })
 
-test("Home windows a large group of friends playing the same game", async ({ page }) => {
+test("Home bounds a large game's avatar stack and keeps every friend in its menu", async ({ page }) => {
   await page.goto("/?rows=500&playing=single")
-  await expect(page.getByText("Fixture Game 1000", { exact: true })).toBeVisible()
-  const main = page.getByRole("main")
-  const grid = main.locator('[data-component="virtual-grid"]').first()
-  await expect(async () => {
-    await grid.evaluate((el) => {
-      const scroller = el.closest("[data-scroller]")
-      if (scroller)
-        scroller.scrollTop =
-          el.getBoundingClientRect().bottom -
-          scroller.getBoundingClientRect().top +
-          scroller.scrollTop -
-          scroller.clientHeight
-    })
-    await settle(page)
-    await expect(page.getByText("Player 599", { exact: true })).toBeInViewport()
-  }).toPass({ timeout: 10_000 })
-  expect(await main.locator('[data-component="list-item"]').count()).toBeLessThan(100)
+  const shelf = page.getByRole("region", { name: "Friends", exact: true })
+  const tile = shelf.locator('[data-component="person-tile"]')
+  await expect(tile).toHaveCount(1)
+  await expect(tile.getByText("Fixture Game 1000", { exact: true })).toBeVisible()
+  const stack = tile.locator('[data-component="avatar-stack"]')
+  await expect(stack.locator('[data-slot="face"]')).toHaveCount(4)
+  await expect(stack.getByText("+495", { exact: true })).toBeVisible()
+  await tile.click({ button: "right" })
+  const last = page.getByRole("menuitem", { name: "Player 599", exact: true })
+  await last.scrollIntoViewIfNeeded()
+  await expect(last).toBeVisible()
 })

@@ -413,9 +413,12 @@ async fn friends_presence_marks_their_server() {
         },
     };
     f.interactions.push(post(
-        "users.roblox.com",
-        "/v1/users",
-        serde_json::json!({"data":[{"id":1,"name":"Roblox","displayName":"Roblox","hasVerifiedBadge":true},{"id":156,"name":"builderman","displayName":"builderman","hasVerifiedBadge":true}]}),
+        "apis.roblox.com",
+        "/user-profile-api/v1/user/profiles/get-profiles",
+        serde_json::json!({"profileDetails":[
+            {"userId":1,"names":{"username":"Roblox","displayName":"Roblox"},"isVerified":true},
+            {"userId":156,"names":{"username":"builderman","displayName":"builderman"},"isVerified":true}
+        ],"errors":[]}),
     ));
     f.interactions.push(post(
         "presence.roblox.com",
@@ -733,7 +736,7 @@ async fn people_profile_lists_and_relation() {
     assert_eq!(followers.items.len(), 100);
     assert!(followers.next.is_some());
     assert!(poll(|| c.followings(ME, 156, false)).await.items.len() > 10);
-    assert!(poll(|| c.friends_of(156, false)).await.items.is_empty());
+    assert!(poll(|| c.friends_of(ME, 156, false)).await.items.is_empty());
     assert!(poll(|| c.username_history(156)).await.is_empty());
     let groups = poll(|| c.user_groups(1)).await;
     assert!(groups.iter().any(|g| g.name == "Roblox Wiki"));
@@ -1953,21 +1956,12 @@ async fn communities_member_admin_forums_and_public_pages() {
         ("Test Community", "User Four", 4)
     );
     assert!(!d.public_entry);
-    let shout = d.shout.clone().unwrap();
-    assert_eq!(
-        (
-            shout.text.as_str(),
-            shout.poster.as_str(),
-            shout.poster_username.as_str()
-        ),
-        ("Event Friday at 6!", "User One", "user1")
-    );
 
     let m = poll(|| c.membership(ME, g)).await;
     assert!(m.is_member() && !m.owner && !m.primary);
     assert_eq!(m.role.as_ref().unwrap().name, "Admin");
     let p = &m.perms;
-    assert!(p.post_shout && p.change_rank && p.invite_members && p.remove_members && p.view_audit_log);
+    assert!(p.change_rank && p.invite_members && p.remove_members && p.view_audit_log);
     assert!(p.view_payouts && p.manage_settings && p.create_posts && p.remove_comments);
     assert!(!p.ban_members && !p.spend_funds);
 
@@ -2028,11 +2022,7 @@ async fn communities_member_admin_forums_and_public_pages() {
         3
     );
 
-    c.mark_shout_seen(ME, g, &shout.updated);
-    assert_eq!(c.seen_shouts(ME).get("7001"), Some(&shout.updated));
-
     // Every write once.
-    c.post_shout(ME, g, "New shout");
     c.answer_join_requests(ME, g, vec![2_000_003], true);
     c.answer_join_requests(ME, g, vec![2_000_002, 2_000_004], false);
     assert!(
@@ -2090,10 +2080,6 @@ async fn communities_member_admin_forums_and_public_pages() {
             .unwrap_or_else(|| panic!("{m} {p} was not called"));
         serde_json::from_slice(&q.body).unwrap_or(serde_json::Value::Null)
     };
-    assert_eq!(
-        body("PATCH", "/groups.roblox.com/v1/groups/7001/status")["message"],
-        "New shout"
-    );
     assert_eq!(
         body("DELETE", "/groups.roblox.com/v1/groups/7001/join-requests")["UserIds"],
         serde_json::json!([2_000_002, 2_000_004])
@@ -3337,4 +3323,34 @@ async fn image_export_uses_cached_display_when_lookup_is_offline() {
         .unwrap();
     assert_eq!(image.url.as_deref(), Some(url));
     assert!(image.image.rgba().is_ok());
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn user_names_load_from_profiles_and_retry_a_failed_batch() {
+    let mut f = replay::load("user_profiles");
+    // The first ask fails; the names come with the retry.
+    let mut failed = f.interactions[0].clone();
+    failed.response = replay::RecordedResponse {
+        status: 500,
+        ..Default::default()
+    };
+    f.interactions.insert(0, failed);
+    let replay = Replay::from_fixture(&f).await;
+    let r = rig(
+        Base::Replay(replay.server.uri()),
+        tempfile::tempdir().unwrap(),
+        Arc::default(),
+    );
+    r.core.want_users(&[1, 156, 1]);
+    // Rows ask every frame; ids already asked for aren't sent again.
+    r.core.want_users(&[156]);
+    wait_for(&r.core, "names", |s| s.users.contains_key(&156)).await;
+    {
+        let s = r.core.store();
+        assert_eq!(s.users[&1].name, "Roblox");
+        assert_eq!(s.users[&156].display_name, "builderman");
+        assert!(s.users[&156].verified);
+    }
+    let asks = replay.server.received_requests().await.unwrap_or_default();
+    assert_eq!(asks.len(), 2, "one failed ask and one retry");
 }

@@ -1,4 +1,5 @@
 import { date } from "~/lib/format"
+import { rank } from "~/lib/search"
 
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -21,8 +22,8 @@ export function startsDay(prev: number | null, ms: number | null): boolean {
   return prev === null || !sameDay(new Date(prev), new Date(ms))
 }
 
-/** Conversations whose name contains `query`, ignoring case. All of them for a blank query. */
+/** Conversations whose name contains every word of `query`, best match first. All of them,
+ * in order, for a blank query. */
 export function filterConversations<T extends { title: string }>(items: readonly T[], query: string): T[] {
-  const q = query.trim().toLowerCase()
-  return q ? items.filter((c) => c.title.toLowerCase().includes(q)) : [...items]
+  return rank(items, query, (c) => [c.title])
 }

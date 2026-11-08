@@ -5,6 +5,7 @@
  * family first, so text switches to it as soon as it loads.
  */
 import { convertFileSrc, isTauri } from "@tauri-apps/api/core"
+import { rank } from "~/lib/search"
 
 export type FontFiles = { family: string; files: { weight: number; path: string }[] }
 
@@ -42,10 +43,7 @@ export function fontChoices(
   google: { family: string; category: string }[],
 ): FontChoice[] {
   const bundled = mono ? ["JetBrains Mono", "System"] : ["Inter", "System"]
-  const q = query.trim().toLowerCase()
-  const out: FontChoice[] = bundled
-    .filter((b) => b.toLowerCase().includes(q))
-    .map((b) => ({ value: b, label: b, detail: "Built in" }))
+  const out: FontChoice[] = rank(bundled, query, (b) => [b]).map((b) => ({ value: b, label: b, detail: "Built in" }))
   for (const f of google) {
     if (bundled.some((b) => b.toLowerCase() === f.family.toLowerCase())) continue
     out.push({ value: f.family, label: f.family, detail: f.category })

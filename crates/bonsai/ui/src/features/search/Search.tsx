@@ -95,7 +95,7 @@ export default function Search() {
   }
 
   return (
-    <Page title="Search" width="narrow">
+    <Page>
       <form
         class="flex items-center gap-2"
         onSubmit={(e) => {

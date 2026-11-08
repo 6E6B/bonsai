@@ -22,12 +22,15 @@ pub enum ThumbKind {
     BadgeIcon,
     GamePass,
     Outfit,
+    /// A headshot named by a player token from a game server list, not by user id. The id is
+    /// [`player_token_id`] of the token.
+    Player,
 }
 
 impl ThumbKind {
     pub(crate) fn api_type(self) -> &'static str {
         match self {
-            ThumbKind::Headshot => "AvatarHeadShot",
+            ThumbKind::Headshot | ThumbKind::Player => "AvatarHeadShot",
             ThumbKind::Avatar => "Avatar",
             ThumbKind::GameIcon => "GameIcon",
             ThumbKind::GameThumbnail => "GameThumbnail",
@@ -43,7 +46,7 @@ impl ThumbKind {
     /// Export only: keep display requests small so scrolling stays cheap.
     pub fn export_sizes(self) -> &'static [&'static str] {
         match self {
-            Self::Headshot => &[
+            Self::Headshot | Self::Player => &[
                 "720x720", "420x420", "352x352", "180x180", "150x150", "110x110", "100x100", "75x75",
                 "60x60", "50x50", "48x48",
             ],
@@ -65,22 +68,23 @@ impl ThumbKind {
     /// How long a looked-up URL is trusted. An older one still shows at once and is checked
     /// again in the background. Avatars change often; icons and item images rarely do.
     pub fn url_age_secs(self) -> i64 {
-        if self.is_avatar() {
+        if self.is_avatar() || self == ThumbKind::Player {
             AVATAR_AGE_SECS
         } else {
             7 * 24 * 3600
         }
     }
     /// Images of a person's look, which change whenever they dress up. These are checked again
-    /// while shown, not only when first loaded.
+    /// while shown, not only when first loaded. Player token images are not: a server list
+    /// shows hundreds of strangers, and its tokens go stale with it.
     pub fn is_avatar(self) -> bool {
         matches!(self, ThumbKind::Headshot | ThumbKind::Avatar | ThumbKind::Outfit)
     }
     /// Sizes the API accepts for this type; we use one per kind per use.
     pub fn size(self, large: bool) -> &'static str {
         match (self, large) {
-            (ThumbKind::Headshot, false) => "48x48",
-            (ThumbKind::Headshot, true) => "150x150",
+            (ThumbKind::Headshot | ThumbKind::Player, false) => "48x48",
+            (ThumbKind::Headshot | ThumbKind::Player, true) => "150x150",
             (ThumbKind::Avatar, _) => "420x420",
             (ThumbKind::GameIcon, false) => "50x50",
             (ThumbKind::GameIcon, true) => "256x256",
@@ -133,6 +137,7 @@ impl ThumbKey {
             "badge_icon" => ThumbKind::BadgeIcon,
             "game_pass" => ThumbKind::GamePass,
             "outfit" => ThumbKind::Outfit,
+            "player" => ThumbKind::Player,
             _ => return None,
         };
         let id = parts
@@ -161,6 +166,7 @@ impl ThumbKey {
             ThumbKind::BadgeIcon => "badge_icon",
             ThumbKind::GamePass => "game_pass",
             ThumbKind::Outfit => "outfit",
+            ThumbKind::Player => "player",
         };
         format!("{kind}.{}.{}", self.id, if self.large { "l" } else { "s" })
     }
@@ -170,8 +176,25 @@ impl ThumbKey {
         self.request_id_for(self.kind.size(self.large))
     }
     pub(crate) fn request_id_for(&self, size: &str) -> String {
-        format!("{}:{}:{size}", self.kind.api_type(), self.id)
+        // Token ids are hashes, so they get their own prefix rather than share user ids'.
+        let prefix = match self.kind {
+            ThumbKind::Player => "PlayerToken",
+            kind => kind.api_type(),
+        };
+        format!("{prefix}:{}:{size}", self.id)
     }
+}
+
+/// The id a player token goes by in [`ThumbKind::Player`] keys: a stable 64-bit FNV-1a hash
+/// cut to the range `thumb://` paths and JS numbers allow. Tokens are opaque strings, so
+/// hashing them keeps `ThumbKey` small and `Copy`.
+pub fn player_token_id(token: &str) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for b in token.bytes() {
+        h ^= u64::from(b);
+        h = h.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    (h & 0x1f_ffff_ffff_ffff).max(1)
 }
 
 /// An encoded image (WebP, PNG or JPEG) as Roblox sent it.
@@ -223,10 +246,12 @@ pub(crate) fn due_for_check(
 }
 
 /// Look up URLs for keys. Returns `(key, Some(url))` for completed ones, `(key, None)` for
-/// ones that are still pending, and leaves out the unavailable ones.
+/// ones that are still pending, and leaves out the unavailable ones. `token` gives the player
+/// token of a [`ThumbKind::Player`] key; one without a known token is left out.
 pub async fn lookup(
     client: &Client,
     keys: &[ThumbKey],
+    token: impl Fn(&ThumbKey) -> Option<String>,
 ) -> Result<Vec<(ThumbKey, Option<String>, bool)>, Error> {
     // Keys whose kind uses one size for both (avatars) share a request id. Ask once
     // and answer every key with it; otherwise all but the first would look unavailable.
@@ -234,15 +259,25 @@ pub async fn lookup(
     let body: Vec<thumbnails::undocumented::BatchRequest> = keys
         .iter()
         .filter(|k| seen.insert(k.request_id()))
-        .map(|k| thumbnails::undocumented::BatchRequest {
-            request_id: Some(k.request_id()),
-            target_id: Some(k.id as i64),
-            type_: Some(k.kind.api_type().into()),
-            size: Some(k.kind.size(k.large).into()),
-            format: Some("webp".into()),
-            is_circular: Some(false),
+        .filter_map(|k| {
+            let (target_id, token) = match k.kind {
+                ThumbKind::Player => (None, Some(token(k)?)),
+                _ => (Some(k.id as i64), None),
+            };
+            Some(thumbnails::undocumented::BatchRequest {
+                request_id: Some(k.request_id()),
+                target_id,
+                token,
+                type_: Some(k.kind.api_type().into()),
+                size: Some(k.kind.size(k.large).into()),
+                format: Some("webp".into()),
+                is_circular: Some(false),
+            })
         })
         .collect();
+    if body.is_empty() {
+        return Ok(Vec::new());
+    }
     let resp = thumbnails::undocumented::post_batch(client, &body).await?;
     let mut out = Vec::new();
     for item in resp.data.unwrap_or_default() {
@@ -472,9 +507,25 @@ mod tests {
             ThumbKey::small(ThumbKind::Headshot, 1),
             ThumbKey::large(ThumbKind::GameThumbnail, 9_007_199_254_740_991),
             ThumbKey::large(ThumbKind::Outfit, 42),
+            ThumbKey::small(ThumbKind::Player, player_token_id("ABC")),
         ] {
             assert_eq!(ThumbKey::parse(&k.path()), Some(k));
         }
+    }
+
+    #[test]
+    fn player_token_ids_are_stable_and_js_safe() {
+        assert_eq!(player_token_id("token0"), player_token_id("token0"));
+        assert_ne!(player_token_id("token0"), player_token_id("token1"));
+        for t in ["", "token0", "0123456789ABCDEF0123456789ABCDEF"] {
+            assert!((1..=9_007_199_254_740_991).contains(&player_token_id(t)));
+        }
+        // Token images never share a cached URL with the user of the same number.
+        let id = player_token_id("token0");
+        assert_ne!(
+            ThumbKey::small(ThumbKind::Player, id).request_id(),
+            ThumbKey::small(ThumbKind::Headshot, id).request_id()
+        );
     }
 
     #[test]

@@ -5,7 +5,7 @@
   }
 
   /* Padding, pulled back with a margin, keeps focus rings from being clipped by the scroll. */
-  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="track"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) > [data-slot="track"] {
     display: flex;
     gap: 12px;
     margin: -2px;
@@ -15,16 +15,16 @@
     scrollbar-width: none;
   }
 
-  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="track"]::-webkit-scrollbar {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) > [data-slot="track"]::-webkit-scrollbar {
     display: none;
   }
 
   /* A context menu's trigger is `display: contents`, so size what it wraps. */
   :is([data-component="shelf"], [data-component="virtual-shelf"])
-    [data-slot="track"]
+    > [data-slot="track"]
     > :not([data-slot="context-trigger"]),
   :is([data-component="shelf"], [data-component="virtual-shelf"])
-    [data-slot="track"]
+    > [data-slot="track"]
     > [data-slot="context-trigger"]
     > * {
     flex: none;
@@ -63,8 +63,8 @@
     opacity: 1;
   }
 
-  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="prev"],
-  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="next"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) > [data-slot="prev"],
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) > [data-slot="next"] {
     position: absolute;
     z-index: 2;
     top: calc(var(--shelf-item) / 2);
@@ -83,21 +83,21 @@
     transition: opacity var(--duration) var(--ease);
   }
 
-  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="prev"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) > [data-slot="prev"] {
     left: 4px;
   }
 
-  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="next"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) > [data-slot="next"] {
     right: 4px;
   }
 
-  :is([data-component="shelf"], [data-component="virtual-shelf"]):hover [data-slot="prev"],
-  :is([data-component="shelf"], [data-component="virtual-shelf"]):hover [data-slot="next"] {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]):hover > [data-slot="prev"],
+  :is([data-component="shelf"], [data-component="virtual-shelf"]):hover > [data-slot="next"] {
     opacity: 1;
   }
 
-  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="prev"]:hover,
-  :is([data-component="shelf"], [data-component="virtual-shelf"]) [data-slot="next"]:hover {
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) > [data-slot="prev"]:hover,
+  :is([data-component="shelf"], [data-component="virtual-shelf"]) > [data-slot="next"]:hover {
     background-image: linear-gradient(var(--color-hover-on-fill), var(--color-hover-on-fill));
   }
 }

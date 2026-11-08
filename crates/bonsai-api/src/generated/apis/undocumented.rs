@@ -1389,6 +1389,59 @@ pub struct UserGamePassesPage {
     pub game_passes: Option<Vec<UserGamePass>>,
 }
 
+/// `UserProfileNames`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UserProfileNames {
+    #[serde(rename = "combinedName")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub combined_name: Option<String>,
+    #[serde(rename = "displayName")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub username: Option<String>,
+}
+
+/// `UserProfile`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UserProfile {
+    #[serde(rename = "isDeleted")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_deleted: Option<bool>,
+    #[serde(rename = "isVerified")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_verified: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub names: Option<UserProfileNames>,
+    #[serde(rename = "userId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_id: Option<i64>,
+}
+
+/// `UserProfilesRequest`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UserProfilesRequest {
+    /// names.username, names.displayName, names.combinedName, isVerified, isDeleted, ...
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fields: Option<Vec<String>>,
+    /// At most 200
+    #[serde(rename = "userIds")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_ids: Option<Vec<i64>>,
+}
+
+/// `UserProfilesResponse`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UserProfilesResponse {
+    #[serde(rename = "profileDetails")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_details: Option<Vec<UserProfile>>,
+}
+
 /// `UserSettingOptionValue`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -2781,6 +2834,30 @@ pub fn post_unblock_user_request(user_id: i64) -> Result<Request> {
 /// Undocumented; captured 2026-10-12, www.roblox.com/my/account#!/privacy.
 pub async fn post_unblock_user(client: &Client, user_id: i64) -> Result<String> {
     client.send(post_unblock_user_request(user_id)?).await?.json()
+}
+
+/// `POST /user-profile-api/v1/user/profiles/get-profiles`
+///
+/// Names and badges of up to 200 users by id. No sign-in needed.
+///
+/// Undocumented; captured 2026-11-07, www.roblox.com/users/{id}/friends.
+pub fn post_user_profiles_request(body: &UserProfilesRequest) -> Result<Request> {
+    let mut r = Request::new(
+        Method::POST,
+        HOST,
+        "/user-profile-api/v1/user/profiles/get-profiles".to_string(),
+    );
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /user-profile-api/v1/user/profiles/get-profiles`
+///
+/// Names and badges of up to 200 users by id. No sign-in needed.
+///
+/// Undocumented; captured 2026-11-07, www.roblox.com/users/{id}/friends.
+pub async fn post_user_profiles(client: &Client, body: &UserProfilesRequest) -> Result<UserProfilesResponse> {
+    client.send(post_user_profiles_request(body)?).await?.json()
 }
 
 /// `POST /user-settings-api/v1/user-settings`

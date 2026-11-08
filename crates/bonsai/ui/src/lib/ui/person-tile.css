@@ -3,7 +3,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
     width: 100%;
     min-width: 0;
     padding: 6px 4px;
@@ -37,7 +36,18 @@
   }
 
   [data-component="person-tile"] [data-component="avatar"] {
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+  }
+
+  /* The small faces' own avatars sit in a row, without the big picture's spacing. */
+  [data-component="person-tile"] [data-slot="stack"] {
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  [data-component="person-tile"] [data-slot="stack"] [data-component="avatar"] {
+    margin-bottom: 0;
   }
 
   [data-component="person-tile"] [data-slot="name"] {
@@ -48,11 +58,13 @@
     width: 100%;
     min-width: 0;
     font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
     font-weight: 500;
   }
 
   [data-component="person-tile"] [data-slot="name-text"],
-  [data-component="person-tile"] [data-slot="username"] {
+  [data-component="person-tile"] [data-slot="username"],
+  [data-component="person-tile"] [data-slot="status"] {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -63,10 +75,17 @@
     flex: 0 1 auto;
   }
 
-  [data-component="person-tile"] [data-slot="username"] {
+  [data-component="person-tile"] [data-slot="username"],
+  [data-component="person-tile"] [data-slot="status"] {
     width: 100%;
     color: var(--color-fg-muted);
     font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+  }
+
+  [data-component="person-tile"] [data-slot="status"] {
+    margin-top: 2px;
+    color: var(--color-presence-game);
   }
 
   [data-component="person-tile"] [data-slot="name"][data-verified] [data-slot="name-text"] {

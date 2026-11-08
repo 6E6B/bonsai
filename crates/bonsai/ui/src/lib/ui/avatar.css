@@ -1,9 +1,13 @@
-/* Avatar. The frame clips the picture; the presence dot and count sit outside the clip, ringed
- * with the canvas color so they read on any picture. */
+/* Avatar. The frame clips the picture; the presence ring, dot and count sit outside the clip.
+ * The ring circles the picture with a clear gap; the dot and count are ringed with the
+ * background color so they read on any picture. The dot carries a mark at md and up: a play
+ * triangle in game, a diamond in Studio. Offline has no ring and a hollow dot. */
 @layer components {
   [data-component="avatar"] {
     --avatar-size: 28px;
-    --avatar-dot: 9px;
+    --avatar-dot: 10px;
+    --avatar-halo: 1.5px;
+    --avatar-gap: 1.5px;
     --avatar-ring: var(--color-canvas);
 
     position: relative;
@@ -16,21 +20,29 @@
   [data-component="avatar"][data-size="xs"] {
     --avatar-size: 16px;
     --avatar-dot: 6px;
+    --avatar-halo: 1px;
+    --avatar-gap: 1px;
   }
 
   [data-component="avatar"][data-size="sm"] {
     --avatar-size: 20px;
     --avatar-dot: 7px;
+    --avatar-halo: 1.5px;
+    --avatar-gap: 1px;
   }
 
   [data-component="avatar"][data-size="lg"] {
     --avatar-size: 40px;
-    --avatar-dot: 11px;
+    --avatar-dot: 13px;
+    --avatar-halo: 2px;
+    --avatar-gap: 2px;
   }
 
   [data-component="avatar"][data-size="xl"] {
     --avatar-size: 88px;
-    --avatar-dot: 18px;
+    --avatar-dot: 20px;
+    --avatar-halo: 3px;
+    --avatar-gap: 3px;
   }
 
   [data-component="avatar"] [data-slot="frame"] {
@@ -65,12 +77,38 @@
     object-fit: cover;
   }
 
+  [data-component="avatar"] [data-slot="ring"],
   [data-component="avatar"] [data-slot="presence"] {
     --presence: var(--color-presence-offline);
+  }
 
+  [data-component="avatar"] [data-presence="online"] {
+    --presence: var(--color-presence-online);
+  }
+
+  [data-component="avatar"] [data-presence="game"] {
+    --presence: var(--color-presence-game);
+  }
+
+  [data-component="avatar"] [data-presence="studio"] {
+    --presence: var(--color-presence-studio);
+  }
+
+  [data-component="avatar"] [data-slot="ring"] {
+    position: absolute;
+    inset: calc(-1 * (var(--avatar-halo) + var(--avatar-gap)));
+    border: var(--avatar-halo) solid var(--presence);
+    border-radius: var(--radius-full);
+    pointer-events: none;
+  }
+
+  [data-component="avatar"] [data-slot="presence"] {
     position: absolute;
     right: -1px;
     bottom: -1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: var(--avatar-dot);
     height: var(--avatar-dot);
     border-radius: var(--radius-full);
@@ -78,16 +116,36 @@
     box-shadow: 0 0 0 2px var(--avatar-ring);
   }
 
-  [data-component="avatar"] [data-slot="presence"][data-presence="online"] {
-    --presence: var(--color-presence-online);
+  [data-component="avatar"] [data-slot="presence"][data-presence="offline"] {
+    background: var(--avatar-ring);
+    box-shadow:
+      inset 0 0 0 max(1.5px, calc(var(--avatar-dot) * 0.2)) var(--presence),
+      0 0 0 2px var(--avatar-ring);
   }
 
-  [data-component="avatar"] [data-slot="presence"][data-presence="game"] {
-    --presence: var(--color-presence-game);
+  /* The mark is cut from the background color, so it reads as a hole in the dot. */
+  [data-component="avatar"] [data-slot="presence"]::before {
+    content: none;
+    background: var(--avatar-ring);
   }
 
-  [data-component="avatar"] [data-slot="presence"][data-presence="studio"] {
-    --presence: var(--color-presence-studio);
+  [data-component="avatar"]:not([data-size="xs"], [data-size="sm"])
+    [data-slot="presence"][data-presence="game"]::before {
+    content: "";
+    width: calc(var(--avatar-dot) * 0.42);
+    height: calc(var(--avatar-dot) * 0.48);
+    margin-left: calc(var(--avatar-dot) * 0.08);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+
+  [data-component="avatar"]:not([data-size="xs"], [data-size="sm"])
+    [data-slot="presence"][data-presence="studio"]::before {
+    /* Cut from a layer covering the whole dot so it is centered exactly; a small rotated box
+     * lands on rounded pixels and sits off center. */
+    content: "";
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(50% 26%, 74% 50%, 50% 74%, 26% 50%);
   }
 
   [data-component="avatar"] [data-slot="count"] {

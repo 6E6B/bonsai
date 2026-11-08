@@ -1,5 +1,5 @@
 import { Tabs as KTabs } from "@kobalte/core/tabs"
-import { For, type ParentProps, Show } from "solid-js"
+import { For, type JSX, type ParentProps, Show } from "solid-js"
 
 export interface TabItem {
   value: string
@@ -18,6 +18,9 @@ export interface TabsProps extends ParentProps {
   onChange: (value: string) => void
   /** Accessible name for the tab list. */
   "aria-label"?: string
+  /** The screen's buttons, at the right end of the tab row. Screens with top-level sub-tabs
+   * put them here instead of under a page title. */
+  actions?: JSX.Element
   class?: string
 }
 
@@ -27,23 +30,28 @@ export interface TabsProps extends ParentProps {
 export function Tabs(props: TabsProps) {
   return (
     <KTabs data-component="tabs" class={props.class} value={props.value} onChange={props.onChange}>
-      <KTabs.List data-slot="list" aria-label={props["aria-label"]}>
-        <For each={props.items}>
-          {(t) => (
-            <KTabs.Trigger
-              data-slot="trigger"
-              value={t.value}
-              disabled={t.disabled}
-              data-empty={t.empty ? "" : undefined}
-            >
-              {t.label}
-              <Show when={t.count}>
-                <span data-slot="count">{t.count}</span>
-              </Show>
-            </KTabs.Trigger>
-          )}
-        </For>
-      </KTabs.List>
+      <div data-slot="bar">
+        <KTabs.List data-slot="list" aria-label={props["aria-label"]}>
+          <For each={props.items}>
+            {(t) => (
+              <KTabs.Trigger
+                data-slot="trigger"
+                value={t.value}
+                disabled={t.disabled}
+                data-empty={t.empty ? "" : undefined}
+              >
+                {t.label}
+                <Show when={t.count}>
+                  <span data-slot="count">{t.count}</span>
+                </Show>
+              </KTabs.Trigger>
+            )}
+          </For>
+        </KTabs.List>
+        <Show when={props.actions}>
+          <div data-slot="actions">{props.actions}</div>
+        </Show>
+      </div>
       {props.children}
     </KTabs>
   )

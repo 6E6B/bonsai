@@ -1,5 +1,5 @@
-import { useParams } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, type JSX, Match, onCleanup, Show, Switch } from "solid-js"
+import { useParams, useSearchParams } from "@solidjs/router"
+import { createEffect, createMemo, createSignal, type JSX, Match, onCleanup, Show, Switch } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { handle, menuItem, run } from "~/lib/commands/registry"
 import { percent } from "~/lib/format"
@@ -19,32 +19,38 @@ import {
 import { IdFact, ItemPreview, PreviewDescription, PreviewHeader, wantsPreview } from "~/lib/item-preview"
 import { emptyList, ListState } from "~/lib/list-state"
 import { gameMenu, type ItemMenuExtras, itemTarget, shareMenu } from "~/lib/menus"
+import { rank } from "~/lib/search"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { ItemTile, Price, TILE_WIDTH } from "~/lib/tiles"
 import {
   Button,
+  CategoryNav,
   ContextMenu,
   EmptyState,
   Fact,
   FactGroup,
   Facts,
-  NavItem,
   Page,
   Robux,
+  SectionHeader,
   Select,
+  SideMain,
+  SidePage,
+  SidePanel,
   showToast,
   TextField,
   TextLink,
   Thumbnail,
   Tile,
   Tooltip,
-  usePrompt,
   VirtualGrid,
 } from "~/lib/ui"
+import { paramOf, useParamDraft } from "~/lib/url-params"
 import { useValuesRefresh } from "~/lib/value-tags"
 import { VALUES_SOURCE } from "~/lib/values"
-import { FILTERS, type InvFilter, isFilter, matches, shapeInventory, slotAssetType } from "./filter"
+import { FILTERS, type InvFilter, isFilter, searchItems, shapeInventory, slotAssetType } from "./filter"
+import { findSlot, inventorySections } from "./sections"
 
 const COLLECTIBLES = "collectibles"
 /** Slots with their own lists instead of `inventory_items`. */
@@ -72,7 +78,8 @@ const openOrInspect = (e: MouseEvent, inspect: (t: Inspected) => void, t: Inspec
 }
 
 /** A user's inventory by category: yours at `/inventory`, anyone's at `/inventory/<id or name>`.
- * Collectibles show serials, RAP and totals. */
+ * Collectibles show serials, RAP and totals. The category, search, sort and filter live in the
+ * URL (`?slot=&q=&sort=&show=`), so a tab keeps its place while another is showing. */
 export default function Inventory() {
   const params = useParams()
   const who = () => params.user?.trim() ?? ""
@@ -83,38 +90,22 @@ export default function Inventory() {
   )
   const userId = () => (who() ? lookup.id : shell.active)
   const mine = () => shell.accounts.some((a) => a.id === userId())
-  const prompt = usePrompt()
   useValuesRefresh()
+  const owner = () => (who() && !mine() ? decodeURIComponent(who()) : "")
 
   return (
-    <Page
-      title={who() && !mine() ? `Inventory of ${decodeURIComponent(who())}` : "Inventory"}
-      actions={
-        <>
-          <Show when={userId()}>{(id) => <Totals userId={id()} />}</Show>
-          <Button
-            icon="search"
-            onClick={async () => {
-              const user = await prompt({ title: "Open an inventory", label: "Username or ID", submit: "Open" })
-              if (user) void run("inventory.view", user)
-            }}
-          >
-            Someone else's
-          </Button>
-        </>
-      }
-    >
-      <Show
-        when={userId()}
-        fallback={
+    <Show
+      when={userId()}
+      fallback={
+        <Page>
           <Show when={lookup.error ?? (!who() && "Add an account to see your inventory.")} fallback={<span />}>
             {(e) => <EmptyState icon="inventory" title={e()} />}
           </Show>
-        }
-      >
-        {(id) => <Browser userId={id()} mine={mine()} />}
-      </Show>
-    </Page>
+        </Page>
+      }
+    >
+      {(id) => <Browser userId={id()} mine={mine()} owner={owner()} />}
+    </Show>
   )
 }
 
@@ -184,19 +175,34 @@ function useWardrobe(own: () => boolean) {
   }
 }
 
-function Browser(props: { userId: number; mine: boolean }) {
+function Browser(props: { userId: number; mine: boolean; owner: string }) {
+  const [params, setParams] = useSearchParams()
   const categories = useLive(() => props.userId, commands.inventoryCategories, emptyList<InvCategoryView>)
-  const [slot, setSlot] = createSignal(COLLECTIBLES)
-  const [query, setQuery] = createSignal("")
+  const param = () => paramOf(params.slot)
+  const found = createMemo(() => (param() ? findSlot(categories.items, param()) : null))
+  const slot = () => found() ?? COLLECTIBLES
+  createEffect(() => {
+    if (param() && !found()) {
+      showToast(`No category named ${param()}`)
+      setParams({ slot: null }, { replace: true })
+    }
+  })
+  const query = useParamDraft("q")
   const [inspected, setInspected] = createSignal<Inspected | null>(null)
   createEffect(() => {
     props.userId
-    setSlot(COLLECTIBLES)
     setInspected(null)
   })
   const own = () => props.userId === shell.active
   const wardrobe = useWardrobe(own)
   const [loaded, setLoaded] = createStore<Loaded>({ items: [], passes: [], badges: [], places: [] })
+  const sections = createMemo(() => inventorySections(categories.items))
+  const hasItems = () => slot() !== BADGES && slot() !== PASSES && slot() !== PLACES
+  const filters = () => FILTERS.filter((f) => f.value !== "wearing" || own())
+  const filter = (): InvFilter => {
+    const f = paramOf(params.show)
+    return isFilter(f) && filters().some((o) => o.value === f) ? f : "all"
+  }
 
   onCleanup(
     handle("inventory.inspect", (a) => {
@@ -207,35 +213,50 @@ function Browser(props: { userId: number; mine: boolean }) {
   )
 
   return (
-    <div class="flex items-start gap-6">
-      <nav aria-label="Categories" class="sticky top-4 flex w-44 shrink-0 flex-col gap-0.5">
-        <For each={categories.items}>
-          {(c) => (
-            <Show
-              when={c.slots.length > 1}
-              fallback={
-                <Show when={c.slots[0]}>
-                  {(s) => <NavItem label={c.name} active={slot() === s().value} onClick={() => setSlot(s().value)} />}
-                </Show>
-              }
-            >
-              <span class="px-2.5 pt-3 text-sm font-semibold text-fg">{c.name}</span>
-              <For each={c.slots}>
-                {(s) => <NavItem label={s.label} active={slot() === s.value} onClick={() => setSlot(s.value)} />}
-              </For>
+    <SidePage>
+      <SidePanel
+        class="w-56"
+        header={
+          <>
+            <Show when={props.owner}>
+              <span class="truncate text-sm text-fg-muted">of {props.owner}</span>
             </Show>
-          )}
-        </For>
-      </nav>
-      <div class="flex min-w-0 flex-1 flex-col gap-3">
+            <Totals userId={props.userId} />
+          </>
+        }
+      >
+        <Show when={hasItems()}>
+          <div class="flex flex-col gap-2 border-b border-line px-2 pb-3">
+            <SectionHeader title="Filters" size="group" />
+            <Select
+              size="sm"
+              aria-label="Show"
+              value={filter()}
+              onChange={(v) => void run("inventory.filter", v)}
+              options={filters()}
+            />
+          </div>
+        </Show>
+        <CategoryNav
+          aria-label="Categories"
+          sections={sections()}
+          selected={slot()}
+          onSelect={(v) => void run("inventory.category", v)}
+          loading={categories.loading && categories.items.length === 0}
+          error={categories.items.length === 0 && categories.error ? "Couldn't load categories" : null}
+        />
+      </SidePanel>
+      <SideMain>
         <Switch
           fallback={
             <Items
               userId={props.userId}
               mine={props.mine}
               slot={slot()}
-              query={query()}
-              setQuery={setQuery}
+              query={query.value()}
+              setQuery={query.set}
+              filter={filter()}
+              filters={filters()}
               wardrobe={wardrobe}
               inspect={setInspected}
               onLoad={(l) => setLoaded("items", reconcile(l))}
@@ -243,34 +264,34 @@ function Browser(props: { userId: number; mine: boolean }) {
           }
         >
           <Match when={slot() === BADGES}>
-            <Search query={query()} setQuery={setQuery} />
+            <Search query={query.value()} setQuery={query.set} />
             <Badges
               userId={props.userId}
-              query={query()}
+              query={query.value()}
               inspect={setInspected}
               onLoad={(l) => setLoaded("badges", reconcile(l))}
             />
           </Match>
           <Match when={slot() === PASSES}>
-            <Search query={query()} setQuery={setQuery} />
+            <Search query={query.value()} setQuery={query.set} />
             <Passes
               userId={props.userId}
-              query={query()}
+              query={query.value()}
               inspect={setInspected}
               onLoad={(l) => setLoaded("passes", reconcile(l))}
             />
           </Match>
           <Match when={slot() === PLACES}>
-            <Search query={query()} setQuery={setQuery} />
+            <Search query={query.value()} setQuery={query.set} />
             <Places
               userId={props.userId}
-              query={query()}
+              query={query.value()}
               inspect={setInspected}
               onLoad={(l) => setLoaded("places", reconcile(l))}
             />
           </Match>
         </Switch>
-      </div>
+      </SideMain>
       <Show when={inspected()}>
         {(t) => (
           <Drawer
@@ -284,7 +305,7 @@ function Browser(props: { userId: number; mine: boolean }) {
           />
         )}
       </Show>
-    </div>
+    </SidePage>
   )
 }
 
@@ -316,52 +337,14 @@ function Items(props: {
   slot: string
   query: string
   setQuery: (q: string) => void
+  filter: InvFilter
+  filters: { value: InvFilter; label: string }[]
   wardrobe: Wardrobe
   inspect: (t: Inspected) => void
   onLoad: (items: ItemCard[]) => void
 }) {
-  const [sort, setSort] = createSignal("newest")
-  const [filter, setFilter] = createSignal<InvFilter>("all")
-  const res = useLive(
-    () => [props.userId, props.slot, sort() === "oldest"] as const,
-    ([u, s, o]) => commands.inventoryItems(u, s, o),
-    pagedEmpty<ItemCard>,
-  )
-  createEffect(() => props.onLoad(res.list.items))
-  onCleanup(() => props.onLoad([]))
+  const [params, setParams] = useSearchParams()
   const collectibles = () => props.slot === COLLECTIBLES
-  const filters = () => FILTERS.filter((f) => f.value !== "wearing" || props.userId === shell.active)
-  const shown = createMemo(() =>
-    shapeInventory(res.list.items, {
-      query: props.query,
-      filter: filter(),
-      sort: sort(),
-      worn: props.wardrobe.worn(),
-      collectibles: collectibles(),
-    }),
-  )
-  onCleanup(
-    handle("inventory.sort", (a) => {
-      if (a && sorts().some((o) => o.value === a)) setSort(a)
-      else
-        showToast(
-          `Sort by one of: ${sorts()
-            .map((o) => o.value)
-            .join(", ")}`,
-        )
-    }),
-  )
-  onCleanup(
-    handle("inventory.filter", (a) => {
-      if (a && isFilter(a) && filters().some((f) => f.value === a)) setFilter(a)
-      else
-        showToast(
-          `Filter by one of: ${filters()
-            .map((f) => f.value)
-            .join(", ")}`,
-        )
-    }),
-  )
   const sorts = () => [
     { value: "newest", label: "Recently added" },
     { value: "oldest", label: "Oldest first" },
@@ -379,6 +362,43 @@ function Items(props: {
         ]
       : []),
   ]
+  const sort = () => {
+    const s = paramOf(params.sort)
+    return sorts().some((o) => o.value === s) ? s : "newest"
+  }
+  const res = useLive(
+    () => [props.userId, props.slot, sort() === "oldest"] as const,
+    ([u, s, o]) => commands.inventoryItems(u, s, o),
+    pagedEmpty<ItemCard>,
+  )
+  createEffect(() => props.onLoad(res.list.items))
+  onCleanup(() => props.onLoad([]))
+  const shown = createMemo(() =>
+    shapeInventory(res.list.items, {
+      query: props.query,
+      filter: props.filter,
+      sort: sort(),
+      worn: props.wardrobe.worn(),
+      collectibles: collectibles(),
+    }),
+  )
+  onCleanup(
+    handle("inventory.sort", (a) => {
+      if (a && sorts().some((o) => o.value === a)) setParams({ sort: a === "newest" ? null : a }, { replace: true })
+      else
+        showToast(
+          `Sort by one of: ${sorts()
+            .map((o) => o.value)
+            .join(", ")}`,
+        )
+    }),
+  )
+  onCleanup(
+    handle("inventory.filter", (a) => {
+      if (a && props.filters.some((f) => f.value === a)) setParams({ show: a === "all" ? null : a }, { replace: true })
+      else showToast(`Filter by one of: ${props.filters.map((f) => f.value).join(", ")}`)
+    }),
+  )
   const menu = (i: ItemCard): ItemMenuExtras => {
     const wear = props.wardrobe.wearType(i, props.slot)
     const worn = props.wardrobe.worn().has(i.id)
@@ -413,18 +433,7 @@ function Items(props: {
   return (
     <>
       <Search query={props.query} setQuery={props.setQuery} placeholder="Search by name, creator or ID">
-        <Select
-          aria-label="Show"
-          value={filters().some((f) => f.value === filter()) ? filter() : "all"}
-          onChange={(v) => isFilter(v) && setFilter(v)}
-          options={filters()}
-        />
-        <Select
-          aria-label="Sort"
-          value={sorts().some((s) => s.value === sort()) ? sort() : "newest"}
-          onChange={setSort}
-          options={sorts()}
-        />
+        <Select aria-label="Sort" value={sort()} onChange={(v) => void run("inventory.sort", v)} options={sorts()} />
       </Search>
       <ListState
         list={res.list}
@@ -460,8 +469,6 @@ function Items(props: {
   )
 }
 
-const byName = (name: string, id: number, query: string) => matches({ id, name, creator: "" }, query)
-
 function Badges(props: {
   userId: number
   query: string
@@ -471,7 +478,14 @@ function Badges(props: {
   const res = useLive(() => props.userId, commands.inventoryBadges, pagedEmpty<UserBadge>)
   createEffect(() => props.onLoad(res.list.items))
   onCleanup(() => props.onLoad([]))
-  const shown = createMemo(() => res.list.items.filter((b) => byName(b.name, b.id, props.query)))
+  const shown = createMemo(() =>
+    rank(
+      res.list.items,
+      props.query,
+      (b) => [b.name],
+      (b) => b.id,
+    ),
+  )
   return (
     <ListState list={res.list} icon="badge" empty="No badges" more={res.moreKey} autoMore>
       <VirtualGrid
@@ -516,7 +530,7 @@ function Passes(props: {
   const res = useLive(() => props.userId, commands.inventoryPasses, pagedEmpty<PassCard>)
   createEffect(() => props.onLoad(res.list.items))
   onCleanup(() => props.onLoad([]))
-  const shown = createMemo(() => res.list.items.filter((p) => matches(p, props.query)))
+  const shown = createMemo(() => searchItems(res.list.items, props.query))
   return (
     <ListState list={res.list} icon="game" empty="No passes" more={res.moreKey}>
       <VirtualGrid
@@ -561,7 +575,14 @@ function Places(props: {
   const res = useLive(() => props.userId, commands.inventoryPlaces, pagedEmpty<PlaceCard>)
   createEffect(() => props.onLoad(res.list.items))
   onCleanup(() => props.onLoad([]))
-  const shown = createMemo(() => res.list.items.filter((p) => byName(p.name, p.placeId, props.query)))
+  const shown = createMemo(() =>
+    rank(
+      res.list.items,
+      props.query,
+      (p) => [p.name],
+      (p) => p.placeId,
+    ),
+  )
   return (
     <ListState
       list={res.list}
@@ -620,7 +641,7 @@ function Drawer(props: {
 }) {
   const target = () => `${props.target.kind}:${props.target.id}`
   return (
-    <aside aria-label="Details" class="sticky top-4 flex w-72 shrink-0 flex-col gap-3">
+    <SidePanel edge="end" as="aside" aria-label="Details" class="w-72">
       <Switch
         fallback={
           <ItemDetails
@@ -734,7 +755,7 @@ function Drawer(props: {
           <span class="text-sm text-fg-muted">Not in the loaded list.</span>
         </Match>
       </Switch>
-    </aside>
+    </SidePanel>
   )
 }
 

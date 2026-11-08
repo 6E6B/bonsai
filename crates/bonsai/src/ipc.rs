@@ -66,8 +66,6 @@ pub struct WindowButtons {
     pub start: Vec<WindowButton>,
     /// Buttons at the right edge, in order.
     pub end: Vec<WindowButton>,
-    /// Title bar height in CSS px, matching the desktop's own title bars. 0 keeps the app's.
-    pub height: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Type)]
@@ -719,7 +717,13 @@ pub struct ServerRow {
     pub fps: Option<f64>,
     /// Friends of the active account in it.
     pub friends: Vec<Id>,
+    /// The first players, as ids for `thumbUrl("player", id)`. Empty when Roblox sends no
+    /// player tokens (signed out).
+    pub players: Vec<Id>,
 }
+
+/// How many player faces a server row can preview. The row shows as many as fit.
+const SERVER_PLAYER_PREVIEW: usize = 40;
 
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -774,6 +778,8 @@ pub struct ProfileView {
     /// What the active account calls them, and its private note about them.
     pub nickname: Option<String>,
     pub note: Option<String>,
+    /// Roblox says the active account can't see their inventory. False while that is checked.
+    pub inventory_private: bool,
 }
 
 /// Who saw a user online last.
@@ -956,6 +962,8 @@ pub struct Connection {
     pub friend: bool,
     /// Known only for the active account's friends; offline for everyone else.
     pub presence: Presence,
+    /// The game they're in, when they're a friend in one and it can be named.
+    pub place: Option<String>,
     /// Whether the active account follows them. `None` for yourself, when signed out, or until
     /// it has loaded.
     pub following: Option<bool>,
@@ -1161,7 +1169,17 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
     let settings = core.settings();
     registry.load_overrides(settings.shortcuts);
     registry.load_plugin_shortcuts(settings.plugin_shortcuts);
-    let builtin = registry.all().iter().map(|c| CommandInfo {
+    let builtin = builtin_infos(&registry);
+    let plugin = core
+        .plugin_commands()
+        .into_iter()
+        .map(|c| plugins::command_info(c, &registry));
+    builtin.chain(plugin).collect()
+}
+
+/// The built-in commands as the UI sees them.
+fn builtin_infos(registry: &Registry) -> impl Iterator<Item = CommandInfo> + '_ {
+    registry.all().iter().map(|c| CommandInfo {
         id: c.id.key().to_owned(),
         title: c.title.to_owned(),
         keywords: c.keywords.iter().map(|k| (*k).to_owned()).collect(),
@@ -1169,12 +1187,7 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
         shortcuts: registry.shortcuts(c.id).iter().map(Keys::from).collect(),
         rebound: registry.is_rebound(c.id),
         context: None,
-    });
-    let plugin = core
-        .plugin_commands()
-        .into_iter()
-        .map(|c| plugins::command_info(c, &registry));
-    builtin.chain(plugin).collect()
+    })
 }
 
 /// Runs a command that needs the backend. Commands that only change UI state (navigation,
@@ -1389,8 +1402,15 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
             Ok(())
         }
         CommandId::JoinJobId => {
-            let (place_id, _) = page()?;
-            let job_id = arg().ok_or_else(|| "Which server?".to_owned())?.trim().to_owned();
+            // `<job id> <place>` for a server in another place of the experience; else the
+            // page's place.
+            let a = arg().ok_or_else(|| "Which server?".to_owned())?;
+            let mut parts = a.split_whitespace();
+            let job_id = parts.next().ok_or_else(|| "Which server?".to_owned())?.to_owned();
+            let place_id = match parts.next() {
+                Some(p) => parse_id(Some(p.to_owned()), "place")?,
+                None => page()?.0,
+            };
             core.send(Cmd::Launch {
                 account: acting()?,
                 target: JoinTarget::Server { place_id, job_id },
@@ -1453,6 +1473,10 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 "Copied invite link.",
             )
         }
+        CommandId::CopyJobId => {
+            let job = arg().ok_or_else(|| "Which server?".to_owned())?;
+            copy(app, core, job.trim().to_owned(), "Copied job id.")
+        }
         // From a plugin: "place price name", at the price it looked up. On the experience page
         // the UI handles it with a dialog that shows the price.
         CommandId::BuyPrivateServer => {
@@ -1507,7 +1531,6 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         CommandId::Unfollow => user_action(core, acting()?, &inv, Core::unfollow),
         CommandId::Block => user_action(core, acting()?, &inv, Core::block),
         CommandId::Unblock => user_action(core, acting()?, &inv, Core::unblock),
-        CommandId::FindUser => user_action(core, acting()?, &inv, Core::find_user),
         CommandId::SetNickname | CommandId::SetNote => {
             let a = acting()?;
             let raw = arg().ok_or_else(|| "Which user?".to_owned())?;
@@ -1540,6 +1563,8 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         // List and sub-tab keys are handled by the screen showing one. Elsewhere they do nothing.
         CommandId::ListDown
         | CommandId::ListUp
+        | CommandId::ListLeft
+        | CommandId::ListRight
         | CommandId::ListOpen
         | CommandId::ListSelect
         | CommandId::NextSubTab
@@ -1560,7 +1585,7 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 Some("requests") => drop(core.friend_requests(acting()?, true)),
                 Some("followers") => drop(core.followers(acting()?, user, true)),
                 Some("following") => drop(core.followings(acting()?, user, true)),
-                Some("friends") => drop(core.friends_of(user, true)),
+                Some("friends") => drop(core.friends_of(acting()?, user, true)),
                 // A friends search on a profile: `friends:<query>`.
                 Some(a) if a.starts_with("friends:") => {
                     drop(core.search_friends_of(acting()?, user, &a[8..], true))
@@ -1869,20 +1894,63 @@ pub fn game_servers(core: State<'_, Arc<Core>>, place_id: Id) -> Servers {
         error: l.error.clone(),
         fetched_at: (l.fetched_at > 0).then_some(l.fetched_at as f64 * 1000.0),
         more: s.server_cursor.get(&place_id.0).is_some_and(Option::is_some),
-        servers: l
-            .data
+        servers: l.data.iter().flatten().map(server_row).collect(),
+    }
+}
+
+fn server_row(v: &bonsai_core::store::Server) -> ServerRow {
+    ServerRow {
+        job_id: v.job_id.clone(),
+        playing: v.playing.max(0) as u32,
+        max_players: v.max_players.max(0) as u32,
+        ping: v.ping.map(|p| p.max(0) as u32),
+        fps: v.fps,
+        friends: v.friends.iter().copied().map(Id).collect(),
+        players: v
+            .player_tokens
             .iter()
-            .flatten()
-            .map(|v| ServerRow {
-                job_id: v.job_id.clone(),
-                playing: v.playing.max(0) as u32,
-                max_players: v.max_players.max(0) as u32,
-                ping: v.ping.map(|p| p.max(0) as u32),
-                fps: v.fps,
-                friends: v.friends.iter().copied().map(Id).collect(),
-            })
+            .take(SERVER_PLAYER_PREVIEW)
+            .map(|t| Id(bonsai_core::thumbs::player_token_id(t)))
             .collect(),
     }
+}
+
+/// A public server the active account played in over the last day.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentServerRow {
+    pub job_id: String,
+    /// The place it runs, which may be a sub-place of the page's experience.
+    pub place_id: Id,
+    /// Last seen in it, in ms since the epoch.
+    pub last_seen: f64,
+    /// The server as it is in the loaded list, when it is there.
+    pub server: Option<ServerRow>,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn game_recent_servers(core: State<'_, Arc<Core>>, place_id: Id) -> Vec<RecentServerRow> {
+    let account = viewer(&core);
+    if account.is_anonymous() {
+        return Vec::new();
+    }
+    let recent = core.recent_servers(account, place_id.0);
+    let s = core.store();
+    recent
+        .into_iter()
+        .map(|r| RecentServerRow {
+            server: s
+                .servers
+                .get(&r.place_id)
+                .and_then(|l| l.data.as_ref())
+                .and_then(|l| l.iter().find(|v| v.job_id == r.job_id))
+                .map(server_row),
+            job_id: r.job_id,
+            place_id: Id(r.place_id),
+            last_seen: r.last_seen as f64 * 1000.0,
+        })
+        .collect()
 }
 
 /// Remote results for the command bar.
@@ -2099,6 +2167,7 @@ pub fn game_friend_servers(core: State<'_, Arc<Core>>, place_id: Id) -> List<Ser
         ping: v.ping.map(|p| p.max(0) as u32),
         fps: None,
         friends: v.friends.iter().copied().map(Id).collect(),
+        players: Vec::new(),
     })
 }
 
@@ -2209,7 +2278,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
     let (mutual_friends, mutual_more) = if mine || account == AccountId::ANONYMOUS {
         (None, false)
     } else {
-        match core.friends_of(uid, false).data {
+        match core.friends_of(account, uid, false).data {
             Some(page) => {
                 let n = own_friends(&core, account)
                     .map(|own| page.items.iter().filter(|id| own.contains(id)).count() as u32);
@@ -2268,6 +2337,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
         favorites_received,
         nickname: Some(note.nickname).filter(|n| !n.is_empty()),
         note: Some(note.note).filter(|n| !n.is_empty()),
+        inventory_private: core.can_view_inventory(account, uid).data.as_deref() == Some(&false),
     }
 }
 
@@ -2403,10 +2473,11 @@ pub fn profile_collectibles(core: State<'_, Arc<Core>>, user_id: Id) -> List<Ite
     let can = core.can_view_inventory(account, user_id.0);
     match can.data.as_deref() {
         Some(true) => {}
+        // `ProfileView::inventory_private` says why it's empty.
         Some(false) => {
             return List {
                 loading: false,
-                error: Some("Their inventory is private.".to_owned()),
+                error: None,
                 items: Vec::new(),
                 more: false,
             };
@@ -2509,11 +2580,15 @@ pub fn people(core: State<'_, Arc<Core>>, which: String) -> List<Person> {
     view
 }
 
-/// Follow-request batch size for [`following_of`].
-const FOLLOW_BATCH: usize = 100;
+/// Follow-request batch size for [`following_of`]. It divides every people list's page size
+/// (50 for friends, 100 for followers and following), so once a page has loaded its batches
+/// stay the same as more pages come in.
+const FOLLOW_BATCH: usize = 50;
 
 /// Which of `ids` `account` follows, as far as loaded. Asked a page at a time, so a page that
-/// is already known isn't asked again as the list grows.
+/// is already known isn't asked again as the list grows. `ids` must be in the order Roblox
+/// sent them: each batch is its own cached request, and a batch whose ids move around is a new
+/// request on friends.roblox.com, which is paced at 2 a second.
 fn following_of(core: &Core, account: AccountId, ids: &[u64]) -> std::collections::HashMap<u64, bool> {
     ids.chunks(FOLLOW_BATCH)
         .filter_map(|c| core.follows(account, c).data)
@@ -2554,21 +2629,22 @@ pub fn profile_people(
         "friends" if !query.trim().is_empty() => {
             signed_in(&|a| core.search_friends_of(a, uid, &query, false))
         }
-        "friends" => {
-            let mut l = List::paged(core.friends_of(uid, false), |id| *id);
-            l.items = bonsai_core::people::mutuals_first(&l.items, &own).0;
-            l
-        }
+        "friends" => signed_in(&|a| core.friends_of(a, uid, false)),
         "followers" => signed_in(&|a| core.followers(a, uid, false)),
         "following" => signed_in(&|a| core.followings(a, uid, false)),
         _ => return List::loading(),
     };
-    let ids = std::mem::take(&mut list.items);
+    let mut ids = std::mem::take(&mut list.items);
+    // Before reordering: see `following_of`.
     let follows = account.map(|a| following_of(&core, a, &ids)).unwrap_or_default();
-    let (items, unnamed) = {
+    if which == "friends" && query.trim().is_empty() {
+        ids = bonsai_core::people::mutuals_first(&ids, &own).0;
+    }
+    let (items, unnamed, games) = {
         let s = core.store();
         let presence = account.and_then(|a| s.account_data(a)).map(|d| &d.presence);
         let mut unnamed = Vec::new();
+        let mut games = Vec::new();
         let items = ids
             .iter()
             .map(|id| {
@@ -2577,23 +2653,31 @@ pub fn profile_people(
                     unnamed.push(*id);
                 }
                 let friend = own.contains(id);
+                let p = presence.filter(|_| friend).and_then(|p| p.get(id));
+                let place = p.filter(|p| p.kind == PresenceKind::InGame).and_then(|p| {
+                    let game = p.universe_id.and_then(|u| s.games.get(&u));
+                    if game.is_none() {
+                        games.extend(p.universe_id);
+                    }
+                    game.map(|g| g.name.clone())
+                        .or_else(|| (!p.last_location.is_empty()).then(|| p.last_location.clone()))
+                });
                 Connection {
                     id: Id(*id),
                     name: u.map(|u| u.name.clone()).unwrap_or_default(),
                     display_name: u.map(|u| u.display_name.clone()).unwrap_or_default(),
                     verified: u.is_some_and(|u| u.verified),
                     friend,
-                    presence: presence
-                        .filter(|_| friend)
-                        .and_then(|p| p.get(id))
-                        .map_or(Presence::Offline, |p| p.kind.into()),
+                    presence: p.map_or(Presence::Offline, |p| p.kind.into()),
+                    place,
                     following: follows.get(id).copied(),
                 }
             })
             .collect();
-        (items, unnamed)
+        (items, unnamed, games)
     };
     core.want_users(&unnamed);
+    core.want_universes(&games);
     List {
         loading: list.loading,
         error: list.error,
@@ -2859,6 +2943,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             home,
             game,
             game_servers,
+            game_recent_servers,
             game_private_servers,
             game_friend_servers,
             creator_bio,
@@ -3049,5 +3134,65 @@ mod tests {
     #[test]
     fn export_bindings() {
         export(&builder()).expect("export bindings");
+    }
+
+    /// Writes the built-in commands for the command bar's ranking tests
+    /// (`ui/src/lib/commands/catalog.test.ts`). Commit the file if this test changed it.
+    #[test]
+    fn export_command_catalog() {
+        #[derive(Serialize)]
+        struct Entry {
+            id: String,
+            title: String,
+            keywords: Vec<String>,
+            arg: Arg,
+        }
+        #[derive(Serialize)]
+        struct Pref {
+            key: &'static str,
+            section: &'static str,
+            title: &'static str,
+            keywords: &'static [&'static str],
+            kind: &'static str,
+            options: Vec<serde_json::Value>,
+        }
+        use bonsai_core::prefs::{PREFS, PrefKind};
+        let commands: Vec<Entry> = builtin_infos(&Registry::default())
+            .map(|c| Entry {
+                id: c.id,
+                title: c.title,
+                keywords: c.keywords,
+                arg: c.arg,
+            })
+            .collect();
+        let prefs: Vec<Pref> = PREFS
+            .iter()
+            .map(|p| {
+                let (kind, options) = match p.kind {
+                    PrefKind::Bool => ("bool", &[][..]),
+                    PrefKind::Choice(o) => ("choice", o),
+                    PrefKind::Range { .. } => ("range", &[][..]),
+                    PrefKind::Text { .. } => ("text", &[][..]),
+                };
+                Pref {
+                    key: p.key,
+                    section: p.section,
+                    title: p.title,
+                    keywords: p.keywords,
+                    kind,
+                    options: options
+                        .iter()
+                        .map(|(v, l)| serde_json::json!({ "value": v, "label": l }))
+                        .collect(),
+                }
+            })
+            .collect();
+        let catalog = serde_json::json!({ "commands": commands, "prefs": prefs });
+        let mut json = serde_json::to_string_pretty(&catalog).expect("serialize catalog");
+        json.push('\n');
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/ui/src/lib/commands/catalog.json");
+        if std::fs::read_to_string(path).ok().as_deref() != Some(json.as_str()) {
+            std::fs::write(path, json).expect("write catalog");
+        }
     }
 }

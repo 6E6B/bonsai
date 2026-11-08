@@ -25,6 +25,18 @@ export function wornKind(assetType: number): WornKind {
   return "other"
 }
 
+/** Kinds worth a thumbnail on the profile overview. Body parts and animations mostly render as
+ * the same blank figure, so the overview only counts them. */
+export const SHOWN: ReadonlySet<WornKind> = new Set<WornKind>(["accessories", "clothing", "other"])
+
+/** One page of `size` items. `index` is clamped to the pages there are, so a list that shrank
+ * under the pager still shows its last page. There is always at least one page. */
+export function pageOf<T>(items: T[], index: number, size: number) {
+  const pages = Math.max(1, Math.ceil(items.length / size))
+  const page = Math.min(Math.max(0, index), pages - 1)
+  return { items: items.slice(page * size, (page + 1) * size), page, pages }
+}
+
 /** Items split into groups, clothing first, keeping Roblox's order inside each. Empty groups
  * are left out. */
 export function wornGroups<T extends { assetType: number }>(items: T[]) {
