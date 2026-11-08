@@ -35,6 +35,7 @@ import {
   Page,
   Robux,
   SegmentedControl,
+  Select,
   Skeleton,
   showToast,
   TabPanel,
@@ -585,14 +586,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
 
   return (
     <div class="flex flex-col gap-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <SegmentedControl
-          size="sm"
-          aria-label="List"
-          options={[...peopleLists]}
-          value={props.list}
-          onChange={(v) => isPeopleList(v) && props.onList(v)}
-        />
+      <div class="flex items-center gap-2">
         <TextField
           class="min-w-48 flex-1"
           icon="search"
@@ -601,9 +595,14 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
           value={query()}
           onChange={setQuery}
         />
+        <Select
+          aria-label="List"
+          options={[...peopleLists]}
+          value={props.list}
+          onChange={(v) => isPeopleList(v) && props.onList(v)}
+        />
         <Show when={friends() && !props.mine}>
-          <SegmentedControl
-            size="sm"
+          <Select
             aria-label="Show"
             options={[
               { value: "all", label: "Everyone" },
