@@ -3,6 +3,9 @@ import { handle } from "~/lib/commands/registry"
 import { commands, type HubEntry, type HubView } from "~/lib/ipc/bindings"
 import { showToast } from "~/lib/ui"
 
+/** Plugins on the hub are switched off for now. Mirrors `PLUGINS_ENABLED` in bonsai-core's hub.rs. */
+export const hubPlugins = false
+
 export const [hubUi, setHubUi] = createStore({
   userId: null as string | null,
   kind: "themes",
@@ -83,6 +86,7 @@ export function registerHubCommands() {
         }
       }
       if (kind !== "themes" && kind !== "plugins") return
+      if (kind === "plugins" && !hubPlugins) return showToast("Plugins are not available on the hub yet.")
       const choices =
         kind === "themes"
           ? (await commands.themes())

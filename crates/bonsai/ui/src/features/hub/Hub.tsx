@@ -1,6 +1,6 @@
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
-import { emptyHub, hubQuery, hubUi, setHubUi, target } from "~/lib/hub"
+import { emptyHub, hubPlugins, hubQuery, hubUi, setHubUi, target } from "~/lib/hub"
 import { commands, type HubEntry } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
 import { parseTheme, resolve } from "~/lib/theme"
@@ -210,7 +210,7 @@ export default function Hub() {
         value={section() === "publisher" ? "publisher" : hubUi.kind}
         items={[
           { value: "themes", label: "Themes" },
-          { value: "plugins", label: "Plugins" },
+          ...(hubPlugins ? [{ value: "plugins", label: "Plugins" }] : []),
           { value: "publisher", label: "Publishing" },
         ]}
         onChange={(value) => {
@@ -257,9 +257,11 @@ export default function Hub() {
         <TabPanel value="themes">
           <Browse />
         </TabPanel>
-        <TabPanel value="plugins">
-          <Browse />
-        </TabPanel>
+        <Show when={hubPlugins}>
+          <TabPanel value="plugins">
+            <Browse />
+          </TabPanel>
+        </Show>
         <TabPanel value="publisher" class="flex flex-col gap-3">
           <div class="flex flex-wrap items-center justify-between gap-4">
             <div class="flex flex-col gap-1">
@@ -296,13 +298,15 @@ export default function Hub() {
                   <Button size="sm" onClick={() => run("hub.submissions")}>
                     Refresh status
                   </Button>
-                  <Button
-                    size="sm"
-                    disabled={data.busy}
-                    onClick={() => run("hub.publish", JSON.stringify({ kind: "plugins" }))}
-                  >
-                    Submit plugin
-                  </Button>
+                  <Show when={hubPlugins}>
+                    <Button
+                      size="sm"
+                      disabled={data.busy}
+                      onClick={() => run("hub.publish", JSON.stringify({ kind: "plugins" }))}
+                    >
+                      Submit plugin
+                    </Button>
+                  </Show>
                   <Button
                     size="sm"
                     variant="primary"
