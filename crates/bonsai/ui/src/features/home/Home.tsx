@@ -1,26 +1,23 @@
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import type { Friend, GameCard } from "~/lib/ipc/bindings"
-import { gameMenu, joinUser, userMenu } from "~/lib/menus"
-import { type GameGroup, groupByGame } from "~/lib/presence"
+import { joinUser, userMenu } from "~/lib/menus"
+import { groupByGame } from "~/lib/presence"
 import { friends, shell, useHome } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { GameIcon, GameTile, ShelfSkeleton, tileGrid } from "~/lib/tiles"
+import { GameTile, ShelfSkeleton, tileGrid } from "~/lib/tiles"
 import {
   Alert,
   Avatar,
   Button,
-  Card,
   ContextMenu,
   EmptyState,
   IconButton,
   ListItem,
   Page,
-  PersonCard,
   SectionHeader,
   Tooltip,
   VirtualGrid,
-  VirtualList,
 } from "~/lib/ui"
 
 /** Landing screen: who is playing what, what you played last, and the Roblox home sorts. */
@@ -28,7 +25,8 @@ export default function Home() {
   const home = useHome()
   const playing = () => friends.friends.filter((f) => f.presence === "game")
   const online = () => friends.friends.filter((f) => f.presence === "online" || f.presence === "studio")
-  const games = createMemo(() => groupByGame(playing()))
+  // Friends in the same experience sit together, biggest group first.
+  const playingRows = createMemo(() => groupByGame(playing()).flatMap((g) => g.users))
   return (
     <Show
       when={shell.accounts.length > 0}
@@ -49,8 +47,8 @@ export default function Home() {
         <Show when={shell.look.homeFriends && playing().length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader title="Friends playing" meta={playing().length} />
-            <VirtualGrid items={games()} minItemWidth={256} estimateRowHeight={180} gap={8}>
-              {(g) => <PlayingGroup group={g} />}
+            <VirtualGrid items={playingRows()} minItemWidth={ROW_WIDTH} estimateRowHeight={48} gap={4}>
+              {(f) => <FriendRow friend={f} />}
             </VirtualGrid>
           </section>
         </Show>
@@ -65,18 +63,8 @@ export default function Home() {
                 </Button>
               }
             />
-            <VirtualGrid items={online()} minItemWidth={192} estimateRowHeight={56} gap={8}>
-              {(f) => (
-                <ContextMenu items={userMenu(f.id, { friend: true })}>
-                  <PersonCard
-                    name={f.displayName}
-                    src={thumbUrl("headshot", f.id)}
-                    presence={f.presence}
-                    subtitle={f.presence === "studio" ? "In Studio" : `@${f.name}`}
-                    onClick={() => run("user.open", String(f.id))}
-                  />
-                </ContextMenu>
-              )}
+            <VirtualGrid items={online()} minItemWidth={ROW_WIDTH} estimateRowHeight={48} gap={4}>
+              {(f) => <FriendRow friend={f} />}
             </VirtualGrid>
           </section>
         </Show>
@@ -159,51 +147,35 @@ function ContinueRow(props: { games: GameCard[] }) {
   )
 }
 
-/** One experience and the friends in it. The header opens the experience; each friend row
- * opens the friend, with Join on hover. */
-function PlayingGroup(props: { group: GameGroup<Friend> }) {
-  const header = () => (
-    <ListItem
-      class="rounded-sm"
-      leading={<GameIcon universeId={props.group.universeId} />}
-      title={props.group.name}
-      subtitle={props.group.users.length === 1 ? "1 friend" : `${props.group.users.length} friends`}
-      onClick={props.group.placeId ? () => run("game.open", String(props.group.placeId)) : undefined}
-    />
-  )
+/** Narrowest a friend row gets before the grid drops a column, as on the Friends screen. */
+const ROW_WIDTH = 280
+
+/** A friend as on the Friends screen: avatar, name, then the game they're in or their status.
+ * Join shows on hover when they're in a game. */
+function FriendRow(props: { friend: Friend }) {
+  const f = () => props.friend
+  const subtitle = () => (f().presence === "online" ? (f().name ? `@${f().name}` : "Online") : f().status)
   return (
-    <Card class="flex min-w-0 flex-col p-1">
-      <Show when={props.group.placeId} fallback={header()}>
-        {(placeId) => <ContextMenu items={gameMenu(placeId())}>{header()}</ContextMenu>}
-      </Show>
-      <VirtualList items={props.group.users} estimateRowHeight={40}>
-        {(f) => (
-          <ContextMenu items={userMenu(f.id, { friend: true, inGame: true, placeId: f.placeId })}>
-            <ListItem
-              class="rounded-sm"
-              leading={
-                // As wide as the game icon above, so the names line up with the game's.
-                <span class="flex w-8 justify-center">
-                  <Avatar name={f.displayName} src={thumbUrl("headshot", f.id)} />
-                </span>
-              }
-              title={f.displayName}
-              onClick={() => run("user.open", String(f.id))}
-              actionsOnHover
-              actions={
-                <Tooltip content="Join">
-                  <IconButton
-                    size="sm"
-                    icon="play"
-                    label={`Join ${f.displayName}`}
-                    onClick={() => run("game.join", joinUser(f.id))}
-                  />
-                </Tooltip>
-              }
-            />
-          </ContextMenu>
-        )}
-      </VirtualList>
-    </Card>
+    <ContextMenu items={userMenu(f().id, { friend: true, inGame: f().presence === "game", placeId: f().placeId })}>
+      <ListItem
+        leading={<Avatar name={f().displayName} presence={f().presence} src={thumbUrl("headshot", f().id)} />}
+        title={f().nickname || f().displayName}
+        subtitle={subtitle()}
+        onClick={() => run("user.open", String(f().id))}
+        actionsOnHover
+        actions={
+          <Show when={f().presence === "game"}>
+            <Tooltip content="Join">
+              <IconButton
+                size="sm"
+                icon="play"
+                label={`Join ${f().displayName}`}
+                onClick={() => run("game.join", joinUser(f().id))}
+              />
+            </Tooltip>
+          </Show>
+        }
+      />
+    </ContextMenu>
   )
 }
