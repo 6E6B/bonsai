@@ -575,7 +575,47 @@ paths:
       summary: Whether the account passed age verification.
       responses:
         "200": { description: OK, schema: { $ref: "#/definitions/VerifiedAge" } }
+  /user-profile-api/v1/user/profiles/get-profiles:
+    post:
+      # Captured 2026-11-07 live, signed out (fixture: user_profiles.json). The friends list on
+      # www.roblox.com/users/{id}/friends names people with it; body shape from the site's
+      # bundles (`{userIds, fields}`). Answers x-ratelimit-limit 10000 per 60 s. More than 200
+      # ids returns 200 with an empty `profileDetails`, not an error.
+      x-captured: "2026-11-07, www.roblox.com/users/{id}/friends"
+      x-rust-name: post_user_profiles
+      summary: Names and badges of up to 200 users by id. No sign-in needed.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/UserProfilesRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/UserProfilesResponse" } }
 definitions:
+  UserProfilesRequest:
+    type: object
+    properties:
+      userIds: { type: array, items: { type: integer, format: int64 }, description: "At most 200" }
+      fields:
+        type: array
+        items: { type: string }
+        description: "names.username, names.displayName, names.combinedName, isVerified, isDeleted, ..."
+  UserProfilesResponse:
+    type: object
+    properties:
+      profileDetails:
+        type: array
+        items: { $ref: "#/definitions/UserProfile" }
+  UserProfile:
+    type: object
+    properties:
+      userId: { type: integer, format: int64 }
+      names: { $ref: "#/definitions/UserProfileNames" }
+      isVerified: { type: boolean }
+      isDeleted: { type: boolean }
+  UserProfileNames:
+    type: object
+    properties:
+      username: { type: string }
+      displayName: { type: string }
+      combinedName: { type: string }
   SessionList:
     type: object
     properties:

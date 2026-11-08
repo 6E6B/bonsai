@@ -54,7 +54,10 @@ impl CoreConfig {
                     .with_host("tr.rbxcdn.com", 40.0, 80.0)
                     // Transactions answer 429 after about 8 quick calls; 1.5 s apart still
                     // tripped it. The sustained limit isn't known.
-                    .with_route("apis.roblox.com", "/transaction-records/", 0.4, 4.0),
+                    .with_route("apis.roblox.com", "/transaction-records/", 0.4, 4.0)
+                    // User names for whole lists. Roblox allows 10,000 a minute; keep them
+                    // from queueing behind chat and explore on the shared apis bucket.
+                    .with_route("apis.roblox.com", "/user-profile-api/", 10.0, 20.0),
             ),
             background: true,
             // What the site uses.
@@ -65,6 +68,16 @@ impl CoreConfig {
 
 /// How long a universe that failed to load waits before it is asked for again.
 const UNIVERSE_RETRY_SECS: i64 = 60;
+
+/// How long a user whose name didn't load waits before rows asking for it ask again.
+const USER_RETRY_SECS: i64 = 30;
+/// Most ids the profile API answers at once; above this it returns an empty list.
+const USER_BATCH: usize = 200;
+/// Profile fields kept in [`UserInfo`].
+const USER_FIELDS: [&str; 3] = ["names.username", "names.displayName", "isVerified"];
+/// Tries after a failed name request (rate limit, network), with doubling delays.
+const USER_RETRIES: u32 = 2;
+const USER_RETRY_DELAY: Duration = Duration::from_secs(2);
 
 /// Requests from the UI. Each runs as its own task.
 #[derive(Debug, Clone)]
@@ -154,7 +167,9 @@ pub(crate) struct Inner {
     pub(crate) res: crate::res::Resources,
     /// Transaction ledgers loaded into memory, per account and scope.
     pub(crate) ledgers: crate::transactions::Ledgers,
-    users_pending: Mutex<std::collections::HashSet<u64>>,
+    /// Users asked for and not yet named, with when they were last asked for. Ones that
+    /// didn't load stay here so rows asking every frame retry after a pause, not at once.
+    users_pending: Mutex<HashMap<u64, i64>>,
     /// Universes asked for and not yet cached, with when they were last asked for. Failed loads
     /// stay here so they are retried after a pause instead of on every frame.
     universes_pending: Mutex<HashMap<u64, i64>>,
@@ -257,7 +272,7 @@ impl Core {
             session_id: random_uuid(),
             res: Default::default(),
             ledgers: Default::default(),
-            users_pending: Mutex::new(Default::default()),
+            users_pending: Mutex::new(HashMap::new()),
             universes_pending: Mutex::new(HashMap::new()),
             throttle: Mutex::new(HashMap::new()),
             theme_writes: Default::default(),
@@ -485,19 +500,26 @@ impl Core {
 
     /// Ask for user names; cheap to call every frame for visible rows.
     pub fn want_users(&self, ids: &[u64]) {
+        let t = crate::cache::now();
         let missing: Vec<u64> = {
             let s = self.inner.store.read();
-            let pending = self.inner.users_pending.lock();
+            let mut pending = self.inner.users_pending.lock();
+            let mut seen = HashSet::new();
             ids.iter()
-                .filter(|i| **i > 0 && !s.users.contains_key(i) && !pending.contains(i))
+                .filter(|i| **i > 0 && seen.insert(**i) && !s.users.contains_key(i))
+                .filter(|i| {
+                    if pending.get(i).is_some_and(|asked| t - asked < USER_RETRY_SECS) {
+                        return false;
+                    }
+                    pending.insert(**i, t);
+                    true
+                })
                 .copied()
                 .collect()
         };
-        if missing.is_empty() {
-            return;
+        if !missing.is_empty() {
+            self.send(Cmd::LoadUsers(missing));
         }
-        self.inner.users_pending.lock().extend(missing.iter().copied());
-        self.send(Cmd::LoadUsers(missing));
     }
 
     /// Ask for game details by universe id; cheap to call every frame for visible rows.
@@ -896,11 +918,17 @@ impl Inner {
                     .retain(|u, _| !s.games.contains_key(u));
             }
             Cmd::LoadUsers(ids) => {
-                self.load_users(&ids).await;
-                let mut p = self.users_pending.lock();
-                for i in &ids {
-                    p.remove(i);
+                let mut failed = self.load_users(&ids).await;
+                for attempt in 0..USER_RETRIES {
+                    if failed.is_empty() {
+                        break;
+                    }
+                    tokio::time::sleep(USER_RETRY_DELAY * 2u32.pow(attempt)).await;
+                    failed = self.load_users(&failed).await;
                 }
+                // Named ones are cached now; the rest keep their time so they wait to retry.
+                let s = self.store.read();
+                self.users_pending.lock().retain(|u, _| !s.users.contains_key(u));
             }
             Cmd::LoadServers {
                 account,
@@ -1225,32 +1253,42 @@ impl Inner {
         self.load_universes(&universes).await;
     }
 
-    pub(crate) async fn load_users(&self, ids: &[u64]) {
-        for chunk in ids.chunks(100) {
-            if chunk.is_empty() {
-                continue;
-            }
-            let body = users::v1::MultiGetByUserIdRequest {
+    /// Names of `ids` into the store and cache, from the profile API the site's friends list
+    /// uses. Returns the ids whose request failed. A user Roblox doesn't know comes back
+    /// without names and is stored blank, so it isn't asked for again.
+    pub(crate) async fn load_users(&self, ids: &[u64]) -> Vec<u64> {
+        let mut failed = Vec::new();
+        for chunk in ids.chunks(USER_BATCH) {
+            let body = apis::undocumented::UserProfilesRequest {
                 user_ids: Some(chunk.iter().map(|i| *i as i64).collect()),
-                exclude_banned_users: Some(false),
+                fields: Some(USER_FIELDS.map(String::from).to_vec()),
             };
-            let Ok(r) = users::v1::post_users(&self.anon, &body).await else {
-                continue;
+            let r = match apis::undocumented::post_user_profiles(&self.anon, &body).await {
+                Ok(r) => r,
+                Err(e) => {
+                    tracing::debug!("loading {} user names: {e}", chunk.len());
+                    failed.extend_from_slice(chunk);
+                    continue;
+                }
             };
             let mut s = self.store.write();
-            for u in r.data.unwrap_or_default() {
-                let Some(id) = u.id else { continue };
+            for p in r.profile_details.unwrap_or_default() {
+                let Some(id) = p.user_id.filter(|i| *i > 0) else {
+                    continue;
+                };
+                let names = p.names.unwrap_or_default();
                 let info = UserInfo {
                     id: id as u64,
-                    name: u.name.unwrap_or_default(),
-                    display_name: u.display_name.unwrap_or_default(),
-                    verified: u.has_verified_badge.unwrap_or(false),
+                    name: names.username.unwrap_or_default(),
+                    display_name: names.display_name.unwrap_or_default(),
+                    verified: p.is_verified.unwrap_or(false),
                 };
                 self.cache
                     .put(Kind::User, AccountId::ANONYMOUS, &info.id.to_string(), &info);
                 s.users.insert(info.id, info);
             }
         }
+        failed
     }
 
     pub(crate) async fn load_universes(&self, ids: &[u64]) {

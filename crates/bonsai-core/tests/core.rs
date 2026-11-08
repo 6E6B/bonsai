@@ -413,9 +413,12 @@ async fn friends_presence_marks_their_server() {
         },
     };
     f.interactions.push(post(
-        "users.roblox.com",
-        "/v1/users",
-        serde_json::json!({"data":[{"id":1,"name":"Roblox","displayName":"Roblox","hasVerifiedBadge":true},{"id":156,"name":"builderman","displayName":"builderman","hasVerifiedBadge":true}]}),
+        "apis.roblox.com",
+        "/user-profile-api/v1/user/profiles/get-profiles",
+        serde_json::json!({"profileDetails":[
+            {"userId":1,"names":{"username":"Roblox","displayName":"Roblox"},"isVerified":true},
+            {"userId":156,"names":{"username":"builderman","displayName":"builderman"},"isVerified":true}
+        ],"errors":[]}),
     ));
     f.interactions.push(post(
         "presence.roblox.com",
@@ -3337,4 +3340,34 @@ async fn image_export_uses_cached_display_when_lookup_is_offline() {
         .unwrap();
     assert_eq!(image.url.as_deref(), Some(url));
     assert!(image.image.rgba().is_ok());
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn user_names_load_from_profiles_and_retry_a_failed_batch() {
+    let mut f = replay::load("user_profiles");
+    // The first ask fails; the names come with the retry.
+    let mut failed = f.interactions[0].clone();
+    failed.response = replay::RecordedResponse {
+        status: 500,
+        ..Default::default()
+    };
+    f.interactions.insert(0, failed);
+    let replay = Replay::from_fixture(&f).await;
+    let r = rig(
+        Base::Replay(replay.server.uri()),
+        tempfile::tempdir().unwrap(),
+        Arc::default(),
+    );
+    r.core.want_users(&[1, 156, 1]);
+    // Rows ask every frame; ids already asked for aren't sent again.
+    r.core.want_users(&[156]);
+    wait_for(&r.core, "names", |s| s.users.contains_key(&156)).await;
+    {
+        let s = r.core.store();
+        assert_eq!(s.users[&1].name, "Roblox");
+        assert_eq!(s.users[&156].display_name, "builderman");
+        assert!(s.users[&156].verified);
+    }
+    let asks = replay.server.received_requests().await.unwrap_or_default();
+    assert_eq!(asks.len(), 2, "one failed ask and one retry");
 }

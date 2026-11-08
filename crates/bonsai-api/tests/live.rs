@@ -276,6 +276,33 @@ async fn place_universe() {
     l.save("place_universe", "Place 1818 to its universe, no sign-in.");
 }
 
+#[tokio::test]
+async fn user_profiles() {
+    let l = live().await;
+    let body = apis::undocumented::UserProfilesRequest {
+        user_ids: Some(vec![1, 156]),
+        fields: Some(
+            ["names.username", "names.displayName", "isVerified"]
+                .map(String::from)
+                .to_vec(),
+        ),
+    };
+    let r = apis::undocumented::post_user_profiles(&l.anon(), &body)
+        .await
+        .unwrap();
+    let names: Vec<_> = r
+        .profile_details
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|p| p.names?.username)
+        .collect();
+    assert_eq!(names, ["Roblox", "builderman"]);
+    l.save(
+        "user_profiles",
+        "Names of users 1 and 156 from the profile API, no sign-in.",
+    );
+}
+
 const SESSION: &str = "00000000-0000-4000-8000-000000000000";
 
 #[tokio::test]
