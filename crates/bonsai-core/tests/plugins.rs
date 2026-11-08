@@ -437,20 +437,14 @@ fn reads_check_grants_and_use_the_cache() {
                 "/v1/users/5",
                 json!({"id":5,"name":"five","displayName":"Five","created":"2020-01-02T00:00:00Z","hasVerifiedBadge":false,"isBanned":false}),
             ),
-            get(
-                "friends.roblox.com",
-                "/v1/users/5/friends/count",
-                json!({"count":3}),
-            ),
-            get(
-                "friends.roblox.com",
-                "/v1/users/5/followers/count",
-                json!({"count":4}),
-            ),
-            get(
-                "friends.roblox.com",
-                "/v1/users/5/followings/count",
-                json!({"count":6}),
+            serve(
+                "POST",
+                "apis.roblox.com",
+                "/profile-platform-api/v1/profiles/get",
+                json!({"components":{"UserProfileHeader":{"userId":5,"isPremium":true,"counts":{
+                    "friendsCount":3,"followersCount":4,"followingsCount":6,
+                    "isFriendsCountEnabled":true,"isFollowersCountEnabled":true,"isFollowingsCountEnabled":true
+                }}}}),
             ),
             serve(
                 "POST",

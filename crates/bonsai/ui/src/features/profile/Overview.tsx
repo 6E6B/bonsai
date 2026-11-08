@@ -242,6 +242,7 @@ function Person(props: { person: Connection }) {
         src={thumbUrl("headshot", p().id, true)}
         presence={p().friend ? p().presence : undefined}
         verified={p().verified}
+        premium={p().premium}
         status={p().place ?? undefined}
         onClick={() => run("user.open", String(p().id))}
       />

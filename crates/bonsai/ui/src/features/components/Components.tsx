@@ -837,7 +837,7 @@ export default function Components() {
             verified
             onClick={noop}
           />
-          <PersonTile class="w-24" name="Seraphon" username="seraphon" presence="online" onClick={noop} />
+          <PersonTile class="w-24" name="Seraphon" username="seraphon" presence="online" premium onClick={noop} />
         </div>
       </Section>
 

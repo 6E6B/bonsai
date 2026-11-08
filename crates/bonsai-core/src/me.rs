@@ -468,6 +468,7 @@ impl Core {
                                 name: owner.clone(),
                                 display_name: owner,
                                 verified: false,
+                                premium: None,
                             });
                         }
                         Some(MyServer {

@@ -996,6 +996,97 @@ pub struct PlaceUniverse {
     pub universe_id: Option<i64>,
 }
 
+/// `ProfileComponentRequest`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ProfileComponentRequest {
+    /// UserProfileHeader, About, Friends, ...
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub component: Option<String>,
+}
+
+/// `UserProfileCounts`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UserProfileCounts {
+    #[serde(rename = "followersCount")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub followers_count: Option<i64>,
+    #[serde(rename = "followingsCount")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub followings_count: Option<i64>,
+    #[serde(rename = "friendsCount")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub friends_count: Option<i64>,
+    #[serde(rename = "isFollowersCountEnabled")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_followers_count_enabled: Option<bool>,
+    #[serde(rename = "isFollowingsCountEnabled")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_followings_count_enabled: Option<bool>,
+    /// False when the user hides it, and always when signed out. Do not show the count then.
+    #[serde(rename = "isFriendsCountEnabled")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_friends_count_enabled: Option<bool>,
+}
+
+/// `UserProfileHeader`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UserProfileHeader {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub counts: Option<UserProfileCounts>,
+    /// Premium without Roblox Plus
+    #[serde(rename = "isPremium")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_premium: Option<bool>,
+    /// Signed in only
+    #[serde(rename = "isRobloxPlus")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_roblox_plus: Option<bool>,
+    #[serde(rename = "isVerified")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_verified: Option<bool>,
+    #[serde(rename = "userId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_id: Option<i64>,
+}
+
+/// `ProfileComponents`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ProfileComponents {
+    #[serde(rename = "UserProfileHeader")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_profile_header: Option<UserProfileHeader>,
+}
+
+/// `ProfilePlatformRequest`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ProfilePlatformRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub components: Option<Vec<ProfileComponentRequest>>,
+    #[serde(rename = "includeComponentOrdering")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub include_component_ordering: Option<bool>,
+    #[serde(rename = "profileId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_id: Option<String>,
+    /// User or Community
+    #[serde(rename = "profileType")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_type: Option<String>,
+}
+
+/// `ProfilePlatformResponse`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ProfilePlatformResponse {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub components: Option<ProfileComponents>,
+}
+
 /// `QuickLoginCancel`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -1407,6 +1498,10 @@ pub struct UserProfileNames {
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct UserProfile {
+    /// Premium or Roblox Plus. The site's friends list shows its Plus badge from this.
+    #[serde(rename = "hasRobloxSubscription")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_roblox_subscription: Option<bool>,
     #[serde(rename = "isDeleted")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_deleted: Option<bool>,
@@ -1424,7 +1519,7 @@ pub struct UserProfile {
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct UserProfilesRequest {
-    /// names.username, names.displayName, names.combinedName, isVerified, isDeleted, ...
+    /// names.username, names.displayName, names.combinedName, isVerified, isDeleted, hasRobloxSubscription, ... Unknown fields are left out of the answer, not an error.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fields: Option<Vec<String>>,
     /// At most 200
@@ -2482,6 +2577,33 @@ pub fn post_chat_typing_request(body: &ChatConversationRef) -> Result<Request> {
 /// Undocumented; captured 2026-10-13, chat panel on www.roblox.com (ReactChat bundle).
 pub async fn post_chat_typing(client: &Client, body: &ChatConversationRef) -> Result<ChatStatus> {
     client.send(post_chat_typing_request(body)?).await?.json()
+}
+
+/// `POST /profile-platform-api/v1/profiles/get`
+///
+/// Components of a profile page. We ask only for UserProfileHeader.
+///
+/// Undocumented; captured 2026-11-08, www.roblox.com/users/156/profile.
+pub fn post_profile_platform_request(body: &ProfilePlatformRequest) -> Result<Request> {
+    let mut r = Request::new(
+        Method::POST,
+        HOST,
+        "/profile-platform-api/v1/profiles/get".to_string(),
+    );
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /profile-platform-api/v1/profiles/get`
+///
+/// Components of a profile page. We ask only for UserProfileHeader.
+///
+/// Undocumented; captured 2026-11-08, www.roblox.com/users/156/profile.
+pub async fn post_profile_platform(
+    client: &Client,
+    body: &ProfilePlatformRequest,
+) -> Result<ProfilePlatformResponse> {
+    client.send(post_profile_platform_request(body)?).await?.json()
 }
 
 /// `GET /search-api/omni-search`

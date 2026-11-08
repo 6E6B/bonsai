@@ -229,8 +229,8 @@ export default function Profile() {
                   <Show when={u().verified}>
                     <VerifiedBadge size={18} />
                   </Show>
-                  <Show when={u().premium}>
-                    <PremiumBadge size={18} />
+                  <Show when={u().premium || u().plus}>
+                    <PremiumBadge size={18} label={u().plus ? "Roblox Plus" : "Premium"} />
                   </Show>
                   <Show when={u().banned}>
                     <Badge variant="danger">Banned</Badge>
@@ -642,9 +642,17 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                     <Avatar name={p.displayName || p.name} presence={p.presence} src={thumbUrl("headshot", p.id)} />
                   }
                   title={
-                    <Show when={p.verified} fallback={p.displayName || p.name || `User ${p.id}`}>
-                      {p.displayName || p.name} <VerifiedBadge />
-                    </Show>
+                    <>
+                      {p.displayName || p.name || `User ${p.id}`}
+                      <Show when={p.verified}>
+                        {" "}
+                        <VerifiedBadge />
+                      </Show>
+                      <Show when={p.premium}>
+                        {" "}
+                        <PremiumBadge />
+                      </Show>
+                    </>
                   }
                   subtitle={p.name ? `@${p.name}` : undefined}
                   meta={

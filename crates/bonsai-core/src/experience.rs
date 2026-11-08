@@ -406,6 +406,7 @@ impl Core {
                                 name: o.name.clone().unwrap_or_default(),
                                 display_name: o.display_name.clone().or(o.name.clone()).unwrap_or_default(),
                                 verified: o.has_verified_badge.unwrap_or(false),
+                                premium: None,
                             });
                         }
                         Some(PrivateServer {
@@ -457,6 +458,7 @@ impl Core {
                                 display_name: u.display_name.clone().unwrap_or_else(|| name.clone()),
                                 name,
                                 verified: false,
+                                premium: None,
                             })
                         })
                         .collect::<Vec<_>>(),
@@ -505,6 +507,7 @@ impl Core {
                                     display_name: u.display_name.unwrap_or_else(|| name.clone()),
                                     name,
                                     verified: false,
+                                    premium: None,
                                 });
                                 Some(id)
                             })

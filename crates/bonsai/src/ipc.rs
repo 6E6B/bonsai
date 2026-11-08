@@ -854,9 +854,11 @@ pub struct ProfileHead {
     pub created: String,
     pub verified: bool,
     pub banned: bool,
-    /// Has Roblox Premium.
+    /// Has Premium (without Roblox Plus).
     pub premium: bool,
-    /// Counts; `None` when Roblox didn't say.
+    /// Has Roblox Plus.
+    pub plus: bool,
+    /// Counts; `None` when Roblox didn't say or the user hides them.
     pub friends: Option<u32>,
     pub followers: Option<u32>,
     pub following: Option<u32>,
@@ -960,6 +962,8 @@ pub struct Connection {
     pub name: String,
     pub display_name: String,
     pub verified: bool,
+    /// Has Premium or Roblox Plus.
+    pub premium: bool,
     /// A friend of the active account (a mutual friend, on a friends list).
     pub friend: bool,
     /// Known only for the active account's friends; offline for everyone else.
@@ -2315,6 +2319,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
             verified: u.verified,
             banned: u.banned,
             premium: u.premium,
+            plus: u.plus,
             friends: count(u.friends),
             followers: count(u.followers),
             following: count(u.following),
@@ -2652,7 +2657,7 @@ pub fn profile_people(
             .iter()
             .map(|id| {
                 let u = s.users.get(id);
-                if u.is_none() {
+                if !u.is_some_and(|u| u.is_complete()) {
                     unnamed.push(*id);
                 }
                 let friend = own.contains(id);
@@ -2670,6 +2675,7 @@ pub fn profile_people(
                     name: u.map(|u| u.name.clone()).unwrap_or_default(),
                     display_name: u.map(|u| u.display_name.clone()).unwrap_or_default(),
                     verified: u.is_some_and(|u| u.verified),
+                    premium: u.and_then(|u| u.premium).unwrap_or(false),
                     friend,
                     presence: p.map_or(Presence::Offline, |p| p.kind.into()),
                     place,

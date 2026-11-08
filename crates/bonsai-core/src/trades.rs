@@ -744,6 +744,7 @@ impl crate::core::Inner {
                     name: r.partner_name.clone(),
                     display_name: r.partner_display.clone(),
                     verified: false,
+                    premium: None,
                 }));
                 Ok(Page {
                     items: rows,

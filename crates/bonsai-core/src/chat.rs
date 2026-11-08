@@ -239,6 +239,7 @@ fn conversation_users(c: &Conversation) -> Vec<UserInfo> {
             name: String::new(),
             display_name: n.clone(),
             verified: false,
+            premium: None,
         })
         .collect()
 }

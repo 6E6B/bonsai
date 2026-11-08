@@ -6,7 +6,7 @@
 
 use std::collections::HashMap;
 
-use bonsai_api::generated::{apis, badges, friends, games, groups, premiumfeatures, presence, users};
+use bonsai_api::generated::{apis, badges, friends, games, groups, presence, users};
 use bonsai_api::{AccountId, Error};
 use serde::{Deserialize, Serialize};
 
@@ -26,22 +26,46 @@ pub struct Profile {
     pub created: String,
     pub verified: bool,
     pub banned: bool,
-    /// Has Roblox Premium. False when Roblox wouldn't say.
+    /// Has Premium (without Roblox Plus).
     #[serde(default)]
     pub premium: bool,
-    /// The counts are -1 until they load, or when Roblox didn't send them. They come from a
-    /// slower host than the rest, so they load on their own and never hold up the header.
+    /// Has Roblox Plus.
+    #[serde(default)]
+    pub plus: bool,
+    /// The counts are -1 until they load, or when the user hides them. They come with Premium
+    /// and Plus from a second request that never holds up the header.
     pub friends: i64,
     pub followers: i64,
     pub following: i64,
 }
 
-/// A user's friend, follower and following counts, -1 where Roblox didn't send one.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ProfileCounts {
+/// The rest of a profile header: subscription and counts. Counts are -1 where the user hides
+/// them or Roblox didn't send them.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ProfileExtras {
+    pub premium: bool,
+    pub plus: bool,
     pub friends: i64,
     pub followers: i64,
     pub following: i64,
+}
+
+impl ProfileExtras {
+    fn from_header(h: apis::undocumented::UserProfileHeader) -> Self {
+        let c = h.counts.unwrap_or_default();
+        let shown = |on: Option<bool>, n: Option<i64>| match (on, n) {
+            (Some(true), Some(n)) => n,
+            _ => -1,
+        };
+        Self {
+            premium: h.is_premium.unwrap_or(false),
+            plus: h.is_roblox_plus.unwrap_or(false),
+            friends: shown(c.is_friends_count_enabled, c.friends_count),
+            followers: shown(c.is_followers_count_enabled, c.followers_count),
+            following: shown(c.is_followings_count_enabled, c.followings_count),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -908,6 +932,7 @@ impl crate::core::Inner {
                     name: x.name.clone(),
                     display_name: x.display_name.clone(),
                     verified: false,
+                    premium: None,
                 }));
                 Ok(Page {
                     items,
@@ -917,40 +942,38 @@ impl crate::core::Inner {
         )
     }
 
-    /// Profile header for any user. Names and bio come from users.roblox.com; the counts come
-    /// from friends.roblox.com, which is paced much slower and is often busy with friend
-    /// lists, so they are a separate resource and the header shows without them.
+    /// Profile header for any user. Names, bio and the banned flag come from
+    /// users.roblox.com. Premium, Plus and the counts come from the profile-platform header
+    /// the site uses, as a separate resource so the header shows without them.
     pub(crate) fn profile(self: &std::sync::Arc<Self>, user_id: u64) -> Res<Profile> {
         let r = self.profile_head(user_id);
-        let c = self.profile_counts(user_id);
+        let x = self.profile_extras(user_id);
         Res {
             data: r.data.map(|p| {
                 let mut p = (*p).clone();
-                let n = c.data.as_deref().copied();
-                p.friends = n.map_or(-1, |n| n.friends);
-                p.followers = n.map_or(-1, |n| n.followers);
-                p.following = n.map_or(-1, |n| n.following);
+                let x = x.data.as_deref().copied();
+                p.premium = x.is_some_and(|x| x.premium);
+                p.plus = x.is_some_and(|x| x.plus);
+                p.friends = x.map_or(-1, |x| x.friends);
+                p.followers = x.map_or(-1, |x| x.followers);
+                p.following = x.map_or(-1, |x| x.following);
                 std::sync::Arc::new(p)
             }),
-            // Plugins wait for `loading` to clear, so they still get the counts.
-            loading: r.loading || c.loading,
+            // Plugins wait for `loading` to clear, so they still get the extras.
+            loading: r.loading || x.loading,
             error: r.error,
             fetched_at: r.fetched_at,
         }
     }
 
-    /// [`Inner::profile`] without the counts.
+    /// [`Inner::profile`] without the extras. profile-platform has names too, but shows a
+    /// banned user as "Account Deleted", so names stay on users.roblox.com.
     fn profile_head(self: &std::sync::Arc<Self>, user_id: u64) -> Res<Profile> {
         self.res(
             Key::shared("profile", user_id),
             PROFILE_AGE,
             move |f| async move {
-                let c = &f.public();
-                let (u, premium) = tokio::join!(
-                    users::v1::get_users_by_user_id(c, user_id as i64),
-                    premiumfeatures::undocumented::get_has_premium(c, user_id as i64),
-                );
-                let u = u?;
+                let u = users::v1::get_users_by_user_id(&f.public(), user_id as i64).await?;
                 Ok(Profile {
                     id: user_id,
                     name: u.name.unwrap_or_default(),
@@ -959,7 +982,8 @@ impl crate::core::Inner {
                     created: u.created.unwrap_or_default(),
                     verified: u.has_verified_badge.unwrap_or(false),
                     banned: u.is_banned.unwrap_or(false),
-                    premium: premium.unwrap_or(false),
+                    premium: false,
+                    plus: false,
                     friends: -1,
                     followers: -1,
                     following: -1,
@@ -968,24 +992,30 @@ impl crate::core::Inner {
         )
     }
 
-    /// A user's friend, follower and following counts.
-    fn profile_counts(self: &std::sync::Arc<Self>, user_id: u64) -> Res<ProfileCounts> {
+    /// A user's Premium, Plus and counts, from the profile-platform header. Signed out, Roblox
+    /// leaves out Plus and hides every count.
+    fn profile_extras(self: &std::sync::Arc<Self>, user_id: u64) -> Res<ProfileExtras> {
         self.res(
-            Key::shared("profile_counts", user_id),
+            Key::shared("profile_extras", user_id),
             PROFILE_AGE,
             move |f| async move {
-                let id = user_id as i64;
-                let c = &f.public();
-                let (fr, fo, fg) = tokio::join!(
-                    friends::v1::get_users_by_user_id_friends_count(c, id),
-                    friends::v1::get_users_by_target_user_id_followers_count(c, id),
-                    friends::v1::get_users_by_target_user_id_followings_count(c, id),
-                );
-                Ok(ProfileCounts {
-                    friends: fr.ok().and_then(|r| r.count).unwrap_or(-1) as i64,
-                    followers: fo.ok().and_then(|r| r.count).unwrap_or(-1),
-                    following: fg.ok().and_then(|r| r.count).unwrap_or(-1),
-                })
+                use apis::undocumented::{ProfileComponentRequest, ProfilePlatformRequest};
+                let body = ProfilePlatformRequest {
+                    profile_id: Some(user_id.to_string()),
+                    profile_type: Some("User".into()),
+                    components: Some(vec![ProfileComponentRequest {
+                        component: Some("UserProfileHeader".into()),
+                    }]),
+                    include_component_ordering: Some(false),
+                };
+                let r = apis::undocumented::post_profile_platform(&f.public(), &body).await?;
+                let h = r.components.and_then(|c| c.user_profile_header);
+                Ok(h.map(ProfileExtras::from_header).unwrap_or(ProfileExtras {
+                    friends: -1,
+                    followers: -1,
+                    following: -1,
+                    ..Default::default()
+                }))
             },
         )
     }

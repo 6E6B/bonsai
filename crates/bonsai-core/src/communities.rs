@@ -633,6 +633,7 @@ impl Core {
                     name: m.name.clone(),
                     display_name: m.display_name.clone(),
                     verified: m.verified,
+                    premium: None,
                 }));
                 Ok(Page {
                     items,
@@ -1031,6 +1032,7 @@ impl Core {
                     name: j.name.clone(),
                     display_name: j.display_name.clone(),
                     verified: false,
+                    premium: None,
                 }));
                 Ok(Page {
                     items,

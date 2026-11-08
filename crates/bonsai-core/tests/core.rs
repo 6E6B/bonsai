@@ -725,6 +725,9 @@ async fn people_profile_lists_and_relation() {
     let p = poll(|| c.profile(156)).await;
     assert_eq!(p.name, "builderman");
     assert!(p.verified && p.followers > 1_000_000);
+    // From the profile-platform header: Plus, not Premium, and a hidden friends count.
+    assert!(p.plus && !p.premium);
+    assert_eq!(p.friends, -1);
     let rel = poll(|| c.relation(ME, 1)).await;
     assert_eq!(rel.friend, bonsai_core::people::FriendState::NotFriends);
     assert!(!rel.following && !rel.blocked);
@@ -3350,6 +3353,7 @@ async fn user_names_load_from_profiles_and_retry_a_failed_batch() {
         assert_eq!(s.users[&1].name, "Roblox");
         assert_eq!(s.users[&156].display_name, "builderman");
         assert!(s.users[&156].verified);
+        assert_eq!(s.users[&156].premium, Some(true));
     }
     let asks = replay.server.received_requests().await.unwrap_or_default();
     assert_eq!(asks.len(), 2, "one failed ask and one retry");

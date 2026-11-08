@@ -82,7 +82,12 @@ const USER_RETRY_SECS: i64 = 30;
 /// Most ids the profile API answers at once; above this it returns an empty list.
 const USER_BATCH: usize = 200;
 /// Profile fields kept in [`UserInfo`].
-const USER_FIELDS: [&str; 3] = ["names.username", "names.displayName", "isVerified"];
+const USER_FIELDS: [&str; 4] = [
+    "names.username",
+    "names.displayName",
+    "isVerified",
+    "hasRobloxSubscription",
+];
 /// Tries after a failed name request (rate limit, network), with doubling delays.
 const USER_RETRIES: u32 = 2;
 const USER_RETRY_DELAY: Duration = Duration::from_secs(2);
@@ -514,7 +519,7 @@ impl Core {
             let mut pending = self.inner.users_pending.lock();
             let mut seen = HashSet::new();
             ids.iter()
-                .filter(|i| **i > 0 && seen.insert(**i) && !s.users.contains_key(i))
+                .filter(|i| **i > 0 && seen.insert(**i) && !s.users.get(i).is_some_and(|u| u.is_complete()))
                 .filter(|i| {
                     if pending.get(i).is_some_and(|asked| t - asked < USER_RETRY_SECS) {
                         return false;
@@ -990,6 +995,7 @@ impl Inner {
                     name: me.name.unwrap_or_default(),
                     display_name: me.display_name.unwrap_or_default(),
                     verified: false,
+                    premium: None,
                 };
                 let already = self.store.read().accounts.get(AccountId(user.id)).is_some();
                 self.store.write().login = Some(LoginState::Confirm {
@@ -1195,6 +1201,7 @@ impl Inner {
                             name,
                             display_name: u.display_name.clone().unwrap_or_default(),
                             verified: u.has_verified_badge.unwrap_or(false),
+                            premium: None,
                         },
                     );
                 }
@@ -1290,6 +1297,7 @@ impl Inner {
                     name: names.username.unwrap_or_default(),
                     display_name: names.display_name.unwrap_or_default(),
                     verified: p.is_verified.unwrap_or(false),
+                    premium: Some(p.has_roblox_subscription.unwrap_or(false)),
                 };
                 self.cache
                     .put(Kind::User, AccountId::ANONYMOUS, &info.id.to_string(), &info);

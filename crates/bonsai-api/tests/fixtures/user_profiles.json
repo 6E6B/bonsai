@@ -1,5 +1,5 @@
 {
-  "captured": "2026-11-07",
+  "captured": "2026-11-08",
   "source": "live",
   "note": "Names of users 1 and 156 from the profile API, no sign-in.",
   "interactions": [
@@ -28,7 +28,8 @@
                 "username": "Roblox",
                 "displayName": "Roblox"
               },
-              "isVerified": true
+              "isVerified": true,
+              "hasRobloxSubscription": true
             },
             {
               "userId": 156,
@@ -36,7 +37,8 @@
                 "username": "builderman",
                 "displayName": "builderman"
               },
-              "isVerified": true
+              "isVerified": true,
+              "hasRobloxSubscription": true
             }
           ],
           "errors": []

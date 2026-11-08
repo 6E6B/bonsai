@@ -865,6 +865,8 @@ export type Connection = {
 	name: string,
 	displayName: string,
 	verified: boolean,
+	/**  Has Premium or Roblox Plus. */
+	premium: boolean,
 	/**  A friend of the active account (a mutual friend, on a friends list). */
 	friend: boolean,
 	/**  Known only for the active account's friends; offline for everyone else. */
@@ -1918,9 +1920,11 @@ export type ProfileHead = {
 	created: string,
 	verified: boolean,
 	banned: boolean,
-	/**  Has Roblox Premium. */
+	/**  Has Premium (without Roblox Plus). */
 	premium: boolean,
-	/**  Counts; `None` when Roblox didn't say. */
+	/**  Has Roblox Plus. */
+	plus: boolean,
+	/**  Counts; `None` when Roblox didn't say or the user hides them. */
 	friends: number | null,
 	followers: number | null,
 	following: number | null,

@@ -1,6 +1,7 @@
 import { Button as KButton } from "@kobalte/core/button"
 import { Show } from "solid-js"
 import { Avatar, type Presence } from "./avatar"
+import { PremiumBadge } from "./premium-badge"
 import { VerifiedBadge } from "./verified-badge"
 
 export interface PersonTileProps {
@@ -12,6 +13,8 @@ export interface PersonTileProps {
   src?: string
   presence?: Presence
   verified?: boolean
+  /** Has Premium or Roblox Plus. */
+  premium?: boolean
   /** A third line under the username, such as the game they're in. */
   status?: string
   onClick: () => void
@@ -31,6 +34,9 @@ export function PersonTile(props: PersonTileProps) {
         </span>
         <Show when={props.verified}>
           <VerifiedBadge />
+        </Show>
+        <Show when={props.premium}>
+          <PremiumBadge />
         </Show>
       </span>
       <Show when={props.username}>

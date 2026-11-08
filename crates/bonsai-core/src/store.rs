@@ -64,6 +64,17 @@ pub struct UserInfo {
     pub name: String,
     pub display_name: String,
     pub verified: bool,
+    /// Has Premium or Roblox Plus. `None` when the name came from somewhere that doesn't say
+    /// (or from a cache older than this field), so the next batch name lookup asks again.
+    #[serde(default)]
+    pub premium: Option<bool>,
+}
+
+impl UserInfo {
+    /// Everything the batch name lookup gives is known.
+    pub fn is_complete(&self) -> bool {
+        self.premium.is_some()
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
