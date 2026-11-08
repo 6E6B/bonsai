@@ -1167,7 +1167,17 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
     let settings = core.settings();
     registry.load_overrides(settings.shortcuts);
     registry.load_plugin_shortcuts(settings.plugin_shortcuts);
-    let builtin = registry.all().iter().map(|c| CommandInfo {
+    let builtin = builtin_infos(&registry);
+    let plugin = core
+        .plugin_commands()
+        .into_iter()
+        .map(|c| plugins::command_info(c, &registry));
+    builtin.chain(plugin).collect()
+}
+
+/// The built-in commands as the UI sees them.
+fn builtin_infos(registry: &Registry) -> impl Iterator<Item = CommandInfo> + '_ {
+    registry.all().iter().map(|c| CommandInfo {
         id: c.id.key().to_owned(),
         title: c.title.to_owned(),
         keywords: c.keywords.iter().map(|k| (*k).to_owned()).collect(),
@@ -1175,12 +1185,7 @@ pub fn commands(core: State<'_, Arc<Core>>) -> Vec<CommandInfo> {
         shortcuts: registry.shortcuts(c.id).iter().map(Keys::from).collect(),
         rebound: registry.is_rebound(c.id),
         context: None,
-    });
-    let plugin = core
-        .plugin_commands()
-        .into_iter()
-        .map(|c| plugins::command_info(c, &registry));
-    builtin.chain(plugin).collect()
+    })
 }
 
 /// Runs a command that needs the backend. Commands that only change UI state (navigation,
@@ -3115,5 +3120,65 @@ mod tests {
     #[test]
     fn export_bindings() {
         export(&builder()).expect("export bindings");
+    }
+
+    /// Writes the built-in commands for the command bar's ranking tests
+    /// (`ui/src/lib/commands/catalog.test.ts`). Commit the file if this test changed it.
+    #[test]
+    fn export_command_catalog() {
+        #[derive(Serialize)]
+        struct Entry {
+            id: String,
+            title: String,
+            keywords: Vec<String>,
+            arg: Arg,
+        }
+        #[derive(Serialize)]
+        struct Pref {
+            key: &'static str,
+            section: &'static str,
+            title: &'static str,
+            keywords: &'static [&'static str],
+            kind: &'static str,
+            options: Vec<serde_json::Value>,
+        }
+        use bonsai_core::prefs::{PREFS, PrefKind};
+        let commands: Vec<Entry> = builtin_infos(&Registry::default())
+            .map(|c| Entry {
+                id: c.id,
+                title: c.title,
+                keywords: c.keywords,
+                arg: c.arg,
+            })
+            .collect();
+        let prefs: Vec<Pref> = PREFS
+            .iter()
+            .map(|p| {
+                let (kind, options) = match p.kind {
+                    PrefKind::Bool => ("bool", &[][..]),
+                    PrefKind::Choice(o) => ("choice", o),
+                    PrefKind::Range { .. } => ("range", &[][..]),
+                    PrefKind::Text { .. } => ("text", &[][..]),
+                };
+                Pref {
+                    key: p.key,
+                    section: p.section,
+                    title: p.title,
+                    keywords: p.keywords,
+                    kind,
+                    options: options
+                        .iter()
+                        .map(|(v, l)| serde_json::json!({ "value": v, "label": l }))
+                        .collect(),
+                }
+            })
+            .collect();
+        let catalog = serde_json::json!({ "commands": commands, "prefs": prefs });
+        let mut json = serde_json::to_string_pretty(&catalog).expect("serialize catalog");
+        json.push('\n');
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/ui/src/lib/commands/catalog.json");
+        if std::fs::read_to_string(path).ok().as_deref() != Some(json.as_str()) {
+            std::fs::write(path, json).expect("write catalog");
+        }
     }
 }

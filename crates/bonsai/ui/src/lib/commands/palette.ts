@@ -2,7 +2,7 @@ import type { Arg, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from
 import { rank } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
 import type { ThumbKind } from "~/lib/thumb"
-import { filterEntries } from "./filter"
+import { type Ranked, rankScored } from "./match"
 
 /** A row in the command bar. Picking it runs `id` with `arg`, or, when `ask` is set, asks for
  * the argument first. */
@@ -37,6 +37,8 @@ export interface PalettePerson {
   id: number
   name: string
   displayName: string
+  /** What the active account calls them in this app. */
+  nickname?: string | null
   /** In a game, so `game.join` can follow them. */
   inGame?: boolean
   presence?: Presence
@@ -287,7 +289,7 @@ export function remoteEntries(rows: RemoteRow[]): PaletteEntry[] {
 
 /** `people` matching `query`, best match first. */
 const searchPeople = (people: readonly PalettePerson[], query: string) =>
-  rank(people, query, (p) => [p.displayName, p.name])
+  rank(people, query, (p) => [p.displayName, p.nickname, p.name])
 
 /** A person as a row that opens their profile. */
 export function personEntry(p: PalettePerson): PaletteEntry {
@@ -319,6 +321,10 @@ export interface SectionInput {
   recent?: PaletteEntry[]
   /** Command ids of the screens to offer under "Go to" for an empty query, in sidebar order. */
   places?: string[]
+  /** Commands with their argument typed inline (`intentRows`), ranked with the commands. */
+  intents?: Ranked<PaletteEntry>[]
+  /** Extra score for a row from what was picked before (`booster`), by row key. */
+  boost?: (key: string) => number
 }
 
 /** How many rows `remember` keeps. */
@@ -333,6 +339,20 @@ export function remember(recent: PaletteEntry[], entry: PaletteEntry): PaletteEn
 
 /** Rows per group when searching everything; a scope shows all of its results. */
 const PER_GROUP = 4
+
+/** A screen is what a short query most often means; a single setting's value rarely is. */
+const SCREEN = 30
+const SETTING_VALUE = -40
+
+/** How much more or less likely a command row is, before looking at the query. */
+function prior(e: PaletteEntry): number {
+  if (e.arg === null && e.id.startsWith("nav.")) return SCREEN
+  if (e.id === "settings.set") return SETTING_VALUE
+  return 0
+}
+
+/** Commands shown above friends and Roblox results when searching everything. */
+const TOP_COMMANDS = 4
 
 /** Order of Roblox result groups. Titles come from bonsai-core's `Group::title`. */
 const REMOTE_GROUPS = ["Pasted link", "People", "Experiences", "Communities", "Marketplace"]
@@ -371,19 +391,29 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
     )
     return out
   }
+  const ranked = () => {
+    const boost = input.boost
+    const scored = rankScored(input.commands, text, (e) => prior(e) + (boost?.(e.key) ?? 0))
+    const intents = (input.intents ?? []).map((r) => ({ ...r, score: r.score + (boost?.(r.entry.key) ?? 0) }))
+    return [...intents, ...scored].sort((a, b) => b.score - a.score)
+  }
   if (input.scope === "commands") {
-    add("Commands", filterEntries(input.commands, text))
+    add(
+      "Commands",
+      ranked().map((r) => r.entry),
+    )
     return out
   }
 
   let rest: PaletteEntry[] = []
   if (all) {
-    const matched = filterEntries(input.commands, text)
-    const terms = q.split(/\s+/)
-    const inTitle = (e: PaletteEntry) => terms.every((t) => e.title.toLowerCase().includes(t))
-    const top = matched.filter(inTitle).slice(0, 3)
-    add("Commands", top)
-    rest = matched.filter((e) => !top.includes(e))
+    const matched = ranked()
+    const top = matched.filter((r) => r.strong).slice(0, TOP_COMMANDS)
+    add(
+      "Commands",
+      top.map((r) => r.entry),
+    )
+    rest = matched.filter((r) => !top.includes(r)).map((r) => r.entry)
   }
 
   const shownPeople = new Set<number>()

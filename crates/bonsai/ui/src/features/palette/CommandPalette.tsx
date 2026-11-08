@@ -1,6 +1,8 @@
 import { createEffect, createMemo, createSignal, For, Match, onMount, Show, Switch } from "solid-js"
 import { createStore } from "solid-js/store"
 import { filterEntries } from "~/lib/commands/filter"
+import { intentRows, remoteTail } from "~/lib/commands/intent"
+import { booster, emptyUsage, loadUsage, record, saveUsage, type Usage } from "~/lib/commands/learn"
 import {
   argEntries,
   argHint,
@@ -28,6 +30,13 @@ import { Avatar, Icon, Kbd, SegmentedControl, Spinner, TextField, Thumbnail, use
 
 /** Rows picked from the command bar this session, newest first, per account. */
 const [recents, setRecents] = createStore<Record<string, PaletteEntry[]>>({})
+/** What each account picked for what it typed, loaded from this machine on first use. */
+const [usage, setUsage] = createStore<Record<string, Usage>>({})
+
+function usageOf(account: string): Usage {
+  if (!usage[account]) setUsage(account, loadUsage(account))
+  return usage[account]
+}
 
 /** The command bar. Typing searches commands, friends and Roblox (people, experiences,
  * communities, items) at once; ←/→, Tab or a prefix (`@`, `g:`, `#`, `i:`, `>`) narrows it to one.
@@ -67,6 +76,7 @@ export function CommandPalette() {
       id: f.id,
       name: f.name,
       displayName: f.displayName,
+      nickname: f.nickname,
       inGame: f.presence === "game",
       presence: f.presence,
       status: f.status,
@@ -89,13 +99,17 @@ export function CommandPalette() {
   const [actionsOf, setActionsOf] = createSignal<{ entry: PaletteEntry; query: string } | null>(null)
   const [active, setActive] = createSignal(0)
 
+  /** The argument part of "join tower of hell", searched instead of the whole query. */
+  const tail = createMemo(() =>
+    scope() === "all" && !asking() && !actionsOf() ? remoteTail(entries(), query()) : null,
+  )
   const noResults = (): RemoteSearch => ({ loading: false, rows: [] })
   const remote = useLive(
     () => {
       if (actionsOf()) return ""
       const cmd = asking()
       if (cmd) return cmd.ask === "user" ? remoteQuery("people", query()) : ""
-      return remoteQuery(scope(), query())
+      return remoteQuery(scope(), tail() ?? query())
     },
     async (q) => (q ? commands.remoteSearch(q) : noResults()),
     noResults,
@@ -110,6 +124,7 @@ export function CommandPalette() {
     }
     const cmd = asking()
     if (cmd) return [{ title: "", rows: argEntries(cmd, query(), people(), remoteRows()) }]
+    const all = scope() === "all" || scope() === "commands"
     return paletteSections({
       scope: scope(),
       text: query(),
@@ -118,6 +133,16 @@ export function CommandPalette() {
       remote: remoteRows(),
       recent: recents[account()],
       places: places(),
+      intents: all
+        ? intentRows({
+            commands: entries(),
+            text: query(),
+            people: people(),
+            remote: remoteRows(),
+            remoteFor: tail() ?? undefined,
+          })
+        : [],
+      boost: booster(usage[account()] ?? emptyUsage(), query()),
     })
   })
   const rows = createMemo(() => flatRows(sections()))
@@ -141,7 +166,10 @@ export function CommandPalette() {
   createEffect(() => {
     list?.querySelector(`[data-index="${active()}"]`)?.scrollIntoView({ block: "nearest" })
   })
-  onMount(() => input?.focus())
+  onMount(() => {
+    usageOf(account())
+    input?.focus()
+  })
 
   const onInput = (v: string) => {
     const typed = !asking() && !actionsOf() ? parseScope(v) : null
@@ -185,7 +213,13 @@ export function CommandPalette() {
       input?.focus()
       return
     }
-    if (!nested()) setRecents(account(), (r) => remember(r ?? [], e))
+    if (!nested()) {
+      const a = account()
+      setRecents(a, (r) => remember(r ?? [], e))
+      const u = record(usageOf(a), e.key, query())
+      setUsage(a, u)
+      saveUsage(a, u)
+    }
     dialog.close()
     void run(e.id, e.arg)
   }

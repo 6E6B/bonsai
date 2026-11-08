@@ -1,12 +1,9 @@
-import { rank } from "~/lib/search"
+import { rankScored, type Searchable } from "./match"
 
-export interface Searchable {
-  title: string
-  words: string
-}
+export type { Searchable }
 
-/** Keeps entries whose title or keywords contain every word of the query, best match first
- * (see `rank`). Title matches count more than keyword matches. */
+/** Keeps entries whose title or keywords match the query, best match first (see `match.ts`).
+ * Title matches count more than keyword matches; typos and synonyms are allowed. */
 export function filterEntries<T extends Searchable>(entries: T[], query: string): T[] {
-  return rank(entries, query, (e) => [e.title, e.words])
+  return rankScored(entries, query).map((r) => r.entry)
 }
