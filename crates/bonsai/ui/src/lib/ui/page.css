@@ -74,8 +74,14 @@
     overflow-y: auto;
   }
 
+  /* A header whose contents all render nothing (e.g. no totals yet) takes no space. */
+  [data-component="side-panel"] > [data-slot="header"]:empty {
+    display: none;
+  }
+
   /* Without a header, the body starts at the same inset as a page. */
-  [data-component="side-panel"] > [data-slot="body"]:first-child {
+  [data-component="side-panel"] > [data-slot="body"]:first-child,
+  [data-component="side-panel"] > [data-slot="header"]:empty + [data-slot="body"] {
     padding-top: 16px;
   }
 
