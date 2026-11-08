@@ -184,6 +184,8 @@ impl RateLimiter {
     }
 
     /// How long to wait before the next request on bucket `host` may go out; takes the token.
+    /// Requests line up behind each other, and behind a hold: one asked for during a hold goes
+    /// after it ends, spaced at the bucket's rate, not all at once when it lifts.
     fn reserve(&self, host: &str) -> Duration {
         let (rate, burst) = self.limits(host);
         let now = Instant::now();
@@ -193,27 +195,86 @@ impl RateLimiter {
             last: now,
             blocked_until: None,
         });
-        b.tokens = (b.tokens + now.duration_since(b.last).as_secs_f64() * rate).min(burst);
-        b.last = now;
-        let mut wait = Duration::ZERO;
-        if let Some(u) = b.blocked_until {
-            if u > now {
-                wait = u - now;
-            } else {
+        // `last` is in the future during a hold: nothing refills until it ends.
+        if now > b.last {
+            b.tokens = (b.tokens + (now - b.last).as_secs_f64() * rate).min(burst);
+            b.last = now;
+        }
+        let held = match b.blocked_until {
+            Some(u) if u > now => u - now,
+            Some(_) => {
                 b.blocked_until = None;
+                Duration::ZERO
             }
-        }
+            None => Duration::ZERO,
+        };
         b.tokens -= 1.0;
-        if b.tokens < 0.0 {
-            wait = wait.max(Duration::from_secs_f64(-b.tokens / rate));
-        }
-        wait
+        let queued = if b.tokens < 0.0 {
+            Duration::from_secs_f64(-b.tokens / rate)
+        } else {
+            Duration::ZERO
+        };
+        held + queued
+    }
+
+    /// How much longer bucket `host` is held, if at all.
+    fn held_for(&self, host: &str) -> Duration {
+        let now = Instant::now();
+        self.buckets
+            .lock()
+            .get(host)
+            .and_then(|b| b.blocked_until)
+            .map_or(Duration::ZERO, |u| u.saturating_duration_since(now))
     }
 
     pub async fn acquire(&self, host: &str) {
-        let wait = self.reserve(host);
-        if !wait.is_zero() {
+        let start = Instant::now();
+        let mut wait = self.reserve(host);
+        while !wait.is_zero() {
             tokio::time::sleep(wait).await;
+            // A 429 or a spent quota may have held the bucket while this one waited. Going
+            // now would only earn another 429, so take a new place after the hold.
+            wait = if self.held_for(host).is_zero() {
+                Duration::ZERO
+            } else {
+                self.reserve(host)
+            };
+        }
+        let waited = start.elapsed();
+        if waited >= SLOW_WAIT {
+            tracing::debug!(
+                bucket = host,
+                waited_ms = waited.as_millis() as u64,
+                "rate limiter wait"
+            );
+        }
+    }
+
+    /// Hold bucket `host` until `until`. Nothing refills during a hold, and what was already
+    /// owed stays owed.
+    fn hold(b: &mut Bucket, until: Instant) -> Duration {
+        let now = Instant::now();
+        let until = b.blocked_until.map_or(until, |u| u.max(until));
+        b.blocked_until = Some(until);
+        b.tokens = b.tokens.min(0.0);
+        b.last = b.last.max(until);
+        until.saturating_duration_since(now)
+    }
+
+    fn bucket_mut<'a>(&self, map: &'a mut HashMap<String, Bucket>, host: &str) -> &'a mut Bucket {
+        let (_, burst) = self.limits(host);
+        map.entry(host.to_string()).or_insert(Bucket {
+            tokens: burst,
+            last: Instant::now(),
+            blocked_until: None,
+        })
+    }
+
+    /// Tell the user why requests on `host` are waiting.
+    fn note_hold(&self, host: &str, d: Duration) {
+        tracing::debug!(bucket = host, held_ms = d.as_millis() as u64, "rate limiter hold");
+        if let Some(f) = &*self.on_block.lock() {
+            f(host, d);
         }
     }
 
@@ -221,41 +282,35 @@ impl RateLimiter {
     /// `reset`. This only ever slows the bucket down: a bucket covers a whole host, and the
     /// server may count some of its endpoints apart.
     pub fn observe(&self, host: &str, remaining: u64, reset: Duration) {
-        let (_, burst) = self.limits(host);
-        let now = Instant::now();
-        let mut map = self.buckets.lock();
-        let b = map.entry(host.to_string()).or_insert(Bucket {
-            tokens: burst,
-            last: now,
-            blocked_until: None,
-        });
-        if remaining == 0 {
-            let until = now + reset;
-            b.blocked_until = Some(b.blocked_until.map_or(until, |u| u.max(until)));
-        } else {
-            b.tokens = b.tokens.min(remaining as f64);
+        let held = {
+            let mut map = self.buckets.lock();
+            let b = self.bucket_mut(&mut map, host);
+            if remaining == 0 {
+                Self::hold(b, Instant::now() + reset)
+            } else {
+                b.tokens = b.tokens.min(remaining as f64);
+                Duration::ZERO
+            }
+        };
+        // Short holds are a busy second; long ones would otherwise look like a hang.
+        if held >= SLOW_WAIT {
+            self.note_hold(host, held);
         }
     }
 
     /// The server said 429: hold every account's requests on this bucket.
     pub fn block(&self, host: &str, d: Duration) {
-        let remaining = {
+        let held = {
             let mut map = self.buckets.lock();
-            let now = Instant::now();
-            let b = map.entry(host.to_string()).or_insert(Bucket {
-                tokens: 0.0,
-                last: now,
-                blocked_until: None,
-            });
-            let until = b.blocked_until.map_or(now + d, |u| u.max(now + d));
-            b.blocked_until = Some(until);
-            until.saturating_duration_since(now)
+            let b = self.bucket_mut(&mut map, host);
+            Self::hold(b, Instant::now() + d)
         };
-        if let Some(f) = &*self.on_block.lock() {
-            f(host, remaining);
-        }
+        self.note_hold(host, held);
     }
 }
+
+/// A limiter wait or hold at least this long is logged, and a hold this long is shown.
+const SLOW_WAIT: Duration = Duration::from_secs(5);
 
 /// A completed response.
 #[derive(Debug)]
@@ -1166,6 +1221,38 @@ mod tests {
         assert!(l.reserve("b").is_zero());
         l.block("b", Duration::from_secs(5));
         assert!(l.reserve("b") >= Duration::from_secs(4));
+    }
+
+    #[test]
+    fn requests_during_a_hold_are_spaced_after_it() {
+        let l = RateLimiter::new(2.0, 4.0);
+        l.block("a", Duration::from_secs(10));
+        let first = l.reserve("a");
+        let second = l.reserve("a");
+        assert!(first >= Duration::from_secs(9), "{first:?}");
+        // Not all at once when the hold lifts: one every half second.
+        let gap = second.saturating_sub(first);
+        assert!(gap >= Duration::from_millis(400), "{gap:?}");
+    }
+
+    #[tokio::test]
+    async fn a_waiting_request_does_not_go_into_a_newer_hold() {
+        let l = Arc::new(RateLimiter::new(10.0, 1.0));
+        l.acquire("a").await;
+        let start = Instant::now();
+        let waiter = {
+            let l = l.clone();
+            tokio::spawn(async move { l.acquire("a").await })
+        };
+        // It was due in 100 ms; a 429 lands first.
+        tokio::time::sleep(Duration::from_millis(20)).await;
+        l.block("a", Duration::from_millis(300));
+        waiter.await.unwrap();
+        assert!(
+            start.elapsed() >= Duration::from_millis(300),
+            "{:?}",
+            start.elapsed()
+        );
     }
 
     #[test]
