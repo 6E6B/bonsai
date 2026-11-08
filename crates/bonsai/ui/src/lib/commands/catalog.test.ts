@@ -205,7 +205,6 @@ const CASES: [string, string][] = [
   ["unfriend builder", "intent:user.unfriend:102"],
   ["follow luke", "intent:user.follow:103"],
   ["friends of luke", "intent:user.friends:103"],
-  ["find luke", "intent:user.find:103"],
   ["profile roblox", "intent:user.open:1"],
   ["join tower of hell", "intent:game.join:1962086868"],
   ["join bloxburg", "intent:game.join:185655149"],

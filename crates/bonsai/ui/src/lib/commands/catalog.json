@@ -1824,16 +1824,6 @@
     },
     {
       "arg": "user",
-      "id": "user.find",
-      "keywords": [
-        "find",
-        "where",
-        "server"
-      ],
-      "title": "Find which server a user is in"
-    },
-    {
-      "arg": "user",
       "id": "user.open",
       "keywords": [
         "profile",

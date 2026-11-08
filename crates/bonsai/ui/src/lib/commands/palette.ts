@@ -451,7 +451,6 @@ const ACTIONS: Record<RemoteKind, Action[]> = {
     { id: "user.message", arg: (e) => String(e.id) },
     { id: "trade.new", arg: (e) => String(e.id) },
     { id: "inventory.view", arg: (e) => String(e.id) },
-    { id: "user.find", arg: (e) => String(e.id) },
     { id: "user.add_friend", arg: (e) => String(e.id) },
     { id: "user.follow", arg: (e) => String(e.id) },
     { id: "user.block", arg: (e) => String(e.id) },

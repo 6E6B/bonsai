@@ -64,9 +64,4 @@ describe("userMenu", () => {
   it("leaves out Open profile on the profile itself", () => {
     expect(labels(userMenu(1, { onProfile: true }))).not.toContain("user.open")
   })
-
-  it("only offers Find server when the game isn't known", () => {
-    expect(labels(userMenu(1, { inGame: true }))).not.toContain("Find server")
-    expect(labels(userMenu(1))).toContain("Find server")
-  })
 })

@@ -5,24 +5,27 @@ import { wroteRecently } from "~/lib/plugins"
 import { shell } from "~/lib/store"
 import { IconButton, SearchButton, Tooltip } from "~/lib/ui"
 
-/** The controls in the title bar: the command bar trigger, the plugin kill
- * switch while a plugin has written recently, notifications and the drawer toggle. Space
- * around them drags the window. */
-export function TopBar(props: { drawer: boolean }) {
+/** The command bar trigger, centered in the title bar. */
+export function TopSearch() {
   const keys = () => shortcutOf("palette.open")?.split("+")
+  return (
+    <SearchButton
+      placeholder="Search, paste a link, or type > for commands"
+      keys={keys()}
+      onClick={() => run("palette.open")}
+    />
+  )
+}
+
+/** The buttons on the right of the title bar: the plugin kill switch while a plugin has
+ * written recently, notifications, Discord and the drawer toggle. Space around them drags
+ * the window. */
+export function TopBar(props: { drawer: boolean }) {
   const [now, setNow] = createSignal(Date.now())
   const timer = setInterval(() => setNow(Date.now()), 10_000)
   onCleanup(() => clearInterval(timer))
   return (
-    <div data-tauri-drag-region class="flex min-w-0 flex-1 items-center gap-2 px-2">
-      <div data-tauri-drag-region class="flex min-w-0 flex-1 justify-center">
-        <SearchButton
-          class="max-w-xl"
-          placeholder="Search, paste a link, or type > for commands"
-          keys={keys()}
-          onClick={() => run("palette.open")}
-        />
-      </div>
+    <div data-tauri-drag-region class="flex shrink-0 items-center gap-2 px-2">
       <Show when={wroteRecently(shell.pluginWrote, now())}>
         <Tooltip
           content="A plugin wrote recently. Click to stop all plugins."

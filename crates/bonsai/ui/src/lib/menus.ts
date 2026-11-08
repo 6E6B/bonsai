@@ -114,7 +114,6 @@ export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[
     sep,
     ...(opts.onProfile ? [] : [menuItem("inventory.view", { arg: id, icon: "inventory", label: "Inventory" })]),
     menuItem("user.friends", { arg: id, icon: "friends", label: "Friends" }),
-    ...(opts.inGame ? [] : [menuItem("user.find", { arg: id, icon: "search", label: "Find server" })]),
     sep,
     { kind: "submenu", label: "Manage", icon: "sliders", items: manage },
     ...pluginMenu("user", userId),

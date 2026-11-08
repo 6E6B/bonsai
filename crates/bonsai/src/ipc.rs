@@ -1529,7 +1529,6 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         CommandId::Unfollow => user_action(core, acting()?, &inv, Core::unfollow),
         CommandId::Block => user_action(core, acting()?, &inv, Core::block),
         CommandId::Unblock => user_action(core, acting()?, &inv, Core::unblock),
-        CommandId::FindUser => user_action(core, acting()?, &inv, Core::find_user),
         CommandId::SetNickname | CommandId::SetNote => {
             let a = acting()?;
             let raw = arg().ok_or_else(|| "Which user?".to_owned())?;

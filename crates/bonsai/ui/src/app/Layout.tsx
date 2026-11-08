@@ -54,7 +54,7 @@ import { Sidebar } from "./shell/Sidebar"
 import { StatusBar } from "./shell/StatusBar"
 import { TabBar } from "./shell/TabBar"
 import { TitleBar } from "./shell/TitleBar"
-import { TopBar } from "./shell/TopBar"
+import { TopBar, TopSearch } from "./shell/TopBar"
 import { VaultForm } from "./shell/VaultForm"
 
 /**
@@ -536,7 +536,7 @@ export function Layout(props: ParentProps) {
       data-status-bar={shell.look.statusBar ? "" : undefined}
       class="flex h-full min-h-0 flex-col bg-deep text-fg"
     >
-      <TitleBar>
+      <TitleBar center={<TopSearch />}>
         <TopBar drawer={drawer()} />
       </TitleBar>
       <div class="flex min-h-0 flex-1">

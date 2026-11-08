@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::Core;
 use crate::effects::Effect;
 use crate::res::{Key, Page, Res};
-use crate::store::{Presence, PresenceKind, UserInfo};
+use crate::store::{Presence, UserInfo};
 
 /// Profile header data, shared by every viewer.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -229,63 +229,6 @@ impl Core {
                 Ok(p)
             },
         )
-    }
-
-    /// Asks where a user is right now and says so in a toast. Presence changes by the minute,
-    /// so this skips the cache, then marks it stale so an open profile picks up the answer.
-    pub fn find_user(&self, account: AccountId, user_id: u64) {
-        let inner = self.inner.clone();
-        let Some(client) = inner.client(account) else {
-            self.notice("No account to ask with.", true);
-            return;
-        };
-        inner.store.write().jobs += 1;
-        self.inner.rt.spawn(async move {
-            let body = presence::v1::UserPresenceRequest {
-                user_ids: Some(vec![user_id as i64]),
-            };
-            match presence::v1::post_presence_users(&client, &body).await {
-                Ok(r) => {
-                    let p = r
-                        .user_presences
-                        .unwrap_or_default()
-                        .into_iter()
-                        .find_map(Presence::from_api)
-                        .map(|(_, p)| p)
-                        .unwrap_or_default();
-                    inner.note_presence(account, &[(user_id, p.kind)]);
-                    let text = {
-                        let s = inner.store.read();
-                        let name = s
-                            .users
-                            .get(&user_id)
-                            .map(|u| u.display_name.clone())
-                            .filter(|n| !n.is_empty())
-                            .unwrap_or_else(|| format!("User {user_id}"));
-                        let game = p
-                            .universe_id
-                            .and_then(|u| s.games.get(&u))
-                            .map(|g| g.name.as_str());
-                        whereabouts(&name, &p, game)
-                    };
-                    inner.toast(Some(account), text, false);
-                    inner.res.invalidate(account, "presence");
-                }
-                Err(e) => {
-                    inner.note_error(account, &e);
-                    inner.toast(
-                        Some(account),
-                        format!("Could not find them: {}", e.user_message()),
-                        true,
-                    );
-                }
-            }
-            {
-                let mut s = inner.store.write();
-                s.jobs = s.jobs.saturating_sub(1);
-            }
-            inner.repaint();
-        });
     }
 
     /// Pending friend requests to `account`, newest first.
@@ -918,25 +861,6 @@ fn captcha() -> Error {
     Error::Message("Roblox wants a captcha for this. Do it once on the website, then try again.".into())
 }
 
-/// One line saying where a user is. `game` is the experience's name when it is cached.
-fn whereabouts(name: &str, p: &Presence, game: Option<&str>) -> String {
-    match p.kind {
-        PresenceKind::InGame => {
-            let game = game
-                .or_else(|| (!p.last_location.is_empty()).then_some(p.last_location.as_str()))
-                .unwrap_or("an experience");
-            if p.job_id.is_some() {
-                format!("{name} is in {game}. Use Join to follow them.")
-            } else {
-                format!("{name} is in {game}. Their server is hidden from you.")
-            }
-        }
-        PresenceKind::InStudio => format!("{name} is in Studio."),
-        PresenceKind::Online => format!("{name} is online, not in an experience."),
-        PresenceKind::Offline | PresenceKind::Invisible => format!("{name} is offline."),
-    }
-}
-
 impl crate::core::Inner {
     /// Pending friend requests to `account`, newest first.
     pub(crate) fn friend_requests(
@@ -1075,27 +999,5 @@ mod tests {
         assert_eq!(clip("abcdef", 3), "abc");
         assert_eq!(clip("ab cd", 3), "ab");
         assert_eq!(clip("ééé", 2), "éé");
-    }
-
-    #[test]
-    fn whereabouts_lines() {
-        let mut p = Presence {
-            kind: PresenceKind::InGame,
-            last_location: "Obby".into(),
-            ..Default::default()
-        };
-        assert_eq!(
-            whereabouts("Ann", &p, None),
-            "Ann is in Obby. Their server is hidden from you."
-        );
-        p.job_id = Some("abc".into());
-        assert_eq!(
-            whereabouts("Ann", &p, Some("Tower")),
-            "Ann is in Tower. Use Join to follow them."
-        );
-        p.last_location.clear();
-        assert!(whereabouts("Ann", &p, None).contains("an experience"));
-        p.kind = PresenceKind::Invisible;
-        assert_eq!(whereabouts("Ann", &p, None), "Ann is offline.");
     }
 }
