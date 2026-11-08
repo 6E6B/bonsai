@@ -838,7 +838,7 @@ export default function Components() {
           />
           <PersonTile
             class="w-24"
-            name="Tilework +1"
+            name="Tilework"
             presence="game"
             status="Brick Plaza"
             stack={[{ name: "Seraphon" }]}

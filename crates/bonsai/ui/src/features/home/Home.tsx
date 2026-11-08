@@ -143,15 +143,16 @@ function ContinueRow(props: { games: GameCard[] }) {
   )
 }
 
-/** Wider than a friend on a profile, so the row has more room between pictures. */
-const PERSON_WIDTH = 112
+/** A little wider than a friend on a profile, for more room between pictures. */
+const PERSON_WIDTH = 104
 
 const nameOf = (f: Friend) => f.nickname || f.displayName
 
 const menuFor = (f: Friend) => userMenu(f.id, { friend: true, inGame: f.presence === "game", placeId: f.placeId })
 
-/** A friend as on a profile, or friends in the same experience as one stacked tile: the first
- * in front, "+n" after the name. Right-click a stack for each friend's menu. */
+/** A friend as on a profile, or friends in the same experience as one tile: the first one's
+ * picture, the others as small faces on it and named under it. Right-click a shared tile for
+ * each friend's menu. */
 function FriendTile(props: { users: Friend[] }) {
   const first = () => props.users[0]
   const others = () => props.users.slice(1)
@@ -162,8 +163,8 @@ function FriendTile(props: { users: Friend[] }) {
   return (
     <ContextMenu items={menu()}>
       <PersonTile
-        name={others().length > 0 ? `${nameOf(first())} +${others().length}` : nameOf(first())}
-        username={others().length > 0 ? undefined : first().name || undefined}
+        name={nameOf(first())}
+        username={first().name || undefined}
         src={thumbUrl("headshot", first().id, true)}
         presence={first().presence}
         status={first().presence === "game" ? first().status : undefined}

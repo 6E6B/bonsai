@@ -41,26 +41,14 @@
     margin-bottom: 6px;
   }
 
-  /* A stack: the front picture shifts left and a second, smaller one sits behind it, offset
-   * right, so the pair stays centered. The front is cut out of the background, ring and all, so the two
-   * edges don't run into each other. */
-  [data-component="person-tile"] [data-slot="picture"][data-stacked] {
-    transform: translateX(-10px);
-  }
-
-  [data-component="person-tile"] [data-slot="behind"] {
+  /* People with them: small faces on the picture's bottom-left corner, opposite the
+   * presence dot. */
+  [data-component="person-tile"] [data-slot="stack"] {
     position: absolute;
-    top: 0;
-    left: 28px;
-    transform: scale(0.85);
-  }
-
-  [data-component="person-tile"] [data-slot="picture"][data-stacked] > [data-component="avatar"]:last-child::before {
-    content: "";
-    position: absolute;
-    inset: calc(-1 * (var(--avatar-halo) + var(--avatar-gap)) - 2px);
-    border-radius: var(--radius-full);
-    background: var(--color-canvas);
+    z-index: 1;
+    bottom: -2px;
+    left: -2px;
+    display: flex;
   }
 
   [data-component="person-tile"] [data-slot="name"] {
