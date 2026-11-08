@@ -230,7 +230,7 @@ export default function Profile() {
                     <VerifiedBadge size={18} />
                   </Show>
                   <Show when={u().premium || u().plus}>
-                    <PremiumBadge size={18} label={u().plus ? "Roblox Plus" : "Premium"} />
+                    <PremiumBadge size={24} label={u().plus ? "Roblox Plus" : "Premium"} />
                   </Show>
                   <Show when={u().banned}>
                     <Badge variant="danger">Banned</Badge>
