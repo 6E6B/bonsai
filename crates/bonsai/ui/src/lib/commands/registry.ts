@@ -4,6 +4,7 @@ import { selectedImageArgument, selectImage } from "~/lib/image-actions"
 import { type CommandInfo, commands as ipc } from "~/lib/ipc/bindings"
 import { refreshShell } from "~/lib/store"
 import { type ConfirmOptions, type IconName, type MenuEntry, showToast } from "~/lib/ui"
+import { refreshUpdates } from "~/lib/updates"
 import { confirmations } from "./confirm"
 import { isPlain, match, toPress } from "./keys"
 import { begin } from "./running"
@@ -110,6 +111,8 @@ export async function run(id: string, arg: string | null = null, asAccount: numb
   return ok
 }
 
+const UPDATE_COMMANDS = new Set(["app.check_updates", "app.download_update", "app.install_update"])
+
 /** Sends a command to the backend, skipping any UI handler. A handler that also needs the
  * backend (like opening a screen after `trade.new`) calls this. True when it ran. */
 export async function runBackend(id: string, arg: string | null = null, asAccount: number | null = null) {
@@ -119,7 +122,11 @@ export async function runBackend(id: string, arg: string | null = null, asAccoun
   try {
     const r = await ipc.runCommand({ id, arg: imageArg, asAccount, context: pageContext })
     if (r.status === "error") showToast(r.error)
-    else await refreshShell().catch(() => {})
+    else {
+      // The updater keeps its own status, polled every couple of seconds. Read it now.
+      if (UPDATE_COMMANDS.has(id)) refreshUpdates()
+      await refreshShell().catch(() => {})
+    }
     return r.status === "ok"
   } finally {
     end()
