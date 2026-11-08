@@ -6,9 +6,16 @@
     min-width: 0;
   }
 
-  /* The picture is inset evenly from the card's edges. */
+  /* The two text lines set the card's height, so the picture has more room above and below than
+   * the plain inset. The left padding adds that extra, so the picture is inset evenly on all sides. */
   [data-component="person-card"] {
     --person-card-inset: 6px;
+    --person-card-picture: 28px;
+    --person-card-inset-start: calc(
+      var(--person-card-inset) +
+      (2 * var(--text-sm--line-height) - var(--person-card-picture)) /
+      2
+    );
 
     position: relative;
     display: flex;
@@ -27,7 +34,7 @@
     align-items: center;
     gap: 10px;
     min-width: 0;
-    padding: var(--person-card-inset) 10px var(--person-card-inset) var(--person-card-inset);
+    padding: var(--person-card-inset) 10px var(--person-card-inset) var(--person-card-inset-start);
     border: 0;
     border-radius: inherit;
     background: none;
@@ -44,6 +51,7 @@
 
   /* The stock md size (28px), so the picture and its ring sit inside the card with room to spare. */
   [data-component="person-card"] [data-component="avatar"] {
+    --avatar-size: var(--person-card-picture);
     --avatar-ring: var(--color-surface);
   }
 
