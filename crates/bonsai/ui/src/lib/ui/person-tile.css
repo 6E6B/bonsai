@@ -35,8 +35,32 @@
     box-shadow: 0 0 0 2px var(--color-focus);
   }
 
-  [data-component="person-tile"] [data-component="avatar"] {
+  [data-component="person-tile"] [data-slot="picture"] {
+    position: relative;
+    display: inline-flex;
     margin-bottom: 6px;
+  }
+
+  /* A stack: the front picture shifts left and a second, smaller one sits behind it, offset
+   * right, so the pair stays centered. The front is cut out of the background, ring and all, so the two
+   * edges don't run into each other. */
+  [data-component="person-tile"] [data-slot="picture"][data-stacked] {
+    transform: translateX(-10px);
+  }
+
+  [data-component="person-tile"] [data-slot="behind"] {
+    position: absolute;
+    top: 0;
+    left: 28px;
+    transform: scale(0.85);
+  }
+
+  [data-component="person-tile"] [data-slot="picture"][data-stacked] > [data-component="avatar"]:last-child::before {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * (var(--avatar-halo) + var(--avatar-gap)) - 2px);
+    border-radius: var(--radius-full);
+    background: var(--color-canvas);
   }
 
   [data-component="person-tile"] [data-slot="name"] {

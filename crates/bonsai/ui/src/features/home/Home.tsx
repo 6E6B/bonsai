@@ -1,23 +1,21 @@
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import type { Friend, GameCard } from "~/lib/ipc/bindings"
-import { joinUser, userMenu } from "~/lib/menus"
+import { userMenu } from "~/lib/menus"
 import { groupByGame } from "~/lib/presence"
 import { friends, shell, useHome } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile, ShelfSkeleton, tileGrid } from "~/lib/tiles"
 import {
   Alert,
-  Avatar,
   Button,
   ContextMenu,
   EmptyState,
-  IconButton,
-  ListItem,
+  type MenuEntry,
   Page,
+  PersonTile,
   SectionHeader,
-  Tooltip,
-  VirtualGrid,
+  VirtualShelf,
 } from "~/lib/ui"
 
 /** Landing screen: who is playing what, what you played last, and the Roblox home sorts. */
@@ -25,8 +23,8 @@ export default function Home() {
   const home = useHome()
   const playing = () => friends.friends.filter((f) => f.presence === "game")
   const online = () => friends.friends.filter((f) => f.presence === "online" || f.presence === "studio")
-  // Friends in the same experience sit together, biggest group first.
-  const playingRows = createMemo(() => groupByGame(playing()).flatMap((g) => g.users))
+  // One tile per experience friends are in, biggest group first, then one per friend online.
+  const strip = createMemo(() => [...groupByGame(playing()).map((g) => g.users), ...online().map((f) => [f])])
   return (
     <Show
       when={shell.accounts.length > 0}
@@ -44,28 +42,20 @@ export default function Home() {
       }
     >
       <Page class="gap-6">
-        <Show when={shell.look.homeFriends && playing().length > 0}>
-          <section class="flex flex-col gap-2">
-            <SectionHeader title="Friends playing" meta={playing().length} />
-            <VirtualGrid items={playingRows()} minItemWidth={ROW_WIDTH} estimateRowHeight={48} gap={4}>
-              {(f) => <FriendRow friend={f} />}
-            </VirtualGrid>
-          </section>
-        </Show>
-        <Show when={shell.look.homeFriends && online().length > 0}>
+        <Show when={shell.look.homeFriends && strip().length > 0}>
           <section class="flex flex-col gap-2">
             <SectionHeader
-              title="Friends online"
-              meta={online().length}
+              title="Friends"
+              meta={playing().length + online().length}
               actions={
                 <Button variant="ghost" size="sm" onClick={() => run("nav.friends")}>
                   See all
                 </Button>
               }
             />
-            <VirtualGrid items={online()} minItemWidth={ROW_WIDTH} estimateRowHeight={48} gap={4}>
-              {(f) => <FriendRow friend={f} />}
-            </VirtualGrid>
+            <VirtualShelf items={strip()} itemWidth={PERSON_WIDTH} aria-label="Friends">
+              {(users) => <FriendTile users={users} />}
+            </VirtualShelf>
           </section>
         </Show>
         <Show when={shell.look.homeContinue && home.recent.length > 0}>
@@ -147,34 +137,32 @@ function ContinueRow(props: { games: GameCard[] }) {
   )
 }
 
-/** Narrowest a friend row gets before the grid drops a column, as on the Friends screen. */
-const ROW_WIDTH = 280
+/** As wide as a friend on a profile. */
+const PERSON_WIDTH = 96
 
-/** A friend as on the Friends screen: avatar, name, then the game they're in or their status.
- * Join shows on hover when they're in a game. */
-function FriendRow(props: { friend: Friend }) {
-  const f = () => props.friend
-  const subtitle = () => (f().presence === "online" ? (f().name ? `@${f().name}` : "Online") : f().status)
+const nameOf = (f: Friend) => f.nickname || f.displayName
+
+const menuFor = (f: Friend) => userMenu(f.id, { friend: true, inGame: f.presence === "game", placeId: f.placeId })
+
+/** A friend as on a profile, or friends in the same experience as one stacked tile: the first
+ * in front, "+n" after the name. Right-click a stack for each friend's menu. */
+function FriendTile(props: { users: Friend[] }) {
+  const first = () => props.users[0]
+  const others = () => props.users.slice(1)
+  const menu = (): MenuEntry[] =>
+    others().length === 0
+      ? menuFor(first())
+      : props.users.map((f) => ({ kind: "submenu", label: nameOf(f), icon: "user", items: menuFor(f) }))
   return (
-    <ContextMenu items={userMenu(f().id, { friend: true, inGame: f().presence === "game", placeId: f().placeId })}>
-      <ListItem
-        leading={<Avatar name={f().displayName} presence={f().presence} src={thumbUrl("headshot", f().id)} />}
-        title={f().nickname || f().displayName}
-        subtitle={subtitle()}
-        onClick={() => run("user.open", String(f().id))}
-        actionsOnHover
-        actions={
-          <Show when={f().presence === "game"}>
-            <Tooltip content="Join">
-              <IconButton
-                size="sm"
-                icon="play"
-                label={`Join ${f().displayName}`}
-                onClick={() => run("game.join", joinUser(f().id))}
-              />
-            </Tooltip>
-          </Show>
-        }
+    <ContextMenu items={menu()}>
+      <PersonTile
+        name={others().length > 0 ? `${nameOf(first())} +${others().length}` : nameOf(first())}
+        username={others().length > 0 ? undefined : first().name || undefined}
+        src={thumbUrl("headshot", first().id, true)}
+        presence={first().presence}
+        status={first().presence === "game" ? first().status : undefined}
+        stack={others().map((f) => ({ name: nameOf(f), src: thumbUrl("headshot", f.id, true) }))}
+        onClick={() => run("user.open", String(first().id))}
       />
     </ContextMenu>
   )

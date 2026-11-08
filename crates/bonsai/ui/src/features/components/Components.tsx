@@ -836,6 +836,14 @@ export default function Components() {
             verified
             onClick={noop}
           />
+          <PersonTile
+            class="w-24"
+            name="Tilework +1"
+            presence="game"
+            status="Brick Plaza"
+            stack={[{ name: "Seraphon" }]}
+            onClick={noop}
+          />
           <PersonTile class="w-24" name="Seraphon" username="seraphon" presence="online" onClick={noop} />
         </div>
       </Section>
