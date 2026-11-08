@@ -38,7 +38,7 @@ export function PinForm(props: { onDone: () => void }) {
         <Button variant="ghost" type="button" onClick={() => props.onDone()}>
           Cancel
         </Button>
-        <Button variant="primary" type="submit" disabled={busy() || pin().length !== 4}>
+        <Button variant="primary" type="submit" loading={busy()} disabled={pin().length !== 4}>
           Unlock
         </Button>
       </div>

@@ -1,6 +1,6 @@
 import { For, Match, Show, Switch } from "solid-js"
 import { assetIcon } from "~/lib/asset-icon"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { compact, percent } from "~/lib/format"
 import type { GameCard, ValueTag } from "~/lib/ipc/bindings"
 import { wantsPreview } from "~/lib/item-preview"
@@ -123,7 +123,13 @@ export function PlayingRow(props: {
         onClick={() => run("game.open", String(props.placeId))}
         actions={
           props.noJoin ? undefined : (
-            <Button size="sm" variant="primary" icon="play" onClick={() => run("game.join", joinUser(props.userId))}>
+            <Button
+              size="sm"
+              variant="primary"
+              icon="play"
+              loading={isRunning("game.join", joinUser(props.userId))}
+              onClick={() => run("game.join", joinUser(props.userId))}
+            >
               Join
             </Button>
           )

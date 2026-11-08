@@ -1,7 +1,7 @@
 import { useParams, useSearchParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, Match, on, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { compact } from "~/lib/format"
 import {
   type Connection,
@@ -407,13 +407,23 @@ function FriendButton(props: { status: string; id: string }) {
     <Show
       when={props.status !== "none"}
       fallback={
-        <Button variant="primary" icon="user-plus" onClick={() => run("user.add_friend", props.id)}>
+        <Button
+          variant="primary"
+          icon="user-plus"
+          loading={isRunning("user.add_friend", props.id)}
+          onClick={() => run("user.add_friend", props.id)}
+        >
           Add friend
         </Button>
       }
     >
       <Show when={props.status === "received"}>
-        <Button variant="primary" icon="user-plus" onClick={() => run("user.accept_friend", props.id)}>
+        <Button
+          variant="primary"
+          icon="user-plus"
+          loading={isRunning("user.accept_friend", props.id)}
+          onClick={() => run("user.accept_friend", props.id)}
+        >
           Accept request
         </Button>
       </Show>

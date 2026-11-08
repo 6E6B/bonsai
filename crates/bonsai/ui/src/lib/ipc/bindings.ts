@@ -2129,6 +2129,13 @@ export type RoleRow = {
 	members: number,
 };
 
+/**  A command still working: the account it acts as, its id and the argument it was run with. */
+export type Running = {
+	account: Id | null,
+	id: string,
+	arg: string | null,
+};
+
 export type ScaleView = {
 	/**  The name `avatar.scale` takes. */
 	name: string,
@@ -2262,6 +2269,8 @@ export type Shell = {
 	active: Id | null,
 	offline: boolean,
 	jobs: number,
+	/**  Commands the user ran whose work hasn't finished, so their buttons can show a spinner. */
+	running: Running[],
 	toasts: Toast[],
 	keychainWarning: string | null,
 	/**  Robux of the active account, once known. */

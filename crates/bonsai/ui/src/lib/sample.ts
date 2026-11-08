@@ -127,6 +127,7 @@ export const browserShell: Shell = {
   active: 1,
   offline: false,
   jobs: 0,
+  running: [],
   toasts: [],
   keychainWarning: null,
   robux: 22,

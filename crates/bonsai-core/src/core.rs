@@ -196,7 +196,7 @@ pub(crate) struct Inner {
 
 pub struct Core {
     pub(crate) inner: Arc<Inner>,
-    tx: mpsc::UnboundedSender<Cmd>,
+    tx: mpsc::UnboundedSender<(Cmd, Option<crate::running::Busy>)>,
     rt: Option<tokio::runtime::Runtime>,
 }
 
@@ -304,13 +304,16 @@ impl Core {
                 }
             });
         }
-        let (tx, mut rx) = mpsc::unbounded_channel::<Cmd>();
+        let (tx, mut rx) = mpsc::unbounded_channel::<(Cmd, Option<crate::running::Busy>)>();
         {
             let inner = inner.clone();
             rt.spawn(async move {
-                while let Some(cmd) = rx.recv().await {
+                while let Some((cmd, busy)) = rx.recv().await {
                     let inner = inner.clone();
-                    tokio::spawn(async move { inner.handle(cmd).await });
+                    tokio::spawn(async move {
+                        inner.handle(cmd).await;
+                        drop(busy);
+                    });
                 }
             });
         }
@@ -360,7 +363,7 @@ impl Core {
         if self.accounts_locked() {
             return;
         }
-        let _ = self.tx.send(cmd);
+        let _ = self.tx.send((cmd, self.inner.busy()));
     }
 
     pub fn store(&self) -> RwLockReadGuard<'_, StoreData> {

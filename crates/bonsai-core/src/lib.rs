@@ -37,6 +37,7 @@ pub mod recent_servers;
 mod remote;
 pub mod res;
 pub mod resolve;
+pub mod running;
 pub mod search;
 pub mod security;
 pub mod seen;

@@ -1,7 +1,7 @@
 import { useParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
-import { handle, menuItem, run, runBackend } from "~/lib/commands/registry"
+import { handle, isRunning, menuItem, run, runBackend } from "~/lib/commands/registry"
 import { ago, compact, full } from "~/lib/format"
 import {
   type AffiliatesView,
@@ -388,6 +388,7 @@ function Header(props: { view: CommunityView; info: CommunityInfo }) {
                   class="w-36"
                   icon="user-plus"
                   disabled={!me() || g().locked}
+                  loading={isRunning("group.join", id())}
                   onClick={() => run("group.join", id())}
                 >
                   {g().publicEntry ? "Join" : "Ask to join"}
@@ -401,6 +402,7 @@ function Header(props: { view: CommunityView; info: CommunityInfo }) {
               icon="star"
               pressedIcon="star-fill"
               pressed={me()?.primary ?? false}
+              loading={isRunning("group.primary", id())}
               onChange={() => run("group.primary", id())}
             >
               Primary
@@ -488,6 +490,7 @@ function YourAccounts(props: { view: CommunityView }) {
               <Show when={a.known && !a.role && !a.pending && !props.view.info?.locked}>
                 <Button
                   size="sm"
+                  loading={isRunning("group.join", String(props.view.info?.id), a.active ? null : a.id)}
                   onClick={() => run("group.join", String(props.view.info?.id), a.active ? null : a.id)}
                 >
                   {open() ? "Join" : "Ask to join"}
@@ -577,6 +580,7 @@ function Members(props: { groupId: number; myRank: number; canRank: boolean; can
             size="sm"
             icon="user-minus"
             label={`Remove ${m.displayName}`}
+            loading={isRunning("group.kick", String(m.id))}
             onClick={() => run("group.kick", String(m.id))}
           />
         </Show>
@@ -624,11 +628,19 @@ function Requests(props: { groupId: number }) {
       else next.delete(id)
       return next
     })
+  // The last batch sent, so its button spins until the backend is done with it.
+  const [sent, setSent] = createSignal<{ id: string; arg: string }>()
   const answer = async (accept: boolean) => {
     const ids = [...picked()]
     if (ids.length === 0) return showToast("Select requests first.")
-    await run(accept ? "group.accept_request" : "group.decline_request", ids.join(","))
+    const batch = { id: accept ? "group.accept_request" : "group.decline_request", arg: ids.join(",") }
+    setSent(batch)
+    await run(batch.id, batch.arg)
     setPicked(new Set<number>())
+  }
+  const answering = (id: string) => {
+    const b = sent()
+    return b?.id === id && isRunning(b.id, b.arg)
   }
   onCleanup(handle("group.accept_selected", () => void answer(true)))
   onCleanup(handle("group.decline_selected", () => void answer(false)))
@@ -645,10 +657,19 @@ function Requests(props: { groupId: number }) {
           Select all loaded
         </Checkbox>
         <div class="flex gap-1.5">
-          <Button disabled={picked().size === 0} onClick={() => run("group.decline_selected")}>
+          <Button
+            loading={answering("group.decline_request")}
+            disabled={picked().size === 0}
+            onClick={() => run("group.decline_selected")}
+          >
             Decline selected
           </Button>
-          <Button variant="primary" disabled={picked().size === 0} onClick={() => run("group.accept_selected")}>
+          <Button
+            variant="primary"
+            loading={answering("group.accept_request")}
+            disabled={picked().size === 0}
+            onClick={() => run("group.accept_selected")}
+          >
             Accept selected
           </Button>
         </div>
@@ -670,10 +691,18 @@ function Requests(props: { groupId: number }) {
                 subtitle={`@${u.name} · ${ago(ms(u.created))}`}
                 actions={
                   <>
-                    <Button size="sm" onClick={() => run("group.decline_request", String(u.id))}>
+                    <Button
+                      size="sm"
+                      loading={isRunning("group.decline_request", String(u.id))}
+                      onClick={() => run("group.decline_request", String(u.id))}
+                    >
                       Decline
                     </Button>
-                    <Button size="sm" onClick={() => run("group.accept_request", String(u.id))}>
+                    <Button
+                      size="sm"
+                      loading={isRunning("group.accept_request", String(u.id))}
+                      onClick={() => run("group.accept_request", String(u.id))}
+                    >
                       Accept
                     </Button>
                   </>
@@ -935,6 +964,7 @@ function Thread(props: { groupId: number; post: OpenPost; canReply: boolean; can
                     size="sm"
                     icon="trash"
                     label="Delete reply"
+                    loading={isRunning("group.delete_reply", `${props.post.category}/${props.post.id}/${c.id}`)}
                     onClick={() => run("group.delete_reply", `${props.post.category}/${props.post.id}/${c.id}`)}
                   />
                 </Show>
@@ -999,7 +1029,12 @@ function NewPostForm(props: { groupId: number; categories: ForumCategoryRow[]; i
         <Button variant="ghost" type="button" onClick={() => props.onDone()}>
           Cancel
         </Button>
-        <Button variant="primary" type="submit" disabled={busy() || title().trim() === "" || text().trim() === ""}>
+        <Button
+          variant="primary"
+          type="submit"
+          loading={busy()}
+          disabled={title().trim() === "" || text().trim() === ""}
+        >
           Post
         </Button>
       </div>

@@ -5,7 +5,7 @@ import { canTryOn, showcaseAnimation, showsAlone, type TryOnItem, wearable } fro
 import { AvatarViewer, show3d } from "~/lib/avatar3d/viewer"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
-import { handle, menuItem, run } from "~/lib/commands/registry"
+import { handle, isRunning, menuItem, run } from "~/lib/commands/registry"
 import { ago, compact, date, full } from "~/lib/format"
 import { commands, type ItemCard, type ItemView, type OwnerRow, type Paged, type ResellerRow } from "~/lib/ipc/bindings"
 import { IdFact } from "~/lib/item-preview"
@@ -533,6 +533,7 @@ export default function ItemPage() {
                             pressedIcon="star-fill"
                             pressed={view.favorited ?? false}
                             disabled={view.favorited === null}
+                            loading={isRunning("market.favorite", target())}
                             onChange={() => run("market.favorite", target())}
                           >
                             Favorite
@@ -547,6 +548,7 @@ export default function ItemPage() {
                               icon="heart"
                               pressedIcon="heart-fill"
                               pressed={view.wishlisted}
+                              loading={isRunning("market.wishlist", target())}
                               onChange={() => run("market.wishlist", target())}
                             >
                               Wishlist

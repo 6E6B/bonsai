@@ -2,6 +2,7 @@ import { ToggleButton as KToggleButton } from "@kobalte/core/toggle-button"
 import { type JSX, Show } from "solid-js"
 import type { ButtonSize, ButtonVariant } from "./button"
 import { Icon, type IconName } from "./icon"
+import { Spinner } from "./spinner"
 
 export interface ToggleButtonProps {
   /** Comes from the store, never from local state: the button shows what the server says. */
@@ -17,6 +18,8 @@ export interface ToggleButtonProps {
   variant?: ButtonVariant
   size?: ButtonSize
   disabled?: boolean
+  /** Shows a spinner in place of the icon and disables the button, while the change is sent. */
+  loading?: boolean
   class?: string
 }
 
@@ -32,9 +35,11 @@ export function ToggleButton(props: ToggleButtonProps) {
       aria-label={props.label}
       pressed={props.pressed}
       onChange={props.onChange}
-      disabled={props.disabled}
+      disabled={props.disabled || props.loading}
     >
-      <Icon name={props.pressed ? (props.pressedIcon ?? props.icon) : props.icon} />
+      <Show when={!props.loading} fallback={<Spinner size="sm" />}>
+        <Icon name={props.pressed ? (props.pressedIcon ?? props.icon) : props.icon} />
+      </Show>
       <Show when={props.children}>{props.children}</Show>
     </KToggleButton>
   )

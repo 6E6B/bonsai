@@ -96,7 +96,7 @@ export function BuyForm(props: BuyFormProps) {
             </Button>
           }
         >
-          <Button variant="primary" type="submit" disabled={busy()}>
+          <Button variant="primary" type="submit" loading={busy()}>
             <Show when={props.price > 0} fallback="Get for free">
               Buy for <Robux amount={props.price} />
             </Show>

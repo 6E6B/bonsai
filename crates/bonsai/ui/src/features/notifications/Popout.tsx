@@ -1,5 +1,5 @@
 import { createSignal, For, onCleanup, Show } from "solid-js"
-import { handle, run } from "~/lib/commands/registry"
+import { handle, isRunning, run } from "~/lib/commands/registry"
 import { ago } from "~/lib/format"
 import { commands, type NotificationRow, type Paged } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
@@ -31,6 +31,7 @@ export function NotificationsButton() {
           variant="ghost"
           icon="check"
           disabled={shell.unread.notifications === 0}
+          loading={isRunning("notifications.mark_read")}
           onClick={() => run("notifications.mark_read")}
         >
           Mark all read

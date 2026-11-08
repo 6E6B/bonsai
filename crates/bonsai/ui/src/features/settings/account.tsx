@@ -1,5 +1,5 @@
 import { createSignal, For, onCleanup, Show } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { countdown, date } from "~/lib/format"
 import { type AccountInfoView, commands, type PinView, type SecurityView, type SessionsView } from "~/lib/ipc/bindings"
 import { voiceBanText } from "~/lib/moderation"
@@ -173,7 +173,12 @@ export function SecuritySection() {
                 </Button>
               }
             >
-              <Button size="sm" icon="lock" onClick={() => run("account.lock_pin")}>
+              <Button
+                size="sm"
+                icon="lock"
+                loading={isRunning("account.lock_pin")}
+                onClick={() => run("account.lock_pin")}
+              >
                 Lock
               </Button>
             </Show>
@@ -191,7 +196,13 @@ export function SecuritySection() {
         title="Signed-in sessions"
         meta={sessions.sessions.length || undefined}
         actions={
-          <Button size="sm" variant="danger" disabled={!activeAccount()} onClick={() => run("account.sign_out_others")}>
+          <Button
+            size="sm"
+            variant="danger"
+            disabled={!activeAccount()}
+            loading={isRunning("account.sign_out_others")}
+            onClick={() => run("account.sign_out_others")}
+          >
             Sign out others
           </Button>
         }
@@ -293,7 +304,12 @@ function TwoStepGroup() {
       <For each={sec.passkeys}>
         {(name) => (
           <SettingRow label={name} description="Passkey">
-            <Button size="sm" variant="danger" onClick={() => run("security.remove_passkey", name)}>
+            <Button
+              size="sm"
+              variant="danger"
+              loading={isRunning("security.remove_passkey", name)}
+              onClick={() => run("security.remove_passkey", name)}
+            >
               Remove
             </Button>
           </SettingRow>

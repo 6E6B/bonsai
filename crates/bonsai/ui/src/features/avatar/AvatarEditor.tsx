@@ -1,7 +1,7 @@
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import { AvatarViewer } from "~/lib/avatar3d/viewer"
 import { useSubTabs } from "~/lib/commands/hooks"
-import { menuItem, run } from "~/lib/commands/registry"
+import { isRunning, menuItem, run } from "~/lib/commands/registry"
 import {
   type AvatarView,
   commands,
@@ -242,6 +242,7 @@ export default function AvatarEditor() {
                           size="sm"
                           icon="x"
                           label="Take off"
+                          loading={isRunning("avatar.wear", `${w.id}:${w.typeId}`)}
                           onClick={() => run("avatar.wear", `${w.id}:${w.typeId}`)}
                         />
                       </>
@@ -294,7 +295,13 @@ export default function AvatarEditor() {
             onChange={setSection}
             actions={
               <>
-                <IconButton size="sm" icon="refresh" label="Redraw avatar image" onClick={() => run("avatar.redraw")} />
+                <IconButton
+                  size="sm"
+                  icon="refresh"
+                  label="Redraw avatar image"
+                  loading={isRunning("avatar.redraw")}
+                  onClick={() => run("avatar.redraw")}
+                />
                 <Button size="sm" icon="plus" onClick={saveOutfit}>
                   Save as outfit
                 </Button>

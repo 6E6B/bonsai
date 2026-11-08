@@ -1,5 +1,5 @@
 import { createMemo, For, Show } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { commands, type Person, type PrivacyRow } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { privacyOptions, shownPrivacy, valueLabel } from "~/lib/privacy"
@@ -61,7 +61,11 @@ export function PrivacySection() {
                 subtitle={p.name ? `@${p.name}` : undefined}
                 onClick={() => run("user.open", String(p.id))}
                 actions={
-                  <Button size="sm" onClick={() => run("user.unblock", String(p.id))}>
+                  <Button
+                    size="sm"
+                    loading={isRunning("user.unblock", String(p.id))}
+                    onClick={() => run("user.unblock", String(p.id))}
+                  >
                     Unblock
                   </Button>
                 }

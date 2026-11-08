@@ -125,6 +125,7 @@ export function AddAccount(props: { mode: AddMode; onDone: () => void }) {
                 <Button
                   variant="primary"
                   autofocus
+                  loading={saving()}
                   onClick={() => {
                     setSaving(true)
                     void commands.confirmLogin()

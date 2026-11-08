@@ -2,9 +2,13 @@ import { isTauri } from "@tauri-apps/api/core"
 import { createSignal } from "solid-js"
 import { selectedImageArgument, selectImage } from "~/lib/image-actions"
 import { type CommandInfo, commands as ipc } from "~/lib/ipc/bindings"
+import { refreshShell } from "~/lib/store"
 import { type ConfirmOptions, type IconName, type MenuEntry, showToast } from "~/lib/ui"
 import { confirmations } from "./confirm"
 import { isPlain, match, toPress } from "./keys"
+import { begin } from "./running"
+
+export { isRunning } from "./running"
 
 /**
  * The UI side of bonsai-core's command registry. Every button, menu item and shortcut calls
@@ -110,9 +114,16 @@ export async function run(id: string, arg: string | null = null, asAccount: numb
  * backend (like opening a screen after `trade.new`) calls this. True when it ran. */
 export async function runBackend(id: string, arg: string | null = null, asAccount: number | null = null) {
   const imageArg = id.startsWith("image.") ? (arg ?? selectedImageArgument()) : arg
-  const r = await ipc.runCommand({ id, arg: imageArg, asAccount, context: pageContext })
-  if (r.status === "error") showToast(r.error)
-  return r.status === "ok"
+  // Shows as running at once; the backend's list takes over once the shell has it.
+  const end = begin(id, imageArg, asAccount)
+  try {
+    const r = await ipc.runCommand({ id, arg: imageArg, asAccount, context: pageContext })
+    if (r.status === "error") showToast(r.error)
+    else await refreshShell().catch(() => {})
+    return r.status === "ok"
+  } finally {
+    end()
+  }
 }
 
 function isTyping(target: EventTarget | null) {

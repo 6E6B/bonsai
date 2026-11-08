@@ -122,7 +122,7 @@ function Charts(props: { view: DiscoverView; keep: (g: GameCard) => boolean; onO
           <Button
             class="self-start"
             variant="ghost"
-            disabled={props.view.loading}
+            loading={props.view.loading}
             onClick={() => run("list.more", props.view.moreKey)}
           >
             More charts

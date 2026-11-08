@@ -11,27 +11,30 @@ import { browserFriends, browserHome, browserShell } from "~/lib/sample"
  */
 
 /** A store that refetches on every `storeChanged` once started. A fetch that lands while
- * another is in flight runs once more afterwards instead of overlapping. */
+ * another is in flight runs once more afterwards instead of overlapping. `refresh` resolves
+ * once a fetch that started after the call has landed. */
 function mirror<T extends object>(initial: T, fetch: () => Promise<T>, key = "id") {
   const [state, setState] = createStore<T>(initial)
-  let inflight = false
+  let inflight: Promise<void> | undefined
   let again = false
   let started = false
 
-  async function refresh() {
+  function refresh(): Promise<void> {
     if (inflight) {
       again = true
-      return
+      return inflight
     }
-    inflight = true
-    try {
-      do {
-        again = false
-        setState(reconcile(await fetch(), { key }))
-      } while (again)
-    } finally {
-      inflight = false
-    }
+    inflight = (async () => {
+      try {
+        do {
+          again = false
+          setState(reconcile(await fetch(), { key }))
+        } while (again)
+      } finally {
+        inflight = undefined
+      }
+    })()
+    return inflight
   }
 
   return {
@@ -54,6 +57,7 @@ const shellMirror = mirror<Shell>(
     active: null,
     offline: false,
     jobs: 0,
+    running: [],
     toasts: [],
     keychainWarning: null,
     robux: null,
@@ -115,6 +119,9 @@ const mirrors = new Set<{ started: () => boolean; refresh: () => Promise<void> }
 ])
 
 export const shell = shellMirror.state
+
+/** Fetches the shell now. Resolves once it reflects everything done before the call. */
+export const refreshShell = () => shellMirror.refresh()
 
 /** The active account's friends, grouped by presence then name. The drawer and Friends page
  * read this. */

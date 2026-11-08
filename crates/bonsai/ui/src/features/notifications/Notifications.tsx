@@ -1,7 +1,7 @@
 import { createMemo, createResource, createSignal, onCleanup, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useListCursor } from "~/lib/commands/hooks"
-import { handle, run } from "~/lib/commands/registry"
+import { handle, isRunning, run } from "~/lib/commands/registry"
 import { ago } from "~/lib/format"
 import { commands, type NotificationRow, type Paged } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
@@ -94,7 +94,11 @@ export default function Notifications() {
       }
       actions={
         <>
-          <Button onClick={() => run("notifications.mark_read")} icon="check">
+          <Button
+            loading={isRunning("notifications.mark_read")}
+            onClick={() => run("notifications.mark_read")}
+            icon="check"
+          >
             Mark all read
           </Button>
         </>

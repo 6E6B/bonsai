@@ -714,6 +714,9 @@ export default function Components() {
         <ToggleButton icon="thumbs-up" pressedIcon="thumbs-up-fill" pressed onChange={noop}>
           21.9K
         </ToggleButton>
+        <ToggleButton icon="heart" pressedIcon="heart-fill" pressed={false} onChange={noop} loading>
+          Wishlist
+        </ToggleButton>
       </Section>
 
       <Section title="Menu and context menu">

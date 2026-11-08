@@ -979,6 +979,38 @@ async fn poll<T>(mut f: impl FnMut() -> bonsai_core::res::Res<T>) -> Arc<T> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn a_write_counts_as_running_until_it_finishes() {
+    let replay = Replay::from_fixture(&replay::load("friends_actions")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let key = bonsai_core::running::RunKey {
+        account: Some(ME),
+        command: "user.add_friend".into(),
+        arg: Some("156".into()),
+    };
+    {
+        let _scope = c.running_scope(key.clone());
+        c.add_friend(ME, 156);
+    }
+    assert_eq!(
+        c.store().running.get(&key),
+        Some(&1),
+        "running as soon as the command returns"
+    );
+    wait_for(c, "request sent", |s| {
+        s.toasts.iter().any(|t| t.text == "Friend request sent")
+    })
+    .await;
+    wait_for(c, "no longer running", |s| s.running.is_empty()).await;
+    // Work started outside a command, like a watcher's, is never shown as running.
+    c.accept_friend(ME, 2_000_001);
+    assert!(c.store().running.is_empty());
+    wait_for(c, "idle", |s| s.jobs == 0).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn people_actions_toast_and_report_errors() {
     let mut f = replay::load("friends_actions");
     f.interactions.extend(replay::load("blocking").interactions);

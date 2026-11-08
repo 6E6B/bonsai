@@ -799,7 +799,9 @@ impl Core {
         // Not loaded yet (joined from the list across experiences): wait for it, then join.
         let inner = self.inner.clone();
         let key = Key::private(account, "private_servers", place_id);
+        let busy = self.inner.busy();
         self.inner.rt.spawn(async move {
+            let _busy = busy;
             for _ in 0..100 {
                 let r = inner
                     .res

@@ -1,5 +1,5 @@
 import { createSignal, Show } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { date } from "~/lib/format"
 import { commands, type MyServerRow } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
@@ -84,6 +84,7 @@ export function ServersSection() {
                     <Button
                       size="sm"
                       disabled={!s.active}
+                      loading={isRunning("game.join_private_server", `${s.id} ${s.placeId}`)}
                       onClick={() => run("game.join_private_server", `${s.id} ${s.placeId}`)}
                     >
                       Join

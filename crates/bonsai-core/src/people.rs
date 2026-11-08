@@ -669,6 +669,7 @@ impl Core {
         }
         let core = self.handle();
         let name = who.to_string();
+        let busy = self.inner.busy();
         self.inner.rt.spawn(async move {
             let body = users::v1::MultiGetByUsernameRequest {
                 usernames: Some(vec![name.clone()]),
@@ -676,7 +677,10 @@ impl Core {
             };
             match users::v1::post_usernames_users(&core.inner.anon, &body).await {
                 Ok(r) => match r.data.unwrap_or_default().into_iter().find_map(|u| u.id) {
-                    Some(id) => f(&core, id as u64),
+                    Some(id) => {
+                        let _scope = busy.as_ref().map(crate::running::Busy::enter);
+                        f(&core, id as u64)
+                    }
                     None => core.notice(format!("No user is named {name}."), true),
                 },
                 Err(e) => core.notice(format!("Could not look up {name}: {}", e.user_message()), true),

@@ -314,7 +314,9 @@ impl Core {
             state.busy = true;
         }
         let core = self.clone();
+        let busy = self.inner.busy();
         self.inner.rt.spawn(async move {
+            let _busy = busy;
             let clear = core.clone();
             let erased = core
                 .inner
@@ -364,7 +366,9 @@ impl Core {
             state.error = None;
         }
         let core = self.clone();
+        let busy = self.inner.busy();
         self.inner.rt.spawn(async move {
+            let _busy = busy;
             let result: Result<(), String> = async {
                 let entry = client
                     .entry(target.kind, &target.id, Some(&target.version))
@@ -550,7 +554,9 @@ impl Core {
             s.error = None;
         }
         let core = self.clone();
+        let busy = self.inner.busy();
         self.inner.rt.spawn(async move {
+            let _busy = busy;
             let result = job.await;
             let mut s = core.inner.hub.state.write();
             s.busy = false;

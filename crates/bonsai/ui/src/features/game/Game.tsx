@@ -2,7 +2,7 @@ import { useParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
-import { handle, run } from "~/lib/commands/registry"
+import { handle, isRunning, run } from "~/lib/commands/registry"
 import { ago, compact, date, percent } from "~/lib/format"
 import {
   type BadgeRow,
@@ -303,7 +303,14 @@ function Header(props: { game: GameView; details: GameDetails }) {
       ]}
       actions={
         <>
-          <Button variant="primary" size="lg" icon="play" class="w-36" onClick={() => run("game.join", id())}>
+          <Button
+            variant="primary"
+            size="lg"
+            icon="play"
+            class="w-36"
+            loading={isRunning("game.join", id())}
+            onClick={() => run("game.join", id())}
+          >
             Join
           </Button>
           <Menu
@@ -321,6 +328,7 @@ function Header(props: { game: GameView; details: GameDetails }) {
             pressedIcon="thumbs-up-fill"
             pressed={me()?.vote === true}
             disabled={!me()}
+            loading={isRunning("game.like")}
             onChange={() => run("game.like")}
           >
             {compact(d().upVotes ?? 0)}
@@ -332,6 +340,7 @@ function Header(props: { game: GameView; details: GameDetails }) {
             pressedIcon="thumbs-down-fill"
             pressed={me()?.vote === false}
             disabled={!me()}
+            loading={isRunning("game.dislike")}
             onChange={() => run("game.dislike")}
           >
             {compact(d().downVotes ?? 0)}
@@ -343,6 +352,7 @@ function Header(props: { game: GameView; details: GameDetails }) {
             pressedIcon="star-fill"
             pressed={me()?.favorited ?? false}
             disabled={!me()}
+            loading={isRunning("game.favorite")}
             onChange={() => run("game.favorite")}
           >
             Favorite
@@ -356,6 +366,7 @@ function Header(props: { game: GameView; details: GameDetails }) {
               label="Notify"
               pressed={me()?.following ?? false}
               disabled={!me() || (!me()?.following && !me()?.canFollow)}
+              loading={isRunning("game.notify")}
               onChange={() => run("game.notify")}
             />
           </Tooltip>
@@ -484,7 +495,11 @@ const recentColumns: Column<RecentServerRow>[] = [
     align: "end",
     cell: (r) => (
       <>
-        <Button size="sm" onClick={() => run("game.join_job", recentKey(r))}>
+        <Button
+          size="sm"
+          loading={isRunning("game.join_job", recentKey(r))}
+          onClick={() => run("game.join_job", recentKey(r))}
+        >
           Join
         </Button>
         <Menu
@@ -565,7 +580,7 @@ function ServersPanel(props: { placeId: number; max: number }) {
             label="Copy invite link"
             onClick={() => run("game.copy_server_link", s.jobId)}
           />
-          <Button size="sm" onClick={() => run("game.join_job", s.jobId)}>
+          <Button size="sm" loading={isRunning("game.join_job", s.jobId)} onClick={() => run("game.join_job", s.jobId)}>
             Join
           </Button>
           <Menu
@@ -598,13 +613,28 @@ function ServersPanel(props: { placeId: number; max: number }) {
       <Toolbar
         actions={
           <>
-            <Button size="sm" variant="primary" onClick={() => run("game.join_best")}>
+            <Button
+              size="sm"
+              variant="primary"
+              loading={isRunning("game.join_best")}
+              onClick={() => run("game.join_best")}
+            >
               Join best
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => run("game.join_smallest")}>
+            <Button
+              size="sm"
+              variant="ghost"
+              loading={isRunning("game.join_smallest")}
+              onClick={() => run("game.join_smallest")}
+            >
               Smallest
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => run("game.join_random")}>
+            <Button
+              size="sm"
+              variant="ghost"
+              loading={isRunning("game.join_random")}
+              onClick={() => run("game.join_random")}
+            >
               Random
             </Button>
             <IconButton
@@ -661,12 +691,7 @@ function ServersPanel(props: { placeId: number; max: number }) {
           }
         />
         <Show when={list.more}>
-          <Button
-            class="self-start"
-            variant="ghost"
-            disabled={list.loading}
-            onClick={() => run("list.more", "servers")}
-          >
+          <Button class="self-start" variant="ghost" loading={list.loading} onClick={() => run("list.more", "servers")}>
             Load more servers
           </Button>
         </Show>
@@ -708,7 +733,11 @@ function PrivateServersPanel(props: { list: List<PrivateServerRow>; offer: Serve
                 title={s.name || "Private server"}
                 subtitle={`${s.mine ? "Yours" : `Owned by ${s.ownerName || "…"}`} · ${s.playing}/${s.maxPlayers} playing`}
                 actions={
-                  <Button size="sm" onClick={() => run("game.join_private_server", String(s.id))}>
+                  <Button
+                    size="sm"
+                    loading={isRunning("game.join_private_server", String(s.id))}
+                    onClick={() => run("game.join_private_server", String(s.id))}
+                  >
                     Join
                   </Button>
                 }
@@ -754,7 +783,7 @@ function BuyServerForm(props: { placeId: number; price: number; initial: string;
         <Button variant="ghost" type="button" onClick={() => props.onDone()}>
           Cancel
         </Button>
-        <Button variant="primary" type="submit" disabled={busy() || name().trim() === ""}>
+        <Button variant="primary" type="submit" loading={busy()} disabled={name().trim() === ""}>
           <Show when={props.price > 0} fallback="Create">
             Buy for <Robux amount={props.price} />
           </Show>
@@ -855,6 +884,7 @@ function EventsPanel(props: { list: List<EventRow> }) {
                   icon="bell"
                   pressedIcon="bell-fill"
                   pressed={e.going}
+                  loading={isRunning("game.event_notify", e.id)}
                   onChange={() => run("game.event_notify", e.id)}
                 >
                   Notify me
@@ -1018,7 +1048,11 @@ function FriendsHere(props: { list: List<ServerRow> }) {
               title={friendName(r.friend)}
               subtitle={`${serverName(r.server.jobId)} · ${r.server.playing}/${r.server.maxPlayers}`}
               actions={
-                <Button size="sm" onClick={() => run("game.join_job", r.server.jobId)}>
+                <Button
+                  size="sm"
+                  loading={isRunning("game.join_job", r.server.jobId)}
+                  onClick={() => run("game.join_job", r.server.jobId)}
+                >
                   Join
                 </Button>
               }
@@ -1080,7 +1114,11 @@ function BestServers(props: { placeId: number; onAll: () => void }) {
                     tone="capacity"
                   />
                 </div>
-                <Button size="sm" onClick={() => run("game.join_job", s.jobId)}>
+                <Button
+                  size="sm"
+                  loading={isRunning("game.join_job", s.jobId)}
+                  onClick={() => run("game.join_job", s.jobId)}
+                >
                   Join
                 </Button>
               </div>
@@ -1129,7 +1167,11 @@ function FriendServersPanel(props: { list: List<ServerRow> }) {
                 <Menu size="sm" items={joinAsItems("game.join_job", s.jobId)}>
                   Join as…
                 </Menu>
-                <Button size="sm" onClick={() => run("game.join_job", s.jobId)}>
+                <Button
+                  size="sm"
+                  loading={isRunning("game.join_job", s.jobId)}
+                  onClick={() => run("game.join_job", s.jobId)}
+                >
                   Join
                 </Button>
               </>

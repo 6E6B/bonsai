@@ -101,6 +101,8 @@ pub struct Shell {
     pub active: Option<Id>,
     pub offline: bool,
     pub jobs: u32,
+    /// Commands the user ran whose work hasn't finished, so their buttons can show a spinner.
+    pub running: Vec<Running>,
     pub toasts: Vec<Toast>,
     pub keychain_warning: Option<String>,
     /// Robux of the active account, once known.
@@ -147,6 +149,15 @@ pub struct Shell {
     /// Revisions of thumbnails that changed during the run, by `thumb://` path. `thumbUrl`
     /// adds them so the webview loads the new image instead of its cached copy.
     pub thumb_revs: std::collections::HashMap<String, u32>,
+}
+
+/// A command still working: the account it acts as, its id and the argument it was run with.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct Running {
+    pub account: Option<Id>,
+    pub id: String,
+    pub arg: Option<String>,
 }
 
 /// Display settings the whole window follows. Values as `settings.set` takes them.
@@ -1139,6 +1150,15 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         active: s.accounts.active.map(|a| Id(a.0)),
         offline: s.offline,
         jobs: s.jobs,
+        running: s
+            .running
+            .keys()
+            .map(|k| Running {
+                account: k.account.map(|a| Id(a.0)),
+                id: k.command.clone(),
+                arg: k.arg.clone(),
+            })
+            .collect(),
         toasts: s
             .toasts
             .iter()
@@ -1284,6 +1304,12 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
         let picked = inv.as_account.map(|a| AccountId(a.0));
         return core.run_plugin_command(&cmd, inv.arg, core.acting(picked), inv.context.as_deref());
     }
+    // Work this command starts counts as running until it finishes.
+    let _running = core.running_scope(bonsai_core::running::RunKey {
+        account: core.acting(inv.as_account.map(|a| AccountId(a.0))),
+        command: inv.id.clone(),
+        arg: inv.arg.clone(),
+    });
     dispatch(&app, core.inner(), inv)
 }
 

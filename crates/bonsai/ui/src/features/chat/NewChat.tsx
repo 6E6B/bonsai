@@ -104,9 +104,8 @@ export function NewChat(props: { onDone: (started: boolean) => void }) {
         <Button
           variant="primary"
           type="submit"
-          disabled={
-            busy() || picked().length === 0 || !options.enabled || (picked().length > 1 && !options.groupEnabled)
-          }
+          loading={busy()}
+          disabled={picked().length === 0 || !options.enabled || (picked().length > 1 && !options.groupEnabled)}
         >
           <Show when={picked().length > 1} fallback="Chat">
             Start group of {picked().length + 1}

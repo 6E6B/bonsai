@@ -484,6 +484,9 @@ pub struct StoreData {
     pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,
     pub jobs: u32,
+    /// User commands with work still in flight, by how many tasks each has (see
+    /// [`crate::running`]).
+    pub running: HashMap<crate::running::RunKey, u32>,
     pub offline: bool,
     pub keychain_warning: Option<String>,
     /// Disk cache size, once measured (Settings → Advanced).
