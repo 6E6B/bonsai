@@ -93,8 +93,9 @@ test("inventory groups pick their first slot, and a slot from the URL shows open
   await expect(page).toHaveURL(/slot=a8/)
   await expect(row(page, "Head")).toHaveAttribute("aria-selected", "true")
 
-  await page.goto("/inventory?rows=8&slot=a76")
-  const eyebrows = page.getByRole("tree").getByRole("treeitem", { selected: true })
+  await page.goto("/inventory?rows=8&slot=a93")
+  const eyebrows = row(page, "Eyebrow Accessory")
+  await expect(eyebrows).toHaveAttribute("aria-selected", "true")
   await expect(eyebrows).toBeInViewport()
   await expect(row(page, "Makeup")).toHaveAttribute("aria-expanded", "true")
 })
