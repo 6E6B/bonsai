@@ -36,7 +36,7 @@
   }
 
   [data-component="person-tile"] [data-component="avatar"] {
-    margin-bottom: 6px;
+    margin-bottom: 10px;
   }
 
   [data-component="person-tile"] [data-slot="name"] {
