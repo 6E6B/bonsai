@@ -904,8 +904,7 @@ export default function Components() {
         </span>
         <span>
           Made with <Mention text="@Chiidoku" name="Chiidoku" onClick={noop} /> and{" "}
-          <Mention text="@Tilework" name="Tilework" verified onClick={noop} />, thanks{" "}
-          <Mention text="@Looking" name="Looking" />
+          <Mention text="@Tilework" name="Tilework" onClick={noop} />, thanks <Mention text="@Looking" name="Looking" />
         </span>
         <span class="rounded-lg bg-accent px-3 py-1.5 text-on-accent">
           Inside a bubble:{" "}

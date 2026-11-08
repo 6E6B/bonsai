@@ -25,7 +25,7 @@ export function PersonTile(props: PersonTileProps) {
   return (
     <KButton data-component="person-tile" class={props.class} onClick={props.onClick}>
       <Avatar size="xl" name={props.name} src={props.src} presence={props.presence} />
-      <span data-slot="name" data-verified={props.verified ? "" : undefined}>
+      <span data-slot="name">
         <span data-slot="name-text" title={props.name}>
           {props.name}
         </span>
@@ -34,7 +34,7 @@ export function PersonTile(props: PersonTileProps) {
         </Show>
       </span>
       <Show when={props.username}>
-        <span data-slot="username" data-verified={props.verified ? "" : undefined} title={`@${props.username}`}>
+        <span data-slot="username" title={`@${props.username}`}>
           @{props.username}
         </span>
       </Show>

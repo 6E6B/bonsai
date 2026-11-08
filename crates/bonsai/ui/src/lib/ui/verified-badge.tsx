@@ -6,8 +6,8 @@ export interface VerifiedBadgeProps {
   class?: string
 }
 
-/** Roblox's verified checkmark, after a verified user's or community's name. Pair it with
- * `TextLink tone="verified"` or `text-verified` on the name: only verified names are blue. */
+/** Roblox's verified checkmark, after a verified user's or community's name. A verified
+ * community's name is blue (`TextLink tone="verified"` or `text-verified`); a user's is not. */
 export function VerifiedBadge(props: VerifiedBadgeProps) {
   return (
     <Tooltip content="Verified">

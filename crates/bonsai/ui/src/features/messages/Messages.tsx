@@ -135,7 +135,7 @@ export default function Messages() {
                     <span class="flex items-center gap-1 text-sm text-fg-muted">
                       From{" "}
                       <Show when={m().senderVerified} fallback={m().sender}>
-                        <span class="text-verified">{m().sender}</span>
+                        <span>{m().sender}</span>
                         <VerifiedBadge />
                       </Show>
                       <Show when={box() === "sent"}> to {m().recipient}</Show> · {date(ms(m().created))}

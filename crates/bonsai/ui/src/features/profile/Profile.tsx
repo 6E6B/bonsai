@@ -223,8 +223,8 @@ export default function Profile() {
                 src={thumbUrl("headshot", userId(), true)}
               />
               <div class="flex min-w-0 flex-col gap-0.5">
-                <h1 class="flex items-center gap-2 truncate text-2xl font-medium">
-                  <span class={u().verified ? "truncate text-verified" : "truncate"}>{u().displayName}</span>
+                <h1 class="flex items-center gap-2 truncate text-2xl font-semibold">
+                  <span class="truncate">{u().displayName}</span>
                   <Show when={u().verified}>
                     <VerifiedBadge size={18} />
                   </Show>
@@ -232,7 +232,7 @@ export default function Profile() {
                     <Badge variant="danger">Banned</Badge>
                   </Show>
                 </h1>
-                <span class={u().verified ? "truncate text-verified-muted" : "truncate text-fg-muted"}>
+                <span class="truncate text-fg-muted">
                   @{u().name}
                   <Show when={view.nickname}>
                     {(n) => (
@@ -639,7 +639,7 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                   }
                   title={
                     <Show when={p.verified} fallback={p.displayName || p.name || `User ${p.id}`}>
-                      <span class="text-verified">{p.displayName || p.name}</span> <VerifiedBadge />
+                      {p.displayName || p.name} <VerifiedBadge />
                     </Show>
                   }
                   subtitle={p.name ? `@${p.name}` : undefined}

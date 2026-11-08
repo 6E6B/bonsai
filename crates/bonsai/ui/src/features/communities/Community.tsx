@@ -196,10 +196,7 @@ export default function Community() {
               <span class="text-fg-muted">
                 <Show when={g().ownerId} fallback="No owner">
                   by{" "}
-                  <TextLink
-                    tone={g().ownerVerified ? "verified" : "name"}
-                    onClick={() => run("user.open", String(g().ownerId))}
-                  >
+                  <TextLink tone="name" onClick={() => run("user.open", String(g().ownerId))}>
                     {g().owner}
                   </TextLink>
                   <Show when={g().ownerVerified}>
@@ -370,13 +367,13 @@ function Members(props: { groupId: number; myRank: number; canRank: boolean; can
       cell: (m) => (
         <>
           <Avatar size="sm" name={m.displayName} src={thumbUrl("headshot", m.id)} />
-          <TextLink tone={m.verified ? "verified" : "name"} onClick={() => run("user.open", String(m.id))}>
+          <TextLink tone="name" onClick={() => run("user.open", String(m.id))}>
             {m.displayName}
           </TextLink>
           <Show when={m.verified}>
             <VerifiedBadge />
           </Show>
-          <span class={m.verified ? "truncate text-verified-muted" : "truncate text-fg-muted"}>@{m.name}</span>
+          <span class="truncate text-fg-muted">@{m.name}</span>
         </>
       ),
     },

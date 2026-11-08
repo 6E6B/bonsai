@@ -69,7 +69,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `Meter` | Amount of a known maximum: server fill (`tone="capacity"` warns near full), progress. |
 | `Robux` | Any Robux amount; `null` shows a dash. |
 | `Badge` | A short status word: Limited, Primary, Owned, Offline. |
-| `VerifiedBadge` | Roblox's checkmark after a verified user or community name. Color the name with `tone="verified"` or `text-verified`. |
+| `VerifiedBadge` | Roblox's checkmark after a verified user or community name. Color a community name with `tone="verified"` or `text-verified`; user names keep their normal color. |
 | `Kbd` | Shortcut caps in tooltips, menus and the shortcuts list. |
 | `Collapsible` | Long text that can fold away (About). |
 | `Clamp` | Long text cut to a few lines with Show more (descriptions, bios). |

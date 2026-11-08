@@ -205,7 +205,7 @@ export default function Game() {
                     <span class="text-fg-muted">
                       by{" "}
                       <TextLink
-                        tone={d().creatorVerified ? "verified" : "muted"}
+                        tone={d().creatorVerified && d().creatorIsGroup ? "verified" : "muted"}
                         onClick={() => run(d().creatorIsGroup ? "group.open" : "user.open", String(d().creatorId))}
                       >
                         {d().creatorName}
@@ -958,7 +958,10 @@ function AboutPanel(props: { game: GameView; wiki: WikiPageView }) {
                     </Show>
                     <div class="flex min-w-0 flex-col gap-0.5">
                       <span class="flex items-center gap-1">
-                        <TextLink tone={g().creatorVerified ? "verified" : "name"} onClick={openCreator}>
+                        <TextLink
+                          tone={g().creatorVerified && g().creatorIsGroup ? "verified" : "name"}
+                          onClick={openCreator}
+                        >
                           {g().creatorName}
                         </TextLink>
                         <Show when={g().creatorVerified}>

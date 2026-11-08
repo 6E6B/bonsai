@@ -254,7 +254,13 @@ export default function ItemPage() {
                 <span class="flex items-center gap-1 text-fg-muted">
                   {item().typeName} by{" "}
                   <TextLink
-                    tone={item().creatorFake ? "danger" : item().creatorVerified ? "verified" : "name"}
+                    tone={
+                      item().creatorFake
+                        ? "danger"
+                        : item().creatorVerified && item().creatorIsGroup
+                          ? "verified"
+                          : "name"
+                    }
                     onClick={() => run(item().creatorIsGroup ? "group.open" : "user.open", String(item().creatorId))}
                   >
                     {item().creator}
@@ -570,7 +576,7 @@ function Resellers(props: { collectibleId: string; id: number; bundle: boolean; 
       label: "Seller",
       cell: (r) => (
         <>
-          <TextLink tone={r.verified ? "verified" : "name"} onClick={() => run("user.open", String(r.sellerId))}>
+          <TextLink tone="name" onClick={() => run("user.open", String(r.sellerId))}>
             {r.seller}
           </TextLink>
           <Show when={r.verified}>

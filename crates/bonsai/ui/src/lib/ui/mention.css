@@ -20,10 +20,6 @@
     cursor: pointer;
   }
 
-  [data-component="mention"][data-verified] {
-    color: var(--color-verified);
-  }
-
   [data-component="mention"][data-pending] {
     padding: 0 5px;
     cursor: default;

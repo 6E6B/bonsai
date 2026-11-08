@@ -76,12 +76,4 @@
     margin-top: 2px;
     color: var(--color-presence-game);
   }
-
-  [data-component="person-tile"] [data-slot="name"][data-verified] [data-slot="name-text"] {
-    color: var(--color-verified);
-  }
-
-  [data-component="person-tile"] [data-slot="username"][data-verified] {
-    color: var(--color-verified-muted);
-  }
 }
