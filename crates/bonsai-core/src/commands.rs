@@ -607,7 +607,6 @@ commands! {
     JoinCommunity => "group.join", "Join this community", ["join", "group", "community"], Text, Write(Social), [];
     LeaveCommunity => "group.leave", "Leave a community", ["leave", "group", "community"], Text, Write(Social), [];
     SetPrimaryCommunity => "group.primary", "Make or clear primary community", ["primary", "group", "community", "main"], Text, Write(Social), [];
-    PostShout => "group.shout", "Post a shout", ["shout", "status", "announce", "group"], Text, Write(Social), [];
     AcceptJoinRequest => "group.accept_request", "Accept join request", ["accept", "join request", "group"], User, Write(Social), [];
     DeclineJoinRequest => "group.decline_request", "Decline join request", ["decline", "join request", "group"], User, Write(Social), [];
     AcceptSelectedRequests => "group.accept_selected", "Accept selected join requests", ["accept", "bulk", "join requests"], None, Write(Social), [];
@@ -1014,7 +1013,6 @@ mod tests {
             CommandId::Unfriend,
             CommandId::Block,
             CommandId::SendChat,
-            CommandId::PostShout,
         ] {
             assert_eq!(tier(id), Some(Tier::Social), "{}", id.key());
         }

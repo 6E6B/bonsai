@@ -34,7 +34,6 @@ import {
   Clamp,
   type Column,
   DataTable,
-  Icon,
   IconButton,
   ListItem,
   Menu,
@@ -75,7 +74,7 @@ interface OpenPost {
   row: ForumPostRow
 }
 
-/** A community: header, shout, then about, games, store, forum, members, allies and enemies
+/** A community: header, then about, games, store, forum, members, allies and enemies
  * and, with the right permissions, join requests, audit log, revenue and settings. */
 export default function Community() {
   const params = useParams()
@@ -125,16 +124,6 @@ export default function Community() {
   const prompt = usePrompt()
   const dialog = useDialog()
   const id = () => String(groupId())
-  const newShout = async () => {
-    const text = await prompt({
-      title: "Post a shout",
-      label: "Shout",
-      placeholder: "Leave empty to clear it",
-      submit: "Post",
-    })
-    if (text !== null) void run("group.shout", text)
-  }
-
   // With an argument these run at once (after confirming); without one they ask first.
   onCleanup(
     handle("group.payout", (arg) => {
@@ -261,51 +250,6 @@ export default function Community() {
             </div>
           </header>
         )}
-      </Show>
-
-      <Show when={view.info?.shout || me()?.postShout}>
-        <Card class="flex items-start gap-3 p-3">
-          <Show
-            when={view.info?.shout}
-            fallback={
-              <>
-                <Icon name="megaphone" class="mt-0.5 text-fg-muted" />
-                <p class="flex-1 text-fg-muted">No shout</p>
-              </>
-            }
-          >
-            {(s) => (
-              <>
-                <Avatar size="sm" name={s().poster} src={thumbUrl("headshot", s().posterId)} />
-                <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <div class="flex flex-wrap items-center gap-1.5 text-sm text-fg-muted">
-                    <TextLink
-                      tone={s().posterVerified ? "verified" : "name"}
-                      onClick={() => run("user.open", String(s().posterId))}
-                    >
-                      {s().poster}
-                    </TextLink>
-                    <Show when={s().posterVerified}>
-                      <VerifiedBadge />
-                    </Show>
-                    <Show when={s().posterUsername}>
-                      <span>@{s().posterUsername}</span>
-                    </Show>
-                    <span>· {ago(ms(s().updated))}</span>
-                  </div>
-                  <p class="whitespace-pre-wrap break-words">
-                    <LinkedText text={s().text} />
-                  </p>
-                </div>
-              </>
-            )}
-          </Show>
-          <Show when={me()?.postShout}>
-            <Button size="sm" onClick={newShout}>
-              New shout
-            </Button>
-          </Show>
-        </Card>
       </Show>
 
       <Tabs aria-label="Community sections" items={sections()} value={section()} onChange={setSection}>

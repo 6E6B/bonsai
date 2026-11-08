@@ -53,19 +53,6 @@ pub struct CommunityInfo {
     pub verified: bool,
     pub public_entry: bool,
     pub locked: bool,
-    pub shout: Option<ShoutView>,
-}
-
-#[derive(Clone, Debug, Serialize, Type)]
-#[serde(rename_all = "camelCase")]
-pub struct ShoutView {
-    pub text: String,
-    pub poster_id: Id,
-    pub poster: String,
-    pub poster_username: String,
-    pub poster_verified: bool,
-    /// ISO date-time.
-    pub updated: String,
 }
 
 /// What the active account is and may do in a community.
@@ -80,7 +67,6 @@ pub struct MyMembership {
     pub pending: bool,
     pub owner: bool,
     pub can_view_members: bool,
-    pub post_shout: bool,
     pub change_rank: bool,
     pub remove_members: bool,
     /// Accept and decline join requests.
@@ -284,7 +270,6 @@ pub fn community(core: State<'_, Arc<Core>>, group_id: Id) -> CommunityView {
             pending: m.pending,
             owner: m.owner,
             can_view_members: m.can_view_members,
-            post_shout: p.post_shout,
             change_rank: p.change_rank,
             remove_members: p.remove_members,
             manage_requests: p.invite_members,
@@ -331,14 +316,6 @@ pub fn community(core: State<'_, Arc<Core>>, group_id: Id) -> CommunityView {
             verified: c.verified,
             public_entry: c.public_entry,
             locked: c.locked,
-            shout: c.shout.as_ref().map(|s| ShoutView {
-                text: s.text.clone(),
-                poster_id: Id(s.poster_id),
-                poster: s.poster.clone(),
-                poster_username: s.poster_username.clone(),
-                poster_verified: s.poster_verified,
-                updated: s.updated.clone(),
-            }),
         }),
         me,
         alts,
@@ -675,7 +652,6 @@ pub(super) fn run(
         C::JoinCommunity
             | C::LeaveCommunity
             | C::SetPrimaryCommunity
-            | C::PostShout
             | C::AcceptJoinRequest
             | C::DeclineJoinRequest
             | C::AcceptSelectedRequests
@@ -757,11 +733,6 @@ fn run_group(
                 return Err("Join it first.".to_owned());
             }
             core.set_primary_community(a, (!m.primary).then_some(g));
-            Ok(())
-        }
-        C::PostShout => {
-            // An empty shout clears it.
-            core.post_shout(a, group()?, arg.unwrap_or(""));
             Ok(())
         }
         C::AcceptJoinRequest

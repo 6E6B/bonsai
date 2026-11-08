@@ -4928,7 +4928,7 @@
       "module": "groups::v1",
       "path": "/v1/groups/{groupId}/status",
       "summary": "Sets group status",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -7902,5 +7902,5 @@
     }
   ],
   "total": 790,
-  "used": 253
+  "used": 252
 }

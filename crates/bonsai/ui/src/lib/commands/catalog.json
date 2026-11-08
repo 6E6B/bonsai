@@ -3351,17 +3351,6 @@
       "title": "Make or clear primary community"
     },
     {
-      "arg": "text",
-      "id": "group.shout",
-      "keywords": [
-        "shout",
-        "status",
-        "announce",
-        "group"
-      ],
-      "title": "Post a shout"
-    },
-    {
       "arg": "user",
       "id": "group.accept_request",
       "keywords": [

@@ -1956,21 +1956,12 @@ async fn communities_member_admin_forums_and_public_pages() {
         ("Test Community", "User Four", 4)
     );
     assert!(!d.public_entry);
-    let shout = d.shout.clone().unwrap();
-    assert_eq!(
-        (
-            shout.text.as_str(),
-            shout.poster.as_str(),
-            shout.poster_username.as_str()
-        ),
-        ("Event Friday at 6!", "User One", "user1")
-    );
 
     let m = poll(|| c.membership(ME, g)).await;
     assert!(m.is_member() && !m.owner && !m.primary);
     assert_eq!(m.role.as_ref().unwrap().name, "Admin");
     let p = &m.perms;
-    assert!(p.post_shout && p.change_rank && p.invite_members && p.remove_members && p.view_audit_log);
+    assert!(p.change_rank && p.invite_members && p.remove_members && p.view_audit_log);
     assert!(p.view_payouts && p.manage_settings && p.create_posts && p.remove_comments);
     assert!(!p.ban_members && !p.spend_funds);
 
@@ -2031,11 +2022,7 @@ async fn communities_member_admin_forums_and_public_pages() {
         3
     );
 
-    c.mark_shout_seen(ME, g, &shout.updated);
-    assert_eq!(c.seen_shouts(ME).get("7001"), Some(&shout.updated));
-
     // Every write once.
-    c.post_shout(ME, g, "New shout");
     c.answer_join_requests(ME, g, vec![2_000_003], true);
     c.answer_join_requests(ME, g, vec![2_000_002, 2_000_004], false);
     assert!(
@@ -2093,10 +2080,6 @@ async fn communities_member_admin_forums_and_public_pages() {
             .unwrap_or_else(|| panic!("{m} {p} was not called"));
         serde_json::from_slice(&q.body).unwrap_or(serde_json::Value::Null)
     };
-    assert_eq!(
-        body("PATCH", "/groups.roblox.com/v1/groups/7001/status")["message"],
-        "New shout"
-    );
     assert_eq!(
         body("DELETE", "/groups.roblox.com/v1/groups/7001/join-requests")["UserIds"],
         serde_json::json!([2_000_002, 2_000_004])

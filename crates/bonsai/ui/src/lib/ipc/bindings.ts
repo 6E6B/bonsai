@@ -834,7 +834,6 @@ export type CommunityInfo = {
 	verified: boolean,
 	publicEntry: boolean,
 	locked: boolean,
-	shout: ShoutView | null,
 };
 
 /**  A game pass sold in one of the community's experiences. */
@@ -1499,7 +1498,6 @@ export type MyMembership = {
 	pending: boolean,
 	owner: boolean,
 	canViewMembers: boolean,
-	postShout: boolean,
 	changeRank: boolean,
 	removeMembers: boolean,
 	/**  Accept and decline join requests. */
@@ -2243,16 +2241,6 @@ export type Shell = {
 	 *  adds them so the webview loads the new image instead of its cached copy.
 	 */
 	thumbRevs: { [key in string]: number },
-};
-
-export type ShoutView = {
-	text: string,
-	posterId: Id,
-	poster: string,
-	posterUsername: string,
-	posterVerified: boolean,
-	/**  ISO date-time. */
-	updated: string,
 };
 
 export type SideView = {
