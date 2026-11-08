@@ -23,8 +23,14 @@ export default function Home() {
   const home = useHome()
   const playing = () => friends.friends.filter((f) => f.presence === "game")
   const online = () => friends.friends.filter((f) => f.presence === "online" || f.presence === "studio")
-  // One tile per experience friends are in, biggest group first, then one per friend online.
-  const strip = createMemo(() => [...groupByGame(playing()).map((g) => g.users), ...online().map((f) => [f])])
+  const offline = () => friends.friends.filter((f) => f.presence === "offline")
+  // One tile per experience friends are in, biggest group first, then one per friend online,
+  // then offline friends, like the friends row on roblox.com.
+  const strip = createMemo(() => [
+    ...groupByGame(playing()).map((g) => g.users),
+    ...online().map((f) => [f]),
+    ...offline().map((f) => [f]),
+  ])
   return (
     <Show
       when={shell.accounts.length > 0}
@@ -46,7 +52,7 @@ export default function Home() {
           <section class="flex flex-col gap-2">
             <SectionHeader
               title="Friends"
-              meta={playing().length + online().length}
+              meta={friends.friends.length}
               actions={
                 <Button variant="ghost" size="sm" onClick={() => run("nav.friends")}>
                   See all
@@ -137,8 +143,8 @@ function ContinueRow(props: { games: GameCard[] }) {
   )
 }
 
-/** As wide as a friend on a profile. */
-const PERSON_WIDTH = 96
+/** Wider than a friend on a profile, so the row has more room between pictures. */
+const PERSON_WIDTH = 112
 
 const nameOf = (f: Friend) => f.nickname || f.displayName
 
