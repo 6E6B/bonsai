@@ -28,6 +28,7 @@ export const people = rows<Connection>((id) => ({
   verified: false,
   friend: true,
   presence: "online",
+  place: null,
   following: false,
 }))
 export const games = rows<GameCard>((id) => ({
@@ -103,6 +104,7 @@ export const profile: ProfileView = {
   favoritesReceived: 100,
   nickname: null,
   note: null,
+  inventoryPrivate: false,
 }
 
 const created = "2026-01-01T12:00:00Z"
