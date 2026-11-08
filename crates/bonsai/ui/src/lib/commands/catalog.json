@@ -3162,16 +3162,6 @@
     },
     {
       "arg": "none",
-      "id": "message.select_all",
-      "keywords": [
-        "select all",
-        "bulk",
-        "messages"
-      ],
-      "title": "Select all loaded messages, or clear the selection"
-    },
-    {
-      "arg": "none",
       "id": "message.mark_all_read",
       "keywords": [
         "read all",

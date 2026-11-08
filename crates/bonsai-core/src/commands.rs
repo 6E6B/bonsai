@@ -589,7 +589,6 @@ commands! {
     ReplyMessage => "message.reply", "Reply to the message (in chat)", ["reply", "respond", "message"], Text, Write(Social), [Shortcut::shift("R")];
     ToggleMessageRead => "message.toggle_read", "Mark message read or unread", ["read", "unread", "message"], Text, Write(Harmless), [Shortcut::key("U")];
     ArchiveMessage => "message.archive", "Archive message, or move it back to Inbox", ["archive", "unarchive", "message"], Text, Write(Harmless), [Shortcut::key("E")];
-    SelectAllMessages => "message.select_all", "Select all loaded messages, or clear the selection", ["select all", "bulk", "messages"], None, Read, [];
     MarkAllMessagesRead => "message.mark_all_read", "Mark all messages read", ["read all", "messages", "inbox"], None, Write(Harmless), [];
     FilterNotifications => "notifications.filter", "Show all or only unread notifications (all, unread; no argument toggles)", ["notifications", "unread", "filter", "bell"], Text, Local, [];
     FilterNotificationCategory => "notifications.category", "Show one notification category (friends, trades, communities, experiences, account, messages, other; no argument shows all)", ["notifications", "category", "filter", "friends", "trades", "security", "robux", "group", "experience"], Text, Local, [];

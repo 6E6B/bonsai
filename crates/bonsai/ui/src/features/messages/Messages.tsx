@@ -13,7 +13,6 @@ import {
   Alert,
   Avatar,
   Button,
-  Checkbox,
   Divider,
   EmptyState,
   ListItem,
@@ -22,7 +21,6 @@ import {
   showToast,
   Tabs,
   TextField,
-  Toolbar,
   VerifiedBadge,
   VirtualList,
 } from "~/lib/ui"
@@ -32,15 +30,13 @@ const ms = (iso: string) => {
   return Number.isNaN(t) ? 0 : t
 }
 
-/** Private messages (the website's inbox, not chat). Triage with J / K, X to select, E to
- * archive, U to mark read or unread, Shift+R to reply; read on the right. Roblox no longer
+/** Private messages (the website's inbox, not chat). Triage with J / K, E to archive, U to
+ * mark read or unread, Shift+R to reply; read on the right. Roblox no longer
  * takes new private messages, so Reply starts a chat. */
 export default function Messages() {
   const [box, setBox] = createSignal("inbox")
   const [cursor, setCursor] = createSignal(0)
   const [query, setQuery] = createSignal("")
-  const [selecting, setSelecting] = createSignal(false)
-  const [picked, setPicked] = createSignal<ReadonlySet<number>>(new Set())
   const res = useLive(
     () => [shell.active, box()] as const,
     ([, b]) => commands.messages(b),
@@ -61,25 +57,9 @@ export default function Messages() {
   const open = () => shown()[cursor()]
   /** Only Inbox and Archive messages can be moved; Sent and News can't. */
   const movable = () => box() === "inbox" || box() === "archive"
-
-  // Ticked messages that are still on screen (a search can hide some).
-  const ticked = createMemo(() => shown().filter((m) => picked().has(m.id)))
-  const allTicked = () => shown().length > 0 && ticked().length === shown().length
-  const toggle = (id: number, on: boolean) =>
-    setPicked((s) => {
-      const next = new Set(s)
-      if (on) next.add(id)
-      else next.delete(id)
-      return next
-    })
-  const stopSelecting = () => {
-    setSelecting(false)
-    setPicked(new Set<number>())
-  }
   const pick = (v: string) => {
     setBox(v)
     setCursor(0)
-    stopSelecting()
   }
   useSubTabs(sections, box, pick)
   useCommandContext(() => `messages:${box()}`)
@@ -87,93 +67,33 @@ export default function Messages() {
     count: () => shown().length,
     index: cursor,
     setIndex: setCursor,
-    onSelect: (i) => {
-      const m = shown()[i]
-      if (!m) return
-      setSelecting(true)
-      toggle(m.id, !picked().has(m.id))
-    },
   })
 
-  // Keys and buttons act on the ticked messages, or on the one under the cursor when none are.
-  const targets = () => {
-    const t = ticked()
-    return t.length > 0 ? t : open() ? [open() as MessageRow] : []
+  // Keys act on the message under the cursor; buttons pass the message id.
+  const act = (id: string, arg: string | null) => {
+    const ids = arg ?? (open() ? String(open()?.id) : null)
+    if (ids) void runBackend(id, ids)
+    else showToast("Pick a message first.")
   }
-  const act = async (id: string, arg: string | null, done?: () => void) => {
-    const ids =
-      arg ??
-      targets()
-        .map((m) => m.id)
-        .join(",")
-    if (!ids) {
-      showToast("Pick a message first.")
-      return
-    }
-    if (await runBackend(id, ids)) done?.()
-  }
-  onCleanup(handle("message.archive", (arg) => act("message.archive", arg, stopSelecting)))
+  onCleanup(handle("message.archive", (arg) => act("message.archive", arg)))
   onCleanup(handle("message.toggle_read", (arg) => act("message.toggle_read", arg)))
-  onCleanup(
-    handle("message.reply", (arg) => {
-      const id = arg ?? (open() ? String(open()?.id) : null)
-      if (id) void runBackend("message.reply", id)
-      else showToast("Pick a message first.")
-    }),
-  )
-  onCleanup(
-    handle("message.select_all", () => {
-      setSelecting(true)
-      setPicked(allTicked() ? new Set<number>() : new Set(shown().map((m) => m.id)))
-    }),
-  )
+  onCleanup(handle("message.reply", (arg) => act("message.reply", arg)))
 
   return (
     <Split>
       <Pane side class="w-88">
-        <Toolbar
-          actions={
-            <>
-              <Button size="sm" onClick={() => (selecting() ? stopSelecting() : setSelecting(true))}>
-                {selecting() ? "Done" : "Select"}
-              </Button>
-              <Button size="sm" onClick={() => run("message.mark_all_read")}>
-                Mark all read
-              </Button>
-            </>
-          }
-        >
+        <div class="flex items-center gap-2">
           <TextField
-            class="flex-1"
+            class="min-w-0 flex-1"
             icon="search"
             aria-label="Search loaded messages"
             placeholder="Search messages"
             value={query()}
             onChange={setQuery}
           />
-        </Toolbar>
+          <Button onClick={() => run("message.mark_all_read")}>Mark all read</Button>
+        </div>
         <Tabs aria-label="Mailbox" items={sections()} value={box()} onChange={pick} />
-        <Show when={selecting()}>
-          <div class="flex flex-wrap items-center gap-2 px-2 py-1">
-            <Checkbox
-              checked={allTicked()}
-              indeterminate={ticked().length > 0 && !allTicked()}
-              onChange={() => run("message.select_all")}
-            >
-              {ticked().length > 0 ? `${ticked().length} selected` : "Select all"}
-            </Checkbox>
-            <div class="ml-auto flex gap-1.5">
-              <Show when={movable()}>
-                <Button size="sm" disabled={ticked().length === 0} onClick={() => run("message.archive")}>
-                  {box() === "archive" ? "Move to inbox" : "Archive"}
-                </Button>
-              </Show>
-              <Button size="sm" disabled={ticked().length === 0} onClick={() => run("message.toggle_read")}>
-                {ticked().some((m) => !m.read) ? "Mark read" : "Mark unread"}
-              </Button>
-            </div>
-          </div>
-        </Show>
         <ListState list={res.list} icon="inbox" empty="Nothing here" more={res.moreKey}>
           <div data-cursor-list class="flex flex-col">
             <VirtualList
@@ -196,13 +116,6 @@ export default function Messages() {
                   title={m.subject}
                   subtitle={box() === "sent" ? `To ${m.recipient}` : m.sender}
                   meta={ago(ms(m.created))}
-                  actions={
-                    <Show when={selecting()}>
-                      <Checkbox hideLabel checked={picked().has(m.id)} onChange={(on) => toggle(m.id, on)}>
-                        Select {m.subject}
-                      </Checkbox>
-                    </Show>
-                  }
                   onClick={() => setCursor(i)}
                 />
               )}
