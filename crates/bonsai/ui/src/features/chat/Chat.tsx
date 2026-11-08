@@ -551,6 +551,7 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
               input = el
             }}
             multiline
+            rows={1}
             class="flex-1"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
