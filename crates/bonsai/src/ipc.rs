@@ -2579,11 +2579,15 @@ pub fn people(core: State<'_, Arc<Core>>, which: String) -> List<Person> {
     view
 }
 
-/// Follow-request batch size for [`following_of`].
-const FOLLOW_BATCH: usize = 100;
+/// Follow-request batch size for [`following_of`]. It divides every people list's page size
+/// (50 for friends, 100 for followers and following), so once a page has loaded its batches
+/// stay the same as more pages come in.
+const FOLLOW_BATCH: usize = 50;
 
 /// Which of `ids` `account` follows, as far as loaded. Asked a page at a time, so a page that
-/// is already known isn't asked again as the list grows.
+/// is already known isn't asked again as the list grows. `ids` must be in the order Roblox
+/// sent them: each batch is its own cached request, and a batch whose ids move around is a new
+/// request on friends.roblox.com, which is paced at 2 a second.
 fn following_of(core: &Core, account: AccountId, ids: &[u64]) -> std::collections::HashMap<u64, bool> {
     ids.chunks(FOLLOW_BATCH)
         .filter_map(|c| core.follows(account, c).data)
@@ -2624,17 +2628,17 @@ pub fn profile_people(
         "friends" if !query.trim().is_empty() => {
             signed_in(&|a| core.search_friends_of(a, uid, &query, false))
         }
-        "friends" => {
-            let mut l = signed_in(&|a| core.friends_of(a, uid, false));
-            l.items = bonsai_core::people::mutuals_first(&l.items, &own).0;
-            l
-        }
+        "friends" => signed_in(&|a| core.friends_of(a, uid, false)),
         "followers" => signed_in(&|a| core.followers(a, uid, false)),
         "following" => signed_in(&|a| core.followings(a, uid, false)),
         _ => return List::loading(),
     };
-    let ids = std::mem::take(&mut list.items);
+    let mut ids = std::mem::take(&mut list.items);
+    // Before reordering: see `following_of`.
     let follows = account.map(|a| following_of(&core, a, &ids)).unwrap_or_default();
+    if which == "friends" && query.trim().is_empty() {
+        ids = bonsai_core::people::mutuals_first(&ids, &own).0;
+    }
     let (items, unnamed) = {
         let s = core.store();
         let presence = account.and_then(|a| s.account_data(a)).map(|d| &d.presence);

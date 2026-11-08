@@ -26,6 +26,16 @@ pub struct Profile {
     pub created: String,
     pub verified: bool,
     pub banned: bool,
+    /// The counts are -1 until they load, or when Roblox didn't send them. They come from a
+    /// slower host than the rest, so they load on their own and never hold up the header.
+    pub friends: i64,
+    pub followers: i64,
+    pub following: i64,
+}
+
+/// A user's friend, follower and following counts, -1 where Roblox didn't send one.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProfileCounts {
     pub friends: i64,
     pub followers: i64,
     pub following: i64,
@@ -137,7 +147,7 @@ const LIST_AGE: i64 = 300;
 const RELATION_AGE: i64 = 60;
 
 impl Core {
-    /// Profile header for any user.
+    /// Profile header for any user. See [`Inner::profile`].
     pub fn profile(&self, user_id: u64) -> Res<Profile> {
         self.inner.profile(user_id)
     }
@@ -979,21 +989,35 @@ impl crate::core::Inner {
         )
     }
 
-    /// Profile header for any user.
+    /// Profile header for any user. Names and bio come from users.roblox.com; the counts come
+    /// from friends.roblox.com, which is paced much slower and is often busy with friend
+    /// lists, so they are a separate resource and the header shows without them.
     pub(crate) fn profile(self: &std::sync::Arc<Self>, user_id: u64) -> Res<Profile> {
+        let r = self.profile_head(user_id);
+        let c = self.profile_counts(user_id);
+        Res {
+            data: r.data.map(|p| {
+                let mut p = (*p).clone();
+                let n = c.data.as_deref().copied();
+                p.friends = n.map_or(-1, |n| n.friends);
+                p.followers = n.map_or(-1, |n| n.followers);
+                p.following = n.map_or(-1, |n| n.following);
+                std::sync::Arc::new(p)
+            }),
+            // Plugins wait for `loading` to clear, so they still get the counts.
+            loading: r.loading || c.loading,
+            error: r.error,
+            fetched_at: r.fetched_at,
+        }
+    }
+
+    /// [`Inner::profile`] without the counts.
+    fn profile_head(self: &std::sync::Arc<Self>, user_id: u64) -> Res<Profile> {
         self.res(
             Key::shared("profile", user_id),
             PROFILE_AGE,
             move |f| async move {
-                let id = user_id as i64;
-                let c = &f.client;
-                let (u, fr, fo, fg) = tokio::join!(
-                    users::v1::get_users_by_user_id(c, id),
-                    friends::v1::get_users_by_user_id_friends_count(c, id),
-                    friends::v1::get_users_by_target_user_id_followers_count(c, id),
-                    friends::v1::get_users_by_target_user_id_followings_count(c, id),
-                );
-                let u = u?;
+                let u = users::v1::get_users_by_user_id(&f.client, user_id as i64).await?;
                 Ok(Profile {
                     id: user_id,
                     name: u.name.unwrap_or_default(),
@@ -1002,6 +1026,28 @@ impl crate::core::Inner {
                     created: u.created.unwrap_or_default(),
                     verified: u.has_verified_badge.unwrap_or(false),
                     banned: u.is_banned.unwrap_or(false),
+                    friends: -1,
+                    followers: -1,
+                    following: -1,
+                })
+            },
+        )
+    }
+
+    /// A user's friend, follower and following counts.
+    fn profile_counts(self: &std::sync::Arc<Self>, user_id: u64) -> Res<ProfileCounts> {
+        self.res(
+            Key::shared("profile_counts", user_id),
+            PROFILE_AGE,
+            move |f| async move {
+                let id = user_id as i64;
+                let c = &f.client;
+                let (fr, fo, fg) = tokio::join!(
+                    friends::v1::get_users_by_user_id_friends_count(c, id),
+                    friends::v1::get_users_by_target_user_id_followers_count(c, id),
+                    friends::v1::get_users_by_target_user_id_followings_count(c, id),
+                );
+                Ok(ProfileCounts {
                     friends: fr.ok().and_then(|r| r.count).unwrap_or(-1) as i64,
                     followers: fo.ok().and_then(|r| r.count).unwrap_or(-1),
                     following: fg.ok().and_then(|r| r.count).unwrap_or(-1),
