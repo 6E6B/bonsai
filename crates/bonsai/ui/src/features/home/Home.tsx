@@ -151,7 +151,7 @@ const nameOf = (f: Friend) => f.nickname || f.displayName
 const menuFor = (f: Friend) => userMenu(f.id, { friend: true, inGame: f.presence === "game", placeId: f.placeId })
 
 /** A friend as on a profile, or friends in the same experience as one tile: the first one's
- * picture, the others as small faces on it and named under it. Right-click a shared tile for
+ * picture and name, the others as small faces under the game. Right-click a shared tile for
  * each friend's menu. */
 function FriendTile(props: { users: Friend[] }) {
   const first = () => props.users[0]

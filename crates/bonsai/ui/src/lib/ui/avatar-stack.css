@@ -32,7 +32,10 @@
     margin-inline-start: calc(var(--avatar-stack-size) / -3);
   }
 
+  /* Headshots are transparent, so each face gets an opaque backdrop: the control tint over the
+   * background color. Without it, whatever the face overlaps shows through. */
   [data-component="avatar-stack"] [data-slot="face"] [data-slot="frame"] {
+    background: linear-gradient(var(--color-control), var(--color-control)) var(--avatar-stack-ring);
     box-shadow: 0 0 0 1.5px var(--avatar-stack-ring);
   }
 
@@ -56,7 +59,7 @@
     height: var(--avatar-stack-size);
     padding: 0 5px;
     border-radius: var(--radius-full);
-    background: var(--color-control);
+    background: linear-gradient(var(--color-control), var(--color-control)) var(--avatar-stack-ring);
     box-shadow: 0 0 0 1.5px var(--avatar-stack-ring);
     color: var(--color-fg-muted);
     font-size: var(--text-xs);

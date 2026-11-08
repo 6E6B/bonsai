@@ -35,20 +35,19 @@
     box-shadow: 0 0 0 2px var(--color-focus);
   }
 
-  [data-component="person-tile"] [data-slot="picture"] {
-    position: relative;
-    display: inline-flex;
+  [data-component="person-tile"] [data-component="avatar"] {
     margin-bottom: 6px;
   }
 
-  /* People with them: small faces on the picture's bottom-left corner, opposite the
-   * presence dot. */
+  /* The small faces' own avatars sit in a row, without the big picture's spacing. */
   [data-component="person-tile"] [data-slot="stack"] {
-    position: absolute;
-    z-index: 1;
-    bottom: -2px;
-    left: -2px;
     display: flex;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  [data-component="person-tile"] [data-slot="stack"] [data-component="avatar"] {
+    margin-bottom: 0;
   }
 
   [data-component="person-tile"] [data-slot="name"] {
