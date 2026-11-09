@@ -4,6 +4,8 @@ import { Show } from "solid-js"
 export interface FactsProps extends ParentProps {
   /** Inside a `Card`: the control fill, so it stands out from the card around it. */
   nested?: boolean
+  /** Groups side by side, wrapping onto new rows when narrow, instead of stacked. */
+  columns?: boolean
   class?: string
 }
 
@@ -11,7 +13,12 @@ export interface FactsProps extends ParentProps {
  * `FactGroup`s, or `Fact`s directly when there is only one group. */
 export function Facts(props: FactsProps) {
   return (
-    <div data-component="facts" data-nested={props.nested ? "" : undefined} class={props.class}>
+    <div
+      data-component="facts"
+      data-nested={props.nested ? "" : undefined}
+      data-layout={props.columns ? "columns" : undefined}
+      class={props.class}
+    >
       {props.children}
     </div>
   )

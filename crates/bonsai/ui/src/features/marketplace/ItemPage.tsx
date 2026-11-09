@@ -6,37 +6,39 @@ import { AvatarViewer, show3d } from "~/lib/avatar3d/viewer"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
 import { handle, menuItem, run } from "~/lib/commands/registry"
-import { ago, compact, date } from "~/lib/format"
-import {
-  commands,
-  type ItemCard,
-  type ItemView,
-  type OwnerRow,
-  type Paged,
-  type ResellerRow,
-  type ValueView,
-} from "~/lib/ipc/bindings"
+import { ago, compact, date, full } from "~/lib/format"
+import { commands, type ItemCard, type ItemView, type OwnerRow, type Paged, type ResellerRow } from "~/lib/ipc/bindings"
+import { IdFact } from "~/lib/item-preview"
 import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { accountItems, entityMenu, itemTarget, templateItems } from "~/lib/menus"
+import { isSoundHat } from "~/lib/sound-hats"
 import { shell, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { assetFileUrl, thumbUrl } from "~/lib/thumb"
-import { ItemTile } from "~/lib/tiles"
+import { ItemTile, SoundHatBadge } from "~/lib/tiles"
 import {
   type AudioControl,
   AudioPlayer,
+  Avatar,
   Badge,
   Button,
   Card,
+  Clamp,
   type Column,
   DataTable,
+  Divider,
+  Fact,
+  FactGroup,
+  Facts,
   Icon,
   Menu,
+  Meter,
   Page,
   PremiumBadge,
   Robux,
-  Stat,
+  SegmentedControl,
+  Stage,
   showToast,
   TabPanel,
   Tabs,
@@ -48,11 +50,12 @@ import {
   VerifiedBadge,
   VirtualGrid,
 } from "~/lib/ui"
-import { DemandPips, TrendMark, useValuesRefresh, ValueAmount, ValueFlags } from "~/lib/value-tags"
-import { rapGap, VALUES_SOURCE, versionLabel } from "~/lib/values"
+import { useValuesRefresh } from "~/lib/value-tags"
 import { useWikiAbout, WikiTab } from "~/lib/wiki-panels"
-import { DetailSkeleton } from "./DetailSkeleton"
+import { ItemSkeleton } from "./DetailSkeleton"
+import { pctOver } from "./history"
 import { Dependencies } from "./ItemDependencies"
+import { MarketCard } from "./MarketCard"
 import { PriceHistory } from "./PriceHistory"
 
 const ms = (iso: string) => {
@@ -159,22 +162,38 @@ export default function ItemPage() {
   )
   // Non-limited UGC can also carry a collectibleId; only limiteds and collectibles have copies.
   const resells = () => Boolean(info()?.collectibleId && info()?.limited)
+  // Copies for sale, cheapest first. Read here as well as in the tab: the buy box names the
+  // copy that sets the price.
+  const resellers = useLive(
+    () => (resells() ? (info()?.collectibleId ?? "") : ""),
+    (c) => (c ? commands.itemResellers(c) : Promise.resolve({ ...emptyPaged<ResellerRow>(), list: idle() })),
+    emptyPaged<ResellerRow>,
+  )
+  const cheapest = () => {
+    const i = info()
+    if (!i?.fromReseller || i.price === null) return null
+    return resellers.list.items.find((r) => r.price === i.price) ?? null
+  }
+  const value = () => (resells() ? (view.value?.tag.value ?? null) : null)
+  const resellerCount = () =>
+    resellers.list.loading || resellers.moreKey ? undefined : resellers.list.items.length || undefined
+
   const [section, setSection] = createSignal("similar")
   const wiki = useWikiAbout(() => {
     const name = info()?.name
     return name ? { kind: bundle() ? "bundle" : "item", id: id(), name } : null
   })
   const sections = createMemo(() => [
-    ...(inCatalog() ? [{ value: "similar", label: "Similar items" }] : []),
-    ...(!bundle() ? [{ value: "dependencies", label: "Dependencies" }] : []),
-    // Only limiteds and collectibles have copies to resell, track or own.
+    // Only limiteds and collectibles have copies to resell, track or own; they lead.
     ...(inCatalog() && resells()
       ? [
-          { value: "resellers", label: "Resellers" },
+          { value: "resellers", label: "Resellers", count: resellerCount() },
           { value: "history", label: "Price history" },
           ...(!bundle() ? [{ value: "owners", label: "Owners" }] : []),
         ]
       : []),
+    ...(inCatalog() ? [{ value: "similar", label: "Similar items" }] : []),
+    ...(!bundle() ? [{ value: "dependencies", label: "Dependencies" }] : []),
     ...(wiki.article ? [{ value: "wiki", label: "Wiki" }] : []),
   ])
   onCleanup(
@@ -201,225 +220,359 @@ export default function ItemPage() {
       <Show
         when={info()}
         fallback={
-          <Show when={view.error} fallback={<DetailSkeleton />}>
+          <Show when={view.error} fallback={<ItemSkeleton />}>
             {(e) => <span class="text-fg-muted">{e()}</span>}
           </Show>
         }
       >
-        {(item) => (
-          <div class="flex flex-wrap gap-6">
-            <Show
-              when={previewable()}
-              fallback={
-                <Thumbnail
-                  class="w-72 self-start"
-                  alt={item().name}
-                  src={thumbUrl(bundle() ? "bundle" : "asset", id(), true)}
-                  fallback={bundle() ? "avatar" : assetIcon(item().assetType)}
-                />
-              }
-            >
-              <AvatarViewer
-                class="w-72 self-start"
-                source={trying() && shell.active !== null ? { kind: "me" } : undefined}
-                image={
-                  trying()
-                    ? thumbUrl("avatar", shell.active ?? 0, true)
-                    : thumbUrl(bundle() ? "bundle" : "asset", id(), true)
-                }
-                alt={trying() ? `You wearing ${item().name}` : item().name}
-                accessory={alone() ? item().id : undefined}
-                wear={wearable(parts())}
-                animation={showcaseAnimation(parts())}
-                controls
-                menu={[
-                  menuItem("market.try_on", {
-                    label: trying() ? "View alone" : "Try on",
-                    icon: trying() ? "eye" : "avatar",
-                  }),
-                ]}
-              />
-            </Show>
-            <div class="flex min-w-64 flex-1 flex-col gap-3">
-              <div class="flex flex-col gap-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h1 class="truncate text-2xl font-medium">{item().name}</h1>
-                  <Show when={item().limited}>{(l) => <Badge variant="success">{l()}</Badge>}</Show>
-                  <Show when={item().premiumOnly}>
-                    <Badge>
-                      <PremiumBadge bare size={12} class="-ml-0.5 mr-1" />
-                      Premium
-                    </Badge>
-                  </Show>
-                  <Show when={item().publicDomain}>
-                    <Badge>Free to take</Badge>
-                  </Show>
-                </div>
-                <span class="flex items-center gap-1 text-fg-muted">
-                  {item().typeName} by{" "}
-                  <TextLink
-                    tone={
-                      item().creatorFake
-                        ? "danger"
-                        : item().creatorVerified && item().creatorIsGroup
-                          ? "verified"
-                          : "name"
+        {(item) => {
+          const picture = () => thumbUrl(bundle() ? "bundle" : "asset", id(), true)
+          const deadline = () => {
+            const t = ms(item().offSaleDeadline)
+            return t !== null && t > Date.now() ? t : null
+          }
+          const hasAbout = () =>
+            !!sound() || !!item().description.trim() || item().contents.length > 0 || item().tags.length > 0
+          return (
+            <div class="@container">
+              <div class="flex flex-col gap-4 @3xl:grid @3xl:grid-cols-[minmax(0,1fr)_21rem] @3xl:items-start">
+                <div class="contents @3xl:flex @3xl:min-w-0 @3xl:flex-col @3xl:gap-4">
+                  <Show
+                    when={previewable()}
+                    fallback={
+                      <Stage class={`order-1 ${STAGE_SIZE}`}>
+                        <Thumbnail
+                          alt={item().name}
+                          src={picture()}
+                          fallback={bundle() ? "avatar" : assetIcon(item().assetType)}
+                        />
+                      </Stage>
                     }
-                    onClick={() => run(item().creatorIsGroup ? "group.open" : "user.open", String(item().creatorId))}
                   >
-                    {item().creator}
-                  </TextLink>
-                  <Show when={item().creatorVerified}>
-                    <VerifiedBadge />
+                    <AvatarViewer
+                      stage
+                      class={`order-1 ${STAGE_SIZE}`}
+                      corner={
+                        <SegmentedControl
+                          size="sm"
+                          aria-label="Show"
+                          options={[
+                            { value: "alone", label: "Alone" },
+                            { value: "me", label: "On me", disabled: shell.active === null },
+                          ]}
+                          value={trying() ? "me" : "alone"}
+                          onChange={(v) => {
+                            if ((v === "me") !== trying()) run("market.try_on")
+                          }}
+                        />
+                      }
+                      source={trying() && shell.active !== null ? { kind: "me" } : undefined}
+                      image={trying() ? thumbUrl("avatar", shell.active ?? 0, true) : picture()}
+                      alt={trying() ? `You wearing ${item().name}` : item().name}
+                      accessory={alone() ? item().id : undefined}
+                      wear={wearable(parts())}
+                      animation={showcaseAnimation(parts())}
+                      controls
+                      menu={[
+                        menuItem("market.try_on", {
+                          label: trying() ? "View alone" : "Try on",
+                          icon: trying() ? "eye" : "avatar",
+                        }),
+                      ]}
+                    />
                   </Show>
-                  <Show when={item().creatorFake}>
-                    <Tooltip content="Not Roblox. This creator copies Roblox's name.">
-                      <Icon name="alert" size={14} class="text-danger" aria-label="Not Roblox" />
-                    </Tooltip>
+
+                  <Show when={hasAbout()}>
+                    <Card class="order-3 flex min-w-0 flex-col">
+                      <Show when={sound()} keyed>
+                        {(src) => (
+                          <section class="px-4 py-3.5">
+                            <AudioPlayer
+                              src={src}
+                              label={item().name}
+                              ref={(c) => {
+                                player = c
+                              }}
+                            />
+                          </section>
+                        )}
+                      </Show>
+                      <Show when={item().description.trim()}>
+                        <Show when={sound()}>
+                          <Divider />
+                        </Show>
+                        <section class="flex flex-col gap-1.5 px-4 py-3.5">
+                          <h3 class="text-sm font-medium text-fg-muted">Description</h3>
+                          <Clamp lines={6}>
+                            <Description text={item().description} />
+                          </Clamp>
+                        </section>
+                      </Show>
+                      <Show when={item().contents.length > 0}>
+                        <Show when={sound() || item().description.trim()}>
+                          <Divider />
+                        </Show>
+                        <section class="flex flex-col gap-1.5 px-4 py-3.5">
+                          <h3 class="text-sm font-medium text-fg-muted">Includes</h3>
+                          <div class="flex flex-wrap gap-x-3 gap-y-1">
+                            <For each={item().contents}>
+                              {(p) => (
+                                <TextLink onClick={() => run("market.open", itemTarget(p.id))}>{p.name}</TextLink>
+                              )}
+                            </For>
+                          </div>
+                        </section>
+                      </Show>
+                      <Show when={item().tags.length > 0}>
+                        <Show when={sound() || item().description.trim() || item().contents.length > 0}>
+                          <Divider />
+                        </Show>
+                        <div class="flex flex-wrap items-center gap-1.5 px-4 py-2.5">
+                          <span class="mr-1 text-sm text-fg-muted">Tags</span>
+                          <For each={item().tags}>
+                            {(tag) => (
+                              <TextLink onClick={() => run("market.search", tag)}>
+                                <Badge>{tag}</Badge>
+                              </TextLink>
+                            )}
+                          </For>
+                        </div>
+                      </Show>
+                    </Card>
                   </Show>
-                </span>
-              </div>
-              <Show
-                when={item().price !== null}
-                fallback={<span class="text-xl font-medium">{item().priceLabel}</span>}
-              >
-                <Show when={item().price !== 0} fallback={<span class="text-xl font-medium">Free</span>}>
-                  <Robux class="text-xl font-medium" amount={item().price} />
-                </Show>
-              </Show>
-              <div class="flex flex-wrap gap-1.5">
-                <Show
-                  when={item().inCatalog}
-                  fallback={
-                    <Button icon="external" onClick={() => run("entity.open_website", target())}>
-                      Open on website
-                    </Button>
-                  }
-                >
-                  <Button
-                    variant="primary"
-                    disabled={item().price === null || view.owned}
-                    onClick={() => run("market.buy", target())}
-                  >
-                    <Switch>
-                      <Match when={view.owned}>Owned</Match>
-                      <Match when={item().price === 0}>Get</Match>
-                      <Match when>Buy</Match>
-                    </Switch>
-                  </Button>
-                  <Menu
-                    items={accountItems("market.buy_as")}
-                    disabled={item().price === null || accountItems("market.buy_as").length === 0}
-                  >
-                    Buy as…
-                  </Menu>
-                </Show>
-                <ToggleButton
-                  icon="star"
-                  pressedIcon="star-fill"
-                  pressed={view.favorited ?? false}
-                  disabled={view.favorited === null}
-                  onChange={() => run("market.favorite", target())}
-                >
-                  Favorite
-                </ToggleButton>
-                <Show when={previewable()}>
-                  <ToggleButton icon="avatar" pressed={trying()} onChange={() => run("market.try_on")}>
-                    Try on
-                  </ToggleButton>
-                </Show>
-                <Show when={item().inCatalog}>
-                  <ToggleButton
-                    icon="heart"
-                    pressedIcon="heart-fill"
-                    pressed={view.wishlisted}
-                    onChange={() => run("market.wishlist", target())}
-                  >
-                    Wishlist
-                  </ToggleButton>
-                </Show>
-                <Menu
-                  icon="more"
-                  label="More"
-                  items={entityMenu(
-                    target(),
-                    item().bundle
-                      ? []
-                      : [
-                          menuItem("market.dependencies", { label: "View dependencies", icon: "inventory" }),
-                          ...templateItems(item().id, item().assetType),
-                        ],
-                  )}
-                />
-              </div>
-              <Show when={sound()} keyed>
-                {(src) => (
-                  <AudioPlayer
-                    class="max-w-md"
-                    src={src}
-                    label={item().name}
-                    ref={(c) => {
-                      player = c
-                    }}
-                  />
-                )}
-              </Show>
-              <Show when={view.ownedBy.length > 0}>
-                <span class="flex items-center gap-1.5 text-sm text-fg-muted">
-                  <Icon name="check" size={14} /> Owned by {view.ownedBy.join(", ")}
-                </span>
-              </Show>
-              <Show when={item().description}>
-                {(d) => <Description text={d()} class="max-w-prose text-fg-muted" />}
-              </Show>
-              <Card class="flex flex-wrap gap-x-10 gap-y-3 p-3">
-                <Stat label={item().bundle ? "Bundle ID" : "Asset ID"}>{item().id}</Stat>
-                <Stat label="Type">{item().typeName}</Stat>
-                <Show when={item().category}>{(c) => <Stat label="Category">{c()}</Stat>}</Show>
-                <Show when={item().genres.length > 0}>
-                  <Stat label="Genres">{item().genres.join(", ")}</Stat>
-                </Show>
-                <Show when={item().inCatalog}>
-                  <Stat label="Favorites">{compact(item().favorites)}</Stat>
-                </Show>
-                <Show when={item().sales > 0}>
-                  <Stat label="Sales">{compact(item().sales)}</Stat>
-                </Show>
-                <Show when={ms(item().created)}>{(t) => <Stat label="Created">{date(t())}</Stat>}</Show>
-                <Show when={ms(item().updated)}>{(t) => <Stat label="Updated">{date(t())}</Stat>}</Show>
-                <Show when={item().totalQuantity > 0}>
-                  <Stat label="Stock">
-                    {compact(item().unitsLeft)} / {compact(item().totalQuantity)}
-                  </Stat>
-                </Show>
-                <Show when={ms(item().offSaleDeadline)}>{(t) => <Stat label="Off sale on">{date(t())}</Stat>}</Show>
-              </Card>
-              <Show when={view.value}>{(v) => <ValuePanel value={v()} />}</Show>
-              <Show when={item().tags.length > 0}>
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <span class="text-xs text-fg-muted">Tags</span>
-                  <For each={item().tags}>
-                    {(tag) => (
-                      <TextLink onClick={() => run("market.search", tag)}>
-                        <Badge>{tag}</Badge>
-                      </TextLink>
-                    )}
-                  </For>
+
+                  <Facts columns class="order-4">
+                    <FactGroup title={bundle() ? "Bundle" : "Item"}>
+                      <IdFact id={item().id} target={target()} />
+                      <Fact label="Type">{item().typeName}</Fact>
+                      <Show when={item().category}>{(c) => <Fact label="Category">{c()}</Fact>}</Show>
+                      <Show when={item().genres.length > 0}>
+                        <Fact label="Genres">{item().genres.join(", ")}</Fact>
+                      </Show>
+                    </FactGroup>
+                    <Show when={item().totalQuantity > 0 || item().inCatalog || item().sales > 0}>
+                      <FactGroup title={item().totalQuantity > 0 ? "Supply" : "Popularity"}>
+                        <Show when={item().totalQuantity > 0}>
+                          <Fact label="Copies">{full(item().totalQuantity)}</Fact>
+                          <Show when={!item().fromReseller}>
+                            <Fact label="Left">{item().unitsLeft > 0 ? full(item().unitsLeft) : "Sold out"}</Fact>
+                          </Show>
+                        </Show>
+                        <Show when={item().inCatalog}>
+                          <Fact label="Favorites">{full(item().favorites)}</Fact>
+                        </Show>
+                        <Show when={item().sales > 0}>
+                          <Fact label="Sales">{full(item().sales)}</Fact>
+                        </Show>
+                      </FactGroup>
+                    </Show>
+                    <FactGroup title="Dates">
+                      <Fact label="Created">{when(item().created, date)}</Fact>
+                      <Fact label="Updated">{when(item().updated, ago)}</Fact>
+                      <Show when={ms(item().offSaleDeadline)}>
+                        {(t) => <Fact label="Off sale on">{date(t())}</Fact>}
+                      </Show>
+                    </FactGroup>
+                  </Facts>
                 </div>
-              </Show>
-              <Show when={item().contents.length > 0}>
-                <div class="flex flex-col gap-1">
-                  <span class="text-sm text-fg-muted">Includes</span>
-                  <div class="flex flex-wrap gap-x-3 gap-y-1">
-                    <For each={item().contents}>
-                      {(p) => <TextLink onClick={() => run("market.open", itemTarget(p.id))}>{p.name}</TextLink>}
-                    </For>
-                  </div>
-                </div>
-              </Show>
+
+                <aside class="order-2 flex min-w-0 flex-col gap-4 @3xl:sticky @3xl:top-4">
+                  <Card class="flex flex-col">
+                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 px-4 pt-3.5 pb-3.5">
+                      <div class="flex min-w-0 flex-col gap-1.5">
+                        <Show
+                          when={
+                            item().limited || isSoundHat(id(), bundle()) || item().premiumOnly || item().publicDomain
+                          }
+                        >
+                          <div class="flex flex-wrap items-center gap-1.5">
+                            <Show when={item().limited}>{(l) => <Badge variant="success">{l()}</Badge>}</Show>
+                            <Show when={isSoundHat(id(), bundle())}>
+                              <SoundHatBadge />
+                            </Show>
+                            <Show when={item().premiumOnly}>
+                              <Badge>
+                                <PremiumBadge bare size={12} class="-ml-0.5 mr-1" />
+                                Premium
+                              </Badge>
+                            </Show>
+                            <Show when={item().publicDomain}>
+                              <Badge>Free to take</Badge>
+                            </Show>
+                          </div>
+                        </Show>
+                        <h1 class="text-2xl font-semibold leading-tight [overflow-wrap:anywhere]">{item().name}</h1>
+                        <span class="flex flex-wrap items-center gap-1 text-fg-muted">
+                          {item().typeName} by{" "}
+                          <TextLink
+                            tone={item().creatorFake ? "danger" : "name"}
+                            onClick={() =>
+                              run(item().creatorIsGroup ? "group.open" : "user.open", String(item().creatorId))
+                            }
+                          >
+                            {item().creator}
+                          </TextLink>
+                          <Show when={item().creatorVerified}>
+                            <VerifiedBadge />
+                          </Show>
+                          <Show when={item().creatorFake}>
+                            <Tooltip content="Not Roblox. This creator copies Roblox's name.">
+                              <Icon name="alert" size={14} class="text-danger" aria-label="Not Roblox" />
+                            </Tooltip>
+                          </Show>
+                        </span>
+                      </div>
+                      <Menu
+                        variant="ghost"
+                        icon="more"
+                        label="More"
+                        class="-mt-1 -mr-2"
+                        items={entityMenu(
+                          target(),
+                          item().bundle
+                            ? []
+                            : [
+                                menuItem("market.dependencies", { label: "View dependencies", icon: "inventory" }),
+                                ...templateItems(item().id, item().assetType),
+                              ],
+                        )}
+                      />
+                    </div>
+                    <Divider />
+                    <div class="flex flex-col gap-3 px-4 py-3.5">
+                      <div class="flex flex-col gap-1">
+                        <span class="flex min-w-0 items-center gap-1 text-xs text-fg-muted">
+                          <Show when={cheapest()} fallback={item().fromReseller ? "Cheapest copy" : "Price"}>
+                            {(r) => (
+                              <>
+                                <span class="shrink-0">
+                                  Cheapest copy
+                                  <Show when={r().serial}> · #{full(r().serial ?? 0)}</Show> from
+                                </span>
+                                <TextLink
+                                  tone="name"
+                                  class="truncate"
+                                  onClick={() => run("user.open", String(r().sellerId))}
+                                >
+                                  {r().seller}
+                                </TextLink>
+                              </>
+                            )}
+                          </Show>
+                        </span>
+                        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                          <Switch>
+                            <Match when={item().price === null}>
+                              <span class="text-xl font-semibold text-fg-muted">{item().priceLabel}</span>
+                            </Match>
+                            <Match when={item().price === 0}>
+                              <span class="text-3xl font-semibold">Free</span>
+                            </Match>
+                            <Match when={item().price}>
+                              {(p) => <Robux size="lg" class="text-3xl font-semibold" amount={p()} />}
+                            </Match>
+                          </Switch>
+                          <Show when={pctOver(item().price, value())}>{(n) => <VsValue pct={n()} />}</Show>
+                          <Show when={item().price !== null && pctOver(item().price, value()) === 0}>
+                            <Badge>At value</Badge>
+                          </Show>
+                        </div>
+                      </div>
+                      <Show when={!item().fromReseller && item().totalQuantity > 0}>
+                        <Meter
+                          label="Stock"
+                          value={item().unitsLeft}
+                          max={item().totalQuantity}
+                          valueLabel={`${full(item().unitsLeft)} of ${full(item().totalQuantity)} left`}
+                        />
+                      </Show>
+                      <Show when={deadline()}>
+                        {(t) => (
+                          <span class="flex items-center gap-1.5 text-sm text-warning">
+                            <Icon name="clock" size={14} /> Off sale {date(t())}
+                          </span>
+                        )}
+                      </Show>
+                      <div class="flex flex-col gap-1.5">
+                        <Show
+                          when={item().inCatalog}
+                          fallback={
+                            <Button size="lg" icon="external" onClick={() => run("entity.open_website", target())}>
+                              Open on website
+                            </Button>
+                          }
+                        >
+                          <div class="flex gap-1.5">
+                            <Button
+                              variant="primary"
+                              size="lg"
+                              class="flex-1"
+                              disabled={item().price === null || view.owned}
+                              onClick={() => run("market.buy", target())}
+                            >
+                              <Switch>
+                                <Match when={view.owned}>Owned</Match>
+                                <Match when={item().price === 0}>Get</Match>
+                                <Match when>Buy</Match>
+                              </Switch>
+                            </Button>
+                            <Menu
+                              size="lg"
+                              items={accountItems("market.buy_as")}
+                              disabled={item().price === null || accountItems("market.buy_as").length === 0}
+                            >
+                              Buy as…
+                            </Menu>
+                          </div>
+                        </Show>
+                        <div class="flex gap-1.5">
+                          <ToggleButton
+                            variant="secondary"
+                            class="flex-1"
+                            icon="star"
+                            pressedIcon="star-fill"
+                            pressed={view.favorited ?? false}
+                            disabled={view.favorited === null}
+                            onChange={() => run("market.favorite", target())}
+                          >
+                            Favorite
+                            <Show when={item().inCatalog && item().favorites > 0}>
+                              <span class="font-normal text-fg-muted tabular-nums">{compact(item().favorites)}</span>
+                            </Show>
+                          </ToggleButton>
+                          <Show when={item().inCatalog}>
+                            <ToggleButton
+                              variant="secondary"
+                              class="flex-1"
+                              icon="heart"
+                              pressedIcon="heart-fill"
+                              pressed={view.wishlisted}
+                              onChange={() => run("market.wishlist", target())}
+                            >
+                              Wishlist
+                            </ToggleButton>
+                          </Show>
+                        </div>
+                      </div>
+                    </div>
+                    <Show when={view.ownedBy.length > 0}>
+                      <Divider />
+                      <span class="flex items-center gap-1.5 px-4 py-2.5 text-sm text-fg-muted">
+                        <Icon name="check" size={14} class="text-success" />
+                        <span class="min-w-0">
+                          Owned by <span class="text-fg">{view.ownedBy.join(", ")}</span>
+                        </span>
+                      </span>
+                    </Show>
+                  </Card>
+                  <Show when={item().inCatalog && (resells() || view.value)}>
+                    <MarketCard collectibleId={resells() ? item().collectibleId : null} value={view.value} />
+                  </Show>
+                </aside>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        }}
       </Show>
 
       <Show when={info()}>
@@ -441,9 +594,14 @@ export default function ItemPage() {
           <TabPanel value="resellers">
             <Show when={info()}>
               {(i) => (
-                <Show when={i().collectibleId}>
-                  {(c) => <Resellers collectibleId={c()} id={id()} bundle={bundle()} name={i().name} thumb={thumb()} />}
-                </Show>
+                <Resellers
+                  res={resellers}
+                  value={value()}
+                  id={id()}
+                  bundle={bundle()}
+                  name={i().name}
+                  thumb={thumb()}
+                />
               )}
             </Show>
           </TabPanel>
@@ -474,64 +632,23 @@ export default function ItemPage() {
   )
 }
 
-/** What Rolimons says about this limited: value beside RAP and how far apart they are, demand,
- * trend and flags, with the source and age always shown. */
-function ValuePanel(props: { value: ValueView }) {
-  const v = () => props.value
-  const gap = () => rapGap(v().tag.value, v().rap)
+/** The stage's size: wide, and never taller than a comfortable look at the item. */
+const STAGE_SIZE = "aspect-[4/3] max-h-[30rem] w-full"
+
+const when = (iso: string, f: (t: number) => string) => {
+  const t = ms(iso)
+  return t === null ? "–" : f(t)
+}
+
+const idle = <T,>() => ({ ...emptyList<T>(), loading: false })
+
+/** How a price compares to value: under is good, a little over is normal, well over is a
+ * warning. */
+function VsValue(props: { pct: number }) {
   return (
-    <Card class="flex flex-col gap-3 p-3">
-      <div class="flex flex-wrap items-center gap-1.5 text-sm text-fg-muted">
-        <Icon name="rolimons" size={14} />
-        <span>{VALUES_SOURCE}</span>
-        <Show when={v().acronym}>
-          <Badge>{v().acronym}</Badge>
-        </Show>
-        <Show when={versionLabel(v().version)}>{(l) => <Badge>{l()}</Badge>}</Show>
-        <ValueFlags tag={v().tag} />
-        <Show when={v().fetchedAt}>{(t) => <span class="ml-auto text-xs text-fg-faint">Updated {ago(t())}</span>}</Show>
-      </div>
-      <dl class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-4">
-        <Stat label="Value">
-          <Show when={v().tag.value} fallback={<span class="text-fg-muted">Not valued</span>}>
-            {(n) => <ValueAmount class="text-lg font-medium" amount={n()} />}
-          </Show>
-        </Stat>
-        <Stat label="RAP (Rolimons)">
-          <span class="flex flex-col">
-            <Robux amount={v().rap} />
-            <Show when={gap()}>
-              {(g) => (
-                <span
-                  class="text-xs"
-                  classList={{
-                    "text-warning": g() > 10,
-                    "text-success": g() < -10,
-                    "text-fg-muted": Math.abs(g()) <= 10,
-                  }}
-                >
-                  {Math.abs(g())}% {g() > 0 ? "above" : "below"} value
-                </span>
-              )}
-            </Show>
-          </span>
-        </Stat>
-        <Show when={v().tag.demand}>
-          {(d) => (
-            <Stat label="Demand">
-              <DemandPips demand={d()} label />
-            </Stat>
-          )}
-        </Show>
-        <Show when={v().tag.trend}>
-          {(t) => (
-            <Stat label="Trend">
-              <TrendMark trend={t()} label />
-            </Stat>
-          )}
-        </Show>
-      </dl>
-    </Card>
+    <Badge variant={props.pct < 0 ? "success" : props.pct > 10 ? "warning" : "neutral"}>
+      {Math.abs(props.pct)}% {props.pct < 0 ? "under" : "over"} value
+    </Badge>
   )
 }
 
@@ -550,12 +667,18 @@ function Similar(props: { id: number; bundle: boolean; assetType: number }) {
   )
 }
 
-function Resellers(props: { collectibleId: string; id: number; bundle: boolean; name: string; thumb?: string }) {
-  const res = useLive(() => props.collectibleId, commands.itemResellers, emptyPaged<ResellerRow>)
+function Resellers(props: {
+  res: Paged<ResellerRow>
+  value: number | null
+  id: number
+  bundle: boolean
+  name: string
+  thumb?: string
+}) {
   const dialog = useDialog()
   onCleanup(
     handle("market.buy_resale", (arg) => {
-      const r = res.list.items.find((x) => x.instanceId === arg?.trim())
+      const r = props.res.list.items.find((x) => x.instanceId === arg?.trim())
       if (!r) return showToast("Pick a copy in the Resellers tab.")
       const [itemId, isBundle] = [props.id, props.bundle]
       dialog.show(
@@ -574,23 +697,51 @@ function Resellers(props: { collectibleId: string; id: number; bundle: boolean; 
       )
     }),
   )
-  const columns: Column<ResellerRow>[] = [
+  const columns = (): Column<ResellerRow>[] => [
     {
       key: "seller",
       label: "Seller",
       cell: (r) => (
-        <>
-          <TextLink tone="name" onClick={() => run("user.open", String(r.sellerId))}>
+        <span class="flex min-w-0 items-center gap-2">
+          <Avatar size="xs" name={r.seller} src={thumbUrl("headshot", r.sellerId)} />
+          <TextLink tone="name" class="truncate" onClick={() => run("user.open", String(r.sellerId))}>
             {r.seller}
           </TextLink>
           <Show when={r.verified}>
             <VerifiedBadge />
           </Show>
-        </>
+        </span>
       ),
     },
     { key: "serial", label: "Serial", width: "6rem", mono: true, cell: (r) => (r.serial ? `#${r.serial}` : "–") },
     { key: "price", label: "Price", width: "7rem", align: "end", cell: (r) => <Robux amount={r.price} /> },
+    ...(props.value
+      ? [
+          {
+            key: "vs",
+            label: "vs value",
+            width: "6rem",
+            align: "end" as const,
+            cell: (r: ResellerRow) => (
+              <Show when={pctOver(r.price, props.value)} fallback={<span class="text-fg-muted">At value</span>}>
+                {(n) => (
+                  <span
+                    class="tabular-nums"
+                    classList={{
+                      "text-success": n() < 0,
+                      "text-warning": n() > 10,
+                      "text-fg-muted": n() >= 0 && n() <= 10,
+                    }}
+                  >
+                    {n() > 0 ? "+" : "−"}
+                    {Math.abs(n())}%
+                  </span>
+                )}
+              </Show>
+            ),
+          },
+        ]
+      : []),
     {
       key: "buy",
       label: "",
@@ -604,11 +755,11 @@ function Resellers(props: { collectibleId: string; id: number; bundle: boolean; 
     },
   ]
   return (
-    <ListState list={res.list} icon="robux" empty="Nobody is selling this" more={res.moreKey}>
+    <ListState list={props.res.list} icon="robux" empty="Nobody is selling this" more={props.res.moreKey}>
       <DataTable
         aria-label="Resellers"
-        columns={columns}
-        rows={res.list.items}
+        columns={columns()}
+        rows={props.res.list.items}
         rowKey={(r) => r.instanceId || `${r.sellerId}:${r.serial}:${r.price}`}
       />
     </ListState>

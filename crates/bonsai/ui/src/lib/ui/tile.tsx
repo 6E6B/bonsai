@@ -15,6 +15,9 @@ export interface TileProps {
   badge?: JSX.Element
   /** A small dark chip in the other top corner, for glanceable signals like demand and trend. */
   marker?: JSX.Element
+  /** A badge in the bottom-left corner of the picture that marks something special about the
+   * thing, like a sound hat. Keeps its own color. */
+  flair?: JSX.Element
   /** Ring around the tile, for items being worn or picked for a trade. */
   selected?: boolean
   /** Always as tall as two title lines and a subtitle, so rows of tiles keep one height as
@@ -44,6 +47,9 @@ export function Tile(props: TileProps) {
         </Show>
         <Show when={props.marker}>
           <span data-slot="marker">{props.marker}</span>
+        </Show>
+        <Show when={props.flair}>
+          <span data-slot="flair">{props.flair}</span>
         </Show>
       </span>
       <span data-slot="text">

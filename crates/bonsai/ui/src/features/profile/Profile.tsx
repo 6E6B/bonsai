@@ -53,7 +53,7 @@ import {
 import { rolimonsFailed, VALUES_SOURCE } from "~/lib/values"
 import { useWikiAbout, WikiSummary, WikiTab } from "~/lib/wiki-panels"
 import { Outfits } from "./Outfits"
-import { BadgeTile, Overview } from "./Overview"
+import { BadgeTile, Intro, Overview } from "./Overview"
 
 const allSections = [
   { value: "about", label: "Overview" },
@@ -336,6 +336,10 @@ export default function Profile() {
         )}
       </Show>
 
+      <Show when={view.user}>
+        <Intro view={view} trading={trading} />
+      </Show>
+
       <Tabs aria-label="Profile sections" items={sections()} value={section()} onChange={setSection}>
         <TabPanel value="about" class="flex flex-col gap-4">
           <Show when={wiki.article}>{(a) => <WikiSummary view={wiki} article={a()} facts={3} />}</Show>
@@ -348,7 +352,6 @@ export default function Profile() {
             badges={badges}
             groups={groups}
             collectibles={collectibles}
-            trading={trading}
             onSeeAll={seeAll}
           />
         </TabPanel>
@@ -511,7 +514,7 @@ function Groups(props: { list: List<GroupCard> }) {
             leading={<Thumbnail class="w-10" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}
             title={
               <Show when={c.verified} fallback={c.name}>
-                <span class="text-verified">{c.name}</span> <VerifiedBadge />
+                {c.name} <VerifiedBadge />
               </Show>
             }
             subtitle={`${compact(c.members)} members · ${c.role}`}

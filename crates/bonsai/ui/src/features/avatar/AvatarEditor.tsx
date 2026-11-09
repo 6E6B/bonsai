@@ -15,9 +15,10 @@ import {
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { itemMenu } from "~/lib/menus"
+import { isSoundHat } from "~/lib/sound-hats"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl, withRev } from "~/lib/thumb"
-import { ItemTile, TILE_WIDTH } from "~/lib/tiles"
+import { ItemName, ItemTile, SoundHatBadge, TILE_WIDTH } from "~/lib/tiles"
 import {
   Button,
   ColorPicker,
@@ -216,7 +217,7 @@ export default function AvatarEditor() {
                 >
                   <ListItem
                     leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
-                    title={w.name}
+                    title={<ItemName name={w.name} id={w.id} />}
                     subtitle={view.rig === "R6" && w.r15Only ? `${w.typeName} · R15 only` : w.typeName}
                     dim={view.rig === "R6" && w.r15Only}
                     onClick={() => run("market.open", String(w.id))}
@@ -588,6 +589,7 @@ function Recent() {
                   subtitle={r.outfit ? "Outfit" : r.typeName}
                   src={thumbUrl(r.outfit ? "outfit" : "asset", r.id)}
                   fallback="avatar"
+                  flair={!r.outfit && isSoundHat(Number(r.id)) ? <SoundHatBadge /> : undefined}
                   onClick={() => void wear(r)}
                 />
               </ContextMenu>

@@ -43,7 +43,6 @@
   --color-accent: #4ace51;
   --color-accent-hover: #65d56b;
   --color-accent-soft: #4ace5129;
-  --color-verified: #4d94ff; /* verified community names; the badge fill in assets/verified-badge.svg */
   --color-on-accent: #000000; /* text on accent, danger and success fills */
   --color-contrast: #4ace51; /* primary button fill, lit by --sheen; the accent unless a theme overrides it */
   --color-focus: #65d56b;
@@ -117,6 +116,8 @@
   --text-xl--line-height: 24px;
   --text-2xl: 22px;
   --text-2xl--line-height: 28px;
+  --text-3xl: 28px; /* a name laid over a picture */
+  --text-3xl--line-height: 34px;
 
   /* ── Shape ── */
   --radius-xs: 2px;

@@ -1959,6 +1959,11 @@ async fn communities_member_admin_forums_and_public_pages() {
         ("Test Community", "User Four", 4)
     );
     assert!(!d.public_entry);
+    let shout = d.shout.as_ref().expect("shout");
+    assert_eq!(
+        (shout.text.as_str(), shout.poster.as_str(), shout.updated.as_str()),
+        ("Event Friday at 6!", "User One", "2026-10-12T18:00:00.000Z")
+    );
 
     let m = poll(|| c.membership(ME, g)).await;
     assert!(m.is_member() && !m.owner && !m.primary);

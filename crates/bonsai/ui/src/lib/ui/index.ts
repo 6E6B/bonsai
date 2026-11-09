@@ -61,9 +61,11 @@ export {
   type SettingsGroupProps,
 } from "./settings-group"
 export { Shelf, type ShelfProps } from "./shelf"
+export { Showcase, type ShowcaseFigure, type ShowcaseImage, type ShowcaseProps } from "./showcase"
 export { Skeleton, type SkeletonProps } from "./skeleton"
 export { Slider, type SliderProps } from "./slider"
 export { Spinner, type SpinnerProps } from "./spinner"
+export { Stage, type StageProps } from "./stage"
 export { Stat, type StatProps } from "./stat"
 export { Swatch, type SwatchProps } from "./swatch"
 export { Switch, type SwitchProps } from "./switch"

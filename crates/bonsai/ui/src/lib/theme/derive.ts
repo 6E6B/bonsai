@@ -253,7 +253,6 @@ function shadow(layers: Layer[], seeds: ShadowSeeds): string {
 
 /* ── Constants ── Same in both bases unless a theme pins them. */
 const FIXED: Tokens = {
-  "color-verified": "#4d94ff", // verified community names; the badge fill
   "color-media-chip": "#000000a6",
   "color-on-media": "#ffffff",
   "color-presence-online": "#00a2ff", // Roblox's online blue, not the accent
@@ -278,6 +277,7 @@ const TEXT: [name: string, size: number, line: number][] = [
   ["lg", 15, 22],
   ["xl", 18, 24],
   ["2xl", 22, 28],
+  ["3xl", 28, 34],
 ]
 const RADII: [name: string, px: number][] = [
   ["xs", 2],

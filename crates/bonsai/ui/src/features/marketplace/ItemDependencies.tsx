@@ -126,7 +126,7 @@ export function Dependencies(props: { id: number; assetType: number }) {
         >
           <TextLink
             class="truncate"
-            tone={item.creatorVerified && item.creatorIsGroup ? "verified" : "name"}
+            tone="name"
             onClick={() => run(item.creatorIsGroup ? "group.open" : "user.open", String(item.creatorId))}
           >
             {item.creator || `Creator ${item.creatorId}`}

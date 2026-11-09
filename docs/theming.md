@@ -32,7 +32,7 @@ from strangers. This is the design and the roadmap. What's still missing is in [
     "shadow": { "depth": 1, "ring": 1, "highlight": 1 },   // alpha multipliers per layer kind
     "font": { "google": "Space Grotesk" }, "mono": "jetbrains"   // bundled id or a Google family
   },
-  "tokens": { "color-verified": "#4d94ff" }                 // pinned values; win over seeds
+  "tokens": { "color-focus": "#88c0d0" }                    // pinned values; win over seeds
 }
 ```
 

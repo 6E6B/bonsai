@@ -15,8 +15,8 @@ import {
   topBadges,
 } from "./trader"
 
-/** Rolimons' view of a trader: what their limiteds are worth, their leaderboard rank and the
- * badges Rolimons gave them, with the source and age always shown. While values are off it is
+/** Rolimons' view of a trader: what their limiteds are worth and the badges Rolimons
+ * gave them, with the source and age always shown. While values are off it is
  * one line offering to turn them on. Hidden when Rolimons hasn't scanned the player. */
 export function TradingCard(props: { view: TraderView; enabled: boolean }) {
   const unscanned = () => props.enabled && props.view.stats !== null && !props.view.stats.tracked
@@ -44,8 +44,7 @@ export function TradingCard(props: { view: TraderView; enabled: boolean }) {
           when={props.enabled}
           fallback={
             <span class="text-sm text-fg-muted">
-              Value, rank and badges from {VALUES_SOURCE}.{" "}
-              <TextLink onClick={() => run("market.values")}>Turn on</TextLink>
+              Value and badges from {VALUES_SOURCE}. <TextLink onClick={() => run("market.values")}>Turn on</TextLink>
             </span>
           }
         >
@@ -106,15 +105,6 @@ function Numbers(props: { stats: TraderStats }) {
       </Stat>
       <Stat label="RAP">
         <Robux class="text-lg font-medium" amount={props.stats.rap} />
-      </Stat>
-      <Stat label="Rank">
-        <Show when={props.stats.rank} fallback={<span class="text-lg text-fg-muted">Unranked</span>}>
-          {(r) => (
-            <Tooltip content={`By value, on ${VALUES_SOURCE}`} class="inline-flex">
-              <span class="text-lg font-medium">#{r().toLocaleString("en-US")}</span>
-            </Tooltip>
-          )}
-        </Show>
       </Stat>
     </dl>
   )

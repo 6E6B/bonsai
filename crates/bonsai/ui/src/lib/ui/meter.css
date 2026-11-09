@@ -39,4 +39,9 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+
+  /* An empty label (valueLabel="") takes no room, for a bare bar beside its own figure. */
+  [data-component="meter"] [data-slot="value"]:empty {
+    display: none;
+  }
 }

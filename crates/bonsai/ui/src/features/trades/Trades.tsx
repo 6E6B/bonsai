@@ -18,6 +18,7 @@ import { itemMenu, itemTarget } from "~/lib/menus"
 import { rank } from "~/lib/search"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
+import { ItemName } from "~/lib/tiles"
 import {
   Alert,
   Avatar,
@@ -310,7 +311,7 @@ function ItemRow(props: {
         leading={
           <Thumbnail class="w-10" alt="" src={thumbUrl(i().bundle ? "bundle" : "asset", i().id)} fallback="avatar" />
         }
-        title={i().name}
+        title={<ItemName name={i().name} id={i().id} bundle={i().bundle} />}
         subtitle={
           <span class="flex items-center gap-1.5">
             <Show when={i().serial}>{(n) => `#${n()}`}</Show>

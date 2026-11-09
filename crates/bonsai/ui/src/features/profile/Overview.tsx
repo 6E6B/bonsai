@@ -18,7 +18,7 @@ import { emptyList } from "~/lib/list-state"
 import { itemMenu, itemTarget, userMenu } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { GameTile, ItemTile } from "~/lib/tiles"
+import { GameTile, ItemTile, SoundHatMark } from "~/lib/tiles"
 import {
   Badge,
   Button,
@@ -55,7 +55,7 @@ const ms = (iso: string) => {
 /** Which tab, and which list inside it, a "See all" opens. */
 export type SeeAll = (section: string, list?: string) => void
 
-/** A bit of everything, like the profile on roblox.com: bio and facts, what they wear, and one
+/** A bit of everything, like the profile on roblox.com: facts, what they wear, and one
  * scrolling row each of friends, experiences, favorites, communities, badges and collectibles, each with
  * a link to its full tab. Rows with nothing in them are left out. */
 export function Overview(props: {
@@ -67,7 +67,6 @@ export function Overview(props: {
   badges: List<UserBadge>
   groups: List<GroupCard>
   collectibles: List<ItemCard>
-  trading: TraderView
   onSeeAll: SeeAll
 }) {
   const id = () => String(props.userId)
@@ -87,20 +86,6 @@ export function Overview(props: {
     <div class="@container">
       <div class="grid grid-cols-1 gap-x-6 gap-y-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
         <div class="flex min-w-0 flex-col gap-5">
-          <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
-            <h3 class="text-sm font-medium text-fg-muted">Bio</h3>
-            <Show
-              when={props.view.user?.description.trim()}
-              fallback={<span class="text-fg-muted">{props.view.user ? "No bio." : ""}</span>}
-            >
-              {(d) => (
-                <Clamp lines={8}>
-                  <Description text={d()} tags />
-                </Clamp>
-              )}
-            </Show>
-          </Card>
-          <TradingCard view={props.trading} enabled={shell.itemValues} />
           <Show when={props.view.note}>
             {(n) => (
               <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
@@ -190,6 +175,28 @@ export function Overview(props: {
             </FactGroup>
           </Facts>
         </aside>
+      </div>
+    </div>
+  )
+}
+
+/** Bio and trading stats side by side under the profile header, shown on every tab. Trading hides itself for
+ * players the values site has not scanned, and Bio then takes the full width. */
+export function Intro(props: { view: ProfileView; trading: TraderView }) {
+  return (
+    <div class="@container">
+      <div class="grid grid-cols-1 gap-x-6 gap-y-5 @2xl:grid-flow-col @2xl:auto-cols-fr">
+        <Card class="flex min-w-0 flex-col gap-1.5 px-3.5 py-3">
+          <h3 class="text-sm font-medium text-fg-muted">Bio</h3>
+          <Show when={props.view.user?.description.trim()} fallback={<span class="text-fg-muted">No bio.</span>}>
+            {(d) => (
+              <Clamp lines={8}>
+                <Description text={d()} tags />
+              </Clamp>
+            )}
+          </Show>
+        </Card>
+        <TradingCard view={props.trading} enabled={shell.itemValues} />
       </div>
     </div>
   )
@@ -335,6 +342,12 @@ function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }
                       onClick={() => run("market.open", itemTarget(i.id, i.bundle))}
                     >
                       <Thumbnail class="w-full" alt={i.name} src={thumbUrl("asset", i.id)} fallback="avatar" />
+                      <SoundHatMark
+                        id={i.id}
+                        bundle={i.bundle}
+                        size={12}
+                        class="absolute bottom-1 left-1 [filter:var(--shadow-on-media)]"
+                      />
                       <span class="pointer-events-none absolute inset-0 rounded-lg group-hover:bg-hover" />
                     </button>
                   </Tooltip>

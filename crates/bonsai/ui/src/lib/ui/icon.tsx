@@ -11,6 +11,7 @@ import messagesFill from "@phosphor-icons/core/assets/fill/envelope-simple-fill.
 import settingsFill from "@phosphor-icons/core/assets/fill/gear-six-fill.svg?raw"
 import heartFill from "@phosphor-icons/core/assets/fill/heart-fill.svg?raw"
 import homeFill from "@phosphor-icons/core/assets/fill/house-fill.svg?raw"
+import audioFill from "@phosphor-icons/core/assets/fill/music-notes-fill.svg?raw"
 import pause from "@phosphor-icons/core/assets/fill/pause-fill.svg?raw"
 import play from "@phosphor-icons/core/assets/fill/play-fill.svg?raw"
 import playlistFill from "@phosphor-icons/core/assets/fill/playlist-fill.svg?raw"
@@ -22,6 +23,7 @@ import thumbsDownFill from "@phosphor-icons/core/assets/fill/thumbs-down-fill.sv
 import thumbsUpFill from "@phosphor-icons/core/assets/fill/thumbs-up-fill.svg?raw"
 import friendsFill from "@phosphor-icons/core/assets/fill/users-fill.svg?raw"
 import communitiesFill from "@phosphor-icons/core/assets/fill/users-three-fill.svg?raw"
+import alertFill from "@phosphor-icons/core/assets/fill/warning-fill.svg?raw"
 import archive from "@phosphor-icons/core/assets/regular/archive.svg?raw"
 import refresh from "@phosphor-icons/core/assets/regular/arrow-clockwise.svg?raw"
 import trendFlat from "@phosphor-icons/core/assets/regular/arrow-right.svg?raw"
@@ -143,6 +145,7 @@ const svgs = {
   upload,
   info,
   alert,
+  "alert-fill": alertFill,
   "circle-check": circleCheck,
   "circle-x": circleX,
   home,
@@ -227,6 +230,7 @@ const svgs = {
   "sort-desc": sortDesc,
   video,
   audio,
+  "audio-fill": audioFill,
   image,
   model,
   plugin,

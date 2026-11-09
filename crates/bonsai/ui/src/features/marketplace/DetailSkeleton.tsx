@@ -35,3 +35,36 @@ export function DetailSkeleton() {
     </div>
   )
 }
+
+/** The item page while it loads: the stage, the buy box beside it and the facts below. */
+export function ItemSkeleton() {
+  return (
+    <div class="@container" aria-hidden="true">
+      <div class="flex flex-col gap-4 @3xl:grid @3xl:grid-cols-[minmax(0,1fr)_21rem] @3xl:items-start">
+        <div class="contents @3xl:flex @3xl:min-w-0 @3xl:flex-col @3xl:gap-4">
+          <Skeleton class="order-1 aspect-[4/3] max-h-[30rem] w-full rounded-lg" />
+          <Card class="order-3 flex flex-col gap-1.5 px-4 py-3.5">
+            <Skeleton class="h-3.5 w-20" />
+            <Skeleton class="h-4 w-full" />
+            <Skeleton class="h-4 w-4/6" />
+          </Card>
+        </div>
+        <Card class="order-2 flex flex-col gap-3 px-4 py-3.5">
+          <Skeleton class="h-5 w-16 rounded-full" />
+          <Skeleton class="h-7 w-4/5 rounded-md" />
+          <Skeleton class="h-4 w-36" />
+          <Skeleton class="mt-2 h-3 w-12" />
+          <Skeleton class="h-8 w-28 rounded-md" />
+          <div class="flex gap-1.5">
+            <Skeleton class="h-10 flex-1 rounded-md" />
+            <Skeleton class="h-10 w-24 rounded-md" />
+          </div>
+          <div class="flex gap-1.5">
+            <Skeleton class="h-8 flex-1 rounded-md" />
+            <Skeleton class="h-8 flex-1 rounded-md" />
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}

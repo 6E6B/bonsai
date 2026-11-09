@@ -16,4 +16,15 @@
     opacity: 0.8;
     mask: url("./assets/robux.svg") center / contain no-repeat;
   }
+
+  /* At headline sizes a full-line mark dwarfs the digits; match it to their height. */
+  [data-component="robux"][data-size="lg"] {
+    gap: 0.16em;
+  }
+
+  [data-component="robux"][data-size="lg"] [data-slot="mark"] {
+    width: 0.72em;
+    height: 0.8em;
+    opacity: 0.55;
+  }
 }

@@ -56,9 +56,11 @@ import {
   SettingSwitch,
   SettingsGroup,
   Shelf,
+  Showcase,
   Skeleton,
   Slider,
   Spinner,
+  Stage,
   Stat,
   type StripTab,
   Swatch,
@@ -192,6 +194,7 @@ export default function Components() {
   const [volume, setVolume] = createSignal(60)
   const [quality, setQuality] = createSignal(1)
   const [swatch, setSwatch] = createSignal("var(--color-accent)")
+  const [stageView, setStageView] = createSignal("Alone")
   const [picked, setPicked] = createSignal("#3d7dff")
   const [tint, setTint] = createSignal("#3d7dff33")
   const [themeCard, setThemeCard] = createSignal("Dark")
@@ -495,6 +498,20 @@ export default function Components() {
             </FactGroup>
           </Facts>
         </Card>
+        <Facts columns class="w-[40rem]">
+          <FactGroup title="Experience">
+            <Fact label="Genre">Survival</Fact>
+            <Fact label="Maturity">Moderate</Fact>
+          </FactGroup>
+          <FactGroup title="Servers">
+            <Fact label="Server size">24</Fact>
+            <Fact label="Avatar type">R15</Fact>
+          </FactGroup>
+          <FactGroup title="Building">
+            <Fact label="Copying">No</Fact>
+            <Fact label="Gear">None</Fact>
+          </FactGroup>
+        </Facts>
       </Section>
 
       <Section title="Settings group">
@@ -856,6 +873,22 @@ export default function Components() {
             <Spinner size="sm" />
           </span>
         </Viewport>
+        <Stage
+          class="aspect-[4/3] w-72"
+          topStart={
+            <SegmentedControl
+              size="sm"
+              aria-label="Stage view"
+              options={["Alone", "On me"]}
+              value={stageView()}
+              onChange={setStageView}
+            />
+          }
+          topEnd={<IconButton size="sm" icon="refresh" label="Reset" onClick={noop} />}
+          hint="Drag to turn · Scroll to zoom"
+        >
+          <Thumbnail alt="Stage" fallback="avatar" />
+        </Stage>
         <div class="grid w-full grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
           <Tile title="Tile Cats" subtitle="1,037 playing" onClick={noop} />
           <Tile
@@ -866,6 +899,18 @@ export default function Components() {
             onClick={noop}
           />
           <Tile title="Being worn" subtitle={<Robux amount={null} />} fallback="avatar" selected onClick={noop} />
+          <Tile
+            title="With flair"
+            subtitle={<Robux amount={100} />}
+            fallback="avatar"
+            flair={
+              <Badge variant="purple">
+                <Icon name="audio-fill" size={12} class="-ml-0.5 mr-1" />
+                Sound Hat
+              </Badge>
+            }
+            onClick={noop}
+          />
         </div>
         <Shelf class="w-full" itemWidth="8rem">
           <For each={Array.from({ length: 14 }, (_, i) => i)}>
@@ -924,6 +969,10 @@ export default function Components() {
         />
       </Section>
 
+      <Section title="Showcase">
+        <ShowcaseDemo />
+      </Section>
+
       <Section title="Stat, meter, robux, link">
         <Card class="grid w-full grid-cols-6 gap-4 p-3">
           <Stat label="Playing">1,037</Stat>
@@ -933,7 +982,7 @@ export default function Components() {
           </Stat>
           <Stat label="Creator">
             <span class="flex items-center gap-1">
-              <TextLink tone="verified" onClick={noop}>
+              <TextLink tone="name" onClick={noop}>
                 Tilework
               </TextLink>
               <VerifiedBadge />
@@ -1045,5 +1094,49 @@ export default function Components() {
         <Spinner size="lg" />
       </Section>
     </Page>
+  )
+}
+
+/** A Showcase with placeholder pictures, so the strip and arrows can be tried. */
+function ShowcaseDemo() {
+  const [shown, setShown] = createSignal(0)
+  return (
+    <Showcase
+      class="w-full"
+      images={[1, 2, 3, 4].map((i) => ({ label: `Image ${i}` }))}
+      index={shown()}
+      onSelect={setShown}
+      tags={["Survival", "Escape", "Moderate"]}
+      title="Basement Escape"
+      byline={
+        <span class="flex items-center gap-1">
+          by <TextLink onClick={noop}>Tilework</TextLink>
+          <VerifiedBadge />
+        </span>
+      }
+      summary={[
+        { icon: "friends", value: "1,037", label: "playing" },
+        { icon: "eye", value: "7.3M", label: "visits" },
+        { icon: "star", value: "48K", label: "favorites" },
+      ]}
+      actions={
+        <>
+          <Button variant="primary" size="lg" icon="play" class="w-36" onClick={noop}>
+            Join
+          </Button>
+          <Button size="lg" onClick={noop}>
+            Join as…
+          </Button>
+        </>
+      }
+      stats={
+        <>
+          <Stat label="Playing now">1,037</Stat>
+          <Stat label="Visits">7.3M</Stat>
+          <Stat label="Favorites">48K</Stat>
+          <Stat label="Updated">5h ago</Stat>
+        </>
+      }
+    />
   )
 }

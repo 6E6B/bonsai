@@ -173,7 +173,7 @@ export default function Communities() {
                   leading={<Thumbnail class="w-8" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}
                   title={
                     <Show when={c.verified} fallback={c.name}>
-                      <span class="text-verified">{c.name}</span> <VerifiedBadge />
+                      {c.name} <VerifiedBadge />
                     </Show>
                   }
                   subtitle={`${compact(c.members)} members · ${c.role}`}
@@ -226,7 +226,7 @@ function Results(props: { query: string; onClear: () => void }) {
                   leading={<Thumbnail class="w-8" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}
                   title={
                     <Show when={c.verified} fallback={c.name}>
-                      <span class="text-verified">{c.name}</span> <VerifiedBadge />
+                      {c.name} <VerifiedBadge />
                     </Show>
                   }
                   subtitle={`${compact(c.members)} members${c.publicEntry ? "" : " · Approval needed"}`}

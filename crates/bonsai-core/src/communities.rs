@@ -39,6 +39,20 @@ pub struct Community {
     pub public_entry: bool,
     /// Locked or deactivated by Roblox.
     pub locked: bool,
+    /// The message pinned to the top of the page; `None` when there is none.
+    #[serde(default)]
+    pub shout: Option<Shout>,
+}
+
+/// A community's shout.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct Shout {
+    pub text: String,
+    pub poster_id: u64,
+    /// Display name, else username.
+    pub poster: String,
+    /// ISO time it was last changed.
+    pub updated: String,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -323,6 +337,18 @@ fn role(r: groups::v1::GroupRoleResponse) -> Option<Role> {
     })
 }
 
+/// An empty shout is how Roblox shows a cleared one.
+fn shout_of(s: groups::v1::ShoutResponse) -> Option<Shout> {
+    let text = s.body_.filter(|t| !t.trim().is_empty())?;
+    let (poster_id, name, display, _) = user_of(s.poster);
+    Some(Shout {
+        text,
+        poster_id,
+        poster: if display.is_empty() { name } else { display },
+        updated: s.updated.or(s.created).unwrap_or_default(),
+    })
+}
+
 fn user_of(u: Option<groups::v1::UserModel>) -> (u64, String, String, bool) {
     let u = u.unwrap_or_default();
     (
@@ -509,6 +535,7 @@ impl Core {
                     verified: g.has_verified_badge.unwrap_or(false),
                     public_entry: g.public_entry_allowed.unwrap_or(false),
                     locked: g.is_locked.unwrap_or(false) || g.is_deactivated.unwrap_or(false),
+                    shout: g.shout.and_then(shout_of),
                 })
             },
         )

@@ -812,6 +812,27 @@ export type CommandInfo = {
 	context: string | null,
 };
 
+/**  One of your accounts on a community's page. */
+export type CommunityAccount = {
+	/**  The account's user id. */
+	id: Id,
+	name: string,
+	active: boolean,
+	/**  Role name; `None` when not a member. */
+	role: string | null,
+	/**  Asked to join, waiting for approval. */
+	pending: boolean,
+	/**  False while its membership loads. */
+	known: boolean,
+};
+
+export type CommunityFigures = {
+	experiences: number,
+	/**  Playing now, across the experiences whose details have loaded. */
+	playing: number,
+	visits: number | null,
+};
+
 /**  A community in search results. */
 export type CommunityHit = {
 	id: Id,
@@ -834,6 +855,7 @@ export type CommunityInfo = {
 	verified: boolean,
 	publicEntry: boolean,
 	locked: boolean,
+	shout: ShoutView | null,
 };
 
 /**  A game pass sold in one of the community's experiences. */
@@ -848,14 +870,27 @@ export type CommunityPass = {
 	game: string,
 };
 
+/**  An experience's picture on a community's banner. */
+export type CommunityShot = {
+	placeId: Id,
+	name: string,
+	playing: number,
+	/**  A `game_thumbnail` image id; `None` until its media loads or when it has none. */
+	image: Id | null,
+};
+
 export type CommunityView = {
 	loading: boolean,
 	error: string | null,
 	info: CommunityInfo | null,
 	/**  The active account's place in it; `None` when signed out or still loading. */
 	me: MyMembership | null,
-	/**  Your other accounts in it, like "Alt · Admin". */
-	alts: string[],
+	/**  Every signed-in account and its place in the community, the active one first. */
+	accounts: CommunityAccount[],
+	/**  Pictures of its most visited experiences, one each, for the page's banner. */
+	shots: CommunityShot[],
+	/**  Totals across its public experiences; `None` until they load. */
+	figures: CommunityFigures | null,
 };
 
 /**  Someone in a profile's friends, followers or following list. */
@@ -2251,6 +2286,14 @@ export type Shell = {
 	 *  adds them so the webview loads the new image instead of its cached copy.
 	 */
 	thumbRevs: { [key in string]: number },
+};
+
+export type ShoutView = {
+	text: string,
+	posterId: Id,
+	poster: string,
+	/**  ISO time, or empty. */
+	updated: string,
 };
 
 export type SideView = {

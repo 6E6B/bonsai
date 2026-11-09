@@ -9,6 +9,7 @@ import {
   commands,
   type EventRow,
   type GameCard,
+  type GameDetails,
   type Game as GameView,
   type List,
   type PassRow,
@@ -47,13 +48,13 @@ import {
   Facts,
   IconButton,
   ListItem,
-  MediaFrame,
   Menu,
   Meter,
   Page,
   Robux,
   SectionHeader,
   Select,
+  Showcase,
   Skeleton,
   Stat,
   showToast,
@@ -187,113 +188,20 @@ export default function Game() {
     if (name) setTabTitle(`/games/${params.id}`, name)
   })
 
-  const id = () => String(placeId())
-
   return (
     <Page>
       <Show when={game.details} fallback={<HeaderSkeleton />}>
-        {(d) => (
-          <>
-            {/* Media beside the title and actions, so the server list starts near the top.
-                Stacks when the page is narrow. */}
-            <header class="@container">
-              <div class="grid grid-cols-1 items-start gap-4 @xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-                <MediaStrip media={game.media} universeId={d().universeId} name={d().name} />
-                <div class="flex min-w-0 flex-col gap-3">
-                  <div class="flex flex-col">
-                    <h1 class="truncate text-2xl font-medium">{d().name}</h1>
-                    <span class="text-fg-muted">
-                      by{" "}
-                      <TextLink
-                        tone={d().creatorVerified && d().creatorIsGroup ? "verified" : "muted"}
-                        onClick={() => run(d().creatorIsGroup ? "group.open" : "user.open", String(d().creatorId))}
-                      >
-                        {d().creatorName}
-                      </TextLink>
-                      <Show when={d().creatorVerified}>
-                        <VerifiedBadge class="ml-1" />
-                      </Show>
-                    </span>
-                  </div>
-                  <div class="flex gap-1.5">
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      icon="play"
-                      class="flex-1"
-                      onClick={() => run("game.join", id())}
-                    >
-                      Join
-                    </Button>
-                    <Menu
-                      size="lg"
-                      items={joinAsItems("game.join_as", id())}
-                      disabled={joinAsItems("game.join_as", id()).length === 0}
-                    >
-                      Join as…
-                    </Menu>
-                    <Menu size="lg" icon="playlist" label="Add to playlist" items={playlistItems(placeId())} />
-                    <Menu size="lg" icon="more" label="More" items={entityMenu(`game:${placeId()}`)} />
-                  </div>
-                  <div class="grid grid-cols-4 gap-1.5">
-                    <ToggleButton
-                      variant="secondary"
-                      icon="thumbs-up"
-                      pressedIcon="thumbs-up-fill"
-                      pressed={game.me?.vote === true}
-                      disabled={!game.me}
-                      onChange={() => run("game.like")}
-                    >
-                      {compact(d().upVotes ?? 0)}
-                    </ToggleButton>
-                    <ToggleButton
-                      variant="secondary"
-                      icon="thumbs-down"
-                      pressedIcon="thumbs-down-fill"
-                      pressed={game.me?.vote === false}
-                      disabled={!game.me}
-                      onChange={() => run("game.dislike")}
-                    >
-                      {compact(d().downVotes ?? 0)}
-                    </ToggleButton>
-                    <ToggleButton
-                      variant="secondary"
-                      icon="star"
-                      pressedIcon="star-fill"
-                      pressed={game.me?.favorited ?? false}
-                      disabled={!game.me}
-                      onChange={() => run("game.favorite")}
-                    >
-                      Favorite
-                    </ToggleButton>
-                    <ToggleButton
-                      variant="secondary"
-                      icon="bell"
-                      pressedIcon="bell-fill"
-                      pressed={game.me?.following ?? false}
-                      disabled={!game.me || (!game.me.following && !game.me.canFollow)}
-                      onChange={() => run("game.notify")}
-                    >
-                      Notify
-                    </ToggleButton>
-                  </div>
-                  <dl class="grid grid-cols-5 gap-x-4 border-t border-line pt-3">
-                    <Stat label="Playing">{compact(d().playing)}</Stat>
-                    <Stat label="Visits">{compact(d().visits)}</Stat>
-                    <Stat label="Rating">{rating(d().upVotes, d().downVotes)}</Stat>
-                    <Stat label="Favorites">{compact(d().favorites)}</Stat>
-                    <Stat label="Updated">{when(d().updated, ago)}</Stat>
-                  </dl>
-                </div>
-              </div>
-            </header>
-          </>
-        )}
+        {(d) => <Header game={game} details={d()} />}
       </Show>
 
       <Tabs aria-label="Experience sections" items={sections()} value={section()} onChange={setSection}>
         <TabPanel value="about">
-          <AboutPanel game={game} wiki={wiki} />
+          <AboutPanel
+            game={game}
+            wiki={wiki}
+            friendServers={friendServers}
+            onAllServers={() => setSection("servers")}
+          />
         </TabPanel>
         <TabPanel value="servers">
           <ServersPanel placeId={placeId()} max={game.details?.maxPlayers ?? 0} />
@@ -336,79 +244,142 @@ function when(iso: string, fmt: (ms: number) => string) {
 
 function HeaderSkeleton() {
   return (
-    <div class="@container">
-      <div class="grid grid-cols-1 items-start gap-4 @xl:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <Skeleton class="order-last aspect-video w-full max-w-md rounded-md @xl:order-none @xl:max-w-none" />
-        <div class="flex flex-col gap-3">
-          <Skeleton class="h-8 w-2/3 rounded-md" />
-          <Skeleton class="h-4 w-1/3" />
-          <Skeleton class="h-8 w-full rounded-md" />
-          <Skeleton class="h-14 w-full rounded-md" />
-        </div>
+    <div class="flex flex-col overflow-hidden rounded-lg shadow-raised">
+      <Skeleton class="aspect-[16/5] max-h-[380px] min-h-[220px] w-full" />
+      <div class="flex items-center gap-1.5 px-4 py-3">
+        <Skeleton class="h-8 w-36 rounded-md" />
+        <Skeleton class="h-8 w-20 rounded-md" />
+        <Skeleton class="h-8 w-48 rounded-md" />
+        <Skeleton class="ml-auto h-9 w-72 rounded-md" />
       </div>
     </div>
   )
 }
 
-/** One image large with previous and next, and up to four more below. Trailers show their
- * preview image and title; they play on the website. Falls back to the game icon. */
-function MediaStrip(props: { media: GameView["media"]; universeId: number; name: string }) {
+/** The pictures as a banner with the name, tags and creator on them; join, votes and the other
+ * buttons under it, with the headline figures at the far end. Trailers show their preview image
+ * and title; they play on the website. */
+function Header(props: { game: GameView; details: GameDetails }) {
+  const d = () => props.details
+  const placeId = () => props.game.placeId
+  const id = () => String(placeId())
   const [shown, setShown] = createSignal(0)
-  const main = () => props.media[shown()] ?? props.media[0]
-  const step = (by: number) => setShown((i) => (i + by + props.media.length) % props.media.length)
-  // The four thumbnails around the shown one, so the strip follows previous and next.
-  const strip = () => {
-    const start = Math.max(0, Math.min(shown() - 1, props.media.length - 4))
-    return props.media.slice(start, start + 4).map((m, i) => ({ m, i: start + i }))
-  }
+  const shownMedia = () => props.game.media[shown()]
+  const images = () =>
+    props.game.media.map((m, i) => ({
+      src: thumbUrl("game_thumbnail", m.imageId, true),
+      label: m.videoTitle || m.alt || `Image ${i + 1}`,
+    }))
+  const tags = () => [d().genreL1 || d().genre, d().genreL2, props.game.maturity].filter((t): t is string => Boolean(t))
+  const votes = () => (d().upVotes ?? 0) + (d().downVotes ?? 0)
+  const me = () => props.game.me
   return (
-    <div class="order-last flex max-w-md flex-col gap-1.5 @xl:order-none @xl:max-w-none">
-      <Show
-        when={main()}
-        fallback={
-          <Thumbnail
-            shape="wide"
-            alt={props.name}
-            src={thumbUrl("game_icon", props.universeId, true)}
-            fallback="game"
-          />
-        }
-      >
-        {(m) => (
-          <MediaFrame
-            index={shown()}
-            count={props.media.length}
-            onStep={step}
-            caption={m().video ? `${m().videoTitle || "Trailer"} (plays on the website)` : undefined}
-            captionIcon="video"
+    <Showcase
+      images={images()}
+      index={shown()}
+      onSelect={setShown}
+      caption={shownMedia()?.video ? `${shownMedia()?.videoTitle || "Trailer"} (plays on the website)` : undefined}
+      captionIcon="video"
+      tags={tags()}
+      title={d().name}
+      byline={
+        <span class="flex min-w-0 items-center gap-1">
+          by
+          <TextLink onClick={() => run(d().creatorIsGroup ? "group.open" : "user.open", String(d().creatorId))}>
+            {d().creatorName}
+          </TextLink>
+          <Show when={d().creatorVerified}>
+            <VerifiedBadge />
+          </Show>
+        </span>
+      }
+      summary={[
+        { icon: "friends", value: d().playing.toLocaleString(), label: "playing" },
+        ...(votes() > 0
+          ? [{ icon: "thumbs-up" as const, value: rating(d().upVotes, d().downVotes), label: "rating" }]
+          : []),
+        { icon: "eye", value: compact(d().visits), label: "visits" },
+        { icon: "star", value: compact(d().favorites), label: "favorites" },
+      ]}
+      actions={
+        <>
+          <Button variant="primary" size="lg" icon="play" class="w-36" onClick={() => run("game.join", id())}>
+            Join
+          </Button>
+          <Menu
+            size="lg"
+            items={joinAsItems("game.join_as", id())}
+            disabled={joinAsItems("game.join_as", id()).length === 0}
           >
-            <Thumbnail
-              shape="wide"
-              alt={m().alt || props.name}
-              src={thumbUrl("game_thumbnail", m().imageId, true)}
-              fallback="game"
+            Join as…
+          </Menu>
+          <Divider orientation="vertical" class="mx-1 h-5 self-center" />
+          <ToggleButton
+            variant="secondary"
+            size="lg"
+            icon="thumbs-up"
+            pressedIcon="thumbs-up-fill"
+            pressed={me()?.vote === true}
+            disabled={!me()}
+            onChange={() => run("game.like")}
+          >
+            {compact(d().upVotes ?? 0)}
+          </ToggleButton>
+          <ToggleButton
+            variant="secondary"
+            size="lg"
+            icon="thumbs-down"
+            pressedIcon="thumbs-down-fill"
+            pressed={me()?.vote === false}
+            disabled={!me()}
+            onChange={() => run("game.dislike")}
+          >
+            {compact(d().downVotes ?? 0)}
+          </ToggleButton>
+          <ToggleButton
+            variant="secondary"
+            size="lg"
+            icon="star"
+            pressedIcon="star-fill"
+            pressed={me()?.favorited ?? false}
+            disabled={!me()}
+            onChange={() => run("game.favorite")}
+          >
+            Favorite
+          </ToggleButton>
+          <Tooltip content={me()?.following ? "Stop update notifications" : "Notify me about updates"}>
+            <ToggleButton
+              variant="secondary"
+              size="lg"
+              icon="bell"
+              pressedIcon="bell-fill"
+              label="Notify"
+              pressed={me()?.following ?? false}
+              disabled={!me() || (!me()?.following && !me()?.canFollow)}
+              onChange={() => run("game.notify")}
             />
-          </MediaFrame>
-        )}
-      </Show>
-      <Show when={props.media.length > 1}>
-        <div class="grid grid-cols-4 gap-1.5">
-          <For each={strip()}>
-            {(t) => (
-              <button
-                type="button"
-                class="rounded-md"
-                aria-label={t.m.videoTitle || t.m.alt || `Image ${t.i + 1}`}
-                aria-pressed={shown() === t.i}
-                onClick={() => setShown(t.i)}
-              >
-                <Thumbnail shape="wide" alt="" src={thumbUrl("game_thumbnail", t.m.imageId)} fallback="game" />
-              </button>
-            )}
-          </For>
-        </div>
-      </Show>
-    </div>
+          </Tooltip>
+          <Menu size="lg" icon="playlist" label="Add to playlist" items={playlistItems(placeId())} />
+          <Menu size="lg" icon="more" label="More" items={entityMenu(`game:${placeId()}`)} />
+        </>
+      }
+      stats={
+        <>
+          <Stat label="Playing now">{d().playing.toLocaleString()}</Stat>
+          <Stat label="Rating">
+            <span class="flex items-center gap-2">
+              {rating(d().upVotes, d().downVotes)}
+              <Show when={votes() > 0}>
+                <Meter class="w-14" label="Rating" value={d().upVotes ?? 0} max={votes()} valueLabel="" />
+              </Show>
+            </span>
+          </Stat>
+          <Stat label="Visits">{compact(d().visits)}</Stat>
+          <Stat label="Favorites">{compact(d().favorites)}</Stat>
+          <Stat label="Updated">{when(d().updated, ago)}</Stat>
+        </>
+      }
+    />
   )
 }
 
@@ -913,8 +884,14 @@ function RecommendedPanel(props: { list: List<GameCard> }) {
   )
 }
 
-/** Description and the creator on the left; every detail in one panel on the right. */
-function AboutPanel(props: { game: GameView; wiki: WikiPageView }) {
+/** Description, details and the creator on the left; who and where to join on the right: friends
+ * playing and the best open servers. */
+function AboutPanel(props: {
+  game: GameView
+  wiki: WikiPageView
+  friendServers: List<ServerRow>
+  onAllServers: () => void
+}) {
   const d = () => props.game.details
   const bio = useLive(
     () => (d() ? `${d()?.creatorIsGroup ? "g" : "u"}${d()?.creatorId}` : ""),
@@ -931,95 +908,198 @@ function AboutPanel(props: { game: GameView; wiki: WikiPageView }) {
         const openCreator = () => run(g().creatorIsGroup ? "group.open" : "user.open", String(g().creatorId))
         return (
           <div class="@container">
-            <div class="grid grid-cols-1 gap-4 @2xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
-              <Card class="flex h-fit min-w-0 flex-col">
-                <section class="flex flex-col gap-1.5 px-3.5 py-3">
-                  <h3 class="text-sm font-medium text-fg-muted">Description</h3>
-                  <Show when={g().description} fallback={<span class="text-fg-muted">No description.</span>}>
-                    <Clamp lines={8}>
-                      <Description text={g().description} />
-                    </Clamp>
-                  </Show>
-                </section>
-                <Divider />
-                <section class="flex flex-col gap-1.5 px-3.5 py-3">
-                  <h3 class="text-sm font-medium text-fg-muted">Creator</h3>
-                  <div class="flex items-start gap-3">
-                    <Show
-                      when={g().creatorIsGroup}
-                      fallback={<Avatar size="md" name={g().creatorName} src={thumbUrl("headshot", g().creatorId)} />}
-                    >
-                      <Thumbnail
-                        class="w-10 shrink-0"
-                        alt=""
-                        src={thumbUrl("group_icon", g().creatorId)}
-                        fallback="communities"
-                      />
+            <div class="grid grid-cols-1 items-start gap-4 @3xl:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)]">
+              <div class="flex min-w-0 flex-col gap-4">
+                <Card class="flex min-w-0 flex-col">
+                  <section class="flex flex-col gap-1.5 px-4 py-3.5">
+                    <h3 class="text-sm font-medium text-fg-muted">Description</h3>
+                    <Show when={g().description} fallback={<span class="text-fg-muted">No description.</span>}>
+                      <Clamp lines={8}>
+                        <Description text={g().description} />
+                      </Clamp>
                     </Show>
-                    <div class="flex min-w-0 flex-col gap-0.5">
-                      <span class="flex items-center gap-1">
-                        <TextLink
-                          tone={g().creatorVerified && g().creatorIsGroup ? "verified" : "name"}
-                          onClick={openCreator}
-                        >
-                          {g().creatorName}
-                        </TextLink>
-                        <Show when={g().creatorVerified}>
-                          <VerifiedBadge />
-                        </Show>
-                        <span class="text-sm text-fg-muted">· {g().creatorIsGroup ? "Community" : "User"}</span>
-                      </span>
-                      <Show when={bio.text !== null} fallback={<Skeleton class="h-10 w-64 rounded-md" />}>
-                        <Show when={bio.text} fallback={<span class="text-sm text-fg-muted">No description.</span>}>
-                          {(t) => (
-                            <Clamp lines={3} class="text-sm text-fg-muted">
-                              <Description text={t()} />
-                            </Clamp>
-                          )}
-                        </Show>
-                      </Show>
-                    </div>
-                  </div>
-                </section>
-                <Show when={props.wiki.article}>
-                  {(a) => (
-                    <>
-                      <Divider />
-                      <WikiTeaser view={props.wiki} article={a()} />
-                    </>
-                  )}
-                </Show>
-              </Card>
-              <Facts class="h-fit">
-                <FactGroup title="Experience">
-                  <Fact label="Genre">{g().genreL1 || g().genre || "–"}</Fact>
-                  <Show when={g().genreL2}>
-                    <Fact label="Subgenre">{g().genreL2}</Fact>
-                  </Show>
-                  <Fact label="Maturity">{props.game.maturity ?? "–"}</Fact>
+                  </section>
                   <Show when={props.game.maturityDescriptors.length > 0}>
-                    <Fact label="Contains">
+                    <Divider />
+                    <div class="flex flex-wrap items-center gap-1.5 px-4 py-2.5">
+                      <span class="mr-1 text-sm text-fg-muted">Contains</span>
                       <For each={props.game.maturityDescriptors}>{(t) => <Badge>{t}</Badge>}</For>
-                    </Fact>
+                    </div>
                   </Show>
-                  <Fact label="Created">{when(g().created, date)}</Fact>
-                  <Fact label="Updated">{when(g().updated, ago)}</Fact>
-                </FactGroup>
-                <FactGroup title="Servers">
-                  <Fact label="Server size">{g().maxPlayers}</Fact>
-                  <Fact label="Private servers">{g().privateServersAllowed ? "Allowed" : "Off"}</Fact>
-                  <Fact label="Avatar type">{g().avatarType || "–"}</Fact>
-                </FactGroup>
-                <FactGroup title="Building">
-                  <Fact label="Copying">{yesNo(g().copyingAllowed)}</Fact>
-                  <Fact label="Gear">{g().gear.length > 0 ? g().gear.join(", ") : "None"}</Fact>
-                </FactGroup>
-              </Facts>
+                  <Show when={props.wiki.article}>
+                    {(a) => (
+                      <>
+                        <Divider />
+                        <WikiTeaser view={props.wiki} article={a()} />
+                      </>
+                    )}
+                  </Show>
+                </Card>
+                <Facts columns>
+                  <FactGroup title="Experience">
+                    <Fact label="Genre">{g().genreL1 || g().genre || "–"}</Fact>
+                    <Show when={g().genreL2}>
+                      <Fact label="Subgenre">{g().genreL2}</Fact>
+                    </Show>
+                    <Fact label="Maturity">{props.game.maturity ?? "–"}</Fact>
+                    <Fact label="Created">{when(g().created, date)}</Fact>
+                    <Fact label="Updated">{when(g().updated, ago)}</Fact>
+                  </FactGroup>
+                  <FactGroup title="Servers">
+                    <Fact label="Server size">{g().maxPlayers}</Fact>
+                    <Fact label="Private servers">{g().privateServersAllowed ? "Allowed" : "Off"}</Fact>
+                    <Fact label="Avatar type">{g().avatarType || "–"}</Fact>
+                  </FactGroup>
+                  <FactGroup title="Building">
+                    <Fact label="Copying">{yesNo(g().copyingAllowed)}</Fact>
+                    <Fact label="Gear">{g().gear.length > 0 ? g().gear.join(", ") : "None"}</Fact>
+                  </FactGroup>
+                </Facts>
+                <Card class="flex items-start gap-3 px-4 py-3.5">
+                  <Show
+                    when={g().creatorIsGroup}
+                    fallback={<Avatar size="md" name={g().creatorName} src={thumbUrl("headshot", g().creatorId)} />}
+                  >
+                    <Thumbnail
+                      class="w-10 shrink-0"
+                      alt=""
+                      src={thumbUrl("group_icon", g().creatorId)}
+                      fallback="communities"
+                    />
+                  </Show>
+                  <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span class="flex items-center gap-1">
+                      <TextLink tone="name" onClick={openCreator}>
+                        {g().creatorName}
+                      </TextLink>
+                      <Show when={g().creatorVerified}>
+                        <VerifiedBadge />
+                      </Show>
+                      <span class="text-sm text-fg-muted">· {g().creatorIsGroup ? "Community" : "User"}</span>
+                    </span>
+                    <Show when={bio.text !== null} fallback={<Skeleton class="h-10 w-64 rounded-md" />}>
+                      <Show when={bio.text} fallback={<span class="text-sm text-fg-muted">No description.</span>}>
+                        {(t) => (
+                          <Clamp lines={3} class="text-sm text-fg-muted">
+                            <Description text={t()} />
+                          </Clamp>
+                        )}
+                      </Show>
+                    </Show>
+                  </div>
+                </Card>
+              </div>
+              <aside class="flex min-w-0 flex-col gap-4" aria-label="Where to play">
+                <FriendsHere list={props.friendServers} />
+                <BestServers placeId={props.game.placeId} onAll={props.onAllServers} />
+              </aside>
             </div>
           </div>
         )
       }}
     </Show>
+  )
+}
+
+/** Friends of the active account playing now, one row each, with Join on their server. Hidden
+ * when none are. */
+function FriendsHere(props: { list: List<ServerRow> }) {
+  const rows = () => props.list.items.flatMap((s) => s.friends.map((f) => ({ friend: f, server: s })))
+  return (
+    <Show when={rows().length > 0}>
+      <Card class="flex flex-col gap-1 p-2">
+        <SectionHeader class="px-2 pt-1" title="Friends here" meta={rows().length} size="group" />
+        <For each={rows().slice(0, 6)}>
+          {(r) => (
+            <ListItem
+              leading={
+                <Avatar size="sm" name={friendName(r.friend)} src={thumbUrl("headshot", r.friend)} presence="game" />
+              }
+              title={friendName(r.friend)}
+              subtitle={`${serverName(r.server.jobId)} · ${r.server.playing}/${r.server.maxPlayers}`}
+              actions={
+                <Button size="sm" onClick={() => run("game.join_job", r.server.jobId)}>
+                  Join
+                </Button>
+              }
+            />
+          )}
+        </For>
+      </Card>
+    </Show>
+  )
+}
+
+/** Open servers with friends first, then the lowest ping. */
+const byBest = (a: ServerRow, b: ServerRow) => byServer.friends(a, b) || byServer.ping(a, b)
+
+/** The few best open servers, each with how full it is, its ping and Join. */
+function BestServers(props: { placeId: number; onAll: () => void }) {
+  const list = useLive(
+    () => props.placeId,
+    (id) => commands.gameServers(id),
+    (): Servers => ({ loading: true, error: null, fetchedAt: null, servers: [], more: false }),
+  )
+  const best = createMemo(() =>
+    list.servers
+      .filter((s) => s.playing < s.maxPlayers)
+      .sort(byBest)
+      .slice(0, 5),
+  )
+  return (
+    <Card class="flex flex-col gap-1 p-2">
+      <SectionHeader
+        class="px-2 pt-1"
+        title="Best servers"
+        size="group"
+        actions={
+          <TextLink class="text-sm" onClick={() => props.onAll()}>
+            All servers
+          </TextLink>
+        }
+      />
+      <Switch>
+        <Match when={best().length > 0}>
+          <For each={best()}>
+            {(s) => (
+              <div class="flex items-center gap-3 rounded-md px-2 py-1.5">
+                <div class="flex min-w-0 flex-1 flex-col gap-1">
+                  <div class="flex items-baseline justify-between gap-2 text-sm">
+                    <span class="truncate">{serverName(s.jobId)}</span>
+                    <span class="shrink-0 text-fg-muted tabular-nums">
+                      {s.playing}/{s.maxPlayers}
+                      <Show when={s.ping !== null}> · {s.ping} ms</Show>
+                    </span>
+                  </div>
+                  <Meter
+                    class="w-full"
+                    label="Players"
+                    value={s.playing}
+                    max={s.maxPlayers}
+                    valueLabel=""
+                    tone="capacity"
+                  />
+                </div>
+                <Button size="sm" onClick={() => run("game.join_job", s.jobId)}>
+                  Join
+                </Button>
+              </div>
+            )}
+          </For>
+        </Match>
+        <Match when={list.loading}>
+          <div class="flex flex-col gap-2 px-2 py-1.5">
+            <For each={[1, 2, 3]}>{() => <Skeleton class="h-8 w-full rounded-md" />}</For>
+          </div>
+        </Match>
+        <Match when={list.error}>
+          <span class="px-2 py-1.5 text-sm text-fg-muted">Couldn't load servers.</span>
+        </Match>
+        <Match when={true}>
+          <span class="px-2 py-1.5 text-sm text-fg-muted">No open servers right now.</span>
+        </Match>
+      </Switch>
+    </Card>
   )
 }
 

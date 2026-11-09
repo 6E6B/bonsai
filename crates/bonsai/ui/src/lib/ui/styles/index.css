@@ -50,6 +50,7 @@
 @import "../search-button.css";
 @import "../section-header.css";
 @import "../shelf.css";
+@import "../showcase.css";
 @import "../virtual-shelf.css";
 @import "../settings-group.css";
 @import "../segmented-control.css";
@@ -57,6 +58,7 @@
 @import "../skeleton.css";
 @import "../slider.css";
 @import "../spinner.css";
+@import "../stage.css";
 @import "../stat.css";
 @import "../swatch.css";
 @import "../theme-card.css";

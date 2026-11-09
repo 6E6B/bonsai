@@ -36,8 +36,48 @@ pub struct CommunityView {
     pub info: Option<CommunityInfo>,
     /// The active account's place in it; `None` when signed out or still loading.
     pub me: Option<MyMembership>,
-    /// Your other accounts in it, like "Alt · Admin".
-    pub alts: Vec<String>,
+    /// Every signed-in account and its place in the community, the active one first.
+    pub accounts: Vec<CommunityAccount>,
+    /// Pictures of its most visited experiences, one each, for the page's banner.
+    pub shots: Vec<CommunityShot>,
+    /// Totals across its public experiences; `None` until they load.
+    pub figures: Option<CommunityFigures>,
+}
+
+/// One of your accounts on a community's page.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CommunityAccount {
+    /// The account's user id.
+    pub id: Id,
+    pub name: String,
+    pub active: bool,
+    /// Role name; `None` when not a member.
+    pub role: Option<String>,
+    /// Asked to join, waiting for approval.
+    pub pending: bool,
+    /// False while its membership loads.
+    pub known: bool,
+}
+
+/// An experience's picture on a community's banner.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CommunityShot {
+    pub place_id: Id,
+    pub name: String,
+    pub playing: u32,
+    /// A `game_thumbnail` image id; `None` until its media loads or when it has none.
+    pub image: Option<Id>,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CommunityFigures {
+    pub experiences: u32,
+    /// Playing now, across the experiences whose details have loaded.
+    pub playing: u32,
+    pub visits: f64,
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -53,6 +93,17 @@ pub struct CommunityInfo {
     pub verified: bool,
     pub public_entry: bool,
     pub locked: bool,
+    pub shout: Option<ShoutView>,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ShoutView {
+    pub text: String,
+    pub poster_id: Id,
+    pub poster: String,
+    /// ISO time, or empty.
+    pub updated: String,
 }
 
 /// What the active account is and may do in a community.
@@ -255,6 +306,9 @@ impl From<&bonsai_core::communities::CommunityRow> for CommunityHit {
     }
 }
 
+/// Experiences on a community's banner, as many as its strip shows.
+const SHOTS: usize = 5;
+
 #[tauri::command]
 #[specta::specta]
 pub fn community(core: State<'_, Arc<Core>>, group_id: Id) -> CommunityView {
@@ -285,22 +339,71 @@ pub fn community(core: State<'_, Arc<Core>>, group_id: Id) -> CommunityView {
             view_payouts: p.view_payouts,
         }
     });
-    let alts = {
-        let labels: Vec<(AccountId, String)> = core
-            .store()
-            .accounts
-            .accounts
-            .iter()
-            .map(|a| (a.id, a.label.clone().unwrap_or_else(|| a.display_name.clone())))
-            .collect();
-        core.my_accounts_in(g)
+    let accounts: Vec<(AccountId, String)> = core
+        .store()
+        .accounts
+        .accounts
+        .iter()
+        .map(|a| (a.id, a.label.clone().unwrap_or_else(|| a.display_name.clone())))
+        .collect();
+    // With one account the page's own buttons say it all; only alts need a membership each.
+    let mut accounts: Vec<CommunityAccount> = if accounts.len() < 2 {
+        Vec::new()
+    } else {
+        accounts
             .into_iter()
-            .filter(|m| Some(m.account) != active)
-            .filter_map(|m| {
-                let (_, label) = labels.iter().find(|(id, _)| *id == m.account)?;
-                Some(format!("{label} · {}", m.role))
+            .map(|(a, name)| {
+                let m = core.membership(a, g).data;
+                CommunityAccount {
+                    id: Id(a.0),
+                    name,
+                    active: Some(a) == active,
+                    role: m
+                        .as_ref()
+                        .and_then(|m| m.role.as_ref())
+                        .filter(|r| r.rank > 0)
+                        .map(|r| r.name.clone()),
+                    pending: m.as_ref().is_some_and(|m| m.pending),
+                    known: m.is_some(),
+                }
             })
             .collect()
+    };
+    accounts.sort_by_key(|a| !a.active);
+    let (shots, figures) = match core.community_games(g).data {
+        Some(list) => {
+            let ids: Vec<u64> = list.iter().map(|c| c.universe_id).collect();
+            core.want_universes(&ids);
+            let playing = |u: u64| {
+                core.store()
+                    .games
+                    .get(&u)
+                    .map_or(0, |i| i.playing.clamp(0, u32::MAX as i64) as u32)
+            };
+            // Most visited first, as listed. A still, not a video's poster, when there is one.
+            let shots = list
+                .iter()
+                .take(SHOTS)
+                .map(|c| CommunityShot {
+                    place_id: Id(c.place_id),
+                    name: c.name.clone(),
+                    playing: playing(c.universe_id),
+                    image: core.game_media(c.universe_id).data.and_then(|v| {
+                        v.iter()
+                            .find(|m| m.video_title.is_none())
+                            .or(v.first())
+                            .map(|m| Id(m.image_id))
+                    }),
+                })
+                .collect();
+            let figures = CommunityFigures {
+                experiences: list.len() as u32,
+                playing: ids.iter().map(|u| playing(*u)).fold(0u32, u32::saturating_add),
+                visits: list.iter().map(|c| c.visits).sum::<i64>() as f64,
+            };
+            (shots, Some(figures))
+        }
+        None => (Vec::new(), None),
     };
     CommunityView {
         loading: r.loading,
@@ -316,9 +419,17 @@ pub fn community(core: State<'_, Arc<Core>>, group_id: Id) -> CommunityView {
             verified: c.verified,
             public_entry: c.public_entry,
             locked: c.locked,
+            shout: c.shout.as_ref().map(|t| ShoutView {
+                text: t.text.clone(),
+                poster_id: Id(t.poster_id),
+                poster: t.poster.clone(),
+                updated: t.updated.clone(),
+            }),
         }),
         me,
-        alts,
+        accounts,
+        shots,
+        figures,
     }
 }
 
@@ -326,6 +437,9 @@ pub fn community(core: State<'_, Arc<Core>>, group_id: Id) -> CommunityView {
 #[specta::specta]
 pub fn community_games(core: State<'_, Arc<Core>>, group_id: Id) -> List<GameCard> {
     let r = core.community_games(group_id.0);
+    if let Some(list) = &r.data {
+        core.want_universes(&list.iter().map(|c| c.universe_id).collect::<Vec<_>>());
+    }
     let s = core.store();
     List::of(r, |c| match s.games.get(&c.universe_id) {
         Some(g) => GameCard::from(g),

@@ -8,7 +8,7 @@ import { itemMenu, itemTarget } from "~/lib/menus"
 import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { thumbUrl, withRev } from "~/lib/thumb"
-import { Price, TILE_WIDTH } from "~/lib/tiles"
+import { ItemName, Price, TILE_WIDTH } from "~/lib/tiles"
 import {
   Badge,
   Button,
@@ -157,7 +157,7 @@ export function Outfits(props: { userId: number; mine: boolean; outfits: List<Ou
                         <ContextMenu items={itemMenu(i.id, i.bundle, i.assetType)}>
                           <ListItem
                             leading={<Thumbnail class="w-9" alt="" fallback="avatar" src={thumbUrl("asset", i.id)} />}
-                            title={i.name}
+                            title={<ItemName name={i.name} id={i.id} bundle={i.bundle} />}
                             subtitle={
                               <span class="flex items-center gap-1.5">
                                 <Price amount={i.price} />

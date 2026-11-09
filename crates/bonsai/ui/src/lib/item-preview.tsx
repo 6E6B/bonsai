@@ -126,7 +126,7 @@ export function ItemPreview(props: {
               <Fact label="Creator">
                 <span class="flex items-center gap-1">
                   <TextLink
-                    tone={v.creatorVerified && v.creatorIsGroup ? "verified" : "name"}
+                    tone="name"
                     onClick={() => run(v.creatorIsGroup ? "group.open" : "user.open", String(v.creatorId))}
                   >
                     {v.creator}
