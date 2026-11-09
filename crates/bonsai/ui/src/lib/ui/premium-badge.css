@@ -1,11 +1,11 @@
 @layer components {
-  /* The asset is the Builders Club hard hat, 152.6 × 129.5. */
+  /* The asset is the Roblox Plus logo, 349.8 × 390.3: one outline drawn inline in the text color.
+     Same height as `verified-badge` at the same size. */
   [data-component="premium-badge"] {
     display: inline-block;
     flex-shrink: 0;
-    width: calc(var(--badge-size) * 1.178);
+    width: calc(var(--badge-size) * 0.896);
     height: var(--badge-size);
     vertical-align: -0.15em;
-    background: url("./assets/premium-badge.svg") center / contain no-repeat;
   }
 }
