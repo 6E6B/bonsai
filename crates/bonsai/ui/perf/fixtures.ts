@@ -97,6 +97,7 @@ export const profile: ProfileView = {
   lastOnline: null,
   lastOnlineBy: null,
   lastLocation: null,
+  placeImage: null,
   unfriendedAt: null,
   mutualFriends: 0,
   mutualMore: false,

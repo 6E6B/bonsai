@@ -27,6 +27,8 @@ import {
   FactGroup,
   Facts,
   Figure,
+  Hero,
+  HeroBanner,
   Icon,
   IconButton,
   type IconName,
@@ -870,6 +872,56 @@ export default function Components() {
             {(i) => <Tile title={`Shelf item ${i + 1}`} subtitle="In a row" onClick={noop} />}
           </For>
         </Shelf>
+      </Section>
+
+      <Section title="Hero">
+        <Hero
+          class="w-full"
+          avatar={<Avatar size="xl" name="Tilework" presence="game" />}
+          banner={
+            <HeroBanner
+              label="Playing now"
+              title={<TextLink onClick={noop}>Nezzera</TextLink>}
+              action={
+                <Button variant="primary" icon="play" onClick={noop}>
+                  Join
+                </Button>
+              }
+            />
+          }
+          title={<span class="truncate">Tilework</span>}
+          subtitle="@tilework"
+          actions={
+            <>
+              <Button variant="primary" icon="user-plus" onClick={noop}>
+                Add friend
+              </Button>
+              <IconButton variant="secondary" icon="chat" label="Message" onClick={noop} />
+            </>
+          }
+          stats={
+            <>
+              <Stat label="Friends">232</Stat>
+              <Stat label="Followers">695</Stat>
+              <Stat label="Following">37</Stat>
+              <Stat label="Value">
+                <Robux amount={565400} compact />
+              </Stat>
+            </>
+          }
+        />
+        <Hero
+          class="w-full"
+          avatar={<Avatar size="xl" name="Offline Person" presence="offline" />}
+          title={<span class="truncate">Offline Person</span>}
+          subtitle="@offline"
+          stats={
+            <>
+              <Stat label="Friends">12</Stat>
+              <Stat label="Followers">3</Stat>
+            </>
+          }
+        />
       </Section>
 
       <Section title="Stat, meter, robux, link">

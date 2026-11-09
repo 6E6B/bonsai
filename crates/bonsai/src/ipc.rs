@@ -751,6 +751,8 @@ pub struct ProfileView {
     pub place_id: Option<Id>,
     /// For the experience's icon.
     pub universe_id: Option<Id>,
+    /// The experience's first screenshot, for `thumb://game_thumbnail`. Only while in game.
+    pub place_image: Option<Id>,
     /// `None` on your own profiles and when signed out.
     pub relation: Option<RelationView>,
     /// One of your accounts.
@@ -2258,6 +2260,16 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
         }
         None => (Presence::Offline, None, None, None),
     };
+    // A still, not a video's poster, when there is one.
+    let place_image = universe_id
+        .filter(|_| matches!(presence, Presence::Game))
+        .and_then(|u| core.game_media(u.0).data)
+        .and_then(|v| {
+            v.iter()
+                .find(|m| m.video_title.is_none())
+                .or(v.first())
+                .map(|m| Id(m.image_id))
+        });
     let (seen, unfriended_at) = core.store().account_data(account).map_or((None, None), |d| {
         (
             d.last_seen.get(&uid).copied(),
@@ -2328,6 +2340,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
         place,
         place_id,
         universe_id,
+        place_image,
         relation,
         mine,
         past_names: core

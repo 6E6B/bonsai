@@ -1941,6 +1941,8 @@ export type ProfileView = {
 	placeId: Id | null,
 	/**  For the experience's icon. */
 	universeId: Id | null,
+	/**  The experience's first screenshot, for `thumb://game_thumbnail`. Only while in game. */
+	placeImage: Id | null,
 	/**  `None` on your own profiles and when signed out. */
 	relation: RelationView | null,
 	/**  One of your accounts. */
