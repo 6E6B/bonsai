@@ -17,6 +17,7 @@ export interface VirtualShelfProps<T> {
 export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
   let root!: HTMLDivElement
   let track!: HTMLElement
+  let sizer!: HTMLDivElement
   const [scroller, setScroller] = createSignal<HTMLElement>()
   const [height, setHeight] = createSignal(0)
   const [previous, setPrevious] = createSignal(false)
@@ -25,6 +26,11 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
   const virtualizer = createVirtualizer({
     useAnimationFrameWithResizeObserver: true,
     horizontal: true,
+    // The track only exists after mount. Reading it here re-runs the virtualizer once it does,
+    // so the first paint already has its items instead of an empty shelf until the next update.
+    get enabled() {
+      return scroller() !== undefined
+    },
     get count() {
       return props.items.length
     },
@@ -49,12 +55,12 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
   onMount(() => {
     setScroller(track)
     observeVirtualResize([track], measure)
-  })
-  const observe = (element: HTMLDivElement) => {
-    observeVirtualResize([element], ([entry]) =>
+    // Items share one grid cell, so the sizer is as tall as the tallest one from the first
+    // paint. Hold the tallest seen so scrolling past a shorter run doesn't shrink the row.
+    observeVirtualResize([sizer], ([entry]) =>
       setHeight((height) => Math.max(height, Math.ceil(entry.contentRect.height))),
     )
-  }
+  })
   virtualFocus({
     root: () => root,
     count: () => props.items.length,
@@ -89,13 +95,16 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
         }}
       >
         <div
+          ref={sizer}
           data-slot="sizer"
-          style={{ width: `${virtualizer.getTotalSize()}px`, height: `${height() || props.estimateHeight || 190}px` }}
+          style={{
+            width: `${virtualizer.getTotalSize()}px`,
+            "min-height": `${height() || (indexes().length === 0 ? (props.estimateHeight ?? 0) : 0)}px`,
+          }}
         >
           <For each={indexes()}>
             {(index) => (
               <div
-                ref={observe}
                 data-slot="item"
                 data-virtual-item={index}
                 style={{ width: `${props.itemWidth}px`, transform: `translateX(${positions().get(index) ?? 0}px)` }}

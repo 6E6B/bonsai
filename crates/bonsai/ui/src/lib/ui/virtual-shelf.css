@@ -1,13 +1,13 @@
 @layer components {
   [data-component="virtual-shelf"] > [data-slot="track"] > [data-slot="sizer"] {
-    position: relative;
+    display: grid;
+    align-items: start;
     flex: none;
     min-width: 0;
   }
   [data-component="virtual-shelf"] > [data-slot="track"] > [data-slot="sizer"] > [data-slot="item"] {
-    position: absolute;
-    top: 0;
-    left: 0;
+    grid-area: 1 / 1;
+    justify-self: start;
     min-width: 0;
   }
 }
