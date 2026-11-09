@@ -10,6 +10,7 @@ describe("fontChoices", () => {
 
   it("lists bundled fonts first and skips Google's copies of them", () => {
     expect(fontChoices("", false, google).map((c) => c.value)).toEqual([
+      "Rubik",
       "Inter",
       "System",
       "Inter Tight",

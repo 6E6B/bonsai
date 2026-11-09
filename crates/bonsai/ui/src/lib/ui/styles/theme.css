@@ -102,7 +102,7 @@
   --text-shadow-fill: 0 0.5px 0.5px #0000004d; /* text on contrast fills */
 
   /* ── Type ── */
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Rubik", system-ui, sans-serif;
   --font-mono: "JetBrainsMono Nerd Font Mono", ui-monospace, monospace;
 
   --text-xs: 11px;

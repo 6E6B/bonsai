@@ -40,6 +40,7 @@ export type FontSeed<Id extends string> = Id | { google: string }
 /** Bundled fonts, and the fallback stacks behind a Google font. The webview never loads fonts from
  * the network; Google fonts come from disk (see `fonts.ts`). */
 export const FONTS = {
+  rubik: { label: "Rubik", stack: '"Rubik", system-ui, sans-serif' },
   inter: { label: "Inter", stack: '"Inter", system-ui, sans-serif' },
   system: { label: "System", stack: "system-ui, sans-serif" },
 } as const
@@ -94,7 +95,7 @@ export const DEFAULT_SEEDS: Record<Base, Seeds> = {
     contrast: 1,
     radius: 1,
     shadow: DEFAULT_SHADOW,
-    font: "inter",
+    font: "rubik",
     mono: "jetbrains",
   },
   light: {
@@ -107,7 +108,7 @@ export const DEFAULT_SEEDS: Record<Base, Seeds> = {
     contrast: 1,
     radius: 1,
     shadow: DEFAULT_SHADOW,
-    font: "inter",
+    font: "rubik",
     mono: "jetbrains",
   },
 }
@@ -369,7 +370,7 @@ export function derive(base: Base, seeds: Seeds): Tokens {
     "color-success": c(success),
     "color-warning": c(warning),
     "color-danger": c(danger),
-    "font-sans": fontStack(seeds.font, FONTS, "inter"),
+    "font-sans": fontStack(seeds.font, FONTS, "rubik"),
     "font-mono": fontStack(seeds.mono, MONOS, "jetbrains"),
     "radius-full": "9999px",
   }

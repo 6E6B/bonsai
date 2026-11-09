@@ -42,7 +42,7 @@ export function fontChoices(
   mono: boolean,
   google: { family: string; category: string }[],
 ): FontChoice[] {
-  const bundled = mono ? ["JetBrains Mono", "System"] : ["Inter", "System"]
+  const bundled = mono ? ["JetBrains Mono", "System"] : ["Rubik", "Inter", "System"]
   const out: FontChoice[] = rank(bundled, query, (b) => [b]).map((b) => ({ value: b, label: b, detail: "Built in" }))
   for (const f of google) {
     if (bundled.some((b) => b.toLowerCase() === f.family.toLowerCase())) continue
