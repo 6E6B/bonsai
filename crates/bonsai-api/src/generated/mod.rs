@@ -51,6 +51,7 @@ pub mod thumbnailsresizer;
 pub mod trades;
 pub mod translationroles;
 pub mod twostepverification;
+pub mod usermoderation;
 pub mod users;
 pub mod voice;
 pub mod www;

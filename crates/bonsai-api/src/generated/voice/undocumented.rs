@@ -13,10 +13,22 @@ use crate::rt::{Client, FilePart, Method, Request, Result};
 /// Host for every operation in this module.
 pub const HOST: &str = "voice.roblox.com";
 
+/// `Timestamp`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Timestamp {
+    #[serde(rename = "Seconds")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub seconds: Option<i64>,
+}
+
 /// `VoiceSettings`
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct VoiceSettings {
+    #[serde(rename = "bannedUntil")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub banned_until: Option<Timestamp>,
     #[serde(rename = "isAvatarVideoEligible")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_avatar_video_eligible: Option<bool>,

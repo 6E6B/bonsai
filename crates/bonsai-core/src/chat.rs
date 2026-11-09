@@ -864,8 +864,12 @@ pub(crate) async fn realtime_loop(inner: Arc<Inner>) {
                 .map(|a| a.id)
                 .filter(|id| all || Some(*id) == s.accounts.active)
                 .filter(|id| {
-                    s.account_data(*id)
-                        .is_none_or(|d| d.session != crate::store::SessionState::Expired)
+                    s.account_data(*id).is_none_or(|d| {
+                        !matches!(
+                            d.session,
+                            crate::store::SessionState::Expired | crate::store::SessionState::Moderated
+                        )
+                    })
                 })
                 .collect()
         };

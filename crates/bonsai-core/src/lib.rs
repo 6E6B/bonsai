@@ -27,6 +27,7 @@ pub mod links;
 pub mod market;
 pub mod me;
 pub mod messages;
+pub mod moderation;
 pub mod people;
 pub mod playlists;
 pub mod plugins;

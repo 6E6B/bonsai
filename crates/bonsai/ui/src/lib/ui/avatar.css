@@ -1,7 +1,8 @@
 /* Avatar. The frame clips the picture; the presence ring, dot and count sit outside the clip.
  * The ring circles the picture with a clear gap; the dot and count are ringed with the
  * background color so they read on any picture. The dot carries a mark at md and up: a play
- * triangle in game, a diamond in Studio. Offline has no ring and a hollow dot. */
+ * triangle in game, a diamond in Studio. Offline has no ring and a hollow dot. Muted grays the
+ * picture only. */
 @layer components {
   [data-component="avatar"] {
     --avatar-size: 28px;
@@ -69,6 +70,12 @@
     border-radius: inherit;
     background-image: var(--sheen-soft);
     pointer-events: none;
+  }
+
+  /* An account that can't be used: gray and faded, badges untouched. */
+  [data-component="avatar"][data-muted] [data-slot="frame"] {
+    filter: grayscale(1);
+    opacity: 0.5;
   }
 
   [data-component="avatar"] [data-slot="image"] {

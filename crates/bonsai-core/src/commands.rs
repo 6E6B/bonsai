@@ -340,6 +340,7 @@ commands! {
     SetDisplayName => "account.display_name", "Change display name", ["display name", "nickname", "name"], Text, Write(Social), [];
     SetPrivacy => "privacy.set", "Change a privacy setting (setting, then value)", ["privacy", "who can", "inventory", "trade", "chat", "join"], Text, Write(Account), [];
     ReplaceCookie => "account.replace_cookie", "Paste a new cookie for this account", ["expired", "session", "cookie"], None, Write(Account), [];
+    Reactivate => "account.reactivate", "Reactivate account (accept a warning or an ended ban)", ["ban", "banned", "warning", "warned", "moderation", "moderated", "reactivate", "unban"], None, Write(Account), [];
 
     GoHome => "nav.home", "Go to Home", ["home"], None, Read, [Shortcut::seq("G", "H")];
     GoDiscover => "nav.discover", "Go to Discover", ["discover", "charts", "sorts"], None, Read, [Shortcut::seq("G", "D")];
@@ -986,6 +987,7 @@ mod tests {
                         | CommandId::UnlockPin
                         | CommandId::LockPin
                         | CommandId::ReplaceCookie
+                        | CommandId::Reactivate
                 );
             assert_eq!(control, c.effect == Effect::Write(Tier::Account), "{key}");
         }

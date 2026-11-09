@@ -2,6 +2,7 @@ import { createSignal, For, onCleanup, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { countdown, date } from "~/lib/format"
 import { type AccountInfoView, commands, type PinView, type SecurityView, type SessionsView } from "~/lib/ipc/bindings"
+import { voiceBanText } from "~/lib/moderation"
 import { shell, useLive } from "~/lib/store"
 import { Badge, Button, PremiumBadge, SettingRow, SettingsGroup, Skeleton, usePrompt } from "~/lib/ui"
 import { Verified, WebButton } from "./shared"
@@ -94,9 +95,9 @@ export function ProfileSection() {
         <Show when={info.voice}>
           {(v) => (
             <SettingRow label="Voice and camera" description="Set on the website. Shown here for reference.">
-              <Badge variant={v().voiceEnabled ? "success" : undefined}>
+              <Badge variant={v().banned ? "danger" : v().voiceEnabled ? "success" : undefined}>
                 {v().banned
-                  ? "Voice banned"
+                  ? voiceBanText({ until: v().bannedUntil }, Date.now() / 1000)
                   : v().voiceEnabled
                     ? "Voice on"
                     : v().voiceEligible

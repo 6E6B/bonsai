@@ -914,3 +914,30 @@ async fn model_download_enforces_byte_budget_and_cdn_allowlist() {
     assert_eq!(requests.len(), 1);
     assert!(!requests[0].headers.contains_key("cookie"));
 }
+
+#[tokio::test]
+async fn moderated_account_reads_its_punishment_and_reactivates() {
+    let r = Replay::start(&["moderation"]).await;
+    let c = r.client();
+    let e = users::v1::get_users_authenticated(&c).await.unwrap_err();
+    assert!(
+        matches!(&e, Error::Status { status: 403, errors, .. } if errors[0].message == "User is moderated"),
+        "{e:?}"
+    );
+    let n = usermoderation::undocumented::get_not_approved(&c).await.unwrap();
+    assert_eq!(n.punished_user_id, Some(1_000_001));
+    assert_eq!(n.punishment_type_description.as_deref(), Some("Warn"));
+    assert!(n.message_to_user.is_some_and(|m| !m.is_empty()));
+    let u = users::v1::get_users_by_user_id(&r.builder(AccountId::ANONYMOUS).build().unwrap(), 1_000_001)
+        .await
+        .unwrap();
+    assert_eq!(u.name.as_deref(), Some("TestUser"));
+    // Skip the refresh after saving: same two answers again.
+    users::v1::get_users_authenticated(&c).await.unwrap_err();
+    usermoderation::undocumented::get_not_approved(&c).await.unwrap();
+    usermoderation::undocumented::post_reactivate(&c).await.unwrap();
+    users::v1::get_users_authenticated(&c).await.unwrap();
+    let v = voice::undocumented::get_voice_settings(&c).await.unwrap();
+    assert_eq!(v.is_banned, Some(true));
+    assert_eq!(v.banned_until.and_then(|t| t.seconds), Some(1_794_268_800));
+}

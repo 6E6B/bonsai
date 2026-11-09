@@ -405,6 +405,25 @@ pub async fn page_messages(client: &Client) -> Result<()> {
     client.send(page_messages_request()?).await?.unit()
 }
 
+/// `GET /not-approved`
+///
+/// Moderation notice: warning, ban, termination or human check
+///
+/// Undocumented; captured 2026-11-09, shown to a moderated account.
+pub fn page_not_approved_request() -> Result<Request> {
+    let r = Request::new(Method::GET, HOST, "/not-approved".to_string());
+    Ok(r)
+}
+
+/// `GET /not-approved`
+///
+/// Moderation notice: warning, ban, termination or human check
+///
+/// Undocumented; captured 2026-11-09, shown to a moderated account.
+pub async fn page_not_approved(client: &Client) -> Result<()> {
+    client.send(page_not_approved_request()?).await?.unit()
+}
+
 /// `GET /report-abuse/`
 ///
 /// Report form; the app only opens it, it never submits reports

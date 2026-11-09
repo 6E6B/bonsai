@@ -52,6 +52,8 @@ pub struct VoiceView {
     pub voice_eligible: bool,
     pub voice_verified: bool,
     pub banned: bool,
+    /// Unix seconds when a voice suspension ends, when Roblox says.
+    pub banned_until: Option<f64>,
     pub camera_enabled: bool,
     pub camera_eligible: bool,
 }
@@ -194,6 +196,7 @@ pub fn account_info(core: State<'_, Arc<Core>>) -> AccountInfoView {
             voice_eligible: v.voice_eligible,
             voice_verified: v.voice_verified,
             banned: v.banned,
+            banned_until: v.banned_until.map(|t| t as f64),
             camera_enabled: v.camera_enabled,
             camera_eligible: v.camera_eligible,
         }),
@@ -1163,6 +1166,7 @@ pub(super) fn run(
             Ok(())
         }
         CommandId::SignOutOthers => acting().map(|a| core.sign_out_others(a)),
+        CommandId::Reactivate => acting().and_then(|a| core.reactivate(a)),
         CommandId::LockPin => acting().map(|a| core.lock_pin(a)),
         // The settings screen asks for the PIN and calls `unlock_pin`.
         CommandId::UnlockPin => Err("Open Settings to enter the PIN.".into()),

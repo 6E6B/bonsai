@@ -1,0 +1,41 @@
+# usermoderation.roblox.com is not in the tracker. Only endpoints we use, with the fields we use.
+#
+# A moderated account gets 403 `{"errors":[{"message":"User is moderated"}]}` from most
+# authenticated requests, users/v1/users/authenticated included. These two are the ones
+# www.roblox.com/not-approved still answers for it.
+swagger: "2.0"
+host: usermoderation.roblox.com
+info: { title: "usermoderation (undocumented)", version: undocumented }
+paths:
+  /v1/not-approved:
+    get:
+      # Shape verified against a banned account on 2026-11-09 (RobloxAccountManager
+      # internal/roblox/moderation.go); fixture moderation.json is synthetic. Called by
+      # www.roblox.com/not-approved.
+      x-captured: "2026-11-09, www.roblox.com/not-approved"
+      x-rust-name: get_not_approved
+      summary: The punishment of the signed-in account. Empty punishment type means locked until a human check.
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/NotApproved" } }
+  /v1/not-approved/reactivate:
+    post:
+      # The "I Agree" / "Reactivate My Account" button on www.roblox.com/not-approved, same
+      # source as above. Only works for a warning or a ban that has ended.
+      x-captured: "2026-11-09, www.roblox.com/not-approved"
+      x-rust-name: post_reactivate
+      summary: Accept a warning or an ended ban so the account works again (user action only).
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+definitions:
+  Empty:
+    type: object
+  NotApproved:
+    type: object
+    properties:
+      punishedUserId: { type: integer, format: int64 }
+      punishmentTypeDescription: { type: string, description: '"Warn", "Delete" (terminated), "Ban 7 Days", or empty' }
+      beginDate: { type: string, description: "RFC 3339" }
+      endDate: { type: string, description: "RFC 3339; set for bans" }
+      messageToUser: { type: string }
+      title: { type: string }
+      body: { type: string }

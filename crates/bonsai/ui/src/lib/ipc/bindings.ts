@@ -418,6 +418,10 @@ export type Account = {
 	 *  notifications), for the rail badge.
 	 */
 	unread: number,
+	/**  What Roblox did, while `session` is `moderated`. None when Roblox didn't say yet. */
+	moderation: ModerationView | null,
+	/**  A voice chat suspension. The account still works. */
+	voiceBan: VoiceBanView | null,
 };
 
 export type AccountInfoView = {
@@ -1426,7 +1430,9 @@ export type Login =
 /**  The sign-in window is open. */
 { kind: "browser" } | { kind: "quickStarting" } | 
 /**  Quick sign-in code to approve on another device. `expiresAt` is unix seconds. */
-{ kind: "quickCode"; code: string; expiresAt: Id; linked: string | null } | { kind: "validating" } | { kind: "confirm"; user: User; alreadyAdded: boolean } | { kind: "failed"; message: string };
+{ kind: "quickCode"; code: string; expiresAt: Id; linked: string | null } | { kind: "validating" } | { kind: "confirm"; user: User; alreadyAdded: boolean; 
+/**  Roblox moderated this account. It can still be added. */
+moderation: ModerationView | null } | { kind: "failed"; message: string };
 
 /**  Display settings the whole window follows. Values as `settings.set` takes them. */
 export type Look = {
@@ -1506,6 +1512,22 @@ export type MessageRow = {
 	read: boolean,
 	/**  From Roblox itself. */
 	system: boolean,
+};
+
+export type ModerationKind = "warned" | "banned" | "terminated" | 
+/**  Roblox wants a human check on the website. */
+"locked" | "unknown";
+
+export type ModerationView = {
+	kind: ModerationKind,
+	/**  Roblox's heading; empty when it wrote none. */
+	title: string,
+	/**  Roblox's explanation. */
+	message: string,
+	/**  Unix seconds; 0 when unknown. */
+	begins: number | null,
+	/**  Unix seconds when a ban ends. A warning, or a ban past this, can be reactivated. */
+	ends: number | null,
 };
 
 export type MonthView = {
@@ -2209,7 +2231,9 @@ export type Servers = {
 };
 
 /**  Whether an account's saved cookie still works. */
-export type Session = "unknown" | "ok" | "expired" | "noCookie";
+export type Session = "unknown" | "ok" | "expired" | "noCookie" | 
+/**  Warned, banned, terminated or locked. See `Account::moderation`. */
+"moderated";
 
 export type SessionView = {
 	location: string,
@@ -2657,11 +2681,18 @@ export type ViewValue = {
 	value: string,
 };
 
+export type VoiceBanView = {
+	/**  Unix seconds; None when Roblox didn't say. */
+	until: number | null,
+};
+
 export type VoiceView = {
 	voiceEnabled: boolean,
 	voiceEligible: boolean,
 	voiceVerified: boolean,
 	banned: boolean,
+	/**  Unix seconds when a voice suspension ends, when Roblox says. */
+	bannedUntil: number | null,
 	cameraEnabled: boolean,
 	cameraEligible: boolean,
 };

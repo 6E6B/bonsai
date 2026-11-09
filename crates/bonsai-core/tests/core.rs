@@ -10,6 +10,7 @@ use bonsai_core::account::{AccountList, CookieStore, MemoryCookies};
 use bonsai_core::cache::{Cache, Kind};
 use bonsai_core::launcher::{JoinTarget, RecordingOpener};
 use bonsai_core::me::ServersTab;
+use bonsai_core::moderation::ModerationKind;
 use bonsai_core::search::{Group, Scope, Target};
 use bonsai_core::store::{LoginState, PresenceKind, SessionState, Unread};
 use bonsai_core::thumbs::{DiskCache, ThumbKey, ThumbKind, ThumbState};
@@ -144,10 +145,15 @@ async fn paste_cookie_validates_then_confirms() {
     })
     .await;
     match r.core.store().login.clone() {
-        Some(LoginState::Confirm { user, already_added }) => {
+        Some(LoginState::Confirm {
+            user,
+            already_added,
+            moderation,
+        }) => {
             assert_eq!(user.id, ME.0);
             assert_eq!(user.name, "TestUser");
             assert!(!already_added);
+            assert!(moderation.is_none());
         }
         other => panic!("{other:?}"),
     }
@@ -3381,4 +3387,50 @@ async fn user_names_load_from_profiles_and_retry_a_failed_batch() {
     }
     let asks = replay.server.received_requests().await.unwrap_or_default();
     assert_eq!(asks.len(), 2, "one failed ask and one retry");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn moderated_cookie_can_be_saved_then_reactivated() {
+    let replay = Replay::start(&["moderation"]).await;
+    let dir = tempfile::tempdir().unwrap();
+    let r = rig(Base::Replay(replay.server.uri()), dir, Arc::default());
+
+    assert!(r.core.submit_cookie(COOKIE));
+    wait_for(&r.core, "confirm step", |s| {
+        matches!(s.login, Some(LoginState::Confirm { .. }))
+    })
+    .await;
+    match r.core.store().login.clone() {
+        Some(LoginState::Confirm { user, moderation, .. }) => {
+            assert_eq!((user.id, user.name.as_str()), (ME.0, "TestUser"));
+            assert_eq!(moderation.unwrap().kind, ModerationKind::Warned);
+        }
+        other => panic!("{other:?}"),
+    }
+
+    r.core.send(Cmd::ConfirmLogin);
+    wait_for(&r.core, "moderated", |s| {
+        s.account_data(ME).is_some_and(|d| {
+            d.session == SessionState::Moderated
+                && d.moderation.as_ref().is_some_and(|m| !m.message.is_empty())
+        })
+    })
+    .await;
+
+    r.core.reactivate(ME).unwrap();
+    wait_for(&r.core, "reactivated", |s| {
+        s.account_data(ME)
+            .is_some_and(|d| d.session == SessionState::Ok && d.moderation.is_none() && d.voice_ban.is_some())
+    })
+    .await;
+    wait_for(&r.core, "done toast", |s| {
+        s.toasts
+            .iter()
+            .any(|t| !t.error && t.text == "Account reactivated.")
+    })
+    .await;
+    let d = r.core.store().account_data(ME).cloned().unwrap();
+    assert_eq!(d.voice_ban.unwrap().until, Some(1_794_268_800));
+    // A second reactivation has nothing to accept.
+    assert!(r.core.reactivate(ME).is_err());
 }

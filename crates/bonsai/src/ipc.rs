@@ -227,6 +227,8 @@ pub enum Login {
     Confirm {
         user: User,
         already_added: bool,
+        /// Roblox moderated this account. It can still be added.
+        moderation: Option<ModerationView>,
     },
     Failed {
         message: String,
@@ -249,6 +251,8 @@ pub enum Session {
     Ok,
     Expired,
     NoCookie,
+    /// Warned, banned, terminated or locked. See `Account::moderation`.
+    Moderated,
 }
 
 impl From<&SessionState> for Session {
@@ -258,6 +262,7 @@ impl From<&SessionState> for Session {
             SessionState::Ok => Session::Ok,
             SessionState::Expired => Session::Expired,
             SessionState::NoCookie => Session::NoCookie,
+            SessionState::Moderated => Session::Moderated,
         }
     }
 }
@@ -274,6 +279,61 @@ pub struct Account {
     /// Everything unread for this account (messages, chat, friend requests, trades,
     /// notifications), for the rail badge.
     pub unread: u32,
+    /// What Roblox did, while `session` is `moderated`. None when Roblox didn't say yet.
+    pub moderation: Option<ModerationView>,
+    /// A voice chat suspension. The account still works.
+    pub voice_ban: Option<VoiceBanView>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum ModerationKind {
+    Warned,
+    Banned,
+    Terminated,
+    /// Roblox wants a human check on the website.
+    Locked,
+    Unknown,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ModerationView {
+    pub kind: ModerationKind,
+    /// Roblox's heading; empty when it wrote none.
+    pub title: String,
+    /// Roblox's explanation.
+    pub message: String,
+    /// Unix seconds; 0 when unknown.
+    pub begins: f64,
+    /// Unix seconds when a ban ends. A warning, or a ban past this, can be reactivated.
+    pub ends: Option<f64>,
+}
+
+impl From<&bonsai_core::moderation::Moderation> for ModerationView {
+    fn from(m: &bonsai_core::moderation::Moderation) -> Self {
+        use bonsai_core::moderation::ModerationKind as K;
+        Self {
+            kind: match m.kind {
+                K::Warned => ModerationKind::Warned,
+                K::Banned => ModerationKind::Banned,
+                K::Terminated => ModerationKind::Terminated,
+                K::Locked => ModerationKind::Locked,
+                K::Unknown => ModerationKind::Unknown,
+            },
+            title: m.title.clone(),
+            message: m.message.clone(),
+            begins: m.begins as f64,
+            ends: m.ends.map(|e| e as f64),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct VoiceBanView {
+    /// Unix seconds; None when Roblox didn't say.
+    pub until: Option<f64>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Type)]
@@ -1065,6 +1125,15 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                 unread: s.data.get(&a.id).map_or(0, |d| {
                     (d.unread.total() + bonsai_core::feed::unread(&d.feed)).clamp(0, u32::MAX as i64) as u32
                 }),
+                moderation: s
+                    .data
+                    .get(&a.id)
+                    .filter(|d| d.session == SessionState::Moderated)
+                    .and_then(|d| d.moderation.as_ref())
+                    .map(Into::into),
+                voice_ban: s.data.get(&a.id).and_then(|d| d.voice_ban).map(|v| VoiceBanView {
+                    until: v.until.map(|u| u as f64),
+                }),
             })
             .collect(),
         active: s.accounts.active.map(|a| Id(a.0)),
@@ -1155,13 +1224,18 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                 linked: linked.clone(),
             },
             LoginState::Validating => Login::Validating,
-            LoginState::Confirm { user, already_added } => Login::Confirm {
+            LoginState::Confirm {
+                user,
+                already_added,
+                moderation,
+            } => Login::Confirm {
                 user: User {
                     id: Id(user.id),
                     name: user.name.clone(),
                     display_name: user.display_name.clone(),
                 },
                 already_added: *already_added,
+                moderation: moderation.as_ref().map(Into::into),
             },
             LoginState::Failed(message) => Login::Failed {
                 message: message.clone(),

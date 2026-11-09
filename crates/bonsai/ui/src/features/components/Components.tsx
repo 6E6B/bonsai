@@ -249,6 +249,7 @@ export default function Components() {
         <Avatar size="sm" name="Builderman" />
         <Avatar name="Roblox" />
         <Avatar size="lg" name="Bonsai App" />
+        <Avatar size="lg" name="Banned Account" muted count={2} />
       </Section>
 
       <Section title="Avatar stack">

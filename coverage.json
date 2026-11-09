@@ -7662,6 +7662,26 @@
     },
     {
       "deprecated": false,
+      "function": "get_not_approved",
+      "host": "usermoderation.roblox.com",
+      "method": "GET",
+      "module": "usermoderation::undocumented",
+      "path": "/v1/not-approved",
+      "summary": "The punishment of the signed-in account. Empty punishment type means locked until a human check.",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "post_reactivate",
+      "host": "usermoderation.roblox.com",
+      "method": "POST",
+      "module": "usermoderation::undocumented",
+      "path": "/v1/not-approved/reactivate",
+      "summary": "Accept a warning or an ended ban so the account works again (user action only).",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "get_voice_settings",
       "host": "voice.roblox.com",
       "method": "GET",
@@ -7832,6 +7852,16 @@
     },
     {
       "deprecated": false,
+      "function": "page_not_approved",
+      "host": "www.roblox.com",
+      "method": "GET",
+      "module": "www::undocumented",
+      "path": "/not-approved",
+      "summary": "Moderation notice: warning, ban, termination or human check",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "page_report_abuse",
       "host": "www.roblox.com",
       "method": "GET",
@@ -7911,6 +7941,6 @@
       "used": true
     }
   ],
-  "total": 791,
-  "used": 250
+  "total": 794,
+  "used": 253
 }

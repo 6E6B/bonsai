@@ -248,12 +248,19 @@ pub enum SessionState {
     Expired,
     /// The keychain had no cookie (e.g. Secret Service missing after restart).
     NoCookie,
+    /// Roblox answers "User is moderated": warned, banned, terminated or locked. The cookie is
+    /// still valid. See [`crate::moderation`].
+    Moderated,
 }
 
 /// Private, per-account data. Never shared with another account.
 #[derive(Clone, Debug, Default)]
 pub struct AccountData {
     pub session: SessionState,
+    /// What Roblox did, while the session is [`SessionState::Moderated`]. Cached.
+    pub moderation: Option<crate::moderation::Moderation>,
+    /// A voice chat suspension. The account still works.
+    pub voice_ban: Option<crate::moderation::VoiceBan>,
     pub unread: Unread,
     pub friends: Loadable<Vec<u64>>,
     /// Presence as seen by this account.
@@ -367,6 +374,8 @@ pub enum LoginState {
     Confirm {
         user: UserInfo,
         already_added: bool,
+        /// Roblox moderated this account. It can still be added.
+        moderation: Option<crate::moderation::Moderation>,
     },
     Failed(String),
 }
