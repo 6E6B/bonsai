@@ -47,6 +47,7 @@ import { Backdrop } from "./shell/Backdrop"
 import { ChallengeDialog } from "./shell/ChallengeDialog"
 import { DiscordDialog } from "./shell/DiscordDialog"
 import { Drawer } from "./shell/Drawer"
+import { allowedWhileModerated, ModerationDialog } from "./shell/ModerationDialog"
 import { PinForm } from "./shell/PinForm"
 import { ChangePasswordForm, PasswordForm, SecurityDialog } from "./shell/SecurityForms"
 import { ShellAlerts } from "./shell/ShellAlerts"
@@ -524,7 +525,7 @@ export function Layout(props: ParentProps) {
     void run(o.command, o.arg)
   })
 
-  makeEventListener(window, "keydown", shortcutListener())
+  makeEventListener(window, "keydown", shortcutListener(allowedWhileModerated))
 
   onMount(() => {
     Promise.all([loadCommands(), startSync()]).catch((e) => showToast(String(e)))
@@ -557,6 +558,7 @@ export function Layout(props: ParentProps) {
                 >
                   <div class="flex h-full flex-col">
                     <ShellAlerts />
+                    <ModerationDialog />
                     <ChallengeDialog />
                     <HubDialogs />
                     <ImportDialog />

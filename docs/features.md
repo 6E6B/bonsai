@@ -28,5 +28,5 @@ Features beyond the website, with the command that reaches each.
 | Every account's balance and period totals side by side | Transactions → All accounts | Go to Transactions |
 | Monthly incoming vs outgoing, spending per experience, top items sold, top buyers | Transactions → Insights | Go to Transactions |
 | Toast on a new sale (watcher only notifies) | Settings → Notifications | Turn a notification kind on or off (`sales`) |
-| Warnings, bans, terminations and voice chat bans on every saved account, with the ban countdown; warned or banned accounts can still be added | Account rail; banner above every screen | Reactivate account (accept a warning or an ended ban) |
+| Warnings, bans, terminations and voice chat bans on every saved account, with the ban countdown; warned or banned accounts can still be added | Account rail; a dialog that blocks the app until you reactivate, sign out or switch account | Reactivate account (accept a warning or an ended ban) |
 | Game playlists (local, per account) | Playlists; experience page and game menus → Add to playlist | Go to Playlists; New game playlist; Add this experience to a playlist |

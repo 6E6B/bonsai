@@ -1,9 +1,30 @@
 import { describe, expect, it, vi } from "vitest"
 
 const runCommand = vi.fn(async () => ({ status: "ok" as const, data: null }))
-vi.mock("~/lib/ipc/bindings", () => ({ commands: { runCommand, commands: async () => [] } }))
+const chord = (key: string) => ({
+  kind: "chord" as const,
+  ctrl: true,
+  shift: false,
+  alt: false,
+  key,
+  label: `Ctrl+${key}`,
+})
+const commandsList = vi.fn(async () => [
+  { id: "app.palette", title: "", keywords: [], arg: "none", shortcuts: [chord("K")], rebound: false, context: null },
+  {
+    id: "account.switch_1",
+    title: "",
+    keywords: [],
+    arg: "none",
+    shortcuts: [chord("1")],
+    rebound: false,
+    context: null,
+  },
+])
+vi.mock("~/lib/ipc/bindings", () => ({ commands: { runCommand, commands: commandsList } }))
+vi.mock("@tauri-apps/api/core", () => ({ isTauri: () => true }))
 
-const { handle, run, setCommandContext } = await import("./registry")
+const { handle, loadCommands, run, setCommandContext, shortcutListener } = await import("./registry")
 
 describe("handle", () => {
   it("keeps a newer handler when an older one is removed", async () => {
@@ -37,5 +58,22 @@ describe("image command context", () => {
     await run("image.copy")
     expect(runCommand).toHaveBeenLastCalledWith(expect.objectContaining({ arg: null, context: "user:1" }))
     setCommandContext(null)
+  })
+})
+
+describe("shortcutListener", () => {
+  it("skips shortcuts that allow turns off", async () => {
+    await loadCommands()
+    const palette = vi.fn()
+    const switchTo = vi.fn()
+    handle("app.palette", palette)
+    handle("account.switch_1", switchTo)
+    const listener = shortcutListener((id) => id.startsWith("account.switch"))
+    const press = (key: string) => listener(new KeyboardEvent("keydown", { key, ctrlKey: true, cancelable: true }))
+    press("k")
+    press("1")
+    await Promise.resolve()
+    expect(palette).not.toHaveBeenCalled()
+    expect(switchTo).toHaveBeenCalled()
   })
 })

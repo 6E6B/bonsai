@@ -120,8 +120,9 @@ function isTyping(target: EventTarget | null) {
   return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
 }
 
-/** Returns a keydown listener that runs commands by their shortcuts. */
-export function shortcutListener() {
+/** Returns a keydown listener that runs commands by their shortcuts. `allow` can turn shortcuts
+ * off while something blocks the app. */
+export function shortcutListener(allow: (id: string) => boolean = () => true) {
   let pending: string | undefined
   let timer: ReturnType<typeof setTimeout> | undefined
   return (e: KeyboardEvent) => {
@@ -129,6 +130,7 @@ export function shortcutListener() {
     if (!press || (isPlain(press) && isTyping(e.target))) return
     let next: string | undefined
     for (const c of list()) {
+      if (!allow(c.id)) continue
       const m = match(press, c.shortcuts, pending)
       if (m.kind === "run") {
         e.preventDefault()
