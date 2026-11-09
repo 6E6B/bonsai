@@ -679,7 +679,9 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                       </Show>
                     </>
                   }
-                  subtitle={p.name ? `@${p.name}` : undefined}
+                  subtitle={
+                    [p.name && `@${p.name}`, p.presence === "game" && p.place].filter(Boolean).join(" · ") || undefined
+                  }
                   meta={
                     <Show when={p.friend && !props.mine}>
                       <Badge variant="accent">{tag()}</Badge>
