@@ -660,7 +660,11 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                   data-index={i}
                   selected={i === cursor()}
                   leading={
-                    <Avatar name={p.displayName || p.name} presence={p.presence} src={thumbUrl("headshot", p.id)} />
+                    <Avatar
+                      name={p.displayName || p.name}
+                      presence={p.presence ?? undefined}
+                      src={thumbUrl("headshot", p.id)}
+                    />
                   }
                   title={
                     <>

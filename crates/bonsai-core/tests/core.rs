@@ -702,6 +702,21 @@ async fn people_profile_lists_and_relation() {
         .cloned()
         .unwrap();
     f.interactions.push(lookup);
+    f.interactions.push(Interaction {
+        request: replay::RecordedRequest {
+            method: "POST".into(),
+            host: "presence.roblox.com".into(),
+            path: "/v1/presence/users".into(),
+            ..Default::default()
+        },
+        response: replay::RecordedResponse {
+            status: 200,
+            body: serde_json::json!({"userPresences":[
+                {"userPresenceType":1,"lastLocation":"Website","placeId":null,"rootPlaceId":null,"gameId":null,"universeId":null,"userId":156}
+            ]}),
+            ..Default::default()
+        },
+    });
     let replay = Replay::from_fixture(&f).await;
     let dir = tempfile::tempdir().unwrap();
     let cookies = seeded(&dir);
@@ -765,6 +780,10 @@ async fn people_profile_lists_and_relation() {
     let follows = poll(|| c.follows(ME, &[156, 2_000_001, ME.0])).await;
     assert_eq!(follows.get(&156), Some(&true));
     assert_eq!(follows.get(&2_000_001), Some(&false));
+    // Presence of people who aren't friends, in one batch. Users left out are missing.
+    let seen = poll(|| c.presences(ME, &[156, 2_000_001])).await;
+    assert_eq!(seen.get(&156).map(|p| p.kind), Some(PresenceKind::Online));
+    assert!(!seen.contains_key(&2_000_001));
     // Nicknames and notes stay on this computer, per account.
     c.set_nickname(ME, 156, "  Builder ");
     c.set_note(ME, 156, "Met in Crossroads");

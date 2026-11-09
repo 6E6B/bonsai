@@ -968,9 +968,9 @@ pub struct Connection {
     pub premium: bool,
     /// A friend of the active account (a mutual friend, on a friends list).
     pub friend: bool,
-    /// Known only for the active account's friends; offline for everyone else.
-    pub presence: Presence,
-    /// The game they're in, when they're a friend in one and it can be named.
+    /// `None` until it loads, or when loading it failed.
+    pub presence: Option<Presence>,
+    /// The game they're in, when Roblox shares it and it can be named.
     pub place: Option<String>,
     /// Whether the active account follows them. `None` for yourself, when signed out, or until
     /// it has loaded.
@@ -2617,6 +2617,24 @@ fn following_of(core: &Core, account: AccountId, ids: &[u64]) -> std::collection
         .collect()
 }
 
+/// Presence of `ids`, in batches the size `following_of` uses and for the same reason. Users
+/// in a loaded batch that Roblox left out count as offline; a batch still loading is missing.
+fn presence_of(
+    core: &Core,
+    account: AccountId,
+    ids: &[u64],
+) -> std::collections::HashMap<u64, bonsai_core::store::Presence> {
+    let mut out = std::collections::HashMap::new();
+    for c in ids.chunks(FOLLOW_BATCH) {
+        if let Some(m) = core.presences(account, c).data {
+            for id in c {
+                out.insert(*id, m.get(id).cloned().unwrap_or_default());
+            }
+        }
+    }
+    out
+}
+
 /// The account's friends, once its friends list has loaded.
 fn own_friends(core: &Core, account: AccountId) -> Option<std::collections::HashSet<u64>> {
     let s = core.store();
@@ -2658,6 +2676,7 @@ pub fn profile_people(
     let mut ids = std::mem::take(&mut list.items);
     // Before reordering: see `following_of`.
     let follows = account.map(|a| following_of(&core, a, &ids)).unwrap_or_default();
+    let others = account.map(|a| presence_of(&core, a, &ids)).unwrap_or_default();
     if which == "friends" && query.trim().is_empty() {
         ids = bonsai_core::people::mutuals_first(&ids, &own).0;
     }
@@ -2674,7 +2693,12 @@ pub fn profile_people(
                     unnamed.push(*id);
                 }
                 let friend = own.contains(id);
-                let p = presence.filter(|_| friend).and_then(|p| p.get(id));
+                // Friends' presence is fresher, from the friends list refresh.
+                let mine = presence.filter(|_| friend).map(|p| p.get(id));
+                let p = match mine {
+                    Some(p) => p,
+                    None => others.get(id),
+                };
                 let place = p.filter(|p| p.kind == PresenceKind::InGame).and_then(|p| {
                     let game = p.universe_id.and_then(|u| s.games.get(&u));
                     if game.is_none() {
@@ -2690,7 +2714,10 @@ pub fn profile_people(
                     verified: u.is_some_and(|u| u.verified),
                     premium: u.and_then(|u| u.premium).unwrap_or(false),
                     friend,
-                    presence: p.map_or(Presence::Offline, |p| p.kind.into()),
+                    presence: match mine {
+                        Some(p) => Some(p.map_or(Presence::Offline, |p| p.kind.into())),
+                        None => p.map(|p| p.kind.into()),
+                    },
                     place,
                     following: follows.get(id).copied(),
                 }

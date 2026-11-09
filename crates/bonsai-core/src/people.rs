@@ -487,6 +487,33 @@ impl Core {
         )
     }
 
+    /// Where each of `users` is, as `account` can see it, asked in one batch of at most 50.
+    /// For lists of people who are not the account's friends; friends' presence comes from the
+    /// friends list refresh. Callers pass a page of a list at a time, so each page keeps its
+    /// own entry. Users Roblox leaves out are missing from the map.
+    pub fn presences(&self, account: AccountId, users: &[u64]) -> Res<HashMap<u64, Presence>> {
+        if account.is_anonymous() || users.is_empty() {
+            return Res::default();
+        }
+        let users = users.to_vec();
+        let key = users.iter().map(u64::to_string).collect::<Vec<_>>().join(",");
+        self.inner.res(
+            Key::private(account, "presences", key),
+            RELATION_AGE,
+            move |f| async move {
+                let body = presence::v1::UserPresenceRequest {
+                    user_ids: Some(users.iter().map(|u| *u as i64).collect()),
+                };
+                let r = presence::v1::post_presence_users(&f.client, &body).await?;
+                Ok(r.user_presences
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(Presence::from_api)
+                    .collect())
+            },
+        )
+    }
+
     /// Nicknames and notes `account` keeps, by user id.
     pub fn user_notes(&self, account: AccountId) -> HashMap<u64, UserNote> {
         self.local::<HashMap<String, UserNote>>(account, "user_notes")

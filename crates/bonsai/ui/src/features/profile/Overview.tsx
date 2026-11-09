@@ -237,8 +237,8 @@ function Row<T>(props: {
   )
 }
 
-/** A friend of theirs. Presence is only known for your own friends, so others get no dot rather
- * than a grey one that reads as offline. */
+/** A friend of theirs. No dot until their presence loads, rather than a grey one that reads as
+ * offline. */
 function Person(props: { person: Connection }) {
   const p = () => props.person
   return (
@@ -247,7 +247,7 @@ function Person(props: { person: Connection }) {
         name={p().displayName || p().name || `User ${p().id}`}
         username={p().name || undefined}
         src={thumbUrl("headshot", p().id, true)}
-        presence={p().friend ? p().presence : undefined}
+        presence={p().presence ?? undefined}
         verified={p().verified}
         premium={p().premium}
         status={p().place ?? undefined}

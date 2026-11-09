@@ -904,9 +904,9 @@ export type Connection = {
 	premium: boolean,
 	/**  A friend of the active account (a mutual friend, on a friends list). */
 	friend: boolean,
-	/**  Known only for the active account's friends; offline for everyone else. */
-	presence: Presence,
-	/**  The game they're in, when they're a friend in one and it can be named. */
+	/**  `None` until it loads, or when loading it failed. */
+	presence: Presence | null,
+	/**  The game they're in, when Roblox shares it and it can be named. */
 	place: string | null,
 	/**
 	 *  Whether the active account follows them. `None` for yourself, when signed out, or until
