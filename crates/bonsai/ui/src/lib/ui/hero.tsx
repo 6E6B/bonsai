@@ -61,7 +61,9 @@ export function HeroBanner(props: HeroBannerProps) {
   return (
     <div data-slot="banner">
       <KImage data-slot="backdrop" fallbackDelay={0}>
-        <Show when={props.src}>{(src) => <KImage.Img data-slot="backdrop-image" src={src()} alt="" />}</Show>
+        <Show when={props.src}>
+          {(src) => <KImage.Img data-slot="backdrop-image" src={src()} alt="" decoding="async" />}
+        </Show>
       </KImage>
       <div data-slot="banner-content">
         <div data-slot="banner-text">

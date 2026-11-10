@@ -31,7 +31,9 @@ export function Thumbnail(props: ThumbnailProps) {
         {...rest}
       >
         <KImage data-slot="frame" fallbackDelay={0}>
-          <Show when={local.src}>{(src) => <KImage.Img data-slot="image" src={src()} alt={local.alt} />}</Show>
+          <Show when={local.src}>
+            {(src) => <KImage.Img data-slot="image" src={src()} alt={local.alt} decoding="async" />}
+          </Show>
           <KImage.Fallback data-slot="fallback">
             <Icon name={local.fallback ?? "game"} size={20} />
           </KImage.Fallback>

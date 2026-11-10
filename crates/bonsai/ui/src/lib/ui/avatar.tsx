@@ -47,7 +47,9 @@ export function Avatar(props: AvatarProps) {
         {...rest}
       >
         <KImage data-slot="frame" fallbackDelay={0}>
-          <Show when={local.src}>{(src) => <KImage.Img data-slot="image" src={src()} alt={local.name} />}</Show>
+          <Show when={local.src}>
+            {(src) => <KImage.Img data-slot="image" src={src()} alt={local.name} decoding="async" />}
+          </Show>
           <KImage.Fallback data-slot="fallback">{initials()}</KImage.Fallback>
         </KImage>
         <Show when={local.presence !== "offline" && local.presence}>
