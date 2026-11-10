@@ -2821,6 +2821,20 @@
       "title": "Play or pause this sound"
     },
     {
+      "arg": "none",
+      "id": "market.sound_hat",
+      "keywords": [
+        "sound hat",
+        "sound",
+        "audio",
+        "mute",
+        "quack",
+        "harmonica",
+        "laugh"
+      ],
+      "title": "Turn sound hat sounds on or off"
+    },
+    {
       "arg": "text",
       "id": "market.history_scale",
       "keywords": [
@@ -4193,12 +4207,12 @@
       "kind": "choice",
       "options": [
         {
-          "label": "Image",
-          "value": "2d"
-        },
-        {
           "label": "3D",
           "value": "3d"
+        },
+        {
+          "label": "Image",
+          "value": "2d"
         }
       ],
       "section": "general",

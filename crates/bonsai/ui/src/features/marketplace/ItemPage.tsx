@@ -12,7 +12,7 @@ import { IdFact } from "~/lib/item-preview"
 import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { accountItems, entityMenu, itemTarget, templateItems } from "~/lib/menus"
-import { isSoundHat } from "~/lib/sound-hats"
+import { isSoundHat, runSoundHat, setSoundHatsOn, soundHat, soundHatsOn } from "~/lib/sound-hats"
 import { shell, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { assetFileUrl, thumbUrl } from "~/lib/thumb"
@@ -51,7 +51,7 @@ import {
   VirtualGrid,
 } from "~/lib/ui"
 import { useValuesRefresh } from "~/lib/value-tags"
-import { useWikiAbout, WikiTab } from "~/lib/wiki-panels"
+import { useWikiAbout, WikiSummary, WikiTab } from "~/lib/wiki-panels"
 import { ItemSkeleton } from "./DetailSkeleton"
 import { pctOver } from "./history"
 import { Dependencies } from "./ItemDependencies"
@@ -161,6 +161,14 @@ export default function ItemPage() {
       player.toggle()
     }),
   )
+  // Sound hats run their in-game script while the page is open: a random sound every few seconds.
+  const hat = () => soundHat(id(), bundle())
+  const loaded = createMemo(() => info() !== null)
+  createEffect(() => {
+    const h = hat()
+    if (h && loaded() && soundHatsOn()) onCleanup(runSoundHat(h))
+  })
+  onCleanup(handle("market.sound_hat", () => setSoundHatsOn(!soundHatsOn())))
   // Non-limited UGC can also carry a collectibleId; only limiteds and collectibles have copies.
   const resells = () => Boolean(info()?.collectibleId && info()?.limited)
   // Copies for sale, cheapest first. Read here as well as in the tab: the buy box names the
@@ -240,7 +248,7 @@ export default function ItemPage() {
             return t !== null && t > Date.now() ? t : null
           }
           const hasAbout = () =>
-            !!sound() || !!item().description.trim() || item().contents.length > 0 || item().tags.length > 0
+            !!sound() || !!hat() || !!item().description.trim() || item().contents.length > 0 || item().tags.length > 0
           return (
             <div class="@container">
               <div class="flex flex-col gap-4 @3xl:grid @3xl:grid-cols-[minmax(0,1fr)_21rem] @3xl:items-start">
@@ -305,8 +313,29 @@ export default function ItemPage() {
                           </section>
                         )}
                       </Show>
+                      <Show when={hat()}>
+                        {(h) => (
+                          <section class="flex items-center gap-3 px-4 py-3">
+                            <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                              <h3 class="text-sm font-medium text-fg-muted">Sound hat</h3>
+                              <span class="text-sm">
+                                Plays a random sound every {h().wait[0]}–{h().wait[1]} s while worn.
+                              </span>
+                            </div>
+                            <ToggleButton
+                              size="sm"
+                              icon="audio"
+                              pressedIcon="audio-fill"
+                              pressed={soundHatsOn()}
+                              onChange={() => run("market.sound_hat")}
+                            >
+                              {soundHatsOn() ? "On" : "Off"}
+                            </ToggleButton>
+                          </section>
+                        )}
+                      </Show>
                       <Show when={item().description.trim()}>
-                        <Show when={sound()}>
+                        <Show when={sound() || hat()}>
                           <Divider />
                         </Show>
                         <section class="flex flex-col gap-1.5 px-4 py-3.5">
@@ -317,7 +346,7 @@ export default function ItemPage() {
                         </section>
                       </Show>
                       <Show when={item().contents.length > 0}>
-                        <Show when={sound() || item().description.trim()}>
+                        <Show when={sound() || hat() || item().description.trim()}>
                           <Divider />
                         </Show>
                         <section class="flex flex-col gap-1.5 px-4 py-3.5">
@@ -332,7 +361,7 @@ export default function ItemPage() {
                         </section>
                       </Show>
                       <Show when={item().tags.length > 0}>
-                        <Show when={sound() || item().description.trim() || item().contents.length > 0}>
+                        <Show when={sound() || hat() || item().description.trim() || item().contents.length > 0}>
                           <Divider />
                         </Show>
                         <div class="flex flex-wrap items-center gap-1.5 px-4 py-2.5">
@@ -349,6 +378,207 @@ export default function ItemPage() {
                     </Card>
                   </Show>
 
+                  <Show when={wiki.article}>
+                    {(a) => <WikiSummary view={wiki} article={a()} facts={3} class="order-3" />}
+                  </Show>
+                </div>
+
+                <aside class="contents @3xl:sticky @3xl:top-4 @3xl:flex @3xl:min-w-0 @3xl:flex-col @3xl:gap-4">
+                  <div class="order-2 flex min-w-0 flex-col gap-4">
+                    <Card class="flex flex-col">
+                      <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 px-4 pt-3.5 pb-3.5">
+                        <div class="flex min-w-0 flex-col gap-1.5">
+                          <Show
+                            when={
+                              item().limited || isSoundHat(id(), bundle()) || item().premiumOnly || item().publicDomain
+                            }
+                          >
+                            <div class="flex flex-wrap items-center gap-1.5">
+                              <Show when={item().limited}>{(l) => <Badge variant="success">{l()}</Badge>}</Show>
+                              <Show when={isSoundHat(id(), bundle())}>
+                                <SoundHatBadge />
+                              </Show>
+                              <Show when={item().premiumOnly}>
+                                <Badge>
+                                  <PremiumBadge bare size={12} class="-ml-0.5 mr-1" />
+                                  Premium
+                                </Badge>
+                              </Show>
+                              <Show when={item().publicDomain}>
+                                <Badge>Free to take</Badge>
+                              </Show>
+                            </div>
+                          </Show>
+                          <h1 class="text-2xl font-semibold leading-tight [overflow-wrap:anywhere]">{item().name}</h1>
+                          <span class="flex flex-wrap items-center gap-1 text-fg-muted">
+                            {item().typeName} by{" "}
+                            <TextLink
+                              tone={item().creatorFake ? "danger" : "name"}
+                              onClick={() =>
+                                run(item().creatorIsGroup ? "group.open" : "user.open", String(item().creatorId))
+                              }
+                            >
+                              {item().creator}
+                            </TextLink>
+                            <Show when={item().creatorVerified}>
+                              <VerifiedBadge />
+                            </Show>
+                            <Show when={item().creatorFake}>
+                              <Tooltip content="Not Roblox. This creator copies Roblox's name.">
+                                <Icon name="alert" size={14} class="text-danger" aria-label="Not Roblox" />
+                              </Tooltip>
+                            </Show>
+                          </span>
+                        </div>
+                        <Menu
+                          variant="ghost"
+                          icon="more"
+                          label="More"
+                          class="-mt-1 -mr-2"
+                          items={entityMenu(
+                            target(),
+                            item().bundle
+                              ? []
+                              : [
+                                  menuItem("market.dependencies", { label: "View dependencies", icon: "inventory" }),
+                                  ...templateItems(item().id, item().assetType),
+                                ],
+                          )}
+                        />
+                      </div>
+                      <Divider />
+                      <div class="flex flex-col gap-3 px-4 py-3.5">
+                        <div class="flex flex-col gap-1">
+                          <span class="flex min-w-0 items-center gap-1 text-xs text-fg-muted">
+                            <Show when={cheapest()} fallback={item().fromReseller ? "Cheapest copy" : "Price"}>
+                              {(r) => (
+                                <>
+                                  <span class="shrink-0">
+                                    Cheapest copy
+                                    <Show when={r().serial}> · #{full(r().serial ?? 0)}</Show> from
+                                  </span>
+                                  <TextLink
+                                    tone="name"
+                                    class="truncate"
+                                    onClick={() => run("user.open", String(r().sellerId))}
+                                  >
+                                    {r().seller}
+                                  </TextLink>
+                                </>
+                              )}
+                            </Show>
+                          </span>
+                          <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                            <Switch>
+                              <Match when={item().price === null}>
+                                <span class="text-xl font-semibold text-fg-muted">{item().priceLabel}</span>
+                              </Match>
+                              <Match when={item().price === 0}>
+                                <span class="text-3xl font-semibold">Free</span>
+                              </Match>
+                              <Match when={item().price}>
+                                {(p) => <Robux size="lg" class="text-3xl font-semibold" amount={p()} />}
+                              </Match>
+                            </Switch>
+                            <Show when={pctOver(item().price, value())}>{(n) => <VsValue pct={n()} />}</Show>
+                            <Show when={item().price !== null && pctOver(item().price, value()) === 0}>
+                              <Badge>At value</Badge>
+                            </Show>
+                          </div>
+                        </div>
+                        <Show when={!item().fromReseller && item().totalQuantity > 0}>
+                          <Meter
+                            label="Stock"
+                            value={item().unitsLeft}
+                            max={item().totalQuantity}
+                            valueLabel={`${full(item().unitsLeft)} of ${full(item().totalQuantity)} left`}
+                          />
+                        </Show>
+                        <Show when={deadline()}>
+                          {(t) => (
+                            <span class="flex items-center gap-1.5 text-sm text-warning">
+                              <Icon name="clock" size={14} /> Off sale {date(t())}
+                            </span>
+                          )}
+                        </Show>
+                        <div class="flex flex-col gap-1.5">
+                          <Show
+                            when={item().inCatalog}
+                            fallback={
+                              <Button size="lg" icon="external" onClick={() => run("entity.open_website", target())}>
+                                Open on website
+                              </Button>
+                            }
+                          >
+                            <div class="flex gap-1.5">
+                              <Button
+                                variant="primary"
+                                size="lg"
+                                class="flex-1"
+                                disabled={item().price === null || view.owned}
+                                onClick={() => run("market.buy", target())}
+                              >
+                                <Switch>
+                                  <Match when={view.owned}>Owned</Match>
+                                  <Match when={item().price === 0}>Get</Match>
+                                  <Match when>Buy</Match>
+                                </Switch>
+                              </Button>
+                              <Menu
+                                size="lg"
+                                items={accountItems("market.buy_as")}
+                                disabled={item().price === null || accountItems("market.buy_as").length === 0}
+                              >
+                                Buy as…
+                              </Menu>
+                            </div>
+                          </Show>
+                          <div class="flex gap-1.5">
+                            <ToggleButton
+                              variant="secondary"
+                              class="flex-1"
+                              icon="star"
+                              pressedIcon="star-fill"
+                              pressed={view.favorited ?? false}
+                              disabled={view.favorited === null}
+                              loading={isRunning("market.favorite", target())}
+                              onChange={() => run("market.favorite", target())}
+                            >
+                              Favorite
+                              <Show when={item().inCatalog && item().favorites > 0}>
+                                <span class="font-normal text-fg-muted tabular-nums">{compact(item().favorites)}</span>
+                              </Show>
+                            </ToggleButton>
+                            <Show when={item().inCatalog}>
+                              <ToggleButton
+                                variant="secondary"
+                                class="flex-1"
+                                icon="heart"
+                                pressedIcon="heart-fill"
+                                pressed={view.wishlisted}
+                                loading={isRunning("market.wishlist", target())}
+                                onChange={() => run("market.wishlist", target())}
+                              >
+                                Wishlist
+                              </ToggleButton>
+                            </Show>
+                          </div>
+                        </div>
+                      </div>
+                      <Show when={view.ownedBy.length > 0}>
+                        <Divider />
+                        <span class="flex items-center gap-1.5 px-4 py-2.5 text-sm text-fg-muted">
+                          <Icon name="check" size={14} class="text-success" />
+                          <span class="min-w-0">
+                            Owned by <span class="text-fg">{view.ownedBy.join(", ")}</span>
+                          </span>
+                        </span>
+                      </Show>
+                    </Card>
+                    <Show when={item().inCatalog && (resells() || view.value)}>
+                      <MarketCard collectibleId={resells() ? item().collectibleId : null} value={view.value} />
+                    </Show>
+                  </div>
                   <Facts columns class="order-4">
                     <FactGroup title={bundle() ? "Bundle" : "Item"}>
                       <IdFact id={item().id} target={target()} />
@@ -382,202 +612,6 @@ export default function ItemPage() {
                       </Show>
                     </FactGroup>
                   </Facts>
-                </div>
-
-                <aside class="order-2 flex min-w-0 flex-col gap-4 @3xl:sticky @3xl:top-4">
-                  <Card class="flex flex-col">
-                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 px-4 pt-3.5 pb-3.5">
-                      <div class="flex min-w-0 flex-col gap-1.5">
-                        <Show
-                          when={
-                            item().limited || isSoundHat(id(), bundle()) || item().premiumOnly || item().publicDomain
-                          }
-                        >
-                          <div class="flex flex-wrap items-center gap-1.5">
-                            <Show when={item().limited}>{(l) => <Badge variant="success">{l()}</Badge>}</Show>
-                            <Show when={isSoundHat(id(), bundle())}>
-                              <SoundHatBadge />
-                            </Show>
-                            <Show when={item().premiumOnly}>
-                              <Badge>
-                                <PremiumBadge bare size={12} class="-ml-0.5 mr-1" />
-                                Premium
-                              </Badge>
-                            </Show>
-                            <Show when={item().publicDomain}>
-                              <Badge>Free to take</Badge>
-                            </Show>
-                          </div>
-                        </Show>
-                        <h1 class="text-2xl font-semibold leading-tight [overflow-wrap:anywhere]">{item().name}</h1>
-                        <span class="flex flex-wrap items-center gap-1 text-fg-muted">
-                          {item().typeName} by{" "}
-                          <TextLink
-                            tone={item().creatorFake ? "danger" : "name"}
-                            onClick={() =>
-                              run(item().creatorIsGroup ? "group.open" : "user.open", String(item().creatorId))
-                            }
-                          >
-                            {item().creator}
-                          </TextLink>
-                          <Show when={item().creatorVerified}>
-                            <VerifiedBadge />
-                          </Show>
-                          <Show when={item().creatorFake}>
-                            <Tooltip content="Not Roblox. This creator copies Roblox's name.">
-                              <Icon name="alert" size={14} class="text-danger" aria-label="Not Roblox" />
-                            </Tooltip>
-                          </Show>
-                        </span>
-                      </div>
-                      <Menu
-                        variant="ghost"
-                        icon="more"
-                        label="More"
-                        class="-mt-1 -mr-2"
-                        items={entityMenu(
-                          target(),
-                          item().bundle
-                            ? []
-                            : [
-                                menuItem("market.dependencies", { label: "View dependencies", icon: "inventory" }),
-                                ...templateItems(item().id, item().assetType),
-                              ],
-                        )}
-                      />
-                    </div>
-                    <Divider />
-                    <div class="flex flex-col gap-3 px-4 py-3.5">
-                      <div class="flex flex-col gap-1">
-                        <span class="flex min-w-0 items-center gap-1 text-xs text-fg-muted">
-                          <Show when={cheapest()} fallback={item().fromReseller ? "Cheapest copy" : "Price"}>
-                            {(r) => (
-                              <>
-                                <span class="shrink-0">
-                                  Cheapest copy
-                                  <Show when={r().serial}> · #{full(r().serial ?? 0)}</Show> from
-                                </span>
-                                <TextLink
-                                  tone="name"
-                                  class="truncate"
-                                  onClick={() => run("user.open", String(r().sellerId))}
-                                >
-                                  {r().seller}
-                                </TextLink>
-                              </>
-                            )}
-                          </Show>
-                        </span>
-                        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                          <Switch>
-                            <Match when={item().price === null}>
-                              <span class="text-xl font-semibold text-fg-muted">{item().priceLabel}</span>
-                            </Match>
-                            <Match when={item().price === 0}>
-                              <span class="text-3xl font-semibold">Free</span>
-                            </Match>
-                            <Match when={item().price}>
-                              {(p) => <Robux size="lg" class="text-3xl font-semibold" amount={p()} />}
-                            </Match>
-                          </Switch>
-                          <Show when={pctOver(item().price, value())}>{(n) => <VsValue pct={n()} />}</Show>
-                          <Show when={item().price !== null && pctOver(item().price, value()) === 0}>
-                            <Badge>At value</Badge>
-                          </Show>
-                        </div>
-                      </div>
-                      <Show when={!item().fromReseller && item().totalQuantity > 0}>
-                        <Meter
-                          label="Stock"
-                          value={item().unitsLeft}
-                          max={item().totalQuantity}
-                          valueLabel={`${full(item().unitsLeft)} of ${full(item().totalQuantity)} left`}
-                        />
-                      </Show>
-                      <Show when={deadline()}>
-                        {(t) => (
-                          <span class="flex items-center gap-1.5 text-sm text-warning">
-                            <Icon name="clock" size={14} /> Off sale {date(t())}
-                          </span>
-                        )}
-                      </Show>
-                      <div class="flex flex-col gap-1.5">
-                        <Show
-                          when={item().inCatalog}
-                          fallback={
-                            <Button size="lg" icon="external" onClick={() => run("entity.open_website", target())}>
-                              Open on website
-                            </Button>
-                          }
-                        >
-                          <div class="flex gap-1.5">
-                            <Button
-                              variant="primary"
-                              size="lg"
-                              class="flex-1"
-                              disabled={item().price === null || view.owned}
-                              onClick={() => run("market.buy", target())}
-                            >
-                              <Switch>
-                                <Match when={view.owned}>Owned</Match>
-                                <Match when={item().price === 0}>Get</Match>
-                                <Match when>Buy</Match>
-                              </Switch>
-                            </Button>
-                            <Menu
-                              size="lg"
-                              items={accountItems("market.buy_as")}
-                              disabled={item().price === null || accountItems("market.buy_as").length === 0}
-                            >
-                              Buy as…
-                            </Menu>
-                          </div>
-                        </Show>
-                        <div class="flex gap-1.5">
-                          <ToggleButton
-                            variant="secondary"
-                            class="flex-1"
-                            icon="star"
-                            pressedIcon="star-fill"
-                            pressed={view.favorited ?? false}
-                            disabled={view.favorited === null}
-                            loading={isRunning("market.favorite", target())}
-                            onChange={() => run("market.favorite", target())}
-                          >
-                            Favorite
-                            <Show when={item().inCatalog && item().favorites > 0}>
-                              <span class="font-normal text-fg-muted tabular-nums">{compact(item().favorites)}</span>
-                            </Show>
-                          </ToggleButton>
-                          <Show when={item().inCatalog}>
-                            <ToggleButton
-                              variant="secondary"
-                              class="flex-1"
-                              icon="heart"
-                              pressedIcon="heart-fill"
-                              pressed={view.wishlisted}
-                              loading={isRunning("market.wishlist", target())}
-                              onChange={() => run("market.wishlist", target())}
-                            >
-                              Wishlist
-                            </ToggleButton>
-                          </Show>
-                        </div>
-                      </div>
-                    </div>
-                    <Show when={view.ownedBy.length > 0}>
-                      <Divider />
-                      <span class="flex items-center gap-1.5 px-4 py-2.5 text-sm text-fg-muted">
-                        <Icon name="check" size={14} class="text-success" />
-                        <span class="min-w-0">
-                          Owned by <span class="text-fg">{view.ownedBy.join(", ")}</span>
-                        </span>
-                      </span>
-                    </Show>
-                  </Card>
-                  <Show when={item().inCatalog && (resells() || view.value)}>
-                    <MarketCard collectibleId={resells() ? item().collectibleId : null} value={view.value} />
-                  </Show>
                 </aside>
               </div>
             </div>

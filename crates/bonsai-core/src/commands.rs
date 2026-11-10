@@ -556,6 +556,7 @@ commands! {
     CopyModelPath => "market.model_copy_path", "Copy the selected instance's path", ["model", "instance", "path", "explorer", "copy"], Text, Read, [];
     CopyModelValue => "market.model_copy_value", "Copy a property value of the selected instance", ["model", "property", "value", "explorer", "copy"], Text, Read, [];
     PlayAudio => "market.play_audio", "Play or pause this sound", ["play", "pause", "audio", "sound", "music", "listen"], None, Read, [];
+    SoundHatSounds => "market.sound_hat", "Turn sound hat sounds on or off", ["sound hat", "sound", "audio", "mute", "quack", "harmonica", "laugh"], None, Local, [];
     PriceHistoryScale => "market.history_scale", "Show the price history on a log or linear scale (log, linear; no argument toggles)", ["price history", "chart", "log", "scale", "limited"], Text, Local, [];
     PriceHistoryView => "market.history_view", "Show price history as a chart or a table (chart, table; no argument toggles)", ["price history", "chart", "table", "sales", "limited"], Text, Local, [];
     SearchAuditLog => "group.audit_search", "Search the community audit log", ["audit", "log", "search", "performer", "community", "group"], Text, Read, [];
