@@ -110,6 +110,10 @@ pub struct RateLimiter {
     overrides: HashMap<String, (f64, f64)>,
     /// `(host, path prefix)`, longest prefix first.
     routes: Vec<(String, String)>,
+    /// When each endpoint (`host/path` with ids as `*`) may be called again, after a response
+    /// said its own quota was spent. Roblox counts quotas per endpoint, so one spent quota
+    /// holds only that endpoint, not every request to its host.
+    endpoint_holds: Mutex<HashMap<String, Instant>>,
     on_block: Mutex<Option<BlockHook>>,
 }
 
@@ -138,6 +142,7 @@ impl RateLimiter {
             burst,
             overrides: HashMap::new(),
             routes: Vec::new(),
+            endpoint_holds: Mutex::new(HashMap::new()),
             on_block: Mutex::new(None),
         }
     }
@@ -248,6 +253,58 @@ impl RateLimiter {
                 waited_ms = waited.as_millis() as u64,
                 "rate limiter wait"
             );
+        }
+    }
+
+    /// The key a request's endpoint quota is tracked under: the host and path, with each
+    /// all-digit segment (an id) as `*`.
+    pub fn endpoint(host: &str, path: &str) -> String {
+        let mut key = host.to_string();
+        for seg in path.split('/').filter(|s| !s.is_empty()) {
+            key.push('/');
+            if seg.bytes().all(|b| b.is_ascii_digit()) {
+                key.push('*');
+            } else {
+                key.push_str(seg);
+            }
+        }
+        key
+    }
+
+    fn endpoint_held_for(&self, key: &str) -> Duration {
+        let now = Instant::now();
+        let mut holds = self.endpoint_holds.lock();
+        match holds.get(key) {
+            Some(u) if *u > now => *u - now,
+            Some(_) => {
+                holds.remove(key);
+                Duration::ZERO
+            }
+            None => Duration::ZERO,
+        }
+    }
+
+    /// Wait out a hold on endpoint `key`, if it has one.
+    pub async fn wait_endpoint(&self, key: &str) {
+        loop {
+            let d = self.endpoint_held_for(key);
+            if d.is_zero() {
+                return;
+            }
+            tokio::time::sleep(d).await;
+        }
+    }
+
+    /// A response said endpoint `key` has no quota left until `reset`.
+    pub fn hold_endpoint(&self, key: &str, reset: Duration) {
+        let until = Instant::now() + reset;
+        {
+            let mut holds = self.endpoint_holds.lock();
+            let u = holds.entry(key.to_string()).or_insert(until);
+            *u = (*u).max(until);
+        }
+        if reset >= SLOW_WAIT {
+            self.note_hold(key, reset);
         }
     }
 
@@ -559,7 +616,9 @@ impl Client {
         let mut n5xx = 0;
         let mut challenges = 0;
         let (bucket, strict) = self.inner.limiter.bucket(req.host, &req.path);
+        let endpoint = RateLimiter::endpoint(req.host, &req.path);
         loop {
+            self.inner.limiter.wait_endpoint(&endpoint).await;
             self.inner.limiter.acquire(&bucket).await;
             let roblox = is_roblox_host(req.host);
             let csrf_sent = roblox && req.method != Method::GET && self.inner.csrf.read().is_some();
@@ -598,8 +657,14 @@ impl Client {
                 h(&req, &response, csrf_sent);
             }
             let quota = if roblox { quota(&response.headers) } else { None };
-            if let Some((remaining, reset)) = quota {
-                self.inner.limiter.observe(&bucket, remaining, reset);
+            match quota {
+                // The quota is this endpoint's. A route bucket already stands for one endpoint.
+                Some((0, reset)) if !strict => {
+                    tracing::debug!(endpoint, reset_s = reset.as_secs(), "endpoint quota spent");
+                    self.inner.limiter.hold_endpoint(&endpoint, reset);
+                }
+                Some((remaining, reset)) => self.inner.limiter.observe(&bucket, remaining, reset),
+                None => {}
             }
 
             if let Some(ch) = challenge_from(&response.headers) {
@@ -1273,6 +1338,19 @@ mod tests {
             "{:?}",
             start.elapsed()
         );
+    }
+
+    #[test]
+    fn a_spent_endpoint_quota_holds_only_that_endpoint() {
+        let l = RateLimiter::new(10.0, 10.0);
+        let a = RateLimiter::endpoint("h", "/v1/users/123/friends/statuses");
+        assert_eq!(a, "h/v1/users/*/friends/statuses");
+        assert_eq!(a, RateLimiter::endpoint("h", "/v1/users/456/friends/statuses"));
+        l.hold_endpoint(&a, Duration::from_secs(30));
+        assert!(l.endpoint_held_for(&a) > Duration::from_secs(29));
+        let b = RateLimiter::endpoint("h", "/v1/users/123/friends");
+        assert!(l.endpoint_held_for(&b).is_zero());
+        assert!(l.reserve("h").is_zero());
     }
 
     #[test]
