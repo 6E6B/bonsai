@@ -193,9 +193,6 @@ export function ItemModel(props: { id: number; assetType: number }) {
     <div class="flex min-w-0 flex-col gap-3" aria-busy={status.loading}>
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-col gap-1">
-          <span class="text-sm text-fg-muted">
-            The instances in this model and their properties. Scripts never run.
-          </span>
           <Show when={status.count > 0}>
             <span class="text-xs text-fg-faint" aria-live="polite">
               {status.count} instances
