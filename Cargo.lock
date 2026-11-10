@@ -473,7 +473,7 @@ dependencies = [
 
 [[package]]
 name = "bonsai"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "block2",
  "bonsai-core",
@@ -504,7 +504,7 @@ dependencies = [
 
 [[package]]
 name = "bonsai-api"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "base64 0.23.1",
  "bonsai-api",
@@ -526,7 +526,7 @@ dependencies = [
 
 [[package]]
 name = "bonsai-codegen"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "heck 0.5.0",
@@ -536,7 +536,7 @@ dependencies = [
 
 [[package]]
 name = "bonsai-core"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "argon2",
  "base64 0.23.1",
@@ -575,7 +575,7 @@ dependencies = [
 
 [[package]]
 name = "bonsai-hub-api"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "bonsai-api",
  "reqwest",
@@ -589,7 +589,7 @@ dependencies = [
 
 [[package]]
 name = "bonsai-plugin"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "mlua",
  "serde",
