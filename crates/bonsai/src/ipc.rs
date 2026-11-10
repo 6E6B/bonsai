@@ -957,6 +957,25 @@ pub struct RelationView {
     pub blocked: bool,
 }
 
+/// Trusted status loads separately from ordinary friendship and fails independently.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TrustedFriendView {
+    pub loading: bool,
+    pub error: Option<String>,
+    pub status: TrustedStatus,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum TrustedStatus {
+    None,
+    Trusted,
+    Sent,
+    Received,
+    Unknown,
+}
+
 /// A badge a user has.
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -1630,6 +1649,11 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         CommandId::AddFriend | CommandId::AddFriendAs => user_action(core, acting()?, &inv, Core::add_friend),
         CommandId::Unfriend => user_action(core, acting()?, &inv, Core::unfriend),
         CommandId::AcceptFriend => user_action(core, acting()?, &inv, Core::accept_friend),
+        CommandId::AddTrustedFriend => user_action(core, acting()?, &inv, Core::add_trusted_friend),
+        CommandId::AcceptTrustedFriend => user_action(core, acting()?, &inv, Core::accept_trusted_friend),
+        CommandId::DeclineTrustedFriend => user_action(core, acting()?, &inv, Core::decline_trusted_friend),
+        CommandId::CancelTrustedFriend => user_action(core, acting()?, &inv, Core::cancel_trusted_friend),
+        CommandId::RemoveTrustedFriend => user_action(core, acting()?, &inv, Core::remove_trusted_friend),
         CommandId::DeclineFriend => user_action(core, acting()?, &inv, Core::decline_friend),
         CommandId::DeclineAllFriends => {
             core.decline_all_friends(acting()?);
@@ -1691,6 +1715,7 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 Some("favorites") => drop(core.favorite_games(user, true)),
                 Some("outfits") => drop(core.user_outfits(user, true)),
                 Some("requests") => drop(core.friend_requests(acting()?, true)),
+                Some("trusted_requests") => drop(core.trusted_requests(acting()?, true)),
                 Some("followers") => drop(core.followers(acting()?, user, true)),
                 Some("following") => drop(core.followings(acting()?, user, true)),
                 Some("friends") => drop(core.friends_of(acting()?, user, true)),
@@ -2618,6 +2643,24 @@ pub fn profile_collectibles(core: State<'_, Arc<Core>>, user_id: Id) -> List<Ite
     })
 }
 
+#[tauri::command]
+#[specta::specta]
+pub fn trusted_friend(core: State<'_, Arc<Core>>, user_id: Id) -> TrustedFriendView {
+    use bonsai_core::trusted::TrustedState;
+    let r = core.trusted_friend(viewer(&core), user_id.0);
+    TrustedFriendView {
+        loading: r.loading,
+        error: r.error,
+        status: match r.data.as_deref().copied().unwrap_or_default() {
+            TrustedState::None => TrustedStatus::None,
+            TrustedState::Trusted => TrustedStatus::Trusted,
+            TrustedState::Sent => TrustedStatus::Sent,
+            TrustedState::Received => TrustedStatus::Received,
+            TrustedState::Unknown => TrustedStatus::Unknown,
+        },
+    }
+}
+
 /// The active account's friend requests, followers, following or blocked users (`which`).
 #[tauri::command]
 #[specta::specta]
@@ -2631,10 +2674,14 @@ pub fn people(core: State<'_, Arc<Core>>, which: String) -> List<Person> {
     let me = account.0;
     let ids = |r: Res<Page<u64>>| List::paged(r, |id| *id);
     let list: List<u64> = match which.as_str() {
-        "requests" => {
+        "requests" | "trusted_requests" => {
             // The requests endpoint often leaves names empty; fill them from the user store.
             let mut unnamed = Vec::new();
-            let page = core.friend_requests(account, false);
+            let page = if which == "trusted_requests" {
+                core.trusted_requests(account, false)
+            } else {
+                core.friend_requests(account, false)
+            };
             let view = {
                 let s = core.store();
                 List::paged(page, |r| {
@@ -3107,6 +3154,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             game_events,
             game_recommended,
             profile,
+            trusted_friend,
             profile_badges,
             profile_trading,
             profile_groups,

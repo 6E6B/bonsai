@@ -477,6 +477,11 @@ commands! {
     AddFriendAs => "user.add_friend_as", "Add friend as another account", ["friend", "connect", "request", "alt", "as"], User, Write(Social), [];
     Unfriend => "user.unfriend", "Remove friend", ["unfriend", "remove", "connection"], User, Write(Social), [];
     AcceptFriend => "user.accept_friend", "Accept friend request", ["accept", "request"], User, Write(Social), [];
+    AddTrustedFriend => "user.add_trusted_friend", "Send trusted friend request", ["trusted", "friend", "send", "connect"], User, Write(Social), [];
+    AcceptTrustedFriend => "user.accept_trusted_friend", "Accept trusted friend request", ["trusted", "accept", "request"], User, Write(Social), [];
+    DeclineTrustedFriend => "user.decline_trusted_friend", "Decline trusted friend request", ["trusted", "decline", "ignore"], User, Write(Social), [];
+    CancelTrustedFriend => "user.cancel_trusted_friend", "Cancel trusted friend request", ["trusted", "cancel", "withdraw"], User, Write(Social), [];
+    RemoveTrustedFriend => "user.remove_trusted_friend", "Remove trusted friend", ["trusted", "remove"], User, Write(Social), [];
     DeclineFriend => "user.decline_friend", "Decline friend request", ["decline", "ignore", "request"], User, Write(Social), [];
     DeclineAllFriends => "friends.decline_all", "Ignore all friend requests", ["decline", "ignore", "requests"], None, Write(Social), [];
     SortFriends => "friends.sort", "Sort the friends list (status, name; requests: newest, oldest, mutuals, name)", ["friends", "sort", "order", "name", "status", "requests", "mutuals"], Text, Local, [];

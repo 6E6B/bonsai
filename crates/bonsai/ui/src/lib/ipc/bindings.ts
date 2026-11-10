@@ -79,6 +79,7 @@ export const commands = {
 	gameEvents: (placeId: Id) => __TAURI_INVOKE<List<EventRow>>("game_events", { placeId }),
 	gameRecommended: (placeId: Id) => __TAURI_INVOKE<List<GameCard>>("game_recommended", { placeId }),
 	profile: (userId: Id) => __TAURI_INVOKE<ProfileView>("profile", { userId }),
+	trustedFriend: (userId: Id) => __TAURI_INVOKE<TrustedFriendView>("trusted_friend", { userId }),
 	profileBadges: (userId: Id) => __TAURI_INVOKE<List<UserBadge>>("profile_badges", { userId }),
 	/**  Rolimons' value, RAP, rank and badges for a user, when values are on. */
 	profileTrading: (userId: Id) => __TAURI_INVOKE<TraderView>("profile_trading", { userId }),
@@ -2487,6 +2488,15 @@ export type TraderView = {
 	error: string | null,
 	stats: TraderStats | null,
 };
+
+/**  Trusted status loads separately from ordinary friendship and fails independently. */
+export type TrustedFriendView = {
+	loading: boolean,
+	error: string | null,
+	status: TrustedStatus,
+};
+
+export type TrustedStatus = "none" | "trusted" | "sent" | "received" | "unknown";
 
 /**  Beyond the website: the filtered ledger by month, experience, item and buyer. */
 export type TxInsights = {

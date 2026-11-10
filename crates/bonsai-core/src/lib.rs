@@ -50,6 +50,7 @@ pub mod themes;
 pub mod thumbs;
 pub mod trades;
 pub mod transactions;
+pub mod trusted;
 pub mod values;
 pub mod vault;
 pub mod wiki;

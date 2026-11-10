@@ -1920,6 +1920,56 @@
     },
     {
       "arg": "user",
+      "id": "user.add_trusted_friend",
+      "keywords": [
+        "trusted",
+        "friend",
+        "send",
+        "connect"
+      ],
+      "title": "Send trusted friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.accept_trusted_friend",
+      "keywords": [
+        "trusted",
+        "accept",
+        "request"
+      ],
+      "title": "Accept trusted friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.decline_trusted_friend",
+      "keywords": [
+        "trusted",
+        "decline",
+        "ignore"
+      ],
+      "title": "Decline trusted friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.cancel_trusted_friend",
+      "keywords": [
+        "trusted",
+        "cancel",
+        "withdraw"
+      ],
+      "title": "Cancel trusted friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.remove_trusted_friend",
+      "keywords": [
+        "trusted",
+        "remove"
+      ],
+      "title": "Remove trusted friend"
+    },
+    {
+      "arg": "user",
       "id": "user.decline_friend",
       "keywords": [
         "decline",

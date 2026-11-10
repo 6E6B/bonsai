@@ -26,6 +26,8 @@ pub enum Effect {
     Friendship(u64),
     /// Friend requests to the account.
     FriendRequests,
+    /// A trusted request or trusted friendship changed, without ending the friendship.
+    TrustedFriendship(u64),
     /// The account followed or unfollowed this user.
     Follow(u64),
     /// The account blocked or unblocked this user.
@@ -80,8 +82,9 @@ fn kinds(e: Effect) -> &'static [&'static str] {
         ],
         Effect::Market => &["item", "items", "resellers"],
         Effect::Trades => &["trades", "trade", "tradable"],
-        Effect::Friendship(_) => &["friends_search"],
+        Effect::Friendship(_) => &["friends_search", "trusted_requests", "trusted_status"],
         Effect::FriendRequests => &["friend_requests", "relation"],
+        Effect::TrustedFriendship(_) => &["trusted_requests"],
         Effect::Follow(_) | Effect::Block(_) => &[],
         Effect::Profile(_) => &[],
         Effect::Avatar => &["avatar"],
@@ -130,8 +133,11 @@ fn keys(account: AccountId, e: Effect) -> Vec<Key> {
             Key::private(account, "followers", id),
             Key::private(account, "followings", account.0),
         ],
+        Effect::TrustedFriendship(id) => vec![Key::private(account, "trusted_status", id)],
         Effect::Block(id) => vec![
             Key::private(account, "relation", id),
+            Key::private(account, "trusted_status", id),
+            Key::private(account, "trusted_requests", ""),
             Key::private(account, "blocked", ""),
         ],
         Effect::Profile(id) => vec![Key::shared("profile", id)],
