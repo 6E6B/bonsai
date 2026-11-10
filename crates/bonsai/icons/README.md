@@ -1,7 +1,9 @@
 # App icons
 
 `app-icon.svg` is the original engraved artwork. Keep its transparent padding and
-rounded plate. `tray-template.svg` is the same tree silhouette without the plate,
+rounded plate: macOS expects the plate to fill about 80% of the canvas. Windows
+and Linux add no margin of their own, so the generator scales the plate to fill
+nearly the whole canvas for every asset except `icon.icns`. `tray-template.svg` is the same tree silhouette without the plate,
 for the macOS menu bar's light/dark template rendering.
 
 From `crates/bonsai/ui`, run:
