@@ -884,8 +884,8 @@ function RecommendedPanel(props: { list: List<GameCard> }) {
   )
 }
 
-/** Description, details and the creator on the left; who and where to join on the right: friends
- * playing and the best open servers. */
+/** Description and details on the left; who and where to join on the right (friends playing and
+ * the best open servers), then the creator. */
 function AboutPanel(props: {
   game: GameView
   wiki: WikiPageView
@@ -955,6 +955,10 @@ function AboutPanel(props: {
                     <Fact label="Gear">{g().gear.length > 0 ? g().gear.join(", ") : "None"}</Fact>
                   </FactGroup>
                 </Facts>
+              </div>
+              <aside class="flex min-w-0 flex-col gap-4" aria-label="Where to play and creator">
+                <FriendsHere list={props.friendServers} />
+                <BestServers placeId={props.game.placeId} onAll={props.onAllServers} />
                 <Card class="flex items-start gap-3 px-4 py-3.5">
                   <Show
                     when={g().creatorIsGroup}
@@ -977,7 +981,7 @@ function AboutPanel(props: {
                       </Show>
                       <span class="text-sm text-fg-muted">· {g().creatorIsGroup ? "Community" : "User"}</span>
                     </span>
-                    <Show when={bio.text !== null} fallback={<Skeleton class="h-10 w-64 rounded-md" />}>
+                    <Show when={bio.text !== null} fallback={<Skeleton class="h-10 w-full rounded-md" />}>
                       <Show when={bio.text} fallback={<span class="text-sm text-fg-muted">No description.</span>}>
                         {(t) => (
                           <Clamp lines={3} class="text-sm text-fg-muted">
@@ -988,10 +992,6 @@ function AboutPanel(props: {
                     </Show>
                   </div>
                 </Card>
-              </div>
-              <aside class="flex min-w-0 flex-col gap-4" aria-label="Where to play">
-                <FriendsHere list={props.friendServers} />
-                <BestServers placeId={props.game.placeId} onAll={props.onAllServers} />
               </aside>
             </div>
           </div>
