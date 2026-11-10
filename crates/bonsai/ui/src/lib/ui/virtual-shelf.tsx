@@ -1,7 +1,6 @@
 import { createVirtualizer, defaultRangeExtractor } from "@tanstack/solid-virtual"
-import { createMemo, createSignal, For, type JSX, onMount, Show } from "solid-js"
+import { createMemo, createSignal, For, type JSX, onCleanup, onMount, Show } from "solid-js"
 import { Icon } from "./icon"
-import { observeVirtualResize } from "./virtual"
 import { virtualFocus } from "./virtual-focus"
 
 export interface VirtualShelfProps<T> {
@@ -17,7 +16,6 @@ export interface VirtualShelfProps<T> {
 export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
   let root!: HTMLDivElement
   let track!: HTMLElement
-  let sizer!: HTMLDivElement
   const [scroller, setScroller] = createSignal<HTMLElement>()
   const [height, setHeight] = createSignal(0)
   const [previous, setPrevious] = createSignal(false)
@@ -38,6 +36,15 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
     estimateSize: () => props.itemWidth,
     gap: 12,
     overscan: 2,
+    // Arrows from the virtualizer's own numbers. Reading the track's scroll size here would make
+    // WebKit lay out the whole page for every shelf on every frame of a window resize.
+    onChange: (instance) => {
+      const offset = instance.scrollOffset ?? 0
+      const width = instance.scrollRect?.width ?? 0
+      setPrevious(offset > 1)
+      // The track's 2px padding on each side adds 4px to what scrolls.
+      setNext(width > 0 && offset + width < instance.getTotalSize() + 3)
+    },
     rangeExtractor: (range) => {
       const indexes = defaultRangeExtractor(range)
       const index = focused()
@@ -48,19 +55,27 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
   const visible = createMemo(() => virtualizer.getVirtualItems())
   const indexes = createMemo(() => visible().map((item) => item.index))
   const positions = createMemo(() => new Map(visible().map((item) => [item.index, item.start])))
-  const measure = () => {
-    setPrevious(track.scrollLeft > 1)
-    setNext(track.scrollLeft + track.clientWidth < track.scrollWidth - 1)
-  }
-  onMount(() => {
-    setScroller(track)
-    observeVirtualResize([track], measure)
-    // Items share one grid cell, so the sizer is as tall as the tallest one from the first
-    // paint. Hold the tallest seen so scrolling past a shorter run doesn't shrink the row.
-    observeVirtualResize([sizer], ([entry]) =>
-      setHeight((height) => Math.max(height, Math.ceil(entry.contentRect.height))),
-    )
+  onMount(() => setScroller(track))
+  // Items are absolutely placed, so the row takes the height of the tallest item seen, which
+  // keeps it from shrinking when scrolling past a shorter run. Not a grid with every item in one
+  // cell: WebKit lays out every item of a grid again on each change, and with an aspect-ratio
+  // thumbnail in each one, a window resize on a page of shelves dropped to a few frames a second.
+  // The height is written a frame later, after ResizeObserver delivery.
+  let tallest = 0
+  let frame = 0
+  const items = new ResizeObserver((entries) => {
+    for (const entry of entries) tallest = Math.max(tallest, Math.ceil(entry.contentRect.height))
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(() => setHeight(tallest))
   })
+  onCleanup(() => {
+    items.disconnect()
+    cancelAnimationFrame(frame)
+  })
+  const observe = (el: HTMLElement) => {
+    items.observe(el)
+    onCleanup(() => items.unobserve(el))
+  }
   virtualFocus({
     root: () => root,
     count: () => props.items.length,
@@ -84,7 +99,6 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
         aria-label={props["aria-label"]}
         // biome-ignore lint/a11y/noNoninteractiveTabindex: WebKit requires an explicit tab stop for keyboard scrolling.
         tabIndex={0}
-        onScroll={measure}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
             return
@@ -95,16 +109,16 @@ export function VirtualShelf<T>(props: VirtualShelfProps<T>) {
         }}
       >
         <div
-          ref={sizer}
           data-slot="sizer"
           style={{
             width: `${virtualizer.getTotalSize()}px`,
-            "min-height": `${height() || (indexes().length === 0 ? (props.estimateHeight ?? 0) : 0)}px`,
+            height: `${height() || (props.estimateHeight ?? 0)}px`,
           }}
         >
           <For each={indexes()}>
             {(index) => (
               <div
+                ref={observe}
                 data-slot="item"
                 data-virtual-item={index}
                 style={{ width: `${props.itemWidth}px`, transform: `translateX(${positions().get(index) ?? 0}px)` }}

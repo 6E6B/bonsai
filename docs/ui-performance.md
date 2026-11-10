@@ -99,3 +99,8 @@ The UI now uses `VirtualList`, `VirtualGrid`, `VirtualShelf` and the existing vi
 Existing inventory, marketplace, avatar/outfit and tabular views retain their shared virtualization. Bounded forms, palettes, tabs, capped small home previews and short metadata strips keep ordinary rendering. No Roblox endpoints, credentials, generated bindings or CSP settings changed. See the [component guide](../crates/bonsai/ui/src/lib/ui/README.md) for the contracts.
 
 In a 500-item synthetic profile run, virtualizing the six preview shelves reduced the full overview DOM from about 2,900 elements to about 1,200. Exact timings vary by machine; the stronger regression checks verify bounded mounting, reachability, focus and scroll anchoring. Real initial profile-opening latency still includes backend and image work outside this harness.
+
+## WebKitGTK layout traps
+
+- Don't stack virtual items in one grid cell (`grid-area: 1 / 1`). WebKitGTK lays out every item of a grid again on each change, so mounting one tile or resizing the window relays out them all. With an `aspect-ratio` thumbnail in each tile, a profile with six shelves fell to about 3 fps while resizing. Place items absolutely and measure the row height with a ResizeObserver, as `VirtualShelf` does.
+- Don't read `scrollWidth`, `clientWidth` or `getBoundingClientRect` in a per-frame or per-resize callback. Each read after a DOM write forces a full-page layout. Use the virtualizer's `scrollOffset`, `scrollRect` and `getTotalSize()` instead.
