@@ -748,6 +748,13 @@ impl Inner {
         (self.repaint)();
     }
 
+    /// Wake `thumb://` requests waiting on an image, without telling the UI the store
+    /// changed: it reads no thumbnail state but revisions, and a profile full of images would
+    /// otherwise refetch every view once per image.
+    pub(crate) fn wake_thumbs(&self) {
+        self.store_changed.notify_waiters();
+    }
+
     /// True at most once per `secs` for `key`, so a view can ask on every frame.
     pub(crate) fn due(&self, key: &str, secs: i64) -> bool {
         let t = crate::cache::now();
@@ -1220,6 +1227,9 @@ impl Inner {
                 let Some(uid) = u.id else { continue };
                 let name = u.name.clone().unwrap_or_default();
                 if !name.is_empty() {
+                    // The friends list doesn't say Premium; keep what the names call found, so
+                    // a refresh doesn't make friends look unloaded and refetch them.
+                    let premium = s.users.get(&(uid as u64)).and_then(|u| u.premium);
                     s.users.insert(
                         uid as u64,
                         UserInfo {
@@ -1227,7 +1237,7 @@ impl Inner {
                             name,
                             display_name: u.display_name.clone().unwrap_or_default(),
                             verified: u.has_verified_badge.unwrap_or(false),
-                            premium: None,
+                            premium,
                         },
                     );
                 }
@@ -1887,7 +1897,7 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbMs
                 }
             }
         }
-        inner.repaint();
+        inner.wake_thumbs();
     }
 }
 
@@ -1928,7 +1938,12 @@ async fn fetch_image(inner: &Inner, k: ThumbKey, url: &str, replaces: bool) {
             inner.store.write().thumbs.insert(k, ThumbState::Unavailable);
         }
     }
-    inner.repaint();
+    // Only a new revision changes what the UI reads; a first load only wakes the request.
+    if replaces {
+        inner.repaint();
+    } else {
+        inner.wake_thumbs();
+    }
 }
 
 impl Inner {
