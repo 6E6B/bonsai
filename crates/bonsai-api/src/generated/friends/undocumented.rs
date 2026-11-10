@@ -39,6 +39,39 @@ pub struct FriendshipResult {
     pub success: Option<bool>,
 }
 
+/// `TrustedFriendStatus`
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TrustedFriendStatus {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+}
+
+/// `GET /v1/my/trusted-friends/{targetUserId}/status`
+///
+/// Read the signed-in account's trusted friendship with a user.
+pub fn get_trusted_friend_status_request(target_user_id: i64) -> Result<Request> {
+    let r = Request::new(
+        Method::GET,
+        HOST,
+        format!(
+            "/v1/my/trusted-friends/{}/status",
+            crate::rt::path_value(&target_user_id)
+        ),
+    );
+    Ok(r)
+}
+
+/// `GET /v1/my/trusted-friends/{targetUserId}/status`
+///
+/// Read the signed-in account's trusted friendship with a user.
+pub async fn get_trusted_friend_status(client: &Client, target_user_id: i64) -> Result<TrustedFriendStatus> {
+    client
+        .send(get_trusted_friend_status_request(target_user_id)?)
+        .await?
+        .json()
+}
+
 /// `POST /v1/user/friend-requests/decline-all`
 ///
 /// Decline every pending friend request.
@@ -123,6 +156,92 @@ pub async fn post_decline_friend_request(client: &Client, requester_user_id: i64
         .json()
 }
 
+/// `POST /v1/users/{targetUserId}/accept-trusted-friend-request`
+///
+/// Accept an incoming trusted friend request.
+pub fn post_accept_trusted_friend_request_request(target_user_id: i64, body: &Empty) -> Result<Request> {
+    let mut r = Request::new(
+        Method::POST,
+        HOST,
+        format!(
+            "/v1/users/{}/accept-trusted-friend-request",
+            crate::rt::path_value(&target_user_id)
+        ),
+    );
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /v1/users/{targetUserId}/accept-trusted-friend-request`
+///
+/// Accept an incoming trusted friend request.
+pub async fn post_accept_trusted_friend_request(
+    client: &Client,
+    target_user_id: i64,
+    body: &Empty,
+) -> Result<Empty> {
+    client
+        .send(post_accept_trusted_friend_request_request(target_user_id, body)?)
+        .await?
+        .json()
+}
+
+/// `POST /v1/users/{targetUserId}/ignore-trusted-friend-request`
+///
+/// Decline an incoming trusted friend request, keeping the friendship.
+pub fn post_ignore_trusted_friend_request_request(target_user_id: i64, body: &Empty) -> Result<Request> {
+    let mut r = Request::new(
+        Method::POST,
+        HOST,
+        format!(
+            "/v1/users/{}/ignore-trusted-friend-request",
+            crate::rt::path_value(&target_user_id)
+        ),
+    );
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /v1/users/{targetUserId}/ignore-trusted-friend-request`
+///
+/// Decline an incoming trusted friend request, keeping the friendship.
+pub async fn post_ignore_trusted_friend_request(
+    client: &Client,
+    target_user_id: i64,
+    body: &Empty,
+) -> Result<Empty> {
+    client
+        .send(post_ignore_trusted_friend_request_request(target_user_id, body)?)
+        .await?
+        .json()
+}
+
+/// `POST /v1/users/{targetUserId}/remove-trusted-friend`
+///
+/// Remove trusted status or cancel an outgoing trusted request, keeping the friendship.
+pub fn post_remove_trusted_friend_request(target_user_id: i64, body: &Empty) -> Result<Request> {
+    let mut r = Request::new(
+        Method::POST,
+        HOST,
+        format!(
+            "/v1/users/{}/remove-trusted-friend",
+            crate::rt::path_value(&target_user_id)
+        ),
+    );
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /v1/users/{targetUserId}/remove-trusted-friend`
+///
+/// Remove trusted status or cancel an outgoing trusted request, keeping the friendship.
+pub async fn post_remove_trusted_friend(client: &Client, target_user_id: i64, body: &Empty) -> Result<Empty> {
+    client
+        .send(post_remove_trusted_friend_request(target_user_id, body)?)
+        .await?
+        .json()
+}
+
 /// `POST /v1/users/{targetUserId}/request-friendship`
 ///
 /// Send a friend request (user action only).
@@ -153,6 +272,36 @@ pub async fn post_request_friendship(
 ) -> Result<FriendshipResult> {
     client
         .send(post_request_friendship_request(target_user_id, body)?)
+        .await?
+        .json()
+}
+
+/// `POST /v1/users/{targetUserId}/send-trusted-friend-request`
+///
+/// Send a trusted friend request to an existing friend.
+pub fn post_send_trusted_friend_request_request(target_user_id: i64, body: &Empty) -> Result<Request> {
+    let mut r = Request::new(
+        Method::POST,
+        HOST,
+        format!(
+            "/v1/users/{}/send-trusted-friend-request",
+            crate::rt::path_value(&target_user_id)
+        ),
+    );
+    r.json(body)?;
+    Ok(r)
+}
+
+/// `POST /v1/users/{targetUserId}/send-trusted-friend-request`
+///
+/// Send a trusted friend request to an existing friend.
+pub async fn post_send_trusted_friend_request(
+    client: &Client,
+    target_user_id: i64,
+    body: &Empty,
+) -> Result<Empty> {
+    client
+        .send(post_send_trusted_friend_request_request(target_user_id, body)?)
         .await?
         .json()
 }

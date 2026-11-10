@@ -322,8 +322,10 @@ pub struct Settings {
     /// Off by default: show Roblox Wiki articles from Fandom (a third-party site).
     pub wiki: bool,
     pub sidebar: SidebarPrefs,
-    /// Avatar viewers open in 3D instead of on the image. Off by default: the engine is heavy.
-    pub avatar_3d: bool,
+    /// Avatar viewers open on the image instead of in 3D. Off by default, so they open in 3D.
+    /// Replaces the old `avatar_3d` key, which saved files carry as `false` from when 2D was
+    /// the default; it is ignored so they move to 3D once.
+    pub avatar_2d: bool,
     /// Animations: `system` follows the OS "reduce motion" setting, `reduce` or `full`.
     pub motion: String,
     /// Clock times: `auto` follows the number and date format, `12h` or `24h`.
@@ -475,7 +477,7 @@ impl Default for Settings {
             item_values: false,
             wiki: false,
             sidebar: SidebarPrefs::default(),
-            avatar_3d: false,
+            avatar_2d: false,
             motion: "system".into(),
             time_format: "auto".into(),
             relative_dates: true,

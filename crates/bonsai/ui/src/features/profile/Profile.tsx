@@ -13,15 +13,17 @@ import {
   type OutfitView,
   type ProfileView,
   type TraderView,
+  type TrustedFriendView,
   type UserBadge,
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { gameMenu, joinUser, userMenu } from "~/lib/menus"
 import { rank } from "~/lib/search"
-import { useLive } from "~/lib/store"
+import { shell, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile, ItemTile, TILE_WIDTH } from "~/lib/tiles"
+import { trustedActions, trustedCommands } from "~/lib/trusted-friends"
 import {
   Avatar,
   Badge,
@@ -85,8 +87,8 @@ export default function Profile() {
   const params = useParams()
   const userId = () => Number(params.id)
   const view = useLive(
-    userId,
-    (id) => commands.profile(id),
+    () => `${shell.active ?? 0}:${userId()}`,
+    (key) => commands.profile(Number(key.split(":")[1])),
     (): ProfileView => ({
       loading: true,
       error: null,
@@ -113,6 +115,14 @@ export default function Profile() {
     }),
   )
   const creations = useLive(userId, commands.profileCreations, emptyList<GameCard>)
+  const trusted = useLive(
+    () => `${shell.active ?? 0}:${view.mine ? 0 : userId()}`,
+    (key) =>
+      Number(key.split(":")[1])
+        ? commands.trustedFriend(Number(key.split(":")[1]))
+        : Promise.resolve({ loading: false, error: null, status: "unknown" } as TrustedFriendView),
+    (): TrustedFriendView => ({ loading: true, error: null, status: "unknown" }),
+  )
   const favorites = useLive(userId, commands.profileFavorites, emptyList<GameCard>)
   const followed = useLive(userId, commands.profileFollowedGames, emptyList<GameCard>)
   const outfits = useLive(userId, commands.profileOutfits, emptyList<OutfitView>)
@@ -199,9 +209,12 @@ export default function Profile() {
     const r = rel()
     if (!r) return ""
     const parts: string[] = []
-    if (r.friend === "friends") parts.push("Friends")
+    if (trusted.status === "trusted") parts.push("Trusted friends")
+    else if (r.friend === "friends") parts.push("Friends")
     else if (r.friend === "sent") parts.push("Request sent")
     else if (r.friend === "received") parts.push("Request received")
+    if (trusted.status === "sent") parts.push("Trusted request sent")
+    if (trusted.status === "received") parts.push("Trusted request received")
     if (r.following) parts.push("Following")
     if (r.followedBy) parts.push("Follows you")
     if (r.blocked) parts.push("Blocked")
@@ -291,6 +304,7 @@ export default function Profile() {
                   }
                 >
                   <FriendButton status={rel()?.friend ?? "none"} id={id()} />
+                  <TrustedButton view={trusted} friend={rel()?.friend === "friends"} id={id()} />
                   <InventoryButton id={id()} private={view.inventoryPrivate} />
                   <Tooltip content="Message">
                     <IconButton
@@ -306,6 +320,7 @@ export default function Profile() {
                   label="More"
                   items={userMenu(userId(), {
                     friend: rel()?.friend === "friends",
+                    trusted: view.mine ? "unknown" : trusted.status,
                     blocked: rel()?.blocked,
                     inGame: view.presence === "game",
                     placeId: view.placeId,
@@ -398,6 +413,40 @@ export default function Profile() {
         </TabPanel>
       </Tabs>
     </Page>
+  )
+}
+
+/** Trusted status and the next action; cancel, decline and remove live in More > Manage. */
+function TrustedButton(props: { view: TrustedFriendView; friend: boolean; id: string }) {
+  const busy = () => trustedCommands.some((command) => isRunning(command, props.id))
+  const action = () => trustedActions(props.view.status, props.friend)[0]
+  return (
+    <Switch>
+      <Match when={props.view.status === "sent" || props.view.status === "trusted"}>
+        <Tooltip content="Manage trusted friendship in the More menu">
+          <Button icon="shield" disabled class="pointer-events-none">
+            {props.view.status === "trusted" ? "Trusted friends" : "Trusted request sent"}
+          </Button>
+        </Tooltip>
+      </Match>
+      <Match when={action()}>
+        <Button
+          icon="shield"
+          variant={props.view.status === "received" ? "primary" : "secondary"}
+          loading={busy()}
+          onClick={() => run(action() ?? "", props.id)}
+        >
+          {props.view.status === "received" ? "Accept trusted friend" : "Add trusted friend"}
+        </Button>
+      </Match>
+      <Match when={props.friend && (props.view.loading || props.view.error || props.view.status === "unknown")}>
+        <Tooltip content={props.view.error || "Trusted status is unavailable. Press F5 to refresh."}>
+          <Button icon="shield" disabled class="pointer-events-none">
+            {props.view.loading ? "Checking trusted status…" : "Trusted status unavailable"}
+          </Button>
+        </Tooltip>
+      </Match>
+    </Switch>
   )
 }
 

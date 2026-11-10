@@ -79,6 +79,7 @@ export const commands = {
 	gameEvents: (placeId: Id) => __TAURI_INVOKE<List<EventRow>>("game_events", { placeId }),
 	gameRecommended: (placeId: Id) => __TAURI_INVOKE<List<GameCard>>("game_recommended", { placeId }),
 	profile: (userId: Id) => __TAURI_INVOKE<ProfileView>("profile", { userId }),
+	trustedFriend: (userId: Id) => __TAURI_INVOKE<TrustedFriendView>("trusted_friend", { userId }),
 	profileBadges: (userId: Id) => __TAURI_INVOKE<List<UserBadge>>("profile_badges", { userId }),
 	/**  Rolimons' value, RAP, rank and badges for a user, when values are on. */
 	profileTrading: (userId: Id) => __TAURI_INVOKE<TraderView>("profile_trading", { userId }),
@@ -142,6 +143,9 @@ export const commands = {
 	catalogSearch: (filter: CatalogFilter) => __TAURI_INVOKE<Paged<ItemCard>>("catalog_search", { filter }),
 	itemPage: (id: Id, bundle: boolean) => __TAURI_INVOKE<ItemView>("item_page", { id, bundle }),
 	itemDependencies: (id: Id, assetType: number) => __TAURI_INVOKE<DependenciesView>("item_dependencies", { id, assetType }),
+	itemModel: (id: Id, assetType: number, processed: boolean) => __TAURI_INVOKE<ModelStatusView>("item_model", { id, assetType, processed }),
+	itemModelNodes: (id: Id, assetType: number, processed: boolean) => __TAURI_INVOKE<ModelNodeView[]>("item_model_nodes", { id, assetType, processed }),
+	itemModelProperties: (id: Id, assetType: number, processed: boolean, node: number) => __TAURI_INVOKE<ModelPropView[]>("item_model_properties", { id, assetType, processed, node }),
 	passPage: (id: Id) => __TAURI_INVOKE<PassView>("pass_page", { id }),
 	itemResellers: (collectibleId: string) => __TAURI_INVOKE<Paged<ResellerRow>>("item_resellers", { collectibleId }),
 	/**
@@ -1538,6 +1542,37 @@ export type MessageRow = {
 	system: boolean,
 };
 
+/**  One instance. Nodes come in depth-first order, so descendants follow their ancestor. */
+export type ModelNodeView = {
+	parent: number | null,
+	depth: number,
+	class: string,
+	name: string,
+	children: number,
+};
+
+export type ModelPropView = {
+	name: string,
+	kind: string,
+	value: string,
+	asset: Id | null,
+	target: number | null,
+	color: string | null,
+	truncated: boolean,
+	attribute: boolean,
+};
+
+/**  The state of an item's decoded model. The UI fetches the nodes once per `rev`. */
+export type ModelStatusView = {
+	loading: boolean,
+	error: string | null,
+	/**  Changes when a new tree is loaded; 0 while there is none. */
+	rev: number | null,
+	count: number,
+	/**  Roblox also serves an avatar MeshPart form of this asset type. */
+	hasProcessed: boolean,
+};
+
 export type ModerationKind = "warned" | "banned" | "terminated" | 
 /**  Roblox wants a human check on the website. */
 "locked" | "unknown";
@@ -2511,6 +2546,15 @@ export type TraderView = {
 	error: string | null,
 	stats: TraderStats | null,
 };
+
+/**  Trusted status loads separately from ordinary friendship and fails independently. */
+export type TrustedFriendView = {
+	loading: boolean,
+	error: string | null,
+	status: TrustedStatus,
+};
+
+export type TrustedStatus = "none" | "trusted" | "sent" | "received" | "unknown";
 
 /**  Beyond the website: the filtered ledger by month, experience, item and buyer. */
 export type TxInsights = {

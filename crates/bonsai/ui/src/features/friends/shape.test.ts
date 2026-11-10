@@ -50,6 +50,14 @@ describe("shapePeople", () => {
     expect(ids(shapePeople(requests, "requests", { ...opts, sort: "mutuals" }))).toEqual([3, 1, 2])
   })
 
+  it("searches and sorts trusted requests without offering mutual-friend sorting", () => {
+    const requests = [row(1, "Amy", { sentAt: "2026-01-01" }), row(2, "Bob", { sentAt: "2026-02-01" })]
+    expect(ids(shapePeople(requests, "trusted_requests", opts))).toEqual([2, 1])
+    expect(ids(shapePeople(requests, "trusted_requests", { ...opts, sort: "oldest" }))).toEqual([1, 2])
+    expect(ids(shapePeople(requests, "trusted_requests", { ...opts, query: "amy" }))).toEqual([1])
+    expect(sortOptions("trusted_requests").some((o) => o.value === "mutuals")).toBe(false)
+  })
+
   it("shows followers you don't follow back", () => {
     const list = [row(1, "A", { following: true }), row(2, "B", { following: false })]
     expect(ids(shapePeople(list, "followers", { ...opts, show: "not_followed" }))).toEqual([2])

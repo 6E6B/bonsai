@@ -86,7 +86,7 @@ const shellMirror = mirror<Shell>(
     approve: null,
     itemValues: false,
     wiki: false,
-    avatar3d: false,
+    avatar3d: true,
     uiScale: 1,
     look: {
       density: "comfortable",

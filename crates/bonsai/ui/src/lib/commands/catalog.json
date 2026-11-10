@@ -1920,6 +1920,56 @@
     },
     {
       "arg": "user",
+      "id": "user.add_trusted_friend",
+      "keywords": [
+        "trusted",
+        "friend",
+        "send",
+        "connect"
+      ],
+      "title": "Send trusted friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.accept_trusted_friend",
+      "keywords": [
+        "trusted",
+        "accept",
+        "request"
+      ],
+      "title": "Accept trusted friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.decline_trusted_friend",
+      "keywords": [
+        "trusted",
+        "decline",
+        "ignore"
+      ],
+      "title": "Decline trusted friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.cancel_trusted_friend",
+      "keywords": [
+        "trusted",
+        "cancel",
+        "withdraw"
+      ],
+      "title": "Cancel trusted friend request"
+    },
+    {
+      "arg": "user",
+      "id": "user.remove_trusted_friend",
+      "keywords": [
+        "trusted",
+        "remove"
+      ],
+      "title": "Remove trusted friend"
+    },
+    {
+      "arg": "user",
       "id": "user.decline_friend",
       "keywords": [
         "decline",
@@ -2793,6 +2843,106 @@
     },
     {
       "arg": "none",
+      "id": "market.model",
+      "keywords": [
+        "model",
+        "instances",
+        "tree",
+        "explorer",
+        "properties",
+        "rbxm",
+        "decode"
+      ],
+      "title": "View this item's model tree and properties"
+    },
+    {
+      "arg": "text",
+      "id": "market.model_search",
+      "keywords": [
+        "model",
+        "instances",
+        "explorer",
+        "filter",
+        "class",
+        "search"
+      ],
+      "title": "Search this model's instances"
+    },
+    {
+      "arg": "none",
+      "id": "market.model_toggle",
+      "keywords": [
+        "model",
+        "instance",
+        "explorer",
+        "expand",
+        "collapse",
+        "tree"
+      ],
+      "title": "Expand or collapse the selected instance"
+    },
+    {
+      "arg": "none",
+      "id": "market.model_expand_all",
+      "keywords": [
+        "model",
+        "instances",
+        "explorer",
+        "expand",
+        "tree"
+      ],
+      "title": "Expand all instances in this model"
+    },
+    {
+      "arg": "none",
+      "id": "market.model_collapse_all",
+      "keywords": [
+        "model",
+        "instances",
+        "explorer",
+        "collapse",
+        "tree"
+      ],
+      "title": "Collapse all instances in this model"
+    },
+    {
+      "arg": "text",
+      "id": "market.model_format",
+      "keywords": [
+        "model",
+        "source",
+        "processed",
+        "meshpart",
+        "explorer"
+      ],
+      "title": "Show the source or processed model (source, processed; no argument toggles)"
+    },
+    {
+      "arg": "text",
+      "id": "market.model_copy_path",
+      "keywords": [
+        "model",
+        "instance",
+        "path",
+        "explorer",
+        "copy"
+      ],
+      "title": "Copy the selected instance's path"
+    },
+    {
+      "arg": "text",
+      "id": "market.model_copy_value",
+      "keywords": [
+        "model",
+        "property",
+        "value",
+        "explorer",
+        "copy"
+      ],
+      "title": "Copy a property value of the selected instance"
+    },
+    {
+      "arg": "none",
       "id": "market.play_audio",
       "keywords": [
         "play",
@@ -2803,6 +2953,20 @@
         "listen"
       ],
       "title": "Play or pause this sound"
+    },
+    {
+      "arg": "none",
+      "id": "market.sound_hat",
+      "keywords": [
+        "sound hat",
+        "sound",
+        "audio",
+        "mute",
+        "quack",
+        "harmonica",
+        "laugh"
+      ],
+      "title": "Turn sound hat sounds on or off"
     },
     {
       "arg": "text",
@@ -4177,12 +4341,12 @@
       "kind": "choice",
       "options": [
         {
-          "label": "Image",
-          "value": "2d"
-        },
-        {
           "label": "3D",
           "value": "3d"
+        },
+        {
+          "label": "Image",
+          "value": "2d"
         }
       ],
       "section": "general",

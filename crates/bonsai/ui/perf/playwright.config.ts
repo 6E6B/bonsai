@@ -9,6 +9,7 @@ export default defineConfig({
     "dependencies.spec.ts",
     "side-panels.spec.ts",
     "bookmarks.spec.ts",
+    "trusted-friends.spec.ts",
   ],
   fullyParallel: false,
   workers: 1,

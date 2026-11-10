@@ -469,6 +469,126 @@ pub struct DependenciesView {
     pub note: Option<String>,
 }
 
+/// The state of an item's decoded model. The UI fetches the nodes once per `rev`.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelStatusView {
+    pub loading: bool,
+    pub error: Option<String>,
+    /// Changes when a new tree is loaded; 0 while there is none.
+    pub rev: f64,
+    pub count: u32,
+    /// Roblox also serves an avatar MeshPart form of this asset type.
+    pub has_processed: bool,
+}
+
+/// One instance. Nodes come in depth-first order, so descendants follow their ancestor.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelNodeView {
+    pub parent: Option<u32>,
+    pub depth: u32,
+    pub class: String,
+    pub name: String,
+    pub children: u32,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelPropView {
+    pub name: String,
+    pub kind: String,
+    pub value: String,
+    pub asset: Option<Id>,
+    pub target: Option<u32>,
+    pub color: Option<String>,
+    pub truncated: bool,
+    pub attribute: bool,
+}
+
+fn item_model_res(
+    core: &Core,
+    id: Id,
+    asset_type: i32,
+    processed: bool,
+) -> bonsai_core::res::Res<bonsai_core::model_tree::ModelTree> {
+    let account = core.acting(None).unwrap_or(AccountId::ANONYMOUS);
+    core.item_model(account, id.0, asset_type, processed)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn item_model(core: State<'_, Arc<Core>>, id: Id, asset_type: i32, processed: bool) -> ModelStatusView {
+    let r = item_model_res(&core, id, asset_type, processed);
+    ModelStatusView {
+        loading: r.loading,
+        error: r.error,
+        rev: if r.data.is_some() {
+            r.fetched_at as f64
+        } else {
+            0.0
+        },
+        count: r.data.as_ref().map_or(0, |t| t.nodes.len() as u32),
+        has_processed: bonsai_core::model_tree::has_processed(asset_type),
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn item_model_nodes(
+    core: State<'_, Arc<Core>>,
+    id: Id,
+    asset_type: i32,
+    processed: bool,
+) -> Vec<ModelNodeView> {
+    let r = item_model_res(&core, id, asset_type, processed);
+    r.data
+        .map(|t| {
+            t.nodes
+                .iter()
+                .map(|n| ModelNodeView {
+                    parent: n.parent,
+                    depth: n.depth.into(),
+                    class: n.class.clone(),
+                    name: n.name.clone(),
+                    children: n.children,
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn item_model_properties(
+    core: State<'_, Arc<Core>>,
+    id: Id,
+    asset_type: i32,
+    processed: bool,
+    node: u32,
+) -> Vec<ModelPropView> {
+    let r = item_model_res(&core, id, asset_type, processed);
+    r.data
+        .and_then(|t| {
+            t.nodes.get(node as usize).map(|n| {
+                n.props
+                    .iter()
+                    .map(|p| ModelPropView {
+                        name: p.name.clone(),
+                        kind: p.kind.clone(),
+                        value: p.value.clone(),
+                        asset: p.asset.map(Id),
+                        target: p.target,
+                        color: p.color.clone(),
+                        truncated: p.truncated,
+                        attribute: p.attribute,
+                    })
+                    .collect()
+            })
+        })
+        .unwrap_or_default()
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn item_dependencies(core: State<'_, Arc<Core>>, id: Id, asset_type: i32) -> DependenciesView {

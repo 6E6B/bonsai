@@ -1,7 +1,9 @@
 import { bookmarkPath, findBookmark } from "~/lib/bookmarks"
 import { commandList, menuItem } from "~/lib/commands/registry"
+import type { TrustedStatus } from "~/lib/ipc/bindings"
 import { type PluginContext, pluginCommandsFor } from "~/lib/plugins"
 import { playlists, shell, visibleBookmarks } from "~/lib/store"
+import { trustedActions } from "~/lib/trusted-friends"
 import type { MenuEntry } from "~/lib/ui"
 
 /**
@@ -67,6 +69,7 @@ export function bookmarkMenu(target: string): MenuEntry {
 
 export interface UserMenuOptions {
   friend?: boolean
+  trusted?: TrustedStatus
   /** In an experience they can be joined. */
   inGame?: boolean
   /** The experience they are in, when visible. Adds Open experience. */
@@ -90,6 +93,13 @@ export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[
   const target = `user:${id}`
   const friendAs = joinAsItems("user.add_friend_as", id)
   const manage: MenuEntry[] = [
+    ...(opts.trusted === undefined
+      ? opts.friend
+        ? [menuItem("user.open", { arg: id, icon: "shield", label: "Trusted friendship…" })]
+        : []
+      : trustedActions(opts.trusted, !!opts.friend).map((command) =>
+          menuItem(command, { arg: id, icon: "shield", danger: command === "user.remove_trusted_friend" }),
+        )),
     ...(friendAs.length > 0
       ? [{ kind: "submenu", label: "Add friend as", icon: "user-plus", items: friendAs } as const]
       : []),

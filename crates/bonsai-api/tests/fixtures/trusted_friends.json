@@ -1,0 +1,195 @@
+{
+  "captured": "2026-11-10",
+  "source": "synthetic",
+  "note": "Public Roblox ProfileHeader/ProfilePlatform bundles and sleaze5/RobloxAccountManager friends.go. No real requests sent or accepted. IDs and dates are synthetic.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/my/trusted-friends/2000001/status"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "status": "Friends",
+          "futureField": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/my/trusted-friends/2000002/status"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "status": "RequestReceived"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/my/trusted-friends/2000003/status"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "status": "RequestSent"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/my/trusted-friends/2000004/status"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "status": "TrustedFriends"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/my/trusted-friends/requests",
+        "query": {
+          "limit": "50",
+          "sortOrder": "1"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "data": [
+            {
+              "senderId": 2000002,
+              "sentAt": "2026-11-10T14:00:00Z"
+            }
+          ],
+          "nextPageCursor": "page-2"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "friends.roblox.com",
+        "path": "/v1/my/trusted-friends/requests",
+        "query": {
+          "limit": "50",
+          "sortOrder": "1",
+          "cursor": "page-2"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {
+          "data": [
+            {
+              "senderId": 2000005,
+              "sentAt": "2026-11-09T14:00:00Z"
+            }
+          ],
+          "nextPageCursor": null
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/2000001/send-trusted-friend-request"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/2000002/accept-trusted-friend-request"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/2000005/ignore-trusted-friend-request"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/2000003/remove-trusted-friend"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "friends.roblox.com",
+        "path": "/v1/users/2000004/remove-trusted-friend"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "body": {}
+      }
+    }
+  ]
+}
