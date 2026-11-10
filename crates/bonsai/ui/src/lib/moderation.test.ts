@@ -3,7 +3,9 @@ import type { ModerationView } from "~/lib/ipc/bindings"
 import {
   accountProblem,
   accountUnusable,
+  activeVoiceBans,
   canReactivate,
+  clock,
   duration,
   moderationLabel,
   moderationNext,
@@ -61,5 +63,25 @@ describe("moderation", () => {
     expect(accountUnusable(banned, 0)).toBe(true)
     expect(accountUnusable(banned, 100)).toBe(false)
     expect(accountUnusable({ ...banned, session: "ok" }, 0)).toBe(false)
+  })
+
+  it("counts down a clock", () => {
+    expect(clock(5)).toBe("0:05")
+    expect(clock(4 * 60 + 5)).toBe("4:05")
+    expect(clock(3 * 3600 + 4 * 60 + 5)).toBe("3:04:05")
+    expect(clock(2 * 86400 + 3 * 3600 + 4 * 60 + 5.9)).toBe("2d 03:04:05")
+    expect(clock(-1)).toBe("0:00")
+  })
+
+  it("lists active voice bans, soonest end first", () => {
+    const accounts = [
+      { id: 1, voiceBan: null },
+      { id: 2, voiceBan: { until: null } },
+      { id: 3, voiceBan: { until: 500 } },
+      { id: 4, voiceBan: { until: 100 } },
+      { id: 5, voiceBan: { until: 50 } },
+    ]
+    expect(activeVoiceBans(accounts, 60).map((a) => a.id)).toEqual([4, 3, 2])
+    expect(activeVoiceBans(accounts, 1000).map((a) => a.id)).toEqual([2])
   })
 })

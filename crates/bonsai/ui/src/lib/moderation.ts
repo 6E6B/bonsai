@@ -60,6 +60,30 @@ export function voiceBanText(v: Pick<VoiceBanView, "until">, now: number): strin
   return `Voice banned for ${duration(v.until - now)}`
 }
 
+/** Seconds → "2d 03:04:05", "3:04:05", "4:05": a countdown that changes every second. */
+export function clock(secs: number): string {
+  const t = Math.max(0, Math.floor(secs))
+  const d = Math.floor(t / 86400)
+  const h = Math.floor(t / 3600) % 24
+  const m = Math.floor(t / 60) % 60
+  const pad = (n: number) => String(n).padStart(2, "0")
+  const ms = `${pad(m)}:${pad(t % 60)}`
+  if (d > 0) return `${d}d ${pad(h)}:${ms}`
+  if (h > 0) return `${h}:${ms}`
+  return `${m}:${pad(t % 60)}`
+}
+
+/** Accounts with a voice ban that hasn't ended, soonest end first. Bans with no end go last. */
+export function activeVoiceBans<A extends Pick<Account, "voiceBan">>(
+  accounts: readonly A[],
+  now: number,
+): (A & { voiceBan: VoiceBanView })[] {
+  const end = (a: { voiceBan: VoiceBanView }) => a.voiceBan.until ?? Number.POSITIVE_INFINITY
+  return accounts
+    .filter((a): a is A & { voiceBan: VoiceBanView } => !!a.voiceBan && (a.voiceBan.until ?? Infinity) > now)
+    .sort((a, b) => end(a) - end(b))
+}
+
 /** The account's problem in a few words, for the rail tooltip, or "" when it has none. */
 export function accountProblem(a: Pick<Account, "session" | "moderation" | "voiceBan">, now: number): string {
   if (a.session === "moderated") return moderationLabel(a.moderation, now)
@@ -71,10 +95,11 @@ export function accountProblem(a: Pick<Account, "session" | "moderation" | "voic
 export const accountUnusable = (a: Pick<Account, "session" | "moderation">, now: number) =>
   a.session === "moderated" && moderationTone(a.moderation, now) === "danger"
 
-/** Unix seconds, updated every 30 seconds while the caller is mounted: enough for ban clocks. */
-export function useNowSecs() {
+/** Unix seconds, updated every `everyMs` (30 seconds by default, enough for ban labels) while
+ * the caller is mounted. Countdowns pass 1000. */
+export function useNowSecs(everyMs = 30_000) {
   const [now, setNow] = createSignal(Date.now() / 1000)
-  const tick = setInterval(() => setNow(Date.now() / 1000), 30_000)
+  const tick = setInterval(() => setNow(Date.now() / 1000), everyMs)
   onCleanup(() => clearInterval(tick))
   return now
 }

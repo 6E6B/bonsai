@@ -77,6 +77,7 @@ import list from "@phosphor-icons/core/assets/regular/list.svg?raw"
 import lock from "@phosphor-icons/core/assets/regular/lock.svg?raw"
 import search from "@phosphor-icons/core/assets/regular/magnifying-glass.svg?raw"
 import megaphone from "@phosphor-icons/core/assets/regular/megaphone.svg?raw"
+import voiceBanned from "@phosphor-icons/core/assets/regular/microphone-slash.svg?raw"
 import minimize from "@phosphor-icons/core/assets/regular/minus.svg?raw"
 import audio from "@phosphor-icons/core/assets/regular/music-notes.svg?raw"
 import palette from "@phosphor-icons/core/assets/regular/palette.svg?raw"
@@ -195,6 +196,7 @@ const svgs = {
   /** Drawn by icon.css from the same mask as `<Robux>`, so the two marks match. */
   robux: "<svg></svg>",
   keyboard,
+  "voice-banned": voiceBanned,
   sidebar,
   user,
   "user-plus": userPlus,
