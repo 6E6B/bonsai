@@ -136,7 +136,12 @@ function CodeForm(props: { challenge: ChallengeView; kind: Code; onCancel: () =>
         <Button variant="ghost" type="button" onClick={() => props.onCancel()}>
           Cancel
         </Button>
-        <Button variant="primary" type="submit" disabled={props.challenge.busy || codeDigits(code()).length !== 6}>
+        <Button
+          variant="primary"
+          type="submit"
+          loading={props.challenge.busy}
+          disabled={codeDigits(code()).length !== 6}
+        >
           Verify
         </Button>
       </div>

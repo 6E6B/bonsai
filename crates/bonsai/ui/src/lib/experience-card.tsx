@@ -1,5 +1,5 @@
 import { Show } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { compact } from "~/lib/format"
 import { commands, type GameCard } from "~/lib/ipc/bindings"
 import { gameMenu } from "~/lib/menus"
@@ -36,7 +36,13 @@ export function ExperienceCard(props: { placeId: number }) {
             )}
           </Show>
         </div>
-        <Button size="sm" variant="primary" icon="play" onClick={() => run("game.join", String(props.placeId))}>
+        <Button
+          size="sm"
+          variant="primary"
+          icon="play"
+          loading={isRunning("game.join", String(props.placeId))}
+          onClick={() => run("game.join", String(props.placeId))}
+        >
           Join
         </Button>
       </Card>

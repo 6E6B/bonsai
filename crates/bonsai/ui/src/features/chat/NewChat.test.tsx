@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock("~/lib/ipc/bindings", () => ({ commands: { startChat: mocks.startChat, chatOptions: vi.fn() } }))
 vi.mock("~/lib/store", () => ({
-  shell: { active: 1 },
+  shell: { active: 1, running: [] },
   friends: {
     friends: [
       { id: 2, name: "ann", displayName: "Ann", presence: "offline" },

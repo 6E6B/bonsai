@@ -5,11 +5,10 @@ export interface TextLinkProps extends ParentProps {
   /** Run a command here (usually a `nav.*` or `*.open` one). */
   onClick: () => void
   /** `accent` for links that are not names. User and community names use `name` (or
-   * `muted` for secondary text like "by Chiidoku"), or `verified` when Roblox has verified
-   * them: only verified names are blue, to match the `VerifiedBadge`. `danger` marks a name
+   * `muted` for secondary text like "by Chiidoku"), verified or not. `danger` marks a name
    * that is pretending to be someone it isn't. `inherit` keeps the surrounding text colour and
    * underlines, for links inside a coloured bubble. */
-  tone?: "accent" | "name" | "muted" | "verified" | "danger" | "inherit"
+  tone?: "accent" | "name" | "muted" | "danger" | "inherit"
   class?: string
 }
 

@@ -68,7 +68,7 @@ export function ApproveCode(props: {
                 <Button variant="ghost" autofocus onClick={() => props.onDone()}>
                   Cancel sign-in
                 </Button>
-                <Button variant="primary" disabled={view()?.busy} onClick={() => void confirm()}>
+                <Button variant="primary" loading={view()?.busy} onClick={() => void confirm()}>
                   Confirm
                 </Button>
               </div>
@@ -106,7 +106,7 @@ export function ApproveCode(props: {
               <Button variant="ghost" type="button" onClick={() => props.onDone()}>
                 Cancel
               </Button>
-              <Button variant="primary" type="submit" disabled={view()?.busy || code().length !== 6}>
+              <Button variant="primary" type="submit" loading={view()?.busy} disabled={code().length !== 6}>
                 Continue
               </Button>
             </div>

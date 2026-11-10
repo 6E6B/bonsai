@@ -43,7 +43,6 @@ export const TOKENS: readonly Token[] = [
     ["color-focus", "Focus ring"],
     ["color-on-accent", "Text on fills"],
     ["color-contrast", "Primary button"],
-    ["color-verified", "Verified names"],
   ]),
   ...t("Status", "color", [
     ["color-success", "Success"],
@@ -112,6 +111,8 @@ export const TOKENS: readonly Token[] = [
     ["text-xl--line-height", "Heading, line"],
     ["text-2xl", "Title"],
     ["text-2xl--line-height", "Title, line"],
+    ["text-3xl", "Title on a picture"],
+    ["text-3xl--line-height", "Title on a picture, line"],
   ]),
   ...t("Shape", "length", [
     ["radius-xs", "Radius, extra small"],

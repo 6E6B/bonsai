@@ -32,7 +32,7 @@ from strangers. This is the design and the roadmap. What's still missing is in [
     "shadow": { "depth": 1, "ring": 1, "highlight": 1 },   // alpha multipliers per layer kind
     "font": { "google": "Space Grotesk" }, "mono": "jetbrains"   // bundled id or a Google family
   },
-  "tokens": { "color-verified": "#4d94ff" }                 // pinned values; win over seeds
+  "tokens": { "color-focus": "#88c0d0" }                    // pinned values; win over seeds
 }
 ```
 
@@ -47,7 +47,7 @@ Token values follow one grammar per kind:
 | color | `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, or `var(--color-…)` naming another color token. Cycles fall back to derived values. |
 | length | `0` or a px value |
 | shadow | Up to 6 comma-separated layers: optional `inset`, 2–4 px lengths, one hex color |
-| font | A bundled font id (`inter`, `jetbrains`, `system`). Pinned font tokens take bundled ids only; Google families go in the `font` and `mono` seeds. |
+| font | A bundled font id (`rubik`, `inter`, `jetbrains`, `system`). Pinned font tokens take bundled ids only; Google families go in the `font` and `mono` seeds. |
 
 ## Code
 
@@ -95,10 +95,11 @@ A theme's `font` or `mono` seed may be `{ "google": "Family Name" }`. Settings �
 Fonts picks one from a searchable list; `theme.font` and `theme.mono_font` do the same from the
 command bar. Changing the font of a built-in makes a copy first and says so.
 
-Built-ins set a text font too. Dark, Light and both Adwaitas use the bundled Inter. The rest use
-Google families: Ember Figtree, Midnight Manrope, Fjord IBM Plex Sans, Paper Source Sans 3, Moss
-Work Sans, Dusk Outfit, Abyss Space Grotesk, Phosphor IBM Plex Mono, Sakura Nunito, Glacier Plus
-Jakarta Sans. The font of a theme in use downloads the first time it is applied.
+Built-ins set a text font too. Dark and Light use the bundled Rubik, the app default; both
+Adwaitas use the bundled Inter. The rest use Google families: Ember Figtree, Midnight Manrope,
+Fjord IBM Plex Sans, Paper Source Sans 3, Moss Work Sans, Dusk Outfit, Abyss Space Grotesk,
+Phosphor IBM Plex Mono, Sakura Nunito, Glacier Plus Jakarta Sans. The font of a theme in use
+downloads the first time it is applied.
 
 - **Catalog.** `fonts.google.com/metadata/fonts`, fetched only when the picker opens or a theme
   names a Google font, cached for 7 days. Italic-only families are left out.

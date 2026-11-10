@@ -1,7 +1,7 @@
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import { AvatarViewer } from "~/lib/avatar3d/viewer"
 import { useSubTabs } from "~/lib/commands/hooks"
-import { menuItem, run } from "~/lib/commands/registry"
+import { isRunning, menuItem, run } from "~/lib/commands/registry"
 import {
   type AvatarView,
   commands,
@@ -15,9 +15,10 @@ import {
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { itemMenu } from "~/lib/menus"
+import { isSoundHat } from "~/lib/sound-hats"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl, withRev } from "~/lib/thumb"
-import { ItemTile, TILE_WIDTH } from "~/lib/tiles"
+import { ItemName, ItemTile, SoundHatBadge, TILE_WIDTH } from "~/lib/tiles"
 import {
   Button,
   ColorPicker,
@@ -216,7 +217,7 @@ export default function AvatarEditor() {
                 >
                   <ListItem
                     leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
-                    title={w.name}
+                    title={<ItemName name={w.name} id={w.id} />}
                     subtitle={view.rig === "R6" && w.r15Only ? `${w.typeName} · R15 only` : w.typeName}
                     dim={view.rig === "R6" && w.r15Only}
                     onClick={() => run("market.open", String(w.id))}
@@ -241,6 +242,7 @@ export default function AvatarEditor() {
                           size="sm"
                           icon="x"
                           label="Take off"
+                          loading={isRunning("avatar.wear", `${w.id}:${w.typeId}`)}
                           onClick={() => run("avatar.wear", `${w.id}:${w.typeId}`)}
                         />
                       </>
@@ -293,7 +295,13 @@ export default function AvatarEditor() {
             onChange={setSection}
             actions={
               <>
-                <IconButton size="sm" icon="refresh" label="Redraw avatar image" onClick={() => run("avatar.redraw")} />
+                <IconButton
+                  size="sm"
+                  icon="refresh"
+                  label="Redraw avatar image"
+                  loading={isRunning("avatar.redraw")}
+                  onClick={() => run("avatar.redraw")}
+                />
                 <Button size="sm" icon="plus" onClick={saveOutfit}>
                   Save as outfit
                 </Button>
@@ -588,6 +596,7 @@ function Recent() {
                   subtitle={r.outfit ? "Outfit" : r.typeName}
                   src={thumbUrl(r.outfit ? "outfit" : "asset", r.id)}
                   fallback="avatar"
+                  flair={!r.outfit && isSoundHat(Number(r.id)) ? <SoundHatBadge /> : undefined}
                   onClick={() => void wear(r)}
                 />
               </ContextMenu>

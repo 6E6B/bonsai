@@ -1,7 +1,7 @@
 import { useParams, useSearchParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, Match, on, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { compact } from "~/lib/format"
 import {
   type Connection,
@@ -16,27 +16,30 @@ import {
   type UserBadge,
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
-import { userMenu } from "~/lib/menus"
+import { gameMenu, joinUser, userMenu } from "~/lib/menus"
 import { rank } from "~/lib/search"
 import { useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
-import { GameTile, ItemTile, PlayingRow, TILE_WIDTH } from "~/lib/tiles"
+import { GameTile, ItemTile, TILE_WIDTH } from "~/lib/tiles"
 import {
   Avatar,
   Badge,
   Button,
-  Card,
   ContextMenu,
   EmptyState,
+  Hero,
+  HeroBanner,
   IconButton,
   ListItem,
   Menu,
   Page,
+  PremiumBadge,
   Robux,
   SegmentedControl,
   Select,
   Skeleton,
+  Stat,
   showToast,
   TabPanel,
   Tabs,
@@ -50,7 +53,7 @@ import {
 import { rolimonsFailed, VALUES_SOURCE } from "~/lib/values"
 import { useWikiAbout, WikiSummary, WikiTab } from "~/lib/wiki-panels"
 import { Outfits } from "./Outfits"
-import { BadgeTile, Overview } from "./Overview"
+import { BadgeTile, Intro, Overview } from "./Overview"
 
 const allSections = [
   { value: "about", label: "Overview" },
@@ -98,6 +101,7 @@ export default function Profile() {
       lastOnline: null,
       lastOnlineBy: null,
       lastLocation: null,
+      placeImage: null,
       unfriendedAt: null,
       mutualFriends: null,
       mutualMore: false,
@@ -208,109 +212,132 @@ export default function Profile() {
       <Show
         when={view.user}
         fallback={
-          <Show when={view.error} fallback={<Skeleton class="h-24 w-full rounded-md" />}>
+          <Show when={view.error} fallback={<Skeleton class="h-36 w-full rounded-lg" />}>
             {(e) => <span class="text-fg-muted">{e()}</span>}
           </Show>
         }
       >
         {(u) => (
-          <header class="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <div class="flex min-w-0 flex-1 items-center gap-4">
+          <Hero
+            avatar={
               <Avatar
                 size="xl"
                 name={u().displayName}
                 presence={view.presence}
                 src={thumbUrl("headshot", userId(), true)}
               />
-              <div class="flex min-w-0 flex-col gap-0.5">
-                <h1 class="flex items-center gap-2 truncate text-2xl font-medium">
-                  <span class={u().verified ? "truncate text-verified" : "truncate"}>{u().displayName}</span>
-                  <Show when={u().verified}>
-                    <VerifiedBadge size={18} />
-                  </Show>
-                  <Show when={u().banned}>
-                    <Badge variant="danger">Banned</Badge>
-                  </Show>
-                </h1>
-                <span class="truncate text-fg-muted">
-                  @{u().name}
-                  <Show when={view.nickname}>
-                    {(n) => (
-                      <Tooltip content="Your nickname for them" class="ml-2">
-                        <Badge>{n()}</Badge>
-                      </Tooltip>
-                    )}
-                  </Show>
-                </span>
-                <span class="mt-1 flex flex-wrap gap-x-4 text-sm text-fg-muted">
-                  <CountLink n={u().friends} label="friends" command="user.friends" id={id()} />
-                  <CountLink n={u().followers} label="followers" command="user.followers" id={id()} />
-                  <CountLink n={u().following} label="following" command="user.following" id={id()} />
-                  <Show when={worth()}>
-                    {(v) => (
-                      <Tooltip content={`Value of their limiteds (${VALUES_SOURCE})`} class="inline-flex items-center">
-                        <Robux class="font-medium text-fg" amount={v()} compact />
-                        <span class="ml-1">value</span>
-                      </Tooltip>
-                    )}
-                  </Show>
-                </span>
-              </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Show
-                when={!view.mine}
-                fallback={
-                  <>
-                    <Button icon="avatar" onClick={() => run("nav.avatar")}>
-                      Edit avatar
-                    </Button>
-                    <InventoryButton id={id()} private={view.inventoryPrivate} />
-                  </>
-                }
-              >
-                <FriendButton status={rel()?.friend ?? "none"} id={id()} />
-                <InventoryButton id={id()} private={view.inventoryPrivate} />
-                <Tooltip content="Message">
-                  <IconButton
-                    variant="secondary"
-                    icon="chat"
-                    label="Message"
-                    onClick={() => run("user.message", id())}
-                  />
-                </Tooltip>
+            }
+            banner={
+              <Show when={view.presence === "game" && view.placeId}>
+                {(placeId) => (
+                  <ContextMenu items={gameMenu(placeId())}>
+                    <HeroBanner
+                      src={view.placeImage ? thumbUrl("game_thumbnail", view.placeImage, true) : undefined}
+                      label="Playing now"
+                      title={
+                        <TextLink onClick={() => run("game.open", String(placeId()))}>
+                          {view.place ?? "In a game"}
+                        </TextLink>
+                      }
+                      action={
+                        <Show when={!view.mine}>
+                          <Button variant="primary" icon="play" onClick={() => run("game.join", joinUser(userId()))}>
+                            Join
+                          </Button>
+                        </Show>
+                      }
+                    />
+                  </ContextMenu>
+                )}
               </Show>
-              <Menu
-                icon="more"
-                label="More"
-                items={userMenu(userId(), {
-                  friend: rel()?.friend === "friends",
-                  blocked: rel()?.blocked,
-                  inGame: view.presence === "game",
-                  placeId: view.placeId,
-                  following: view.mine ? undefined : (rel()?.following ?? false),
-                  requested: rel()?.friend === "received",
-                  onProfile: true,
-                })}
-              />
-            </div>
-          </header>
+            }
+            title={
+              <>
+                <span class="truncate">{u().displayName}</span>
+                <Show when={u().verified}>
+                  <VerifiedBadge size={18} />
+                </Show>
+                <Show when={u().premium || u().plus}>
+                  <PremiumBadge size={18} label={u().plus ? "Roblox Plus" : "Premium"} />
+                </Show>
+                <Show when={u().banned}>
+                  <Badge variant="danger">Banned</Badge>
+                </Show>
+              </>
+            }
+            subtitle={
+              <>
+                @{u().name}
+                <Show when={view.nickname}>
+                  {(n) => (
+                    <Tooltip content="Your nickname for them" class="ml-2">
+                      <Badge>{n()}</Badge>
+                    </Tooltip>
+                  )}
+                </Show>
+              </>
+            }
+            actions={
+              <>
+                <Show
+                  when={!view.mine}
+                  fallback={
+                    <>
+                      <Button icon="avatar" onClick={() => run("nav.avatar")}>
+                        Edit avatar
+                      </Button>
+                      <InventoryButton id={id()} private={view.inventoryPrivate} />
+                    </>
+                  }
+                >
+                  <FriendButton status={rel()?.friend ?? "none"} id={id()} />
+                  <InventoryButton id={id()} private={view.inventoryPrivate} />
+                  <Tooltip content="Message">
+                    <IconButton
+                      variant="secondary"
+                      icon="chat"
+                      label="Message"
+                      onClick={() => run("user.message", id())}
+                    />
+                  </Tooltip>
+                </Show>
+                <Menu
+                  icon="more"
+                  label="More"
+                  items={userMenu(userId(), {
+                    friend: rel()?.friend === "friends",
+                    blocked: rel()?.blocked,
+                    inGame: view.presence === "game",
+                    placeId: view.placeId,
+                    following: view.mine ? undefined : (rel()?.following ?? false),
+                    requested: rel()?.friend === "received",
+                    onProfile: true,
+                  })}
+                />
+              </>
+            }
+            stats={
+              <>
+                <CountStat n={u().friends} label="Friends" command="user.friends" id={id()} />
+                <CountStat n={u().followers} label="Followers" command="user.followers" id={id()} />
+                <CountStat n={u().following} label="Following" command="user.following" id={id()} />
+                <Show when={worth()}>
+                  {(v) => (
+                    <Stat label="Value">
+                      <Tooltip content={`Value of their limiteds (${VALUES_SOURCE})`}>
+                        <Robux amount={v()} compact />
+                      </Tooltip>
+                    </Stat>
+                  )}
+                </Show>
+              </>
+            }
+          />
         )}
       </Show>
 
-      <Show when={view.presence === "game" && view.placeId}>
-        {(placeId) => (
-          <Card class="p-1">
-            <PlayingRow
-              userId={userId()}
-              placeId={placeId()}
-              universeId={view.universeId}
-              name={view.place ?? "In a game"}
-              noJoin={view.mine}
-              class="rounded-sm"
-            />
-          </Card>
-        )}
+      <Show when={view.user}>
+        <Intro view={view} trading={trading} />
       </Show>
 
       <Tabs aria-label="Profile sections" items={sections()} value={section()} onChange={setSection}>
@@ -325,7 +352,6 @@ export default function Profile() {
             badges={badges}
             groups={groups}
             collectibles={collectibles}
-            trading={trading}
             onSeeAll={seeAll}
           />
         </TabPanel>
@@ -381,13 +407,23 @@ function FriendButton(props: { status: string; id: string }) {
     <Show
       when={props.status !== "none"}
       fallback={
-        <Button variant="primary" icon="user-plus" onClick={() => run("user.add_friend", props.id)}>
+        <Button
+          variant="primary"
+          icon="user-plus"
+          loading={isRunning("user.add_friend", props.id)}
+          onClick={() => run("user.add_friend", props.id)}
+        >
           Add friend
         </Button>
       }
     >
       <Show when={props.status === "received"}>
-        <Button variant="primary" icon="user-plus" onClick={() => run("user.accept_friend", props.id)}>
+        <Button
+          variant="primary"
+          icon="user-plus"
+          loading={isRunning("user.accept_friend", props.id)}
+          onClick={() => run("user.accept_friend", props.id)}
+        >
           Accept request
         </Button>
       </Show>
@@ -415,18 +451,17 @@ function InventoryButton(props: { id: string; private: boolean }) {
   )
 }
 
-/** A header count that opens that list in Connections. A dash, not a link, when Roblox didn't
+/** A header figure that opens that list in Connections. A dash, not a link, when Roblox didn't
  * send it. */
-function CountLink(props: { n: number | null; label: string; command: string; id: string }) {
+function CountStat(props: { n: number | null; label: string; command: string; id: string }) {
   return (
-    <span>
+    <Stat label={props.label}>
       <Show when={props.n !== null} fallback={<Count n={null} />}>
-        <TextLink onClick={() => run(props.command, props.id)}>
+        <TextLink tone="name" onClick={() => run(props.command, props.id)}>
           <Count n={props.n} />
         </TextLink>
-      </Show>{" "}
-      {props.label}
-    </span>
+      </Show>
+    </Stat>
   )
 }
 
@@ -489,7 +524,7 @@ function Groups(props: { list: List<GroupCard> }) {
             leading={<Thumbnail class="w-10" alt="" src={thumbUrl("group_icon", c.id)} fallback="communities" />}
             title={
               <Show when={c.verified} fallback={c.name}>
-                <span class="text-verified">{c.name}</span> <VerifiedBadge />
+                {c.name} <VerifiedBadge />
               </Show>
             }
             subtitle={`${compact(c.members)} members · ${c.role}`}
@@ -635,14 +670,28 @@ function Connections(props: { userId: number; list: PeopleList; onList: (l: Peop
                   data-index={i}
                   selected={i === cursor()}
                   leading={
-                    <Avatar name={p.displayName || p.name} presence={p.presence} src={thumbUrl("headshot", p.id)} />
+                    <Avatar
+                      name={p.displayName || p.name}
+                      presence={p.presence ?? undefined}
+                      src={thumbUrl("headshot", p.id)}
+                    />
                   }
                   title={
-                    <Show when={p.verified} fallback={p.displayName || p.name || `User ${p.id}`}>
-                      <span class="text-verified">{p.displayName || p.name}</span> <VerifiedBadge />
-                    </Show>
+                    <>
+                      {p.displayName || p.name || `User ${p.id}`}
+                      <Show when={p.verified}>
+                        {" "}
+                        <VerifiedBadge />
+                      </Show>
+                      <Show when={p.premium}>
+                        {" "}
+                        <PremiumBadge />
+                      </Show>
+                    </>
                   }
-                  subtitle={p.name ? `@${p.name}` : undefined}
+                  subtitle={
+                    [p.name && `@${p.name}`, p.presence === "game" && p.place].filter(Boolean).join(" · ") || undefined
+                  }
                   meta={
                     <Show when={p.friend && !props.mine}>
                       <Badge variant="accent">{tag()}</Badge>

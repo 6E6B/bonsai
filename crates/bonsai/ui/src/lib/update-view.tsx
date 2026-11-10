@@ -1,5 +1,5 @@
 import { createEffect, Match, on, Show, Switch } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { Alert, Button, dismissToast, Meter, SettingRow, Spinner, showToast } from "~/lib/ui"
 import { updateBusy, updateMessage, updates } from "~/lib/updates"
 
@@ -7,17 +7,31 @@ function UpdateAction() {
   return (
     <Switch>
       <Match when={updates.phase === "available"}>
-        <Button size="sm" variant="primary" onClick={() => run("app.download_update")}>
+        <Button
+          size="sm"
+          variant="primary"
+          loading={isRunning("app.download_update")}
+          onClick={() => run("app.download_update")}
+        >
           Download update
         </Button>
       </Match>
       <Match when={updates.phase === "ready"}>
-        <Button size="sm" variant="primary" onClick={() => run("app.install_update")}>
+        <Button
+          size="sm"
+          variant="primary"
+          loading={isRunning("app.install_update")}
+          onClick={() => run("app.install_update")}
+        >
           Install and restart
         </Button>
       </Match>
       <Match when={updates.phase === "idle" || updates.phase === "checking"}>
-        <Button size="sm" loading={updates.phase === "checking"} onClick={() => run("app.check_updates")}>
+        <Button
+          size="sm"
+          loading={updates.phase === "checking" || isRunning("app.check_updates")}
+          onClick={() => run("app.check_updates")}
+        >
           Check for updates
         </Button>
       </Match>
@@ -80,7 +94,8 @@ export function UpdateDetails() {
   return (
     <div data-setting="updates" class="flex flex-col gap-3 pb-3">
       <SettingRow label={`Bonsai ${updates.currentVersion}`} description={updateMessage(updates)}>
-        <Show when={updateBusy(updates.phase)}>
+        {/* While checking, the Check button has the spinner. */}
+        <Show when={updateBusy(updates.phase) && updates.phase !== "checking"}>
           <Spinner size="sm" />
         </Show>
         <UpdateAction />

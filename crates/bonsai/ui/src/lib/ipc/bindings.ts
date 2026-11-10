@@ -418,6 +418,10 @@ export type Account = {
 	 *  notifications), for the rail badge.
 	 */
 	unread: number,
+	/**  What Roblox did, while `session` is `moderated`. None when Roblox didn't say yet. */
+	moderation: ModerationView | null,
+	/**  A voice chat suspension. The account still works. */
+	voiceBan: VoiceBanView | null,
 };
 
 export type AccountInfoView = {
@@ -812,6 +816,27 @@ export type CommandInfo = {
 	context: string | null,
 };
 
+/**  One of your accounts on a community's page. */
+export type CommunityAccount = {
+	/**  The account's user id. */
+	id: Id,
+	name: string,
+	active: boolean,
+	/**  Role name; `None` when not a member. */
+	role: string | null,
+	/**  Asked to join, waiting for approval. */
+	pending: boolean,
+	/**  False while its membership loads. */
+	known: boolean,
+};
+
+export type CommunityFigures = {
+	experiences: number,
+	/**  Playing now, across the experiences whose details have loaded. */
+	playing: number,
+	visits: number | null,
+};
+
 /**  A community in search results. */
 export type CommunityHit = {
 	id: Id,
@@ -834,6 +859,7 @@ export type CommunityInfo = {
 	verified: boolean,
 	publicEntry: boolean,
 	locked: boolean,
+	shout: ShoutView | null,
 };
 
 /**  A game pass sold in one of the community's experiences. */
@@ -848,14 +874,27 @@ export type CommunityPass = {
 	game: string,
 };
 
+/**  An experience's picture on a community's banner. */
+export type CommunityShot = {
+	placeId: Id,
+	name: string,
+	playing: number,
+	/**  A `game_thumbnail` image id; `None` until its media loads or when it has none. */
+	image: Id | null,
+};
+
 export type CommunityView = {
 	loading: boolean,
 	error: string | null,
 	info: CommunityInfo | null,
 	/**  The active account's place in it; `None` when signed out or still loading. */
 	me: MyMembership | null,
-	/**  Your other accounts in it, like "Alt · Admin". */
-	alts: string[],
+	/**  Every signed-in account and its place in the community, the active one first. */
+	accounts: CommunityAccount[],
+	/**  Pictures of its most visited experiences, one each, for the page's banner. */
+	shots: CommunityShot[],
+	/**  Totals across its public experiences; `None` until they load. */
+	figures: CommunityFigures | null,
 };
 
 /**  Someone in a profile's friends, followers or following list. */
@@ -865,11 +904,13 @@ export type Connection = {
 	name: string,
 	displayName: string,
 	verified: boolean,
+	/**  Has Premium or Roblox Plus. */
+	premium: boolean,
 	/**  A friend of the active account (a mutual friend, on a friends list). */
 	friend: boolean,
-	/**  Known only for the active account's friends; offline for everyone else. */
-	presence: Presence,
-	/**  The game they're in, when they're a friend in one and it can be named. */
+	/**  `None` until it loads, or when loading it failed. */
+	presence: Presence | null,
+	/**  The game they're in, when Roblox shares it and it can be named. */
 	place: string | null,
 	/**
 	 *  Whether the active account follows them. `None` for yourself, when signed out, or until
@@ -1389,7 +1430,9 @@ export type Login =
 /**  The sign-in window is open. */
 { kind: "browser" } | { kind: "quickStarting" } | 
 /**  Quick sign-in code to approve on another device. `expiresAt` is unix seconds. */
-{ kind: "quickCode"; code: string; expiresAt: Id; linked: string | null } | { kind: "validating" } | { kind: "confirm"; user: User; alreadyAdded: boolean } | { kind: "failed"; message: string };
+{ kind: "quickCode"; code: string; expiresAt: Id; linked: string | null } | { kind: "validating" } | { kind: "confirm"; user: User; alreadyAdded: boolean; 
+/**  Roblox moderated this account. It can still be added. */
+moderation: ModerationView | null } | { kind: "failed"; message: string };
 
 /**  Display settings the whole window follows. Values as `settings.set` takes them. */
 export type Look = {
@@ -1469,6 +1512,22 @@ export type MessageRow = {
 	read: boolean,
 	/**  From Roblox itself. */
 	system: boolean,
+};
+
+export type ModerationKind = "warned" | "banned" | "terminated" | 
+/**  Roblox wants a human check on the website. */
+"locked" | "unknown";
+
+export type ModerationView = {
+	kind: ModerationKind,
+	/**  Roblox's heading; empty when it wrote none. */
+	title: string,
+	/**  Roblox's explanation. */
+	message: string,
+	/**  Unix seconds; 0 when unknown. */
+	begins: number | null,
+	/**  Unix seconds when a ban ends. A warning, or a ban past this, can be reactivated. */
+	ends: number | null,
 };
 
 export type MonthView = {
@@ -1918,7 +1977,11 @@ export type ProfileHead = {
 	created: string,
 	verified: boolean,
 	banned: boolean,
-	/**  Counts; `None` when Roblox didn't say. */
+	/**  Has Premium (without Roblox Plus). */
+	premium: boolean,
+	/**  Has Roblox Plus. */
+	plus: boolean,
+	/**  Counts; `None` when Roblox didn't say or the user hides them. */
 	friends: number | null,
 	followers: number | null,
 	following: number | null,
@@ -1935,6 +1998,8 @@ export type ProfileView = {
 	placeId: Id | null,
 	/**  For the experience's icon. */
 	universeId: Id | null,
+	/**  The experience's first screenshot, for `thumb://game_thumbnail`. Only while in game. */
+	placeImage: Id | null,
 	/**  `None` on your own profiles and when signed out. */
 	relation: RelationView | null,
 	/**  One of your accounts. */
@@ -2064,6 +2129,13 @@ export type RoleRow = {
 	members: number,
 };
 
+/**  A command still working: the account it acts as, its id and the argument it was run with. */
+export type Running = {
+	account: Id | null,
+	id: string,
+	arg: string | null,
+};
+
 export type ScaleView = {
 	/**  The name `avatar.scale` takes. */
 	name: string,
@@ -2166,7 +2238,9 @@ export type Servers = {
 };
 
 /**  Whether an account's saved cookie still works. */
-export type Session = "unknown" | "ok" | "expired" | "noCookie";
+export type Session = "unknown" | "ok" | "expired" | "noCookie" | 
+/**  Warned, banned, terminated or locked. See `Account::moderation`. */
+"moderated";
 
 export type SessionView = {
 	location: string,
@@ -2195,6 +2269,8 @@ export type Shell = {
 	active: Id | null,
 	offline: boolean,
 	jobs: number,
+	/**  Commands the user ran whose work hasn't finished, so their buttons can show a spinner. */
+	running: Running[],
 	toasts: Toast[],
 	keychainWarning: string | null,
 	/**  Robux of the active account, once known. */
@@ -2243,6 +2319,14 @@ export type Shell = {
 	 *  adds them so the webview loads the new image instead of its cached copy.
 	 */
 	thumbRevs: { [key in string]: number },
+};
+
+export type ShoutView = {
+	text: string,
+	posterId: Id,
+	poster: string,
+	/**  ISO time, or empty. */
+	updated: string,
 };
 
 export type SideView = {
@@ -2606,11 +2690,18 @@ export type ViewValue = {
 	value: string,
 };
 
+export type VoiceBanView = {
+	/**  Unix seconds; None when Roblox didn't say. */
+	until: number | null,
+};
+
 export type VoiceView = {
 	voiceEnabled: boolean,
 	voiceEligible: boolean,
 	voiceVerified: boolean,
 	banned: boolean,
+	/**  Unix seconds when a voice suspension ends, when Roblox says. */
+	bannedUntil: number | null,
 	cameraEnabled: boolean,
 	cameraEligible: boolean,
 };

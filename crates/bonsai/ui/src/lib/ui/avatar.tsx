@@ -17,12 +17,14 @@ export interface AvatarProps extends ComponentProps<"span"> {
   presence?: Presence
   /** Shows an unread count in the top-right corner. Hidden when 0. */
   count?: number
+  /** Grays out the picture, for an account that can't be used right now (banned, terminated). */
+  muted?: boolean
 }
 
 /** A round user or account picture, with initials while it loads or when it fails. */
 export function Avatar(props: AvatarProps) {
   const standalone = !useImageMenu()
-  const [local, rest] = splitProps(props, ["name", "src", "size", "presence", "count"])
+  const [local, rest] = splitProps(props, ["name", "src", "size", "presence", "count", "muted"])
   // Initials come from words that start with a letter, so "Player 100" is "P", not "P1".
   const initials = () => {
     const words = local.name.split(/[\s_]+/).filter(Boolean)
@@ -41,10 +43,13 @@ export function Avatar(props: AvatarProps) {
         tabIndex={standalone && imageKey(local.src) ? 0 : undefined}
         data-component="avatar"
         data-size={local.size ?? "md"}
+        data-muted={local.muted ? "" : undefined}
         {...rest}
       >
         <KImage data-slot="frame" fallbackDelay={0}>
-          <Show when={local.src}>{(src) => <KImage.Img data-slot="image" src={src()} alt={local.name} />}</Show>
+          <Show when={local.src}>
+            {(src) => <KImage.Img data-slot="image" src={src()} alt={local.name} decoding="async" />}
+          </Show>
           <KImage.Fallback data-slot="fallback">{initials()}</KImage.Fallback>
         </KImage>
         <Show when={local.presence !== "offline" && local.presence}>

@@ -2,9 +2,14 @@ import { isTauri } from "@tauri-apps/api/core"
 import { createSignal } from "solid-js"
 import { selectedImageArgument, selectImage } from "~/lib/image-actions"
 import { type CommandInfo, commands as ipc } from "~/lib/ipc/bindings"
+import { refreshShell } from "~/lib/store"
 import { type ConfirmOptions, type IconName, type MenuEntry, showToast } from "~/lib/ui"
+import { refreshUpdates } from "~/lib/updates"
 import { confirmations } from "./confirm"
 import { isPlain, match, toPress } from "./keys"
+import { begin } from "./running"
+
+export { isRunning } from "./running"
 
 /**
  * The UI side of bonsai-core's command registry. Every button, menu item and shortcut calls
@@ -106,13 +111,26 @@ export async function run(id: string, arg: string | null = null, asAccount: numb
   return ok
 }
 
+const UPDATE_COMMANDS = new Set(["app.check_updates", "app.download_update", "app.install_update"])
+
 /** Sends a command to the backend, skipping any UI handler. A handler that also needs the
  * backend (like opening a screen after `trade.new`) calls this. True when it ran. */
 export async function runBackend(id: string, arg: string | null = null, asAccount: number | null = null) {
   const imageArg = id.startsWith("image.") ? (arg ?? selectedImageArgument()) : arg
-  const r = await ipc.runCommand({ id, arg: imageArg, asAccount, context: pageContext })
-  if (r.status === "error") showToast(r.error)
-  return r.status === "ok"
+  // Shows as running at once; the backend's list takes over once the shell has it.
+  const end = begin(id, imageArg, asAccount)
+  try {
+    const r = await ipc.runCommand({ id, arg: imageArg, asAccount, context: pageContext })
+    if (r.status === "error") showToast(r.error)
+    else {
+      // The updater keeps its own status, polled every couple of seconds. Read it now.
+      if (UPDATE_COMMANDS.has(id)) refreshUpdates()
+      await refreshShell().catch(() => {})
+    }
+    return r.status === "ok"
+  } finally {
+    end()
+  }
 }
 
 function isTyping(target: EventTarget | null) {
@@ -120,8 +138,9 @@ function isTyping(target: EventTarget | null) {
   return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
 }
 
-/** Returns a keydown listener that runs commands by their shortcuts. */
-export function shortcutListener() {
+/** Returns a keydown listener that runs commands by their shortcuts. `allow` can turn shortcuts
+ * off while something blocks the app. */
+export function shortcutListener(allow: (id: string) => boolean = () => true) {
   let pending: string | undefined
   let timer: ReturnType<typeof setTimeout> | undefined
   return (e: KeyboardEvent) => {
@@ -129,6 +148,7 @@ export function shortcutListener() {
     if (!press || (isPlain(press) && isTyping(e.target))) return
     let next: string | undefined
     for (const c of list()) {
+      if (!allow(c.id)) continue
       const m = match(press, c.shortcuts, pending)
       if (m.kind === "run") {
         e.preventDefault()

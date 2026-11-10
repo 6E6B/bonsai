@@ -2,6 +2,7 @@ import { createSignal, For } from "solid-js"
 import { menuItem, run, shortcutOf } from "~/lib/commands/registry"
 import { type Account, type Color, commands, type PrivacyRow } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
+import { accountProblem, accountUnusable, canReactivate, useNowSecs } from "~/lib/moderation"
 import { privacyLabels, valueLabel } from "~/lib/privacy"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
@@ -17,6 +18,7 @@ const menuPrivacy = ["whoCanJoinMeInExperiences", "whoCanSeeMyOnlineStatus"]
 export function AccountRail() {
   const prompt = usePrompt()
   const confirm = useConfirm()
+  const now = useNowSecs()
   // Privacy settings of the account whose menu was opened last, loaded when it opens.
   const [menuFor, setMenuFor] = createSignal<number | null>(null)
   const privacy = useLive(
@@ -103,6 +105,11 @@ export function AccountRail() {
           menuItem("account.approve_code", { ...as, label: "Sign in another device…", icon: "devices" }),
           menuItem("account.replace_cookie", { ...as, label: "Paste new cookie…" }),
           menuItem("account.sign_out_others", { ...as, label: "Sign out other sessions" }),
+          menuItem("account.reactivate", {
+            ...as,
+            label: "Reactivate account",
+            disabled: !canReactivate(a.moderation, now()),
+          }),
         ],
       },
       menuItem("account.sign_out", { ...as, icon: "sign-out" }),
@@ -133,13 +140,19 @@ export function AccountRail() {
         {(a, i) => (
           <ContextMenu items={menu(a, i())} onOpenChange={(open) => open && setMenuFor(a.id)}>
             <RailItem
-              label={a.unread > 0 ? `${a.label ?? a.displayName} (${a.unread} unread)` : (a.label ?? a.displayName)}
+              label={railLabel(a, now())}
               shortcut={i() < 9 ? shortcutOf(`account.switch_${i() + 1}`) : undefined}
               active={shell.active === a.id}
               color={a.color}
               onClick={() => run("account.switch", String(a.id))}
             >
-              <Avatar size="lg" name={a.displayName} src={thumbUrl("headshot", a.id)} count={a.unread} />
+              <Avatar
+                size="lg"
+                name={a.displayName}
+                src={thumbUrl("headshot", a.id)}
+                count={a.unread}
+                muted={accountUnusable(a, now())}
+              />
             </RailItem>
           </ContextMenu>
         )}
@@ -151,4 +164,11 @@ export function AccountRail() {
       </RailItem>
     </nav>
   )
+}
+
+/** "Alt (Banned, 3 unread)": the name, then what's wrong, then the unread count. */
+function railLabel(a: Account, now: number) {
+  const notes = [accountProblem(a, now), a.unread > 0 ? `${a.unread} unread` : ""].filter(Boolean)
+  const name = a.label ?? a.displayName
+  return notes.length > 0 ? `${name} (${notes.join(", ")})` : name
 }

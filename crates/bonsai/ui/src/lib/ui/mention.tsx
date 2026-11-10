@@ -11,8 +11,6 @@ export interface MentionProps {
   src?: string
   /** Shown as a tooltip: usually the display name. */
   title?: string
-  /** Verified users are blue, like `TextLink tone="verified"`. */
-  verified?: boolean
   /** Opens the profile. Without it the mention is highlighted but not clickable, e.g. while the
    * name is being looked up. */
   onClick?: () => void
@@ -30,12 +28,7 @@ export function Mention(props: MentionProps) {
       }
     >
       {(onClick) => (
-        <KButton
-          data-component="mention"
-          data-verified={props.verified ? "" : undefined}
-          title={props.title}
-          onClick={onClick()}
-        >
+        <KButton data-component="mention" title={props.title} onClick={onClick()}>
           <Avatar data-slot="avatar" size="xs" name={props.name} src={props.src} />
           {props.text}
         </KButton>

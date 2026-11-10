@@ -36,18 +36,7 @@
   }
 
   [data-component="person-tile"] [data-component="avatar"] {
-    margin-bottom: 6px;
-  }
-
-  /* The small faces' own avatars sit in a row, without the big picture's spacing. */
-  [data-component="person-tile"] [data-slot="stack"] {
-    display: flex;
-    justify-content: center;
-    margin-top: 4px;
-  }
-
-  [data-component="person-tile"] [data-slot="stack"] [data-component="avatar"] {
-    margin-bottom: 0;
+    margin-bottom: 10px;
   }
 
   [data-component="person-tile"] [data-slot="name"] {
@@ -86,9 +75,5 @@
   [data-component="person-tile"] [data-slot="status"] {
     margin-top: 2px;
     color: var(--color-presence-game);
-  }
-
-  [data-component="person-tile"] [data-slot="name"][data-verified] [data-slot="name-text"] {
-    color: var(--color-verified);
   }
 }

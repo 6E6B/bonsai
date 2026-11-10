@@ -48,6 +48,8 @@ paths:
     get: { x-rust-name: page_report_abuse, x-captured: "2026-10-12, profile menu Report", summary: "Report form; the app only opens it, it never submits reports", parameters: [{ in: query, name: targetId, type: integer, format: int64, required: true }, { in: query, name: submitterId, type: integer, format: int64, required: false }, { in: query, name: abuseVector, type: string, required: true, description: "user, place, asset, group" }], responses: { "200": { description: OK } } }
   /my/account:
     get: { x-rust-name: page_settings, x-captured: "2026-10-12", summary: Account settings, responses: { "200": { description: OK } } }
+  /not-approved:
+    get: { x-rust-name: page_not_approved, x-captured: "2026-11-09, shown to a moderated account", summary: "Moderation notice: warning, ban, termination or human check", responses: { "200": { description: OK } } }
   /upgrades/robux:
     get: { x-rust-name: page_buy_robux, x-captured: "2026-10-12", summary: Official Robux purchase page (the app never buys Robux), responses: { "200": { description: OK } } }
   /share:

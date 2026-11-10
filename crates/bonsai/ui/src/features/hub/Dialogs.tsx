@@ -1,5 +1,5 @@
 import { createEffect, createSignal, For, on, Show } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { emptyHub, hubUi, publishProblem, setHubUi, target } from "~/lib/hub"
 import { commands, type HubHistory } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
@@ -107,6 +107,7 @@ export function HubDialogs() {
               </Show>
               <Button
                 variant="primary"
+                loading={isRunning("hub.install", target(entry()))}
                 onClick={async () => {
                   const selected = entry()
                   if (await run("hub.install", target(selected))) setHubUi("selected", null)
@@ -173,12 +174,17 @@ export function HubDialogs() {
                     Submit report
                   </Button>
                   <Show when={entry().ownerId === hubUi.userId}>
-                    <Button size="sm" onClick={() => run("hub.unlist", target(entry()))}>
+                    <Button
+                      size="sm"
+                      loading={isRunning("hub.unlist", target(entry()))}
+                      onClick={() => run("hub.unlist", target(entry()))}
+                    >
                       Unlist
                     </Button>
                     <Button
                       size="sm"
                       variant="danger"
+                      loading={isRunning("hub.delete", target(entry()))}
                       onClick={async () => {
                         if (await run("hub.delete", target(entry()))) setHubUi("selected", null)
                       }}

@@ -65,6 +65,18 @@
     --badge-fg: var(--color-on-media);
   }
 
+  [data-component="tile"] [data-slot="flair"] {
+    position: absolute;
+    z-index: 1;
+    bottom: 4px;
+    left: 4px;
+  }
+
+  /* Flair stands out from the quiet badge chip: the same dark chip, but in the badge's own color. */
+  [data-component="tile"] [data-slot="flair"] [data-component="badge"] {
+    --badge-bg: var(--color-media-chip);
+  }
+
   /* Bare marks on the picture, no chip. A drop shadow keeps them readable on light pictures. */
   [data-component="tile"] [data-slot="marker"] {
     --pips-empty: color-mix(in srgb, var(--color-on-media) 30%, transparent);

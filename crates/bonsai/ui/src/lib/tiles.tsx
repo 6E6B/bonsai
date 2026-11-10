@@ -1,10 +1,11 @@
 import { For, Match, Show, Switch } from "solid-js"
 import { assetIcon } from "~/lib/asset-icon"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { compact, percent } from "~/lib/format"
 import type { GameCard, ValueTag } from "~/lib/ipc/bindings"
 import { wantsPreview } from "~/lib/item-preview"
 import { gameMenu, type ItemMenuExtras, itemMenu, itemTarget, joinUser } from "~/lib/menus"
+import { isSoundHat } from "~/lib/sound-hats"
 import { thumbUrl } from "~/lib/thumb"
 import {
   Badge,
@@ -122,7 +123,13 @@ export function PlayingRow(props: {
         onClick={() => run("game.open", String(props.placeId))}
         actions={
           props.noJoin ? undefined : (
-            <Button size="sm" variant="primary" icon="play" onClick={() => run("game.join", joinUser(props.userId))}>
+            <Button
+              size="sm"
+              variant="primary"
+              icon="play"
+              loading={isRunning("game.join", joinUser(props.userId))}
+              onClick={() => run("game.join", joinUser(props.userId))}
+            >
               Join
             </Button>
           )
@@ -147,6 +154,38 @@ export interface TileItem {
   rap?: number | null
   /** Rolimons' data, when values are on. */
   values?: ValueTag | null
+}
+
+/** The flair on a sound hat's tile. Check `isSoundHat` first. */
+export function SoundHatBadge() {
+  return (
+    <Badge variant="purple">
+      <Icon name="audio-fill" size={12} class="-ml-0.5 mr-1" />
+      Sound Hat
+    </Badge>
+  )
+}
+
+/** A music-notes icon with a tooltip, for spots too small for `SoundHatBadge`. Renders
+ * nothing unless the item is a sound hat. */
+export function SoundHatMark(props: { id: number; bundle?: boolean; size?: number; class?: string }) {
+  return (
+    <Show when={isSoundHat(props.id, props.bundle)}>
+      <Tooltip content="Sound Hat" class={`inline-flex shrink-0 text-tag-purple ${props.class ?? ""}`}>
+        <Icon name="audio-fill" size={props.size ?? 14} aria-label="Sound Hat" />
+      </Tooltip>
+    </Show>
+  )
+}
+
+/** An item's name that truncates, with its `SoundHatMark` after it. For list rows and cells. */
+export function ItemName(props: { name: string; id: number; bundle?: boolean }) {
+  return (
+    <span class="flex min-w-0 items-center gap-1.5">
+      <span class="truncate">{props.name}</span>
+      <SoundHatMark id={props.id} bundle={props.bundle} />
+    </span>
+  )
 }
 
 const marker = (t: ValueTag | null | undefined) => !!t && (t.projected || !!t.demand || !!t.trend)
@@ -189,6 +228,7 @@ export function ItemTile(props: {
             <Badge>{`x${props.item.copies}`}</Badge>
           ) : undefined
         }
+        flair={isSoundHat(props.item.id, props.item.bundle) ? <SoundHatBadge /> : undefined}
         onClick={
           props.onClick ??
           ((e) => run(wantsPreview(e) ? "market.preview" : "market.open", itemTarget(props.item.id, props.item.bundle)))

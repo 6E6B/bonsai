@@ -1,6 +1,6 @@
 import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js"
 import { useCommandContext, useListCursor } from "~/lib/commands/hooks"
-import { handle, menuItem, run, runBackend } from "~/lib/commands/registry"
+import { handle, isRunning, menuItem, run, runBackend } from "~/lib/commands/registry"
 import { ExperienceCard } from "~/lib/experience-card"
 import { ago } from "~/lib/format"
 import { type ChatView, type ConversationRow, commands, type GameCard, type Paged } from "~/lib/ipc/bindings"
@@ -404,7 +404,13 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
           </Show>
           <Show when={friend()?.presence === "game" && friend()}>
             {(f) => (
-              <Button size="sm" variant="primary" icon="play" onClick={() => run("game.join", joinUser(f().id))}>
+              <Button
+                size="sm"
+                variant="primary"
+                icon="play"
+                loading={isRunning("game.join", joinUser(f().id))}
+                onClick={() => run("game.join", joinUser(f().id))}
+              >
                 Join
               </Button>
             )}
@@ -498,7 +504,12 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
                               <span class="flex items-center gap-1 text-xs text-danger">
                                 <Icon name="alert" size={12} />
                                 Not sent
-                                <Button variant="ghost" size="sm" onClick={() => run("chat.resend", l.id)}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  loading={isRunning("chat.resend", l.id)}
+                                  onClick={() => run("chat.resend", l.id)}
+                                >
                                   Resend
                                 </Button>
                                 <Button variant="ghost" size="sm" onClick={() => run("chat.discard", l.id)}>
@@ -551,6 +562,7 @@ function Conversation(props: { id: string; row: ConversationRow | null }) {
               input = el
             }}
             multiline
+            rows={1}
             class="flex-1"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {

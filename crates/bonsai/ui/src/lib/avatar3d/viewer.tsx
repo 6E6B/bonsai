@@ -1,9 +1,9 @@
 import { isTauri } from "@tauri-apps/api/core"
-import { createEffect, createMemo, createSignal, on, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, type JSX, on, onCleanup, onMount, Show } from "solid-js"
 import { handle, menuItem, run } from "~/lib/commands/registry"
 import { type Avatar3dView, type AvatarSource, commands } from "~/lib/ipc/bindings"
 import { shell, useLive } from "~/lib/store"
-import { IconButton, Menu, type MenuEntry, Spinner, showToast, Thumbnail, Viewport } from "~/lib/ui"
+import { IconButton, Menu, type MenuEntry, Spinner, Stage, showToast, Thumbnail, Viewport } from "~/lib/ui"
 import {
   animationName,
   BASIC_ANIMATIONS,
@@ -63,6 +63,11 @@ export interface AvatarViewerProps {
   class?: string
   /** Menu entries added to the toolbar's menu. */
   menu?: MenuEntry[]
+  /** Draw it on a `Stage`, with the controls laid over the corners instead of a toolbar
+   * below. `class` then sizes the stage. */
+  stage?: boolean
+  /** On a stage, controls for the top-left corner, like a view switch. */
+  corner?: JSX.Element
 }
 
 /**
@@ -224,37 +229,72 @@ export function AvatarViewer(props: AvatarViewerProps) {
     ...(props.menu?.length ? [{ kind: "separator" as const }, ...props.menu] : []),
   ]
 
+  const frame = (cls: string) => (
+    <Viewport tabindex={lease() ? 0 : -1} role="img" aria-label={props.alt} onKeyDown={onKey} class={cls}>
+      {/* The engine's canvas lives here. Solid clears an element whose dynamic children all
+          go away, so the canvas can't share a parent with the <Show>s below. */}
+      <div ref={box} class="absolute inset-0" classList={{ invisible: waiting() || showImage() }} />
+      <Show when={showImage()}>
+        <Thumbnail class="absolute inset-0 w-full" alt={props.alt} fallback="avatar" src={props.image} />
+      </Show>
+      <Show when={waiting()}>
+        <span class="absolute inset-0 flex items-center justify-center">
+          <Spinner />
+        </span>
+      </Show>
+    </Viewport>
+  )
+  const toggle = () => (
+    <IconButton
+      size="sm"
+      icon={is3d() ? "image" : "model"}
+      label={is3d() ? "Show image" : "Show 3D"}
+      onClick={() => run("avatar.view_3d")}
+    />
+  )
+  const reset = () => (
+    <Show when={lease()}>
+      <IconButton size="sm" icon="refresh" label="Reset camera" onClick={() => run("avatar.orbit", "reset")} />
+    </Show>
+  )
+  const options = () => <Menu size="sm" label="Viewer options" icon="more" items={toolbarMenu()} />
+  const hint = () => {
+    if (want3d() && failed()) return "3D unavailable"
+    return lease() ? "Drag to turn · Scroll to zoom" : undefined
+  }
+
   return (
-    <div class={`flex flex-col gap-2 ${props.class ?? ""}`}>
-      <Viewport tabindex={lease() ? 0 : -1} role="img" aria-label={props.alt} onKeyDown={onKey} class="w-full">
-        {/* The engine's canvas lives here. Solid clears an element whose dynamic children all
-            go away, so the canvas can't share a parent with the <Show>s below. */}
-        <div ref={box} class="absolute inset-0" classList={{ invisible: waiting() || showImage() }} />
-        <Show when={showImage()}>
-          <Thumbnail class="absolute inset-0 w-full" alt={props.alt} fallback="avatar" src={props.image} />
-        </Show>
-        <Show when={waiting()}>
-          <span class="absolute inset-0 flex items-center justify-center">
-            <Spinner />
-          </span>
-        </Show>
-      </Viewport>
-      <div class="flex items-center gap-1">
-        <IconButton
-          size="sm"
-          icon={is3d() ? "image" : "model"}
-          label={is3d() ? "Show image" : "Show 3D"}
-          onClick={() => run("avatar.view_3d")}
-        />
-        <Show when={lease()}>
-          <IconButton size="sm" icon="refresh" label="Reset camera" onClick={() => run("avatar.orbit", "reset")} />
-        </Show>
-        <Show when={want3d() && failed()}>
-          <span class="text-xs text-fg-muted">3D unavailable</span>
-        </Show>
-        <span class="flex-1" />
-        <Menu size="sm" label="Viewer options" icon="more" items={toolbarMenu()} />
-      </div>
-    </div>
+    <Show
+      when={props.stage}
+      fallback={
+        <div class={`flex flex-col gap-2 ${props.class ?? ""}`}>
+          {frame("w-full")}
+          <div class="flex items-center gap-1">
+            {toggle()}
+            {reset()}
+            <Show when={want3d() && failed()}>
+              <span class="text-xs text-fg-muted">3D unavailable</span>
+            </Show>
+            <span class="flex-1" />
+            {options()}
+          </div>
+        </div>
+      }
+    >
+      <Stage
+        class={props.class}
+        topStart={props.corner}
+        topEnd={
+          <>
+            {reset()}
+            {toggle()}
+            {options()}
+          </>
+        }
+        hint={hint()}
+      >
+        {frame("")}
+      </Stage>
+    </Show>
   )
 }

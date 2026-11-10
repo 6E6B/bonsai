@@ -1,0 +1,400 @@
+/* An experience's top: a raised card with a wide picture across it, the name laid over the
+ * darkened bottom of the picture, a strip of the other pictures in its corner, and a bar of
+ * actions and figures under it. Marks on the picture use the media tokens, the same in both
+ * themes. */
+@layer components {
+  [data-component="showcase"] {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+  }
+
+  [data-component="showcase"] [data-slot="stage"] {
+    position: relative;
+    /* Grows with the card's width rather than an aspect ratio, which with a height cap would
+     * also cap the width and leave a gap at the side. */
+    height: clamp(240px, 34cqi, 560px);
+    overflow: hidden;
+    background: var(--color-deep);
+    color: var(--color-on-media);
+  }
+
+  /* Nothing to picture: a band just tall enough for the heading. */
+  [data-component="showcase"][data-plain] [data-slot="stage"] {
+    height: 168px;
+  }
+
+  /* The picture fills the stage edge to edge. */
+  [data-component="showcase"] [data-slot="backdrop"] {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    border-radius: 0;
+    background: var(--color-deep);
+    box-shadow: none;
+    animation: showcase-in var(--duration-slow) var(--ease);
+  }
+
+  @keyframes showcase-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* Darkens the bottom for the title and the left for long names. Two layers of the media chip
+   * so the bottom edge is near black and the top of the picture stays clear. */
+  [data-component="showcase"] [data-slot="stage"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, var(--color-media-chip), transparent 45%),
+      linear-gradient(to top, var(--color-media-chip), transparent 75%);
+    pointer-events: none;
+  }
+
+  /* Text and controls over the picture. Clicks fall through to the picture (its image menu)
+   * except on the controls themselves. A grid so the strip can change corners: the top and
+   * foot rows only group the markup. */
+  [data-component="showcase"] [data-slot="overlay"] {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    display: grid;
+    grid-template:
+      "caption count" auto
+      ". ." 1fr
+      "heading strip" auto
+      / minmax(0, 1fr) auto;
+    gap: 8px 24px;
+    padding: 16px;
+    pointer-events: none;
+  }
+
+  [data-component="showcase"] :is([data-slot="top"], [data-slot="foot"]) {
+    display: contents;
+  }
+
+  [data-component="showcase"] [data-slot="overlay"] :is(button, a, [data-component="text-link"]) {
+    pointer-events: auto;
+  }
+
+  [data-component="showcase"] :is([data-slot="caption"], [data-slot="count"], [data-slot="tag"]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 0 8px;
+    overflow: hidden;
+    border-radius: var(--radius-full);
+    background: var(--color-media-chip);
+    color: var(--color-on-media);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-on-media) 15%, transparent);
+  }
+
+  [data-component="showcase"] [data-slot="caption"] {
+    grid-area: caption;
+    justify-self: start;
+    max-width: 100%;
+  }
+
+  [data-component="showcase"] [data-slot="count"] {
+    grid-area: count;
+    justify-self: end;
+  }
+
+  [data-component="showcase"] [data-slot="caption"] [data-component="icon"] {
+    flex-shrink: 0;
+  }
+
+  [data-component="showcase"] [data-slot="caption-text"] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  [data-component="showcase"] [data-slot="caption"] [data-component="text-link"] {
+    color: var(--color-on-media);
+  }
+
+  [data-component="showcase"] [data-slot="heading"] {
+    grid-area: heading;
+    align-self: end;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  [data-component="showcase"] [data-slot="names"] {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  /* Ringed like the strip's thumbs so it reads on any picture. */
+  [data-component="showcase"] [data-slot="emblem"] {
+    display: flex;
+    flex-shrink: 0;
+    width: 76px;
+  }
+
+  [data-component="showcase"] [data-slot="emblem"] [data-component="thumbnail"] {
+    width: 100%;
+    border-radius: var(--radius-md);
+    background: var(--color-deep);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-on-media) 20%, transparent);
+  }
+
+  [data-component="showcase"] [data-slot="tags"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  [data-component="showcase"] [data-slot="title"] {
+    margin: 0;
+    overflow: hidden;
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    filter: var(--shadow-on-media);
+  }
+
+  [data-component="showcase"] [data-slot="byline"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    min-width: 0;
+    color: color-mix(in srgb, var(--color-on-media) 80%, transparent);
+    font-size: var(--text-base);
+    filter: var(--shadow-on-media);
+  }
+
+  /* Figures under the byline: a bright value, a softer label, a faint icon. Hidden while the
+   * stats fit on the bar; see the container query at the end. */
+  [data-component="showcase"] [data-slot="summary"] {
+    display: none;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    filter: var(--shadow-on-media);
+  }
+
+  [data-component="showcase"] [data-slot="figure"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  [data-component="showcase"] [data-slot="figure"] [data-component="icon"] {
+    opacity: 0.65;
+  }
+
+  [data-component="showcase"] [data-slot="figure-value"] {
+    font-size: var(--text-base);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  [data-component="showcase"] [data-slot="figure-label"] {
+    font-size: var(--text-sm);
+    opacity: 0.7;
+  }
+
+  [data-component="showcase"] [data-slot="byline"] [data-component="text-link"] {
+    color: var(--color-on-media);
+    font-weight: 600;
+  }
+
+  /* ── Strip ── */
+
+  [data-component="showcase"] [data-slot="strip"] {
+    grid-area: strip;
+    align-self: end;
+    display: flex;
+    gap: 6px;
+  }
+
+  [data-component="showcase"] [data-slot="thumb"] {
+    width: 72px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    opacity: 0.6;
+    cursor: default;
+    transition:
+      opacity var(--duration) var(--ease),
+      box-shadow var(--duration) var(--ease);
+  }
+
+  [data-component="showcase"] [data-slot="thumb"]:hover,
+  [data-component="showcase"] [data-slot="thumb"]:focus-visible {
+    opacity: 1;
+  }
+
+  [data-component="showcase"] [data-slot="thumb"][aria-pressed="true"] {
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--color-on-media);
+  }
+
+  [data-component="showcase"] [data-slot="thumb"] [data-component="thumbnail"] {
+    width: 100%;
+    border-radius: var(--radius-sm);
+  }
+
+  /* ── Arrows ── Shown on hover or keyboard focus, like MediaFrame. */
+
+  [data-component="showcase"] :is([data-slot="prev"], [data-slot="next"]) {
+    position: absolute;
+    z-index: 2;
+    top: 40%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--color-media-chip);
+    color: var(--color-on-media);
+    opacity: 0;
+    transform: translateY(-50%);
+    cursor: default;
+    transition: opacity var(--duration) var(--ease);
+  }
+
+  [data-component="showcase"] [data-slot="prev"] {
+    left: 12px;
+  }
+
+  [data-component="showcase"] [data-slot="next"] {
+    right: 12px;
+  }
+
+  [data-component="showcase"] [data-slot="stage"]:hover :is([data-slot="prev"], [data-slot="next"]),
+  [data-component="showcase"] :is([data-slot="prev"], [data-slot="next"]):focus-visible {
+    opacity: 1;
+  }
+
+  [data-component="showcase"] :is([data-slot="prev"], [data-slot="next"]):hover {
+    background-image: linear-gradient(var(--color-hover-on-fill), var(--color-hover-on-fill));
+  }
+
+  /* ── Bar ── */
+
+  [data-component="showcase"] [data-slot="bar"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 12px 16px;
+  }
+
+  [data-component="showcase"] [data-slot="actions"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  [data-component="showcase"] [data-slot="stats"] {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    margin: 0;
+  }
+
+  [data-component="showcase"] [data-slot="stats"] > * {
+    padding: 0 16px;
+  }
+
+  [data-component="showcase"] [data-slot="stats"] > :first-child {
+    padding-left: 0;
+  }
+
+  [data-component="showcase"] [data-slot="stats"] > :last-child {
+    padding-right: 0;
+  }
+
+  [data-component="showcase"] [data-slot="stats"] > * + * {
+    box-shadow: inset 1px 0 var(--color-line);
+  }
+
+  /* Too narrow for the actions and the stats side by side: the figures move onto the picture
+   * as a short line after the byline, and the bar keeps one row of actions. Only when there
+   * is a summary to show instead. */
+  @container (max-width: 1120px) {
+    [data-component="showcase"]:has([data-slot="summary"]) [data-slot="bar"] [data-slot="stats"] {
+      display: none;
+    }
+
+    [data-component="showcase"] [data-slot="summary"] {
+      display: flex;
+    }
+
+    /* The strip moves to the top-left so the heading gets the whole width. A caption goes
+     * under it. */
+    [data-component="showcase"] [data-slot="overlay"] {
+      grid-template:
+        "strip count" auto
+        "caption ." auto
+        ". ." 1fr
+        "heading heading" auto
+        / minmax(0, 1fr) auto;
+    }
+
+    [data-component="showcase"] [data-slot="strip"] {
+      align-self: start;
+    }
+
+    [data-component="showcase"] [data-slot="thumb"] {
+      width: 60px;
+    }
+  }
+
+  /* Narrow: a smaller title; below that the strip goes and the arrows still step. */
+  @container (max-width: 480px) {
+    [data-component="showcase"] [data-slot="strip"] {
+      display: none;
+    }
+  }
+
+  @container (max-width: 640px) {
+    [data-component="showcase"] [data-slot="title"] {
+      font-size: var(--text-2xl);
+      line-height: var(--text-2xl--line-height);
+    }
+
+    [data-component="showcase"] [data-slot="overlay"] {
+      padding: 12px;
+    }
+
+    [data-component="showcase"] [data-slot="heading"] {
+      gap: 12px;
+    }
+
+    [data-component="showcase"] [data-slot="emblem"] {
+      width: 56px;
+    }
+  }
+}

@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest"
+import { createRoot } from "solid-js"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import type { UpdateStatus } from "~/lib/ipc/bindings"
-import { updateBusy, updateMessage } from "./updates"
+import { refreshUpdates, updateBusy, updateMessage, updates, useUpdates } from "./updates"
+
+const updateStatus = vi.hoisted(() => vi.fn())
+vi.mock("@tauri-apps/api/core", () => ({ isTauri: () => true }))
+vi.mock("~/lib/ipc/bindings", () => ({ commands: { updateStatus } }))
 
 const status = (patch: Partial<UpdateStatus> = {}): UpdateStatus => ({
   phase: "idle",
@@ -34,5 +39,35 @@ describe("update status", () => {
     expect(updateMessage(status({ phase: "unavailable", unavailableReason: "Use your package manager." }))).toBe(
       "Use your package manager.",
     )
+  })
+})
+
+describe("polling", () => {
+  afterEach(() => vi.useRealTimers())
+
+  it("reads the status at once when asked, not at the next poll", async () => {
+    vi.useFakeTimers()
+    updateStatus.mockResolvedValue(status())
+    const dispose = createRoot((dispose) => {
+      useUpdates()
+      return dispose
+    })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(updateStatus).toHaveBeenCalledTimes(1)
+
+    updateStatus.mockResolvedValue(status({ phase: "checking" }))
+    refreshUpdates()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(updateStatus).toHaveBeenCalledTimes(2)
+    expect(updates.phase).toBe("checking")
+
+    // Busy phases poll fast, and the early read didn't start a second timer chain.
+    await vi.advanceTimersByTimeAsync(500)
+    expect(updateStatus).toHaveBeenCalledTimes(3)
+
+    dispose()
+    refreshUpdates()
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(updateStatus).toHaveBeenCalledTimes(3)
   })
 })

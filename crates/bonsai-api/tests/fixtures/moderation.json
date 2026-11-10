@@ -1,0 +1,202 @@
+{
+  "captured": "2026-11-09",
+  "source": "synthetic",
+  "note": "A warned account: users/authenticated says \"User is moderated\" when the cookie is pasted and on the refresh after saving, not-approved says what happened, the public profile names it. Then the warning is accepted, users/authenticated answers again and voice settings report a suspension. Shapes from RobloxAccountManager's moderation checks; ids and text are made up.",
+  "interactions": [
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/authenticated"
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "User is moderated"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "usermoderation.roblox.com",
+        "path": "/v1/not-approved"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "punishedUserId": 1000001,
+          "punishmentTypeDescription": "Warn",
+          "beginDate": "2026-11-08T21:04:11.533Z",
+          "endDate": "2026-11-08T21:04:11.533Z",
+          "messageToUser": "Do not share personal information.",
+          "title": "Warning",
+          "body": "",
+          "badUtterances": [],
+          "punishmentId": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/1000001"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": 1000001,
+          "name": "TestUser",
+          "displayName": "TestUser",
+          "isBanned": false,
+          "hasVerifiedBadge": false,
+          "description": "",
+          "created": "2020-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/authenticated"
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "errors": [
+            {
+              "code": 0,
+              "message": "User is moderated"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "usermoderation.roblox.com",
+        "path": "/v1/not-approved"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "punishedUserId": 1000001,
+          "punishmentTypeDescription": "Warn",
+          "beginDate": "2026-11-08T21:04:11.533Z",
+          "endDate": "2026-11-08T21:04:11.533Z",
+          "messageToUser": "Do not share personal information.",
+          "title": "Warning",
+          "body": "",
+          "badUtterances": [],
+          "punishmentId": 1
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "usermoderation.roblox.com",
+        "path": "/v1/not-approved/reactivate",
+        "absent_headers": [
+          "x-csrf-token"
+        ]
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "x-csrf-token": "csrf-token-redacted"
+        },
+        "body": {
+          "code": 0,
+          "message": "Token Validation Failed"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "host": "usermoderation.roblox.com",
+        "path": "/v1/not-approved/reactivate",
+        "headers": {
+          "x-csrf-token": "csrf-token-redacted"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {}
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "users.roblox.com",
+        "path": "/v1/users/authenticated"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "id": 1000001,
+          "name": "TestUser",
+          "displayName": "TestUser"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "host": "voice.roblox.com",
+        "path": "/v1/settings"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "isVoiceEnabled": false,
+          "isUserOptIn": true,
+          "isUserEligible": true,
+          "isBanned": true,
+          "banReason": 7,
+          "bannedUntil": {
+            "Seconds": 1794268800,
+            "Nanos": 0
+          },
+          "isVerifiedForVoice": true,
+          "isAvatarVideoEnabled": false,
+          "isAvatarVideoEligible": true
+        }
+      }
+    }
+  ]
+}

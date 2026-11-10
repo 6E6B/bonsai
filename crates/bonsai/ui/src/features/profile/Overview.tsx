@@ -18,7 +18,7 @@ import { emptyList } from "~/lib/list-state"
 import { itemMenu, itemTarget, userMenu } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
-import { GameTile, ItemTile } from "~/lib/tiles"
+import { GameTile, ItemTile, SoundHatMark } from "~/lib/tiles"
 import {
   Badge,
   Button,
@@ -39,7 +39,7 @@ import {
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
 import { TradingCard } from "./Trading"
-import { pageOf, SHOWN, wornKind } from "./wearing"
+import { pageOf, shownOnOverview } from "./wearing"
 
 /** Entry widths for each row: tiles match `tileGrid`; people and badges are narrower. */
 const TILE = 128
@@ -55,7 +55,7 @@ const ms = (iso: string) => {
 /** Which tab, and which list inside it, a "See all" opens. */
 export type SeeAll = (section: string, list?: string) => void
 
-/** A bit of everything, like the profile on roblox.com: bio and facts, what they wear, and one
+/** A bit of everything, like the profile on roblox.com: facts, what they wear, and one
  * scrolling row each of friends, experiences, favorites, communities, badges and collectibles, each with
  * a link to its full tab. Rows with nothing in them are left out. */
 export function Overview(props: {
@@ -67,7 +67,6 @@ export function Overview(props: {
   badges: List<UserBadge>
   groups: List<GroupCard>
   collectibles: List<ItemCard>
-  trading: TraderView
   onSeeAll: SeeAll
 }) {
   const id = () => String(props.userId)
@@ -87,20 +86,6 @@ export function Overview(props: {
     <div class="@container">
       <div class="grid grid-cols-1 gap-x-6 gap-y-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
         <div class="flex min-w-0 flex-col gap-5">
-          <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
-            <h3 class="text-sm font-medium text-fg-muted">Bio</h3>
-            <Show
-              when={props.view.user?.description.trim()}
-              fallback={<span class="text-fg-muted">{props.view.user ? "No bio." : ""}</span>}
-            >
-              {(d) => (
-                <Clamp lines={8}>
-                  <Description text={d()} tags />
-                </Clamp>
-              )}
-            </Show>
-          </Card>
-          <TradingCard view={props.trading} enabled={shell.itemValues} />
           <Show when={props.view.note}>
             {(n) => (
               <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
@@ -195,6 +180,28 @@ export function Overview(props: {
   )
 }
 
+/** Bio and trading stats side by side under the profile header, shown on every tab. Trading hides itself for
+ * players the values site has not scanned, and Bio then takes the full width. */
+export function Intro(props: { view: ProfileView; trading: TraderView }) {
+  return (
+    <div class="@container">
+      <div class="grid grid-cols-1 gap-x-6 gap-y-5 @2xl:grid-flow-col @2xl:auto-cols-fr">
+        <Card class="flex min-w-0 flex-col gap-1.5 px-3.5 py-3">
+          <h3 class="text-sm font-medium text-fg-muted">Bio</h3>
+          <Show when={props.view.user?.description.trim()} fallback={<span class="text-fg-muted">No bio.</span>}>
+            {(d) => (
+              <Clamp lines={8}>
+                <Description text={d()} tags />
+              </Clamp>
+            )}
+          </Show>
+        </Card>
+        <TradingCard view={props.trading} enabled={shell.itemValues} />
+      </div>
+    </div>
+  )
+}
+
 /** One sideways-scrolling row of a list under a heading with its count and "See all". Hidden until the list has
  * something in it. */
 function Row<T>(props: {
@@ -230,8 +237,8 @@ function Row<T>(props: {
   )
 }
 
-/** A friend of theirs. Presence is only known for your own friends, so others get no dot rather
- * than a grey one that reads as offline. */
+/** A friend of theirs. No dot until their presence loads, rather than a grey one that reads as
+ * offline. */
 function Person(props: { person: Connection }) {
   const p = () => props.person
   return (
@@ -240,8 +247,9 @@ function Person(props: { person: Connection }) {
         name={p().displayName || p().name || `User ${p().id}`}
         username={p().name || undefined}
         src={thumbUrl("headshot", p().id, true)}
-        presence={p().friend ? p().presence : undefined}
+        presence={p().presence ?? undefined}
         verified={p().verified}
+        premium={p().premium}
         status={p().place ?? undefined}
         onClick={() => run("user.open", String(p().id))}
       />
@@ -283,9 +291,9 @@ export function BadgeTile(props: { badge: UserBadge }) {
 /** Worn items on one page of the Wearing card: two rows of four. */
 const WORN_PAGE = 8
 
-/** Their avatar as it is now, with the accessories and clothing on it, two rows at a time. Body
- * parts and animations look alike and say little at this size, so they are left out; the Outfits
- * tab lists them. */
+/** Their avatar as it is now, with the accessories, clothing, head and face on it, two rows at a
+ * time. Other body parts and animations look alike and say little at this size, so they are left
+ * out; the Outfits tab lists them. */
 function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }) {
   const [index, setIndex] = createSignal(0)
   createEffect(
@@ -295,7 +303,7 @@ function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }
       { defer: true },
     ),
   )
-  const shown = () => props.look.items.filter((i) => SHOWN.has(wornKind(i.assetType)))
+  const shown = () => props.look.items.filter((i) => shownOnOverview(i.assetType))
   const page = () => pageOf(shown(), index(), WORN_PAGE)
   return (
     <Card class="flex flex-col">
@@ -334,6 +342,12 @@ function Wearing(props: { userId: number; look: LookView; onSeeAll: () => void }
                       onClick={() => run("market.open", itemTarget(i.id, i.bundle))}
                     >
                       <Thumbnail class="w-full" alt={i.name} src={thumbUrl("asset", i.id)} fallback="avatar" />
+                      <SoundHatMark
+                        id={i.id}
+                        bundle={i.bundle}
+                        size={12}
+                        class="absolute bottom-1 left-1 [filter:var(--shadow-on-media)]"
+                      />
                       <span class="pointer-events-none absolute inset-0 rounded-lg group-hover:bg-hover" />
                     </button>
                   </Tooltip>

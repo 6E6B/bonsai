@@ -101,6 +101,8 @@ pub struct Shell {
     pub active: Option<Id>,
     pub offline: bool,
     pub jobs: u32,
+    /// Commands the user ran whose work hasn't finished, so their buttons can show a spinner.
+    pub running: Vec<Running>,
     pub toasts: Vec<Toast>,
     pub keychain_warning: Option<String>,
     /// Robux of the active account, once known.
@@ -147,6 +149,15 @@ pub struct Shell {
     /// Revisions of thumbnails that changed during the run, by `thumb://` path. `thumbUrl`
     /// adds them so the webview loads the new image instead of its cached copy.
     pub thumb_revs: std::collections::HashMap<String, u32>,
+}
+
+/// A command still working: the account it acts as, its id and the argument it was run with.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct Running {
+    pub account: Option<Id>,
+    pub id: String,
+    pub arg: Option<String>,
 }
 
 /// Display settings the whole window follows. Values as `settings.set` takes them.
@@ -227,6 +238,8 @@ pub enum Login {
     Confirm {
         user: User,
         already_added: bool,
+        /// Roblox moderated this account. It can still be added.
+        moderation: Option<ModerationView>,
     },
     Failed {
         message: String,
@@ -249,6 +262,8 @@ pub enum Session {
     Ok,
     Expired,
     NoCookie,
+    /// Warned, banned, terminated or locked. See `Account::moderation`.
+    Moderated,
 }
 
 impl From<&SessionState> for Session {
@@ -258,6 +273,7 @@ impl From<&SessionState> for Session {
             SessionState::Ok => Session::Ok,
             SessionState::Expired => Session::Expired,
             SessionState::NoCookie => Session::NoCookie,
+            SessionState::Moderated => Session::Moderated,
         }
     }
 }
@@ -274,6 +290,61 @@ pub struct Account {
     /// Everything unread for this account (messages, chat, friend requests, trades,
     /// notifications), for the rail badge.
     pub unread: u32,
+    /// What Roblox did, while `session` is `moderated`. None when Roblox didn't say yet.
+    pub moderation: Option<ModerationView>,
+    /// A voice chat suspension. The account still works.
+    pub voice_ban: Option<VoiceBanView>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum ModerationKind {
+    Warned,
+    Banned,
+    Terminated,
+    /// Roblox wants a human check on the website.
+    Locked,
+    Unknown,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ModerationView {
+    pub kind: ModerationKind,
+    /// Roblox's heading; empty when it wrote none.
+    pub title: String,
+    /// Roblox's explanation.
+    pub message: String,
+    /// Unix seconds; 0 when unknown.
+    pub begins: f64,
+    /// Unix seconds when a ban ends. A warning, or a ban past this, can be reactivated.
+    pub ends: Option<f64>,
+}
+
+impl From<&bonsai_core::moderation::Moderation> for ModerationView {
+    fn from(m: &bonsai_core::moderation::Moderation) -> Self {
+        use bonsai_core::moderation::ModerationKind as K;
+        Self {
+            kind: match m.kind {
+                K::Warned => ModerationKind::Warned,
+                K::Banned => ModerationKind::Banned,
+                K::Terminated => ModerationKind::Terminated,
+                K::Locked => ModerationKind::Locked,
+                K::Unknown => ModerationKind::Unknown,
+            },
+            title: m.title.clone(),
+            message: m.message.clone(),
+            begins: m.begins as f64,
+            ends: m.ends.map(|e| e as f64),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct VoiceBanView {
+    /// Unix seconds; None when Roblox didn't say.
+    pub until: Option<f64>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Type)]
@@ -751,6 +822,8 @@ pub struct ProfileView {
     pub place_id: Option<Id>,
     /// For the experience's icon.
     pub universe_id: Option<Id>,
+    /// The experience's first screenshot, for `thumb://game_thumbnail`. Only while in game.
+    pub place_image: Option<Id>,
     /// `None` on your own profiles and when signed out.
     pub relation: Option<RelationView>,
     /// One of your accounts.
@@ -854,7 +927,11 @@ pub struct ProfileHead {
     pub created: String,
     pub verified: bool,
     pub banned: bool,
-    /// Counts; `None` when Roblox didn't say.
+    /// Has Premium (without Roblox Plus).
+    pub premium: bool,
+    /// Has Roblox Plus.
+    pub plus: bool,
+    /// Counts; `None` when Roblox didn't say or the user hides them.
     pub friends: Option<u32>,
     pub followers: Option<u32>,
     pub following: Option<u32>,
@@ -958,11 +1035,13 @@ pub struct Connection {
     pub name: String,
     pub display_name: String,
     pub verified: bool,
+    /// Has Premium or Roblox Plus.
+    pub premium: bool,
     /// A friend of the active account (a mutual friend, on a friends list).
     pub friend: bool,
-    /// Known only for the active account's friends; offline for everyone else.
-    pub presence: Presence,
-    /// The game they're in, when they're a friend in one and it can be named.
+    /// `None` until it loads, or when loading it failed.
+    pub presence: Option<Presence>,
+    /// The game they're in, when Roblox shares it and it can be named.
     pub place: Option<String>,
     /// Whether the active account follows them. `None` for yourself, when signed out, or until
     /// it has loaded.
@@ -1057,11 +1136,29 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                 unread: s.data.get(&a.id).map_or(0, |d| {
                     (d.unread.total() + bonsai_core::feed::unread(&d.feed)).clamp(0, u32::MAX as i64) as u32
                 }),
+                moderation: s
+                    .data
+                    .get(&a.id)
+                    .filter(|d| d.session == SessionState::Moderated)
+                    .and_then(|d| d.moderation.as_ref())
+                    .map(Into::into),
+                voice_ban: s.data.get(&a.id).and_then(|d| d.voice_ban).map(|v| VoiceBanView {
+                    until: v.until.map(|u| u as f64),
+                }),
             })
             .collect(),
         active: s.accounts.active.map(|a| Id(a.0)),
         offline: s.offline,
         jobs: s.jobs,
+        running: s
+            .running
+            .keys()
+            .map(|k| Running {
+                account: k.account.map(|a| Id(a.0)),
+                id: k.command.clone(),
+                arg: k.arg.clone(),
+            })
+            .collect(),
         toasts: s
             .toasts
             .iter()
@@ -1147,13 +1244,18 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                 linked: linked.clone(),
             },
             LoginState::Validating => Login::Validating,
-            LoginState::Confirm { user, already_added } => Login::Confirm {
+            LoginState::Confirm {
+                user,
+                already_added,
+                moderation,
+            } => Login::Confirm {
                 user: User {
                     id: Id(user.id),
                     name: user.name.clone(),
                     display_name: user.display_name.clone(),
                 },
                 already_added: *already_added,
+                moderation: moderation.as_ref().map(Into::into),
             },
             LoginState::Failed(message) => Login::Failed {
                 message: message.clone(),
@@ -1202,6 +1304,12 @@ pub fn run_command(app: AppHandle, core: State<'_, Arc<Core>>, inv: Invocation) 
         let picked = inv.as_account.map(|a| AccountId(a.0));
         return core.run_plugin_command(&cmd, inv.arg, core.acting(picked), inv.context.as_deref());
     }
+    // Work this command starts counts as running until it finishes.
+    let _running = core.running_scope(bonsai_core::running::RunKey {
+        account: core.acting(inv.as_account.map(|a| AccountId(a.0))),
+        command: inv.id.clone(),
+        arg: inv.arg.clone(),
+    });
     dispatch(&app, core.inner(), inv)
 }
 
@@ -2252,6 +2360,16 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
         }
         None => (Presence::Offline, None, None, None),
     };
+    // A still, not a video's poster, when there is one.
+    let place_image = universe_id
+        .filter(|_| matches!(presence, Presence::Game))
+        .and_then(|u| core.game_media(u.0).data)
+        .and_then(|v| {
+            v.iter()
+                .find(|m| m.video_title.is_none())
+                .or(v.first())
+                .map(|m| Id(m.image_id))
+        });
     let (seen, unfriended_at) = core.store().account_data(account).map_or((None, None), |d| {
         (
             d.last_seen.get(&uid).copied(),
@@ -2312,6 +2430,8 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
             created: u.created.clone(),
             verified: u.verified,
             banned: u.banned,
+            premium: u.premium,
+            plus: u.plus,
             friends: count(u.friends),
             followers: count(u.followers),
             following: count(u.following),
@@ -2320,6 +2440,7 @@ pub fn profile(core: State<'_, Arc<Core>>, user_id: Id) -> ProfileView {
         place,
         place_id,
         universe_id,
+        place_image,
         relation,
         mine,
         past_names: core
@@ -2596,6 +2717,24 @@ fn following_of(core: &Core, account: AccountId, ids: &[u64]) -> std::collection
         .collect()
 }
 
+/// Presence of `ids`, in batches the size `following_of` uses and for the same reason. Users
+/// in a loaded batch that Roblox left out count as offline; a batch still loading is missing.
+fn presence_of(
+    core: &Core,
+    account: AccountId,
+    ids: &[u64],
+) -> std::collections::HashMap<u64, bonsai_core::store::Presence> {
+    let mut out = std::collections::HashMap::new();
+    for c in ids.chunks(FOLLOW_BATCH) {
+        if let Some(m) = core.presences(account, c).data {
+            for id in c {
+                out.insert(*id, m.get(id).cloned().unwrap_or_default());
+            }
+        }
+    }
+    out
+}
+
 /// The account's friends, once its friends list has loaded.
 fn own_friends(core: &Core, account: AccountId) -> Option<std::collections::HashSet<u64>> {
     let s = core.store();
@@ -2637,6 +2776,7 @@ pub fn profile_people(
     let mut ids = std::mem::take(&mut list.items);
     // Before reordering: see `following_of`.
     let follows = account.map(|a| following_of(&core, a, &ids)).unwrap_or_default();
+    let others = account.map(|a| presence_of(&core, a, &ids)).unwrap_or_default();
     if which == "friends" && query.trim().is_empty() {
         ids = bonsai_core::people::mutuals_first(&ids, &own).0;
     }
@@ -2649,11 +2789,16 @@ pub fn profile_people(
             .iter()
             .map(|id| {
                 let u = s.users.get(id);
-                if u.is_none() {
+                if !u.is_some_and(|u| u.is_complete()) {
                     unnamed.push(*id);
                 }
                 let friend = own.contains(id);
-                let p = presence.filter(|_| friend).and_then(|p| p.get(id));
+                // Friends' presence is fresher, from the friends list refresh.
+                let mine = presence.filter(|_| friend).map(|p| p.get(id));
+                let p = match mine {
+                    Some(p) => p,
+                    None => others.get(id),
+                };
                 let place = p.filter(|p| p.kind == PresenceKind::InGame).and_then(|p| {
                     let game = p.universe_id.and_then(|u| s.games.get(&u));
                     if game.is_none() {
@@ -2667,8 +2812,12 @@ pub fn profile_people(
                     name: u.map(|u| u.name.clone()).unwrap_or_default(),
                     display_name: u.map(|u| u.display_name.clone()).unwrap_or_default(),
                     verified: u.is_some_and(|u| u.verified),
+                    premium: u.and_then(|u| u.premium).unwrap_or(false),
                     friend,
-                    presence: p.map_or(Presence::Offline, |p| p.kind.into()),
+                    presence: match mine {
+                        Some(p) => Some(p.map_or(Presence::Offline, |p| p.kind.into())),
+                        None => p.map(|p| p.kind.into()),
+                    },
                     place,
                     following: follows.get(id).copied(),
                 }

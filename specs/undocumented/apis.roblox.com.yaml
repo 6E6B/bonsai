@@ -588,7 +588,58 @@ paths:
         - { in: body, name: body, required: true, schema: { $ref: "#/definitions/UserProfilesRequest" } }
       responses:
         "200": { description: OK, schema: { $ref: "#/definitions/UserProfilesResponse" } }
+  /profile-platform-api/v1/profiles/get:
+    post:
+      # Captured 2026-11-08 live, signed in (fixture: people.json). The header of
+      # www.roblox.com/users/{id}/profile; body shape from the site's ProfilePlatform bundle
+      # (`{profileId, profileType, components, includeComponentOrdering}`). Signed out it leaves
+      # out isRobloxPlus and marks every count disabled. For a banned user the names read
+      # "Account Deleted", and an unknown id returns 200 with blank names, so names still come
+      # from users.roblox.com.
+      x-captured: "2026-11-08, www.roblox.com/users/156/profile"
+      x-rust-name: post_profile_platform
+      summary: Components of a profile page. We ask only for UserProfileHeader.
+      parameters:
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/ProfilePlatformRequest" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/ProfilePlatformResponse" } }
 definitions:
+  ProfilePlatformRequest:
+    type: object
+    properties:
+      profileId: { type: string }
+      profileType: { type: string, description: "User or Community" }
+      components: { type: array, items: { $ref: "#/definitions/ProfileComponentRequest" } }
+      includeComponentOrdering: { type: boolean }
+  ProfileComponentRequest:
+    type: object
+    properties:
+      component: { type: string, description: "UserProfileHeader, About, Friends, ..." }
+  ProfilePlatformResponse:
+    type: object
+    properties:
+      components: { $ref: "#/definitions/ProfileComponents" }
+  ProfileComponents:
+    type: object
+    properties:
+      UserProfileHeader: { $ref: "#/definitions/UserProfileHeader" }
+  UserProfileHeader:
+    type: object
+    properties:
+      userId: { type: integer, format: int64 }
+      isPremium: { type: boolean, description: "Premium without Roblox Plus" }
+      isRobloxPlus: { type: boolean, description: "Signed in only" }
+      isVerified: { type: boolean }
+      counts: { $ref: "#/definitions/UserProfileCounts" }
+  UserProfileCounts:
+    type: object
+    properties:
+      friendsCount: { type: integer, format: int64 }
+      followersCount: { type: integer, format: int64 }
+      followingsCount: { type: integer, format: int64 }
+      isFriendsCountEnabled: { type: boolean, description: "False when the user hides it, and always when signed out. Do not show the count then." }
+      isFollowersCountEnabled: { type: boolean }
+      isFollowingsCountEnabled: { type: boolean }
   UserProfilesRequest:
     type: object
     properties:
@@ -596,7 +647,7 @@ definitions:
       fields:
         type: array
         items: { type: string }
-        description: "names.username, names.displayName, names.combinedName, isVerified, isDeleted, ..."
+        description: "names.username, names.displayName, names.combinedName, isVerified, isDeleted, hasRobloxSubscription, ... Unknown fields are left out of the answer, not an error."
   UserProfilesResponse:
     type: object
     properties:
@@ -610,6 +661,7 @@ definitions:
       names: { $ref: "#/definitions/UserProfileNames" }
       isVerified: { type: boolean }
       isDeleted: { type: boolean }
+      hasRobloxSubscription: { type: boolean, description: "Premium or Roblox Plus. The site's friends list shows its Plus badge from this." }
   UserProfileNames:
     type: object
     properties:

@@ -454,6 +454,7 @@ impl Inner {
         let what = what.to_string();
         let done = done.to_string();
         let effects: Vec<Effect> = effects.to_vec();
+        let busy = self.busy();
         self.store.write().jobs += 1;
         self.rt.spawn(async move {
             let r = match inner.client(account).filter(|c| c.signed_in()) {
@@ -486,6 +487,7 @@ impl Inner {
                 let mut s = inner.store.write();
                 s.jobs = s.jobs.saturating_sub(1);
             }
+            drop(busy);
             inner.repaint();
         });
     }

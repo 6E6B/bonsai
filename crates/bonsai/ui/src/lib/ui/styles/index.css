@@ -29,6 +29,7 @@
 @import "../facts.css";
 @import "../field.css";
 @import "../figure.css";
+@import "../hero.css";
 @import "../icon.css";
 @import "../kbd.css";
 @import "../list-item.css";
@@ -49,6 +50,7 @@
 @import "../search-button.css";
 @import "../section-header.css";
 @import "../shelf.css";
+@import "../showcase.css";
 @import "../virtual-shelf.css";
 @import "../settings-group.css";
 @import "../segmented-control.css";
@@ -56,6 +58,7 @@
 @import "../skeleton.css";
 @import "../slider.css";
 @import "../spinner.css";
+@import "../stage.css";
 @import "../stat.css";
 @import "../swatch.css";
 @import "../theme-card.css";
@@ -70,6 +73,7 @@
 @import "../toolbar.css";
 @import "../tooltip.css";
 @import "../verified-badge.css";
+@import "../premium-badge.css";
 @import "../viewport.css";
 @import "../virtual-grid.css";
 @import "../window-controls.css";

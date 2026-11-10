@@ -6,6 +6,7 @@ import { commands, type LimitedVersion, type ValueRow, type ValuesStatus } from 
 import { itemMenu, itemTarget } from "~/lib/menus"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
+import { SoundHatMark } from "~/lib/tiles"
 import {
   Alert,
   Badge,
@@ -166,6 +167,7 @@ function Browser(props: { rows: ValueRow[] }) {
           <span class="flex min-w-0 items-center gap-2.5">
             <Thumbnail class="w-7 shrink-0 rounded-sm" alt="" src={thumbUrl("asset", r.id)} fallback="avatar" />
             <span class="truncate">{r.name}</span>
+            <SoundHatMark id={r.id} />
             <Show when={r.acronym}>
               <Badge class="shrink-0">{r.acronym}</Badge>
             </Show>

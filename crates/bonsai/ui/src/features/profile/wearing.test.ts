@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { pageOf, wornGroups, wornKind } from "./wearing"
+import { pageOf, shownOnOverview, wornGroups, wornKind } from "./wearing"
 
 const item = (assetType: number, id = 0) => ({ assetType, id })
 
@@ -12,6 +12,13 @@ describe("wornKind", () => {
     expect(wornKind(17)).toBe("body")
     expect(wornKind(53)).toBe("animations")
     expect(wornKind(0)).toBe("other")
+  })
+})
+
+describe("shownOnOverview", () => {
+  it("shows accessories, clothing, heads and faces but not other body parts or animations", () => {
+    expect([8, 11, 17, 18, 79, 0].every(shownOnOverview)).toBe(true)
+    expect([27, 31, 53].some(shownOnOverview)).toBe(false)
   })
 })
 

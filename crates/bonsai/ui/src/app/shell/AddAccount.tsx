@@ -2,6 +2,7 @@ import { createEffect, createSignal, Match, onCleanup, onMount, Show, Switch } f
 import { runBackend } from "~/lib/commands/registry"
 import { countdown } from "~/lib/format"
 import { commands, type Login } from "~/lib/ipc/bindings"
+import { moderationLabel, moderationNext, moderationTone } from "~/lib/moderation"
 import { shell } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Alert, Avatar, Button, Spinner, TextField, TextLink } from "~/lib/ui"
@@ -95,6 +96,16 @@ export function AddAccount(props: { mode: AddMode; onDone: () => void }) {
                   <span class="text-fg-muted">@{l().user.name}</span>
                 </div>
               </div>
+              <Show when={l().moderation}>
+                {(m) => (
+                  <Alert
+                    variant={moderationTone(m(), now())}
+                    title={`Roblox moderated this account: ${moderationLabel(m(), now())}`}
+                  >
+                    {moderationNext(m(), now())} It can still be added.
+                  </Alert>
+                )}
+              </Show>
               <Show when={l().alreadyAdded}>
                 <p class="text-fg-muted">This account is already added. Saving replaces its cookie.</p>
               </Show>
@@ -114,6 +125,7 @@ export function AddAccount(props: { mode: AddMode; onDone: () => void }) {
                 <Button
                   variant="primary"
                   autofocus
+                  loading={saving()}
                   onClick={() => {
                     setSaving(true)
                     void commands.confirmLogin()

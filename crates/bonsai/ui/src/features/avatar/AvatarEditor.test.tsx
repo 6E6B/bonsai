@@ -24,7 +24,7 @@ vi.mock("~/lib/store", async () => {
   const { commands } = await import("~/lib/ipc/bindings")
   const list = (items: unknown[]) => ({ loading: false, error: null, items, more: false })
   return {
-    shell: { active: 1 },
+    shell: { active: 1, running: [] },
     useLive: (_source: unknown, fetch: unknown) => {
       if (fetch === commands.avatar)
         return {

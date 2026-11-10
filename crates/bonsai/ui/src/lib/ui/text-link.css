@@ -18,10 +18,6 @@
     color: var(--color-fg-muted);
   }
 
-  [data-component="text-link"][data-tone="verified"] {
-    color: var(--color-verified);
-  }
-
   [data-component="text-link"][data-tone="danger"] {
     color: var(--color-danger);
   }
@@ -36,11 +32,6 @@
     color: var(--color-fg);
     text-decoration: underline;
     text-underline-offset: 2px;
-  }
-
-  /* A verified name stays blue on hover, like the badge beside it. */
-  [data-component="text-link"][data-tone="verified"]:hover {
-    color: var(--color-verified);
   }
 
   [data-component="text-link"][data-tone="inherit"]:hover {

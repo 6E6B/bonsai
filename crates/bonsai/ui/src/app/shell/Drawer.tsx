@@ -1,5 +1,5 @@
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { ago } from "~/lib/format"
 import { type ConversationRow, commands, type Friend, type Paged } from "~/lib/ipc/bindings"
 import { joinUser, userMenu } from "~/lib/menus"
@@ -151,6 +151,7 @@ function FriendRow(props: { row: PresenceRow<Friend> }) {
                         size="sm"
                         icon="play"
                         label="Join"
+                        loading={isRunning("game.join", joinUser(f().id))}
                         onClick={() => run("game.join", joinUser(f().id))}
                       />
                     </Tooltip>

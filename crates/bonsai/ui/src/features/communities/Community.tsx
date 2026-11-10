@@ -1,11 +1,13 @@
 import { useParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
-import { handle, menuItem, run, runBackend } from "~/lib/commands/registry"
-import { ago, compact } from "~/lib/format"
+import { handle, isRunning, menuItem, run, runBackend } from "~/lib/commands/registry"
+import { ago, compact, full } from "~/lib/format"
 import {
   type AffiliatesView,
   type AuditRow,
+  type CommunityAccount,
+  type CommunityInfo,
   type CommunityView,
   commands,
   type ForumCategoryRow,
@@ -13,9 +15,11 @@ import {
   type ForumPostRow,
   type GameCard,
   type JoinRequestRow,
+  type List,
   type MemberRow,
   type RoleRow,
   type SettingRow,
+  type ShoutView,
 } from "~/lib/ipc/bindings"
 import { Description, LinkedText } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
@@ -34,11 +38,14 @@ import {
   Clamp,
   type Column,
   DataTable,
+  Icon,
   IconButton,
   ListItem,
   Menu,
   Page,
+  SectionHeader,
   Select,
+  Showcase,
   Skeleton,
   Stat,
   Switch,
@@ -48,6 +55,7 @@ import {
   TextField,
   TextLink,
   Thumbnail,
+  ToggleButton,
   useDialog,
   usePrompt,
   VerifiedBadge,
@@ -82,7 +90,15 @@ export default function Community() {
   const view = useLive(
     groupId,
     commands.community,
-    (): CommunityView => ({ loading: true, error: null, info: null, me: null, alts: [] }),
+    (): CommunityView => ({
+      loading: true,
+      error: null,
+      info: null,
+      me: null,
+      accounts: [],
+      shots: [],
+      figures: null,
+    }),
   )
   const [post, setPost] = createSignal<OpenPost | null>(null)
   createEffect(on(groupId, () => setPost(null), { defer: true }))
@@ -96,17 +112,15 @@ export default function Community() {
   })
 
   const me = () => view.me
-  const member = () => Boolean(me()?.role)
-  const [section, setSection] = createSignal("about")
+  const games = useLive(groupId, commands.communityGames, emptyList<GameCard>)
+  const [section, setSection] = createSignal("games")
   const sections = () =>
     [
-      { value: "about", label: "About" },
-      { value: "games", label: "Games" },
+      { value: "games", label: "Experiences", empty: view.figures?.experiences === 0 },
       { value: "store", label: "Store" },
       { value: "forum", label: "Forum", disabled: !me()?.viewForums },
       { value: "members", label: "Members", disabled: me() !== null && !me()?.canViewMembers },
-      { value: "allies", label: "Allies" },
-      { value: "enemies", label: "Enemies" },
+      { value: "affiliates", label: "Affiliates" },
       { value: "requests", label: "Join requests", disabled: !me()?.manageRequests },
       { value: "audit", label: "Audit log", disabled: !me()?.viewAuditLog },
       { value: "revenue", label: "Revenue", disabled: !me()?.viewPayouts && !me()?.spendFunds },
@@ -116,14 +130,13 @@ export default function Community() {
       .filter((t) => !t.disabled || t.value === section())
   useSubTabs(sections, section, setSection)
   const affiliates = useLive(
-    () => (section() === "allies" || section() === "enemies" ? groupId() : 0),
+    () => (section() === "affiliates" ? groupId() : 0),
     (g) => (g ? commands.communityAffiliates(g) : Promise.resolve(noAffiliates())),
     noAffiliates,
   )
 
   const prompt = usePrompt()
   const dialog = useDialog()
-  const id = () => String(groupId())
   // With an argument these run at once (after confirming); without one they ask first.
   onCleanup(
     handle("group.payout", (arg) => {
@@ -175,166 +188,326 @@ export default function Community() {
       <Show
         when={view.info}
         fallback={
-          <Show when={view.error} fallback={<Skeleton class="h-24 w-full rounded-md" />}>
+          <Show when={view.error} fallback={<HeaderSkeleton />}>
             {(e) => <span class="text-fg-muted">{e()}</span>}
           </Show>
         }
       >
-        {(g) => (
-          <header class="flex flex-wrap items-center gap-4">
-            <Thumbnail class="w-20" alt={g().name} src={thumbUrl("group_icon", groupId())} fallback="communities" />
-            <div class="flex min-w-0 flex-1 flex-col gap-1">
-              <h1 class="flex items-center gap-2 truncate text-2xl font-medium">
-                <span class={g().verified ? "truncate text-verified" : "truncate"}>{g().name}</span>
-                <Show when={g().verified}>
-                  <VerifiedBadge size={18} />
-                </Show>
-                <Show when={g().locked}>
-                  <Badge variant="danger">Locked</Badge>
-                </Show>
-              </h1>
-              <span class="text-fg-muted">
-                <Show when={g().ownerId} fallback="No owner">
-                  by{" "}
-                  <TextLink
-                    tone={g().ownerVerified ? "verified" : "name"}
-                    onClick={() => run("user.open", String(g().ownerId))}
-                  >
-                    {g().owner}
-                  </TextLink>
-                  <Show when={g().ownerVerified}>
-                    {" "}
-                    <VerifiedBadge />
-                  </Show>
-                </Show>{" "}
-                · {compact(g().members)} members
-                <Show when={me()?.role}>{(r) => <> · You're {r()}</>}</Show>
-                <Show when={view.alts.length > 0}> · {view.alts.join(", ")}</Show>
-              </span>
-              <div class="mt-1 flex flex-wrap gap-1.5">
-                <Show
-                  when={member()}
-                  fallback={
-                    <Show
-                      when={!me()?.pending}
-                      fallback={
-                        <Button disabled icon="clock">
-                          Requested
-                        </Button>
-                      }
-                    >
-                      <Button variant="primary" disabled={!me()} onClick={() => run("group.join", id())}>
-                        {g().publicEntry ? "Join" : "Ask to join"}
-                      </Button>
-                    </Show>
-                  }
-                >
-                  <Button onClick={() => run("group.primary", id())} icon={me()?.primary ? "star-fill" : "star"}>
-                    {me()?.primary ? "Primary" : "Make primary"}
-                  </Button>
-                </Show>
-                <Menu
-                  icon="more"
-                  label="More"
-                  items={[
-                    ...entityMenu(`group:${id()}`),
-                    ...(member() && !me()?.owner
-                      ? [
-                          { kind: "separator" as const },
-                          menuItem("group.leave", { arg: id(), icon: "sign-out", danger: true }),
-                        ]
-                      : []),
-                  ]}
-                />
-              </div>
-            </div>
-          </header>
-        )}
+        {(g) => <Header view={view} info={g()} />}
       </Show>
 
-      <Tabs aria-label="Community sections" items={sections()} value={section()} onChange={setSection}>
-        <TabPanel value="about" class="flex flex-col gap-3">
-          <Show when={view.info?.description}>
-            {(d) => (
-              <div class="max-w-prose">
-                <Clamp lines={4}>
-                  <Description text={d()} />
-                </Clamp>
-              </div>
-            )}
-          </Show>
-          <Card class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-4 p-3">
-            <Stat label="Members">{compact(view.info?.members ?? 0)}</Stat>
-            <Stat label="Owner">{view.info?.owner || "–"}</Stat>
-            <Stat label="Entry">{view.info?.publicEntry ? "Open" : "Approval"}</Stat>
-            <Stat label="ID">{params.id}</Stat>
-          </Card>
-        </TabPanel>
-        <TabPanel value="games">
-          <Games groupId={groupId()} />
-        </TabPanel>
-        <TabPanel value="store">
-          <Store groupId={groupId()} />
-        </TabPanel>
-        <TabPanel value="forum">
-          <Show
-            when={post()}
-            fallback={
-              <Forum
-                groupId={groupId()}
-                canPost={Boolean(me()?.createPosts)}
-                canDelete={Boolean(me()?.removePosts)}
-                onOpen={setPost}
-              />
-            }
+      <div class="@container">
+        <div class="grid grid-cols-1 items-start gap-4 @4xl:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)]">
+          <Tabs
+            class="min-w-0"
+            aria-label="Community sections"
+            items={sections()}
+            value={section()}
+            onChange={setSection}
           >
-            {(p) => (
-              <Thread
+            <TabPanel value="games">
+              <Games list={games} />
+            </TabPanel>
+            <TabPanel value="store">
+              <Store groupId={groupId()} />
+            </TabPanel>
+            <TabPanel value="forum">
+              <Show
+                when={post()}
+                fallback={
+                  <Forum
+                    groupId={groupId()}
+                    canPost={Boolean(me()?.createPosts)}
+                    canDelete={Boolean(me()?.removePosts)}
+                    onOpen={setPost}
+                  />
+                }
+              >
+                {(p) => (
+                  <Thread
+                    groupId={groupId()}
+                    post={p()}
+                    canReply={Boolean(me()?.createComments)}
+                    canDelete={Boolean(me()?.removeComments)}
+                    onBack={() => setPost(null)}
+                  />
+                )}
+              </Show>
+            </TabPanel>
+            <TabPanel value="members">
+              <Members
                 groupId={groupId()}
-                post={p()}
-                canReply={Boolean(me()?.createComments)}
-                canDelete={Boolean(me()?.removeComments)}
-                onBack={() => setPost(null)}
+                myRank={me()?.rank ?? 0}
+                canRank={Boolean(me()?.changeRank)}
+                canKick={Boolean(me()?.removeMembers)}
               />
-            )}
-          </Show>
-        </TabPanel>
-        <TabPanel value="members">
-          <Members
-            groupId={groupId()}
-            myRank={me()?.rank ?? 0}
-            canRank={Boolean(me()?.changeRank)}
-            canKick={Boolean(me()?.removeMembers)}
-          />
-        </TabPanel>
-        <TabPanel value="allies">
-          <Affiliates view={affiliates} kind="allies" canManage={Boolean(me()?.manageRelationships)} />
-        </TabPanel>
-        <TabPanel value="enemies">
-          <Affiliates view={affiliates} kind="enemies" canManage={Boolean(me()?.manageRelationships)} />
-        </TabPanel>
-        <TabPanel value="requests">
-          <Requests groupId={groupId()} />
-        </TabPanel>
-        <TabPanel value="audit">
-          <Audit groupId={groupId()} />
-        </TabPanel>
-        <TabPanel value="revenue">
-          <Revenue groupId={groupId()} canSpend={Boolean(me()?.spendFunds)} />
-        </TabPanel>
-        <TabPanel value="settings">
-          <Settings groupId={groupId()} />
-        </TabPanel>
-      </Tabs>
+            </TabPanel>
+            <TabPanel value="affiliates">
+              <Affiliates view={affiliates} canManage={Boolean(me()?.manageRelationships)} />
+            </TabPanel>
+            <TabPanel value="requests">
+              <Requests groupId={groupId()} />
+            </TabPanel>
+            <TabPanel value="audit">
+              <Audit groupId={groupId()} />
+            </TabPanel>
+            <TabPanel value="revenue">
+              <Revenue groupId={groupId()} canSpend={Boolean(me()?.spendFunds)} />
+            </TabPanel>
+            <TabPanel value="settings">
+              <Settings groupId={groupId()} />
+            </TabPanel>
+          </Tabs>
+          {/* First on narrow windows, two cards to a row, so the shout and about sit under the
+              banner without pushing the experiences far down. */}
+          <aside
+            class="grid min-w-0 grid-cols-1 content-start gap-4 @max-4xl:order-first @xl:@max-4xl:grid-cols-2"
+            aria-label="About this community"
+          >
+            <Show when={view.info?.shout}>{(s) => <ShoutCard shout={s()} />}</Show>
+            <Show when={view.info?.description}>
+              {(d) => (
+                <Card class="flex flex-col gap-1.5 px-4 py-3.5">
+                  <h3 class="text-sm font-medium text-fg-muted">About</h3>
+                  <Clamp lines={6}>
+                    <Description text={d()} />
+                  </Clamp>
+                </Card>
+              )}
+            </Show>
+            <Show when={view.accounts.length > 0}>
+              <YourAccounts view={view} />
+            </Show>
+          </aside>
+        </div>
+      </div>
     </Page>
   )
 }
 
-function Games(props: { groupId: number }) {
-  const list = useLive(() => props.groupId, commands.communityGames, emptyList<GameCard>)
+function HeaderSkeleton() {
   return (
-    <ListState list={list} icon="game" empty="No experiences">
-      <VirtualGrid items={list.items} minItemWidth={128} estimateRowHeight={240} gap={12}>
+    <div class="flex flex-col overflow-hidden rounded-lg shadow-raised">
+      <Skeleton class="h-[240px] w-full" />
+      <div class="flex items-center gap-1.5 px-4 py-3">
+        <Skeleton class="h-8 w-36 rounded-md" />
+        <Skeleton class="h-8 w-20 rounded-md" />
+        <Skeleton class="ml-auto h-9 w-72 rounded-md" />
+      </div>
+    </div>
+  )
+}
+
+/** Its most visited experiences as the banner, the name and icon on them, and joining and the
+ * headline figures on the bar under them. */
+function Header(props: { view: CommunityView; info: CommunityInfo }) {
+  const g = () => props.info
+  const me = () => props.view.me
+  const id = () => String(g().id)
+  const member = () => Boolean(me()?.role)
+  const [shown, setShown] = createSignal(0)
+  // Only shots with a picture; the list grows as their media loads. Same-content arrays keep
+  // the shown picture mounted, so it doesn't fade in again on every refresh.
+  const shots = createMemo(() => props.view.shots.filter((s) => s.image !== null), [], {
+    equals: (a, b) => a.length === b.length && a.every((s, i) => s.image === b[i].image && s.playing === b[i].playing),
+  })
+  const images = () =>
+    shots().map((s) => ({ src: s.image ? thumbUrl("game_thumbnail", s.image, true) : undefined, label: s.name }))
+  const shot = () => shots()[shown()] ?? shots()[0]
+  // The shown experience, linked. Undefined without one, so no empty chip shows.
+  const caption = createMemo(() => {
+    const s = shot()
+    if (!s) return undefined
+    return (
+      <>
+        <TextLink onClick={() => run("game.open", String(s.placeId))}>{s.name}</TextLink>
+        <Show when={s.playing > 0}> · {compact(s.playing)} playing</Show>
+      </>
+    )
+  })
+  const figures = () => props.view.figures
+  // The join button already says whether it takes approval; only say why it is disabled.
+  const tags = () => (g().locked ? ["Locked"] : [])
+  return (
+    <Showcase
+      images={images()}
+      index={Math.min(shown(), Math.max(0, shots().length - 1))}
+      onSelect={setShown}
+      plain={figures()?.experiences === 0}
+      caption={caption()}
+      captionIcon="game"
+      tags={tags()}
+      emblem={<Thumbnail alt="" src={thumbUrl("group_icon", g().id, true)} fallback="communities" />}
+      title={
+        <span class="flex min-w-0 items-center gap-2">
+          <span class="truncate">{g().name}</span>
+          <Show when={g().verified}>
+            <VerifiedBadge size={22} />
+          </Show>
+        </span>
+      }
+      byline={
+        <span class="flex min-w-0 items-center gap-1">
+          <Show when={g().ownerId} fallback="No owner">
+            by
+            <TextLink onClick={() => run("user.open", String(g().ownerId))}>{g().owner}</TextLink>
+            <Show when={g().ownerVerified}>
+              <VerifiedBadge />
+            </Show>
+          </Show>
+          <Show when={me()?.role} fallback={<Show when={me()?.pending}> · Request pending</Show>}>
+            {(r) => <> · You're {r()}</>}
+          </Show>
+        </span>
+      }
+      summary={[
+        { icon: "friends", value: compact(g().members), label: "members" },
+        ...(figures()?.experiences
+          ? [
+              { icon: "game" as const, value: compact(figures()?.playing ?? 0), label: "playing" },
+              { icon: "eye" as const, value: compact(figures()?.visits ?? 0), label: "visits" },
+            ]
+          : []),
+      ]}
+      actions={
+        <>
+          <Show
+            when={member()}
+            fallback={
+              <Show
+                when={!me()?.pending}
+                fallback={
+                  <Button size="lg" class="w-36" disabled icon="clock">
+                    Requested
+                  </Button>
+                }
+              >
+                <Button
+                  variant="primary"
+                  size="lg"
+                  class="w-36"
+                  icon="user-plus"
+                  disabled={!me() || g().locked}
+                  loading={isRunning("group.join", id())}
+                  onClick={() => run("group.join", id())}
+                >
+                  {g().publicEntry ? "Join" : "Ask to join"}
+                </Button>
+              </Show>
+            }
+          >
+            <ToggleButton
+              variant="secondary"
+              size="lg"
+              icon="star"
+              pressedIcon="star-fill"
+              pressed={me()?.primary ?? false}
+              loading={isRunning("group.primary", id())}
+              onChange={() => run("group.primary", id())}
+            >
+              Primary
+            </ToggleButton>
+          </Show>
+          <Menu
+            size="lg"
+            icon="more"
+            label="More"
+            items={[
+              ...entityMenu(`group:${id()}`),
+              ...(member() && !me()?.owner
+                ? [
+                    { kind: "separator" as const },
+                    menuItem("group.leave", { arg: id(), icon: "sign-out", danger: true }),
+                  ]
+                : []),
+            ]}
+          />
+        </>
+      }
+      stats={
+        <>
+          <Stat label="Members">{g().members.toLocaleString()}</Stat>
+          <Stat label="Playing now">{orDash(figures()?.playing, full)}</Stat>
+          <Stat label="Visits">{orDash(figures()?.visits, compact)}</Stat>
+          <Stat label="Experiences">{figures()?.experiences ?? "–"}</Stat>
+        </>
+      }
+    />
+  )
+}
+
+/** A figure, or a dash while it loads. */
+const orDash = (n: number | null | undefined, format: (n: number) => string) => (n == null ? "–" : format(n))
+
+/** The pinned message, who posted it and when. */
+function ShoutCard(props: { shout: ShoutView }) {
+  return (
+    <Card class="flex flex-col gap-2 px-4 py-3.5">
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="flex items-center gap-1.5 text-sm font-medium text-fg-muted">
+          <Icon name="megaphone" size={14} />
+          Shout
+        </h3>
+        <Show when={props.shout.updated}>
+          <span class="text-sm text-fg-muted">{ago(ms(props.shout.updated))}</span>
+        </Show>
+      </div>
+      <Clamp lines={6}>
+        <p class="whitespace-pre-wrap break-words">
+          <LinkedText text={props.shout.text} />
+        </p>
+      </Clamp>
+      <Show when={props.shout.posterId}>
+        <span class="flex min-w-0 items-center gap-2 text-sm">
+          <Avatar size="xs" name={props.shout.poster} src={thumbUrl("headshot", props.shout.posterId)} />
+          <TextLink tone="name" onClick={() => run("user.open", String(props.shout.posterId))}>
+            {props.shout.poster}
+          </TextLink>
+        </span>
+      </Show>
+    </Card>
+  )
+}
+
+/** Where each signed-in account stands, with Join for the ones that aren't in. */
+function YourAccounts(props: { view: CommunityView }) {
+  const open = () => props.view.info?.publicEntry ?? false
+  const status = (a: CommunityAccount) => {
+    if (!a.known) return "…"
+    if (a.role) return a.role
+    return a.pending ? "Request pending" : "Not a member"
+  }
+  return (
+    <Card class="flex flex-col gap-1 p-2">
+      <SectionHeader class="px-2 pt-1" title="Your accounts" size="group" />
+      <For each={props.view.accounts}>
+        {(a) => (
+          <ListItem
+            leading={<Avatar size="sm" name={a.name} src={thumbUrl("headshot", a.id)} />}
+            title={a.name}
+            subtitle={a.active ? `Active · ${status(a)}` : status(a)}
+            actions={
+              <Show when={a.known && !a.role && !a.pending && !props.view.info?.locked}>
+                <Button
+                  size="sm"
+                  loading={isRunning("group.join", String(props.view.info?.id), a.active ? null : a.id)}
+                  onClick={() => run("group.join", String(props.view.info?.id), a.active ? null : a.id)}
+                >
+                  {open() ? "Join" : "Ask to join"}
+                </Button>
+              </Show>
+            }
+          />
+        )}
+      </For>
+    </Card>
+  )
+}
+
+function Games(props: { list: List<GameCard> }) {
+  return (
+    <ListState list={props.list} icon="game" empty="No experiences">
+      <VirtualGrid items={props.list.items} minItemWidth={128} estimateRowHeight={240} gap={12}>
         {(g) => <GameTile game={g} />}
       </VirtualGrid>
     </ListState>
@@ -370,7 +543,7 @@ function Members(props: { groupId: number; myRank: number; canRank: boolean; can
       cell: (m) => (
         <>
           <Avatar size="sm" name={m.displayName} src={thumbUrl("headshot", m.id)} />
-          <TextLink tone={m.verified ? "verified" : "name"} onClick={() => run("user.open", String(m.id))}>
+          <TextLink tone="name" onClick={() => run("user.open", String(m.id))}>
             {m.displayName}
           </TextLink>
           <Show when={m.verified}>
@@ -407,6 +580,7 @@ function Members(props: { groupId: number; myRank: number; canRank: boolean; can
             size="sm"
             icon="user-minus"
             label={`Remove ${m.displayName}`}
+            loading={isRunning("group.kick", String(m.id))}
             onClick={() => run("group.kick", String(m.id))}
           />
         </Show>
@@ -454,11 +628,19 @@ function Requests(props: { groupId: number }) {
       else next.delete(id)
       return next
     })
+  // The last batch sent, so its button spins until the backend is done with it.
+  const [sent, setSent] = createSignal<{ id: string; arg: string }>()
   const answer = async (accept: boolean) => {
     const ids = [...picked()]
     if (ids.length === 0) return showToast("Select requests first.")
-    await run(accept ? "group.accept_request" : "group.decline_request", ids.join(","))
+    const batch = { id: accept ? "group.accept_request" : "group.decline_request", arg: ids.join(",") }
+    setSent(batch)
+    await run(batch.id, batch.arg)
     setPicked(new Set<number>())
+  }
+  const answering = (id: string) => {
+    const b = sent()
+    return b?.id === id && isRunning(b.id, b.arg)
   }
   onCleanup(handle("group.accept_selected", () => void answer(true)))
   onCleanup(handle("group.decline_selected", () => void answer(false)))
@@ -475,10 +657,19 @@ function Requests(props: { groupId: number }) {
           Select all loaded
         </Checkbox>
         <div class="flex gap-1.5">
-          <Button disabled={picked().size === 0} onClick={() => run("group.decline_selected")}>
+          <Button
+            loading={answering("group.decline_request")}
+            disabled={picked().size === 0}
+            onClick={() => run("group.decline_selected")}
+          >
             Decline selected
           </Button>
-          <Button variant="primary" disabled={picked().size === 0} onClick={() => run("group.accept_selected")}>
+          <Button
+            variant="primary"
+            loading={answering("group.accept_request")}
+            disabled={picked().size === 0}
+            onClick={() => run("group.accept_selected")}
+          >
             Accept selected
           </Button>
         </div>
@@ -500,10 +691,18 @@ function Requests(props: { groupId: number }) {
                 subtitle={`@${u.name} · ${ago(ms(u.created))}`}
                 actions={
                   <>
-                    <Button size="sm" onClick={() => run("group.decline_request", String(u.id))}>
+                    <Button
+                      size="sm"
+                      loading={isRunning("group.decline_request", String(u.id))}
+                      onClick={() => run("group.decline_request", String(u.id))}
+                    >
                       Decline
                     </Button>
-                    <Button size="sm" onClick={() => run("group.accept_request", String(u.id))}>
+                    <Button
+                      size="sm"
+                      loading={isRunning("group.accept_request", String(u.id))}
+                      onClick={() => run("group.accept_request", String(u.id))}
+                    >
                       Accept
                     </Button>
                   </>
@@ -765,6 +964,7 @@ function Thread(props: { groupId: number; post: OpenPost; canReply: boolean; can
                     size="sm"
                     icon="trash"
                     label="Delete reply"
+                    loading={isRunning("group.delete_reply", `${props.post.category}/${props.post.id}/${c.id}`)}
                     onClick={() => run("group.delete_reply", `${props.post.category}/${props.post.id}/${c.id}`)}
                   />
                 </Show>
@@ -829,7 +1029,12 @@ function NewPostForm(props: { groupId: number; categories: ForumCategoryRow[]; i
         <Button variant="ghost" type="button" onClick={() => props.onDone()}>
           Cancel
         </Button>
-        <Button variant="primary" type="submit" disabled={busy() || title().trim() === "" || text().trim() === ""}>
+        <Button
+          variant="primary"
+          type="submit"
+          loading={busy()}
+          disabled={title().trim() === "" || text().trim() === ""}
+        >
           Post
         </Button>
       </div>

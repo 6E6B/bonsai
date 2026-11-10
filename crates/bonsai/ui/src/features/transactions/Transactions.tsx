@@ -16,6 +16,7 @@ import {
 import { gameMenu, itemMenu, itemTarget, userMenu } from "~/lib/menus"
 import { useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
+import { SoundHatMark } from "~/lib/tiles"
 import {
   Alert,
   Avatar,
@@ -459,6 +460,7 @@ function Ledger(props: {
                 />
               </Show>
               <Linked open={itemOpen(r)}>{r.itemName}</Linked>
+              <Show when={r.itemKind === "Asset" && r.itemId}>{(id) => <SoundHatMark id={id()} />}</Show>
             </span>
           </ContextMenu>
         </Show>
@@ -607,7 +609,10 @@ function Detail(props: { row: TxRowView | undefined }) {
               <DetailRow label="When">{dateTime(r().at ?? 0)}</DetailRow>
               <Show when={r().itemName}>
                 <DetailRow label={kindLabel(r().itemKind) || "Item"}>
-                  <Linked open={itemOpen(r())}>{r().itemName}</Linked>
+                  <span class="flex min-w-0 items-center gap-1.5">
+                    <Linked open={itemOpen(r())}>{r().itemName}</Linked>
+                    <Show when={r().itemKind === "Asset" && r().itemId}>{(id) => <SoundHatMark id={id()} />}</Show>
+                  </span>
                 </DetailRow>
               </Show>
               <Show when={r().experience}>

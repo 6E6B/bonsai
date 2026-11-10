@@ -96,7 +96,7 @@ export function ValueMarker(props: { tag: ValueTag }) {
     <Show when={props.tag.projected || props.tag.demand || props.tag.trend}>
       <Show when={props.tag.projected}>
         <Tooltip content="Projected: RAP will likely fall" class="inline-flex text-warning">
-          <Icon name="alert" size={12} aria-label="Projected" />
+          <Icon name="alert-fill" size={16} aria-label="Projected" />
         </Tooltip>
       </Show>
       <Show when={props.tag.demand}>{(d) => <DemandPips demand={d()} />}</Show>

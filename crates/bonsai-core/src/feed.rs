@@ -41,6 +41,16 @@ pub fn merge(
     out
 }
 
+/// Roblox only marks a stream entry interacted when it is clicked on the site; clearing the
+/// badge leaves every entry as it was. So only the newest `unread` entries, the ones the badge
+/// counts, are shown unread.
+pub fn mark_seen(stream: &mut [StreamNotification], unread: i64) {
+    let unread = usize::try_from(unread).unwrap_or(0);
+    for n in stream.iter_mut().skip(unread) {
+        n.read = true;
+    }
+}
+
 /// Unread app entries, for the badge.
 pub fn unread(local: &[StreamNotification]) -> i64 {
     local.iter().filter(|n| !n.read).count() as i64
@@ -113,18 +123,19 @@ impl Core {
     /// Roblox's notification stream with the app's own entries, newest first.
     pub fn notification_feed(&self, account: AccountId) -> Res<Page<StreamNotification>> {
         let mut r = self.notifications(account, false);
-        let local = self
+        let (local, unread) = self
             .inner
             .store
             .read()
             .account_data(account)
-            .map(|d| d.feed.clone())
+            .map(|d| (d.feed.clone(), d.unread.notifications))
             .unwrap_or_default();
-        if local.is_empty() {
-            return r;
-        }
         let (items, next) = match r.data.as_deref() {
-            Some(p) => (merge(&p.items, p.next.is_some(), &local), p.next.clone()),
+            Some(p) => {
+                let mut stream = p.items.clone();
+                mark_seen(&mut stream, unread);
+                (merge(&stream, p.next.is_some(), &local), p.next.clone())
+            }
             None => (local, None),
         };
         r.data = Some(Arc::new(Page { items, next }));
@@ -167,6 +178,15 @@ mod tests {
         assert_eq!(ids(&merge(&stream, true, &local)), ["r2", "r1", "a2"]);
         assert_eq!(ids(&merge(&stream, false, &local)), ["r2", "r1", "a2", "a1"]);
         assert_eq!(ids(&merge(&[], true, &local)), ["a2", "a1"]);
+    }
+
+    #[test]
+    fn only_counted_entries_stay_unread() {
+        let mut v = [n("r3", ""), n("r2", ""), n("r1", "")];
+        mark_seen(&mut v, 1);
+        assert_eq!(v.each_ref().map(|n| n.read), [false, true, true]);
+        mark_seen(&mut v, 0);
+        assert!(v.iter().all(|n| n.read));
     }
 
     #[test]

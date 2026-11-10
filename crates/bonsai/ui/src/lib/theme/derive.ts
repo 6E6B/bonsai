@@ -40,6 +40,7 @@ export type FontSeed<Id extends string> = Id | { google: string }
 /** Bundled fonts, and the fallback stacks behind a Google font. The webview never loads fonts from
  * the network; Google fonts come from disk (see `fonts.ts`). */
 export const FONTS = {
+  rubik: { label: "Rubik", stack: '"Rubik", system-ui, sans-serif' },
   inter: { label: "Inter", stack: '"Inter", system-ui, sans-serif' },
   system: { label: "System", stack: "system-ui, sans-serif" },
 } as const
@@ -94,7 +95,7 @@ export const DEFAULT_SEEDS: Record<Base, Seeds> = {
     contrast: 1,
     radius: 1,
     shadow: DEFAULT_SHADOW,
-    font: "inter",
+    font: "rubik",
     mono: "jetbrains",
   },
   light: {
@@ -107,7 +108,7 @@ export const DEFAULT_SEEDS: Record<Base, Seeds> = {
     contrast: 1,
     radius: 1,
     shadow: DEFAULT_SHADOW,
-    font: "inter",
+    font: "rubik",
     mono: "jetbrains",
   },
 }
@@ -252,7 +253,6 @@ function shadow(layers: Layer[], seeds: ShadowSeeds): string {
 
 /* ── Constants ── Same in both bases unless a theme pins them. */
 const FIXED: Tokens = {
-  "color-verified": "#3a7fe6", // verified names; a shade darker than the badge fill (#4d94ff)
   "color-media-chip": "#000000a6",
   "color-on-media": "#ffffff",
   "color-presence-online": "#00a2ff", // Roblox's online blue, not the accent
@@ -277,6 +277,7 @@ const TEXT: [name: string, size: number, line: number][] = [
   ["lg", 15, 22],
   ["xl", 18, 24],
   ["2xl", 22, 28],
+  ["3xl", 28, 34],
 ]
 const RADII: [name: string, px: number][] = [
   ["xs", 2],
@@ -369,7 +370,7 @@ export function derive(base: Base, seeds: Seeds): Tokens {
     "color-success": c(success),
     "color-warning": c(warning),
     "color-danger": c(danger),
-    "font-sans": fontStack(seeds.font, FONTS, "inter"),
+    "font-sans": fontStack(seeds.font, FONTS, "rubik"),
     "font-mono": fontStack(seeds.mono, MONOS, "jetbrains"),
     "radius-full": "9999px",
   }

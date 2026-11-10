@@ -217,12 +217,13 @@ impl FontSlot {
         }
     }
 
-    /// The bundled font typed by name, as its seed id: `Inter` or `System` for text,
-    /// `JetBrains Mono` or `System` for code. Google has Inter and JetBrains Mono too; the
+    /// The bundled font typed by name, as its seed id: `Rubik`, `Inter` or `System` for
+    /// text, `JetBrains Mono` or `System` for code. Google has these too; the
     /// bundled copies need no download.
     fn bundled(self, name: &str) -> Option<&'static str> {
         let n = name.to_ascii_lowercase().replace(' ', "");
         match (self, n.as_str()) {
+            (FontSlot::Sans, "rubik") => Some("rubik"),
             (FontSlot::Sans, "inter") => Some("inter"),
             (FontSlot::Mono, "jetbrains" | "jetbrainsmono") => Some("jetbrains"),
             (_, "system") => Some("system"),
@@ -621,9 +622,9 @@ impl Core {
         Ok(new)
     }
 
-    /// Sets the text or code font of the theme on screen. `name` is a bundled font (Inter,
-    /// JetBrains Mono, System) or a Google Fonts family. A built-in theme is copied first, and the
-    /// copy takes its place for that base. The mode doesn't change.
+    /// Sets the text or code font of the theme on screen. `name` is a bundled font (Rubik,
+    /// Inter, JetBrains Mono, System) or a Google Fonts family. A built-in theme is copied
+    /// first, and the copy takes its place for that base. The mode doesn't change.
     pub fn set_theme_font(&self, slot: FontSlot, name: &str) -> Result<(), String> {
         let name = name.trim();
         let seed = match slot.bundled(name) {
@@ -806,7 +807,8 @@ mod tests {
         for (theme, _) in t.all() {
             let seed = &theme.seeds["font"];
             assert!(
-                seed.as_str().is_some_and(|s| s == "inter") || theme.google_font(FontSlot::Sans).is_some(),
+                seed.as_str().is_some_and(|s| s == "rubik" || s == "inter")
+                    || theme.google_font(FontSlot::Sans).is_some(),
                 "{}",
                 theme.id
             );

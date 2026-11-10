@@ -64,6 +64,17 @@ pub struct UserInfo {
     pub name: String,
     pub display_name: String,
     pub verified: bool,
+    /// Has Premium or Roblox Plus. `None` when the name came from somewhere that doesn't say
+    /// (or from a cache older than this field), so the next batch name lookup asks again.
+    #[serde(default)]
+    pub premium: Option<bool>,
+}
+
+impl UserInfo {
+    /// Everything the batch name lookup gives is known.
+    pub fn is_complete(&self) -> bool {
+        self.premium.is_some()
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -237,12 +248,19 @@ pub enum SessionState {
     Expired,
     /// The keychain had no cookie (e.g. Secret Service missing after restart).
     NoCookie,
+    /// Roblox answers "User is moderated": warned, banned, terminated or locked. The cookie is
+    /// still valid. See [`crate::moderation`].
+    Moderated,
 }
 
 /// Private, per-account data. Never shared with another account.
 #[derive(Clone, Debug, Default)]
 pub struct AccountData {
     pub session: SessionState,
+    /// What Roblox did, while the session is [`SessionState::Moderated`]. Cached.
+    pub moderation: Option<crate::moderation::Moderation>,
+    /// A voice chat suspension. The account still works.
+    pub voice_ban: Option<crate::moderation::VoiceBan>,
     pub unread: Unread,
     pub friends: Loadable<Vec<u64>>,
     /// Presence as seen by this account.
@@ -356,6 +374,8 @@ pub enum LoginState {
     Confirm {
         user: UserInfo,
         already_added: bool,
+        /// Roblox moderated this account. It can still be added.
+        moderation: Option<crate::moderation::Moderation>,
     },
     Failed(String),
 }
@@ -464,6 +484,9 @@ pub struct StoreData {
     pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,
     pub jobs: u32,
+    /// User commands with work still in flight, by how many tasks each has (see
+    /// [`crate::running`]).
+    pub running: HashMap<crate::running::RunKey, u32>,
     pub offline: bool,
     pub keychain_warning: Option<String>,
     /// Disk cache size, once measured (Settings → Advanced).

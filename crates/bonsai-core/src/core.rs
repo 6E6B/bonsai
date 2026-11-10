@@ -14,6 +14,7 @@ use tokio::sync::mpsc;
 use crate::account::{AccountMeta, ColorTag, CookieStore, Paths, parse_cookie_input};
 use crate::cache::{Cache, Kind};
 use crate::launcher::{self, JoinTarget, Opener};
+use crate::moderation::{Moderation, is_moderated};
 use crate::res::Key;
 use crate::settings::Settings;
 use crate::store::*;
@@ -82,7 +83,12 @@ const USER_RETRY_SECS: i64 = 30;
 /// Most ids the profile API answers at once; above this it returns an empty list.
 const USER_BATCH: usize = 200;
 /// Profile fields kept in [`UserInfo`].
-const USER_FIELDS: [&str; 3] = ["names.username", "names.displayName", "isVerified"];
+const USER_FIELDS: [&str; 4] = [
+    "names.username",
+    "names.displayName",
+    "isVerified",
+    "hasRobloxSubscription",
+];
 /// Tries after a failed name request (rate limit, network), with doubling delays.
 const USER_RETRIES: u32 = 2;
 const USER_RETRY_DELAY: Duration = Duration::from_secs(2);
@@ -143,7 +149,7 @@ pub(crate) struct Inner {
     opener: RwLock<Arc<dyn Opener>>,
     pub(crate) limiter: Arc<RateLimiter>,
     pub(crate) base: Base,
-    repaint: Repaint,
+    pub(crate) repaint: Repaint,
     pub(crate) paths: Paths,
     pending_login: Mutex<Option<(Secret, UserInfo)>>,
     /// Bumped whenever an add-account flow starts or is cancelled; older flows stop.
@@ -190,7 +196,7 @@ pub(crate) struct Inner {
 
 pub struct Core {
     pub(crate) inner: Arc<Inner>,
-    tx: mpsc::UnboundedSender<Cmd>,
+    tx: mpsc::UnboundedSender<(Cmd, Option<crate::running::Busy>)>,
     rt: Option<tokio::runtime::Runtime>,
 }
 
@@ -298,13 +304,16 @@ impl Core {
                 }
             });
         }
-        let (tx, mut rx) = mpsc::unbounded_channel::<Cmd>();
+        let (tx, mut rx) = mpsc::unbounded_channel::<(Cmd, Option<crate::running::Busy>)>();
         {
             let inner = inner.clone();
             rt.spawn(async move {
-                while let Some(cmd) = rx.recv().await {
+                while let Some((cmd, busy)) = rx.recv().await {
                     let inner = inner.clone();
-                    tokio::spawn(async move { inner.handle(cmd).await });
+                    tokio::spawn(async move {
+                        inner.handle(cmd).await;
+                        drop(busy);
+                    });
                 }
             });
         }
@@ -354,7 +363,7 @@ impl Core {
         if self.accounts_locked() {
             return;
         }
-        let _ = self.tx.send(cmd);
+        let _ = self.tx.send((cmd, self.inner.busy()));
     }
 
     pub fn store(&self) -> RwLockReadGuard<'_, StoreData> {
@@ -514,7 +523,7 @@ impl Core {
             let mut pending = self.inner.users_pending.lock();
             let mut seen = HashSet::new();
             ids.iter()
-                .filter(|i| **i > 0 && seen.insert(**i) && !s.users.contains_key(i))
+                .filter(|i| **i > 0 && seen.insert(**i) && !s.users.get(i).is_some_and(|u| u.is_complete()))
                 .filter(|i| {
                     if pending.get(i).is_some_and(|asked| t - asked < USER_RETRY_SECS) {
                         return false;
@@ -729,6 +738,10 @@ fn warm_store(cache: &Cache, s: &mut StoreData) {
         if let Some(w) = cache.get::<Vec<crate::market::WishItem>>(Kind::Wishlist, id, "wishlist") {
             d.wishlist = w.value;
         }
+        if let Some(m) = cache.get::<Moderation>(Kind::Local, id, crate::moderation::CACHE_ID) {
+            d.session = SessionState::Moderated;
+            d.moderation = Some(m.value);
+        }
     }
 }
 
@@ -736,6 +749,13 @@ impl Inner {
     pub(crate) fn repaint(&self) {
         self.store_changed.notify_waiters();
         (self.repaint)();
+    }
+
+    /// Wake `thumb://` requests waiting on an image, without telling the UI the store
+    /// changed: it reads no thumbnail state but revisions, and a profile full of images would
+    /// otherwise refetch every view once per image.
+    pub(crate) fn wake_thumbs(&self) {
+        self.store_changed.notify_waiters();
     }
 
     /// True at most once per `secs` for `key`, so a view can ask on every frame.
@@ -862,10 +882,12 @@ impl Inner {
         self.repaint();
     }
 
-    /// Note an error from an account's request: 401 re-checks the session.
+    /// Note an error from an account's request: 401 re-checks the session, "User is
+    /// moderated" reads what Roblox did.
     pub(crate) fn note_error(&self, account: AccountId, e: &Error) {
         match e {
             Error::Unauthorized if !account.is_anonymous() => self.check_session(account),
+            e if !account.is_anonymous() && is_moderated(e) => self.note_moderated(account),
             Error::Network(_) => self.store.write().offline = true,
             _ => {}
         }
@@ -983,18 +1005,31 @@ impl Inner {
                 return;
             }
         };
-        match users::v1::get_users_authenticated(&client).await {
-            Ok(me) => {
-                let user = UserInfo {
+        let found = match users::v1::get_users_authenticated(&client).await {
+            Ok(me) => Ok((
+                UserInfo {
                     id: me.id.unwrap_or_default() as u64,
                     name: me.name.unwrap_or_default(),
                     display_name: me.display_name.unwrap_or_default(),
                     verified: false,
-                };
+                    premium: None,
+                },
+                None,
+            )),
+            // The cookie works but Roblox moderated the account. It can still be saved, to be
+            // reactivated or to wait out a ban.
+            Err(e) if is_moderated(&e) => crate::moderation::identify(&client, &self.anon)
+                .await
+                .map(|(u, m)| (u, Some(m))),
+            Err(e) => Err(e),
+        };
+        match found {
+            Ok((user, moderation)) => {
                 let already = self.store.read().accounts.get(AccountId(user.id)).is_some();
                 self.store.write().login = Some(LoginState::Confirm {
                     user: user.clone(),
                     already_added: already,
+                    moderation,
                 });
                 self.thumb_tx
                     .send(ThumbMsg::Want(ThumbKey::large(
@@ -1103,6 +1138,7 @@ impl Inner {
         match users::v1::get_users_authenticated(&c).await {
             Ok(me) => {
                 self.note_ok();
+                self.clear_moderation(id);
                 let mut s = self.store.write();
                 s.data.entry(id).or_default().session = SessionState::Ok;
                 if let Some(a) = s.accounts.get_mut(id) {
@@ -1112,6 +1148,11 @@ impl Inner {
             }
             Err(Error::Unauthorized) => {
                 self.store.write().data.entry(id).or_default().session = SessionState::Expired;
+                return;
+            }
+            Err(e) if is_moderated(&e) => {
+                self.note_ok();
+                self.moderated(id, &c).await;
                 return;
             }
             Err(e) => {
@@ -1127,6 +1168,7 @@ impl Inner {
         self.cache.put(Kind::Unread, id, "unread", &unread);
         self.note_unread(id, unread);
         self.repaint();
+        self.check_voice(id, &c).await;
         self.refresh_friends(id).await;
     }
 
@@ -1188,6 +1230,9 @@ impl Inner {
                 let Some(uid) = u.id else { continue };
                 let name = u.name.clone().unwrap_or_default();
                 if !name.is_empty() {
+                    // The friends list doesn't say Premium; keep what the names call found, so
+                    // a refresh doesn't make friends look unloaded and refetch them.
+                    let premium = s.users.get(&(uid as u64)).and_then(|u| u.premium);
                     s.users.insert(
                         uid as u64,
                         UserInfo {
@@ -1195,6 +1240,7 @@ impl Inner {
                             name,
                             display_name: u.display_name.clone().unwrap_or_default(),
                             verified: u.has_verified_badge.unwrap_or(false),
+                            premium,
                         },
                     );
                 }
@@ -1290,6 +1336,7 @@ impl Inner {
                     name: names.username.unwrap_or_default(),
                     display_name: names.display_name.unwrap_or_default(),
                     verified: p.is_verified.unwrap_or(false),
+                    premium: Some(p.has_roblox_subscription.unwrap_or(false)),
                 };
                 self.cache
                     .put(Kind::User, AccountId::ANONYMOUS, &info.id.to_string(), &info);
@@ -1853,7 +1900,7 @@ async fn thumb_worker(inner: Arc<Inner>, mut rx: mpsc::UnboundedReceiver<ThumbMs
                 }
             }
         }
-        inner.repaint();
+        inner.wake_thumbs();
     }
 }
 
@@ -1894,7 +1941,12 @@ async fn fetch_image(inner: &Inner, k: ThumbKey, url: &str, replaces: bool) {
             inner.store.write().thumbs.insert(k, ThumbState::Unavailable);
         }
     }
-    inner.repaint();
+    // Only a new revision changes what the UI reads; a first load only wakes the request.
+    if replaces {
+        inner.repaint();
+    } else {
+        inner.wake_thumbs();
+    }
 }
 
 impl Inner {
@@ -1976,13 +2028,21 @@ async fn health_loop(inner: Arc<Inner>) {
             let Some(c) = inner.client(id) else { continue };
             match users::v1::get_users_authenticated(&c).await {
                 Ok(_) => {
+                    inner.clear_moderation(id);
                     let u = inner.unread(&c).await;
-                    let mut s = inner.store.write();
-                    let d = s.data.entry(id).or_default();
-                    d.session = SessionState::Ok;
-                    d.unread = u;
-                    drop(s);
+                    {
+                        let mut s = inner.store.write();
+                        let d = s.data.entry(id).or_default();
+                        d.session = SessionState::Ok;
+                        d.unread = u;
+                    }
                     inner.note_unread(id, u);
+                    inner.check_voice(id, &c).await;
+                }
+                // Nothing else answers until the moderation is lifted.
+                Err(e) if is_moderated(&e) => {
+                    inner.moderated(id, &c).await;
+                    continue;
                 }
                 Err(e) => inner.note_error(id, &e),
             }

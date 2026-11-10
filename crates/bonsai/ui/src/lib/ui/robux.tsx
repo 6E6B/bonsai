@@ -5,6 +5,8 @@ export interface RobuxProps {
   amount: number | null
   /** `compact` writes 12.4K instead of 12,400. */
   compact?: boolean
+  /** `lg` for a headline price: the mark sized to the numerals instead of the full line. */
+  size?: "md" | "lg"
   class?: string
 }
 
@@ -14,7 +16,7 @@ const short = new Intl.NumberFormat("en-US", { notation: "compact", maximumFract
 /** A Robux amount with the currency mark. */
 export function Robux(props: RobuxProps) {
   return (
-    <span data-component="robux" class={props.class}>
+    <span data-component="robux" data-size={props.size ?? "md"} class={props.class}>
       <span data-slot="mark" role="img" aria-label="Robux" />
       <Show when={props.amount !== null} fallback="—">
         {(props.compact ? short : full).format(props.amount ?? 0)}

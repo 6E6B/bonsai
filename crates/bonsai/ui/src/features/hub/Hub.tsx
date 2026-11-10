@@ -1,5 +1,5 @@
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { emptyHub, hubPlugins, hubQuery, hubUi, setHubUi, target } from "~/lib/hub"
 import { commands, type HubEntry } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
@@ -152,6 +152,7 @@ export default function Hub() {
                   <Button
                     size="sm"
                     icon="download"
+                    loading={isRunning("hub.install", target(entry))}
                     disabled={data.busy || installLabel(entry) === "Installed"}
                     onClick={() => run("hub.install", target(entry))}
                   >
@@ -237,7 +238,12 @@ export default function Hub() {
               <Alert
                 title="Complete sign-in in your browser"
                 actions={
-                  <Button size="sm" disabled={data.busy} onClick={() => run("hub.sign_out")}>
+                  <Button
+                    size="sm"
+                    loading={isRunning("hub.sign_out")}
+                    disabled={data.busy}
+                    onClick={() => run("hub.sign_out")}
+                  >
                     Cancel
                   </Button>
                 }
@@ -284,7 +290,12 @@ export default function Hub() {
             >
               <div class="flex items-center gap-3">
                 <span class="text-sm">{data.userName}</span>
-                <Button size="sm" disabled={data.busy} onClick={() => run("hub.sign_out")}>
+                <Button
+                  size="sm"
+                  loading={isRunning("hub.sign_out")}
+                  disabled={data.busy}
+                  onClick={() => run("hub.sign_out")}
+                >
                   Sign out
                 </Button>
               </div>

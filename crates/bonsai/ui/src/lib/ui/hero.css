@@ -1,0 +1,166 @@
+/* A screen's subject: the raised card look, the avatar centered beside the title row and the
+ * stats under it, an optional banner with a picture across the top. */
+@layer components {
+  [data-component="hero"] {
+    --avatar-ring: var(--color-surface);
+
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+  }
+
+  [data-component="hero"] [data-slot="body"] {
+    display: grid;
+    grid-template-areas: "avatar head" "avatar stats";
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 20px;
+    padding: 16px 16px 14px 20px;
+  }
+
+  [data-component="hero"] [data-slot="avatar"] {
+    display: flex;
+    grid-area: avatar;
+    align-self: center;
+  }
+
+  /* Opaque, so a headshot's see-through background reads the same on any card. */
+  [data-component="hero"] [data-slot="avatar"] [data-component="avatar"] [data-slot="frame"] {
+    background-color: var(--color-raised);
+  }
+
+  [data-component="hero"] [data-slot="head"] {
+    display: flex;
+    flex-wrap: wrap;
+    grid-area: head;
+    align-items: center;
+    gap: 8px 16px;
+    min-width: 0;
+  }
+
+  [data-component="hero"] [data-slot="names"] {
+    display: flex;
+    flex: 1 1 12rem;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  [data-component="hero"] [data-slot="title"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    font-size: var(--text-2xl);
+    line-height: var(--text-2xl--line-height);
+    font-weight: 600;
+  }
+
+  [data-component="hero"] [data-slot="subtitle"] {
+    overflow: hidden;
+    color: var(--color-fg-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-component="hero"] [data-slot="actions"] {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+  }
+
+  [data-component="hero"] [data-slot="stats"] {
+    display: flex;
+    flex-wrap: wrap;
+    grid-area: stats;
+    row-gap: 8px;
+    margin: 12px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-line);
+  }
+
+  [data-component="hero"] [data-slot="stats"] > * {
+    padding: 0 20px;
+  }
+
+  [data-component="hero"] [data-slot="stats"] > :first-child {
+    padding-left: 0;
+  }
+
+  [data-component="hero"] [data-slot="stats"] > * + * {
+    box-shadow: inset 1px 0 var(--color-line);
+  }
+
+  /* ── Banner ── */
+
+  [data-component="hero"] [data-slot="banner"] {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    height: 112px;
+    padding: 12px 16px;
+    background: var(--color-deep);
+    color: var(--color-on-media);
+  }
+
+  [data-component="hero"] [data-slot="backdrop"] {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  [data-component="hero"] [data-slot="backdrop-image"] {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  [data-component="hero"] [data-slot="banner"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent, var(--color-media-chip));
+    pointer-events: none;
+  }
+
+  [data-component="hero"] [data-slot="banner-content"] {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  [data-component="hero"] [data-slot="banner-text"] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 0;
+    filter: var(--shadow-on-media);
+  }
+
+  [data-component="hero"] [data-slot="banner-label"] {
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    opacity: 0.8;
+  }
+
+  [data-component="hero"] [data-slot="banner-title"] {
+    max-width: 24rem;
+    overflow: hidden;
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-component="hero"] [data-slot="banner"] [data-component="text-link"] {
+    color: var(--color-on-media);
+  }
+}

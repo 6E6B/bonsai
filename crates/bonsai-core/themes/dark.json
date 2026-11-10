@@ -5,6 +5,6 @@
   "author": "Bonsai",
   "version": "1.0.0",
   "base": "dark",
-  "seeds": { "font": "inter" },
+  "seeds": { "font": "rubik" },
   "tokens": { "color-danger-hover": "#f37373" }
 }

@@ -59,7 +59,8 @@
     height: auto;
     min-height: var(--input-height);
     align-items: flex-start;
-    padding-block: 5px;
+    /* One line of text fills exactly the single-line control height. */
+    padding-block: calc((var(--input-height) - 1.5em) / 2);
   }
 
   [data-component="text-field"][data-multiline] [data-slot="input"] {

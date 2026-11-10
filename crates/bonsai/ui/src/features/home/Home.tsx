@@ -6,17 +6,7 @@ import { groupByGame } from "~/lib/presence"
 import { friends, shell, useHome } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile, ShelfSkeleton, tileGrid } from "~/lib/tiles"
-import {
-  Alert,
-  Button,
-  ContextMenu,
-  EmptyState,
-  type MenuEntry,
-  Page,
-  PersonTile,
-  SectionHeader,
-  VirtualShelf,
-} from "~/lib/ui"
+import { Alert, Button, ContextMenu, EmptyState, Page, PersonTile, SectionHeader, VirtualShelf } from "~/lib/ui"
 
 /** Landing screen: who is playing what, what you played last, and the Roblox home sorts. */
 export default function Home() {
@@ -24,13 +14,9 @@ export default function Home() {
   const playing = () => friends.friends.filter((f) => f.presence === "game")
   const online = () => friends.friends.filter((f) => f.presence === "online" || f.presence === "studio")
   const offline = () => friends.friends.filter((f) => f.presence === "offline")
-  // One tile per experience friends are in, biggest group first, then one per friend online,
-  // then offline friends, like the friends row on roblox.com.
-  const strip = createMemo(() => [
-    ...groupByGame(playing()).map((g) => g.users),
-    ...online().map((f) => [f]),
-    ...offline().map((f) => [f]),
-  ])
+  // Friends in game first, those in the same experience side by side, biggest group first,
+  // then online, then offline.
+  const strip = createMemo(() => [...groupByGame(playing()).flatMap((g) => g.users), ...online(), ...offline()])
   return (
     <Show
       when={shell.accounts.length > 0}
@@ -60,7 +46,7 @@ export default function Home() {
               }
             />
             <VirtualShelf items={strip()} itemWidth={PERSON_WIDTH} aria-label="Friends">
-              {(users) => <FriendTile users={users} />}
+              {(f) => <FriendTile friend={f} />}
             </VirtualShelf>
           </section>
         </Show>
@@ -150,26 +136,18 @@ const nameOf = (f: Friend) => f.nickname || f.displayName
 
 const menuFor = (f: Friend) => userMenu(f.id, { friend: true, inGame: f.presence === "game", placeId: f.placeId })
 
-/** A friend as on a profile, or friends in the same experience as one tile: the first one's
- * picture and name, the others as small faces under the game. Right-click a shared tile for
- * each friend's menu. */
-function FriendTile(props: { users: Friend[] }) {
-  const first = () => props.users[0]
-  const others = () => props.users.slice(1)
-  const menu = (): MenuEntry[] =>
-    others().length === 0
-      ? menuFor(first())
-      : props.users.map((f) => ({ kind: "submenu", label: nameOf(f), icon: "user", items: menuFor(f) }))
+/** A friend as on a profile, with the game they're in under their name. */
+function FriendTile(props: { friend: Friend }) {
+  const f = () => props.friend
   return (
-    <ContextMenu items={menu()}>
+    <ContextMenu items={menuFor(f())}>
       <PersonTile
-        name={nameOf(first())}
-        username={first().name || undefined}
-        src={thumbUrl("headshot", first().id, true)}
-        presence={first().presence}
-        status={first().presence === "game" ? first().status : undefined}
-        stack={others().map((f) => ({ name: nameOf(f), src: thumbUrl("headshot", f.id, true) }))}
-        onClick={() => run("user.open", String(first().id))}
+        name={nameOf(f())}
+        username={f().name || undefined}
+        src={thumbUrl("headshot", f().id, true)}
+        presence={f().presence}
+        status={f().presence === "game" ? f().status : undefined}
+        onClick={() => run("user.open", String(f().id))}
       />
     </ContextMenu>
   )

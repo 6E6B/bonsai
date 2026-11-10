@@ -53,6 +53,8 @@ pub struct VoiceStatus {
     pub voice_eligible: bool,
     pub voice_verified: bool,
     pub banned: bool,
+    /// Unix seconds when a voice suspension ends, when Roblox says.
+    pub banned_until: Option<i64>,
     pub camera_enabled: bool,
     pub camera_eligible: bool,
 }
@@ -308,6 +310,7 @@ impl Core {
                     voice_eligible: v.is_user_eligible.unwrap_or(false),
                     voice_verified: v.is_verified_for_voice.unwrap_or(false),
                     banned: v.is_banned.unwrap_or(false),
+                    banned_until: crate::moderation::voice_ban(&v).and_then(|b| b.until),
                     camera_enabled: v.is_avatar_video_enabled.unwrap_or(false),
                     camera_eligible: v.is_avatar_video_eligible.unwrap_or(false),
                 });
@@ -468,6 +471,7 @@ impl Core {
                                 name: owner.clone(),
                                 display_name: owner,
                                 verified: false,
+                                premium: None,
                             });
                         }
                         Some(MyServer {

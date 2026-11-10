@@ -121,11 +121,11 @@ fn keys(account: AccountId, e: Effect) -> Vec<Key> {
     match e {
         Effect::Friendship(id) => vec![
             Key::private(account, "friends_of", id),
-            Key::shared("profile_counts", id),
+            Key::shared("profile_extras", id),
             Key::private(account, "relation", id),
         ],
         Effect::Follow(id) => vec![
-            Key::shared("profile_counts", id),
+            Key::shared("profile_extras", id),
             Key::private(account, "relation", id),
             Key::private(account, "followers", id),
             Key::private(account, "followings", account.0),

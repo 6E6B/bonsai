@@ -1,6 +1,6 @@
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { menuItem, run } from "~/lib/commands/registry"
+import { isRunning, menuItem, run } from "~/lib/commands/registry"
 import { ago, date } from "~/lib/format"
 import {
   commands,
@@ -18,6 +18,7 @@ import { itemMenu, itemTarget } from "~/lib/menus"
 import { rank } from "~/lib/search"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
+import { ItemName } from "~/lib/tiles"
 import {
   Alert,
   Avatar,
@@ -221,14 +222,24 @@ function Detail(props: { row: TradeRowView; box: string }) {
         {/* Under the name in a narrow pane, at the far end of the row in a wide one. */}
         <div class="flex gap-1.5 empty:hidden @2xl:ml-auto">
           <Show when={props.box === "inbound"}>
-            <Button onClick={() => run("trade.decline", id())}>Decline</Button>
+            <Button loading={isRunning("trade.decline", id())} onClick={() => run("trade.decline", id())}>
+              Decline
+            </Button>
             <Button onClick={() => run("trade.counter", id())}>Counter</Button>
-            <Button variant="primary" onClick={() => run("trade.accept", id())}>
+            <Button
+              variant="primary"
+              loading={isRunning("trade.accept", id())}
+              onClick={() => run("trade.accept", id())}
+            >
               Accept
             </Button>
           </Show>
           <Show when={props.box === "outbound"}>
-            <Button variant="danger" onClick={() => run("trade.decline", id())}>
+            <Button
+              variant="danger"
+              loading={isRunning("trade.decline", id())}
+              onClick={() => run("trade.decline", id())}
+            >
               Cancel trade
             </Button>
           </Show>
@@ -310,7 +321,7 @@ function ItemRow(props: {
         leading={
           <Thumbnail class="w-10" alt="" src={thumbUrl(i().bundle ? "bundle" : "asset", i().id)} fallback="avatar" />
         }
-        title={i().name}
+        title={<ItemName name={i().name} id={i().id} bundle={i().bundle} />}
         subtitle={
           <span class="flex items-center gap-1.5">
             <Show when={i().serial}>{(n) => `#${n()}`}</Show>
@@ -395,7 +406,13 @@ function Composer(props: { draft: DraftView }) {
         </div>
         <div class="flex gap-1.5 @2xl:ml-auto">
           <Button onClick={() => commands.discardTradeDraft()}>Discard</Button>
-          <Button variant="primary" icon="send" disabled={!d().partnerOk.canTrade} onClick={() => run("trade.send")}>
+          <Button
+            variant="primary"
+            icon="send"
+            disabled={!d().partnerOk.canTrade}
+            loading={isRunning("trade.send")}
+            onClick={() => run("trade.send")}
+          >
             Send
           </Button>
         </div>

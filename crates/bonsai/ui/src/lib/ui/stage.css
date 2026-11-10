@@ -1,0 +1,80 @@
+/* A page's subject in a wide frame: the same fill, sheen and shadow as a Viewport or
+ * Thumbnail, so it reads as one of the app's picture frames. Whatever is inside fills it;
+ * corner controls are ordinary controls, raised slightly off the frame. */
+@layer components {
+  [data-component="stage"] {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-control);
+    background-image: var(--sheen-soft);
+    box-shadow: var(--shadow-media);
+  }
+
+  /* The content fills the frame and drops its own fill, so the backdrop shows through. A
+   * thumbnail inside a viewport fills the viewport the same way. */
+  [data-component="stage"] :is([data-component="viewport"], [data-component="thumbnail"]) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  /* Pictures are square; show all of one, never a crop. */
+  [data-component="stage"] [data-component="thumbnail"] [data-slot="image"] {
+    object-fit: contain;
+  }
+
+  [data-component="stage"] [data-component="viewport"]:focus-visible {
+    outline-offset: -2px;
+  }
+
+  /* ── Corners ── */
+
+  [data-component="stage"] [data-slot="overlay"] {
+    position: absolute;
+    z-index: 1;
+    top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  [data-component="stage"] [data-slot="overlay"][data-edge="top-start"] {
+    left: 12px;
+  }
+
+  [data-component="stage"] [data-slot="overlay"][data-edge="top-end"] {
+    right: 12px;
+  }
+
+  /* Icon buttons are ghost by default; on a picture they need a fill to stay visible. */
+  [data-component="stage"] [data-slot="overlay"] [data-component="button"][data-variant="ghost"] {
+    --button-bg: var(--color-control);
+    --button-sheen: var(--sheen-soft);
+    --button-shadow: var(--shadow-control);
+  }
+
+  /* ── Hint ── */
+
+  [data-component="stage"] [data-slot="hint"] {
+    position: absolute;
+    z-index: 1;
+    bottom: 10px;
+    left: 12px;
+    color: var(--color-fg-faint);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-slow) var(--ease);
+  }
+
+  [data-component="stage"]:is(:hover, :focus-within) [data-slot="hint"] {
+    opacity: 1;
+  }
+}

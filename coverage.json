@@ -3028,7 +3028,7 @@
       "module": "friends::v1",
       "path": "/v1/users/{targetUserId}/followers/count",
       "summary": "Get the number of following a user has",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -3048,7 +3048,7 @@
       "module": "friends::v1",
       "path": "/v1/users/{targetUserId}/followings/count",
       "summary": "Get the number of following a user has",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -3078,7 +3078,7 @@
       "module": "friends::v1",
       "path": "/v1/users/{userId}/friends/count",
       "summary": "Get the number of friends a user has",
-      "used": true
+      "used": false
     },
     {
       "deprecated": false,
@@ -7182,6 +7182,16 @@
     },
     {
       "deprecated": false,
+      "function": "post_profile_platform",
+      "host": "apis.roblox.com",
+      "method": "POST",
+      "module": "apis::undocumented",
+      "path": "/profile-platform-api/v1/profiles/get",
+      "summary": "Components of a profile page. We ask only for UserProfileHeader.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "get_omni_search",
       "host": "apis.roblox.com",
       "method": "GET",
@@ -7652,6 +7662,26 @@
     },
     {
       "deprecated": false,
+      "function": "get_not_approved",
+      "host": "usermoderation.roblox.com",
+      "method": "GET",
+      "module": "usermoderation::undocumented",
+      "path": "/v1/not-approved",
+      "summary": "The punishment of the signed-in account. Empty punishment type means locked until a human check.",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "post_reactivate",
+      "host": "usermoderation.roblox.com",
+      "method": "POST",
+      "module": "usermoderation::undocumented",
+      "path": "/v1/not-approved/reactivate",
+      "summary": "Accept a warning or an ended ban so the account works again (user action only).",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "get_voice_settings",
       "host": "voice.roblox.com",
       "method": "GET",
@@ -7822,6 +7852,16 @@
     },
     {
       "deprecated": false,
+      "function": "page_not_approved",
+      "host": "www.roblox.com",
+      "method": "GET",
+      "module": "www::undocumented",
+      "path": "/not-approved",
+      "summary": "Moderation notice: warning, ban, termination or human check",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "page_report_abuse",
       "host": "www.roblox.com",
       "method": "GET",
@@ -7901,6 +7941,6 @@
       "used": true
     }
   ],
-  "total": 790,
-  "used": 252
+  "total": 794,
+  "used": 253
 }

@@ -1,6 +1,6 @@
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { handle, run, runBackend } from "~/lib/commands/registry"
+import { handle, isRunning, run, runBackend } from "~/lib/commands/registry"
 import { ExperienceCard } from "~/lib/experience-card"
 import { ago, date } from "~/lib/format"
 import { commands, type MessageRow, type Paged } from "~/lib/ipc/bindings"
@@ -91,7 +91,9 @@ export default function Messages() {
             value={query()}
             onChange={setQuery}
           />
-          <Button onClick={() => run("message.mark_all_read")}>Mark all read</Button>
+          <Button loading={isRunning("message.mark_all_read")} onClick={() => run("message.mark_all_read")}>
+            Mark all read
+          </Button>
         </div>
         <Tabs aria-label="Mailbox" items={sections()} value={box()} onChange={pick} />
         <ListState list={res.list} icon="inbox" empty="Nothing here" more={res.moreKey}>
@@ -135,7 +137,7 @@ export default function Messages() {
                     <span class="flex items-center gap-1 text-sm text-fg-muted">
                       From{" "}
                       <Show when={m().senderVerified} fallback={m().sender}>
-                        <span class="text-verified">{m().sender}</span>
+                        <span>{m().sender}</span>
                         <VerifiedBadge />
                       </Show>
                       <Show when={box() === "sent"}> to {m().recipient}</Show> · {date(ms(m().created))}
@@ -147,11 +149,18 @@ export default function Messages() {
                         Reply in chat
                       </Button>
                     </Show>
-                    <Button onClick={() => run("message.toggle_read", String(m().id))}>
+                    <Button
+                      loading={isRunning("message.toggle_read", String(m().id))}
+                      onClick={() => run("message.toggle_read", String(m().id))}
+                    >
                       {m().read ? "Mark unread" : "Mark read"}
                     </Button>
                     <Show when={movable()}>
-                      <Button icon="archive" onClick={() => run("message.archive", String(m().id))}>
+                      <Button
+                        icon="archive"
+                        loading={isRunning("message.archive", String(m().id))}
+                        onClick={() => run("message.archive", String(m().id))}
+                      >
                         {box() === "archive" ? "Move to inbox" : "Archive"}
                       </Button>
                     </Show>

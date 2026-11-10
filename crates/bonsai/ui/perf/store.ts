@@ -54,6 +54,7 @@ Object.assign(window, {
 })
 
 export const useHome = () => home
+export async function refreshShell() {}
 export async function startSync() {}
 export function useLive<K, T extends object>(
   source: () => K,

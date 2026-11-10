@@ -20,5 +20,11 @@ definitions:
       isUserEligible: { type: boolean }
       isVerifiedForVoice: { type: boolean }
       isBanned: { type: boolean }
+      # Set while voice is suspended. Shape from RobloxAccountManager and RoSeal (2026-10-14).
+      bannedUntil: { $ref: "#/definitions/Timestamp" }
       isAvatarVideoEnabled: { type: boolean }
       isAvatarVideoEligible: { type: boolean }
+  Timestamp:
+    type: object
+    properties:
+      Seconds: { type: integer, format: int64 }

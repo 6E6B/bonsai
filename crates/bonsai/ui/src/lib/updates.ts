@@ -41,18 +41,43 @@ export function updateMessage(s: UpdateStatus): string {
   }
 }
 
+let poke: (() => void) | undefined
+
+/** Reads the update status now instead of at the next poll, so a click on Check, Download or
+ * Install shows its new phase at once. Does nothing until `useUpdates` has mounted. */
+export function refreshUpdates() {
+  poke?.()
+}
+
 /** One shell-owned subscription. Serial polling survives transient IPC failures and unmounts. */
 export function useUpdates() {
   let stopped = false
   let timer: ReturnType<typeof setTimeout> | undefined
+  let inflight = false
+  let again = false
   const refresh = async () => {
+    inflight = true
     try {
       const next = await commands.updateStatus()
       if (!stopped) setUpdates(reconcile(next))
     } catch {
       // The vault can lock during a poll. Retry after unlock without resetting a pending update.
     }
-    if (!stopped) timer = setTimeout(refresh, updateBusy(updates.phase) ? 500 : 2000)
+    inflight = false
+    if (stopped) return
+    if (again) {
+      again = false
+      void refresh()
+    } else timer = setTimeout(refresh, updateBusy(updates.phase) ? 500 : 2000)
+  }
+  poke = () => {
+    if (stopped) return
+    if (inflight) {
+      again = true
+      return
+    }
+    clearTimeout(timer)
+    void refresh()
   }
   onMount(() => {
     if (isTauri()) void refresh()
@@ -60,5 +85,6 @@ export function useUpdates() {
   onCleanup(() => {
     stopped = true
     clearTimeout(timer)
+    poke = undefined
   })
 }

@@ -5,6 +5,8 @@ import { Icon, type IconName } from "./icon"
 export interface TextFieldProps extends Omit<ComponentProps<"input">, "value" | "onChange" | "onInput" | "size"> {
   /** A text area that grows with its content (capped at about five lines). */
   multiline?: boolean
+  /** Starting height of a multiline field, in lines. Defaults to 2. */
+  rows?: number
   label?: string
   description?: string
   /** Marks the field invalid and shows this message under it. */
@@ -22,7 +24,7 @@ export interface TextFieldProps extends Omit<ComponentProps<"input">, "value" | 
 export function TextField(props: TextFieldProps) {
   const [root, field, input] = splitProps(
     props,
-    ["class", "size", "multiline"],
+    ["class", "size", "multiline", "rows"],
     [
       "label",
       "description",
@@ -64,6 +66,7 @@ export function TextField(props: TextFieldProps) {
           <KTextField.TextArea
             data-slot="input"
             autoResize
+            rows={root.rows}
             submitOnEnter={false}
             {...(input as Record<string, unknown>)}
           />

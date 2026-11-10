@@ -43,7 +43,7 @@ describe("readTheme", () => {
     expect(r.theme.seeds.accent).toBe(DEFAULT_SEEDS.dark.accent)
     expect(r.theme.seeds.contrast).toBe(1)
     expect(r.theme.seeds.radius).toBe(4)
-    expect(r.theme.seeds.font).toBe("inter")
+    expect(r.theme.seeds.font).toBe("rubik")
     expect(r.theme.tokens).toEqual({ "color-accent": "#ff00aa" })
     expect(r.problems).toEqual([
       "color-canvas: bad value",
@@ -173,7 +173,7 @@ describe("Google font seeds", () => {
     expect(r.problems).toEqual([])
     expect(r.theme.seeds.font).toEqual({ google: "Space Grotesk" })
     const t = resolve(r.theme)
-    expect(t["font-sans"]).toBe('"Space Grotesk", "Inter", system-ui, sans-serif')
+    expect(t["font-sans"]).toBe('"Space Grotesk", "Rubik", system-ui, sans-serif')
     expect(t["font-mono"]).toBe('"Fira Code", "JetBrainsMono Nerd Font Mono", ui-monospace, monospace')
   })
 
@@ -181,7 +181,7 @@ describe("Google font seeds", () => {
     const r = readTheme({ ...minimal, seeds: { font: { google: 'X", url(evil)' } } })
     expect(r.ok).toBe(true)
     if (!r.ok) return
-    expect(r.theme.seeds.font).toBe("inter")
+    expect(r.theme.seeds.font).toBe("rubik")
     expect(r.problems).toHaveLength(1)
   })
 })

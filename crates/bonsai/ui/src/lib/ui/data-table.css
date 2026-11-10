@@ -106,7 +106,7 @@
   }
 
   /* Tables already communicate structure through columns and row states. Keep ordinary
-   * cell actions quiet until hovered or focused; verified/danger identity colors stay intact. */
+   * cell actions quiet until hovered or focused; danger identity colors stay intact. */
   [data-component="data-table"] [data-component="text-link"][data-tone="accent"] {
     color: inherit;
   }

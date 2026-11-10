@@ -5,7 +5,7 @@ import { UpdateDetails, useUpdateToasts } from "./update-view"
 import { setUpdates } from "./updates"
 
 const run = vi.hoisted(() => vi.fn())
-vi.mock("~/lib/commands/registry", () => ({ run }))
+vi.mock("~/lib/commands/registry", () => ({ run, isRunning: () => false }))
 
 beforeEach(() => {
   setUpdates({

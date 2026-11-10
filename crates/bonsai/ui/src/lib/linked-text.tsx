@@ -41,7 +41,6 @@ function Parts(props: PartsProps) {
                 name={u().name}
                 title={u().displayName && u().displayName !== u().name ? u().displayName : undefined}
                 src={thumbUrl("headshot", u().id)}
-                verified={u().verified}
                 onClick={() => run("user.open", String(u().id))}
               />
             )}

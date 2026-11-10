@@ -43,7 +43,6 @@
   --color-accent: #4ace51;
   --color-accent-hover: #65d56b;
   --color-accent-soft: #4ace5129;
-  --color-verified: #3a7fe6; /* verified names; a shade darker than the badge fill (#4d94ff) in assets/verified-badge.svg */
   --color-on-accent: #000000; /* text on accent, danger and success fills */
   --color-contrast: #4ace51; /* primary button fill, lit by --sheen; the accent unless a theme overrides it */
   --color-focus: #65d56b;
@@ -102,7 +101,7 @@
   --text-shadow-fill: 0 0.5px 0.5px #0000004d; /* text on contrast fills */
 
   /* ── Type ── */
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Rubik", system-ui, sans-serif;
   --font-mono: "JetBrainsMono Nerd Font Mono", ui-monospace, monospace;
 
   --text-xs: 11px;
@@ -117,6 +116,8 @@
   --text-xl--line-height: 24px;
   --text-2xl: 22px;
   --text-2xl--line-height: 28px;
+  --text-3xl: 28px; /* a name laid over a picture */
+  --text-3xl--line-height: 34px;
 
   /* ── Shape ── */
   --radius-xs: 2px;

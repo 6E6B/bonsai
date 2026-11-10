@@ -441,6 +441,21 @@
     },
     {
       "arg": "none",
+      "id": "account.reactivate",
+      "keywords": [
+        "ban",
+        "banned",
+        "warning",
+        "warned",
+        "moderation",
+        "moderated",
+        "reactivate",
+        "unban"
+      ],
+      "title": "Reactivate account (accept a warning or an ended ban)"
+    },
+    {
+      "arg": "none",
       "id": "nav.home",
       "keywords": [
         "home"

@@ -1,6 +1,6 @@
 import { createMemo, createSignal, Match, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
-import { handle, run } from "~/lib/commands/registry"
+import { handle, isRunning, run } from "~/lib/commands/registry"
 import { commands, type Person } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
 import { joinUser, presenceText, userMenu } from "~/lib/menus"
@@ -123,10 +123,14 @@ export default function Friends() {
     return (
       <Switch>
         <Match when={section() === "requests"}>
-          <Button size="sm" onClick={() => run("user.accept_friend", id)}>
+          <Button size="sm" loading={isRunning("user.accept_friend", id)} onClick={() => run("user.accept_friend", id)}>
             Accept
           </Button>
-          <Button size="sm" onClick={() => run("user.decline_friend", id)}>
+          <Button
+            size="sm"
+            loading={isRunning("user.decline_friend", id)}
+            onClick={() => run("user.decline_friend", id)}
+          >
             Decline
           </Button>
         </Match>
@@ -134,13 +138,14 @@ export default function Friends() {
           <Button
             size="sm"
             variant={f.following ? "ghost" : "secondary"}
+            loading={isRunning("user.follow", id) || isRunning("user.unfollow", id)}
             onClick={() => run(f.following ? "user.unfollow" : "user.follow", id)}
           >
             {f.following ? "Following" : "Follow back"}
           </Button>
         </Match>
         <Match when={section() === "blocked"}>
-          <Button size="sm" onClick={() => run("user.unblock", id)}>
+          <Button size="sm" loading={isRunning("user.unblock", id)} onClick={() => run("user.unblock", id)}>
             Unblock
           </Button>
         </Match>
@@ -161,7 +166,12 @@ export default function Friends() {
             )}
           </Show>
           <Show when={f.presence === "game"}>
-            <Button size="sm" icon="play" onClick={() => run("game.join", joinUser(f.id))}>
+            <Button
+              size="sm"
+              icon="play"
+              loading={isRunning("game.join", joinUser(f.id))}
+              onClick={() => run("game.join", joinUser(f.id))}
+            >
               Join
             </Button>
           </Show>
@@ -215,7 +225,9 @@ export default function Friends() {
           />
           <Switch>
             <Match when={section() === "requests" && requests.items.length > 0}>
-              <Button onClick={() => run("friends.decline_all")}>Ignore all</Button>
+              <Button loading={isRunning("friends.decline_all")} onClick={() => run("friends.decline_all")}>
+                Ignore all
+              </Button>
             </Match>
           </Switch>
         </div>
@@ -277,7 +289,7 @@ export default function Friends() {
             </VirtualGrid>
           </div>
           <Show when={section() !== "friends" && people.more}>
-            <Button class="mt-2" variant="ghost" disabled={people.loading} onClick={() => run("list.more", section())}>
+            <Button class="mt-2" variant="ghost" loading={people.loading} onClick={() => run("list.more", section())}>
               Load more
             </Button>
           </Show>

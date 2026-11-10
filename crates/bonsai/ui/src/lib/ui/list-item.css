@@ -16,18 +16,6 @@
     background: var(--color-active);
   }
 
-  /* In a split view's list the selected row is the one open on the right. A bar tells it apart
-   * from a hovered row. */
-  [data-component="pane"][data-side] [data-component="list-item"][data-selected]::before {
-    content: "";
-    position: absolute;
-    inset: 8px auto 8px 0;
-    width: 3px;
-    border-radius: var(--radius-full);
-    background: var(--color-accent);
-    pointer-events: none;
-  }
-
   [data-component="list-item"] [data-slot="main"] {
     display: flex;
     flex: 1;

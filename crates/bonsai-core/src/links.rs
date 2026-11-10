@@ -32,6 +32,8 @@ pub fn section(key: &str, user_id: Option<u64>) -> Option<String> {
         "communities" => url(www::undocumented::page_communities_request()),
         "settings" => url(www::undocumented::page_settings_request()),
         "friends" => url(www::undocumented::page_friends_request()),
+        // A moderated account's notice; the website's human check happens there.
+        "moderation" => url(www::undocumented::page_not_approved_request()),
         // Robux are only ever bought on the website.
         "robux" => url(www::undocumented::page_buy_robux_request()),
         _ => return None,

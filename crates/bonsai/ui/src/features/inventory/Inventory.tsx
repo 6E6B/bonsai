@@ -1,7 +1,7 @@
 import { useParams, useSearchParams } from "@solidjs/router"
 import { createEffect, createMemo, createSignal, type JSX, Match, onCleanup, Show, Switch } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
-import { handle, menuItem, run } from "~/lib/commands/registry"
+import { handle, isRunning, menuItem, run } from "~/lib/commands/registry"
 import { percent } from "~/lib/format"
 import {
   type AvatarView,
@@ -804,6 +804,7 @@ function ItemDetails(props: {
             <Button
               variant="primary"
               icon={worn() ? "x" : "avatar"}
+              loading={isRunning("avatar.wear", `${props.id}:${t()}`)}
               onClick={() => run("avatar.wear", `${props.id}:${t()}`)}
             >
               {worn() ? "Take off" : "Wear"}
@@ -813,7 +814,12 @@ function ItemDetails(props: {
       }
       trailing={
         <Show when={props.mine && !props.bundle && !card()?.limited}>
-          <Button variant="danger" icon="trash" onClick={() => run("inventory.delete", target(), props.userId)}>
+          <Button
+            variant="danger"
+            icon="trash"
+            loading={isRunning("inventory.delete", target(), props.userId)}
+            onClick={() => run("inventory.delete", target(), props.userId)}
+          >
             Delete
           </Button>
         </Show>

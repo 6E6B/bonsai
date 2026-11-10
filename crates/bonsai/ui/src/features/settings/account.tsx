@@ -1,9 +1,10 @@
 import { createSignal, For, onCleanup, Show } from "solid-js"
-import { run } from "~/lib/commands/registry"
+import { isRunning, run } from "~/lib/commands/registry"
 import { countdown, date } from "~/lib/format"
 import { type AccountInfoView, commands, type PinView, type SecurityView, type SessionsView } from "~/lib/ipc/bindings"
+import { voiceBanText } from "~/lib/moderation"
 import { shell, useLive } from "~/lib/store"
-import { Badge, Button, SettingRow, SettingsGroup, Skeleton, usePrompt } from "~/lib/ui"
+import { Badge, Button, PremiumBadge, SettingRow, SettingsGroup, Skeleton, usePrompt } from "~/lib/ui"
 import { Verified, WebButton } from "./shared"
 
 const activeAccount = () => shell.accounts.find((a) => a.id === shell.active)
@@ -94,9 +95,9 @@ export function ProfileSection() {
         <Show when={info.voice}>
           {(v) => (
             <SettingRow label="Voice and camera" description="Set on the website. Shown here for reference.">
-              <Badge variant={v().voiceEnabled ? "success" : undefined}>
+              <Badge variant={v().banned ? "danger" : v().voiceEnabled ? "success" : undefined}>
                 {v().banned
-                  ? "Voice banned"
+                  ? voiceBanText({ until: v().bannedUntil }, Date.now() / 1000)
                   : v().voiceEnabled
                     ? "Voice on"
                     : v().voiceEligible
@@ -114,7 +115,10 @@ export function ProfileSection() {
         <SettingRow label="Premium">
           <Show when={info.premium !== null} fallback={value(() => null, "Unknown")}>
             <Show when={info.premium} fallback={<span class="text-fg-muted">No</span>}>
-              <Badge variant="accent">{info.premiumPlan ?? "Premium"}</Badge>
+              <Badge variant="accent">
+                <PremiumBadge bare size={12} class="-ml-0.5 mr-1" />
+                {info.premiumPlan ?? "Premium"}
+              </Badge>
               <Show when={day(info.premiumRenews)}>{(d) => <span class="text-fg-muted">Renews {d()}</span>}</Show>
               <Show when={!info.premiumRenews && day(info.premiumExpires)}>
                 {(d) => <span class="text-fg-muted">Ends {d()}</span>}
@@ -169,7 +173,12 @@ export function SecuritySection() {
                 </Button>
               }
             >
-              <Button size="sm" icon="lock" onClick={() => run("account.lock_pin")}>
+              <Button
+                size="sm"
+                icon="lock"
+                loading={isRunning("account.lock_pin")}
+                onClick={() => run("account.lock_pin")}
+              >
                 Lock
               </Button>
             </Show>
@@ -187,7 +196,13 @@ export function SecuritySection() {
         title="Signed-in sessions"
         meta={sessions.sessions.length || undefined}
         actions={
-          <Button size="sm" variant="danger" disabled={!activeAccount()} onClick={() => run("account.sign_out_others")}>
+          <Button
+            size="sm"
+            variant="danger"
+            disabled={!activeAccount()}
+            loading={isRunning("account.sign_out_others")}
+            onClick={() => run("account.sign_out_others")}
+          >
             Sign out others
           </Button>
         }
@@ -289,7 +304,12 @@ function TwoStepGroup() {
       <For each={sec.passkeys}>
         {(name) => (
           <SettingRow label={name} description="Passkey">
-            <Button size="sm" variant="danger" onClick={() => run("security.remove_passkey", name)}>
+            <Button
+              size="sm"
+              variant="danger"
+              loading={isRunning("security.remove_passkey", name)}
+              onClick={() => run("security.remove_passkey", name)}
+            >
               Remove
             </Button>
           </SettingRow>

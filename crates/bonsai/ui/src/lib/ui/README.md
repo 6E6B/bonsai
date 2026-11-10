@@ -16,7 +16,7 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `ToggleButton` | On/off state the server owns: favorite, like, notify, pin. `pressed` comes from the store. | Local view options (use `Switch` or `SegmentedControl`). |
 | `Menu` | A button that opens a list of commands: "More", "Join as…". Build rows with `menuItem()` from the registry. | Picking a value (use `Select`). |
 | `ContextMenu` | Right-click shortcuts on rows and tiles. Everything in it must also be reachable another way. | The only path to an action. |
-| `TextLink` | Inline names that open something: "by Tilework", a seller name. A button, never an anchor. User and community names use `tone="name"`, or `tone="verified"` plus a `VerifiedBadge` when verified; no other name is blue. | Standalone actions. |
+| `TextLink` | Inline names that open something: "by Tilework", a seller name. A button, never an anchor. User and community names use `tone="name"`, with a `VerifiedBadge` after them when verified. | Standalone actions. |
 | `Mention` | An `@name` inside text: headshot plus name in a tinted pill, opens the profile. Rendered for you by `Description` / `LinkedText` in `~/lib/linked-text`. | Names in bylines and lists (use `TextLink`). |
 | `SearchButton` | The command bar trigger in the top bar. Looks like a field, opens the palette. | Filtering a list (use `TextField`). |
 
@@ -56,20 +56,22 @@ Pick by purpose. If two seem to fit, the first one listed in its group is usuall
 | `VirtualGrid` | Growing tile grids: inventory, catalog, outfits, game stores and recommendations. Measures rows and adapts the column count. |
 | `VirtualShelf` | Horizontal collections with expensive tiles, such as profile preview shelves. Fixed item widths, measured height, fades and arrow controls. |
 | `PersonCard` | A person in a grid of compact cards: friends playing. A `Card` with avatar, name, one muted line, an optional trailing action. |
-| `PersonTile` | A person as a tile: big round headshot, display name, @username. Friends rows on a profile and Home. `stack` for several people together, like friends in one game. |
+| `PersonTile` | A person as a tile: big round headshot, display name with verified and Premium badges, @username. Friends rows on a profile and Home. |
 | `Tile` | A picture with a title: games, items, outfits, communities. `selected` for worn or picked items. |
 | `Shelf` | A short, fixed horizontal strip. Use `VirtualShelf` for data collections. |
 | `MediaFrame` | An image with previous and next arrows and a counter laid over it. |
 | `AudioPlayer` | Play, pause and seek one sound from `rbxasset://`: item pages for audio. `ref` hands back `toggle` for a command. |
 | `Thumbnail` | A `thumb://` image with a fixed aspect ratio and a fallback icon. |
+| `Stage` | A wide picture frame for a page's subject, styled like `Viewport`: a `Viewport` or `Thumbnail` fills it, with `topStart` / `topEnd` controls and a `hint` over the corners. `AvatarViewer stage` draws on one. |
 | `Figure` | A picture of any shape with a caption, loaded lazily: wiki article pictures. |
 | `Avatar` | A user or account picture. `presence` dot, `count` badge, sizes `xs`–`xl`. |
 | `Stat` | Label over value inside a `Card` grid (Playing / Visits / Rating). |
 | `Facts` | An entity's details beside its description: `FactGroup`s of `Fact` label/value rows in one panel. `nested` inside a `Card`. |
 | `Meter` | Amount of a known maximum: server fill (`tone="capacity"` warns near full), progress. |
-| `Robux` | Any Robux amount; `null` shows a dash. |
+| `Robux` | Any Robux amount; `null` shows a dash. `size="lg"` for a headline price. |
 | `Badge` | A short status word: Limited, Primary, Owned, Offline. |
-| `VerifiedBadge` | Roblox's checkmark after a verified user or community name. Color the name with `tone="verified"` or `text-verified`. |
+| `VerifiedBadge` | Roblox's checkmark after a verified user or community name. The name keeps its normal color. |
+| `PremiumBadge` | The Builders Club hard hat after the name of a user with Premium. `label` sets the tooltip, e.g. the tier. |
 | `Kbd` | Shortcut caps in tooltips, menus and the shortcuts list. |
 | `Collapsible` | Long text that can fold away (About). |
 | `Clamp` | Long text cut to a few lines with Show more (descriptions, bios). |
