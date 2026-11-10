@@ -4,6 +4,56 @@ swagger: "2.0"
 host: friends.roblox.com
 info: { title: "friends (undocumented)", version: undocumented }
 paths:
+  # Inspected 2026-11-10 in RobloxAccountManager's internal/roblox/services/friends.go
+  # https://github.com/sleaze5/RobloxAccountManager/blob/fe925e35c341415875c0bb6a9e4b0c17574653a4/internal/roblox/services/friends.go
+  # These writes are replayed synthetically; no real friendship was changed during development.
+  # Public site bundles inspected 2026-11-10 from www.roblox.com/users/1/profile:
+  # js.rbxcdn.com/32479d6b4f5fa79633457da0ba68422ba0a90b5359f93bdd261cc000f6140cff-ProfileHeader.js (status and status values)
+  # js.rbxcdn.com/604fe2113ae50706e8459d21391d5eb786e74edc2779486b4e0f54eacf702a9d-ProfilePlatform.js (send, accept, remove; POST {})
+  /v1/my/trusted-friends/{targetUserId}/status:
+    get:
+      x-rust-name: get_trusted_friend_status
+      summary: Read the signed-in account's trusted friendship with a user.
+      parameters:
+        - { in: path, name: targetUserId, required: true, type: integer, format: int64 }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/TrustedFriendStatus" } }
+  /v1/users/{targetUserId}/send-trusted-friend-request:
+    post:
+      x-rust-name: post_send_trusted_friend_request
+      summary: Send a trusted friend request to an existing friend.
+      parameters:
+        - { in: path, name: targetUserId, required: true, type: integer, format: int64 }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/Empty" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+  /v1/users/{targetUserId}/accept-trusted-friend-request:
+    post:
+      x-rust-name: post_accept_trusted_friend_request
+      summary: Accept an incoming trusted friend request.
+      parameters:
+        - { in: path, name: targetUserId, required: true, type: integer, format: int64 }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/Empty" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+  /v1/users/{targetUserId}/ignore-trusted-friend-request:
+    post:
+      x-rust-name: post_ignore_trusted_friend_request
+      summary: Decline an incoming trusted friend request, keeping the friendship.
+      parameters:
+        - { in: path, name: targetUserId, required: true, type: integer, format: int64 }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/Empty" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
+  /v1/users/{targetUserId}/remove-trusted-friend:
+    post:
+      x-rust-name: post_remove_trusted_friend
+      summary: Remove trusted status or cancel an outgoing trusted request, keeping the friendship.
+      parameters:
+        - { in: path, name: targetUserId, required: true, type: integer, format: int64 }
+        - { in: body, name: body, required: true, schema: { $ref: "#/definitions/Empty" } }
+      responses:
+        "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
   /v1/users/{targetUserId}/request-friendship:
     post:
       # Captured 2026-10-12. Profile page "Add Connection" on www.roblox.com/users/{id}/profile.
@@ -56,6 +106,10 @@ paths:
       responses:
         "200": { description: OK, schema: { $ref: "#/definitions/Empty" } }
 definitions:
+  TrustedFriendStatus:
+    type: object
+    properties:
+      status: { type: string }
   Empty:
     type: object
   FriendshipRequest:

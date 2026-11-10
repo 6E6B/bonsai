@@ -964,6 +964,60 @@ async fn friends_search_pages() {
     }
 }
 
+#[tokio::test(flavor = "multi_thread")]
+async fn trusted_accept_refreshes_requests_and_only_the_acting_accounts_status() {
+    use bonsai_core::trusted::TrustedState;
+    let replay = Replay::start(&["trusted_friends"]).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let cache = Cache::open(&Paths::in_dir(dir.path()).db_file()).unwrap();
+    cache.put(Kind::Res, ALT, "trusted_status:2000002", &TrustedState::Sent);
+    drop(cache);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    assert_eq!(
+        *poll(|| c.trusted_friend(ME, 2000002)).await,
+        TrustedState::Received
+    );
+    assert_eq!(*poll(|| c.trusted_friend(ALT, 2000002)).await, TrustedState::Sent);
+    assert_eq!(
+        poll(|| c.trusted_requests(ME, false)).await.items[0].user_id,
+        2000002
+    );
+    let mut fixture = replay::load("trusted_friends");
+    let mut status = fixture.interactions.remove(1);
+    status.response.body = serde_json::json!({"status":"TrustedFriends"});
+    replay.repeat(&status).await;
+    let mut list = fixture
+        .interactions
+        .into_iter()
+        .find(|i| i.request.path.ends_with("/requests"))
+        .unwrap();
+    list.response.body = serde_json::json!({"data":[],"nextPageCursor":null});
+    replay.repeat(&list).await;
+    c.accept_trusted_friend(ME, 2000002);
+    wait_for(c, "trusted acceptance", |s| {
+        s.jobs == 0
+            && s.toasts
+                .iter()
+                .any(|t| t.text.contains("Trusted friend request accepted"))
+    })
+    .await;
+    let start = Instant::now();
+    loop {
+        let status = c.trusted_friend(ME, 2000002);
+        let requests = c.trusted_requests(ME, false);
+        if status.data.as_deref() == Some(&TrustedState::Trusted)
+            && requests.data.is_some_and(|p| p.items.is_empty())
+        {
+            break;
+        }
+        assert!(start.elapsed() < Duration::from_secs(10));
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    assert_eq!(*poll(|| c.trusted_friend(ALT, 2000002)).await, TrustedState::Sent);
+}
+
 /// Poll a resource until it has data.
 async fn poll<T>(mut f: impl FnMut() -> bonsai_core::res::Res<T>) -> Arc<T> {
     let start = Instant::now();

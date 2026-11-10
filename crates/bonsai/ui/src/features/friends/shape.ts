@@ -1,7 +1,7 @@
 import type { Presence } from "~/lib/ipc/bindings"
 import { matches, rank } from "~/lib/search"
 
-export type Section = "friends" | "requests" | "followers" | "following" | "blocked"
+export type Section = "friends" | "requests" | "trusted_requests" | "followers" | "following" | "blocked"
 
 /** What the Friends page lists in every section. */
 export interface Row {
@@ -31,6 +31,8 @@ type Option = { value: string; label: string }
 export function sortOptions(section: Section): Option[] {
   const name = { value: "name", label: "Name" }
   if (section === "friends") return [{ value: "status", label: "Status" }, name]
+  if (section === "trusted_requests")
+    return [{ value: "newest", label: "Newest" }, { value: "oldest", label: "Oldest" }, name]
   if (section === "requests")
     return [
       { value: "newest", label: "Newest" },

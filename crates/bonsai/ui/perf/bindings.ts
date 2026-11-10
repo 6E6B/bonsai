@@ -1,5 +1,5 @@
 // This module replaces bindings only in the explicit performance build. No native IPC or credentials.
-import type { commands as realCommands } from "../src/lib/ipc/bindings"
+import type { commands as realCommands, TrustedStatus } from "../src/lib/ipc/bindings"
 import {
   badges,
   catalogCategories,
@@ -28,6 +28,12 @@ type Fixtures = {
   ) => Awaited<ReturnType<(typeof realCommands)[K]>>
 }
 
+const requestedStatus = new URLSearchParams(location.search).get("trusted")
+let trustedStatus: TrustedStatus = ["none", "sent", "received", "trusted", "unknown"].includes(requestedStatus ?? "")
+  ? (requestedStatus as TrustedStatus)
+  : "none"
+let trustedPeople = people.slice(0, 6)
+
 const fixtures = {
   appearance: () => ({ mode: "dark", dark: "", light: "", fonts: [], background: null }),
   avatar3d: () => ({
@@ -40,7 +46,33 @@ const fixtures = {
     scales: { height: null, width: null, head: null, depth: null, proportion: null, bodyType: null },
     rev: null,
   }),
-  profile: () => profile,
+  profile: () => ({
+    ...profile,
+    relation: { friend: "friends" as const, following: false, followedBy: false, blocked: false },
+  }),
+  trustedFriend: () => ({
+    loading: false,
+    error: requestedStatus === "error" ? "Roblox could not load trusted status." : null,
+    status: requestedStatus === "error" ? ("unknown" as const) : trustedStatus,
+  }),
+  runCommand: (inv) => {
+    switch (inv.id) {
+      case "user.add_trusted_friend":
+        trustedStatus = "sent"
+        break
+      case "user.accept_trusted_friend":
+        trustedStatus = "trusted"
+        break
+      case "user.cancel_trusted_friend":
+      case "user.remove_trusted_friend":
+        trustedStatus = "none"
+        break
+    }
+    if (inv.id === "user.accept_trusted_friend" || inv.id === "user.decline_trusted_friend")
+      trustedPeople = trustedPeople.filter((p) => p.id !== Number(inv.arg))
+    queueMicrotask(() => void window.__bonsaiPerf.refresh())
+    return { status: "ok", data: null }
+  },
   profileCreations: () => list(games),
   profileFavorites: () => list(games),
   profileFollowedGames: () => list(games),
@@ -52,7 +84,14 @@ const fixtures = {
   profilePeople: () => list(people),
   profileLook: () => look,
   outfitLook: () => look,
-  people: () => list(people.map((p) => ({ ...p, mutuals: [], sentAt: null }))),
+  people: (which) =>
+    list(
+      (which === "trusted_requests" ? trustedPeople : people).map((p, i) => ({
+        ...p,
+        mutuals: [],
+        sentAt: which === "trusted_requests" ? `2026-11-${String(10 - i).padStart(2, "0")}T14:00:00Z` : null,
+      })),
+    ),
   catalogCategories: () => list(catalogCategories),
   catalogOptions: () => ({
     sorts: [
@@ -206,11 +245,13 @@ const fixtures = {
 
 export const calls: Record<string, number> = {}
 export const commands = new Proxy({} as typeof realCommands, {
-  get: (_, name: string) => async () => {
-    calls[name] = (calls[name] ?? 0) + 1
-    const fixture = fixtures[name as keyof typeof fixtures]
-    if (!fixture) throw new Error(`Performance fixture missing for ${name}`)
-    // Simulate fresh IPC payloads rather than reusing object identity across store updates.
-    return structuredClone(fixture())
-  },
+  get:
+    (_, name: string) =>
+    async (...args: unknown[]) => {
+      calls[name] = (calls[name] ?? 0) + 1
+      const fixture = fixtures[name as keyof typeof fixtures]
+      if (!fixture) throw new Error(`Performance fixture missing for ${name}`)
+      // Simulate fresh IPC payloads rather than reusing object identity across store updates.
+      return structuredClone(Reflect.apply(fixture, null, args))
+    },
 })

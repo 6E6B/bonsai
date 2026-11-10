@@ -2958,7 +2958,7 @@
       "module": "friends::v1",
       "path": "/v1/my/trusted-friends/requests",
       "summary": "Get all incoming trusted friend requests using exclusive start paging.",
-      "used": false
+      "used": true
     },
     {
       "deprecated": false,
@@ -7472,6 +7472,16 @@
     },
     {
       "deprecated": false,
+      "function": "get_trusted_friend_status",
+      "host": "friends.roblox.com",
+      "method": "GET",
+      "module": "friends::undocumented",
+      "path": "/v1/my/trusted-friends/{targetUserId}/status",
+      "summary": "Read the signed-in account's trusted friendship with a user.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "post_decline_all_friend_requests",
       "host": "friends.roblox.com",
       "method": "POST",
@@ -7502,12 +7512,52 @@
     },
     {
       "deprecated": false,
+      "function": "post_accept_trusted_friend_request",
+      "host": "friends.roblox.com",
+      "method": "POST",
+      "module": "friends::undocumented",
+      "path": "/v1/users/{targetUserId}/accept-trusted-friend-request",
+      "summary": "Accept an incoming trusted friend request.",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "post_ignore_trusted_friend_request",
+      "host": "friends.roblox.com",
+      "method": "POST",
+      "module": "friends::undocumented",
+      "path": "/v1/users/{targetUserId}/ignore-trusted-friend-request",
+      "summary": "Decline an incoming trusted friend request, keeping the friendship.",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "post_remove_trusted_friend",
+      "host": "friends.roblox.com",
+      "method": "POST",
+      "module": "friends::undocumented",
+      "path": "/v1/users/{targetUserId}/remove-trusted-friend",
+      "summary": "Remove trusted status or cancel an outgoing trusted request, keeping the friendship.",
+      "used": true
+    },
+    {
+      "deprecated": false,
       "function": "post_request_friendship",
       "host": "friends.roblox.com",
       "method": "POST",
       "module": "friends::undocumented",
       "path": "/v1/users/{targetUserId}/request-friendship",
       "summary": "Send a friend request (user action only).",
+      "used": true
+    },
+    {
+      "deprecated": false,
+      "function": "post_send_trusted_friend_request",
+      "host": "friends.roblox.com",
+      "method": "POST",
+      "module": "friends::undocumented",
+      "path": "/v1/users/{targetUserId}/send-trusted-friend-request",
+      "summary": "Send a trusted friend request to an existing friend.",
       "used": true
     },
     {
@@ -7941,6 +7991,6 @@
       "used": true
     }
   ],
-  "total": 794,
-  "used": 253
+  "total": 799,
+  "used": 259
 }

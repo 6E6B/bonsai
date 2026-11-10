@@ -5,6 +5,8 @@ Remove a line when it ships.
 
 ## Remaining limits
 
+- Trusted friendships use Roblox's eligibility rules. Sending, accepting, declining, canceling and removing trust are available; Bonsai does not perform Roblox's age checks or verification flow.
+
 - Application updates need the repository signing variable/secrets configured and a published signed release. Cross-platform installation and restart still need the release smoke test in `docs/updates.md`; builds without a key show updates as unavailable.
 
 - Plugins on the hub are switched off (`PLUGINS_ENABLED` in `bonsai-core/src/hub.rs`, `hubPlugins` in `ui/src/lib/hub.ts`). The hub lists and publishes themes only; plugins install from a folder. Revocation checks for installed plugins still run.

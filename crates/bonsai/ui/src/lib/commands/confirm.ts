@@ -7,6 +7,12 @@ import type { ConfirmOptions } from "~/lib/ui"
  * command bar). Each returns the dialog text for an argument, or null to run without asking.
  */
 export const confirmations: Record<string, (arg: string | null) => ConfirmOptions | null> = {
+  "user.remove_trusted_friend": () => ({
+    title: "Remove trusted status?",
+    description: "You stay friends. Becoming trusted friends again requires a new request.",
+    confirm: "Remove trusted status",
+    danger: true,
+  }),
   "hub.delete": () => ({
     title: "Delete this hub content?",
     description: "All releases become unavailable. This ID cannot be reused. Installed copies stay on your devices.",

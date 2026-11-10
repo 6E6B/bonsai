@@ -1,11 +1,13 @@
 import { createMemo, createSignal, Match, onCleanup, Show, Switch } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
 import { handle, isRunning, run } from "~/lib/commands/registry"
+import { date } from "~/lib/format"
 import { commands, type Person } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
 import { joinUser, presenceText, userMenu } from "~/lib/menus"
 import { friends, shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
+import { trustedCommands } from "~/lib/trusted-friends"
 import {
   Avatar,
   Button,
@@ -53,15 +55,25 @@ export default function Friends() {
   const prompt = usePrompt()
   useCommandContext(() => (shell.active === null ? "" : `user:${shell.active}`))
   const people = useLive(
-    () => (section() === "friends" ? "requests" : section()),
-    (which) => commands.people(which),
+    () => `${shell.active ?? 0}:${section() === "friends" ? "requests" : section()}`,
+    (key) => commands.people(key.split(":")[1]),
     emptyList<Person>,
   )
-  const requests = useLive(() => "requests", commands.people, emptyList<Person>)
+  const requests = useLive(
+    () => shell.active,
+    () => commands.people("requests"),
+    emptyList<Person>,
+  )
+  const trustedRequests = useLive(
+    () => shell.active,
+    () => commands.people("trusted_requests"),
+    emptyList<Person>,
+  )
 
   const sections = () => [
     { value: "friends", label: "Friends" },
     { value: "requests", label: "Requests", count: requests.items.length || undefined },
+    { value: "trusted_requests", label: "Trusted requests", count: trustedRequests.items.length || undefined },
     { value: "followers", label: "Followers" },
     { value: "following", label: "Following" },
     { value: "blocked", label: "Blocked" },
@@ -120,8 +132,29 @@ export default function Friends() {
 
   const actions = (f: Row) => {
     const id = String(f.id)
+    const trustedBusy = () => trustedCommands.some((command) => isRunning(command, id))
     return (
       <Switch>
+        <Match when={section() === "trusted_requests"}>
+          <Button
+            size="sm"
+            icon="shield"
+            variant="primary"
+            disabled={trustedBusy()}
+            loading={isRunning("user.accept_trusted_friend", id)}
+            onClick={() => run("user.accept_trusted_friend", id)}
+          >
+            Accept
+          </Button>
+          <Button
+            size="sm"
+            disabled={trustedBusy()}
+            loading={isRunning("user.decline_trusted_friend", id)}
+            onClick={() => run("user.decline_trusted_friend", id)}
+          >
+            Decline
+          </Button>
+        </Match>
         <Match when={section() === "requests"}>
           <Button size="sm" loading={isRunning("user.accept_friend", id)} onClick={() => run("user.accept_friend", id)}>
             Accept
@@ -232,12 +265,15 @@ export default function Friends() {
           </Switch>
         </div>
         <TabPanel value={section()}>
+          <Show when={section() === "trusted_requests"}>
+            <p class="mb-3 text-sm text-fg-muted">These friends asked to become trusted friends on Roblox.</p>
+          </Show>
           <div data-cursor-list>
             <VirtualGrid
               items={shown()}
               activeIndex={cursor()}
               onColumns={setColumns}
-              minItemWidth={ROW_WIDTH}
+              minItemWidth={section() === "trusted_requests" ? 400 : ROW_WIDTH}
               estimateRowHeight={48}
               gap={4}
               empty={
@@ -249,7 +285,16 @@ export default function Friends() {
                     when={section() === "friends" || !people.error}
                     fallback={<EmptyState icon="friends" title="Couldn't load this" description={people.error ?? ""} />}
                   >
-                    <EmptyState icon="friends" title={query() ? "No one matches" : "Nobody here yet"} />
+                    <EmptyState
+                      icon={section() === "trusted_requests" ? "shield" : "friends"}
+                      title={
+                        query()
+                          ? "No one matches"
+                          : section() === "trusted_requests"
+                            ? "No trusted requests"
+                            : "Nobody here yet"
+                      }
+                    />
                   </Show>
                 </Show>
               }
@@ -257,7 +302,9 @@ export default function Friends() {
               {(f, i) => (
                 <ContextMenu
                   items={userMenu(f.id, {
-                    friend: section() === "friends",
+                    friend: section() === "friends" || section() === "trusted_requests",
+                    trusted: section() === "trusted_requests" ? "received" : undefined,
+                    requested: section() === "requests",
                     inGame: f.presence === "game",
                     placeId: f.placeId,
                     blocked: section() === "blocked",
@@ -272,7 +319,13 @@ export default function Friends() {
                     subtitle={[
                       f.nickname && f.displayName,
                       f.name && `@${f.name}`,
-                      section() === "friends" ? presenceText(f) : f.note,
+                      section() === "friends"
+                        ? presenceText(f)
+                        : section() === "trusted_requests"
+                          ? f.sentAt &&
+                            Number.isFinite(Date.parse(f.sentAt)) &&
+                            `Received ${date(Date.parse(f.sentAt))}`
+                          : f.note,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
