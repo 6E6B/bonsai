@@ -1174,7 +1174,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
         keychain_warning: s.keychain_warning.clone(),
         item_values: core.values_enabled(),
         wiki: core.wiki_enabled(),
-        avatar_3d: core.settings().avatar_3d,
+        avatar_3d: !core.settings().avatar_2d,
         ui_scale: f64::from(core.settings().ui_scale),
         look: {
             let p = core.settings();
