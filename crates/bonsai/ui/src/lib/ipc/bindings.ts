@@ -136,6 +136,7 @@ export const commands = {
 	 *  with them until details load.
 	 */
 	playlists: () => __TAURI_INVOKE<PlaylistView[]>("playlists"),
+	bookmarks: () => __TAURI_INVOKE<BookmarkList>("bookmarks"),
 	catalogCategories: () => __TAURI_INVOKE<List<CategoryView>>("catalog_categories"),
 	catalogOptions: () => __TAURI_INVOKE<CatalogOptions>("catalog_options"),
 	catalogSearch: (filter: CatalogFilter) => __TAURI_INVOKE<Paged<ItemCard>>("catalog_search", { filter }),
@@ -533,7 +534,7 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark";
 
 /**  What a plugin asks for, shown in Settings and the install dialog. */
 export type Asks = {
@@ -645,6 +646,29 @@ export type BadgeRow = {
 	awarded: number,
 	/**  ISO date the active account earned it. */
 	earned: string | null,
+};
+
+export type BookmarkKindView = "experience" | "person" | "item" | "community" | "view" | "unknown";
+
+export type BookmarkList = {
+	account: Id,
+	items: BookmarkView[],
+};
+
+export type BookmarkThumbnail = {
+	kind: BookmarkThumbnailKind,
+	id: Id,
+};
+
+export type BookmarkThumbnailKind = "headshot" | "game_icon" | "asset" | "bundle" | "game_pass" | "group_icon";
+
+export type BookmarkView = {
+	id: Id,
+	path: string,
+	title: string,
+	kind: BookmarkKindView,
+	thumbnail: BookmarkThumbnail | null,
+	status: string,
 };
 
 /**  The budget dialog's plugin and account. */

@@ -1,5 +1,6 @@
 import { mapArray } from "solid-js"
 import { menuItem, run } from "~/lib/commands/registry"
+import { bookmarkMenu } from "~/lib/menus"
 import { tabActions, tabLabel, tabs } from "~/lib/tabs"
 import { IconButton, Menu, type MenuEntry, type StripTab, TabStrip } from "~/lib/ui"
 
@@ -30,6 +31,7 @@ export function TabBar() {
     const t = tabs.tabs.find((t) => t.key === key)
     const i = tabs.tabs.findIndex((t) => t.key === key)
     return [
+      ...(t ? [bookmarkMenu(t.path)] : []),
       menuItem("tab.duplicate", { arg: key, icon: "copy" }),
       menuItem("tab.pin", { arg: key, icon: "pin", label: t?.pinned ? "Unpin tab" : "Pin tab" }),
       { kind: "separator" },

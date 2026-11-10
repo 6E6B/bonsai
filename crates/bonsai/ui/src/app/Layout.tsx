@@ -13,6 +13,7 @@ import { ViewDialog } from "~/features/plugins/ViewDialog"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
 import { registerThemeCommands } from "~/features/themes/commands"
 import { ImportDialog, useThemeDrop } from "~/features/themes/ImportDialog"
+import { bookmarkPath, findBookmark } from "~/lib/bookmarks"
 import {
   commandContext,
   handle,
@@ -28,8 +29,8 @@ import { commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { WISHLIST } from "~/lib/market-category"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
-import { playlists, shell, startSync } from "~/lib/store"
-import { activeTab, savedTabs, setTabDescriber, tabActions, tabs } from "~/lib/tabs"
+import { playlists, refreshBookmarks, setDrawerState, shell, startSync, visibleBookmarks } from "~/lib/store"
+import { activeTab, pathname, savedTabs, setTabDescriber, tabActions, tabLabel, tabs } from "~/lib/tabs"
 import { shownBackground } from "~/lib/theme"
 import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { useUpdateToasts } from "~/lib/update-view"
@@ -69,7 +70,7 @@ import { VaultForm } from "./shell/VaultForm"
  * It owns the commands that only change UI state: navigation, tabs, panels, zoom, theme.
  */
 /** Below this window width (CSS px at zoom 1) the sidebar starts collapsed, until the user
- * toggles it. The drawer (friends) starts hidden at any width. */
+ * toggles it. The right drawer starts open unless its saved preference closes it. */
 const NARROW = 1280
 /** Screens with their own side panel. In `auto` mode the sidebar is icons there, so the two
  * panels don't take a third of the window. */
@@ -174,6 +175,55 @@ export function Layout(props: ParentProps) {
       maxLength: 60,
     })
     if (name) void runBackend("playlist.rename", `${raw} ${name}`)
+  }
+
+  const toggleBookmark = async (arg: string | null) => {
+    const path = arg ? bookmarkPath(arg) : here()
+    if (!path) return void showToast("Choose a page to bookmark.")
+    const account = shell.active
+    const existed = findBookmark(visibleBookmarks(), path)
+    const title =
+      tabs.titles[pathname(path)] ??
+      (path === here() && !/^\/(games|users|catalog|bundles|passes|communities)\//.test(path)
+        ? tabLabel(path).title
+        : "")
+    if (!(await runBackend("bookmark.toggle", JSON.stringify({ path, title, fallback: tabLabel(path).title })))) return
+    await refreshBookmarks()
+    if (existed || shell.active !== account) return
+    const added = findBookmark(visibleBookmarks(), path)
+    if (added)
+      showToast({
+        title: "Bookmarked",
+        actions: [
+          {
+            label: "Undo",
+            onClick: () => {
+              if (shell.active === account) void run("bookmark.remove", String(added.id))
+            },
+          },
+          {
+            label: "Rename",
+            onClick: () => {
+              if (shell.active === account) void run("bookmark.rename", String(added.id))
+            },
+          },
+        ],
+      })
+  }
+  const renameBookmark = async (arg: string | null) => {
+    const raw = arg?.trim() ?? ""
+    if (/\s/.test(raw)) return void runBackend("bookmark.rename", raw)
+    const b = visibleBookmarks().find((b) => String(b.id) === raw)
+    if (!b) return void showToast("Choose a bookmark first.")
+    const account = shell.active
+    const title = await prompt({
+      title: "Rename bookmark",
+      label: "Name",
+      initial: b.title,
+      submit: "Rename",
+      maxLength: 120,
+    })
+    if (title && shell.active === account) void runBackend("bookmark.rename", `${b.id} ${title}`)
   }
 
   const addAccount = (mode: AddMode, title: string) => () =>
@@ -314,6 +364,21 @@ export function Layout(props: ParentProps) {
     handle("market.category", (c) => navigate(withParams(location, "/marketplace", { cat: c?.trim() || null }))),
     handle("user.nickname", editAbout("nickname")),
     handle("user.note", editAbout("note")),
+    handle("bookmark.toggle", toggleBookmark),
+    handle("bookmark.rename", renameBookmark),
+    handle("bookmark.open", async (arg) => {
+      const b = visibleBookmarks().find((b) => String(b.id) === arg)
+      const account = shell.active
+      const inBackground = background
+      if (b && (await runBackend("bookmark.open", arg)) && shell.active === account) {
+        if (inBackground) tabActions.open(b.path, { background: true })
+        else visitPath(b.path)
+      }
+    }),
+    handle("view.bookmarks", () => {
+      setDrawerState("tab", "bookmarks")
+      if (!drawer()) void runBackend("settings.set", "drawer on")
+    }),
     handle("playlist.new", newPlaylist),
     handle("playlist.rename", renamePlaylist),
     handle("playlist.open", open("/playlists")),

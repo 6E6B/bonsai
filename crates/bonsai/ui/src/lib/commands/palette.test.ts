@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { CommandInfo } from "~/lib/ipc/bindings"
+import type { BookmarkView, CommandInfo } from "~/lib/ipc/bindings"
 import {
   argEntries,
   entityActions,
@@ -289,5 +289,45 @@ describe("entityActions", () => {
   it("has no action list for items", () => {
     expect(hasActions(user(1, "x"))).toBe(true)
     expect(hasActions({ ...user(1, "x"), entity: { kind: "item", id: 1 } })).toBe(false)
+  })
+})
+
+describe("bookmark search", () => {
+  const bookmark: BookmarkView = {
+    id: 5,
+    path: "/games/9?tab=servers",
+    title: "Doors",
+    kind: "experience",
+    status: "12 playing",
+    thumbnail: { kind: "game_icon", id: 7 },
+  }
+  it("parses b: without requesting remote search", () => {
+    expect(parseScope("  b: doors")).toEqual({ scope: "bookmarks", text: "doors" })
+    expect(remoteQuery("bookmarks", "doors")).toBe("")
+    expect(remoteQuery("bookmarks", "123")).toBe("")
+  })
+  it("puts matching bookmarks first and limits b: to saved rows", () => {
+    const input = {
+      text: "doors",
+      commands: [{ key: "x", title: "Doors", words: "doors", id: "nav.home", arg: null }],
+      friends: [],
+      remote: [],
+      bookmarks: [bookmark],
+    }
+    expect(paletteSections({ ...input, scope: "all" })[0].title).toBe("Bookmarks")
+    const sections = paletteSections({ ...input, scope: "bookmarks" })
+    expect(sections).toHaveLength(1)
+    expect(sections[0].rows[0]).toMatchObject({
+      id: "bookmark.open",
+      arg: "5",
+      title: "Doors",
+      thumb: { kind: "game_icon", id: 7 },
+    })
+    expect(paletteSections({ ...input, scope: "bookmarks", text: "missing" })).toEqual([])
+  })
+  it("expands Bookmark arguments for commands", () => {
+    const rows = paletteEntries([cmd("bookmark.rename", "bookmark")], [], [], [], [], [], [], [], [bookmark])
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ id: "bookmark.rename", arg: "5", title: "bookmark.rename: Doors" })
   })
 })

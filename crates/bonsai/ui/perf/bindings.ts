@@ -1,5 +1,8 @@
 // This module replaces bindings only in the explicit performance build. No native IPC or credentials.
-import type { commands as realCommands } from "../src/lib/ipc/bindings"
+
+import catalog from "../src/lib/commands/catalog.json"
+import type { CommandInfo, commands as realCommands } from "../src/lib/ipc/bindings"
+import { bookmarkFixture, bookmarkInvocation } from "./bookmark-fixture"
 import {
   badges,
   catalogCategories,
@@ -29,6 +32,31 @@ type Fixtures = {
 }
 
 const fixtures = {
+  runCommand: bookmarkInvocation,
+  bookmarks: () => bookmarkFixture,
+  prefs: () => [],
+  plugins: () => [],
+  remoteSearch: () => ({ loading: false, rows: [] }),
+  commands: (): CommandInfo[] =>
+    catalog.commands.map((command) => ({
+      ...command,
+      arg: command.arg as CommandInfo["arg"],
+      shortcuts:
+        command.id === "bookmark.toggle" || command.id === "view.bookmarks"
+          ? [
+              {
+                kind: "chord",
+                ctrl: true,
+                shift: command.id === "view.bookmarks",
+                alt: false,
+                key: command.id === "bookmark.toggle" ? "D" : "B",
+                label: command.id === "bookmark.toggle" ? "Ctrl+D" : "Ctrl+Shift+B",
+              },
+            ]
+          : [],
+      rebound: false,
+      context: null,
+    })),
   appearance: () => ({ mode: "dark", dark: "", light: "", fonts: [], background: null }),
   avatar3d: () => ({
     loading: false,
@@ -206,11 +234,13 @@ const fixtures = {
 
 export const calls: Record<string, number> = {}
 export const commands = new Proxy({} as typeof realCommands, {
-  get: (_, name: string) => async () => {
-    calls[name] = (calls[name] ?? 0) + 1
-    const fixture = fixtures[name as keyof typeof fixtures]
-    if (!fixture) throw new Error(`Performance fixture missing for ${name}`)
-    // Simulate fresh IPC payloads rather than reusing object identity across store updates.
-    return structuredClone(fixture())
-  },
+  get:
+    (_, name: string) =>
+    async (...args: unknown[]) => {
+      calls[name] = (calls[name] ?? 0) + 1
+      const fixture = fixtures[name as keyof typeof fixtures]
+      if (!fixture) throw new Error(`Performance fixture missing for ${name}`)
+      // Simulate fresh IPC payloads rather than reusing object identity across store updates.
+      return structuredClone(Reflect.apply(fixture, undefined, args))
+    },
 })

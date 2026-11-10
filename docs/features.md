@@ -30,3 +30,6 @@ Features beyond the website, with the command that reaches each.
 | Toast on a new sale (watcher only notifies) | Settings → Notifications | Turn a notification kind on or off (`sales`) |
 | Warnings, bans, terminations and voice chat bans on every saved account, with the ban countdown; warned or banned accounts can still be added | Account rail; a dialog that blocks the app until you reactivate, sign out or switch account | Reactivate account (accept a warning or an ended ban) |
 | Game playlists (local, per account) | Playlists; experience page and game menus → Add to playlist | Go to Playlists; New game playlist; Add this experience to a playlist |
+| Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
+
+Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.

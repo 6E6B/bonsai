@@ -1,4 +1,4 @@
-import type { Arg, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
+import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
 import { rank } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
 import type { ThumbKind } from "~/lib/thumb"
@@ -148,6 +148,7 @@ export function paletteEntries(
   prefs: PalettePref[] = [],
   plugins: PalettePlugin[] = [],
   playlists: PalettePlaylist[] = [],
+  bookmarks: BookmarkView[] = [],
 ): PaletteEntry[] {
   const out: PaletteEntry[] = []
   for (const c of commands) {
@@ -190,6 +191,9 @@ export function paletteEntries(
           choice(x.id, x.name)
         }
         break
+      case "bookmark":
+        for (const b of bookmarks) choice(String(b.id), b.title)
+        break
       case "playlist":
         for (const p of playlists) choice(String(p.id), p.name)
         break
@@ -227,7 +231,7 @@ export function argHint(kind: Arg): string {
 }
 
 /** What the command bar searches. `all` mixes commands, friends and Roblox results. */
-export type Scope = "all" | "commands" | "people" | "experiences" | "communities" | "items"
+export type Scope = "all" | "commands" | "people" | "experiences" | "communities" | "items" | "bookmarks"
 
 export const scopes: { value: Scope; label: string; prefix: string }[] = [
   { value: "all", label: "All", prefix: "" },
@@ -235,6 +239,7 @@ export const scopes: { value: Scope; label: string; prefix: string }[] = [
   { value: "experiences", label: "Experiences", prefix: "g:" },
   { value: "communities", label: "Communities", prefix: "#" },
   { value: "items", label: "Items", prefix: "i:" },
+  { value: "bookmarks", label: "Bookmarks", prefix: "b:" },
   { value: "commands", label: "Commands", prefix: ">" },
 ]
 
@@ -252,7 +257,7 @@ const isLookup = (text: string) => /^\d+$/.test(text) || /roblox\.com|^roblox:/i
  * to search: commands only, or under three letters (ids and links are searched at any length). */
 export function remoteQuery(scope: Scope, text: string): string {
   const t = text.trim()
-  if (scope === "commands" || (t.length < 3 && !isLookup(t))) return ""
+  if (scope === "commands" || scope === "bookmarks" || (t.length < 3 && !isLookup(t))) return ""
   return `${scopes.find((s) => s.value === scope)?.prefix ?? ""}${t}`
 }
 
@@ -317,6 +322,7 @@ export interface SectionInput {
   commands: PaletteEntry[]
   friends: PalettePerson[]
   remote: PaletteEntry[]
+  bookmarks?: BookmarkView[]
   /** Rows picked lately, newest first (`remember`). Shown for an empty query. */
   recent?: PaletteEntry[]
   /** Command ids of the screens to offer under "Go to" for an empty query, in sidebar order. */
@@ -369,6 +375,23 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
     if (rows.length) out.push({ title, rows })
   }
 
+  if (all || input.scope === "bookmarks") {
+    add(
+      "Bookmarks",
+      rank(input.bookmarks ?? [], text, (b) => [b.title])
+        .slice(0, limit)
+        .map((b) => ({
+          key: `bookmark:${b.id}`,
+          title: b.title,
+          words: b.title,
+          id: "bookmark.open",
+          arg: String(b.id),
+          subtitle: b.status || undefined,
+          thumb: b.thumbnail ?? undefined,
+        })),
+    )
+    if (input.scope === "bookmarks") return out
+  }
   if (all && !text) {
     // Recent command rows are looked up again, so renamed or removed ones (a deleted theme)
     // follow the registry. Results and friends are kept as they were.

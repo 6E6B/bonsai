@@ -41,7 +41,7 @@ const DEV_ONLY = new Set(["nav.overview"])
 
 export async function loadCommands() {
   // `bun run dev` in a plain browser has no backend, so no registry.
-  if (!isTauri()) return
+  if (!isTauri() && import.meta.env.MODE !== "performance") return
   const all = await ipc.commands()
   setList(import.meta.env.DEV ? all : all.filter((c) => !DEV_ONLY.has(c.id)))
 }

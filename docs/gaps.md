@@ -15,3 +15,5 @@ Remove a line when it ships.
 - Avatar **Recent** lists only what was put on through Bonsai on this computer. Roblox has no recent-items endpoint.
 
 - Dependency browsing inspects references in downloadable source and processed accessory/head models. It does not traverse dependency files recursively, list embedded/built-in resources, or bypass Roblox asset permissions. Non-model assets show an explicit unavailable-model state.
+
+- Bookmarks are local only. Folders, tags, import/export, alerts and individual server bookmarks are not included.

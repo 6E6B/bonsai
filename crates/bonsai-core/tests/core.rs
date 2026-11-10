@@ -3466,3 +3466,110 @@ async fn moderated_cookie_can_be_saved_then_reactivated() {
     // A second reactivation has nothing to accept.
     assert!(r.core.reactivate(ME).is_err());
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn bookmarks_keep_scope_and_survive_cache_clear_and_restart() {
+    use bonsai_core::bookmarks;
+    let dir = tempfile::tempdir().unwrap();
+    let paths = Paths::in_dir(dir.path());
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, cookies.clone());
+    let c = &r.core;
+    for (account, path, title) in [
+        (ME, "/games/42?tab=servers", "Game"),
+        (ME, "/chat?conversation=3", "My chat"),
+        (ALT, "/chat?conversation=3", "Alt chat"),
+    ] {
+        c.edit_bookmarks(account, |all| bookmarks::toggle(all, account, path, title))
+            .unwrap();
+    }
+    assert_eq!(c.bookmarks(AccountId::ANONYMOUS).len(), 1);
+    assert_eq!(c.bookmarks(ME).len(), 2);
+    assert_eq!(c.bookmarks(ALT).len(), 2);
+    assert!(!c.bookmarks(ALT).iter().any(|b| b.title == "My chat"));
+    let private = c
+        .bookmarks(ME)
+        .into_iter()
+        .find(|b| b.title == "My chat")
+        .unwrap();
+    assert!(
+        c.edit_bookmarks(ALT, |all| bookmarks::remove(all, private.id))
+            .is_err()
+    );
+    let cache = Cache::open(&paths.db_file()).unwrap();
+    cache.clear_fetched();
+    let expected_me = c.bookmarks(ME);
+    let expected_alt = c.bookmarks(ALT);
+    assert_eq!(expected_me.len(), 2);
+    assert_eq!(expected_alt.len(), 2);
+    drop(cache);
+    drop(r.core);
+    let restarted = Core::start(
+        CoreConfig {
+            paths,
+            base: Base::Replay("http://127.0.0.1:9".into()),
+            cookies,
+            opener: Arc::new(RecordingOpener::default()),
+            limiter: Arc::new(RateLimiter::default()),
+            background: false,
+            quick_poll: Duration::from_millis(10),
+        },
+        Arc::new(|| {}),
+    );
+    assert_eq!(restarted.bookmarks(ME), expected_me);
+    assert_eq!(restarted.bookmarks(ALT), expected_alt);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn bookmarks_cap_counts_other_accounts_and_allows_removal_at_the_limit() {
+    use bonsai_core::bookmarks;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, cookies);
+    let c = &r.core;
+    c.edit_bookmarks(ME, |all| {
+        for i in 0..bookmarks::MAX_BOOKMARKS - 1 {
+            bookmarks::toggle(all, ME, &format!("/chat?conversation={i}"), "Chat")?;
+        }
+        bookmarks::toggle(all, ME, "/games/42", "Shared")
+    })
+    .unwrap();
+    assert!(
+        c.edit_bookmarks(ALT, |all| bookmarks::toggle(all, ALT, "/settings", "Settings"))
+            .is_err()
+    );
+    assert_eq!(c.bookmarks(ALT).len(), 1);
+    let private = c
+        .bookmarks(ME)
+        .into_iter()
+        .find(|b| b.account == Some(ME))
+        .unwrap();
+    c.edit_bookmarks(ME, |all| bookmarks::remove(all, private.id))
+        .unwrap();
+    assert_eq!(
+        c.edit_bookmarks(ALT, |all| bookmarks::toggle(all, ALT, "/settings", "Settings")),
+        Ok(true)
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn bookmarks_serialize_simultaneous_shared_updates() {
+    use bonsai_core::bookmarks;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, cookies);
+    let c = &r.core;
+    std::thread::scope(|scope| {
+        for id in 1..=8 {
+            scope.spawn(move || {
+                let account = if id % 2 == 0 { ME } else { ALT };
+                c.edit_bookmarks(account, |all| {
+                    bookmarks::toggle(all, account, &format!("/games/{id}"), "Game")
+                })
+                .unwrap();
+            });
+        }
+    });
+    assert_eq!(c.bookmarks(ME).len(), 8);
+    assert_eq!(c.bookmarks(ME), c.bookmarks(ALT));
+}

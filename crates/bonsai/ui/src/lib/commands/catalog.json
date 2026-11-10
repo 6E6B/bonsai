@@ -2054,6 +2054,90 @@
       "title": "Favorite or unfavorite this experience"
     },
     {
+      "arg": "none",
+      "id": "bookmark.toggle",
+      "keywords": [
+        "bookmark",
+        "save",
+        "page",
+        "ribbon"
+      ],
+      "title": "Bookmark or remove bookmark for this page"
+    },
+    {
+      "arg": "bookmark",
+      "id": "bookmark.open",
+      "keywords": [
+        "bookmark",
+        "open",
+        "saved"
+      ],
+      "title": "Open bookmark"
+    },
+    {
+      "arg": "bookmark",
+      "id": "bookmark.rename",
+      "keywords": [
+        "bookmark",
+        "rename",
+        "title"
+      ],
+      "title": "Rename bookmark"
+    },
+    {
+      "arg": "bookmark",
+      "id": "bookmark.remove",
+      "keywords": [
+        "bookmark",
+        "remove",
+        "delete"
+      ],
+      "title": "Remove bookmark"
+    },
+    {
+      "arg": "bookmark",
+      "id": "bookmark.move_up",
+      "keywords": [
+        "bookmark",
+        "move",
+        "order",
+        "up"
+      ],
+      "title": "Move bookmark up"
+    },
+    {
+      "arg": "bookmark",
+      "id": "bookmark.move_down",
+      "keywords": [
+        "bookmark",
+        "move",
+        "order",
+        "down"
+      ],
+      "title": "Move bookmark down"
+    },
+    {
+      "arg": "text",
+      "id": "bookmark.move",
+      "keywords": [
+        "bookmark",
+        "move",
+        "reorder"
+      ],
+      "title": "Move bookmark before another (bookmark, then target)"
+    },
+    {
+      "arg": "none",
+      "id": "view.bookmarks",
+      "keywords": [
+        "bookmark",
+        "saved",
+        "drawer",
+        "panel"
+      ],
+      "title": "Show bookmarks"
+    },
+    {
       "arg": "text",
       "id": "playlist.new",
       "keywords": [

@@ -23,7 +23,7 @@ import {
 import { command, commandList, run } from "~/lib/commands/registry"
 import { commands, type PluginView, type PrefView, type RemoteSearch, type ThemeView } from "~/lib/ipc/bindings"
 import { screenKey, screens, sidebarGroups, sidebarScreens } from "~/lib/screens"
-import { friends, playlists, shell, useLive } from "~/lib/store"
+import { friends, playlists, shell, useLive, visibleBookmarks } from "~/lib/store"
 import { tabLabel, tabs } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Icon, Kbd, SegmentedControl, Spinner, TextField, Thumbnail, useDialog } from "~/lib/ui"
@@ -69,6 +69,7 @@ export function CommandPalette() {
       prefs,
       plugins,
       playlists.lists,
+      visibleBookmarks(),
     ),
   )
   const people = createMemo(() =>
@@ -131,6 +132,7 @@ export function CommandPalette() {
       commands: entries(),
       friends: people(),
       remote: remoteRows(),
+      bookmarks: visibleBookmarks(),
       recent: recents[account()],
       places: places(),
       intents: all
@@ -272,7 +274,7 @@ export function CommandPalette() {
     if (remote.loading) return "Searching…"
     const t = query().trim()
     if (t.length === 0) return "Type to search"
-    if (scope() !== "commands" && t.length > 0 && remoteQuery(scope(), t) === "")
+    if (scope() !== "commands" && scope() !== "bookmarks" && t.length > 0 && remoteQuery(scope(), t) === "")
       return "Type 3 letters to search Roblox"
     return "No matches"
   }

@@ -1,8 +1,10 @@
 import { createSignal, onCleanup, Show } from "solid-js"
 import { NotificationsButton } from "~/features/notifications/Popout"
+import { findBookmark } from "~/lib/bookmarks"
 import { run, shortcutOf } from "~/lib/commands/registry"
 import { wroteRecently } from "~/lib/plugins"
-import { shell } from "~/lib/store"
+import { shell, visibleBookmarks } from "~/lib/store"
+import { activeTab, tabs } from "~/lib/tabs"
 import { IconButton, SearchButton, Tooltip } from "~/lib/ui"
 
 /** The command bar trigger, centered in the title bar. */
@@ -35,6 +37,13 @@ export function TopBar(props: { drawer: boolean }) {
           <IconButton icon="plugin" label="Stop all plugins" variant="danger" onClick={() => run("plugins.stop_all")} />
         </Tooltip>
       </Show>
+      <Tooltip content="Bookmarks" keys={[shortcutOf("view.bookmarks") ?? ""]} placement="bottom">
+        <IconButton
+          icon={findBookmark(visibleBookmarks(), activeTab(tabs)?.path ?? "") ? "bookmark-fill" : "bookmark"}
+          label="Show bookmarks"
+          onClick={() => run("view.bookmarks")}
+        />
+      </Tooltip>
       <NotificationsButton />
       <Tooltip content="Join the Bonsai Discord" placement="bottom">
         <IconButton icon="discord" label="Join the Bonsai Discord" onClick={() => run("help.discord")} />
