@@ -201,7 +201,12 @@ pub fn open_detached(target: &str) -> std::io::Result<()> {
 
 /// Spawns with null stdio and Bonsai's environment changes undone, and reaps the child on a
 /// background thread so it never lingers as a zombie.
+///
+/// The child gets its own process group, so a signal to Bonsai's group (Ctrl+C in the
+/// terminal, `tauri dev` stopping) doesn't take the game down with it.
 fn spawn_reaped(cmd: &mut std::process::Command) -> std::io::Result<()> {
+    #[cfg(unix)]
+    std::os::unix::process::CommandExt::process_group(cmd, 0);
     for (k, v) in launch_env_fixes(std::env::vars()) {
         match v {
             Some(v) => cmd.env(k, v),
