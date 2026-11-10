@@ -4,7 +4,7 @@ members = ["crates/*"]
 default-members = ["crates/bonsai-core"]
 
 [workspace.package]
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 license = "GPL-3.0-only"
 rust-version = "1.90"
@@ -65,6 +65,9 @@ nucleo-matcher = "0.3"
 rbx_binary = "=3.0.1"
 rbx_xml = "=3.0.1"
 rbx_dom_weak = "=4.2.0"
+# Class and enum metadata, already pulled in by rbx_binary: names enum values in the model tree.
+rbx_reflection = "=7.0.0"
+rbx_reflection_database = "=3.0.1"
 directories = "6"
 sha2 = "0.11"
 open = "5"

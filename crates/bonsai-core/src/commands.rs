@@ -547,7 +547,16 @@ commands! {
     InspectDependencyUses => "market.dependency_uses", "Inspect a dependency's references", ["dependencies", "references", "property", "inspect", "mesh", "texture"], Text, Read, [];
     SearchDependencies => "market.dependencies_search", "Search this item's dependencies", ["dependencies", "filter", "mesh", "texture", "search"], Text, Read, [];
     ViewDependencies => "market.dependencies", "View this item's dependencies", ["dependencies", "mesh", "texture", "assets", "references", "model"], None, Read, [];
+    ViewModel => "market.model", "View this item's model tree and properties", ["model", "instances", "tree", "explorer", "properties", "rbxm", "decode"], None, Read, [];
+    SearchModel => "market.model_search", "Search this model's instances", ["model", "instances", "explorer", "filter", "class", "search"], Text, Read, [];
+    ToggleModelNode => "market.model_toggle", "Expand or collapse the selected instance", ["model", "instance", "explorer", "expand", "collapse", "tree"], None, Read, [];
+    ExpandModel => "market.model_expand_all", "Expand all instances in this model", ["model", "instances", "explorer", "expand", "tree"], None, Read, [];
+    CollapseModel => "market.model_collapse_all", "Collapse all instances in this model", ["model", "instances", "explorer", "collapse", "tree"], None, Read, [];
+    ModelFormat => "market.model_format", "Show the source or processed model (source, processed; no argument toggles)", ["model", "source", "processed", "meshpart", "explorer"], Text, Read, [];
+    CopyModelPath => "market.model_copy_path", "Copy the selected instance's path", ["model", "instance", "path", "explorer", "copy"], Text, Read, [];
+    CopyModelValue => "market.model_copy_value", "Copy a property value of the selected instance", ["model", "property", "value", "explorer", "copy"], Text, Read, [];
     PlayAudio => "market.play_audio", "Play or pause this sound", ["play", "pause", "audio", "sound", "music", "listen"], None, Read, [];
+    SoundHatSounds => "market.sound_hat", "Turn sound hat sounds on or off", ["sound hat", "sound", "audio", "mute", "quack", "harmonica", "laugh"], None, Local, [];
     PriceHistoryScale => "market.history_scale", "Show the price history on a log or linear scale (log, linear; no argument toggles)", ["price history", "chart", "log", "scale", "limited"], Text, Local, [];
     PriceHistoryView => "market.history_view", "Show price history as a chart or a table (chart, table; no argument toggles)", ["price history", "chart", "table", "sales", "limited"], Text, Local, [];
     SearchAuditLog => "group.audit_search", "Search the community audit log", ["audit", "log", "search", "performer", "community", "group"], Text, Read, [];

@@ -1094,11 +1094,11 @@ pub(super) fn run(
         },
         CommandId::SetAvatarView => match arg().trim().to_ascii_lowercase().as_str() {
             "3d" => {
-                core.update_settings(|s| s.avatar_3d = true);
+                core.update_settings(|s| s.avatar_2d = false);
                 Ok(())
             }
             "2d" | "image" => {
-                core.update_settings(|s| s.avatar_3d = false);
+                core.update_settings(|s| s.avatar_2d = true);
                 Ok(())
             }
             _ => Err("Pick 3d or 2d.".into()),

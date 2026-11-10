@@ -162,7 +162,6 @@ export function Dependencies(props: { id: number; assetType: number }) {
     <div class="flex min-w-0 flex-col gap-3" aria-busy={view.list.loading}>
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-col gap-1">
-          <span class="text-sm text-fg-muted">Meshes, textures and other assets referenced by this model.</span>
           <Show when={view.list.items.length > 0}>
             <span class="text-xs text-fg-faint" aria-live="polite">
               {rows().length} of {view.list.items.length} assets

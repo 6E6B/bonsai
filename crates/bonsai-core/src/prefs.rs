@@ -117,7 +117,7 @@ const HOURS: &[(&str, &str)] = &[
     ("22", "22:00"),
     ("23", "23:00"),
 ];
-const AVATAR_VIEWS: &[(&str, &str)] = &[("2d", "Image"), ("3d", "3D")];
+const AVATAR_VIEWS: &[(&str, &str)] = &[("3d", "3D"), ("2d", "Image")];
 
 const fn pref(
     key: &'static str,
@@ -527,7 +527,7 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "account_accent" => on_off(s.account_accent).to_owned(),
         "vault_idle_minutes" => s.vault_idle_minutes.clamp(1, 60).to_string(),
         "player_command" => s.player_command.clone().unwrap_or_default(),
-        "avatar_view" => if s.avatar_3d { "3d" } else { "2d" }.to_owned(),
+        "avatar_view" => if s.avatar_2d { "2d" } else { "3d" }.to_owned(),
         "format_locale" => s.format_locale.clone(),
         "item_values" => on_off(s.item_values).to_owned(),
         "wiki" => on_off(s.wiki).to_owned(),
@@ -583,7 +583,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
             "mode" => s.appearance.mode = Mode::from_name(v).unwrap_or_default(),
             "density" => s.density = Density::from_name(v).unwrap_or_default(),
             "ui_scale" => s.ui_scale = v.parse::<f32>().unwrap_or(100.0) / 100.0,
-            "avatar_view" => s.avatar_3d = v == "3d",
+            "avatar_view" => s.avatar_2d = v == "2d",
             "motion" => v.clone_into(&mut s.motion),
             "time_format" => v.clone_into(&mut s.time_format),
             "start_screen" => v.clone_into(&mut s.start_screen),

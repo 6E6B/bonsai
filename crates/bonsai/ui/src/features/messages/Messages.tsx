@@ -1,3 +1,4 @@
+import { useNavigate } from "@solidjs/router"
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { useCommandContext, useListCursor, useSubTabs } from "~/lib/commands/hooks"
 import { handle, isRunning, run, runBackend } from "~/lib/commands/registry"
@@ -70,10 +71,12 @@ export default function Messages() {
   })
 
   // Keys act on the message under the cursor; buttons pass the message id.
-  const act = (id: string, arg: string | null) => {
+  const navigate = useNavigate()
+  const act = async (id: string, arg: string | null) => {
     const ids = arg ?? (open() ? String(open()?.id) : null)
-    if (ids) void runBackend(id, ids)
-    else showToast("Pick a message first.")
+    if (!ids) return showToast("Pick a message first.")
+    // This handler replaces the app-wide one, so it opens the new chat itself.
+    if ((await runBackend(id, ids)) && id === "message.reply") navigate("/chat")
   }
   onCleanup(handle("message.archive", (arg) => act("message.archive", arg)))
   onCleanup(handle("message.toggle_read", (arg) => act("message.toggle_read", arg)))
