@@ -55,6 +55,7 @@ import { useWikiAbout, WikiTab } from "~/lib/wiki-panels"
 import { ItemSkeleton } from "./DetailSkeleton"
 import { pctOver } from "./history"
 import { Dependencies } from "./ItemDependencies"
+import { ItemModel } from "./ItemModel"
 import { MarketCard } from "./MarketCard"
 import { PriceHistory } from "./PriceHistory"
 
@@ -194,12 +195,19 @@ export default function ItemPage() {
       : []),
     ...(inCatalog() ? [{ value: "similar", label: "Similar items" }] : []),
     ...(!bundle() ? [{ value: "dependencies", label: "Dependencies" }] : []),
+    ...(!bundle() ? [{ value: "model", label: "Model" }] : []),
     ...(wiki.article ? [{ value: "wiki", label: "Wiki" }] : []),
   ])
   onCleanup(
     handle("market.dependencies", () => {
       if (bundle()) return showToast("Open an item in this bundle to view its dependencies.")
       setSection("dependencies")
+    }),
+  )
+  onCleanup(
+    handle("market.model", () => {
+      if (bundle()) return showToast("Open an item in this bundle to view its model.")
+      setSection("model")
     }),
   )
   createEffect(
@@ -584,6 +592,15 @@ export default function ItemPage() {
               {(item) => (
                 <Show when={`${shell.active ?? 0}:${id()}:${item().assetType}`} keyed>
                   {(_key) => <Dependencies id={id()} assetType={item().assetType} />}
+                </Show>
+              )}
+            </Show>
+          </TabPanel>
+          <TabPanel value="model">
+            <Show when={!bundle() && info()}>
+              {(item) => (
+                <Show when={`${shell.active ?? 0}:${id()}:${item().assetType}`} keyed>
+                  {(_key) => <ItemModel id={id()} assetType={item().assetType} />}
                 </Show>
               )}
             </Show>

@@ -141,6 +141,9 @@ export const commands = {
 	catalogSearch: (filter: CatalogFilter) => __TAURI_INVOKE<Paged<ItemCard>>("catalog_search", { filter }),
 	itemPage: (id: Id, bundle: boolean) => __TAURI_INVOKE<ItemView>("item_page", { id, bundle }),
 	itemDependencies: (id: Id, assetType: number) => __TAURI_INVOKE<DependenciesView>("item_dependencies", { id, assetType }),
+	itemModel: (id: Id, assetType: number, processed: boolean) => __TAURI_INVOKE<ModelStatusView>("item_model", { id, assetType, processed }),
+	itemModelNodes: (id: Id, assetType: number, processed: boolean) => __TAURI_INVOKE<ModelNodeView[]>("item_model_nodes", { id, assetType, processed }),
+	itemModelProperties: (id: Id, assetType: number, processed: boolean, node: number) => __TAURI_INVOKE<ModelPropView[]>("item_model_properties", { id, assetType, processed, node }),
 	passPage: (id: Id) => __TAURI_INVOKE<PassView>("pass_page", { id }),
 	itemResellers: (collectibleId: string) => __TAURI_INVOKE<Paged<ResellerRow>>("item_resellers", { collectibleId }),
 	/**
@@ -1512,6 +1515,37 @@ export type MessageRow = {
 	read: boolean,
 	/**  From Roblox itself. */
 	system: boolean,
+};
+
+/**  One instance. Nodes come in depth-first order, so descendants follow their ancestor. */
+export type ModelNodeView = {
+	parent: number | null,
+	depth: number,
+	class: string,
+	name: string,
+	children: number,
+};
+
+export type ModelPropView = {
+	name: string,
+	kind: string,
+	value: string,
+	asset: Id | null,
+	target: number | null,
+	color: string | null,
+	truncated: boolean,
+	attribute: boolean,
+};
+
+/**  The state of an item's decoded model. The UI fetches the nodes once per `rev`. */
+export type ModelStatusView = {
+	loading: boolean,
+	error: string | null,
+	/**  Changes when a new tree is loaded; 0 while there is none. */
+	rev: number | null,
+	count: number,
+	/**  Roblox also serves an avatar MeshPart form of this asset type. */
+	hasProcessed: boolean,
 };
 
 export type ModerationKind = "warned" | "banned" | "terminated" | 

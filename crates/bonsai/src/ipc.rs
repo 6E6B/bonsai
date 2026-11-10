@@ -1581,6 +1581,15 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 "Copied invite link.",
             )
         }
+        // The model tab resolves the selected instance and sends the text to copy.
+        CommandId::CopyModelPath => {
+            let path = arg().ok_or_else(|| "Select an instance in the model tree first.".to_owned())?;
+            copy(app, core, path, "Copied path.")
+        }
+        CommandId::CopyModelValue => {
+            let value = arg().ok_or_else(|| "Select a property in the model tree first.".to_owned())?;
+            copy(app, core, value, "Copied value.")
+        }
         CommandId::CopyJobId => {
             let job = arg().ok_or_else(|| "Which server?".to_owned())?;
             copy(app, core, job.trim().to_owned(), "Copied job id.")
@@ -3142,6 +3151,9 @@ pub fn builder() -> Builder<tauri::Wry> {
             market::catalog_search,
             market::item_page,
             market::item_dependencies,
+            market::item_model,
+            market::item_model_nodes,
+            market::item_model_properties,
             market::pass_page,
             market::item_resellers,
             market::buy_item,

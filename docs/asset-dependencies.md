@@ -19,3 +19,13 @@ Downloads stop at 16 MiB. Binary headers/chunks are checked before decoding, wit
 - `dependencies.json` replays source/processed delivery, CDN downloads and economy metadata using synthetic IDs and names. Transport tests verify download size limits, CDN host rejection and missing cookie headers.
 - An ignored live test checks a public classic accessory without a cookie: `cargo test -p bonsai-core --lib live_accessory_dependencies -- --ignored`.
 - UI unit tests cover usage labels and search. `bun x playwright test -c perf/playwright.config.ts dependencies.spec.ts` checks on-demand fetching, virtualization, keyboard reference inspection, unavailable metadata and empty search results with synthetic data.
+
+# Model tree
+
+The item page's **Model** tab shows the same downloaded model as an instance tree, like Studio's Explorer and Properties. It appears on every item except bundles, and works on whatever model Roblox serves the active account: Roblox-made items and UGC alike. Some newer UGC needs a signed-in account.
+
+- `bonsai-core/src/model_tree.rs` reuses the dependency scan's download and decoding, with the same size, instance and depth limits. It flattens the DOM into depth-first nodes (class, name, parent, child count) and turns every property into display text. Enum values are named from rbx-dom's bundled reflection database (`rbx_reflection_database`, already built for `rbx_binary`). `Ref` and object `Content` values name and link the target instance. Asset IDs in content properties link to their item. Colors carry a swatch. Attributes are listed after properties. Values over 4 KiB, such as long script sources, are cut. Display text is capped at 8 MiB per model.
+- Accessories and heads have a Source / Processed switch for the avatar MeshPart form. rbx-dom migrates legacy properties as Studio does. For example, `SpecialMesh.MeshId` shows as `MeshContent`.
+- Trees are cached for 15 minutes under the requesting account. The UI fetches node names once per loaded tree (`item_model_nodes`) and the selected instance's properties on demand (`item_model_properties`), so store changes resend only a small status.
+- Keyboard: J / K move, H / L collapse or expand (or go to the parent / first child), Enter or Space toggles. Commands: `market.model`, `market.model_search`, `market.model_toggle`, `market.model_expand_all`, `market.model_collapse_all`, `market.model_format`, `market.model_copy_path` and `market.model_copy_value`.
+- Endpoints: the existing `assetdelivery` `GET /v2/assetId/{assetId}` wrapper and the credential-free CDN download. `model_tree` replays the `dependencies` fixture for both formats.

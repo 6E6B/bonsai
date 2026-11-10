@@ -14,10 +14,10 @@ use crate::res::{Key, Res};
 
 const MAX_MODEL: usize = 16 * 1024 * 1024;
 const MAX_EXPANDED: usize = 64 * 1024 * 1024;
-const MAX_INSTANCES: u32 = 20_000;
+pub(crate) const MAX_INSTANCES: u32 = 20_000;
 const MAX_DEPENDENCIES: usize = 256;
 const MAX_REFERENCES: usize = 4096;
-const MAX_ID: u64 = (1 << 53) - 1;
+pub(crate) const MAX_ID: u64 = (1 << 53) - 1;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Usage {
@@ -46,13 +46,13 @@ pub struct Dependencies {
     pub note: Option<String>,
 }
 
-fn failure(message: &str) -> Error {
+pub(crate) fn failure(message: &str) -> Error {
     Error::Message(message.into())
 }
 
 /// Only asset URIs and Roblox asset URLs count. A number in a script, instance name or an
 /// unrelated URL is not a dependency. Keep ids exact across IPC's JS-number boundary.
-fn reference(value: &str) -> Option<u64> {
+pub(crate) fn reference(value: &str) -> Option<u64> {
     let value = value.trim();
     let lower = value.to_ascii_lowercase();
     let id = if let Some(id) = lower.strip_prefix("rbxassetid://") {
@@ -111,20 +111,25 @@ fn binary_budget(bytes: &[u8]) -> Result<(), Error> {
     Ok(())
 }
 
-fn parse(bytes: &[u8], own_id: u64) -> Result<Vec<Dependency>, Error> {
+/// Decodes a binary or XML model within the size budgets. Shared with the model tree view.
+pub(crate) fn decode(bytes: &[u8]) -> Result<WeakDom, Error> {
     if bytes.len() > MAX_MODEL {
         return Err(failure("This model is too large to inspect."));
     }
-    let dom: WeakDom = if bytes.starts_with(b"<roblox!") {
+    if bytes.starts_with(b"<roblox!") {
         binary_budget(bytes)?;
-        rbx_binary::from_reader(bytes).map_err(|_| failure("Couldn't read this binary model."))?
+        rbx_binary::from_reader(bytes).map_err(|_| failure("Couldn't read this binary model."))
     } else {
         rbx_xml::from_reader(
             bytes,
             rbx_xml::DecodeOptions::new().property_behavior(rbx_xml::DecodePropertyBehavior::ReadUnknown),
         )
-        .map_err(|_| failure("This asset isn't a readable Roblox model."))?
-    };
+        .map_err(|_| failure("This asset isn't a readable Roblox model."))
+    }
+}
+
+fn parse(bytes: &[u8], own_id: u64) -> Result<Vec<Dependency>, Error> {
+    let dom = decode(bytes)?;
     let mut found: BTreeMap<u64, BTreeSet<Usage>> = BTreeMap::new();
     let mut pending = vec![(dom.root_ref(), String::new(), 0)];
     let mut count = 0;
@@ -192,7 +197,7 @@ fn parse(bytes: &[u8], own_id: u64) -> Result<Vec<Dependency>, Error> {
         .collect())
 }
 
-fn content_property(name: &str) -> bool {
+pub(crate) fn content_property(name: &str) -> bool {
     matches!(
         name,
         "MeshId"
@@ -215,7 +220,7 @@ fn content_property(name: &str) -> bool {
     )
 }
 
-fn processed_format(asset_type: i32) -> Option<&'static str> {
+pub(crate) fn processed_format(asset_type: i32) -> Option<&'static str> {
     match asset_type {
         17 | 79 => Some("avatar_meshpart_head"),
         8 | 41..=47 | 57 | 58 => Some("avatar_meshpart_accessory"),
@@ -223,7 +228,8 @@ fn processed_format(asset_type: i32) -> Option<&'static str> {
     }
 }
 
-async fn model(client: &Client, id: u64, format: &str) -> Result<Vec<Dependency>, Error> {
+/// Downloads one representation of a model: the source (`""`) or a processed format.
+pub(crate) async fn download(client: &Client, id: u64, format: &str) -> Result<Vec<u8>, Error> {
     let params = assetdelivery::v2::GetAssetIdByAssetIdParams {
         roblox_asset_format: format.into(),
         ..Default::default()
@@ -239,7 +245,11 @@ async fn model(client: &Client, id: u64, format: &str) -> Result<Vec<Dependency>
                 "Roblox won't serve this model to this account. It may be private, moderated or unavailable.",
             )
         })?;
-    let bytes = client.fetch_cdn_limited(&location, MAX_MODEL).await?;
+    client.fetch_cdn_limited(&location, MAX_MODEL).await
+}
+
+async fn model(client: &Client, id: u64, format: &str) -> Result<Vec<Dependency>, Error> {
+    let bytes = download(client, id, format).await?;
     tokio::task::spawn_blocking(move || parse(&bytes, id))
         .await
         .map_err(|_| failure("Couldn't inspect this model."))?

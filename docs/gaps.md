@@ -14,4 +14,5 @@ Remove a line when it ships.
 - Avatar category tabs search only their loaded inventory type. There is no cross-type wardrobe search.
 - Avatar **Recent** lists only what was put on through Bonsai on this computer. Roblox has no recent-items endpoint.
 
+- The Model tab shows one model at a time and is read only: no 3D preview of the selected instance, no export, and script sources are cut at 4 KiB.
 - Dependency browsing inspects references in downloadable source and processed accessory/head models. It does not traverse dependency files recursively, list embedded/built-in resources, or bypass Roblox asset permissions. Non-model assets show an explicit unavailable-model state.
