@@ -59,6 +59,10 @@
     --dialog-width: 640px;
   }
 
+  [data-component="dialog"][data-size="xl"] {
+    --dialog-width: 880px;
+  }
+
   [data-component="dialog"] > [data-slot="header"] {
     display: flex;
     align-items: center;

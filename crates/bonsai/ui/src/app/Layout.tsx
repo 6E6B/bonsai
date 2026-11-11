@@ -435,7 +435,7 @@ export function Layout(props: ParentProps) {
       navigate(q?.trim() ? `/communities?q=${encodeURIComponent(q.trim())}` : "/communities"),
     ),
     handle("palette.open", () =>
-      dialog.show(() => <CommandPalette />, { position: "top", label: "Command bar", size: "lg" }),
+      dialog.show(() => <CommandPalette />, { position: "top", label: "Command bar", size: "xl" }),
     ),
     handle("help.shortcuts", () => dialog.show(() => <ShortcutsDialog />, { title: "Keyboard shortcuts", size: "lg" })),
     // Saved, so the window opens the same way next time.

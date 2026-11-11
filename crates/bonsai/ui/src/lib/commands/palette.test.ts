@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import type { BookmarkView, CommandInfo } from "~/lib/ipc/bindings"
 import {
   argEntries,
+  argToRemember,
   entityActions,
   hasActions,
   type PaletteEntry,
@@ -254,6 +255,24 @@ describe("paletteSections", () => {
     const s = paletteSections({ ...input, scope: "people", text: "zoom" })
     expect(s.map((x) => x.title)).toEqual(["People"])
   })
+
+  it("lists recent searches after recent rows for an empty query", () => {
+    const s = paletteSections({ ...input, text: "", searches: ["tower", "luke"] })
+    const searches = s.find((x) => x.title === "Recent searches")
+    expect(searches?.rows.map((r) => r.fill)).toEqual(["tower", "luke"])
+  })
+
+  it("puts a Roblox result named exactly what was typed on top", () => {
+    const s = paletteSections({ ...input, friends: [], text: "luke two" })
+    expect(s[0].title).toBe("Top hit")
+    expect(s[0].rows.map((r) => r.entity?.id)).toEqual([9])
+    expect(s.flatMap((x) => x.rows).filter((r) => r.entity?.id === 9)).toHaveLength(1)
+  })
+
+  it("says which scope lists all of a group", () => {
+    const s = paletteSections({ ...input, text: "lu" })
+    expect(s.find((x) => x.title === "People")?.more).toBe("people")
+  })
 })
 
 describe("recentRows", () => {
@@ -409,5 +428,41 @@ describe("bookmark search", () => {
     const rows = paletteEntries([cmd("bookmark.rename", "bookmark")], [], [], [], [], [], [], [], [bookmark])
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ id: "bookmark.rename", arg: "5", title: "bookmark.rename: Doors" })
+  })
+})
+
+describe("argToRemember", () => {
+  const kinds: Record<string, CommandInfo["arg"]> = { "user.message": "user", "game.join": "gameOrFriend" }
+  const kind = (id: string) => kinds[id]
+  const asked: PaletteEntry = {
+    key: "user.message",
+    title: "Message…",
+    words: "",
+    id: "user.message",
+    arg: null,
+    ask: "user",
+  }
+
+  it("keeps a picked friend with their name and picture", () => {
+    const [luke] = argEntries(asked, "luke", people)
+    expect(argToRemember(luke, asked, null, kind)).toEqual({
+      command: "user.message",
+      arg: { arg: "2", title: "Luke", thumb: { kind: "headshot", id: 2 }, ref: "user:2" },
+    })
+  })
+
+  it("titles typed text by the text", () => {
+    const typed = argEntries(asked, "someone", []).at(-1) as PaletteEntry
+    expect(argToRemember(typed, asked, null, kind)?.arg.title).toBe("someone")
+  })
+
+  it("titles an inline row by its argument", () => {
+    const e: PaletteEntry = { key: "intent:game.join:7", title: "Join: Tower", words: "", id: "game.join", arg: "7" }
+    expect(argToRemember(e, null, null, kind)?.arg.title).toBe("Tower")
+  })
+
+  it("skips commands that don't take a typed argument", () => {
+    const e: PaletteEntry = { key: "nav.home", title: "Home", words: "", id: "nav.home", arg: null }
+    expect(argToRemember(e, null, null, kind)).toBeNull()
   })
 })

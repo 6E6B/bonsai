@@ -21,7 +21,6 @@ parking_lot = { workspace = true }
 tracing = { workspace = true }
 keyring = { workspace = true }
 rusqlite = { workspace = true }
-nucleo-matcher = { workspace = true }
 directories = { workspace = true }
 sha2 = { workspace = true }
 open = { workspace = true }

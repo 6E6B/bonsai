@@ -231,3 +231,12 @@ export function noteDetails(account: string, path: string, details: Pick<Seen, "
 export function noteUse(account: string, seen: Partial<Seen> & { ref: string }) {
   update(account, (h) => touch(h, h[seen.ref] ? { ref: seen.ref } : seen))
 }
+
+/** The account no longer wants `ref` remembered. */
+export function forgetSeen(account: string, ref: string) {
+  update(account, (h) => {
+    if (!h[ref]) return h
+    const { [ref]: _, ...rest } = h
+    return rest
+  })
+}

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { type History, openable, seenBoost, touch } from "~/lib/history"
 import type { CommandInfo, RemoteRow } from "~/lib/ipc/bindings"
 import { fold } from "~/lib/search"
 import catalog from "./catalog.json"
@@ -14,6 +15,7 @@ import {
   remoteEntries,
   remoteQuery,
   type Scope,
+  seenEntry,
 } from "./palette"
 
 /** What people type into the command bar, and what should come first. Runs against the real
@@ -68,6 +70,7 @@ const user = (id: number, name: string): RemoteRow => ({
 /** Canned Roblox search results by query. */
 const ROBLOX: Record<string, RemoteRow[]> = {
   "tower of hell": [experience(1962086868, "Tower of Hell"), experience(5, "Tower of Hell but easy")],
+  tower: [experience(7, "Tower Defense Simulator"), experience(1962086868, "Tower of Hell")],
   bloxburg: [experience(185655149, "Welcome to Bloxburg")],
   doors: [experience(6516141723, "DOORS")],
   roblox: [user(1, "Roblox"), user(9, "RobloxFan")],
@@ -75,7 +78,7 @@ const ROBLOX: Record<string, RemoteRow[]> = {
 
 const entries = paletteEntries(commands, accounts, [], [], themes, prefs)
 
-function results(query: string, usage: Usage = emptyUsage()) {
+function results(query: string, usage: Usage = emptyUsage(), history: History = {}) {
   const parsed = parseScope(query) ?? { scope: "all" as Scope, text: query }
   const tail = parsed.scope === "all" ? remoteTail(entries, parsed.text) : null
   const q = remoteQuery(parsed.scope, tail ?? parsed.text)
@@ -89,12 +92,13 @@ function results(query: string, usage: Usage = emptyUsage()) {
       friends: people,
       remote,
       intents,
-      boost: booster(usage, parsed.text),
+      seen: openable(history).flatMap((h) => seenEntry(h) ?? []),
+      boost: (key) => booster(usage, parsed.text)(key) + seenBoost(history, key),
     }),
   )
 }
 
-const top = (query: string, usage?: Usage) => results(query, usage)[0]?.key
+const top = (query: string, usage?: Usage, history?: History) => results(query, usage, history)[0]?.key
 
 /** [query, the key that should come first, or a prefix ending in `*`]. */
 const CASES: [string, string][] = [
@@ -225,12 +229,139 @@ const fits = (key: string | undefined, want: string) => {
   return key === want
 }
 
+/** [query, a key that should be in the first three]: good enough when the top is a judgment
+ * call. */
+const NEAR: [string, string][] = [
+  ["dm", "user.message"],
+  ["msg", "user.message"],
+  ["pm", "user.message"],
+  ["join", "game.join"],
+  ["theme", "nav.themes"],
+  ["dark", "*:dark"],
+  ["zoom", "view.zoom_in"],
+  ["switch acc", "account.switch:*"],
+  ["tab", "tab.new"],
+  ["plugins", "nav.hub"],
+  ["check upd", "app.check_updates"],
+  ["sign", "account.sign_out"],
+  ["tower", "*:1962086868"],
+  ["roblox", "remote:People:user.open:1"],
+]
+
+const DAY = 86_400_000
+const now = Date.now()
+const tower = {
+  ref: "game:1962086868",
+  title: "Tower of Hell",
+  open: { id: "game.open", arg: "1962086868" },
+  entity: { kind: "experience" as const, id: 1962086868 },
+}
+/** Looked at Tower of Hell on three days this week, and RobloxFan's profile once a month ago. */
+let looked: History = {}
+for (const d of [5, 3, 1]) looked = touch(looked, tower, now - d * DAY)
+looked = touch(
+  looked,
+  {
+    ref: "user:9",
+    title: "RobloxFan",
+    open: { id: "user.open", arg: "9" },
+    entity: { kind: "user", id: 9 },
+  },
+  now - 30 * DAY,
+)
+/** Picked Tower of Hell from Roblox's results after typing "tower", twice. */
+let picked = emptyUsage()
+for (const d of [4, 2]) {
+  picked = record(picked, "remote:Experiences:game.open:1962086868", "tower", now - d * DAY)
+  picked = record(picked, "game:1962086868", "tower", now - d * DAY)
+}
+
+/** [query, key that should come first] with that history. */
+const REMEMBERED: [string, string][] = [
+  // Found from the first letter, without Roblox
+  ["t", "seen:game:1962086868"],
+  ["to", "seen:game:1962086868"],
+  ["tow", "seen:game:1962086868"],
+  ["tower", "seen:game:1962086868"],
+  ["hell", "seen:game:1962086868"],
+  // A good command match still wins over something looked at
+  ["trades", "nav.trades"],
+  ["settings", "nav.settings"],
+  // Friends still beat a stranger you once looked at
+  ["luke", "user:103"],
+]
+
+/** Where `want` is in `got` (1 = first), or 0 when it's missing. */
+const place = (got: string[], want: string) => got.findIndex((k) => fits(k, want)) + 1
+
+describe("command bar ranking score", () => {
+  it("stays good across every case", () => {
+    const cases = [
+      ...CASES.map(
+        ([q, w]) =>
+          [
+            q,
+            w,
+            place(
+              results(q).map((r) => r.key),
+              w,
+            ),
+          ] as const,
+      ),
+      ...NEAR.map(
+        ([q, w]) =>
+          [
+            q,
+            w,
+            place(
+              results(q).map((r) => r.key),
+              w,
+            ),
+          ] as const,
+      ),
+      ...REMEMBERED.map(
+        ([q, w]) =>
+          [
+            q,
+            w,
+            place(
+              results(q, picked, looked).map((r) => r.key),
+              w,
+            ),
+          ] as const,
+      ),
+    ]
+    const all = cases.map((c) => c[2])
+    const first = all.filter((p) => p === 1).length / all.length
+    const top3 = all.filter((p) => p >= 1 && p <= 3).length / all.length
+    const mrr = all.reduce((s, p) => s + (p ? 1 / p : 0), 0) / all.length
+    console.info(
+      `command bar: ${all.length} cases, first ${(first * 100).toFixed(1)}%, top 3 ${(top3 * 100).toFixed(1)}%, MRR ${mrr.toFixed(3)}`,
+    )
+    const missed = cases.filter((c) => c[2] !== 1).map(([q, w, p]) => `${q} → ${w} at ${p || "none"}`)
+    if (missed.length) console.info(`not first: ${missed.join("; ")}`)
+    // Raise this when ranking gets better; a change that lowers it needs a reason.
+    expect(mrr).toBeGreaterThanOrEqual(0.98)
+  })
+})
+
 describe("command bar ranking", () => {
   it.each(CASES)("%s → %s", (query, want) => {
     const got = results(query)
       .slice(0, 3)
       .map((r) => `${r.key} (${r.title})`)
     expect(fits(top(query), want), `top results: ${got.join(", ")}`).toBe(true)
+  })
+
+  it.each(NEAR)("%s → %s in the first three", (query, want) => {
+    const got = results(query).map((r) => r.key)
+    const at = place(got, want)
+    expect(at >= 1 && at <= 3, `top results: ${got.slice(0, 5).join(", ")}`).toBe(true)
+  })
+
+  it.each(REMEMBERED)("%s → %s after looking and picking", (query, want) => {
+    const got = results(query, picked, looked).map((r) => r.key)
+    expect(fits(got[0], want), `top results: ${got.slice(0, 5).join(", ")}`).toBe(true)
   })
 
   it("learns what you pick for what you type", () => {

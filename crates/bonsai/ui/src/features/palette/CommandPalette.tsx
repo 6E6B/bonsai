@@ -1,15 +1,30 @@
-import { createEffect, createMemo, createSignal, For, Match, onMount, Show, Switch, untrack } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch, untrack } from "solid-js"
 import { createStore } from "solid-js/store"
 import { filterEntries } from "~/lib/commands/filter"
+import { highlightParts } from "~/lib/commands/highlight"
 import { intentRows, remoteTail } from "~/lib/commands/intent"
-import { booster, emptyUsage, loadUsage, record, saveUsage, type Usage } from "~/lib/commands/learn"
+import {
+  booster,
+  completion,
+  emptyUsage,
+  forget,
+  loadUsage,
+  recentQueries,
+  record,
+  rememberArg,
+  saveUsage,
+  type Usage,
+} from "~/lib/commands/learn"
 import {
   argEntries,
   argHint,
+  argToRemember,
   entityActions,
   flatRows,
   hasActions,
+  type PaletteEntity,
   type PaletteEntry,
+  type PalettePerson,
   type PaletteSection,
   paletteEntries,
   paletteSections,
@@ -23,13 +38,15 @@ import {
   seenEntry,
 } from "~/lib/commands/palette"
 import { command, commandList, run } from "~/lib/commands/registry"
-import { historyOf, noteUse, openable, seenBoost } from "~/lib/history"
+import { enterVerb, rowIcon } from "~/lib/commands/rowkind"
+import { ago } from "~/lib/format"
+import { forgetSeen, historyOf, noteUse, openable, type Seen, seenBoost } from "~/lib/history"
 import { commands, type PluginView, type PrefView, type RemoteSearch, type ThemeView } from "~/lib/ipc/bindings"
 import { screenKey, screens, sidebarGroups, sidebarScreens } from "~/lib/screens"
 import { friends, playlists, shell, useLive, visibleBookmarks } from "~/lib/store"
 import { tabLabel, tabs } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Icon, Kbd, SegmentedControl, Spinner, TextField, Thumbnail, useDialog } from "~/lib/ui"
+import { Avatar, Icon, Kbd, SegmentedControl, Skeleton, Spinner, TextField, Thumbnail, useDialog } from "~/lib/ui"
 
 /** What each account picked for what it typed, loaded from this machine on first use. */
 const [usage, setUsage] = createStore<Record<string, Usage>>({})
@@ -43,7 +60,11 @@ function usageOf(account: string): Usage {
  * communities, items) at once; ←/→, Tab or a prefix (`@`, `g:`, `#`, `i:`, `>`) narrows it to one.
  * Alt+→ on a result lists what else you can do with it. Commands that take a typed argument ask for
  * it after you pick them. What you picked here and what you looked at anywhere in the app
- * (`~/lib/history`) rank higher, and things you looked at are found from the first letter. */
+ * (`~/lib/history`) rank higher, and things you looked at are found from the first letter.
+ *
+ * Keys: ↑/↓ move, Ctrl+↑/↓ jump between groups, Ctrl+1–9 pick a row, Ctrl+Enter shows all of a
+ * cut-short group, Tab or → accepts the faint completion (else changes the scope), Shift+Delete
+ * forgets a remembered row. */
 export function CommandPalette() {
   const dialog = useDialog()
   const themes = useLive(
@@ -103,12 +124,18 @@ export function CommandPalette() {
   const [active, setActive] = createSignal(0)
   /** What was typed before picking the command now asking for its argument. */
   const [askedWith, setAskedWith] = createSignal("")
+  const nested = () => asking() !== null || actionsOf() !== null
 
   const history = () => historyOf(account())
+  const currentUsage = () => usage[account()] ?? emptyUsage()
+  const saveTo = (a: string, u: Usage) => {
+    setUsage(a, u)
+    saveUsage(a, u)
+  }
   const seenRows = createMemo(() => openable(history()).flatMap((s) => seenEntry(s) ?? []))
   /** Extra score for a row key or ref from what was picked here and looked at anywhere. */
   const boost = createMemo(() => {
-    const picked = booster(usage[account()] ?? emptyUsage(), query())
+    const picked = booster(currentUsage(), query())
     const h = history()
     const now = Date.now()
     return (key: string) => picked(key) + seenBoost(h, key, now)
@@ -119,13 +146,12 @@ export function CommandPalette() {
     scope() === "all" && !asking() && !actionsOf() ? remoteTail(entries(), query()) : null,
   )
   const noResults = (): RemoteSearch => ({ loading: false, rows: [] })
+  const remoteFor = () => {
+    if (nested()) return asking()?.ask === "user" ? remoteQuery("people", query()) : ""
+    return remoteQuery(scope(), tail() ?? query())
+  }
   const remote = useLive(
-    () => {
-      if (actionsOf()) return ""
-      const cmd = asking()
-      if (cmd) return cmd.ask === "user" ? remoteQuery("people", query()) : ""
-      return remoteQuery(scope(), tail() ?? query())
-    },
+    () => (actionsOf() ? "" : remoteFor()),
     async (q) => (q ? commands.remoteSearch(q) : noResults()),
     noResults,
   )
@@ -138,7 +164,10 @@ export function CommandPalette() {
       return [{ title: "", rows: filterEntries(rows, query()) }]
     }
     const cmd = asking()
-    if (cmd) return [{ title: "", rows: argEntries(cmd, query(), people(), remoteRows(), 8, boost()) }]
+    if (cmd) {
+      const recent = currentUsage().args?.[cmd.id] ?? []
+      return [{ title: "", rows: argEntries(cmd, query(), people(), remoteRows(), 8, boost(), recent) }]
+    }
     const all = scope() === "all" || scope() === "commands"
     return paletteSections({
       scope: scope(),
@@ -149,9 +178,10 @@ export function CommandPalette() {
       bookmarks: visibleBookmarks(),
       recent: recentRows(
         entries(),
-        Object.entries((usage[account()] ?? emptyUsage()).picks).map(([key, p]) => ({ key, t: p.t })),
+        Object.entries(currentUsage().picks).map(([key, p]) => ({ key, t: p.t })),
         openable(history()),
       ),
+      searches: recentQueries(currentUsage(), 3),
       seen: seenRows(),
       places: places(),
       intents: all
@@ -177,6 +207,22 @@ export function CommandPalette() {
     })
   })
 
+  /** The section each row is in. */
+  const sectionAt = (i: number) => {
+    const st = starts()
+    let s = 0
+    while (s + 1 < st.length && st[s + 1] <= i) s++
+    return s
+  }
+  const activeRow = () => rows()[active()] as PaletteEntry | undefined
+  const activeSection = () => sections()[sectionAt(active())] as PaletteSection | undefined
+  /** The rest of a query typed before that starts like this one. */
+  const ghost = createMemo(() => (nested() || !query() ? "" : (completion(currentUsage(), query()) ?? "")))
+  /** Roblox is still answering and nothing from it is shown yet. */
+  const waiting = () => remote.loading && remoteRows().length === 0 && remoteFor() !== ""
+  /** Ctrl is held: rows show the number that picks them. */
+  const [ctrl, setCtrl] = createSignal(false)
+
   let input: HTMLInputElement | undefined
   let list: HTMLDivElement | undefined
 
@@ -201,6 +247,16 @@ export function CommandPalette() {
   onMount(() => {
     usageOf(account())
     input?.focus()
+    const held = (ev: KeyboardEvent) => setCtrl(ev.ctrlKey && !ev.altKey && !ev.shiftKey)
+    const off = () => setCtrl(false)
+    window.addEventListener("keydown", held)
+    window.addEventListener("keyup", held)
+    window.addEventListener("blur", off)
+    onCleanup(() => {
+      window.removeEventListener("keydown", held)
+      window.removeEventListener("keyup", held)
+      window.removeEventListener("blur", off)
+    })
   })
 
   const onInput = (v: string) => {
@@ -239,6 +295,11 @@ export function CommandPalette() {
 
   const pick = (e: PaletteEntry | undefined) => {
     if (!e) return
+    if (e.fill !== undefined) {
+      setQuery(e.fill)
+      input?.focus()
+      return
+    }
     if (e.ask) {
       setAsking(e)
       setAskedWith(query())
@@ -255,10 +316,13 @@ export function CommandPalette() {
     if (asked) u = record(u, asked.key, askedWith())
     if (of) u = record(u, of.entry.key, of.query)
     u = record(u, e.key, query())
-    setUsage(a, u)
-    saveUsage(a, u)
     const about = of?.entry ?? e
     const ref = refOf(e) ?? refOf(about)
+    // What a row is about learns the query too, so another row about it ranks higher for it.
+    if (ref && ref !== e.key) u = record(u, ref, asked ? askedWith() : (of?.query ?? query()))
+    const again = argToRemember(e, asked, of?.entry ?? null, (id) => command(id)?.arg)
+    if (again) u = rememberArg(u, again.command, again.arg)
+    saveTo(a, u)
     if (ref) {
       const open = about.entity && entityActions(about.entity, () => "")[0]
       noteUse(a, {
@@ -273,21 +337,68 @@ export function CommandPalette() {
     void run(e.id, e.arg)
   }
 
+  /** Stops remembering a row picked, searched or looked at before. */
+  const forgetRow = (e: PaletteEntry | undefined) => {
+    if (!e || !forgettable(e)) return false
+    const a = account()
+    const ref = refOf(e)
+    let u = usageOf(a)
+    if (e.fill !== undefined) u = { ...u, queries: u.queries.filter((q) => q.q !== e.fill) }
+    u = forget(u, [e.key, ...(ref ? [ref, `seen:${ref}`] : [])])
+    saveTo(a, u)
+    if (ref) forgetSeen(a, ref)
+    return true
+  }
+  const forgettable = (e: PaletteEntry) => e.recent === true
+
+  /** The first row of the next (`by` 1) or previous section. */
+  const jumpSection = (by: 1 | -1) => {
+    const st = starts().filter((_, i) => sections()[i].rows.length > 0)
+    if (!st.length) return
+    const i = active()
+    const next = by === 1 ? st.find((at) => at > i) : [...st].reverse().find((at) => at < i)
+    setActive(next ?? (by === 1 ? st[0] : st[st.length - 1]))
+  }
+  const showAll = (s: PaletteSection | undefined) => {
+    if (!s?.more || s.more === scope()) return false
+    pickScope(s.more)
+    return true
+  }
+  const accept = () => {
+    const rest = ghost()
+    if (!rest) return false
+    setQuery(query() + rest)
+    return true
+  }
+
   const atEnd = () => input !== undefined && input.selectionStart === input.value.length
   const atStart = () => input !== undefined && input.selectionStart === 0 && input.selectionEnd === 0
-  const nested = () => asking() !== null || actionsOf() !== null
 
   const onKeyDown = (ev: KeyboardEvent) => {
     const n = rows().length
     const empty = query() === ""
-    if (ev.key === "ArrowDown" && n > 0) setActive((i) => (i + 1) % n)
+    const digit = /^Digit([1-9])$/.exec(ev.code)
+    if (digit && ev.ctrlKey && !ev.altKey) {
+      const e = rows()[Number(digit[1]) - 1]
+      if (!e) return
+      pick(e)
+    } else if ((ev.key === "ArrowDown" || ev.key === "ArrowUp") && ev.ctrlKey && n > 0)
+      jumpSection(ev.key === "ArrowDown" ? 1 : -1)
+    else if (ev.key === "ArrowDown" && n > 0) setActive((i) => (i + 1) % n)
     else if (ev.key === "ArrowUp" && n > 0) setActive((i) => (i - 1 + n) % n)
-    else if (ev.key === "Enter") pick(rows()[active()])
-    else if (ev.key === "Tab" && !nested()) cycleScope(ev.shiftKey ? -1 : 1)
+    else if (ev.key === "Enter" && ev.ctrlKey) {
+      if (!showAll(activeSection())) return
+    } else if (ev.key === "Enter") pick(activeRow())
+    else if (ev.key === "Delete" && ev.shiftKey) {
+      if (!forgetRow(activeRow())) return
+    } else if (ev.key === "Tab" && !ev.shiftKey && accept()) {
+      // Took the completion.
+    } else if (ev.key === "Tab" && !nested()) cycleScope(ev.shiftKey ? -1 : 1)
     else if (ev.key === "ArrowRight" && !nested() && ev.altKey) {
-      if (!showActions(rows()[active()])) return
-    } else if (ev.key === "ArrowRight" && !nested() && atEnd() && !ev.shiftKey) cycleScope(1)
-    else if (ev.key === "ArrowLeft" && !nested() && atStart() && !ev.shiftKey) cycleScope(-1)
+      if (!showActions(activeRow())) return
+    } else if (ev.key === "ArrowRight" && !nested() && atEnd() && !ev.shiftKey) {
+      if (!accept()) cycleScope(1)
+    } else if (ev.key === "ArrowLeft" && !nested() && atStart() && !ev.shiftKey) cycleScope(-1)
     else if ((ev.key === "ArrowLeft" || ev.key === "Backspace") && actionsOf() && empty) back()
     else if (ev.key === "Backspace" && asking() && empty) back()
     else if (ev.key === "Backspace" && !nested() && empty && scope() !== "all") setScope("all")
@@ -295,6 +406,16 @@ export function CommandPalette() {
     else return
     ev.preventDefault()
   }
+
+  const seenOf = (e: PaletteEntry): Seen | undefined => {
+    const ref = refOf(e)
+    return ref ? history()[ref] : undefined
+  }
+  const personOf = (e: PaletteEntry): PalettePerson | undefined => {
+    const ref = refOf(e)
+    return ref?.startsWith("user:") ? people().find((p) => `user:${p.id}` === ref) : undefined
+  }
+  const titleOf = (id: string) => command(id)?.title
 
   const placeholder = () => {
     const cmd = asking()
@@ -318,7 +439,6 @@ export function CommandPalette() {
 
   const emptyText = () => {
     if (asking()) return "Type, then press Enter"
-    if (remote.loading) return "Searching…"
     const t = query().trim()
     if (t.length === 0) return "Type to search"
     if (scope() !== "commands" && scope() !== "bookmarks" && t.length > 0 && remoteQuery(scope(), t) === "")
@@ -348,6 +468,7 @@ export function CommandPalette() {
         aria-label={asking() ? "Argument" : "Search"}
         placeholder={placeholder()}
         value={query()}
+        completion={ghost()}
         onChange={onInput}
         onKeyDown={onKeyDown}
       />
@@ -355,10 +476,8 @@ export function CommandPalette() {
         <div class="flex items-center justify-between gap-2">
           <SegmentedControl
             size="sm"
-            stretch
-            class="min-w-0 flex-1"
             aria-label="Search in"
-            options={scopes.map((s) => ({ value: s.value, label: s.label }))}
+            options={scopes.map((s) => ({ value: s.value, label: s.label, hint: s.prefix || undefined }))}
             value={scope()}
             onChange={(v) => pickScope(v as Scope)}
           />
@@ -367,23 +486,36 @@ export function CommandPalette() {
           </Show>
         </div>
       </Show>
-      <div ref={list} class="flex max-h-[28rem] flex-col overflow-y-auto">
-        <Show when={rows().length > 0} fallback={<div class="px-2 py-1.5 text-fg-faint">{emptyText()}</div>}>
+      <div class="flex h-[28rem] min-h-0 gap-3">
+        <div ref={list} class="flex min-w-0 flex-1 flex-col overflow-y-auto">
           <For each={sections()}>
             {(section, s) => (
-              <>
+              <Show when={section.rows.length > 0}>
                 <Show when={section.title}>
-                  <div class="px-2 pt-2 pb-1 text-xs text-fg-muted">{section.title}</div>
+                  <div class="flex shrink-0 items-center justify-between gap-2 px-2 pt-2 pb-1 text-xs text-fg-muted">
+                    <span>{section.title}</span>
+                    <Show when={section.more && section.more !== scope()}>
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        class="text-fg-muted hover:text-fg"
+                        onClick={() => showAll(section)}
+                      >
+                        Show all
+                      </button>
+                    </Show>
+                  </div>
                 </Show>
                 <For each={section.rows}>
                   {(e, r) => {
                     const i = () => starts()[s()] + r()
+                    const on = () => i() === active()
                     return (
                       <button
                         type="button"
                         data-index={i()}
                         class="flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-left"
-                        classList={{ "bg-active": i() === active() }}
+                        classList={{ "bg-active": on() }}
                         onMouseMove={() => setActive(i())}
                         onClick={() => pick(e)}
                         onContextMenu={(ev) => {
@@ -392,55 +524,214 @@ export function CommandPalette() {
                       >
                         <RowPicture entry={e} />
                         <span class="min-w-0 flex-1 truncate">
-                          {e.title}
+                          <Highlighted text={e.title} query={query()} />
                           <Show when={e.subtitle}>
                             {(sub) => <span class="ml-2 text-sm text-fg-muted">{sub()}</span>}
                           </Show>
                         </span>
+                        <Show when={e.recent && e.fill === undefined}>
+                          <Icon name="clock" size={12} class="shrink-0 text-fg-faint" />
+                        </Show>
                         <Show when={e.shortcut}>{(k) => <Kbd keys={[k()]} />}</Show>
-                        <Show when={i() === active() && !nested() && hasActions(e)}>
-                          <Icon name="chevron-right" size={14} class="text-fg-muted" />
+                        <Show
+                          when={ctrl() && i() < 9}
+                          fallback={
+                            <Show when={on()}>
+                              <span class="shrink-0 text-xs text-fg-muted">{enterVerb(e)}</span>
+                              <Show when={!nested() && hasActions(e)}>
+                                <Icon name="chevron-right" size={14} class="text-fg-muted" />
+                              </Show>
+                            </Show>
+                          }
+                        >
+                          <Kbd keys={[String(i() + 1)]} />
                         </Show>
                       </button>
                     )
                   }}
                 </For>
-              </>
+              </Show>
             )}
           </For>
+          <Show when={waiting()}>
+            <div class="px-2 pt-2 pb-1 text-xs text-fg-muted">Roblox</div>
+            <For each={[40, 28, 34]}>
+              {(w) => (
+                <div class="flex h-8 shrink-0 items-center gap-2 px-2">
+                  <Skeleton class="size-6 rounded-md" />
+                  <Skeleton class={`h-3 ${w === 40 ? "w-40" : w === 28 ? "w-28" : "w-32"}`} />
+                </div>
+              )}
+            </For>
+          </Show>
+          <Show when={rows().length === 0 && !waiting()}>
+            <div class="px-2 py-1.5 text-fg-faint">{emptyText()}</div>
+          </Show>
+        </div>
+        <Show when={activeRow()}>
+          {(e) => (
+            <Preview
+              entry={e()}
+              query={query()}
+              seen={seenOf(e())}
+              person={personOf(e())}
+              actions={!nested() && e().entity ? entityActions(e().entity as PaletteEntity, titleOf) : []}
+              keywords={command(e().id)?.keywords ?? []}
+            />
+          )}
         </Show>
       </div>
-      <div class="flex items-center gap-3 px-2 text-xs text-fg-muted">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 text-xs text-fg-muted">
         <span class="flex items-center gap-1">
-          <Kbd keys={["↵"]} /> Open
+          <Kbd keys={["↵"]} /> {enterVerb(activeRow())}
         </span>
+        <Show when={ghost()}>
+          <span class="flex items-center gap-1">
+            <Kbd keys={["Tab"]} /> Complete
+          </span>
+        </Show>
+        <Show when={!nested() && activeRow() && hasActions(activeRow() as PaletteEntry)}>
+          <span class="flex items-center gap-1">
+            <Kbd keys={["Alt", "→"]} /> Actions
+          </span>
+        </Show>
+        <Show when={activeSection()?.more && activeSection()?.more !== scope()}>
+          <span class="flex items-center gap-1">
+            <Kbd keys={["Ctrl", "↵"]} /> Show all
+          </span>
+        </Show>
+        <Show when={activeRow()?.recent}>
+          <span class="flex items-center gap-1">
+            <Kbd keys={["Shift", "Del"]} /> Forget
+          </span>
+        </Show>
         <Show
           when={nested()}
           fallback={
-            <>
-              <span class="flex items-center gap-1">
-                <Kbd keys={["Alt", "→"]} /> Actions
-              </span>
-              <span class="flex items-center gap-1">
-                <Kbd keys={["←"]} /> <Kbd keys={["→"]} /> Filter
-              </span>
-            </>
+            <span class="flex items-center gap-1">
+              <Kbd keys={["←"]} /> <Kbd keys={["→"]} /> Filter
+            </span>
           }
         >
           <span class="flex items-center gap-1">
             <Kbd keys={["Esc"]} /> Back
           </span>
         </Show>
+        <span class="ml-auto flex items-center gap-1">
+          <Kbd keys={["Ctrl", "1–9"]} /> Pick
+        </span>
       </div>
     </div>
   )
 }
 
-/** A result's picture: a round headshot for people, a square thumbnail for the rest, a blank
- * slot for commands so titles line up. */
+/** A title with the letters the query matched in bold. */
+function Highlighted(props: { text: string; query: string }) {
+  return (
+    <For each={highlightParts(props.text, props.query)}>
+      {(p) => (
+        <Show when={p.hit} fallback={p.text}>
+          <span class="font-semibold">{p.text}</span>
+        </Show>
+      )}
+    </For>
+  )
+}
+
+/** More about the selected row: a bigger picture, when you last looked at it, its other
+ * actions, and a command's shortcut and other names. */
+function Preview(props: {
+  entry: PaletteEntry
+  query: string
+  seen?: Seen
+  person?: PalettePerson
+  actions: PaletteEntry[]
+  keywords: string[]
+}) {
+  const thumb = () => props.entry.thumb
+  return (
+    <aside class="flex w-56 shrink-0 flex-col gap-3 overflow-y-auto border-l border-line pl-3 text-sm">
+      <div class="flex flex-col items-start gap-2 pt-2">
+        <Show
+          when={thumb()}
+          fallback={
+            <span class="flex size-16 items-center justify-center rounded-md bg-raised text-fg-muted">
+              <Icon name={rowIcon(props.entry)} size={28} />
+            </span>
+          }
+        >
+          {(t) => (
+            <Show
+              when={t().kind === "headshot"}
+              fallback={<Thumbnail class="size-24 rounded-md" src={thumbUrl(t().kind, t().id)} alt="" />}
+            >
+              <Avatar
+                size="xl"
+                name={props.entry.title}
+                src={thumbUrl("headshot", t().id)}
+                presence={props.person?.presence}
+              />
+            </Show>
+          )}
+        </Show>
+        <div class="flex min-w-0 flex-col gap-0.5">
+          <span class="font-medium break-words">{props.entry.title}</span>
+          <Show when={props.entry.subtitle}>
+            {(sub) => <span class="text-xs break-words text-fg-muted">{sub()}</span>}
+          </Show>
+        </div>
+      </div>
+      <Show when={props.seen}>
+        {(s) => (
+          <span class="text-xs text-fg-muted">
+            Looked at {s().n === 1 ? "once" : `${s().n} times`} · {ago(s().t)}
+          </span>
+        )}
+      </Show>
+      <Show when={props.entry.shortcut}>
+        {(k) => (
+          <span class="flex items-center gap-2 text-xs text-fg-muted">
+            Shortcut <Kbd keys={[k()]} />
+          </span>
+        )}
+      </Show>
+      <Show when={props.actions.length > 1}>
+        <div class="flex flex-col gap-1">
+          <span class="text-xs text-fg-muted">Actions</span>
+          <For each={props.actions}>
+            {(a, i) => (
+              <span class="flex items-center justify-between gap-2 text-xs">
+                <span class="truncate">{a.title}</span>
+                <Show when={i() === 0}>
+                  <Kbd keys={["↵"]} />
+                </Show>
+              </span>
+            )}
+          </For>
+          <span class="flex items-center gap-1 text-xs text-fg-faint">
+            <Kbd keys={["Alt", "→"]} /> for all
+          </span>
+        </div>
+      </Show>
+      <Show when={props.keywords.length > 0 && !props.entry.entity}>
+        <span class="text-xs text-fg-faint">Also: {props.keywords.slice(0, 6).join(", ")}</span>
+      </Show>
+    </aside>
+  )
+}
+
+/** A result's picture: a round headshot for people, a square thumbnail for the rest, an icon
+ * for commands. */
 function RowPicture(props: { entry: PaletteEntry }) {
   return (
-    <Show when={props.entry.thumb} fallback={<span class="size-6 shrink-0" />}>
+    <Show
+      when={props.entry.thumb}
+      fallback={
+        <span class="flex size-6 shrink-0 items-center justify-center text-fg-muted">
+          <Icon name={rowIcon(props.entry)} size={14} />
+        </span>
+      }
+    >
       {(t) => (
         <Show
           when={t().kind === "headshot"}
