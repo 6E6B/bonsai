@@ -46,7 +46,18 @@ import { screenKey, screens, sidebarGroups, sidebarScreens } from "~/lib/screens
 import { friends, playlists, shell, useLive, visibleBookmarks } from "~/lib/store"
 import { tabLabel, tabs } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Icon, Kbd, SegmentedControl, Skeleton, Spinner, TextField, Thumbnail, useDialog } from "~/lib/ui"
+import {
+  Avatar,
+  Badge,
+  Icon,
+  Kbd,
+  SegmentedControl,
+  Skeleton,
+  Spinner,
+  TextField,
+  Thumbnail,
+  useDialog,
+} from "~/lib/ui"
 
 /** What each account picked for what it typed, loaded from this machine on first use. */
 const [usage, setUsage] = createStore<Record<string, Usage>>({})
@@ -577,6 +588,10 @@ export function CommandPalette() {
               person={personOf(e())}
               actions={!nested() && e().entity ? entityActions(e().entity as PaletteEntity, titleOf) : []}
               keywords={command(e().id)?.keywords ?? []}
+              onAction={(a) => {
+                showActions(e())
+                pick(a)
+              }}
             />
           )}
         </Show>
@@ -638,8 +653,24 @@ function Highlighted(props: { text: string; query: string }) {
   )
 }
 
-/** More about the selected row: a bigger picture, when you last looked at it, its other
- * actions, and a command's shortcut and other names. */
+const KIND_LABEL: Record<PaletteEntity["kind"], string> = {
+  user: "Person",
+  experience: "Experience",
+  community: "Community",
+  item: "Item",
+  bundle: "Bundle",
+}
+
+/** What kind of row this is, in a word, for the preview. */
+function kindLabel(e: PaletteEntry): string {
+  if (e.fill !== undefined) return "Recent search"
+  if (e.entity) return KIND_LABEL[e.entity.kind]
+  if (e.ask) return "Command · asks for input"
+  return "Command"
+}
+
+/** More about the selected row: a bigger picture, what it is, when you last looked at it, and
+ * its other actions (clickable), or a command's shortcut and other names. */
 function Preview(props: {
   entry: PaletteEntry
   query: string
@@ -647,26 +678,29 @@ function Preview(props: {
   person?: PalettePerson
   actions: PaletteEntry[]
   keywords: string[]
+  onAction: (a: PaletteEntry) => void
 }) {
   const thumb = () => props.entry.thumb
+  const status = () => props.person?.status
   return (
-    <aside class="flex w-56 shrink-0 flex-col gap-3 overflow-y-auto border-l border-line pl-3 text-sm">
-      <div class="flex flex-col items-start gap-2 pt-2">
+    <aside class="flex w-80 shrink-0 flex-col overflow-hidden rounded-lg border border-line bg-raised text-sm">
+      <div class="flex items-center gap-3 border-b border-line p-4">
         <Show
           when={thumb()}
           fallback={
-            <span class="flex size-16 items-center justify-center rounded-md bg-raised text-fg-muted">
-              <Icon name={rowIcon(props.entry)} size={28} />
+            <span class="flex size-14 shrink-0 items-center justify-center rounded-lg bg-surface text-fg-muted">
+              <Icon name={rowIcon(props.entry)} size={24} />
             </span>
           }
         >
           {(t) => (
             <Show
               when={t().kind === "headshot"}
-              fallback={<Thumbnail class="size-24 rounded-md" src={thumbUrl(t().kind, t().id)} alt="" />}
+              fallback={<Thumbnail class="size-16 shrink-0 rounded-lg" src={thumbUrl(t().kind, t().id)} alt="" />}
             >
               <Avatar
-                size="xl"
+                size="lg"
+                class="shrink-0"
                 name={props.entry.title}
                 src={thumbUrl("headshot", t().id)}
                 presence={props.person?.presence}
@@ -674,47 +708,79 @@ function Preview(props: {
             </Show>
           )}
         </Show>
-        <div class="flex min-w-0 flex-col gap-0.5">
-          <span class="font-medium break-words">{props.entry.title}</span>
+        <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span class="text-xs text-fg-faint">{kindLabel(props.entry)}</span>
+          <span class="truncate text-base font-semibold" title={props.entry.title}>
+            {props.entry.title}
+          </span>
           <Show when={props.entry.subtitle}>
-            {(sub) => <span class="text-xs break-words text-fg-muted">{sub()}</span>}
+            {(sub) => <span class="truncate text-xs text-fg-muted">{sub()}</span>}
           </Show>
         </div>
       </div>
-      <Show when={props.seen}>
-        {(s) => (
-          <span class="text-xs text-fg-muted">
-            Looked at {s().n === 1 ? "once" : `${s().n} times`} · {ago(s().t)}
-          </span>
-        )}
+      <Show when={status() || props.seen || props.entry.shortcut}>
+        <div class="flex flex-col gap-1.5 border-b border-line px-4 py-3 text-xs text-fg-muted">
+          <Show when={status()}>
+            {(st) => (
+              <span class="flex items-center gap-2">
+                <Icon name={props.person?.inGame ? "game" : "user"} size={12} class="shrink-0" />
+                <span class="truncate">{st()}</span>
+              </span>
+            )}
+          </Show>
+          <Show when={props.seen}>
+            {(s) => (
+              <span class="flex items-center gap-2">
+                <Icon name="clock" size={12} class="shrink-0" />
+                Looked at {s().n === 1 ? "once" : `${s().n} times`}, last {ago(s().t)}
+              </span>
+            )}
+          </Show>
+          <Show when={props.entry.shortcut}>
+            {(k) => (
+              <span class="flex items-center gap-2">
+                <Icon name="keyboard" size={12} class="shrink-0" />
+                Shortcut <Kbd keys={[k()]} />
+              </span>
+            )}
+          </Show>
+        </div>
       </Show>
-      <Show when={props.entry.shortcut}>
-        {(k) => (
-          <span class="flex items-center gap-2 text-xs text-fg-muted">
-            Shortcut <Kbd keys={[k()]} />
-          </span>
-        )}
-      </Show>
-      <Show when={props.actions.length > 1}>
-        <div class="flex flex-col gap-1">
-          <span class="text-xs text-fg-muted">Actions</span>
+      <div class="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
+        <Show
+          when={props.actions.length > 1}
+          fallback={
+            <Show when={props.keywords.length > 0 && !props.entry.entity}>
+              <span class="px-2 pt-1 pb-2 text-xs text-fg-muted">Also found by</span>
+              <div class="flex flex-wrap gap-1 px-2">
+                <For each={props.keywords.slice(0, 10)}>{(k) => <Badge>{k}</Badge>}</For>
+              </div>
+            </Show>
+          }
+        >
+          <span class="px-2 pt-1 pb-1 text-xs text-fg-muted">Actions</span>
           <For each={props.actions}>
             {(a, i) => (
-              <span class="flex items-center justify-between gap-2 text-xs">
-                <span class="truncate">{a.title}</span>
+              <button
+                type="button"
+                tabIndex={-1}
+                class="flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-left hover:bg-hover"
+                onClick={() => props.onAction(a)}
+              >
+                <Icon name={rowIcon(a)} size={14} class="shrink-0 text-fg-muted" />
+                <span class="min-w-0 flex-1 truncate">{a.title}</span>
                 <Show when={i() === 0}>
                   <Kbd keys={["↵"]} />
                 </Show>
-              </span>
+              </button>
             )}
           </For>
-          <span class="flex items-center gap-1 text-xs text-fg-faint">
-            <Kbd keys={["Alt", "→"]} /> for all
-          </span>
+        </Show>
+      </div>
+      <Show when={props.actions.length > 1}>
+        <div class="flex items-center gap-1 border-t border-line px-4 py-2 text-xs text-fg-muted">
+          <Kbd keys={["Alt", "→"]} /> Search actions
         </div>
-      </Show>
-      <Show when={props.keywords.length > 0 && !props.entry.entity}>
-        <span class="text-xs text-fg-faint">Also: {props.keywords.slice(0, 6).join(", ")}</span>
       </Show>
     </aside>
   )
