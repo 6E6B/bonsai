@@ -66,7 +66,8 @@ test("b: lists bookmarks without remote search", async ({ page }) => {
   await page.locator('[data-component="search-button"]').click()
   const dialog = page.getByRole("dialog")
   await dialog.getByRole("textbox", { name: "Search", exact: true }).fill("b: outpost")
-  await expect(dialog.getByText("Industrial Outpost", { exact: false })).toBeVisible()
+  // The preview repeats the selected row's name, so look for the result row itself.
+  await expect(dialog.getByRole("button", { name: /Industrial Outpost/ })).toBeVisible()
   await expect(dialog.getByText("Night Shift", { exact: false })).toHaveCount(0)
   const count = await page.evaluate(() => window.__bonsaiPerf.calls.remoteSearch ?? 0)
   expect(count).toBe(0)
