@@ -93,4 +93,27 @@
   [data-component="text-field"][data-disabled] [data-slot="control"] {
     opacity: 0.5;
   }
+
+  [data-component="text-field"] [data-slot="completion-wrap"] {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+  }
+
+  [data-component="text-field"] [data-slot="completion"] {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    color: var(--color-fg-faint);
+    white-space: pre;
+    pointer-events: none;
+  }
+
+  [data-component="text-field"] [data-slot="completion-typed"] {
+    visibility: hidden;
+  }
 }

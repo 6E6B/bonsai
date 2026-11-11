@@ -337,6 +337,7 @@ export default function Components() {
           <TextField label="User ID" value="156" readOnly />
           <TextField label="Invalid" value="bad value" error="Names can't contain spaces." />
           <TextField size="lg" icon="search" aria-label="Search" placeholder="Search" />
+          <TextField size="lg" icon="search" aria-label="With completion" value="tower" completion=" of hell" />
         </div>
       </Section>
 
@@ -700,6 +701,17 @@ export default function Components() {
           ]}
         />
         <SegmentedControl aria-label="Rig" size="sm" value="R15" onChange={noop} options={["R6", "R15"]} />
+        <SegmentedControl
+          aria-label="With hints"
+          size="sm"
+          value="all"
+          onChange={noop}
+          options={[
+            { value: "all", label: "All" },
+            { value: "people", label: "People", hint: "@" },
+            { value: "commands", label: "Commands", hint: ">" },
+          ]}
+        />
         <SegmentedControl
           aria-label="Stretched"
           size="sm"

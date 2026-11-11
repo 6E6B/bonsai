@@ -2,15 +2,19 @@ import { describe, expect, it } from "vitest"
 import type { BookmarkView, CommandInfo } from "~/lib/ipc/bindings"
 import {
   argEntries,
+  argToRemember,
   entityActions,
   hasActions,
+  nameWords,
   type PaletteEntry,
   paletteEntries,
   paletteSections,
   parseScope,
-  remember,
+  personScore,
+  recentRows,
   remoteEntries,
   remoteQuery,
+  seenEntry,
 } from "./palette"
 
 const cmd = (id: string, arg: CommandInfo["arg"]): CommandInfo => ({
@@ -227,7 +231,7 @@ describe("paletteSections", () => {
       ...input,
       commands: go,
       text: "",
-      recent: [luke, zoomRow, { ...homeRow, key: "gone" }],
+      recent: [luke, zoomRow],
       places: [friendsRow.id, zoomRow.id],
     })
     expect(s.map((x) => x.title)).toEqual(["Recent", "Go to", "Commands"])
@@ -253,24 +257,125 @@ describe("paletteSections", () => {
     const s = paletteSections({ ...input, scope: "people", text: "zoom" })
     expect(s.map((x) => x.title)).toEqual(["People"])
   })
-})
 
-describe("remember", () => {
-  const rows = paletteEntries(
-    [cmd("A", "none"), cmd("B", "none"), cmd("C", "none"), cmd("D", "none"), cmd("E", "none"), cmd("F", "none")],
-    [],
-  )
-
-  it("moves a row to the front and keeps five", () => {
-    let r: PaletteEntry[] = []
-    for (const e of rows) r = remember(r, e)
-    expect(r.map((e) => e.title)).toEqual(["F", "E", "D", "C", "B"])
-    expect(remember(r, rows[3]).map((e) => e.title)).toEqual(["D", "F", "E", "C", "B"])
+  it("lists recent searches after recent rows for an empty query", () => {
+    const s = paletteSections({ ...input, text: "", searches: ["tower", "luke"] })
+    const searches = s.find((x) => x.title === "Recent searches")
+    expect(searches?.rows.map((r) => r.fill)).toEqual(["tower", "luke"])
   })
 
-  it("skips rows that ask for an argument", () => {
-    const ask = paletteEntries([cmd("Open profile", "user")], [])[0]
-    expect(remember([], ask)).toEqual([])
+  it("puts a Roblox result named exactly what was typed on top", () => {
+    const s = paletteSections({ ...input, friends: [], text: "luke two" })
+    expect(s[0].title).toBe("Top hit")
+    expect(s[0].rows.map((r) => r.entity?.id)).toEqual([9])
+    expect(s.flatMap((x) => x.rows).filter((r) => r.entity?.id === 9)).toHaveLength(1)
+  })
+
+  it("says which scope lists all of a group", () => {
+    const s = paletteSections({ ...input, text: "lu" })
+    expect(s.find((x) => x.title === "People")?.more).toBe("people")
+  })
+})
+
+describe("recentRows", () => {
+  const rows = paletteEntries([cmd("A", "none"), cmd("B", "none"), cmd("Open profile", "user")], [])
+  const game = {
+    ref: "game:5",
+    n: 1,
+    t: 30,
+    title: "Tower of Hell",
+    open: { id: "game.open", arg: "5" },
+    entity: { kind: "experience" as const, id: 5 },
+  }
+
+  it("mixes picked commands and looked-at things, newest first, once each", () => {
+    const r = recentRows(
+      rows,
+      [
+        { key: "A", t: 10 },
+        { key: "B", t: 40 },
+        { key: "gone", t: 50 },
+        { key: "user.open", t: 60 },
+      ],
+      [game, { ref: "nav.friends", n: 3, t: 99 }],
+    )
+    expect(r.map((e) => e.title)).toEqual(["B", "Tower of Hell", "A"])
+  })
+})
+
+describe("looked-at things", () => {
+  const game = seenEntry({
+    ref: "game:5",
+    n: 4,
+    t: 0,
+    title: "Tower of Hell",
+    open: { id: "game.open", arg: "5" },
+    entity: { kind: "experience", id: 5 },
+  })
+  const input = {
+    scope: "all" as const,
+    commands: paletteEntries([cmd("Zoom in", "none")], []),
+    friends: people,
+    remote: [] as PaletteEntry[],
+    seen: game ? [game] : [],
+  }
+
+  it("are found from the first letter", () => {
+    const s = paletteSections({ ...input, text: "t" })
+    expect(s[0].title).toBe("Recently viewed")
+    expect(s[0].rows[0].arg).toBe("5")
+  })
+
+  it("aren't repeated by Roblox results", () => {
+    const remote = remoteEntries([
+      {
+        group: "Experiences",
+        title: "Tower of Hell",
+        subtitle: "",
+        command: "game.open",
+        arg: "5",
+        kind: "experience",
+        id: 5,
+        universeId: 50,
+      },
+      {
+        group: "Experiences",
+        title: "Tower of Misery",
+        subtitle: "",
+        command: "game.open",
+        arg: "6",
+        kind: "experience",
+        id: 6,
+        universeId: 60,
+      },
+    ])
+    const s = paletteSections({ ...input, text: "tower", remote })
+    expect(s.map((x) => x.title)).toEqual(["Recently viewed", "Experiences"])
+    expect(s[1].rows.map((r) => r.arg)).toEqual(["6"])
+  })
+
+  it("lift Roblox results and friends looked at before", () => {
+    const remote = remoteEntries(
+      [1, 2, 3].map((id) => ({
+        group: "Experiences",
+        title: `Obby ${id}`,
+        subtitle: "",
+        command: "game.open",
+        arg: String(id),
+        kind: "experience" as const,
+        id,
+        universeId: id,
+      })),
+    )
+    const boost = (k: string) => (k === "game:3" || k === "user:2" ? 40 : 0)
+    const s = paletteSections({ ...input, seen: [], text: "obby", remote, boost })
+    expect(s[0].rows.map((r) => r.arg)).toEqual(["3", "1", "2"])
+    const lukes = [
+      { id: 1, name: "oldluke", displayName: "Luke A" },
+      { id: 2, name: "lukeb", displayName: "Luke B" },
+    ]
+    const f = paletteSections({ ...input, friends: lukes, seen: [], text: "luke", remote: [], boost })
+    expect(f.find((x) => x.title === "Friends")?.rows.map((r) => r.arg)).toEqual(["2", "1"])
   })
 })
 
@@ -329,5 +434,63 @@ describe("bookmark search", () => {
     const rows = paletteEntries([cmd("bookmark.rename", "bookmark")], [], [], [], [], [], [], [], [bookmark])
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ id: "bookmark.rename", arg: "5", title: "bookmark.rename: Doors" })
+  })
+})
+
+describe("personScore", () => {
+  const luke = { id: 2, name: "stickmasterluke", displayName: "StickMasterLuke" }
+  const score = (text: string) => personScore(luke, text)
+
+  it("splits names at their humps", () =>
+    expect(nameWords("StickMasterLuke2")).toEqual(["stick", "master", "luke", "2"]))
+  it("finds a word inside a name", () => expect(score("luke")).toBeGreaterThan(0))
+  it("finds part of a lowercase username", () => {
+    expect(personScore({ id: 1, name: "builderman", displayName: "" }, "man")).toBeGreaterThan(0)
+  })
+  it("forgives a typo", () => expect(score("stickmasterlukr")).toBeGreaterThan(0))
+  it("ranks the whole name over a word of it, and a word over a part", () => {
+    expect(score("stickmasterluke")).toBeGreaterThan(score("luke"))
+    expect(score("luke")).toBeGreaterThan(score("aste"))
+  })
+  it("doesn't match two letters inside a name", () => expect(score("er")).toBe(-1))
+  it("prefers what you call them", () => {
+    const named = { id: 3, name: "x1", displayName: "Someone", nickname: "Sam" }
+    expect(personScore(named, "sam")).toBeGreaterThan(personScore({ ...named, nickname: null, name: "sam" }, "sam"))
+  })
+})
+
+describe("argToRemember", () => {
+  const kinds: Record<string, CommandInfo["arg"]> = { "user.message": "user", "game.join": "gameOrFriend" }
+  const kind = (id: string) => kinds[id]
+  const asked: PaletteEntry = {
+    key: "user.message",
+    title: "Message…",
+    words: "",
+    id: "user.message",
+    arg: null,
+    ask: "user",
+  }
+
+  it("keeps a picked friend with their name and picture", () => {
+    const [luke] = argEntries(asked, "luke", people)
+    expect(argToRemember(luke, asked, null, kind)).toEqual({
+      command: "user.message",
+      arg: { arg: "2", title: "Luke", thumb: { kind: "headshot", id: 2 }, ref: "user:2" },
+    })
+  })
+
+  it("titles typed text by the text", () => {
+    const typed = argEntries(asked, "someone", []).at(-1) as PaletteEntry
+    expect(argToRemember(typed, asked, null, kind)?.arg.title).toBe("someone")
+  })
+
+  it("titles an inline row by its argument", () => {
+    const e: PaletteEntry = { key: "intent:game.join:7", title: "Join: Tower", words: "", id: "game.join", arg: "7" }
+    expect(argToRemember(e, null, null, kind)?.arg.title).toBe("Tower")
+  })
+
+  it("skips commands that don't take a typed argument", () => {
+    const e: PaletteEntry = { key: "nav.home", title: "Home", words: "", id: "nav.home", arg: null }
+    expect(argToRemember(e, null, null, kind)).toBeNull()
   })
 })

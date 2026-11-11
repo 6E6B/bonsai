@@ -8,7 +8,7 @@ export interface DialogOptions {
   description?: string
   /** Accessible name when there is no title. */
   label?: string
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "xl"
   /** `top` sits near the top of the window, for command bars and pickers. It opens and closes
    * without animation: these are summoned from the keyboard many times a day. */
   position?: "center" | "top"

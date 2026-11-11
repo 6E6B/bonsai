@@ -5,7 +5,8 @@ import { STOP, SYNONYM_WEIGHT, synonyms } from "./synonyms"
  *
  * A query is split into terms. Each term is matched against the words of a row's title and its
  * keywords: equal words count most, then a word starting with the term, then a close typo, then
- * a synonym, then a substring. Title words count more than keywords. One unmatched term is
+ * a synonym, then a substring of four letters or more. A typo of a short word has to be a swap
+ * or a nearby key. Title words count more than keywords. One unmatched term is
  * forgiven in a query of three or more, and stop words ("the", "to") are free. A short query
  * can also be a row's initials ("sa" for Switch account). Rows that cover more of their title
  * and read the query as a phrase rank higher. */
@@ -95,6 +96,35 @@ export function distance(a: string, b: string, max: number): number {
 /** How many typos a term of this length may have. */
 const allowed = (n: number) => (n >= 8 ? 2 : n >= 4 ? 1 : 0)
 
+const ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
+
+/** Whether two letters are next to each other on a QWERTY keyboard. */
+function nearKeys(a: string, b: string): boolean {
+  const at = (c: string) => {
+    for (let r = 0; r < ROWS.length; r++) {
+      const i = ROWS[r].indexOf(c)
+      if (i >= 0) return { r, i: i + r * 0.5 }
+    }
+    return null
+  }
+  const x = at(a)
+  const y = at(b)
+  return !!x && !!y && Math.abs(x.r - y.r) <= 1 && Math.abs(x.i - y.i) <= 1
+}
+
+/** A wrong letter in a short word is usually another word ("play" and "plan", "tower" and
+ * "lower"), so terms under six letters only forgive a swapped, missing or extra letter, or a
+ * slip to the next key ("zoon" for "zoom"). */
+function plausible(term: string, word: string): boolean {
+  if (term.length >= 6 || term.length !== word.length) return true
+  for (let i = 0; i < term.length; i++) {
+    if (term[i] === word[i]) continue
+    const swapped = term[i] === word[i + 1] && term[i + 1] === word[i] && term.slice(i + 2) === word.slice(i + 2)
+    return swapped || (nearKeys(term[i], word[i]) && term.slice(i + 1) === word.slice(i + 1))
+  }
+  return true
+}
+
 /** Scores for one term against one word. */
 export const EXACT = 100
 const PREFIX = 60
@@ -114,17 +144,19 @@ export function wordScore(term: string, word: string, typos = true): number {
   let best = 0
   if (max > 0) {
     const d = distance(term, word, max)
-    if (d <= max) best = TYPO - TYPO_STEP * (d - 1)
+    if (d <= max && plausible(term, word)) best = TYPO - TYPO_STEP * (d - 1)
     else if (word.length > term.length) {
       // Still typing: "swtic" is a typo of the start of "switch".
       for (const n of [term.length, term.length + 1, term.length - 1]) {
         if (n < 3 || n >= word.length) continue
-        const dp = distance(term, word.slice(0, n), max)
-        if (dp <= max) best = Math.max(best, TYPO_PREFIX - TYPO_STEP * (dp - 1))
+        const start = word.slice(0, n)
+        const dp = distance(term, start, max)
+        if (dp <= max && plausible(term, start)) best = Math.max(best, TYPO_PREFIX - TYPO_STEP * (dp - 1))
       }
     }
   }
-  if (!best && term.length >= 3 && word.includes(term)) best = INSIDE
+  // Three letters are inside too many words ("art" in "start") to mean much.
+  if (!best && term.length >= 4 && word.includes(term)) best = INSIDE
   return best
 }
 
@@ -205,6 +237,8 @@ const STOP_MATCH = 5
 const INITIALS = 95
 const INITIALS_PREFIX = 72
 
+const NONE: ReadonlySet<string> = new Set()
+
 /** Splits a query into folded terms. */
 export const terms = (query: string) => tokens(query)
 
@@ -217,10 +251,12 @@ export function matchTerms(p: Prepared, ts: string[], forgive = true): Match | n
   let strong = true
   let weakest = EXACT
   const hit = new Set<number>()
+  // A query of only stop words ("to" on the way to "tower") is a real search.
+  const stop = ts.every((t) => STOP.has(t)) ? NONE : STOP
   for (const t of ts) {
     const r = termScore(p, t)
     if (r.score <= 0) {
-      if (STOP.has(t)) continue
+      if (stop.has(t)) continue
       missing++
       counted++
       strong = false
@@ -228,8 +264,8 @@ export function matchTerms(p: Prepared, ts: string[], forgive = true): Match | n
     }
     counted++
     // "to" and "the" say little even when they match.
-    total += STOP.has(t) ? STOP_MATCH : r.score
-    if (!STOP.has(t)) weakest = Math.min(weakest, r.score)
+    total += stop.has(t) ? STOP_MATCH : r.score
+    if (!stop.has(t)) weakest = Math.min(weakest, r.score)
     if (r.at >= 0) hit.add(r.at)
     // An exact keyword ("inbox" for Messages) is as sure as a title word.
     else if (r.score < EXACT * KEYWORD_WEIGHT) strong = false
@@ -242,7 +278,7 @@ export function matchTerms(p: Prepared, ts: string[], forgive = true): Match | n
   const own = p.title.filter((w) => !STOP.has(w)).length || p.title.length
   const covered = [...hit].filter((i) => !STOP.has(p.title[i])).length
   if (own) total += (COVERAGE * Math.min(covered, own)) / own
-  if (ts.filter((t) => !STOP.has(t)).length > 1) {
+  if (ts.filter((t) => !stop.has(t)).length > 1) {
     const phrase = ts.join(" ")
     if (p.phrase.startsWith(phrase)) total += PHRASE_START
     else if (p.phrase.includes(phrase)) total += PHRASE

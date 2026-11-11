@@ -64,4 +64,11 @@
   [data-component="segmented-control"] [data-slot="item"][data-disabled] {
     opacity: 0.5;
   }
+
+  [data-component="segmented-control"] [data-slot="hint"] {
+    margin-left: 4px;
+    color: var(--color-fg-faint);
+    font-family: var(--font-mono);
+    font-weight: 400;
+  }
 }

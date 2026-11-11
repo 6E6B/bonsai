@@ -17,6 +17,10 @@ export interface TextFieldProps extends Omit<ComponentProps<"input">, "value" | 
   value?: string
   defaultValue?: string
   onChange?: (value: string) => void
+  /** Faint text shown after what was typed, as a suggestion to accept. Pass a string (empty
+   * for none) on every render of a field that uses it, so the input isn't rebuilt. Single
+   * line only. */
+  completion?: string
 }
 
 /** A text input with an optional label, description and error. Other props go to the `<input>`;
@@ -33,6 +37,7 @@ export function TextField(props: TextFieldProps) {
       "value",
       "defaultValue",
       "onChange",
+      "completion",
       "disabled",
       "readOnly",
       "required",
@@ -61,7 +66,20 @@ export function TextField(props: TextFieldProps) {
         <Show when={field.icon}>{(name) => <Icon name={name()} size={14} />}</Show>
         <Show
           when={root.multiline}
-          fallback={<KTextField.Input data-slot="input" {...(input as Record<string, unknown>)} />}
+          fallback={
+            <Show
+              when={field.completion !== undefined}
+              fallback={<KTextField.Input data-slot="input" {...(input as Record<string, unknown>)} />}
+            >
+              <span data-slot="completion-wrap">
+                <KTextField.Input data-slot="input" {...(input as Record<string, unknown>)} />
+                <span data-slot="completion" aria-hidden="true">
+                  <span data-slot="completion-typed">{field.value}</span>
+                  {field.completion}
+                </span>
+              </span>
+            </Show>
+          }
         >
           <KTextField.TextArea
             data-slot="input"

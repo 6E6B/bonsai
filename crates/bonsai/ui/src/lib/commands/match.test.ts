@@ -14,7 +14,7 @@ describe("wordScore", () => {
     const exact = wordScore("settings", "settings")
     const prefix = wordScore("sett", "settings")
     const typo = wordScore("setings", "settings")
-    const inside = wordScore("tin", "settings")
+    const inside = wordScore("ting", "settings")
     expect(exact).toBeGreaterThan(typo)
     expect(typo).toBeGreaterThan(prefix - 20)
     expect(prefix).toBeGreaterThan(inside)
@@ -24,6 +24,14 @@ describe("wordScore", () => {
 
   it("allows no typos in short terms", () => {
     expect(wordScore("tb", "tab")).toBe(0)
+  })
+
+  it("doesn't read a short word as another word", () => {
+    expect(wordScore("play", "plan")).toBe(0)
+    expect(wordScore("art", "start")).toBe(0)
+    expect(wordScore("zoon", "zoom")).toBeGreaterThan(0)
+    expect(wordScore("sgin", "sign")).toBeGreaterThan(0)
+    expect(wordScore("shpo", "shop")).toBeGreaterThan(0)
   })
 })
 

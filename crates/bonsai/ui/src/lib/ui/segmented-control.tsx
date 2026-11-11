@@ -1,5 +1,5 @@
 import { ToggleGroup as KToggleGroup } from "@kobalte/core/toggle-group"
-import { createMemo, For } from "solid-js"
+import { createMemo, For, Show } from "solid-js"
 import { normalize, type Option } from "./options"
 
 export interface SegmentedControlProps {
@@ -31,6 +31,9 @@ export function SegmentedControl(props: SegmentedControlProps) {
         {(o) => (
           <KToggleGroup.Item data-slot="item" value={o.value} disabled={o.disabled}>
             {o.label}
+            <Show when={o.hint}>
+              <span data-slot="hint">{o.hint}</span>
+            </Show>
           </KToggleGroup.Item>
         )}
       </For>
