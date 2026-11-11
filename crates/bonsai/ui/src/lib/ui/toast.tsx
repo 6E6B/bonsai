@@ -1,5 +1,5 @@
 import { Toast as KToast, toaster } from "@kobalte/core/toast"
-import { createSignal, onCleanup, Show } from "solid-js"
+import { createSignal, For, onCleanup, Show } from "solid-js"
 import { Portal } from "solid-js/web"
 import { Button } from "./button"
 import { Icon, type IconName } from "./icon"
@@ -16,6 +16,8 @@ export interface ToastOptions {
   key?: string
   /** One button in the toast. Clicking it runs `onClick` and dismisses the toast. */
   action?: { label: string; onClick: () => void }
+  /** Multiple direct actions, such as Undo and Rename. */
+  actions?: { label: string; onClick: () => void }[]
   /** Stays open until dismissed. */
   persistent?: boolean
 }
@@ -86,21 +88,23 @@ export function showToast(toast: string | ToastOptions) {
         <div data-slot="body">
           <KToast.Title data-slot="title">{t.title}</KToast.Title>
           <Show when={desc()}>{(d) => <KToast.Description data-slot="description">{d()}</KToast.Description>}</Show>
-          <Show when={t.action}>
-            {(a) => (
-              <div data-slot="actions">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    toaster.dismiss(p.toastId)
-                    a().onClick()
-                  }}
-                >
-                  {a().label}
-                </Button>
-              </div>
-            )}
+          <Show when={t.action || t.actions?.length}>
+            <div data-slot="actions">
+              <For each={t.actions ?? (t.action ? [t.action] : [])}>
+                {(action) => (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      toaster.dismiss(p.toastId)
+                      action.onClick()
+                    }}
+                  >
+                    {action.label}
+                  </Button>
+                )}
+              </For>
+            </div>
           </Show>
         </div>
         <KToast.CloseButton data-slot="close" aria-label="Dismiss">

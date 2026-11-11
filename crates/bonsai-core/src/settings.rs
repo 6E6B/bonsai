@@ -339,7 +339,7 @@ pub struct Settings {
     pub start_screen: String,
     /// `auto` collapses the sidebar in narrow windows; `expanded` or `collapsed` always.
     pub sidebar_mode: String,
-    /// The friends and chat drawer on the right is open.
+    /// The right drawer is open by default; a saved preference overrides it.
     pub drawer: bool,
     pub home: HomeRows,
     /// The tabs open when the app last saved them, for `start_screen = "last"`.
@@ -484,7 +484,7 @@ impl Default for Settings {
             status_bar: true,
             start_screen: "home".into(),
             sidebar_mode: "auto".into(),
-            drawer: false,
+            drawer: true,
             home: HomeRows::default(),
             session: SavedTabs::default(),
             quiet: QuietHours::default(),

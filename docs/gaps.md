@@ -18,3 +18,5 @@ Remove a line when it ships.
 
 - The Model tab shows one model at a time and is read only: no 3D preview of the selected instance, no export, and script sources are cut at 4 KiB.
 - Dependency browsing inspects references in downloadable source and processed accessory/head models. It does not traverse dependency files recursively, list embedded/built-in resources, or bypass Roblox asset permissions. Non-model assets show an explicit unavailable-model state.
+
+- Bookmarks are local only. Folders, tags, import/export, alerts and individual server bookmarks are not included.

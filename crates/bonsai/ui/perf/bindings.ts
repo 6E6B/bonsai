@@ -1,5 +1,8 @@
 // This module replaces bindings only in the explicit performance build. No native IPC or credentials.
-import type { commands as realCommands, TrustedStatus } from "../src/lib/ipc/bindings"
+
+import catalog from "../src/lib/commands/catalog.json"
+import type { CommandInfo, commands as realCommands, TrustedStatus } from "../src/lib/ipc/bindings"
+import { bookmarkFixture, bookmarkInvocation } from "./bookmark-fixture"
 import {
   badges,
   catalogCategories,
@@ -35,6 +38,30 @@ let trustedStatus: TrustedStatus = ["none", "sent", "received", "trusted", "unkn
 let trustedPeople = people.slice(0, 6)
 
 const fixtures = {
+  bookmarks: () => bookmarkFixture,
+  prefs: () => [],
+  plugins: () => [],
+  remoteSearch: () => ({ loading: false, rows: [] }),
+  commands: (): CommandInfo[] =>
+    catalog.commands.map((command) => ({
+      ...command,
+      arg: command.arg as CommandInfo["arg"],
+      shortcuts:
+        command.id === "bookmark.toggle" || command.id === "view.bookmarks"
+          ? [
+              {
+                kind: "chord",
+                ctrl: true,
+                shift: command.id === "view.bookmarks",
+                alt: false,
+                key: command.id === "bookmark.toggle" ? "D" : "B",
+                label: command.id === "bookmark.toggle" ? "Ctrl+D" : "Ctrl+Shift+B",
+              },
+            ]
+          : [],
+      rebound: false,
+      context: null,
+    })),
   appearance: () => ({ mode: "dark", dark: "", light: "", fonts: [], background: null }),
   avatar3d: () => ({
     loading: false,
@@ -56,6 +83,7 @@ const fixtures = {
     status: requestedStatus === "error" ? ("unknown" as const) : trustedStatus,
   }),
   runCommand: (inv) => {
+    if (inv.id.startsWith("bookmark.")) return bookmarkInvocation(inv)
     switch (inv.id) {
       case "user.add_trusted_friend":
         trustedStatus = "sent"

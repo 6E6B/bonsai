@@ -1,7 +1,8 @@
+import { bookmarkPath, findBookmark } from "~/lib/bookmarks"
 import { commandList, menuItem } from "~/lib/commands/registry"
 import type { TrustedStatus } from "~/lib/ipc/bindings"
 import { type PluginContext, pluginCommandsFor } from "~/lib/plugins"
-import { playlists, shell } from "~/lib/store"
+import { playlists, shell, visibleBookmarks } from "~/lib/store"
 import { trustedActions } from "~/lib/trusted-friends"
 import type { MenuEntry } from "~/lib/ui"
 
@@ -53,6 +54,17 @@ export function shareMenu(target: string): MenuEntry {
       menuItem("entity.open_website", { arg: target, icon: "external" }),
     ],
   }
+}
+
+export function bookmarkMenu(target: string): MenuEntry {
+  const path = bookmarkPath(target)
+  const saved = path && findBookmark(visibleBookmarks(), path)
+  return menuItem("bookmark.toggle", {
+    arg: path,
+    disabled: !path,
+    label: saved ? "Remove bookmark" : "Bookmark",
+    icon: saved ? "bookmark-fill" : "bookmark",
+  })
 }
 
 export interface UserMenuOptions {
@@ -127,6 +139,7 @@ export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[
     sep,
     { kind: "submenu", label: "Manage", icon: "sliders", items: manage },
     ...pluginMenu("user", userId),
+    bookmarkMenu(target),
     shareMenu(target),
   ]
 }
@@ -149,6 +162,7 @@ export function gameMenu(placeId: number): MenuEntry[] {
     { kind: "submenu", label: "Add to playlist", icon: "playlist", items: playlistItems(placeId) },
     sep,
     ...pluginMenu("game", placeId),
+    bookmarkMenu(`game:${id}`),
     shareMenu(`game:${id}`),
   ]
 }
@@ -208,6 +222,7 @@ export function itemMenu(itemId: number, bundle = false, assetType?: number, ext
     menuItem("market.wishlist", { arg: target, icon: "heart", label: "Toggle wishlist" }),
     ...(bundle ? [] : templateMenu(itemId, assetType)),
     ...(bundle ? [] : pluginMenu("item", itemId)),
+    bookmarkMenu(target),
     shareMenu(target),
     ...(extras.danger?.length ? [sep, ...extras.danger] : []),
   ]
@@ -219,6 +234,7 @@ export function entityMenu(target: string, first: MenuEntry[] = []): MenuEntry[]
   const group = /^group:(\d+)$/.exec(target)
   return [
     ...(first.length > 0 ? [...first, sep] : []),
+    bookmarkMenu(target),
     ...(group ? pluginMenu("group", Number(group[1])) : []),
     menuItem("entity.copy_link", { arg: target, icon: "link" }),
     menuItem("entity.copy_id", { arg: target, icon: "copy" }),

@@ -159,7 +159,7 @@ export const browserShell: Shell = {
     statusBar: true,
     startScreen: "home",
     sidebarMode: "auto",
-    drawer: false,
+    drawer: true,
     homeFriends: true,
     homeContinue: true,
     homeFavorites: true,

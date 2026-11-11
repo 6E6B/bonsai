@@ -1,7 +1,15 @@
 import { isTauri } from "@tauri-apps/api/core"
 import { createEffect, on, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
-import { commands, events, type Friends, type Home, type PlaylistView, type Shell } from "~/lib/ipc/bindings"
+import {
+  type BookmarkList,
+  commands,
+  events,
+  type Friends,
+  type Home,
+  type PlaylistView,
+  type Shell,
+} from "~/lib/ipc/bindings"
 import { browserFriends, browserHome, browserShell } from "~/lib/sample"
 
 /**
@@ -89,7 +97,7 @@ const shellMirror = mirror<Shell>(
       statusBar: true,
       startScreen: "home",
       sidebarMode: "auto",
-      drawer: false,
+      drawer: true,
       homeFriends: true,
       homeContinue: true,
       homeFavorites: true,
@@ -111,11 +119,19 @@ const playlistsMirror = mirror<{ lists: PlaylistView[] }>({ lists: [] }, async (
   lists: await commands.playlists(),
 }))
 
+const bookmarksMirror = mirror<BookmarkList>({ account: 0, items: [] }, () => commands.bookmarks())
+export const [drawerState, setDrawerState] = createStore({ tab: "friends" })
+export const bookmarks = bookmarksMirror.state
+/** Hide the previous account's snapshot while the next account query is in flight. */
+export const visibleBookmarks = () => (bookmarks.account === (shell.active ?? 0) ? bookmarks.items : [])
+export const refreshBookmarks = () => bookmarksMirror.refresh()
+
 const mirrors = new Set<{ started: () => boolean; refresh: () => Promise<void> }>([
   shellMirror,
   friendsMirror,
   homeMirror,
   playlistsMirror,
+  bookmarksMirror,
 ])
 
 export const shell = shellMirror.state
@@ -178,4 +194,5 @@ export async function startSync() {
   shellMirror.start()
   friendsMirror.start()
   playlistsMirror.start()
+  bookmarksMirror.start()
 }

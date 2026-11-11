@@ -40,6 +40,8 @@ pub enum ArgKind {
     Plugin,
     /// a game playlist of the active account
     Playlist,
+    /// a local bookmark visible to the active account
+    Bookmark,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -495,6 +497,14 @@ commands! {
     LikeGame => "game.like", "Like this experience", ["like", "thumbs up", "vote", "upvote"], None, Write(Harmless), [];
     DislikeGame => "game.dislike", "Dislike this experience", ["dislike", "thumbs down", "vote", "downvote"], None, Write(Harmless), [];
     FavoriteGame => "game.favorite", "Favorite or unfavorite this experience", ["favorite", "favourite", "star"], None, Write(Harmless), [];
+    ToggleBookmark => "bookmark.toggle", "Bookmark or remove bookmark for this page", ["bookmark", "save", "page", "ribbon"], None, Local, [Shortcut::ctrl("D")];
+    OpenBookmark => "bookmark.open", "Open bookmark", ["bookmark", "open", "saved"], Bookmark, Read, [];
+    RenameBookmark => "bookmark.rename", "Rename bookmark", ["bookmark", "rename", "title"], Bookmark, Local, [];
+    RemoveBookmark => "bookmark.remove", "Remove bookmark", ["bookmark", "remove", "delete"], Bookmark, Local, [];
+    MoveBookmarkUp => "bookmark.move_up", "Move bookmark up", ["bookmark", "move", "order", "up"], Bookmark, Local, [];
+    MoveBookmarkDown => "bookmark.move_down", "Move bookmark down", ["bookmark", "move", "order", "down"], Bookmark, Local, [];
+    MoveBookmark => "bookmark.move", "Move bookmark before another (bookmark, then target)", ["bookmark", "move", "reorder"], Text, Local, [];
+    ShowBookmarks => "view.bookmarks", "Show bookmarks", ["bookmark", "saved", "drawer", "panel"], None, Local, [Shortcut::ctrl_shift("B")];
     NewPlaylist => "playlist.new", "New game playlist", ["playlist", "list", "collection", "create", "new"], Text, Write(Harmless), [];
     AddToPlaylist => "playlist.add", "Add this experience to a playlist", ["playlist", "list", "collection", "add", "save"], Playlist, Write(Harmless), [];
     RemoveFromPlaylist => "playlist.remove", "Remove experience from playlist (playlist, then place)", ["playlist", "list", "remove"], Text, Write(Harmless), [];

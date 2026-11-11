@@ -8,6 +8,7 @@ export default defineConfig({
     "virtualization.spec.ts",
     "dependencies.spec.ts",
     "side-panels.spec.ts",
+    "bookmarks.spec.ts",
     "trusted-friends.spec.ts",
   ],
   fullyParallel: false,

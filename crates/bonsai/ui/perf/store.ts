@@ -2,12 +2,18 @@
 import { createEffect, on, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { run } from "../src/lib/commands/registry"
-import type { PlaylistView } from "../src/lib/ipc/bindings"
+import type { BookmarkList, PlaylistView } from "../src/lib/ipc/bindings"
 import { browserFriends, browserHome, browserShell } from "../src/lib/sample"
-import { calls } from "./bindings"
+import { calls, commands } from "./bindings"
+import { bookmarkFixture } from "./bookmark-fixture"
 import { appendChat, games, people, prependChat } from "./fixtures"
 
-export const [shell] = createStore({ ...browserShell, wiki: false })
+const showBookmarks = new URLSearchParams(location.search).has("bookmarks")
+export const [shell] = createStore({
+  ...browserShell,
+  wiki: false,
+  look: { ...browserShell.look, drawer: showBookmarks },
+})
 const playing = new URLSearchParams(location.search).get("playing")
 export const [friends] = createStore({
   ...browserFriends,
@@ -23,6 +29,12 @@ export const [friends] = createStore({
     }
   }),
 })
+export const [drawerState, setDrawerState] = createStore({ tab: showBookmarks ? "bookmarks" : "friends" })
+export const [bookmarks, setBookmarks] = createStore<BookmarkList>(structuredClone(bookmarkFixture))
+export const visibleBookmarks = () => (bookmarks.account === (shell.active ?? 0) ? bookmarks.items : [])
+export async function refreshBookmarks() {
+  setBookmarks(reconcile(await commands.bookmarks(), { key: "id" }))
+}
 export const [playlists] = createStore<{ lists: PlaylistView[] }>({ lists: [] })
 const [home] = createStore({
   ...browserHome,
@@ -54,7 +66,9 @@ Object.assign(window, {
 })
 
 export const useHome = () => home
-export async function refreshShell() {}
+export async function refreshShell() {
+  await refreshBookmarks()
+}
 export async function startSync() {}
 export function useLive<K, T extends object>(
   source: () => K,

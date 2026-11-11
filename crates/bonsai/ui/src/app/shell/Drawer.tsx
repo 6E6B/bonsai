@@ -1,10 +1,11 @@
-import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
+import { createMemo, For, Match, Show, Switch } from "solid-js"
+import { BookmarkList } from "~/features/bookmarks/BookmarkList"
 import { isRunning, run } from "~/lib/commands/registry"
 import { ago } from "~/lib/format"
 import { type ConversationRow, commands, type Friend, type Paged } from "~/lib/ipc/bindings"
 import { joinUser, userMenu } from "~/lib/menus"
 import { groupByPresence, type PresenceRow } from "~/lib/presence"
-import { friends, shell, useLive } from "~/lib/store"
+import { drawerState, friends, setDrawerState, shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
   Avatar,
@@ -22,13 +23,14 @@ import {
 
 /** The right-hand panel: friends by presence, and recent chats. Ctrl+\ toggles it. */
 export function Drawer() {
-  const [tab, setTab] = createSignal("friends")
+  const tab = () => drawerState.tab
+  const setTab = (value: string) => setDrawerState("tab", value)
   const online = () => friends.friends.filter((f) => f.presence !== "offline").length
   const rows = createMemo(() => groupByPresence(friends.friends))
 
   return (
     <aside
-      aria-label="Friends and chat"
+      aria-label="Friends, chat and bookmarks"
       data-scroller
       class="flex w-72 shrink-0 flex-col border-l border-line bg-canvas"
     >
@@ -40,6 +42,7 @@ export function Drawer() {
         items={[
           { value: "friends", label: "Friends" },
           { value: "chat", label: "Chat", count: shell.unread.chat },
+          { value: "bookmarks", label: "Bookmarks" },
         ]}
       >
         <TabPanel value="friends" class="flex flex-col gap-1">
@@ -76,6 +79,9 @@ export function Drawer() {
               <RecentChats />
             </div>
           </Show>
+        </TabPanel>
+        <TabPanel value="bookmarks">
+          <BookmarkList />
         </TabPanel>
       </Tabs>
     </aside>

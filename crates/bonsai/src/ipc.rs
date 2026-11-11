@@ -23,6 +23,7 @@ use tauri_specta::{Builder, Event, collect_commands, collect_events};
 mod account;
 mod approve;
 mod avatar;
+mod bookmarks;
 mod challenge;
 mod communities;
 mod discover;
@@ -421,6 +422,7 @@ pub enum Arg {
     Setting,
     Plugin,
     Playlist,
+    Bookmark,
 }
 
 impl From<ArgKind> for Arg {
@@ -442,6 +444,7 @@ impl From<ArgKind> for Arg {
             ArgKind::Setting => Arg::Setting,
             ArgKind::Plugin => Arg::Plugin,
             ArgKind::Playlist => Arg::Playlist,
+            ArgKind::Bookmark => Arg::Bookmark,
         }
     }
 }
@@ -1403,6 +1406,9 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         return r;
     }
     if let Some(r) = playlists::run(core, id, &inv, core.acting(picked)) {
+        return r;
+    }
+    if let Some(r) = bookmarks::run(core, id, &inv, core.acting(picked)) {
         return r;
     }
     if let Some(r) = plugins::run(app, core, id, &inv, core.acting(picked)) {
@@ -3194,6 +3200,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             communities::forum_comments,
             communities::create_forum_post,
             playlists::playlists,
+            bookmarks::bookmarks,
             market::catalog_categories,
             market::catalog_options,
             market::catalog_search,
