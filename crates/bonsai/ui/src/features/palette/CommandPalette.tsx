@@ -49,11 +49,13 @@ import { thumbUrl } from "~/lib/thumb"
 import {
   Avatar,
   Badge,
+  Card,
   Icon,
   Kbd,
   SegmentedControl,
   Skeleton,
   Spinner,
+  Stat,
   TextField,
   Thumbnail,
   useDialog,
@@ -419,8 +421,8 @@ export function CommandPalette() {
   }
 
   const seenOf = (e: PaletteEntry): Seen | undefined => {
-    const ref = refOf(e)
-    return ref ? history()[ref] : undefined
+    // Screens and settings sections are kept under their row's key.
+    return history()[refOf(e) ?? e.key]
   }
   const personOf = (e: PaletteEntry): PalettePerson | undefined => {
     const ref = refOf(e)
@@ -669,8 +671,9 @@ function kindLabel(e: PaletteEntry): string {
   return "Command"
 }
 
-/** More about the selected row: a bigger picture, what it is, when you last looked at it, and
- * its other actions (clickable), or a command's shortcut and other names. */
+/** More about the selected row, laid out like a small profile card: its picture and name, what
+ * it is and when you last looked at it, then its other actions (clickable) or a command's other
+ * names. */
 function Preview(props: {
   entry: PaletteEntry
   query: string
@@ -681,26 +684,26 @@ function Preview(props: {
   onAction: (a: PaletteEntry) => void
 }) {
   const thumb = () => props.entry.thumb
-  const status = () => props.person?.status
+  const subtitle = () => (props.person ? `@${props.person.name}` : props.entry.subtitle)
+  const hasStats = () => !!props.seen || !!props.entry.shortcut
   return (
-    <aside class="flex w-80 shrink-0 flex-col overflow-hidden rounded-lg border border-line bg-raised text-sm">
-      <div class="flex items-center gap-3 border-b border-line p-4">
+    <aside class="flex w-72 shrink-0 flex-col gap-4 overflow-hidden p-1 text-sm">
+      <Card class="flex shrink-0 flex-col items-center px-4 pt-5 pb-4 text-center">
         <Show
           when={thumb()}
           fallback={
-            <span class="flex size-14 shrink-0 items-center justify-center rounded-lg bg-surface text-fg-muted">
-              <Icon name={rowIcon(props.entry)} size={24} />
+            <span class="flex size-16 items-center justify-center rounded-lg bg-control text-fg-muted shadow-control">
+              <Icon name={rowIcon(props.entry)} size={28} />
             </span>
           }
         >
           {(t) => (
             <Show
               when={t().kind === "headshot"}
-              fallback={<Thumbnail class="size-16 shrink-0 rounded-lg" src={thumbUrl(t().kind, t().id)} alt="" />}
+              fallback={<Thumbnail class="size-20 rounded-lg" src={thumbUrl(t().kind, t().id)} alt="" />}
             >
               <Avatar
-                size="lg"
-                class="shrink-0"
+                size="xl"
                 name={props.entry.title}
                 src={thumbUrl("headshot", t().id)}
                 presence={props.person?.presence}
@@ -708,79 +711,82 @@ function Preview(props: {
             </Show>
           )}
         </Show>
-        <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span class="text-xs text-fg-faint">{kindLabel(props.entry)}</span>
-          <span class="truncate text-base font-semibold" title={props.entry.title}>
-            {props.entry.title}
-          </span>
-          <Show when={props.entry.subtitle}>
-            {(sub) => <span class="truncate text-xs text-fg-muted">{sub()}</span>}
-          </Show>
-        </div>
-      </div>
-      <Show when={status() || props.seen || props.entry.shortcut}>
-        <div class="flex flex-col gap-1.5 border-b border-line px-4 py-3 text-xs text-fg-muted">
-          <Show when={status()}>
-            {(st) => (
-              <span class="flex items-center gap-2">
-                <Icon name={props.person?.inGame ? "game" : "user"} size={12} class="shrink-0" />
-                <span class="truncate">{st()}</span>
-              </span>
-            )}
-          </Show>
-          <Show when={props.seen}>
-            {(s) => (
-              <span class="flex items-center gap-2">
-                <Icon name="clock" size={12} class="shrink-0" />
-                Looked at {s().n === 1 ? "once" : `${s().n} times`}, last {ago(s().t)}
-              </span>
-            )}
-          </Show>
-          <Show when={props.entry.shortcut}>
-            {(k) => (
-              <span class="flex items-center gap-2">
-                <Icon name="keyboard" size={12} class="shrink-0" />
-                Shortcut <Kbd keys={[k()]} />
-              </span>
-            )}
-          </Show>
-        </div>
-      </Show>
-      <div class="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
-        <Show
-          when={props.actions.length > 1}
-          fallback={
-            <Show when={props.keywords.length > 0 && !props.entry.entity}>
-              <span class="px-2 pt-1 pb-2 text-xs text-fg-muted">Also found by</span>
-              <div class="flex flex-wrap gap-1 px-2">
+        <span class="mt-3 w-full truncate text-lg font-semibold" title={props.entry.title}>
+          {props.entry.title}
+        </span>
+        <span class="w-full truncate text-fg-muted">{subtitle() ?? kindLabel(props.entry)}</span>
+        <Show when={props.person?.status}>
+          {(st) => (
+            <span
+              class="mt-2 flex max-w-full items-center gap-1.5 truncate text-xs"
+              classList={{ "text-presence-game": props.person?.inGame, "text-fg-muted": !props.person?.inGame }}
+            >
+              <Show when={props.person?.inGame}>
+                <Icon name="game" size={12} class="shrink-0" />
+              </Show>
+              <span class="truncate">{st()}</span>
+            </span>
+          )}
+        </Show>
+        <Show when={hasStats()}>
+          <dl class="mt-4 flex w-full justify-center border-t border-line pt-3">
+            <Show when={props.seen}>
+              {(s) => (
+                <>
+                  <Stat class="flex-1 items-center" label="Looked at">
+                    {s().n === 1 ? "Once" : `${s().n} times`}
+                  </Stat>
+                  <Stat class="flex-1 items-center shadow-[inset_1px_0_var(--color-line)]" label="Last">
+                    {ago(s().t)}
+                  </Stat>
+                </>
+              )}
+            </Show>
+            <Show when={!props.seen && props.entry.shortcut}>
+              {(k) => (
+                <Stat class="items-center" label="Shortcut">
+                  <Kbd keys={[k() as string]} />
+                </Stat>
+              )}
+            </Show>
+          </dl>
+        </Show>
+      </Card>
+      <Show
+        when={props.actions.length > 1}
+        fallback={
+          <Show when={props.keywords.length > 0 && !props.entry.entity}>
+            <section class="flex flex-col gap-2 px-2">
+              <h3 class="font-medium text-fg-muted">Also found by</h3>
+              <div class="flex flex-wrap gap-1">
                 <For each={props.keywords.slice(0, 10)}>{(k) => <Badge>{k}</Badge>}</For>
               </div>
-            </Show>
-          }
-        >
-          <span class="px-2 pt-1 pb-1 text-xs text-fg-muted">Actions</span>
-          <For each={props.actions}>
-            {(a, i) => (
-              <button
-                type="button"
-                tabIndex={-1}
-                class="flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-left hover:bg-hover"
-                onClick={() => props.onAction(a)}
-              >
-                <Icon name={rowIcon(a)} size={14} class="shrink-0 text-fg-muted" />
-                <span class="min-w-0 flex-1 truncate">{a.title}</span>
-                <Show when={i() === 0}>
-                  <Kbd keys={["↵"]} />
-                </Show>
-              </button>
-            )}
-          </For>
-        </Show>
-      </div>
-      <Show when={props.actions.length > 1}>
-        <div class="flex items-center gap-1 border-t border-line px-4 py-2 text-xs text-fg-muted">
-          <Kbd keys={["Alt", "→"]} /> Search actions
-        </div>
+            </section>
+          </Show>
+        }
+      >
+        <section class="flex min-h-0 flex-col">
+          <h3 class="shrink-0 px-2 pb-1 font-medium text-fg-muted">Actions</h3>
+          {/* Fade the bottom like Clamp, padded so the last action clears it once scrolled to. */}
+          <div class="flex min-h-0 flex-col overflow-y-auto pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%-2rem),transparent)]">
+            <For each={props.actions}>
+              {(a, i) => (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  class="flex h-8 shrink-0 items-center gap-2.5 rounded-md px-2 text-left font-medium hover:bg-hover"
+                  onClick={() => props.onAction(a)}
+                >
+                  <Icon name={rowIcon(a)} size={16} class="shrink-0 text-fg-muted" />
+                  <span class="min-w-0 flex-1 truncate">{a.title}</span>
+                  <Show when={i() === 0}>
+                    <Kbd keys={["↵"]} />
+                  </Show>
+                </button>
+              )}
+            </For>
+          </div>
+        </section>
       </Show>
     </aside>
   )
