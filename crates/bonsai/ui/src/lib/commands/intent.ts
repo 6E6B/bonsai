@@ -105,7 +105,8 @@ export function remoteTail(commands: readonly PaletteEntry[], text: string): str
   return h.tail
 }
 
-/** Friend results count this much at most; Roblox results a bit less. */
+/** Roblox results, by their place in Roblox's order, under friends (`personScore`) that match
+ * as well. One named exactly what was typed counts like a friend matched by a whole word. */
 const REMOTE_TOP = 55
 const REMOTE_EXACT = 95
 const REMOTE_STEP = 3

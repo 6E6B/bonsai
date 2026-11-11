@@ -5,10 +5,12 @@ import {
   argToRemember,
   entityActions,
   hasActions,
+  nameWords,
   type PaletteEntry,
   paletteEntries,
   paletteSections,
   parseScope,
+  personScore,
   recentRows,
   remoteEntries,
   remoteQuery,
@@ -368,7 +370,11 @@ describe("looked-at things", () => {
     const boost = (k: string) => (k === "game:3" || k === "user:2" ? 40 : 0)
     const s = paletteSections({ ...input, seen: [], text: "obby", remote, boost })
     expect(s[0].rows.map((r) => r.arg)).toEqual(["3", "1", "2"])
-    const f = paletteSections({ ...input, seen: [], text: "er", remote: [], boost })
+    const lukes = [
+      { id: 1, name: "oldluke", displayName: "Luke A" },
+      { id: 2, name: "lukeb", displayName: "Luke B" },
+    ]
+    const f = paletteSections({ ...input, friends: lukes, seen: [], text: "luke", remote: [], boost })
     expect(f.find((x) => x.title === "Friends")?.rows.map((r) => r.arg)).toEqual(["2", "1"])
   })
 })
@@ -428,6 +434,28 @@ describe("bookmark search", () => {
     const rows = paletteEntries([cmd("bookmark.rename", "bookmark")], [], [], [], [], [], [], [], [bookmark])
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ id: "bookmark.rename", arg: "5", title: "bookmark.rename: Doors" })
+  })
+})
+
+describe("personScore", () => {
+  const luke = { id: 2, name: "stickmasterluke", displayName: "StickMasterLuke" }
+  const score = (text: string) => personScore(luke, text)
+
+  it("splits names at their humps", () =>
+    expect(nameWords("StickMasterLuke2")).toEqual(["stick", "master", "luke", "2"]))
+  it("finds a word inside a name", () => expect(score("luke")).toBeGreaterThan(0))
+  it("finds part of a lowercase username", () => {
+    expect(personScore({ id: 1, name: "builderman", displayName: "" }, "man")).toBeGreaterThan(0)
+  })
+  it("forgives a typo", () => expect(score("stickmasterlukr")).toBeGreaterThan(0))
+  it("ranks the whole name over a word of it, and a word over a part", () => {
+    expect(score("stickmasterluke")).toBeGreaterThan(score("luke"))
+    expect(score("luke")).toBeGreaterThan(score("aste"))
+  })
+  it("doesn't match two letters inside a name", () => expect(score("er")).toBe(-1))
+  it("prefers what you call them", () => {
+    const named = { id: 3, name: "x1", displayName: "Someone", nickname: "Sam" }
+    expect(personScore(named, "sam")).toBeGreaterThan(personScore({ ...named, nickname: null, name: "sam" }, "sam"))
   })
 })
 

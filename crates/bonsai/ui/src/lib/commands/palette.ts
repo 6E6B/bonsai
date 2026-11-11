@@ -1,10 +1,20 @@
 import { entityRef, type Seen } from "~/lib/history"
 import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
-import { fold, score as nameScore } from "~/lib/search"
+import { fold } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
 import type { ThumbKind } from "~/lib/thumb"
 import type { RecentArg } from "./learn"
-import { distance, matchTerms, prepared, type Ranked, rankScored, terms } from "./match"
+import {
+  matchTerms,
+  type Prepared,
+  prepare,
+  prepared,
+  type Ranked,
+  rankScored,
+  terms,
+  tokens,
+  wordScore,
+} from "./match"
 
 /** A row in the command bar. Picking it runs `id` with `arg`, or, when `ask` is set, asks for
  * the argument first. */
@@ -305,20 +315,72 @@ export function remoteEntries(rows: RemoteRow[]): PaletteEntry[] {
   })
 }
 
-/** How well a friend matches a typed name: -1 for not at all. Allows one typo in a name of
- * four letters or more. */
-export function personScore(p: PalettePerson, text: string): number {
-  const s = nameScore([p.displayName, p.nickname, p.name], text)
-  if (s >= 0) return s
-  const t = fold(text.trim())
-  if (t.length < 4 || /\s/.test(t)) return -1
-  for (const n of [p.name, p.displayName, p.nickname]) {
-    if (!n) continue
-    const f = fold(n)
-    if (distance(t, f, 1) <= 1 || (f.length > t.length && distance(t, f.slice(0, t.length), 1) <= 1)) return 30
-  }
-  return -1
+/** The words of a name: split at spaces, camelCase humps and where letters meet digits, so
+ * "StickMasterLuke" is "stick master luke" and "Builder123" is "builder 123". */
+export function nameWords(name: string): string[] {
+  const raw = name.normalize("NFD").replace(/\p{M}/gu, "")
+  return tokens(
+    raw
+      .replace(/(\p{Ll}|\p{N})(\p{Lu})/gu, "$1 $2")
+      .replace(/(\p{Lu})(\p{Lu}\p{Ll})/gu, "$1 $2")
+      .replace(/(\p{L})(\p{N})/gu, "$1 $2")
+      .replace(/(\p{N})(\p{L})/gu, "$1 $2"),
+  )
 }
+
+interface PreparedName {
+  prep: Prepared
+  /** The whole name run together, folded: "stickmasterluke". */
+  whole: string
+}
+
+const names = new WeakMap<PalettePerson, PreparedName[]>()
+
+/** A friend's names, best first: what you call them, their display name, their username. */
+function preparedNames(p: PalettePerson): PreparedName[] {
+  let out = names.get(p)
+  if (!out) {
+    out = [p.nickname, p.displayName, p.name].flatMap((n) => {
+      if (!n) return []
+      const ws = nameWords(n)
+      if (!ws.length) return []
+      // Initials of a name ("sml") find too many people to mean much.
+      return [{ prep: { ...prepare(ws.join(" "), ""), initials: [] }, whole: ws.join("") }]
+    })
+    names.set(p, out)
+  }
+  return out
+}
+
+/** Part of a name, not at its start or at a word in it. */
+const NAME_INSIDE = 30
+/** A later name counts this much less than the first. */
+const NAME_STEP = 2
+
+/** How well a friend matches a typed name, on the same scale as commands and Roblox results
+ * (`matchTerms`): -1 for not at all. Each name is matched by its words ("luke" in
+ * StickMasterLuke) and as a whole ("stickmast", or a typo of it). Typing a whole name exactly
+ * counts like a Roblox result named exactly that. */
+export function personScore(p: PalettePerson, text: string): number {
+  const ts = terms(text)
+  if (!ts.length) return 0
+  const joined = ts.join("")
+  let best = -1
+  preparedNames(p).forEach(({ prep, whole }, i) => {
+    const byWords = matchTerms(prep, ts, false)?.score ?? 0
+    // Usernames are often one lowercase run ("stickmasterluke"), so a part of one counts
+    // from three letters, where a command's word needs four.
+    const asWhole = wordScore(joined, whole) || (joined.length >= 3 && whole.includes(joined) ? NAME_INSIDE : 0)
+    let s = Math.max(byWords, asWhole ? asWhole + COVERAGE_WHOLE : 0)
+    if (!s) return
+    if (whole === joined) s += REMOTE_EXACT
+    best = Math.max(best, s - i * NAME_STEP)
+  })
+  return best
+}
+
+/** A match of the whole name covers all of it, like a title whose every word matched. */
+const COVERAGE_WHOLE = 25
 
 /** `people` matching `query`, best first, each with its score. `lift` adds what was picked or
  * looked at before, by ref. Ties keep the list's order. */
