@@ -1,8 +1,9 @@
+import { entityRef } from "~/lib/history"
 import type { RemoteKind } from "~/lib/ipc/bindings"
-import { fold, score as nameScore } from "~/lib/search"
-import { distance, matchTerms, prepared, type Ranked, tokens } from "./match"
+import { fold } from "~/lib/search"
+import { matchTerms, prepared, type Ranked, tokens } from "./match"
 import type { PaletteEntry, PalettePerson } from "./palette"
-import { personEntry } from "./palette"
+import { personEntry, personScore } from "./palette"
 import { STOP } from "./synonyms"
 
 /** A command and its argument typed in one go: "join builder", "message luke hi", "search wiki
@@ -104,21 +105,6 @@ export function remoteTail(commands: readonly PaletteEntry[], text: string): str
   return h.tail
 }
 
-/** How well a friend matches a typed name: -1 for not at all. Allows one typo in a name of
- * four letters or more. */
-export function personScore(p: PalettePerson, text: string): number {
-  const s = nameScore([p.displayName, p.nickname, p.name], text)
-  if (s >= 0) return s
-  const t = fold(text.trim())
-  if (t.length < 4 || /\s/.test(t)) return -1
-  for (const n of [p.name, p.displayName, p.nickname]) {
-    if (!n) continue
-    const f = fold(n)
-    if (distance(t, f, 1) <= 1 || (f.length > t.length && distance(t, f.slice(0, t.length), 1) <= 1)) return 30
-  }
-  return -1
-}
-
 /** Friend results count this much at most; Roblox results a bit less. */
 const REMOTE_TOP = 55
 const REMOTE_EXACT = 95
@@ -177,7 +163,13 @@ export function intentRows(input: IntentInput): Ranked<PaletteEntry>[] {
         seen.add(p.id)
         if (fold(p.name) === fold(tail) || fold(p.displayName) === fold(tail)) exact = true
         const r = personEntry(p)
-        row(join ? `user:${p.id}` : String(p.id), r.title, { subtitle: r.subtitle, thumb: r.thumb }, s, true)
+        row(
+          join ? `user:${p.id}` : String(p.id),
+          r.title,
+          { subtitle: r.subtitle, thumb: r.thumb, ref: r.ref },
+          s,
+          true,
+        )
       }
       if (!join) {
         remote.forEach((r, i) => {
@@ -185,7 +177,8 @@ export function intentRows(input: IntentInput): Ranked<PaletteEntry>[] {
           const same = fold(r.title) === fold(tail) || fold(r.subtitle ?? "").includes(`@${fold(tail)}`)
           exact ||= same
           const s = same ? REMOTE_EXACT : REMOTE_TOP - REMOTE_STEP * i
-          row(String(r.entity.id), r.title, { subtitle: r.subtitle, thumb: r.thumb }, s, !h.reversed)
+          const ref = entityRef(r.entity.kind, r.entity.id)
+          row(String(r.entity.id), r.title, { subtitle: r.subtitle, thumb: r.thumb, ref }, s, !h.reversed)
         })
         if (!exact && !h.reversed) row(tail, `“${tail}”`, {}, TEXT, false)
       }
@@ -196,7 +189,8 @@ export function intentRows(input: IntentInput): Ranked<PaletteEntry>[] {
         const to = r.entity && kinds[r.entity.kind]
         if (!to || !r.entity) return
         const s = fold(r.title) === fold(tail) ? REMOTE_EXACT : REMOTE_TOP - REMOTE_STEP * i
-        row(to(r.entity.id), r.title, { subtitle: r.subtitle, thumb: r.thumb }, s, !h.reversed)
+        const ref = entityRef(r.entity.kind, r.entity.id)
+        row(to(r.entity.id), r.title, { subtitle: r.subtitle, thumb: r.thumb, ref }, s, !h.reversed)
       })
       if (isIdOrLink(tail)) row(tail, tail, {}, ID, true)
     }

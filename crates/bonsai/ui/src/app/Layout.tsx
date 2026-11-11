@@ -1,7 +1,17 @@
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { useLocation, useNavigate } from "@solidjs/router"
 import { isTauri } from "@tauri-apps/api/core"
-import { createEffect, createSignal, ErrorBoundary, on, onCleanup, onMount, type ParentProps, Show } from "solid-js"
+import {
+  createEffect,
+  createSignal,
+  ErrorBoundary,
+  on,
+  onCleanup,
+  onMount,
+  type ParentProps,
+  Show,
+  untrack,
+} from "solid-js"
 import { NewChat } from "~/features/chat/NewChat"
 import { HubDialogs } from "~/features/hub/Dialogs"
 import { CommandPalette } from "~/features/palette/CommandPalette"
@@ -24,6 +34,7 @@ import {
   shortcutListener,
 } from "~/lib/commands/registry"
 import { setClockFormat, setFormatLocale, setRelativeDates } from "~/lib/format"
+import { noteDetails, noteVisit } from "~/lib/history"
 import { registerHubCommands } from "~/lib/hub"
 import { commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
@@ -540,6 +551,25 @@ export function Layout(props: ParentProps) {
       { defer: true },
     ),
   )
+  // What you look at ranks higher in the command bar (`~/lib/history`). Opening the app on its
+  // saved tabs isn't a visit.
+  const shownPath = () => pathname(activeTab(tabs)?.path ?? "/")
+  const viewer = () => String(shell.active ?? 0)
+  createEffect(
+    on(
+      () => [viewer(), shownPath()] as const,
+      ([account, path]) => {
+        if (started()) noteVisit(account, path)
+      },
+      { defer: true },
+    ),
+  )
+  createEffect(() => {
+    const account = viewer()
+    const path = shownPath()
+    const title = tabs.titles[path]
+    if (title && started()) untrack(() => noteDetails(account, path, { title }))
+  })
   useAppearance()
   useWindowFrame(zoom)
   // Display settings, applied whenever they change.

@@ -1,9 +1,10 @@
 import { useParams } from "@solidjs/router"
-import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch, untrack } from "solid-js"
 import { BuyForm } from "~/lib/buy-form"
 import { useCommandContext, useSubTabs } from "~/lib/commands/hooks"
 import { handle, isRunning, run } from "~/lib/commands/registry"
 import { ago, compact, date, percent } from "~/lib/format"
+import { noteDetails } from "~/lib/history"
 import {
   type BadgeRow,
   commands,
@@ -25,7 +26,7 @@ import { emptyList, ListState } from "~/lib/list-state"
 import { entityMenu, joinAsItems, playlistItems } from "~/lib/menus"
 import { ServerControls } from "~/lib/private-server"
 import { serverName } from "~/lib/server-name"
-import { friends, useLive } from "~/lib/store"
+import { friends, shell, useLive } from "~/lib/store"
 import { setTabTitle } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile } from "~/lib/tiles"
@@ -184,8 +185,15 @@ export default function Game() {
     }),
   )
   createEffect(() => {
-    const name = game.details?.name
-    if (name) setTabTitle(`/games/${params.id}`, name)
+    const d = game.details
+    if (!d) return
+    const path = `/games/${params.id}`
+    if (d.name) setTabTitle(path, d.name)
+    // The game's icon is found by universe, which the path doesn't say.
+    const account = String(shell.active ?? 0)
+    untrack(() =>
+      noteDetails(account, path, { title: d.name || undefined, thumb: { kind: "game_icon", id: d.universeId } }),
+    )
   })
 
   return (

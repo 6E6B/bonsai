@@ -1,3 +1,4 @@
+import { fade } from "~/lib/history"
 import { fold } from "~/lib/search"
 
 /** What the command bar learned from your picks: how often and how lately each row was picked,
@@ -33,22 +34,14 @@ export function record(u: Usage, key: string, query: string, now = Date.now()): 
   return { picks, queries }
 }
 
-const DAY = 86_400_000
-
-/** How much a pick this old still counts. */
-function decay(age: number): number {
-  if (age < DAY) return 1
-  if (age < 7 * DAY) return 0.7
-  if (age < 30 * DAY) return 0.45
-  return 0.25
-}
-
-/** Picked often and lately: at most a tie-breaker between equally good matches. */
-const FRECENCY = 8
+/** Picked often and lately: enough to put a row you use above one you don't, among good
+ * matches. */
+const FRECENCY = 10
 /** Picked before for exactly this query. */
 const SAME_QUERY = 70
-/** Picked before for a longer query that starts with this one: you are typing it again. */
-const TYPING = 50
+/** Picked before for a longer query that starts with this one: you are typing it again. Half of
+ * it counts from the first letter, the rest grows as more of the query is typed. */
+const TYPING = 60
 /** Picked before for a shorter query that this one starts with. */
 const LONGER = 25
 
@@ -58,16 +51,16 @@ export function booster(u: Usage, query: string, now = Date.now()): (key: string
   const learned = new Map<string, number>()
   if (q)
     for (const r of u.queries) {
-      const times = Math.log2(1 + r.n) * decay(now - r.t)
+      const times = Math.log2(1 + r.n) * fade(now - r.t)
       let s = 0
       if (r.q === q) s = SAME_QUERY
-      else if (r.q.startsWith(q)) s = (TYPING * q.length) / r.q.length
+      else if (r.q.startsWith(q)) s = TYPING * (0.5 + (0.5 * q.length) / r.q.length)
       else if (q.startsWith(r.q)) s = LONGER
       if (s) learned.set(r.key, Math.max(learned.get(r.key) ?? 0, s * Math.min(1.5, 0.6 + 0.4 * times)))
     }
   return (key) => {
     const p = u.picks[key]
-    const f = p ? FRECENCY * Math.log2(1 + p.n) * decay(now - p.t) : 0
+    const f = p ? FRECENCY * Math.log2(1 + p.n) * fade(now - p.t) : 0
     return f + (learned.get(key) ?? 0)
   }
 }

@@ -8,9 +8,10 @@ import {
   paletteEntries,
   paletteSections,
   parseScope,
-  remember,
+  recentRows,
   remoteEntries,
   remoteQuery,
+  seenEntry,
 } from "./palette"
 
 const cmd = (id: string, arg: CommandInfo["arg"]): CommandInfo => ({
@@ -227,7 +228,7 @@ describe("paletteSections", () => {
       ...input,
       commands: go,
       text: "",
-      recent: [luke, zoomRow, { ...homeRow, key: "gone" }],
+      recent: [luke, zoomRow],
       places: [friendsRow.id, zoomRow.id],
     })
     expect(s.map((x) => x.title)).toEqual(["Recent", "Go to", "Commands"])
@@ -255,22 +256,101 @@ describe("paletteSections", () => {
   })
 })
 
-describe("remember", () => {
-  const rows = paletteEntries(
-    [cmd("A", "none"), cmd("B", "none"), cmd("C", "none"), cmd("D", "none"), cmd("E", "none"), cmd("F", "none")],
-    [],
-  )
+describe("recentRows", () => {
+  const rows = paletteEntries([cmd("A", "none"), cmd("B", "none"), cmd("Open profile", "user")], [])
+  const game = {
+    ref: "game:5",
+    n: 1,
+    t: 30,
+    title: "Tower of Hell",
+    open: { id: "game.open", arg: "5" },
+    entity: { kind: "experience" as const, id: 5 },
+  }
 
-  it("moves a row to the front and keeps five", () => {
-    let r: PaletteEntry[] = []
-    for (const e of rows) r = remember(r, e)
-    expect(r.map((e) => e.title)).toEqual(["F", "E", "D", "C", "B"])
-    expect(remember(r, rows[3]).map((e) => e.title)).toEqual(["D", "F", "E", "C", "B"])
+  it("mixes picked commands and looked-at things, newest first, once each", () => {
+    const r = recentRows(
+      rows,
+      [
+        { key: "A", t: 10 },
+        { key: "B", t: 40 },
+        { key: "gone", t: 50 },
+        { key: "user.open", t: 60 },
+      ],
+      [game, { ref: "nav.friends", n: 3, t: 99 }],
+    )
+    expect(r.map((e) => e.title)).toEqual(["B", "Tower of Hell", "A"])
+  })
+})
+
+describe("looked-at things", () => {
+  const game = seenEntry({
+    ref: "game:5",
+    n: 4,
+    t: 0,
+    title: "Tower of Hell",
+    open: { id: "game.open", arg: "5" },
+    entity: { kind: "experience", id: 5 },
+  })
+  const input = {
+    scope: "all" as const,
+    commands: paletteEntries([cmd("Zoom in", "none")], []),
+    friends: people,
+    remote: [] as PaletteEntry[],
+    seen: game ? [game] : [],
+  }
+
+  it("are found from the first letter", () => {
+    const s = paletteSections({ ...input, text: "t" })
+    expect(s[0].title).toBe("Recently viewed")
+    expect(s[0].rows[0].arg).toBe("5")
   })
 
-  it("skips rows that ask for an argument", () => {
-    const ask = paletteEntries([cmd("Open profile", "user")], [])[0]
-    expect(remember([], ask)).toEqual([])
+  it("aren't repeated by Roblox results", () => {
+    const remote = remoteEntries([
+      {
+        group: "Experiences",
+        title: "Tower of Hell",
+        subtitle: "",
+        command: "game.open",
+        arg: "5",
+        kind: "experience",
+        id: 5,
+        universeId: 50,
+      },
+      {
+        group: "Experiences",
+        title: "Tower of Misery",
+        subtitle: "",
+        command: "game.open",
+        arg: "6",
+        kind: "experience",
+        id: 6,
+        universeId: 60,
+      },
+    ])
+    const s = paletteSections({ ...input, text: "tower", remote })
+    expect(s.map((x) => x.title)).toEqual(["Recently viewed", "Experiences"])
+    expect(s[1].rows.map((r) => r.arg)).toEqual(["6"])
+  })
+
+  it("lift Roblox results and friends looked at before", () => {
+    const remote = remoteEntries(
+      [1, 2, 3].map((id) => ({
+        group: "Experiences",
+        title: `Obby ${id}`,
+        subtitle: "",
+        command: "game.open",
+        arg: String(id),
+        kind: "experience" as const,
+        id,
+        universeId: id,
+      })),
+    )
+    const boost = (k: string) => (k === "game:3" || k === "user:2" ? 40 : 0)
+    const s = paletteSections({ ...input, seen: [], text: "obby", remote, boost })
+    expect(s[0].rows.map((r) => r.arg)).toEqual(["3", "1", "2"])
+    const f = paletteSections({ ...input, seen: [], text: "er", remote: [], boost })
+    expect(f.find((x) => x.title === "Friends")?.rows.map((r) => r.arg)).toEqual(["2", "1"])
   })
 })
 

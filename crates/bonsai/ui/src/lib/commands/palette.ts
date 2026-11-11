@@ -1,8 +1,9 @@
+import { entityRef, type Seen } from "~/lib/history"
 import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
-import { rank } from "~/lib/search"
+import { fold, score as nameScore } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
 import type { ThumbKind } from "~/lib/thumb"
-import { type Ranked, rankScored } from "./match"
+import { distance, type Ranked, rankScored } from "./match"
 
 /** A row in the command bar. Picking it runs `id` with `arg`, or, when `ask` is set, asks for
  * the argument first. */
@@ -24,7 +25,14 @@ export interface PaletteEntry {
   /** The person, experience, community or item the row opens. Its other actions are listed
    * with `entityActions`. */
   entity?: PaletteEntity
+  /** What the row is about (`user:1`, `game:2`), when that isn't its `entity`: an inline row
+   * that messages a friend. What you picked or looked at before is kept by this. */
+  ref?: string
 }
+
+/** What a row is about, for learning: the same person or game whichever way it was found. */
+export const refOf = (e: PaletteEntry): string | undefined =>
+  e.ref ?? (e.entity ? entityRef(e.entity.kind, e.entity.id) : undefined)
 
 export interface PaletteEntity {
   kind: RemoteKind
@@ -292,9 +300,35 @@ export function remoteEntries(rows: RemoteRow[]): PaletteEntry[] {
   })
 }
 
-/** `people` matching `query`, best match first. */
-const searchPeople = (people: readonly PalettePerson[], query: string) =>
-  rank(people, query, (p) => [p.displayName, p.nickname, p.name])
+/** How well a friend matches a typed name: -1 for not at all. Allows one typo in a name of
+ * four letters or more. */
+export function personScore(p: PalettePerson, text: string): number {
+  const s = nameScore([p.displayName, p.nickname, p.name], text)
+  if (s >= 0) return s
+  const t = fold(text.trim())
+  if (t.length < 4 || /\s/.test(t)) return -1
+  for (const n of [p.name, p.displayName, p.nickname]) {
+    if (!n) continue
+    const f = fold(n)
+    if (distance(t, f, 1) <= 1 || (f.length > t.length && distance(t, f.slice(0, t.length), 1) <= 1)) return 30
+  }
+  return -1
+}
+
+/** `people` matching `query`, best first, each with its score. `lift` adds what was picked or
+ * looked at before, by ref. Ties keep the list's order. */
+function searchPeople(
+  people: readonly PalettePerson[],
+  query: string,
+  lift: (ref: string) => number = () => 0,
+): { person: PalettePerson; score: number }[] {
+  const out: { person: PalettePerson; score: number; index: number }[] = []
+  people.forEach((person, index) => {
+    const s = personScore(person, query)
+    if (s >= 0) out.push({ person, score: s + lift(`user:${person.id}`), index })
+  })
+  return out.sort((a, b) => b.score - a.score || a.index - b.index)
+}
 
 /** A person as a row that opens their profile. */
 export function personEntry(p: PalettePerson): PaletteEntry {
@@ -307,6 +341,7 @@ export function personEntry(p: PalettePerson): PaletteEntry {
     arg: String(p.id),
     thumb: { kind: "headshot", id: p.id },
     entity: { kind: "user", id: p.id, inGame: p.inGame },
+    ref: `user:${p.id}`,
   }
 }
 
@@ -323,24 +358,63 @@ export interface SectionInput {
   friends: PalettePerson[]
   remote: PaletteEntry[]
   bookmarks?: BookmarkView[]
-  /** Rows picked lately, newest first (`remember`). Shown for an empty query. */
+  /** Rows picked or looked at lately, newest first (`recentRows`). Shown for an empty query. */
   recent?: PaletteEntry[]
+  /** Things looked at before (`seenEntry`), found from the first letter. */
+  seen?: PaletteEntry[]
   /** Command ids of the screens to offer under "Go to" for an empty query, in sidebar order. */
   places?: string[]
   /** Commands with their argument typed inline (`intentRows`), ranked with the commands. */
   intents?: Ranked<PaletteEntry>[]
-  /** Extra score for a row from what was picked before (`booster`), by row key. */
+  /** Extra score for a row from what was picked or looked at before, by row key and by what a
+   * row is about (`refOf`). */
   boost?: (key: string) => number
 }
 
-/** How many rows `remember` keeps. */
-const RECENT = 5
+/** How many rows an empty query lists as recent. */
+const RECENT = 6
 
-/** `recent` with `entry` moved to the front. Rows that ask for an argument aren't kept: the
- * row alone doesn't say what was typed. */
-export function remember(recent: PaletteEntry[], entry: PaletteEntry): PaletteEntry[] {
-  if (entry.ask) return recent
-  return [entry, ...recent.filter((e) => e.key !== entry.key)].slice(0, RECENT)
+/** Something picked from the command bar, by row key, and when. */
+export interface Picked {
+  key: string
+  t: number
+}
+
+/** An openable thing from the history (`openable`) as a row. */
+export function seenEntry(s: Seen): PaletteEntry | null {
+  if (!s.open || !s.title) return null
+  return {
+    key: `seen:${s.ref}`,
+    title: s.title,
+    words: s.title,
+    id: s.open.id,
+    arg: s.open.arg,
+    thumb: s.thumb,
+    entity: s.entity,
+    ref: s.ref,
+  }
+}
+
+/** What an empty query lists as recent: commands picked lately and things looked at lately,
+ * newest first, one row each. Picks of rows that are gone (a deleted theme) or that were about
+ * a thing (those come from `seen`) are skipped. */
+export function recentRows(commands: readonly PaletteEntry[], picks: readonly Picked[], seen: readonly Seen[]) {
+  const byKey = new Map(commands.map((e) => [e.key, e]))
+  const rows: { entry: PaletteEntry; t: number }[] = []
+  for (const p of picks) {
+    const e = byKey.get(p.key)
+    if (e && !e.ask) rows.push({ entry: e, t: p.t })
+  }
+  for (const s of seen) {
+    const e = seenEntry(s)
+    if (e) rows.push({ entry: e, t: s.t })
+  }
+  const keys = new Set<string>()
+  return rows
+    .sort((a, b) => b.t - a.t)
+    .filter((r) => !keys.has(r.entry.key) && keys.add(r.entry.key))
+    .slice(0, RECENT)
+    .map((r) => r.entry)
 }
 
 /** Rows per group when searching everything; a scope shows all of its results. */
@@ -363,43 +437,61 @@ const TOP_COMMANDS = 4
 /** Order of Roblox result groups. Titles come from bonsai-core's `Group::title`. */
 const REMOTE_GROUPS = ["Pasted link", "People", "Experiences", "Communities", "Marketplace"]
 
-/** The command bar's grouped rows. Searching everything puts commands whose title matches
- * first, then friends, then Roblox results, then the other matching commands. */
+/** Which looked-at things a scope shows. */
+const SEEN_KINDS: Partial<Record<Scope, RemoteKind[]>> = {
+  all: ["user", "experience", "community", "item", "bundle"],
+  people: ["user"],
+  experiences: ["experience"],
+  communities: ["community"],
+  items: ["item", "bundle"],
+}
+
+/** You saved a bookmark on purpose, so it beats a screen that matches as well. */
+const BOOKMARK = 40
+/** A Roblox result named exactly what was typed. */
+const REMOTE_EXACT = 30
+/** Each place down Roblox's own order costs this much. */
+const REMOTE_STEP = 3
+
+/** The command bar's grouped rows. Searching everything puts the best of commands, things
+ * looked at before, friends and bookmarks first, each group where its best row ranks, then
+ * Roblox results, then the other matching commands. Rows about something picked or looked at
+ * before rank higher in every group. */
 export function paletteSections(input: SectionInput): PaletteSection[] {
   const text = input.text.trim()
-  const q = text.toLowerCase()
   const all = input.scope === "all"
   const limit = all ? PER_GROUP : Number.POSITIVE_INFINITY
   const out: PaletteSection[] = []
   const add = (title: string, rows: PaletteEntry[]) => {
     if (rows.length) out.push({ title, rows })
   }
+  const boost = input.boost ?? (() => 0)
+  /** What was picked or looked at before, by the row and by what it is about. */
+  const lift = (e: PaletteEntry) => {
+    const ref = refOf(e)
+    return boost(e.key) + (ref && ref !== e.key ? boost(ref) : 0)
+  }
+  const bookmarkRows = (): PaletteEntry[] =>
+    (input.bookmarks ?? []).map((b) => ({
+      key: `bookmark:${b.id}`,
+      title: b.title,
+      words: b.title,
+      id: "bookmark.open",
+      arg: String(b.id),
+      subtitle: b.status || undefined,
+      thumb: b.thumbnail ?? undefined,
+    }))
 
-  if (all || input.scope === "bookmarks") {
+  if (input.scope === "bookmarks") {
     add(
       "Bookmarks",
-      rank(input.bookmarks ?? [], text, (b) => [b.title])
-        .slice(0, limit)
-        .map((b) => ({
-          key: `bookmark:${b.id}`,
-          title: b.title,
-          words: b.title,
-          id: "bookmark.open",
-          arg: String(b.id),
-          subtitle: b.status || undefined,
-          thumb: b.thumbnail ?? undefined,
-        })),
+      rankScored(bookmarkRows(), text, lift).map((r) => r.entry),
     )
-    if (input.scope === "bookmarks") return out
+    return out
   }
   if (all && !text) {
-    // Recent command rows are looked up again, so renamed or removed ones (a deleted theme)
-    // follow the registry. Results and friends are kept as they were.
+    const recent = input.recent ?? []
     const byKey = new Map(input.commands.map((e) => [e.key, e]))
-    const recent = (input.recent ?? []).flatMap((e) => {
-      const now = byKey.get(e.key)
-      return now ? [now] : e.entity ? [e] : []
-    })
     const seen = new Set(recent.map((e) => e.key))
     const places = (input.places ?? []).flatMap((id) => {
       const e = byKey.get(id)
@@ -415,9 +507,8 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
     return out
   }
   const ranked = () => {
-    const boost = input.boost
-    const scored = rankScored(input.commands, text, (e) => prior(e) + (boost?.(e.key) ?? 0))
-    const intents = (input.intents ?? []).map((r) => ({ ...r, score: r.score + (boost?.(r.entry.key) ?? 0) }))
+    const scored = rankScored(input.commands, text, (e) => prior(e) + lift(e))
+    const intents = (input.intents ?? []).map((r) => ({ ...r, score: r.score + lift(r.entry) }))
     return [...intents, ...scored].sort((a, b) => b.score - a.score)
   }
   if (input.scope === "commands") {
@@ -428,28 +519,69 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
     return out
   }
 
+  /** Groups found on this machine, placed by their best row. */
+  const local: { title: string; rows: PaletteEntry[]; best: number }[] = []
+  const addLocal = (title: string, rows: { entry: PaletteEntry; score: number }[]) => {
+    if (rows.length) local.push({ title, rows: rows.map((r) => r.entry), best: rows[0].score })
+  }
   let rest: PaletteEntry[] = []
   if (all) {
     const matched = ranked()
     const top = matched.filter((r) => r.strong).slice(0, TOP_COMMANDS)
-    add(
-      "Commands",
-      top.map((r) => r.entry),
-    )
+    addLocal("Commands", top)
     rest = matched.filter((r) => !top.includes(r)).map((r) => r.entry)
   }
 
-  const shownPeople = new Set<number>()
-  if (all || input.scope === "people") {
-    const friends = searchPeople(input.friends, q).slice(0, all ? PER_GROUP : 10)
-    for (const f of friends) shownPeople.add(f.id)
-    add("Friends", friends.map(personEntry))
-  }
+  /** What is already shown, so Roblox results don't repeat it. */
+  const shown = new Set<string>()
+  const people =
+    all || input.scope === "people" ? searchPeople(input.friends, text, boost).slice(0, all ? PER_GROUP : 10) : []
+  for (const p of people) shown.add(`user:${p.person.id}`)
 
-  for (const group of REMOTE_GROUPS) {
-    const rows = input.remote.filter(
-      (r) => r.group === group && !(r.entity?.kind === "user" && shownPeople.has(r.entity.id)),
+  const kinds = SEEN_KINDS[input.scope] ?? []
+  const seen = rankScored(
+    (input.seen ?? []).filter((e) => {
+      const ref = refOf(e)
+      return e.entity && kinds.includes(e.entity.kind) && !(ref && shown.has(ref))
+    }),
+    text,
+    lift,
+  )
+    .filter((r) => r.strong)
+    .slice(0, limit)
+  for (const r of seen) {
+    const ref = refOf(r.entry)
+    if (ref) shown.add(ref)
+  }
+  addLocal("Recently viewed", seen)
+  addLocal(
+    "Friends",
+    people.map((p) => ({ entry: personEntry(p.person), score: p.score })),
+  )
+  if (all)
+    addLocal(
+      "Bookmarks",
+      rankScored(bookmarkRows(), text, (e) => BOOKMARK + lift(e))
+        .filter((r) => r.strong)
+        .slice(0, limit),
     )
+  // Stable: on a tie, the order above.
+  for (const g of local.sort((a, b) => b.best - a.best)) add(g.title, g.rows)
+
+  const typed = fold(text)
+  for (const group of REMOTE_GROUPS) {
+    const rows = input.remote
+      .filter((r) => {
+        if (r.group !== group) return false
+        const ref = refOf(r)
+        return !(ref && shown.has(ref))
+      })
+      .map((entry, i) => ({
+        entry,
+        score: (fold(entry.title) === typed ? REMOTE_EXACT : 0) + lift(entry) - REMOTE_STEP * i,
+      }))
+      .sort((a, b) => b.score - a.score)
+      .map((r) => r.entry)
     add(group, rows.slice(0, limit))
   }
 
@@ -511,6 +643,7 @@ export function argEntries(
   people: PalettePerson[],
   remote: PaletteEntry[] = [],
   limit = 8,
+  boost: (key: string) => number = () => 0,
 ): PaletteEntry[] {
   const text = query.trim()
   const q = text.toLowerCase()
@@ -521,8 +654,9 @@ export function argEntries(
     const matches = searchPeople(
       people.filter((p) => user || p.inGame),
       q,
+      boost,
     ).slice(0, limit)
-    for (const p of matches)
+    for (const { person: p } of matches)
       out.push({
         ...personEntry(p),
         ...base,
@@ -535,7 +669,14 @@ export function argEntries(
     const seen = new Set(out.map((e) => e.arg))
     for (const r of remote)
       if (r.entity?.kind === "user" && !seen.has(String(r.entity.id)))
-        out.push({ ...r, ...base, key: `${command.id}:${r.key}`, arg: String(r.entity.id), entity: undefined })
+        out.push({
+          ...r,
+          ...base,
+          key: `${command.id}:${r.key}`,
+          arg: String(r.entity.id),
+          entity: undefined,
+          ref: refOf(r),
+        })
   }
   if (text) out.push({ ...base, key: `${command.id}:text`, title: `Use “${text}”`, arg: text })
   return out

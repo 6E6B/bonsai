@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, Match, onMount, Show, Switch } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Match, onMount, Show, Switch, untrack } from "solid-js"
 import { createStore } from "solid-js/store"
 import { filterEntries } from "~/lib/commands/filter"
 import { intentRows, remoteTail } from "~/lib/commands/intent"
@@ -14,13 +14,16 @@ import {
   paletteEntries,
   paletteSections,
   parseScope,
-  remember,
+  recentRows,
+  refOf,
   remoteEntries,
   remoteQuery,
   type Scope,
   scopes,
+  seenEntry,
 } from "~/lib/commands/palette"
 import { command, commandList, run } from "~/lib/commands/registry"
+import { historyOf, noteUse, openable, seenBoost } from "~/lib/history"
 import { commands, type PluginView, type PrefView, type RemoteSearch, type ThemeView } from "~/lib/ipc/bindings"
 import { screenKey, screens, sidebarGroups, sidebarScreens } from "~/lib/screens"
 import { friends, playlists, shell, useLive, visibleBookmarks } from "~/lib/store"
@@ -28,8 +31,6 @@ import { tabLabel, tabs } from "~/lib/tabs"
 import { thumbUrl } from "~/lib/thumb"
 import { Avatar, Icon, Kbd, SegmentedControl, Spinner, TextField, Thumbnail, useDialog } from "~/lib/ui"
 
-/** Rows picked from the command bar this session, newest first, per account. */
-const [recents, setRecents] = createStore<Record<string, PaletteEntry[]>>({})
 /** What each account picked for what it typed, loaded from this machine on first use. */
 const [usage, setUsage] = createStore<Record<string, Usage>>({})
 
@@ -41,7 +42,8 @@ function usageOf(account: string): Usage {
 /** The command bar. Typing searches commands, friends and Roblox (people, experiences,
  * communities, items) at once; ←/→, Tab or a prefix (`@`, `g:`, `#`, `i:`, `>`) narrows it to one.
  * Alt+→ on a result lists what else you can do with it. Commands that take a typed argument ask for
- * it after you pick them. */
+ * it after you pick them. What you picked here and what you looked at anywhere in the app
+ * (`~/lib/history`) rank higher, and things you looked at are found from the first letter. */
 export function CommandPalette() {
   const dialog = useDialog()
   const themes = useLive(
@@ -99,6 +101,18 @@ export function CommandPalette() {
   /** A result whose actions are listed, and the query to restore when going back. */
   const [actionsOf, setActionsOf] = createSignal<{ entry: PaletteEntry; query: string } | null>(null)
   const [active, setActive] = createSignal(0)
+  /** What was typed before picking the command now asking for its argument. */
+  const [askedWith, setAskedWith] = createSignal("")
+
+  const history = () => historyOf(account())
+  const seenRows = createMemo(() => openable(history()).flatMap((s) => seenEntry(s) ?? []))
+  /** Extra score for a row key or ref from what was picked here and looked at anywhere. */
+  const boost = createMemo(() => {
+    const picked = booster(usage[account()] ?? emptyUsage(), query())
+    const h = history()
+    const now = Date.now()
+    return (key: string) => picked(key) + seenBoost(h, key, now)
+  })
 
   /** The argument part of "join tower of hell", searched instead of the whole query. */
   const tail = createMemo(() =>
@@ -124,7 +138,7 @@ export function CommandPalette() {
       return [{ title: "", rows: filterEntries(rows, query()) }]
     }
     const cmd = asking()
-    if (cmd) return [{ title: "", rows: argEntries(cmd, query(), people(), remoteRows()) }]
+    if (cmd) return [{ title: "", rows: argEntries(cmd, query(), people(), remoteRows(), 8, boost()) }]
     const all = scope() === "all" || scope() === "commands"
     return paletteSections({
       scope: scope(),
@@ -133,7 +147,12 @@ export function CommandPalette() {
       friends: people(),
       remote: remoteRows(),
       bookmarks: visibleBookmarks(),
-      recent: recents[account()],
+      recent: recentRows(
+        entries(),
+        Object.entries((usage[account()] ?? emptyUsage()).picks).map(([key, p]) => ({ key, t: p.t })),
+        openable(history()),
+      ),
+      seen: seenRows(),
       places: places(),
       intents: all
         ? intentRows({
@@ -144,7 +163,7 @@ export function CommandPalette() {
             remoteFor: tail() ?? undefined,
           })
         : [],
-      boost: booster(usage[account()] ?? emptyUsage(), query()),
+      boost: boost(),
     })
   })
   const rows = createMemo(() => flatRows(sections()))
@@ -161,9 +180,20 @@ export function CommandPalette() {
   let input: HTMLInputElement | undefined
   let list: HTMLDivElement | undefined
 
+  // A new query starts at the top. Results arriving for the same query (Roblox answering)
+  // keep the cursor on the row it was on, so Enter doesn't pick something that just moved in.
+  let shownFor = ""
+  let shown: PaletteEntry[] = []
   createEffect(() => {
-    rows()
-    setActive(0)
+    const next = rows()
+    const now = `${scope()}\u0000${query()}\u0000${asking()?.key ?? ""}\u0000${actionsOf()?.entry.key ?? ""}`
+    untrack(() => {
+      const key = shown[active()]?.key
+      const at = now === shownFor && key ? next.findIndex((e) => e.key === key) : -1
+      setActive(at >= 0 ? at : 0)
+      shownFor = now
+      shown = next
+    })
   })
   createEffect(() => {
     list?.querySelector(`[data-index="${active()}"]`)?.scrollIntoView({ block: "nearest" })
@@ -211,16 +241,33 @@ export function CommandPalette() {
     if (!e) return
     if (e.ask) {
       setAsking(e)
+      setAskedWith(query())
       setQuery("")
       input?.focus()
       return
     }
-    if (!nested()) {
-      const a = account()
-      setRecents(a, (r) => remember(r ?? [], e))
-      const u = record(usageOf(a), e.key, query())
-      setUsage(a, u)
-      saveUsage(a, u)
+    // Learn the whole path: the command that asked, the result whose actions were listed, and
+    // the row picked, each with what was typed for it.
+    const a = account()
+    const asked = asking()
+    const of = actionsOf()
+    let u = usageOf(a)
+    if (asked) u = record(u, asked.key, askedWith())
+    if (of) u = record(u, of.entry.key, of.query)
+    u = record(u, e.key, query())
+    setUsage(a, u)
+    saveUsage(a, u)
+    const about = of?.entry ?? e
+    const ref = refOf(e) ?? refOf(about)
+    if (ref) {
+      const open = about.entity && entityActions(about.entity, () => "")[0]
+      noteUse(a, {
+        ref,
+        title: about.entity ? about.title : undefined,
+        thumb: about.entity ? about.thumb : undefined,
+        entity: about.entity && { kind: about.entity.kind, id: about.entity.id },
+        open: open ? { id: open.id, arg: open.arg ?? "" } : undefined,
+      })
     }
     dialog.close()
     void run(e.id, e.arg)
