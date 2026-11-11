@@ -489,6 +489,8 @@ export function CommandPalette() {
         <div class="flex items-center justify-between gap-2">
           <SegmentedControl
             size="sm"
+            stretch
+            class="flex-1"
             aria-label="Search in"
             options={scopes.map((s) => ({ value: s.value, label: s.label, hint: s.prefix || undefined }))}
             value={scope()}
@@ -688,7 +690,7 @@ function Preview(props: {
   const hasStats = () => !!props.seen || !!props.entry.shortcut
   return (
     <aside class="flex w-72 shrink-0 flex-col gap-4 overflow-hidden p-1 text-sm">
-      <Card class="flex shrink-0 flex-col items-center px-4 pt-5 pb-4 text-center">
+      <Card nested class="flex shrink-0 flex-col items-center px-4 pt-5 pb-4 text-center">
         <Show
           when={thumb()}
           fallback={
@@ -700,12 +702,12 @@ function Preview(props: {
           {(t) => (
             <Show
               when={t().kind === "headshot"}
-              fallback={<Thumbnail class="size-20 rounded-lg" src={thumbUrl(t().kind, t().id)} alt="" />}
+              fallback={<Thumbnail class="size-20 rounded-lg" src={thumbUrl(t().kind, t().id, true)} alt="" />}
             >
               <Avatar
                 size="xl"
                 name={props.entry.title}
-                src={thumbUrl("headshot", t().id)}
+                src={thumbUrl("headshot", t().id, true)}
                 presence={props.person?.presence}
               />
             </Show>
