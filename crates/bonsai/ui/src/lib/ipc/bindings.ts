@@ -289,6 +289,7 @@ export const commands = {
 	 *  found `target` owns) and the look's body type, colors and scales on `target`.
 	 */
 	copyLook: (source: string, target: Id, wear: Id[]) => typedError<null, string>(__TAURI_INVOKE("copy_look", { source, target, wear })),
+	/**
 	 *  Which of your accounts are friends with `user_id` or share friends with them, using their
 	 *  friends as the active account has loaded them.
 	 */
@@ -564,9 +565,7 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "bookmarkFolder";
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "playtimeRange";
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "streamerDetect";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "bookmarkFolder" | "playtimeRange" | "streamerDetect";
 
 /**  What a plugin asks for, shown in Settings and the install dialog. */
 export type Asks = {
