@@ -1,4 +1,4 @@
-import type { Avatar3dView } from "~/lib/ipc/bindings"
+import type { Avatar3dView, PlacementView, Vec3, WornView } from "~/lib/ipc/bindings"
 
 /** The parts of the engine's `OutfitJson` we fill in. Kept here so this file and its tests
  * don't load the engine. */
@@ -28,7 +28,42 @@ export interface OutfitJson {
     leftLegColor3?: string
     rightLegColor3?: string
   }
-  assets: { id: number; name: string; assetType: { id: number }; meta?: { order: number } }[]
+  assets: { id: number; name: string; assetType: { id: number }; meta?: OutfitMeta }[]
+}
+
+/** Roblox's axis vectors are upper case. */
+interface Xyz {
+  X: number
+  Y: number
+  Z: number
+}
+
+/** Layer order of layered clothing, and how a rigid accessory is moved, turned (degrees) and
+ * sized. */
+export interface OutfitMeta {
+  version?: number
+  order?: number
+  position?: Xyz
+  rotation?: Xyz
+  scale?: Xyz
+}
+
+const xyz = (v: Vec3, neutral: number): Xyz => ({ X: v.x ?? neutral, Y: v.y ?? neutral, Z: v.z ?? neutral })
+
+const placementMeta = (p: PlacementView) => ({
+  version: 1,
+  position: xyz(p.position, 0),
+  rotation: xyz(p.rotation, 0),
+  scale: xyz(p.scale, 1),
+})
+
+/** The engine meta of a worn item; none when it has no layer or adjustment. */
+function assetMeta(a: WornView): OutfitMeta | undefined {
+  if (a.layer === null && !a.placement) return undefined
+  return {
+    ...(a.layer === null ? {} : { order: a.layer }),
+    ...(a.placement ? placementMeta(a.placement) : {}),
+  }
 }
 
 /** An item to wear on top of an avatar for Try On. */
@@ -74,12 +109,10 @@ export function toOutfitJson(view: Avatar3dView, colorHex: string[] = []): Outfi
           },
         }
       : {}),
-    assets: view.assets.map((a) => ({
-      id: a.id,
-      name: a.name,
-      assetType: { id: a.typeId },
-      ...(a.layer === null ? {} : { meta: { order: a.layer } }),
-    })),
+    assets: view.assets.map((a) => {
+      const meta = assetMeta(a)
+      return { id: a.id, name: a.name, assetType: { id: a.typeId }, ...(meta ? { meta } : {}) }
+    }),
   }
 }
 

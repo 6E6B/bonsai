@@ -486,6 +486,20 @@ export type ActivityView = {
 	robux: Id | null,
 };
 
+/**  How far accessories of one type can be adjusted. */
+export type AdjustRuleView = {
+	typeId: number,
+	min: PlacementView,
+	max: PlacementView,
+};
+
+/**  What one press of a slider moves, per group. */
+export type AdjustSteps = {
+	position: number | null,
+	rotation: number | null,
+	scale: number | null,
+};
+
 /**  Allied and enemy communities. */
 export type AffiliatesView = {
 	loading: boolean,
@@ -613,6 +627,9 @@ export type AvatarView = {
 	colors: PartColor[],
 	/**  The scales Roblox lets this account change. */
 	scales: ScaleView[],
+	/**  Accessory types that can be moved, turned and sized, with their bounds. */
+	adjustRules: AdjustRuleView[],
+	adjustSteps: AdjustSteps,
 	/**  Changes when the avatar was read again, so the preview image reloads. */
 	rev: number | null,
 };
@@ -1802,6 +1819,13 @@ export type PlaceCard = {
 	price: number | null,
 };
 
+/**  Position in studs, rotation in degrees, scale as a factor. */
+export type PlacementView = {
+	position: Vec3,
+	rotation: Vec3,
+	scale: Vec3,
+};
+
 export type PlaylistView = {
 	id: Id,
 	name: string,
@@ -2734,6 +2758,12 @@ export type VaultView = {
 	systemLockWarning: string | null,
 };
 
+export type Vec3 = {
+	x: number | null,
+	y: number | null,
+	z: number | null,
+};
+
 export type ViewButtonStyle = "default" | "primary" | "danger";
 
 /**  A table cell or stat value. Numbers are shown in the user's number format. */
@@ -2926,6 +2956,8 @@ export type WornView = {
 	r15Only: boolean,
 	/**  Layer of layered clothing; higher sits on top. */
 	layer: number | null,
+	/**  How a rigid accessory is moved, turned and sized; `None` when it is not adjusted. */
+	placement: PlacementView | null,
 };
 
 /* Tauri Specta runtime */

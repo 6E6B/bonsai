@@ -146,6 +146,8 @@ const noAvatar = (loading: boolean): AvatarView => ({
   emotes: [],
   colors: [],
   scales: [],
+  adjustRules: [],
+  adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
   rev: null,
 })
 

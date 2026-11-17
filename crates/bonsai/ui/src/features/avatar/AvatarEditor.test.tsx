@@ -39,6 +39,8 @@ vi.mock("~/lib/store", async () => {
             { part: "torso", label: "Torso", color: 2, hex: "#654321" },
           ],
           scales: [{ name: "height", label: "Height", value: 1, min: 0.9, max: 1.05, step: 0.01 }],
+          adjustRules: [],
+          adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
         }
       if (fetch === commands.outfits)
         return { list: list([{ id: "1", name: "Explorer", editable: true, rev: 1 }]), moreKey: "" }

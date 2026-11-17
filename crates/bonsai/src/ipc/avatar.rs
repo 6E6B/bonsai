@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use bonsai_core::avatar::{Look, Part, Rig, Scale};
+use bonsai_core::avatar::{Group, Look, Part, Placement, Rig, Scale, Worn};
 use bonsai_core::commands::CommandId;
 use bonsai_core::inventory::InvSlot;
 use bonsai_core::market::ItemRef;
@@ -28,6 +28,68 @@ pub struct WornView {
     pub r15_only: bool,
     /// Layer of layered clothing; higher sits on top.
     pub layer: Option<i32>,
+    /// How a rigid accessory is moved, turned and sized; `None` when it is not adjusted.
+    pub placement: Option<PlacementView>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+pub struct Vec3 {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+impl From<[f64; 3]> for Vec3 {
+    fn from([x, y, z]: [f64; 3]) -> Self {
+        Vec3 { x, y, z }
+    }
+}
+
+/// Position in studs, rotation in degrees, scale as a factor.
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+pub struct PlacementView {
+    pub position: Vec3,
+    pub rotation: Vec3,
+    pub scale: Vec3,
+}
+
+impl From<Placement> for PlacementView {
+    fn from(p: Placement) -> Self {
+        PlacementView {
+            position: p.position.into(),
+            rotation: p.rotation.into(),
+            scale: p.scale.into(),
+        }
+    }
+}
+
+/// How far accessories of one type can be adjusted.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AdjustRuleView {
+    pub type_id: i32,
+    pub min: PlacementView,
+    pub max: PlacementView,
+}
+
+/// What one press of a slider moves, per group.
+#[derive(Clone, Debug, Serialize, Type)]
+pub struct AdjustSteps {
+    pub position: f64,
+    pub rotation: f64,
+    pub scale: f64,
+}
+
+fn worn_view(a: &Worn) -> WornView {
+    WornView {
+        id: Id(a.id),
+        name: a.name.clone(),
+        type_id: a.type_id as i32,
+        type_name: a.type_name.clone(),
+        r15_only: bonsai_core::avatar::r15_only(a.type_id),
+        layer: a.layer,
+        placement: a.placement.map(Into::into),
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -43,6 +105,9 @@ pub struct AvatarView {
     pub colors: Vec<PartColor>,
     /// The scales Roblox lets this account change.
     pub scales: Vec<ScaleView>,
+    /// Accessory types that can be moved, turned and sized, with their bounds.
+    pub adjust_rules: Vec<AdjustRuleView>,
+    pub adjust_steps: AdjustSteps,
     /// Changes when the avatar was read again, so the preview image reloads.
     pub rev: f64,
 }
@@ -154,19 +219,7 @@ pub fn avatar(core: State<'_, Arc<Core>>) -> AvatarView {
         error: r.error.clone(),
         rig: look.map(|l| l.rig.clone()).unwrap_or_default(),
         wearing: look
-            .map(|l| {
-                l.assets
-                    .iter()
-                    .map(|a| WornView {
-                        id: Id(a.id),
-                        name: a.name.clone(),
-                        type_id: a.type_id as i32,
-                        type_name: a.type_name.clone(),
-                        r15_only: bonsai_core::avatar::r15_only(a.type_id),
-                        layer: a.layer,
-                    })
-                    .collect()
-            })
+            .map(|l| l.assets.iter().map(worn_view).collect())
             .unwrap_or_default(),
         emotes: look
             .map(|l| {
@@ -179,12 +232,31 @@ pub fn avatar(core: State<'_, Arc<Core>>) -> AvatarView {
                         type_name: format!("Slot {}", e.slot),
                         r15_only: false,
                         layer: None,
+                        placement: None,
                     })
                     .collect()
             })
             .unwrap_or_default(),
         colors,
         scales,
+        adjust_rules: rules
+            .as_deref()
+            .map(|r| {
+                r.placements
+                    .iter()
+                    .map(|p| AdjustRuleView {
+                        type_id: p.type_id as i32,
+                        min: p.min.into(),
+                        max: p.max.into(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
+        adjust_steps: AdjustSteps {
+            position: Group::Position.step(),
+            rotation: Group::Rotation.step(),
+            scale: Group::Scale.step(),
+        },
         rev: r.fetched_at as f64,
     }
 }
@@ -486,6 +558,11 @@ pub(super) fn run(
             };
             core.move_layer(a, asset, outward)
         })(),
+        CommandId::AdjustAccessory => (|| {
+            let a = need()?;
+            let (asset, adjust) = bonsai_core::avatar::placement::parse(arg.unwrap_or(""))?;
+            core.adjust_accessory(a, asset, adjust)
+        })(),
         CommandId::SetBodyColor => (|| {
             let a = need()?;
             let text = arg.ok_or("Which color?")?;
@@ -623,20 +700,12 @@ pub fn avatar_3d(core: State<'_, Arc<Core>>, source: AvatarSource) -> Avatar3dVi
 
 fn avatar_3d_view(r: Res<Look>) -> Avatar3dView {
     let look = r.data.as_deref();
-    let worn = |a: &bonsai_core::avatar::Worn| WornView {
-        id: Id(a.id),
-        name: a.name.clone(),
-        type_id: a.type_id as i32,
-        type_name: a.type_name.clone(),
-        r15_only: bonsai_core::avatar::r15_only(a.type_id),
-        layer: a.layer,
-    };
     Avatar3dView {
         loading: r.loading,
         error: r.error.clone(),
         rig: look.map(|l| l.rig.clone()).unwrap_or_default(),
         assets: look
-            .map(|l| l.assets.iter().map(worn).collect())
+            .map(|l| l.assets.iter().map(worn_view).collect())
             .unwrap_or_default(),
         emotes: look
             .map(|l| {
@@ -649,6 +718,7 @@ fn avatar_3d_view(r: Res<Look>) -> Avatar3dView {
                         type_name: "Emote".to_owned(),
                         r15_only: true,
                         layer: None,
+                        placement: None,
                     })
                     .collect()
             })

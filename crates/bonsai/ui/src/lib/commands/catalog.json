@@ -2539,6 +2539,25 @@
     },
     {
       "arg": "text",
+      "id": "avatar.adjust",
+      "keywords": [
+        "adjust",
+        "accessory",
+        "position",
+        "move",
+        "rotate",
+        "turn",
+        "tilt",
+        "size",
+        "resize",
+        "hat",
+        "offset",
+        "avatar"
+      ],
+      "title": "Adjust an accessory (item id, then position, rotation or scale values, reset, or match or mirror another item id)"
+    },
+    {
+      "arg": "text",
       "id": "avatar.scale",
       "keywords": [
         "height",

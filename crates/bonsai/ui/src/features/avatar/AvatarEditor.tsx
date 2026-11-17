@@ -12,6 +12,7 @@ import {
   type ScaleView,
   type SwatchView,
   type WardrobeSection,
+  type WornView,
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { itemMenu } from "~/lib/menus"
@@ -43,12 +44,15 @@ import {
   VirtualGrid,
 } from "~/lib/ui"
 
+import { Adjust } from "./Adjust"
+import { isAdjusted, resetArg, ruleFor } from "./adjust"
 import { matchesWear, named, sortOptions } from "./wardrobe"
 
 const WARDROBE = "wardrobe"
 const OUTFITS = "outfits"
 const RECENT = "recent"
 const BODY = "body"
+const ADJUST = "adjust"
 
 const sep: MenuEntry = { kind: "separator" }
 
@@ -75,6 +79,8 @@ export default function AvatarEditor() {
       emotes: [],
       colors: [],
       scales: [],
+      adjustRules: [],
+      adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
       rev: 0,
     }),
   )
@@ -89,7 +95,14 @@ export default function AvatarEditor() {
     { value: WARDROBE, label: "Wardrobe" },
     { value: OUTFITS, label: "Outfits" },
     { value: BODY, label: "Body" },
+    { value: ADJUST, label: "Adjust" },
   ]
+  // The accessory the Adjust tab edits.
+  const [adjusting, setAdjusting] = createSignal<number | null>(null)
+  const adjust = (id: number) => {
+    setAdjusting(id)
+    setSection(ADJUST)
+  }
   const [category, setCategory] = createSignal(RECENT)
   const categories = () => [
     { value: RECENT, label: "Recent" },
@@ -98,6 +111,7 @@ export default function AvatarEditor() {
   createEffect(() => {
     shell.active
     setSection(WARDROBE)
+    setAdjusting(null)
     setCategory(RECENT)
     setOutfitQuery("")
     setOutfitSort("default")
@@ -150,6 +164,10 @@ export default function AvatarEditor() {
   // Layered clothing outermost first, as it stacks; everything else after.
   const wearing = () =>
     [...view.wearing].sort((a, b) => (b.layer ?? Number.NEGATIVE_INFINITY) - (a.layer ?? Number.NEGATIVE_INFINITY))
+  const wornNote = (w: WornView) => {
+    if (view.rig === "R6" && w.r15Only) return `${w.typeName} · R15 only`
+    return isAdjusted(w.placement) ? `${w.typeName} · Adjusted` : w.typeName
+  }
   const preview = () => {
     const url = shell.active !== null ? thumbUrl("avatar", shell.active, true) : undefined
     return url && withRev(url, view.rev)
@@ -212,13 +230,24 @@ export default function AvatarEditor() {
                             },
                           ]
                         : []),
+                      ...(ruleFor(view, w.typeId)
+                        ? [
+                            { label: "Adjust…", icon: "settings" as const, onSelect: () => adjust(w.id) },
+                            menuItem("avatar.adjust", {
+                              arg: resetArg(w.id),
+                              label: "Reset adjustment",
+                              icon: "undo",
+                              disabled: !isAdjusted(w.placement),
+                            }),
+                          ]
+                        : []),
                     ],
                   })}
                 >
                   <ListItem
                     leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
                     title={<ItemName name={w.name} id={w.id} />}
-                    subtitle={view.rig === "R6" && w.r15Only ? `${w.typeName} · R15 only` : w.typeName}
+                    subtitle={wornNote(w)}
                     dim={view.rig === "R6" && w.r15Only}
                     onClick={() => run("market.open", String(w.id))}
                     actionsOnHover
@@ -389,6 +418,9 @@ export default function AvatarEditor() {
             </TabPanel>
             <TabPanel value={BODY}>
               <Body view={view} />
+            </TabPanel>
+            <TabPanel value={ADJUST}>
+              <Adjust view={view} selected={adjusting()} onSelect={setAdjusting} />
             </TabPanel>
           </Tabs>
           <Show when={sections.error}>{(e) => <span class="text-sm text-fg-muted">{e()}</span>}</Show>

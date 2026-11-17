@@ -16,6 +16,9 @@ use crate::market::ItemRef;
 use crate::res::{Key, Page, Res};
 use crate::thumbs::ThumbKind;
 
+pub mod placement;
+pub use placement::{Adjust, Group, Placement, PlacementRule};
+
 const AGE: i64 = 120;
 const RULES_AGE: i64 = 6 * 3_600;
 
@@ -38,6 +41,8 @@ pub struct Worn {
     pub type_name: String,
     /// Layer of layered clothing; higher sits on top.
     pub layer: Option<i32>,
+    /// How a rigid accessory is moved, turned and sized. `None` when it is not adjusted.
+    pub placement: Option<Placement>,
 }
 
 /// An equipped emote.
@@ -280,11 +285,18 @@ pub struct Rules {
     pub scales: Vec<ScaleRule>,
     /// Proportion and body type can be changed.
     pub proportions: bool,
+    /// Accessory types that can be moved, turned and sized, and how far.
+    pub placements: Vec<PlacementRule>,
 }
 
 impl Rules {
     pub fn scale(&self, s: Scale) -> Option<&ScaleRule> {
         self.scales.iter().find(|r| r.name == s.key())
+    }
+
+    /// How far an accessory of this type may be adjusted, if at all.
+    pub fn placement(&self, type_id: i64) -> Option<&PlacementRule> {
+        self.placements.iter().find(|r| r.type_id == type_id)
     }
 }
 
@@ -367,6 +379,7 @@ fn worn(assets: Option<Vec<avatar::v1::AssetModelV2>>) -> Vec<Worn> {
                 type_id: t.id.unwrap_or(0),
                 type_name: t.name.unwrap_or_default(),
                 layer: x.meta.as_ref().and_then(|m| m.order),
+                placement: placement::from_meta(x.meta.as_ref()),
             })
         })
         .collect()
@@ -422,6 +435,7 @@ fn scales_model(s: Scales) -> avatar::v1::ScaleModel {
 }
 
 fn rules(r: avatar::v1::AvatarRulesModel) -> Rules {
+    let placements = placement::rules(&r);
     let basic: Vec<i32> = r
         .basic_body_colors_palette
         .unwrap_or_default()
@@ -476,6 +490,7 @@ fn rules(r: avatar::v1::AvatarRulesModel) -> Rules {
             .collect(),
         scales,
         proportions: r.proportions_and_body_type_enabled_for_user.unwrap_or(true),
+        placements,
     }
 }
 
@@ -691,6 +706,14 @@ fn rgb_outfit_look(o: avatar::v3::OutfitDetailsModelV2) -> Look {
 }
 
 /// The avatar images are rendered again after a change; drop ours so they reload.
+fn not_adjustable(type_name: &str) -> String {
+    if type_name.is_empty() {
+        "Roblox does not allow adjusting that item.".into()
+    } else {
+        format!("Roblox does not allow adjusting {type_name} items.")
+    }
+}
+
 fn forget_images(inner: &Inner, user: u64) {
     inner.forget_thumbs(&[ThumbKind::Avatar, ThumbKind::Headshot], user);
 }
@@ -1042,6 +1065,98 @@ impl Core {
         Ok(())
     }
 
+    /// Move, turn or size a worn accessory, within the bounds Roblox allows its type.
+    ///
+    /// The write reads the avatar and the rules again first, applies the change to what is worn
+    /// now, and reads the avatar back afterwards to report a placement Roblox changed.
+    pub fn adjust_accessory(&self, account: AccountId, asset: u64, adjust: Adjust) -> Result<(), String> {
+        let rules = self
+            .avatar_rules()
+            .data
+            .ok_or("The avatar rules have not loaded yet.")?;
+        if let Some(look) = self.avatar(account).data {
+            let find = |id: u64| look.assets.iter().find(|a| a.id == id);
+            let item = find(asset).ok_or("That item is not worn.")?;
+            let rule = rules
+                .placement(item.type_id)
+                .ok_or_else(|| not_adjustable(&item.type_name))?;
+            let source = match adjust.source() {
+                Some(from) => Some(
+                    find(from)
+                        .ok_or("The item to copy from is not worn.")?
+                        .placement
+                        .unwrap_or_default(),
+                ),
+                None => None,
+            };
+            placement::apply(item.placement.unwrap_or_default(), &adjust, source, rule)?;
+        } else if let Adjust::Set(values) = &adjust
+            && values.iter().any(|v| !v.2.is_finite())
+        {
+            return Err("Not a number.".into());
+        }
+        self.inner.mutate(
+            account,
+            "adjust the accessory",
+            "",
+            &[Effect::Avatar],
+            move |f| async move {
+                let allowed = placement::rules(&avatar::v1::get_avatar_rules(&f.client).await?);
+                let now = avatar::v1::get_avatar(&f.client).await?;
+                let mut assets = now.assets.unwrap_or_default();
+                let at = |assets: &[avatar::v1::AssetModelV2], id: u64| {
+                    assets.iter().position(|a| a.id == Some(id as i64))
+                };
+                let i = at(&assets, asset)
+                    .ok_or_else(|| Error::Message("That item is no longer worn.".into()))?;
+                let item = &assets[i];
+                let name = item.name.clone().unwrap_or_else(|| "the accessory".into());
+                let ty = item.asset_type.clone().unwrap_or_default();
+                let rule = allowed
+                    .iter()
+                    .find(|r| Some(r.type_id) == ty.id)
+                    .ok_or_else(|| Error::Message(not_adjustable(ty.name.as_deref().unwrap_or(""))))?;
+                let stored = placement::from_meta(item.meta.as_ref());
+                let current = stored.unwrap_or_default();
+                let source = match adjust.source() {
+                    Some(from) => {
+                        let j = at(&assets, from).ok_or_else(|| {
+                            Error::Message("The item to copy from is no longer worn.".into())
+                        })?;
+                        Some(placement::from_meta(assets[j].meta.as_ref()).unwrap_or_default())
+                    }
+                    None => None,
+                };
+                let next = placement::apply(current, &adjust, source, rule).map_err(Error::Message)?;
+                if next.same(&current) && (stored.is_some() || next.is_default()) {
+                    return Ok(());
+                }
+                let meta = assets[i].meta.take();
+                assets[i].meta = Some(placement::to_meta(meta, next));
+                set_wearing(&f.client, wear_list(assets)).await?;
+                forget_images(&f.inner, account.0);
+
+                let after = avatar::v1::get_avatar(&f.client)
+                    .await?
+                    .assets
+                    .unwrap_or_default();
+                let note = match after.iter().find(|a| a.id == Some(asset as i64)) {
+                    None => Some(format!("Roblox took off {name}.")),
+                    Some(a) => {
+                        let got = placement::from_meta(a.meta.as_ref()).unwrap_or_default();
+                        (!got.same(&next))
+                            .then(|| format!("Roblox placed {name} at {}.", placement::describe(&got)))
+                    }
+                };
+                if let Some(note) = note {
+                    f.inner.toast(Some(account), note, true);
+                }
+                Ok(())
+            },
+        );
+        Ok(())
+    }
+
     /// Paint `parts` (every part when empty) using a palette color without rounding
     /// untouched custom RGB colors back to BrickColor ids.
     pub fn set_body_color(&self, account: AccountId, parts: Vec<Part>, color: i32) -> Result<(), String> {
@@ -1321,6 +1436,28 @@ mod tests {
         let w = wear_list(vec![a]);
         let m = w[0].meta.as_ref().unwrap();
         assert_eq!((w[0].id, m.order, m.puffiness), (Some(5), Some(3), Some(0.5)));
+    }
+
+    #[test]
+    fn carries_placement_to_the_wear_request() {
+        let mut a = worn(5, 8);
+        let p = Placement {
+            position: [0.1, 0.0, -0.05],
+            rotation: [0.0, 12.5, 0.0],
+            scale: [1.1, 1.1, 1.1],
+        };
+        a.meta = Some(placement::to_meta(None, p));
+        assert_eq!(super::worn(Some(vec![a.clone()]))[0].placement, Some(p));
+        let w = serde_json::to_value(wear_list(vec![a])).unwrap();
+        assert_eq!(
+            w[0]["meta"],
+            serde_json::json!({
+                "position": {"X": 0.1, "Y": 0.0, "Z": -0.05},
+                "rotation": {"X": 0.0, "Y": 12.5, "Z": 0.0},
+                "scale": {"X": 1.1, "Y": 1.1, "Z": 1.1},
+                "version": 1,
+            })
+        );
     }
 }
 
