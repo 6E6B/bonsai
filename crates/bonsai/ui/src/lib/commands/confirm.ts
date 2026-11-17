@@ -143,7 +143,7 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
   "avatar.delete_outfit": () => ({ title: "Delete this outfit?", confirm: "Delete", danger: true }),
   "avatar.update_outfit": () => ({
     title: "Replace this outfit?",
-    description: "It gets what you wear now. Its name stays.",
+    description: "It gets the edited look. Its name stays.",
     confirm: "Replace",
   }),
   "user.unblock": () => ({ title: "Unblock this user?", confirm: "Unblock" }),

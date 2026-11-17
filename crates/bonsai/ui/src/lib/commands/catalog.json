@@ -2460,10 +2460,87 @@
       "keywords": [
         "outfit",
         "save",
+        "save as",
+        "new",
         "create",
         "avatar"
       ],
-      "title": "Save current look as an outfit"
+      "title": "Save the edited look as a new outfit"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.try",
+      "keywords": [
+        "try",
+        "wear",
+        "equip",
+        "remove",
+        "take off",
+        "draft",
+        "avatar"
+      ],
+      "title": "Put an item on or take it off in the avatar editor"
+    },
+    {
+      "arg": "outfit",
+      "id": "avatar.load_outfit",
+      "keywords": [
+        "outfit",
+        "edit",
+        "open",
+        "load",
+        "draft",
+        "avatar"
+      ],
+      "title": "Open an outfit in the avatar editor"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.apply",
+      "keywords": [
+        "wear",
+        "apply",
+        "put on",
+        "look",
+        "draft",
+        "avatar"
+      ],
+      "title": "Wear the edited look"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.undo",
+      "keywords": [
+        "undo",
+        "back",
+        "draft",
+        "avatar"
+      ],
+      "title": "Undo the last avatar edit"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.redo",
+      "keywords": [
+        "redo",
+        "again",
+        "draft",
+        "avatar"
+      ],
+      "title": "Redo an undone avatar edit"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.revert",
+      "keywords": [
+        "revert",
+        "discard",
+        "reset",
+        "cancel",
+        "draft",
+        "avatar"
+      ],
+      "title": "Revert avatar edits to what you are wearing"
     },
     {
       "arg": "text",
@@ -2475,7 +2552,7 @@
         "body",
         "avatar"
       ],
-      "title": "Switch body type (R6 or R15)"
+      "title": "Switch body type in the avatar editor (R6 or R15)"
     },
     {
       "arg": "outfit",
@@ -2487,7 +2564,7 @@
         "save",
         "avatar"
       ],
-      "title": "Update outfit with current look"
+      "title": "Update outfit with the edited look"
     },
     {
       "arg": "text",
@@ -2573,32 +2650,6 @@
         "avatar"
       ],
       "title": "Pick the 3D adjust handle (move, turn or size)"
-    },
-    {
-      "arg": "none",
-      "id": "avatar.adjust_undo",
-      "keywords": [
-        "undo",
-        "adjust",
-        "accessory",
-        "position",
-        "back",
-        "avatar"
-      ],
-      "title": "Undo the last accessory adjustment"
-    },
-    {
-      "arg": "none",
-      "id": "avatar.adjust_redo",
-      "keywords": [
-        "redo",
-        "adjust",
-        "accessory",
-        "position",
-        "again",
-        "avatar"
-      ],
-      "title": "Redo an undone accessory adjustment"
     },
     {
       "arg": "text",

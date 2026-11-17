@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { AvatarViewer } from "~/lib/avatar3d/viewer"
 import { useSubTabs } from "~/lib/commands/hooks"
 import { isRunning, menuItem, run } from "~/lib/commands/registry"
@@ -21,6 +21,7 @@ import { shell, useLive } from "~/lib/store"
 import { thumbUrl, withRev } from "~/lib/thumb"
 import { ItemName, ItemTile, SoundHatBadge, TILE_WIDTH } from "~/lib/tiles"
 import {
+  Badge,
   Button,
   ColorPicker,
   ContextMenu,
@@ -65,12 +66,13 @@ const outfitImage = (o: OutfitView) => {
 /** Asset type id of an inventory slot key (`a<type>`). */
 const slotType = (slot: string) => (slot.startsWith("a") ? slot.slice(1) : "")
 
-/** Avatar editor: preview on the left, wardrobe on the right. Clicking an item wears or
- * removes it; a full slot swaps its oldest item out. */
+/** Avatar editor: preview on the left, wardrobe on the right. Clicking an item puts it on or
+ * takes it off the edited look; a full slot swaps its oldest item out. Nothing changes on
+ * Roblox until the look is worn. */
 export default function AvatarEditor() {
   const view = useLive(
     () => shell.active,
-    commands.avatar,
+    () => commands.avatar(true),
     (): AvatarView => ({
       loading: true,
       error: null,
@@ -82,6 +84,12 @@ export default function AvatarEditor() {
       adjustRules: [],
       adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
       rev: 0,
+      edited: false,
+      outfit: null,
+      outfitEdited: false,
+      loadingOutfit: false,
+      canUndo: false,
+      canRedo: false,
     }),
   )
   const outfits = useLive(
@@ -127,11 +135,35 @@ export default function AvatarEditor() {
     const name = await prompt({ title: "Rename outfit", label: "Name", initial: o.name, submit: "Rename" })
     if (name?.trim() && name.trim() !== o.name) void run("avatar.rename_outfit", `${o.id} ${name.trim()}`)
   }
+  // Ctrl+S updates the outfit the look came from, or saves a new one.
+  const save = () => {
+    const o = view.outfit
+    if (o && view.outfitEdited) void run("avatar.update_outfit", o.id)
+    else if (!o) void saveOutfit()
+  }
+  const onKey = (e: KeyboardEvent) => {
+    const t = e.target
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+    if (t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA"].includes(t.tagName))) return
+    const key = e.key.toLowerCase()
+    if (key === "enter") void run("avatar.apply")
+    else if (key === "s") save()
+    else if (key === "y" || (key === "z" && e.shiftKey)) void run("avatar.redo")
+    else if (key === "z") void run("avatar.undo")
+    else return
+    e.preventDefault()
+  }
+  window.addEventListener("keydown", onKey)
+  onCleanup(() => window.removeEventListener("keydown", onKey))
+  const saveMenu = (): MenuEntry[] => [
+    { label: "Save as new outfit…", icon: "plus", onSelect: () => void saveOutfit() },
+  ]
   const outfitMenu = (o: OutfitView): MenuEntry[] => [
-    menuItem("avatar.outfit", { arg: o.id, label: "Wear", icon: "avatar" }),
+    menuItem("avatar.load_outfit", { arg: o.id, label: "Open in editor", icon: "edit" }),
+    menuItem("avatar.outfit", { arg: o.id, label: "Wear now", icon: "avatar" }),
     menuItem("avatar.update_outfit", {
       arg: o.id,
-      label: "Replace with current look",
+      label: "Replace with edited look",
       icon: "refresh",
       disabled: !o.editable,
     }),
@@ -175,14 +207,75 @@ export default function AvatarEditor() {
 
   return (
     <Page>
+      <div class="mb-4 flex flex-wrap items-center gap-2">
+        <span class="truncate font-semibold">{view.outfit?.name ?? "Your avatar"}</span>
+        <Show when={view.loadingOutfit}>
+          <span class="text-sm text-fg-muted">Loading outfit…</span>
+        </Show>
+        <Show when={view.edited}>
+          <Badge>Not worn</Badge>
+        </Show>
+        <Show when={view.outfit && view.outfitEdited}>
+          <span class="text-sm text-fg-muted">Edited</span>
+        </Show>
+        <span class="flex-1" />
+        <IconButton
+          size="sm"
+          icon="undo"
+          label="Undo (Ctrl+Z)"
+          disabled={!view.canUndo}
+          onClick={() => void run("avatar.undo")}
+        />
+        <IconButton
+          size="sm"
+          icon="redo"
+          label="Redo (Ctrl+Shift+Z)"
+          disabled={!view.canRedo}
+          onClick={() => void run("avatar.redo")}
+        />
+        <Button size="sm" disabled={!view.edited && !view.outfit} onClick={() => void run("avatar.revert")}>
+          Revert
+        </Button>
+        <Show
+          when={view.outfit}
+          fallback={
+            <Button size="sm" icon="plus" onClick={saveOutfit}>
+              Save as outfit
+            </Button>
+          }
+        >
+          {(o) => (
+            <>
+              <Button
+                size="sm"
+                disabled={!view.outfitEdited}
+                loading={isRunning("avatar.update_outfit", o().id)}
+                onClick={() => void run("avatar.update_outfit", o().id)}
+              >
+                Update “{o().name}”
+              </Button>
+              <Menu size="sm" icon="chevron-down" label="More save options" items={saveMenu()} />
+            </>
+          )}
+        </Show>
+        <Button
+          size="sm"
+          variant="primary"
+          disabled={!view.edited}
+          loading={isRunning("avatar.apply")}
+          onClick={() => void run("avatar.apply")}
+        >
+          Wear
+        </Button>
+      </div>
       <div class="flex flex-col items-start gap-6 lg:flex-row">
         {/* Adjust draws the avatar large itself; only one viewer shows the 3D model. */}
         <Show when={section() !== ADJUST}>
           <aside class="flex w-64 max-w-full shrink-0 flex-col gap-3 lg:sticky lg:top-4">
             <AvatarViewer
               colorHex={view.colors.map((c) => c.hex)}
-              source={{ kind: "me" }}
-              image={preview()}
+              source={{ kind: "draft" }}
+              image={view.edited ? undefined : preview()}
               alt="Your avatar"
               menu={previewMenu()}
               controls
@@ -199,8 +292,8 @@ export default function AvatarEditor() {
                 size="sm"
                 label="Outfits"
                 items={[
-                  { kind: "heading", label: "Wear outfit" },
-                  ...outfits.list.items.map((o) => menuItem("avatar.outfit", { arg: o.id, label: o.name })),
+                  { kind: "heading", label: "Open outfit" },
+                  ...outfits.list.items.map((o) => menuItem("avatar.load_outfit", { arg: o.id, label: o.name })),
                 ]}
               >
                 Outfits
@@ -214,7 +307,7 @@ export default function AvatarEditor() {
                   <ContextMenu
                     items={itemMenu(w.id, false, w.typeId, {
                       actions: [
-                        menuItem("avatar.wear", { arg: `${w.id}:${w.typeId}`, label: "Take off", icon: "x" }),
+                        menuItem("avatar.try", { arg: `${w.id}:${w.typeId}`, label: "Take off", icon: "x" }),
                         ...(w.layer !== null && layered() > 1
                           ? [
                               {
@@ -273,8 +366,7 @@ export default function AvatarEditor() {
                             size="sm"
                             icon="x"
                             label="Take off"
-                            loading={isRunning("avatar.wear", `${w.id}:${w.typeId}`)}
-                            onClick={() => run("avatar.wear", `${w.id}:${w.typeId}`)}
+                            onClick={() => run("avatar.try", `${w.id}:${w.typeId}`)}
                           />
                         </>
                       }
@@ -326,18 +418,13 @@ export default function AvatarEditor() {
             value={section()}
             onChange={setSection}
             actions={
-              <>
-                <IconButton
-                  size="sm"
-                  icon="refresh"
-                  label="Redraw avatar image"
-                  loading={isRunning("avatar.redraw")}
-                  onClick={() => run("avatar.redraw")}
-                />
-                <Button size="sm" icon="plus" onClick={saveOutfit}>
-                  Save as outfit
-                </Button>
-              </>
+              <IconButton
+                size="sm"
+                icon="refresh"
+                label="Redraw avatar image"
+                loading={isRunning("avatar.redraw")}
+                onClick={() => run("avatar.redraw")}
+              />
             }
           >
             <TabPanel value={OUTFITS}>
@@ -396,7 +483,9 @@ export default function AvatarEditor() {
                             subtitle={o.editable ? undefined : "From a bundle"}
                             src={outfitImage(o)}
                             fallback="avatar"
-                            onClick={() => run("avatar.outfit", o.id)}
+                            selected={view.outfit?.id === o.id}
+                            onClick={() => run("avatar.load_outfit", o.id)}
+                            onDblClick={() => run("avatar.outfit", o.id)}
                           />
                         </ContextMenu>
                       )}
@@ -530,10 +619,10 @@ function Section(props: { section: WardrobeSection; worn: number[] }) {
                   <ItemTile
                     item={i}
                     selected={props.worn.includes(i.id)}
-                    onClick={() => run("avatar.wear", `${i.id}:${i.assetType || slotType(slot())}`)}
+                    onClick={() => run("avatar.try", `${i.id}:${i.assetType || slotType(slot())}`)}
                     menu={{
                       actions: [
-                        menuItem("avatar.wear", {
+                        menuItem("avatar.try", {
                           arg: `${i.id}:${i.assetType || slotType(slot())}`,
                           icon: "avatar",
                           label: props.worn.includes(i.id) ? "Take off" : "Wear",
@@ -551,7 +640,7 @@ function Section(props: { section: WardrobeSection; worn: number[] }) {
   )
 }
 
-/** Items and outfits worn lately. Clicking wears them again. */
+/** Items and outfits worn lately. Clicking puts them on the edited look again. */
 function Recent() {
   const recent = useLive(() => shell.active, commands.recentItems, emptyList<RecentView>)
   const [query, setQuery] = createSignal("")
@@ -564,7 +653,8 @@ function Recent() {
       sort(),
     ),
   )
-  const wear = (r: RecentView) => (r.outfit ? run("avatar.outfit", r.id) : run("avatar.wear", `${r.id}:${r.typeId}`))
+  const wear = (r: RecentView) =>
+    r.outfit ? run("avatar.load_outfit", r.id) : run("avatar.try", `${r.id}:${r.typeId}`)
   return (
     <div class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
@@ -614,12 +704,15 @@ function Recent() {
               <ContextMenu
                 items={
                   r.outfit
-                    ? [menuItem("avatar.outfit", { arg: r.id, label: "Wear", icon: "avatar" })]
+                    ? [
+                        menuItem("avatar.load_outfit", { arg: r.id, label: "Open in editor", icon: "edit" }),
+                        menuItem("avatar.outfit", { arg: r.id, label: "Wear now", icon: "avatar" }),
+                      ]
                     : itemMenu(Number(r.id), false, r.typeId, {
                         actions: [
-                          menuItem("avatar.wear", {
+                          menuItem("avatar.try", {
                             arg: `${r.id}:${r.typeId}`,
-                            label: "Wear or take off",
+                            label: "Put on or take off",
                             icon: "avatar",
                           }),
                         ],
@@ -804,7 +897,7 @@ function Body(props: { view: AvatarView }) {
 }
 
 function ScaleSlider(props: { scale: ScaleView; disabled: boolean }) {
-  // Follows the slider while dragging; the avatar catches up after the write.
+  // Follows the slider while dragging; the avatar catches up when the edit lands.
   const [value, setValue] = createSignal(props.scale.value ?? 0)
   createEffect(() => setValue(props.scale.value ?? 0))
   return (

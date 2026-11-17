@@ -2,17 +2,12 @@ import { describe, expect, it } from "vitest"
 import type { AvatarView, WornView } from "~/lib/ipc/bindings"
 import {
   adjustable,
-  changes,
   copyArg,
   DEFAULT_PLACEMENT,
-  EMPTY_HISTORY,
   formatValue,
   isAdjusted,
-  type Placement,
   parseTool,
   placementArg,
-  record,
-  replay,
   resetArg,
   ruleFor,
   setArg,
@@ -43,6 +38,12 @@ const view = (): AvatarView => ({
   adjustRules: [rule(8), rule(46)],
   adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
   rev: 0,
+  edited: false,
+  outfit: null,
+  outfitEdited: false,
+  loadingOutfit: false,
+  canUndo: false,
+  canRedo: false,
 })
 
 describe("adjust", () => {
@@ -89,38 +90,5 @@ describe("adjust", () => {
     expect(parseTool("move")).toBe("move")
     expect(parseTool("fly")).toBeUndefined()
     expect(parseTool(null)).toBeUndefined()
-  })
-
-  it("undoes and redoes saved changes", () => {
-    const a = toPlacement(null)
-    const b = withAxis(a, "position", "x", 0.1)
-    const c = withAxis(b, "scale", "y", 1.2)
-    const steps = (from: Placement, to: Placement, id = 1) => changes(new Map([[id, from]]), new Map([[id, to]]))
-    expect(changes(new Map(), new Map([[1, a]]))).toEqual([])
-
-    let h = record(record(EMPTY_HISTORY, steps(a, b)), steps(b, c))
-    expect(h.undo).toHaveLength(2)
-
-    const u = replay(h, "undo")
-    expect(u?.placement).toEqual(b)
-    h = u?.history ?? h
-    // The undo's own save is not a new step.
-    h = record(h, steps(c, b))
-    expect(h).toEqual({
-      undo: [{ id: 1, before: a, after: b }],
-      redo: [{ id: 1, before: b, after: c }],
-      replaying: null,
-    })
-
-    const r = replay(h, "redo")
-    expect(r?.placement).toEqual(c)
-    h = record(r?.history ?? h, steps(b, c))
-    expect(h.undo).toHaveLength(2)
-    expect(replay(h, "redo")).toBeNull()
-
-    // A new change clears what could be redone.
-    h = record(replay(h, "undo")?.history ?? h, steps(c, b))
-    h = record(h, steps(b, a, 2))
-    expect(h.redo).toEqual([])
   })
 })

@@ -256,7 +256,11 @@ export const commands = {
 	discover: (device: string, country: string) => __TAURI_INVOKE<DiscoverView>("discover", { device, country }),
 	/**  Every game in one chart ("See all"). */
 	discoverChart: (sortId: string, device: string, country: string) => __TAURI_INVOKE<ChartPage>("discover_chart", { sortId, device, country }),
-	avatar: () => __TAURI_INVOKE<AvatarView>("avatar"),
+	/**
+	 *  The active account's avatar: the look being edited when `edited`, otherwise what is worn
+	 *  on Roblox now.
+	 */
+	avatar: (edited: boolean) => __TAURI_INVOKE<AvatarView>("avatar", { edited }),
 	outfits: () => __TAURI_INVOKE<Paged<OutfitView>>("outfits"),
 	wardrobe: () => __TAURI_INVOKE<List<WardrobeSection>>("wardrobe"),
 	/**  Body colors to pick from, basic ones first. */
@@ -611,6 +615,8 @@ export type Avatar3dView = {
 export type AvatarSource = 
 /**  The active account's avatar. */
 { kind: "me" } | 
+/**  The look being edited in the avatar editor. */
+{ kind: "draft" } | 
 /**  A user's current avatar. Public. */
 { kind: "user"; id: Id } | 
 /**  A saved outfit. Public. The id is a string because outfit ids can exceed 2^53. */
@@ -632,6 +638,16 @@ export type AvatarView = {
 	adjustSteps: AdjustSteps,
 	/**  Changes when the avatar was read again, so the preview image reloads. */
 	rev: number | null,
+	/**  The look differs from what is worn on Roblox. */
+	edited: boolean,
+	/**  The saved outfit the look started from. */
+	outfit: DraftOutfitView | null,
+	/**  The look differs from that outfit. */
+	outfitEdited: boolean,
+	/**  An outfit is still loading into the editor. */
+	loadingOutfit: boolean,
+	canUndo: boolean,
+	canRedo: boolean,
 };
 
 /**  The app background picture and how see-through things are over it. */
@@ -1009,6 +1025,12 @@ export type DiscoverView = {
 	charts: ChartView[],
 	more: boolean,
 	moreKey: string,
+};
+
+export type DraftOutfitView = {
+	/**  Outfit ids can pass 2^53. */
+	id: string,
+	name: string,
 };
 
 export type DraftView = {

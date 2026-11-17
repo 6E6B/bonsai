@@ -149,6 +149,12 @@ const noAvatar = (loading: boolean): AvatarView => ({
   adjustRules: [],
   adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
   rev: null,
+  edited: false,
+  outfit: null,
+  outfitEdited: false,
+  loadingOutfit: false,
+  canUndo: false,
+  canRedo: false,
 })
 
 /** The active account's avatar and wardrobe, to wear and take off items from its own
@@ -156,7 +162,7 @@ const noAvatar = (loading: boolean): AvatarView => ({
 function useWardrobe(own: () => boolean) {
   const avatar = useLive(
     () => (own() ? shell.active : null),
-    (me) => (me !== null ? commands.avatar() : Promise.resolve(noAvatar(false))),
+    (me) => (me !== null ? commands.avatar(false) : Promise.resolve(noAvatar(false))),
     () => noAvatar(true),
   )
   const sections = useLive(

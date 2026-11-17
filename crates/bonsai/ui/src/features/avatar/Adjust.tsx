@@ -20,17 +20,13 @@ import {
 
 import {
   adjustable,
-  changes,
   copyArg,
-  EMPTY_HISTORY,
   formatValue,
   GROUPS,
   isAdjusted,
   type Placement,
   parseTool,
   placementArg,
-  record,
-  replay,
   resetArg,
   ruleFor,
   type Tool,
@@ -44,12 +40,12 @@ const TOOL_OPTIONS = [
   { value: "size", label: "Size", hint: "R" },
 ]
 
-/** How long to wait for the saved look after a write finishes before dropping the draft. */
+/** How long to wait for the edited look after a change before dropping the dragged placement. */
 const SETTLE_MS = 400
 
 /**
  * Moving, turning and sizing worn accessories within the bounds Roblox sets per type. The
- * avatar shows each change as it is dragged; it is saved when the drag ends.
+ * avatar shows each change as it is dragged; it goes into the edited look when the drag ends.
  */
 export function Adjust(props: {
   view: AvatarView
@@ -110,39 +106,6 @@ export function Adjust(props: {
     })
   }
 
-  // Every saved change while this tab is open, from the handle, sliders, menus or command bar.
-  const [history, setHistory] = createSignal(EMPTY_HISTORY)
-  let last = new Map<number, Placement>()
-  createEffect(() => {
-    const now = new Map(items().map((w) => [w.id, toPlacement(w.placement)]))
-    const steps = changes(last, now)
-    last = now
-    if (steps.length) setHistory((h) => record(h, steps))
-  })
-  const step = (dir: "undo" | "redo") => {
-    const r = replay(history(), dir)
-    if (!r || !items().some((w) => w.id === r.id)) return
-    setHistory(r.history)
-    props.onSelect(r.id)
-    commit(r.id, r.placement)
-  }
-  onCleanup(handle("avatar.adjust_undo", () => step("undo")))
-  onCleanup(handle("avatar.adjust_redo", () => step("redo")))
-  const onKey = (e: KeyboardEvent) => {
-    const t = e.target
-    if (!(e.ctrlKey || e.metaKey) || e.altKey) return
-    if (t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA"].includes(t.tagName))) return
-    const key = e.key.toLowerCase()
-    const id =
-      key === "y" || (key === "z" && e.shiftKey) ? "avatar.adjust_redo" : key === "z" ? "avatar.adjust_undo" : null
-    if (!id) return
-    e.preventDefault()
-    void run(id)
-  }
-  // While this tab is open, Ctrl+Z means undo an adjustment, unless a text field has focus.
-  window.addEventListener("keydown", onKey)
-  onCleanup(() => window.removeEventListener("keydown", onKey))
-
   return (
     <Show
       when={current()}
@@ -174,7 +137,7 @@ export function Adjust(props: {
             <AvatarViewer
               stage
               class="h-[28rem] w-full"
-              source={{ kind: "me" }}
+              source={{ kind: "draft" }}
               colorHex={props.view.colors.map((c) => c.hex)}
               image={props.image}
               alt="Your avatar"
@@ -212,8 +175,8 @@ export function Adjust(props: {
                   item={item()}
                   rule={r()}
                   others={items()}
-                  canUndo={history().undo.length > 0}
-                  canRedo={history().redo.length > 0}
+                  canUndo={props.view.canUndo}
+                  canRedo={props.view.canRedo}
                   steps={props.view.adjustSteps}
                   placement={shown()}
                   onChange={(p) => change(item().id, p)}
@@ -262,14 +225,14 @@ function Editor(props: {
             icon="undo"
             label="Undo (Ctrl+Z)"
             disabled={!props.canUndo}
-            onClick={() => void run("avatar.adjust_undo")}
+            onClick={() => void run("avatar.undo")}
           />
           <IconButton
             size="sm"
             icon="redo"
             label="Redo (Ctrl+Shift+Z)"
             disabled={!props.canRedo}
-            onClick={() => void run("avatar.adjust_redo")}
+            onClick={() => void run("avatar.redo")}
           />
           <span class="flex-1" />
           <Menu size="sm" icon="copy" label="Copy placement" items={copyMenu()}>
@@ -318,8 +281,8 @@ function Editor(props: {
         )}
       </For>
       <p class="text-xs text-fg-muted">
-        Drag the handle on the avatar or a slider; the change saves when you let go. Ctrl+Z undoes it. Roblox limits
-        each axis by accessory type.
+        Drag the handle on the avatar or a slider. Changes stay in the editor until you wear them. Roblox limits each
+        axis by accessory type.
       </p>
     </section>
   )

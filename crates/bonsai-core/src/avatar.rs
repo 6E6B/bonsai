@@ -16,7 +16,9 @@ use crate::market::ItemRef;
 use crate::res::{Key, Page, Res};
 use crate::thumbs::ThumbKind;
 
+pub mod draft;
 pub mod placement;
+pub use draft::{DraftOutfit, DraftState};
 pub use placement::{Adjust, Group, Placement, PlacementRule};
 
 const AGE: i64 = 120;
@@ -46,6 +48,9 @@ pub struct Worn {
     pub layer: Option<i32>,
     /// How a rigid accessory is moved, turned and sized. `None` when it is not adjusted.
     pub placement: Option<Placement>,
+    /// Everything Roblox stores about how it is worn (puffiness, version), kept so a write
+    /// sends it back unchanged.
+    pub meta: Option<avatar::v1::AssetMetaModelV1>,
 }
 
 /// An equipped emote.
@@ -383,6 +388,7 @@ fn worn(assets: Option<Vec<avatar::v1::AssetModelV2>>) -> Vec<Worn> {
                 type_name: t.name.unwrap_or_default(),
                 layer: x.meta.as_ref().and_then(|m| m.order),
                 placement: placement::from_meta(x.meta.as_ref()),
+                meta: x.meta,
             })
         })
         .collect()
@@ -943,53 +949,6 @@ impl Core {
                         ..Default::default()
                     },
                 );
-                Ok(())
-            },
-        );
-    }
-
-    /// Save what `account` wears now as a new outfit.
-    #[allow(deprecated)]
-    pub fn save_outfit(&self, account: AccountId, name: &str) -> Result<(), String> {
-        let name = name.trim().to_string();
-        if name.is_empty() {
-            return Err("Give the outfit a name.".into());
-        }
-        self.inner.mutate(
-            account,
-            "save the outfit",
-            "Outfit saved.",
-            &[Effect::Outfits],
-            move |f| async move {
-                let now = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
-                avatar::v3::post_outfits_create(&f.client, &Default::default(), &current_look(now, name))
-                    .await?;
-                Ok(())
-            },
-        );
-        Ok(())
-    }
-
-    /// Replace what `outfit` holds with what `account` wears now. Keeps its name.
-    #[allow(deprecated)]
-    pub fn update_outfit(&self, account: AccountId, outfit: u64) {
-        self.inner.mutate(
-            account,
-            "update the outfit",
-            "Outfit updated.",
-            &[Effect::Outfits],
-            move |f| async move {
-                let o = rgb_outfit(&f.client, outfit).await?;
-                let now = avatar::v2::get_avatar_users_by_user_id_avatar(&f.client, account.0 as i64).await?;
-                let body = current_look(now, o.name.unwrap_or_default());
-                avatar::v3::patch_outfits_by_user_outfit_id(
-                    &f.client,
-                    outfit as i64,
-                    &Default::default(),
-                    &body,
-                )
-                .await?;
-                forget_outfit_image(&f.inner, outfit);
                 Ok(())
             },
         );
