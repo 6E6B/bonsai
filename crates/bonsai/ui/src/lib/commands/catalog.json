@@ -263,6 +263,22 @@
     },
     {
       "arg": "none",
+      "id": "account.export",
+      "keywords": [
+        "backup",
+        "export",
+        "save",
+        "download",
+        "friends",
+        "outfits",
+        "inventory",
+        "json",
+        "csv"
+      ],
+      "title": "Back up this account to a folder"
+    },
+    {
+      "arg": "none",
       "id": "account.copy_name",
       "keywords": [
         "copy",
