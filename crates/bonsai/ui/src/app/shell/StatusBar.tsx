@@ -4,8 +4,8 @@ import { dateTime } from "~/lib/format"
 import type { Account, VoiceBanView } from "~/lib/ipc/bindings"
 import { activeVoiceBans, clock, useNowSecs } from "~/lib/moderation"
 import { shell } from "~/lib/store"
-import { maskedAccountLabel, streamerUi } from "~/lib/streamer"
-import { Badge, Divider, Icon, Menu, Redacted, Robux, redacting, Spinner, TextLink, Tooltip } from "~/lib/ui"
+import { accountName, streamerUi } from "~/lib/streamer"
+import { Badge, Divider, Icon, Menu, Robux, redacting, Spinner, TextLink, Tooltip } from "~/lib/ui"
 
 /** Voice bans shown one by one before the rest fold into "+N". */
 const SHOWN_BANS = 3
@@ -22,9 +22,8 @@ export function StatusBar(props: { zoom: number }) {
         {(a) => (
           <>
             <TextLink tone="muted" onClick={() => run("nav.profile")}>
-              <Redacted>
-                <span class="text-fg">{a().label ?? a().displayName}</span>&nbsp;@{a().name}
-              </Redacted>
+              <span class="text-fg">{accountName(a())}</span>
+              <Show when={!redacting()}> @{a().name}</Show>
             </TextLink>
             <Show when={shell.robux !== null}>
               <Divider orientation="vertical" class="my-1.5" />
@@ -60,10 +59,7 @@ export function StatusBar(props: { zoom: number }) {
 
 type Banned = Account & { voiceBan: VoiceBanView }
 
-const banName = (a: Banned) =>
-  redacting() && a.id !== shell.active
-    ? maskedAccountLabel(shell.accounts.findIndex((b) => b.id === a.id))
-    : (a.label ?? a.displayName)
+const banName = (a: Banned) => accountName(a)
 const banLeft = (a: Banned, now: number) => (a.voiceBan.until === null ? "no end date" : clock(a.voiceBan.until - now))
 
 const banTip = (a: Banned) =>

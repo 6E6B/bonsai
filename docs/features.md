@@ -51,7 +51,7 @@ Features beyond the website, with the command that reaches each.
 | Clothing template download, plain or masked | Item page | Download clothing template; Download clothing template, masked |
 | 3D viewer that plays animations and emotes, and tries on items and bundles | Avatar, item and bundle pages | Play an animation in the 3D view; Try on this item in 3D |
 | Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
-| Streamer mode: blurs Robux amounts and your own account until hovered, hides other accounts, nicknames, notes, chat previews, notification text and optionally Messages; notices OBS and other recording apps | Status bar pill; Settings → Streamer mode | Turn streamer mode on or off (`Ctrl+Shift+S`); Show hidden content for 10 seconds; When a recording app opens |
+| Streamer mode: shows accounts as "Account 1", "Account 2", hides Robux amounts, friend lists, nicknames, notes, chat previews, notification text and optionally Messages; notices OBS and other recording apps | Status bar pill; Settings → Streamer mode | Turn streamer mode on or off (`Ctrl+Shift+S`); Show hidden content for 10 seconds; When a recording app opens |
 
 Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.
 

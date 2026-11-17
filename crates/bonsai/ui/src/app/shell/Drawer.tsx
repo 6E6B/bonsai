@@ -6,6 +6,8 @@ import { type ConversationRow, commands, type Friend, type Paged } from "~/lib/i
 import { joinUser, userMenu } from "~/lib/menus"
 import { groupByPresence, type PresenceRow } from "~/lib/presence"
 import { drawerState, friends, setDrawerState, shell, useLive } from "~/lib/store"
+import { friendsHidden } from "~/lib/streamer"
+import { StreamerCover } from "~/lib/streamer-cover"
 import { thumbUrl } from "~/lib/thumb"
 import {
   Avatar,
@@ -53,6 +55,9 @@ export function Drawer() {
             actions={<IconButton size="sm" icon="refresh" label="Refresh" onClick={() => run("view.refresh")} />}
           />
           <Switch>
+            <Match when={friendsHidden()}>
+              <StreamerCover what="friends" />
+            </Match>
             <Match when={friends.friends.length === 0 && friends.loading}>
               <For each={[0, 1, 2, 3, 4]}>{() => <Skeleton class="my-1.5 h-6" />}</For>
             </Match>

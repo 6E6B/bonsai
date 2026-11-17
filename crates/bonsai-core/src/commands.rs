@@ -393,6 +393,7 @@ commands! {
     StreamerDetect => "streamer.detect", "When a recording app opens", ["streamer", "obs", "recording", "detect", "automatic", "ask"], StreamerDetect, Local, [];
     StreamerReveal => "streamer.reveal", "Show hidden content for 10 seconds", ["streamer", "reveal", "show", "unhide", "peek"], None, Read, [];
     StreamerShowMessages => "streamer.show_messages", "Show Messages in streamer mode", ["streamer", "messages", "inbox", "unhide"], None, Read, [];
+    StreamerShowFriends => "streamer.show_friends", "Show friends in streamer mode", ["streamer", "friends", "people", "unhide"], None, Read, [];
     StreamerIgnore => "streamer.ignore", "Don't ask about a recording app", ["streamer", "obs", "ignore", "don't ask"], Text, Local, [];
     StreamerAskAgain => "streamer.ask_again", "Ask about every recording app again", ["streamer", "obs", "ignored", "reset"], None, Local, [];
     ToggleDrawer => "view.drawer", "Toggle friends and chat drawer", ["friends", "chat", "drawer", "panel"], None, Local, [Shortcut::ctrl("Backslash")];

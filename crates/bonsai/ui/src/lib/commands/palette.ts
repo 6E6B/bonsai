@@ -2,7 +2,7 @@ import { entityRef, type Seen } from "~/lib/history"
 import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
 import { fold } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
-import { streamerDetectOptions } from "~/lib/streamer"
+import { accountName, streamerDetectOptions, streamerHidden } from "~/lib/streamer"
 import type { ThumbKind } from "~/lib/thumb"
 import type { RecentArg } from "./learn"
 import {
@@ -194,7 +194,7 @@ export function paletteEntries(
         out.push({ ...base, key: c.id, title: c.title, arg: null })
         break
       case "account":
-        for (const a of accounts) choice(String(a.id), a.label ?? a.displayName, a.name)
+        for (const a of accounts) choice(String(a.id), accountName(a), streamerHidden() ? "" : a.name)
         break
       case "settingsSection":
         out.push({ ...base, key: c.id, title: c.title, arg: null })

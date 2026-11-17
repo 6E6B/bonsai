@@ -10,7 +10,7 @@ export function StreamerSection() {
     <>
       <SettingsGroup
         title="Streamer mode"
-        description="Blurs Robux amounts and your own account until hovered. Hides other accounts, nicknames, notes, chat previews and notification text."
+        description="Shows accounts as Account 1, 2 and so on, and hides Robux amounts, friends, nicknames, notes, chat previews and notification text."
       >
         <SettingSwitch
           label="Streamer mode"

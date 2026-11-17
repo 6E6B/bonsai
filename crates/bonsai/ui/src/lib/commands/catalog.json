@@ -975,6 +975,17 @@
       "title": "Show Messages in streamer mode"
     },
     {
+      "arg": "none",
+      "id": "streamer.show_friends",
+      "keywords": [
+        "streamer",
+        "friends",
+        "people",
+        "unhide"
+      ],
+      "title": "Show friends in streamer mode"
+    },
+    {
       "arg": "text",
       "id": "streamer.ignore",
       "keywords": [

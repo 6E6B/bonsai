@@ -6,6 +6,8 @@ import { commands, type Person } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
 import { joinUser, presenceText, userMenu } from "~/lib/menus"
 import { friends, shell, useLive } from "~/lib/store"
+import { friendsHidden } from "~/lib/streamer"
+import { StreamerCover } from "~/lib/streamer-cover"
 import { thumbUrl } from "~/lib/thumb"
 import { trustedCommands } from "~/lib/trusted-friends"
 import {
@@ -45,6 +47,14 @@ const fromPerson = (p: Person): Row => ({
 /** Friends, requests, followers, following and blocked users, with search, sort, a status
  * filter and keyboard cursor (J / K / H / L / Enter). As many columns as fit. */
 export default function Friends() {
+  return (
+    <Show when={!friendsHidden()} fallback={<StreamerCover what="friends" class="h-full" />}>
+      <FriendsScreen />
+    </Show>
+  )
+}
+
+function FriendsScreen() {
   const [section, setSection] = createSignal<Section>("friends")
   const [query, setQuery] = createSignal("")
   const [sort, setSort] = createSignal("")

@@ -10,6 +10,7 @@ import { experienceLinks, externalHosts } from "~/lib/links"
 import { emptyList, ListState } from "~/lib/list-state"
 import { shell, useLive } from "~/lib/store"
 import { messagesHidden } from "~/lib/streamer"
+import { StreamerCover } from "~/lib/streamer-cover"
 import { thumbUrl } from "~/lib/thumb"
 import {
   Alert,
@@ -37,23 +38,9 @@ const ms = (iso: string) => {
  * takes new private messages, so Reply starts a chat. */
 export default function Messages() {
   return (
-    <Show when={!messagesHidden()} fallback={<HiddenMessages />}>
+    <Show when={!messagesHidden()} fallback={<StreamerCover what="messages" class="h-full" />}>
       <Inbox />
     </Show>
-  )
-}
-
-/** Streamer mode covers the screen until "Show messages" or streamer mode turns off. */
-function HiddenMessages() {
-  return (
-    <EmptyState
-      class="h-full"
-      icon="eye"
-      title="Messages are hidden in streamer mode"
-      description="Showing them keeps them visible until streamer mode turns off."
-    >
-      <Button onClick={() => run("streamer.show_messages")}>Show messages</Button>
-    </EmptyState>
   )
 }
 

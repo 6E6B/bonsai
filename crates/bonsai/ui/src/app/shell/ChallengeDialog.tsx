@@ -1,6 +1,7 @@
 import { createEffect, createSignal, Match, on, Show, Switch } from "solid-js"
 import { type ChallengeKind, type ChallengeView, commands } from "~/lib/ipc/bindings"
 import { shell } from "~/lib/store"
+import { accountName } from "~/lib/streamer"
 import { Alert, Button, Checkbox, Dialog, SegmentedControl, showToast, TextField } from "~/lib/ui"
 import { codeDigits, METHOD_LABELS } from "./challenge"
 
@@ -29,7 +30,7 @@ export function ChallengeDialog() {
   const account = () => {
     const id = c()?.account
     const a = shell.accounts.find((x) => x.id === id)
-    return a ? (a.label ?? a.displayName) : "this account"
+    return a ? accountName(a) : "this account"
   }
   return (
     <Dialog

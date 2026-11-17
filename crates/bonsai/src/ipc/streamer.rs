@@ -58,7 +58,8 @@ pub(super) fn view(core: &Core) -> StreamerView {
 }
 
 /// Streamer mode commands that go to `bonsai-core`; `None` for any other command.
-/// `streamer.reveal` and `streamer.show_messages` only change the UI and never reach here.
+/// `streamer.reveal`, `streamer.show_messages` and `streamer.show_friends` only change the UI
+/// and never reach here.
 pub(super) fn run(core: &Core, id: CommandId, inv: &Invocation) -> Option<Result<(), String>> {
     let arg = || inv.arg.clone().unwrap_or_default();
     Some(match id {

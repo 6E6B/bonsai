@@ -4,6 +4,8 @@ import type { Friend, GameCard } from "~/lib/ipc/bindings"
 import { userMenu } from "~/lib/menus"
 import { groupByGame } from "~/lib/presence"
 import { friends, shell, useHome } from "~/lib/store"
+import { friendsHidden } from "~/lib/streamer"
+import { StreamerCover } from "~/lib/streamer-cover"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile, ShelfSkeleton, tileGrid } from "~/lib/tiles"
 import {
@@ -55,9 +57,11 @@ export default function Home() {
                 </Button>
               }
             />
-            <VirtualShelf items={strip()} itemWidth={PERSON_WIDTH} aria-label="Friends">
-              {(f) => <FriendTile friend={f} />}
-            </VirtualShelf>
+            <Show when={!friendsHidden()} fallback={<StreamerCover what="friends" />}>
+              <VirtualShelf items={strip()} itemWidth={PERSON_WIDTH} aria-label="Friends">
+                {(f) => <FriendTile friend={f} />}
+              </VirtualShelf>
+            </Show>
           </section>
         </Show>
         <Show when={shell.look.homeContinue && home.recent.length > 0}>

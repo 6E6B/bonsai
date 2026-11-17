@@ -41,7 +41,7 @@ import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { WISHLIST } from "~/lib/market-category"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { playlists, refreshBookmarks, setDrawerState, shell, startSync, visibleBookmarks } from "~/lib/store"
-import { promptToast, resetStreamerUi, revealFor, showMessages, streamerHidden } from "~/lib/streamer"
+import { promptToast, resetStreamerUi, revealFor, showFriends, showMessages, streamerHidden } from "~/lib/streamer"
 import { activeTab, pathname, savedTabs, setTabDescriber, tabActions, tabLabel, tabs } from "~/lib/tabs"
 import { shownBackground } from "~/lib/theme"
 import { dismissToast, setRedacting, showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
@@ -377,6 +377,10 @@ export function Layout(props: ParentProps) {
     handle("streamer.reveal", () => {
       if (!shell.streamer.on) return void showToast("Streamer mode is off.")
       revealFor()
+    }),
+    handle("streamer.show_friends", () => {
+      if (!shell.streamer.on) return void showToast("Streamer mode is off.")
+      showFriends()
     }),
     handle("streamer.show_messages", () => {
       showMessages()

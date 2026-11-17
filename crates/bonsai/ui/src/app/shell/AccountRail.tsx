@@ -1,4 +1,4 @@
-import { createSignal, For } from "solid-js"
+import { createSignal, For, Show } from "solid-js"
 import { menuItem, run, shortcutOf } from "~/lib/commands/registry"
 import { type Account, type Color, commands, type PrivacyRow } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
@@ -7,17 +7,7 @@ import { privacyLabels, valueLabel } from "~/lib/privacy"
 import { shell, useLive } from "~/lib/store"
 import { maskedAccountLabel } from "~/lib/streamer"
 import { thumbUrl } from "~/lib/thumb"
-import {
-  Avatar,
-  ContextMenu,
-  Icon,
-  type MenuEntry,
-  RailItem,
-  Redacted,
-  redacting,
-  useConfirm,
-  usePrompt,
-} from "~/lib/ui"
+import { Avatar, ContextMenu, Icon, type MenuEntry, RailItem, redacting, useConfirm, usePrompt } from "~/lib/ui"
 
 const colors: Color[] = ["none", "red", "orange", "yellow", "green", "blue", "purple", "pink"]
 const colorName = (c: Color) => (c === "none" ? "No color" : c[0].toUpperCase() + c.slice(1))
@@ -148,32 +138,35 @@ export function AccountRail() {
       class="flex w-16 shrink-0 flex-col items-stretch gap-1 overflow-y-auto border-r border-line bg-deep py-2"
     >
       <For each={shell.accounts}>
-        {(a, i) => {
-          // Streamer mode shows other accounts by position only: no name, no picture.
-          const masked = () => redacting() && shell.active !== a.id
-          return (
-            <ContextMenu items={menu(a, i())} onOpenChange={(open) => open && setMenuFor(a.id)}>
-              <RailItem
-                label={railLabel(a, now(), masked() ? maskedAccountLabel(i()) : undefined)}
-                shortcut={i() < 9 ? shortcutOf(`account.switch_${i() + 1}`) : undefined}
-                active={shell.active === a.id}
-                color={a.color}
-                onClick={() => run("account.switch", String(a.id))}
-              >
-                {/* Your own account stays recognizable to you: blurred until hovered. */}
-                <Redacted when={shell.active === a.id}>
+        {(a, i) => (
+          <ContextMenu items={menu(a, i())} onOpenChange={(open) => open && setMenuFor(a.id)}>
+            <RailItem
+              label={railLabel(a, now(), redacting() ? maskedAccountLabel(i()) : undefined)}
+              shortcut={i() < 9 ? shortcutOf(`account.switch_${i() + 1}`) : undefined}
+              active={shell.active === a.id}
+              color={a.color}
+              onClick={() => run("account.switch", String(a.id))}
+            >
+              {/* Streamer mode shows every account by position: its number in place of the
+                  picture, inside its color tag. A separate Avatar, so the loaded picture
+                  can't linger in place of the number. */}
+              <Show
+                when={redacting()}
+                fallback={
                   <Avatar
                     size="lg"
-                    name={masked() ? maskedAccountLabel(i()) : a.displayName}
-                    src={masked() ? undefined : thumbUrl("headshot", a.id)}
+                    name={a.displayName}
+                    src={thumbUrl("headshot", a.id)}
                     count={a.unread}
                     muted={accountUnusable(a, now())}
                   />
-                </Redacted>
-              </RailItem>
-            </ContextMenu>
-          )
-        }}
+                }
+              >
+                <Avatar size="lg" name={String(i() + 1)} count={a.unread} muted={accountUnusable(a, now())} />
+              </Show>
+            </RailItem>
+          </ContextMenu>
+        )}
       </For>
       <RailItem label="Add account" onClick={() => run("account.add")}>
         <span class="flex size-10 items-center justify-center rounded-full bg-control text-fg-muted">
