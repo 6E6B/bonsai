@@ -57,6 +57,12 @@ export function AccountRail() {
         icon: "user",
         disabled: shell.active === a.id,
       }),
+      menuItem("friends.compare", {
+        arg: String(a.id),
+        label: "Compare friends with this account…",
+        icon: "user",
+        disabled: shell.active === a.id || shell.active === null,
+      }),
       { kind: "separator" },
       menuItem("entity.copy_id", { arg: `user:${a.id}`, label: "Copy user ID", icon: "copy" }),
       menuItem("account.copy_name", { ...as, label: "Copy username", icon: "copy" }),

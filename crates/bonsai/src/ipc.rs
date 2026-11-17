@@ -31,6 +31,7 @@ mod hub;
 mod images;
 mod inbox;
 mod market;
+mod overlap;
 mod playlists;
 mod plugins;
 mod security;
@@ -3259,6 +3260,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             avatar::profile_look,
             avatar::profile_outfits,
             avatar::outfit_look,
+            overlap::social_overlap,
+            overlap::shared_friends,
             avatar::avatar_3d,
             account::account_info,
             account::account_sessions,

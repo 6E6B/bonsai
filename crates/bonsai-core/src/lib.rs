@@ -30,6 +30,7 @@ pub mod me;
 pub mod messages;
 pub mod model_tree;
 pub mod moderation;
+pub mod overlap;
 pub mod people;
 pub mod playlists;
 pub mod plugins;

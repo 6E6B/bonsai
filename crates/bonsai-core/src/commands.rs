@@ -486,6 +486,7 @@ commands! {
     RemoveTrustedFriend => "user.remove_trusted_friend", "Remove trusted friend", ["trusted", "remove"], User, Write(Social), [];
     DeclineFriend => "user.decline_friend", "Decline friend request", ["decline", "ignore", "request"], User, Write(Social), [];
     DeclineAllFriends => "friends.decline_all", "Ignore all friend requests", ["decline", "ignore", "requests"], None, Write(Social), [];
+    CompareFriends => "friends.compare", "Compare friends between two of your accounts", ["friends", "mutual", "mutuals", "shared", "overlap", "compare", "accounts", "alt", "common"], Account, Read, [];
     SortFriends => "friends.sort", "Sort the friends list (status, name; requests: newest, oldest, mutuals, name)", ["friends", "sort", "order", "name", "status", "requests", "mutuals"], Text, Local, [];
     FilterFriends => "friends.show", "Filter friends by status (all, online, game, studio, offline; followers: not_followed)", ["friends", "filter", "show only", "online", "in game", "offline", "studio", "followers"], Text, Local, [];
     Follow => "user.follow", "Follow", ["follow"], User, Write(Social), [];
