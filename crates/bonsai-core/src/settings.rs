@@ -370,6 +370,8 @@ pub struct Settings {
     pub update_downloads: bool,
     /// Record how long your accounts spend in each experience, on this computer only.
     pub playtime_log: bool,
+    /// Streamer mode and the recording-app check.
+    pub streamer: crate::streamer::StreamerPrefs,
 }
 
 /// A daily stretch without notifications, in whole local hours. `start` is when it begins and
@@ -502,6 +504,7 @@ impl Default for Settings {
             update_checks: true,
             update_downloads: false,
             playtime_log: true,
+            streamer: crate::streamer::StreamerPrefs::default(),
         }
     }
 }

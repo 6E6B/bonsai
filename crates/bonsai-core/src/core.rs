@@ -325,6 +325,7 @@ impl Core {
             rt.spawn(crate::themes::watch_loop(inner.clone()));
             rt.spawn(crate::plugins::watch_loop(inner.clone()));
             rt.spawn(crate::hub::revocation_loop(inner.clone()));
+            rt.spawn(crate::streamer::watch_loop(inner.clone()));
         }
         let core = Core {
             inner,
@@ -927,7 +928,7 @@ impl Inner {
         }
     }
 
-    async fn handle(self: Arc<Self>, cmd: Cmd) {
+    pub(crate) async fn handle(self: Arc<Self>, cmd: Cmd) {
         if self.vault.blocked()
             || self.vault_busy.load(std::sync::atomic::Ordering::Acquire)
             || self.vault_ending.load(std::sync::atomic::Ordering::Acquire)

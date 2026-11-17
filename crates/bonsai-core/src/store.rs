@@ -485,6 +485,8 @@ pub struct StoreData {
     /// Turning on the authenticator app or making recovery codes (see [`crate::security`]).
     pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,
+    /// Recording apps seen and the streamer mode question on screen.
+    pub streamer: crate::streamer::StreamerState,
     pub jobs: u32,
     /// User commands with work still in flight, by how many tasks each has (see
     /// [`crate::running`]).

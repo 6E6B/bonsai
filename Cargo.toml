@@ -70,6 +70,8 @@ rbx_reflection_database = "=3.0.1"
 directories = "6"
 sha2 = "0.11"
 open = "5"
+# Running process names for streamer mode's recording-app check; one API on Windows, macOS and Linux.
+sysinfo = { version = "=0.31.4", default-features = false, features = ["system"] }
 tauri = { version = "2.12", features = ["tray-icon"] }
 tauri-build = { version = "2.5", features = [] }
 # Linux window frame (src/frame.rs). Same version Tauri uses.

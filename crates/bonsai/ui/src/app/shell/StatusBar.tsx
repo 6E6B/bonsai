@@ -1,10 +1,11 @@
 import { For, Show } from "solid-js"
-import { run, shortcutOf } from "~/lib/commands/registry"
+import { menuItem, run, shortcutOf } from "~/lib/commands/registry"
 import { dateTime } from "~/lib/format"
 import type { Account, VoiceBanView } from "~/lib/ipc/bindings"
 import { activeVoiceBans, clock, useNowSecs } from "~/lib/moderation"
 import { shell } from "~/lib/store"
-import { Badge, Divider, Icon, Robux, Spinner, TextLink, Tooltip } from "~/lib/ui"
+import { accountName, streamerUi } from "~/lib/streamer"
+import { Badge, Divider, Icon, Menu, Robux, redacting, Spinner, TextLink, Tooltip } from "~/lib/ui"
 
 /** Voice bans shown one by one before the rest fold into "+N". */
 const SHOWN_BANS = 3
@@ -21,11 +22,12 @@ export function StatusBar(props: { zoom: number }) {
         {(a) => (
           <>
             <TextLink tone="muted" onClick={() => run("nav.profile")}>
-              <span class="text-fg">{a().label ?? a().displayName}</span> @{a().name}
+              <span class="text-fg">{accountName(a())}</span>
+              <Show when={!redacting()}> @{a().name}</Show>
             </TextLink>
             <Show when={shell.robux !== null}>
               <Divider orientation="vertical" class="my-1.5" />
-              <Robux amount={shell.robux ?? 0} />
+              <Robux amount={shell.robux ?? 0} private />
             </Show>
           </>
         )}
@@ -41,6 +43,7 @@ export function StatusBar(props: { zoom: number }) {
       </Show>
       <VoiceBans />
       <div class="ml-auto flex items-center gap-3">
+        <StreamerPill />
         <Show when={props.zoom !== 1}>
           <TextLink tone="muted" onClick={() => run("view.zoom_reset")}>
             {Math.round(props.zoom * 100)}%
@@ -56,7 +59,7 @@ export function StatusBar(props: { zoom: number }) {
 
 type Banned = Account & { voiceBan: VoiceBanView }
 
-const banName = (a: Banned) => a.label ?? a.displayName
+const banName = (a: Banned) => accountName(a)
 const banLeft = (a: Banned, now: number) => (a.voiceBan.until === null ? "no end date" : clock(a.voiceBan.until - now))
 
 const banTip = (a: Banned) =>
@@ -106,6 +109,31 @@ function VoiceBans() {
           </Tooltip>
         </Show>
       </span>
+    </Show>
+  )
+}
+
+/** Shown while streamer mode is on. Opens a menu to peek, turn it off or change it. */
+function StreamerPill() {
+  return (
+    <Show when={shell.streamer.on}>
+      <Menu
+        variant="ghost"
+        size="sm"
+        placement="top-start"
+        items={[
+          menuItem("streamer.reveal", { icon: "eye", disabled: streamerUi.revealing }),
+          menuItem("streamer.toggle", { label: "Turn off streamer mode", arg: "off" }),
+          menuItem("nav.settings", { label: "Streamer mode settings", arg: "streamer", icon: "settings" }),
+        ]}
+      >
+        <span data-streamer-pill class="flex items-center gap-1.5">
+          <Icon name="video" size={14} />
+          <Show when={streamerUi.revealing} fallback="Streamer mode">
+            Showing hidden content
+          </Show>
+        </span>
+      </Menu>
     </Show>
   )
 }

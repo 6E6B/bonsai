@@ -3,8 +3,9 @@ import { menuItem, run } from "~/lib/commands/registry"
 import type { Account } from "~/lib/ipc/bindings"
 import { canReactivate, moderationLabel, moderationNext, moderationTone, useNowSecs } from "~/lib/moderation"
 import { shell } from "~/lib/store"
+import { accountName } from "~/lib/streamer"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, Button, Dialog, Icon, Menu } from "~/lib/ui"
+import { Avatar, Button, Dialog, Icon, Menu, redacting } from "~/lib/ui"
 
 /** The active account, when Roblox has moderated it. Nothing else in the app works for it then. */
 export const moderatedAccount = () => {
@@ -30,16 +31,23 @@ export function ModerationDialog() {
 function ModerationBody(props: { account: Account }) {
   const now = useNowSecs()
   const m = () => props.account.moderation
-  const name = () => props.account.label ?? props.account.displayName
+  const name = () => accountName(props.account)
   const danger = () => moderationTone(m(), now()) === "danger"
   const others = () => shell.accounts.filter((a) => a.id !== props.account.id)
   return (
     <div class="flex flex-col">
       <div class="flex items-center gap-3 px-5 pt-5">
-        <Avatar size="lg" name={props.account.displayName} src={thumbUrl("headshot", props.account.id)} />
+        <Show
+          when={!redacting()}
+          fallback={<Avatar size="lg" name={String(shell.accounts.findIndex((a) => a.id === props.account.id) + 1)} />}
+        >
+          <Avatar size="lg" name={props.account.displayName} src={thumbUrl("headshot", props.account.id)} />
+        </Show>
         <div class="flex min-w-0 flex-1 flex-col">
           <span class="truncate font-semibold">{name()}</span>
-          <span class="truncate text-sm text-fg-muted">@{props.account.name}</span>
+          <Show when={!redacting()}>
+            <span class="truncate text-sm text-fg-muted">@{props.account.name}</span>
+          </Show>
         </div>
         <span
           class="flex shrink-0 items-center gap-1.5 font-semibold"
@@ -77,7 +85,7 @@ function ModerationBody(props: { account: Account }) {
             class="self-center"
             placement="top-start"
             items={others().map((a) =>
-              menuItem("account.switch", { arg: String(a.id), label: a.label ?? a.displayName, icon: "user" }),
+              menuItem("account.switch", { arg: String(a.id), label: accountName(a), icon: "user" }),
             )}
           >
             Switch account

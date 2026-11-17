@@ -44,9 +44,10 @@ import { WISHLIST } from "~/lib/market-category"
 import { isPlaytimeRange, setPlaytimeView } from "~/lib/playtime"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { playlists, refreshBookmarks, setDrawerState, shell, startSync, visibleBookmarks } from "~/lib/store"
+import { promptToast, resetStreamerUi, revealFor, showFriends, showMessages, streamerHidden } from "~/lib/streamer"
 import { activeTab, pathname, savedTabs, setTabDescriber, tabActions, tabLabel, tabs } from "~/lib/tabs"
 import { shownBackground } from "~/lib/theme"
-import { type PromptOptions, showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
+import { dismissToast, type PromptOptions, setRedacting, showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { useUpdateToasts } from "~/lib/update-view"
 import { useUpdates } from "~/lib/updates"
 import { withParams } from "~/lib/url-params"
@@ -417,6 +418,18 @@ export function Layout(props: ParentProps) {
     }),
     handle("avatar.search", (q) => navigate(withParams(location, "/avatar", { find: q?.trim() || null }))),
     handle("market.category", (c) => navigate(withParams(location, "/marketplace", { cat: c?.trim() || null }))),
+    handle("streamer.reveal", () => {
+      if (!shell.streamer.on) return void showToast("Streamer mode is off.")
+      revealFor()
+    }),
+    handle("streamer.show_friends", () => {
+      if (!shell.streamer.on) return void showToast("Streamer mode is off.")
+      showFriends()
+    }),
+    handle("streamer.show_messages", () => {
+      showMessages()
+      visitPath("/messages")
+    }),
     handle("user.nickname", editAbout("nickname")),
     handle("user.note", editAbout("note")),
     handle("bookmark.toggle", toggleBookmark),
@@ -570,6 +583,42 @@ export function Layout(props: ParentProps) {
 
   // Every navigation lands in a tab: screens replace the current tab, entities get their own.
   createEffect(on(here, (path) => tabActions.visit(path)))
+
+  // Streamer mode: mask private content, forget reveals once it's off, and ask about
+  // recording apps opening or closing. One question at a time; bonsai-core clears it
+  // once streamer mode changes.
+  createEffect(() => setRedacting(streamerHidden()))
+  createEffect(
+    on(
+      () => shell.streamer.on,
+      (on) => !on && resetStreamerUi(),
+      { defer: true },
+    ),
+  )
+  let streamerToast: number | undefined
+  createEffect(
+    on(
+      () => shell.streamer.prompt?.seq,
+      () => {
+        if (streamerToast !== undefined) dismissToast(streamerToast)
+        streamerToast = undefined
+        const p = untrack(() => shell.streamer.prompt)
+        if (!p || p.start === untrack(() => shell.streamer.on)) return
+        const t = promptToast(p)
+        streamerToast = showToast({
+          title: t.title,
+          persistent: true,
+          actions: t.buttons.map((b) => ({
+            label: b.label,
+            onClick: () => {
+              if (b.run) void run(b.run[0], b.run[1])
+            },
+          })),
+        })
+      },
+    ),
+  )
+
   // The start screen, or the tabs from last time. A reload on another page stays there.
   // Tabs are saved only after this, so the single launch tab never replaces the saved ones.
   const [started, setStarted] = createSignal(false)

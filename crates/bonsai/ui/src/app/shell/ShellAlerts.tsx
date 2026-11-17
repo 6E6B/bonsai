@@ -1,6 +1,7 @@
 import { Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { shell } from "~/lib/store"
+import { accountName } from "~/lib/streamer"
 import { Alert, Button } from "~/lib/ui"
 
 /** App-wide problems shown above every screen until they are fixed. */
@@ -20,7 +21,7 @@ export function ShellAlerts() {
               </Button>
             }
           >
-            {a().label ?? a().displayName} is signed out. Paste a new .ROBLOSECURITY cookie to keep using it.
+            {accountName(a())} is signed out. Paste a new .ROBLOSECURITY cookie to keep using it.
           </Alert>
         )}
       </Show>

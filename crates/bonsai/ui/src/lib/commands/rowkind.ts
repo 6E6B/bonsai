@@ -31,6 +31,7 @@ const BY_AREA: Record<string, IconName> = {
   server: "server",
   settings: "settings",
   shortcuts: "keyboard",
+  streamer: "video",
   tab: "layout",
   theme: "palette",
   trade: "trades",

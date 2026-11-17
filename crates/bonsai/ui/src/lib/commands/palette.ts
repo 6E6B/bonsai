@@ -4,6 +4,7 @@ import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, Re
 import { playtimeRanges } from "~/lib/playtime"
 import { fold } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
+import { accountName, streamerDetectOptions, streamerHidden } from "~/lib/streamer"
 import type { ThumbKind } from "~/lib/thumb"
 import type { RecentArg } from "./learn"
 import {
@@ -195,7 +196,7 @@ export function paletteEntries(
         out.push({ ...base, key: c.id, title: c.title, arg: null })
         break
       case "account":
-        for (const a of accounts) choice(String(a.id), a.label ?? a.displayName, a.name)
+        for (const a of accounts) choice(String(a.id), accountName(a), streamerHidden() ? "" : a.name)
         break
       case "settingsSection":
         out.push({ ...base, key: c.id, title: c.title, arg: null })
@@ -233,6 +234,9 @@ export function paletteEntries(
         break
       case "screen":
         for (const s of screens) choice(s.key, s.title)
+        break
+      case "streamerDetect":
+        for (const o of streamerDetectOptions) choice(o.value, o.label)
         break
       case "setting":
         out.push(...(c.id === "settings.reset" ? resetRows(c, prefs) : settingRows(c, prefs)))

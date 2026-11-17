@@ -979,6 +979,90 @@
     },
     {
       "arg": "none",
+      "id": "streamer.toggle",
+      "keywords": [
+        "streamer",
+        "streaming",
+        "recording",
+        "obs",
+        "twitch",
+        "hide",
+        "privacy",
+        "private"
+      ],
+      "title": "Turn streamer mode on or off"
+    },
+    {
+      "arg": "streamerDetect",
+      "id": "streamer.detect",
+      "keywords": [
+        "streamer",
+        "obs",
+        "recording",
+        "detect",
+        "automatic",
+        "ask"
+      ],
+      "title": "When a recording app opens"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.reveal",
+      "keywords": [
+        "streamer",
+        "reveal",
+        "show",
+        "unhide",
+        "peek"
+      ],
+      "title": "Show hidden content for 10 seconds"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.show_messages",
+      "keywords": [
+        "streamer",
+        "messages",
+        "inbox",
+        "unhide"
+      ],
+      "title": "Show Messages in streamer mode"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.show_friends",
+      "keywords": [
+        "streamer",
+        "friends",
+        "people",
+        "unhide"
+      ],
+      "title": "Show friends in streamer mode"
+    },
+    {
+      "arg": "text",
+      "id": "streamer.ignore",
+      "keywords": [
+        "streamer",
+        "obs",
+        "ignore",
+        "don't ask"
+      ],
+      "title": "Don't ask about a recording app"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.ask_again",
+      "keywords": [
+        "streamer",
+        "obs",
+        "ignored",
+        "reset"
+      ],
+      "title": "Ask about every recording app again"
+    },
+    {
+      "arg": "none",
       "id": "view.drawer",
       "keywords": [
         "friends",
@@ -5339,6 +5423,75 @@
       "options": [],
       "section": "accounts",
       "title": "Account color as accent"
+    },
+    {
+      "key": "streamer_detect",
+      "keywords": [
+        "obs",
+        "streaming",
+        "recording",
+        "detect",
+        "automatic",
+        "streamlabs"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "Ask",
+          "value": "ask"
+        },
+        {
+          "label": "Turn on automatically",
+          "value": "auto"
+        },
+        {
+          "label": "Off",
+          "value": "off"
+        }
+      ],
+      "section": "streamer",
+      "title": "When a recording app opens"
+    },
+    {
+      "key": "streamer_apps",
+      "keywords": [
+        "obs",
+        "recording",
+        "process",
+        "app",
+        "custom"
+      ],
+      "kind": "text",
+      "options": [],
+      "section": "streamer",
+      "title": "Other recording apps"
+    },
+    {
+      "key": "streamer_hide_messages",
+      "keywords": [
+        "messages",
+        "inbox",
+        "private",
+        "hide"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "streamer",
+      "title": "Hide Messages"
+    },
+    {
+      "key": "streamer_hide_capture",
+      "keywords": [
+        "capture",
+        "obs",
+        "screenshot",
+        "blank",
+        "content protection"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "streamer",
+      "title": "Hide from screen capture"
     }
   ]
 }

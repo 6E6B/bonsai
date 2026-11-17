@@ -21,6 +21,7 @@ const groups: [string, string][] = [
   ["message", "Chat and messages"],
   ["notifications", "Chat and messages"],
   ["group", "Communities"],
+  ["streamer", "Streamer mode"],
   ["entity", "Anything"],
   ["plugin", "Plugins"],
   ["plugins", "Plugins"],

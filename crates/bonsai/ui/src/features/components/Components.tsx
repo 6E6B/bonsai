@@ -47,7 +47,9 @@ import {
   PremiumBadge,
   RadioGroup,
   RailItem,
+  Redacted,
   Robux,
+  redacting,
   SearchButton,
   SectionHeader,
   SegmentedControl,
@@ -65,6 +67,7 @@ import {
   type StripTab,
   Swatch,
   Switch,
+  setRedacting,
   showToast,
   TabPanel,
   TabStrip,
@@ -269,6 +272,14 @@ export default function Components() {
 
       <Section title="Badge">
         <For each={badgeVariants}>{(v) => <Badge variant={v}>{v}</Badge>}</For>
+      </Section>
+
+      <Section title="Redacted">
+        <Switch checked={redacting()} onChange={setRedacting}>
+          Hide private content
+        </Switch>
+        <Redacted>Nickname: Best friend</Redacted>
+        <Robux amount={12400} private />
       </Section>
 
       <Section title="Kbd">

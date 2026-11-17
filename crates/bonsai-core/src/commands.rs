@@ -46,6 +46,8 @@ pub enum ArgKind {
     BookmarkFolder,
     /// a playtime range: week, month, quarter, year or all
     PlaytimeRange,
+    /// what a recording app opening does: ask, auto or off
+    StreamerDetect,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -395,6 +397,13 @@ commands! {
     HubRevocations => "hub.revocations", "Check installed plugins for revocations", ["hub", "plugin", "revoked", "security"], None, Read, [];
     GoThemes => "nav.themes", "Go to Themes", ["themes", "appearance", "colors", "palette", "editor", "customize"], None, Read, [Shortcut::seq("G", "E")];
 
+    ToggleStreamer => "streamer.toggle", "Turn streamer mode on or off", ["streamer", "streaming", "recording", "obs", "twitch", "hide", "privacy", "private"], None, Local, [Shortcut::ctrl_shift("S")];
+    StreamerDetect => "streamer.detect", "When a recording app opens", ["streamer", "obs", "recording", "detect", "automatic", "ask"], StreamerDetect, Local, [];
+    StreamerReveal => "streamer.reveal", "Show hidden content for 10 seconds", ["streamer", "reveal", "show", "unhide", "peek"], None, Read, [];
+    StreamerShowMessages => "streamer.show_messages", "Show Messages in streamer mode", ["streamer", "messages", "inbox", "unhide"], None, Read, [];
+    StreamerShowFriends => "streamer.show_friends", "Show friends in streamer mode", ["streamer", "friends", "people", "unhide"], None, Read, [];
+    StreamerIgnore => "streamer.ignore", "Don't ask about a recording app", ["streamer", "obs", "ignore", "don't ask"], Text, Local, [];
+    StreamerAskAgain => "streamer.ask_again", "Ask about every recording app again", ["streamer", "obs", "ignored", "reset"], None, Local, [];
     ToggleDrawer => "view.drawer", "Toggle friends and chat drawer", ["friends", "chat", "drawer", "panel"], None, Local, [Shortcut::ctrl("Backslash")];
     ToggleSidebar => "view.sidebar", "Collapse or expand the sidebar", ["sidebar", "collapse"], None, Local, [Shortcut::ctrl("B")];
     ToggleSidebarScreen => "view.sidebar_toggle", "Show or hide in the sidebar", ["sidebar", "hide", "show", "remove", "customize", "screens"], Screen, Local, [];
