@@ -44,6 +44,8 @@ pub enum ArgKind {
     Bookmark,
     /// a bookmark folder visible to the active account
     BookmarkFolder,
+    /// a playtime range: week, month, quarter, year or all
+    PlaytimeRange,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -355,6 +357,9 @@ commands! {
     GoTrades => "nav.trades", "Go to Trades", ["trades", "trading"], None, Read, [Shortcut::seq("G", "T")];
     GoValues => "nav.values", "Go to Values (Rolimons)", ["values", "rolimons", "limiteds", "rap", "demand", "worth"], None, Read, [Shortcut::seq("G", "V")];
     GoTransactions => "nav.transactions", "Go to Transactions", ["transactions", "robux", "sales", "purchases", "spending", "income", "stipend", "ledger", "money"], None, Read, [Shortcut::seq("G", "R")];
+    GoPlaytime => "nav.playtime", "Go to Playtime", ["playtime", "hours", "time played", "stats", "history", "log"], None, Read, [];
+    PlaytimeRange => "playtime.range", "Show playtime for a range", ["playtime", "week", "month", "year", "hours", "range"], PlaytimeRange, Read, [];
+    ClearPlaytime => "playtime.clear", "Clear the playtime log", ["playtime", "clear", "delete", "history", "log"], None, Local, [];
     GoMessages => "nav.messages", "Go to Messages", ["messages", "inbox", "pm"], None, Read, [Shortcut::seq("G", "N")];
     GoCommunities => "nav.communities", "Go to Communities", ["groups", "communities"], None, Read, [Shortcut::seq("G", "C")];
     GoProfile => "nav.profile", "Go to your profile", ["profile", "me"], None, Read, [Shortcut::seq("G", "P")];

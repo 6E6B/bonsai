@@ -56,6 +56,23 @@ export function DataSection() {
           </Button>
         </SettingRow>
       </SettingsGroup>
+      <SettingsGroup title="Playtime">
+        <PrefRow name="playtime_log" />
+        <SettingRow
+          setting="playtime_clear"
+          label="Recorded playtime"
+          description="Time per experience for every account, kept on this computer."
+        >
+          <span class="flex gap-2">
+            <Button size="sm" icon="clock" onClick={() => run("nav.playtime")}>
+              Open
+            </Button>
+            <Button size="sm" icon="trash" onClick={() => run("playtime.clear")}>
+              Clear
+            </Button>
+          </span>
+        </SettingRow>
+      </SettingsGroup>
       <SettingsGroup title="Third-party data">
         <PrefRow name="item_values" />
         <PrefRow name="wiki" />

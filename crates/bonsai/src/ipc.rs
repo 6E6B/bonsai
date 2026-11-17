@@ -33,6 +33,7 @@ mod inbox;
 mod market;
 mod overlap;
 mod playlists;
+mod playtime;
 mod plugins;
 mod security;
 mod trades;
@@ -425,6 +426,7 @@ pub enum Arg {
     Playlist,
     Bookmark,
     BookmarkFolder,
+    PlaytimeRange,
 }
 
 impl From<ArgKind> for Arg {
@@ -448,6 +450,7 @@ impl From<ArgKind> for Arg {
             ArgKind::Playlist => Arg::Playlist,
             ArgKind::Bookmark => Arg::Bookmark,
             ArgKind::BookmarkFolder => Arg::BookmarkFolder,
+            ArgKind::PlaytimeRange => Arg::PlaytimeRange,
         }
     }
 }
@@ -1412,6 +1415,9 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         return r;
     }
     if let Some(r) = bookmarks::run(app, core, id, &inv, core.acting(picked)) {
+        return r;
+    }
+    if let Some(r) = playtime::run(core, id, &inv) {
         return r;
     }
     if let Some(r) = plugins::run(app, core, id, &inv, core.acting(picked)) {
@@ -3203,6 +3209,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             communities::forum_comments,
             communities::create_forum_post,
             playlists::playlists,
+            playtime::playtime,
             bookmarks::bookmarks,
             market::catalog_categories,
             market::catalog_options,

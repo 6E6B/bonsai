@@ -41,6 +41,7 @@ import { registerHubCommands } from "~/lib/hub"
 import { type BookmarkView, commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { WISHLIST } from "~/lib/market-category"
+import { isPlaytimeRange, setPlaytimeView } from "~/lib/playtime"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { playlists, refreshBookmarks, setDrawerState, shell, startSync, visibleBookmarks } from "~/lib/store"
 import { activeTab, pathname, savedTabs, setTabDescriber, tabActions, tabLabel, tabs } from "~/lib/tabs"
@@ -439,6 +440,11 @@ export function Layout(props: ParentProps) {
     handle("playlist.new", newPlaylist),
     handle("playlist.rename", renamePlaylist),
     handle("playlist.open", open("/playlists")),
+    handle("playtime.range", (r) => {
+      const range = r?.trim() ?? ""
+      if (isPlaytimeRange(range)) setPlaytimeView("range", range)
+      visitPath("/playtime")
+    }),
     handle("search.open", (q) => {
       const t = q?.trim() ?? ""
       if (t) void runBackend("search.open", t)

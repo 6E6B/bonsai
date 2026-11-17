@@ -281,6 +281,8 @@ pub struct AccountData {
     pub last_launch: Option<String>,
     /// Public servers this account played in over the last day, newest first. Local.
     pub recent_servers: Vec<crate::recent_servers::RecentServer>,
+    /// Time spent in experiences, oldest first. Local.
+    pub playtime: Vec<crate::playtime::Session>,
     /// Connected to the realtime hub.
     pub realtime: bool,
     /// Who is typing, per conversation: user id -> until (unix ms). From realtime.

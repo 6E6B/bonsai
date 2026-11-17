@@ -39,6 +39,7 @@ import {
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
 import { OverlapCard } from "./Overlap"
+import { PlaytimeCard } from "./PlaytimeCard"
 import { TradingCard } from "./Trading"
 import { pageOf, shownOnOverview } from "./wearing"
 
@@ -141,6 +142,9 @@ export function Overview(props: {
           <Wearing userId={props.userId} look={look} onSeeAll={() => props.onSeeAll("outfits")} />
           <Show when={!props.view.mine}>
             <OverlapCard userId={props.userId} />
+          </Show>
+          <Show when={shell.accounts.some((a) => a.id === props.userId)}>
+            <PlaytimeCard account={props.userId} />
           </Show>
           <Facts class="h-fit">
             <FactGroup>

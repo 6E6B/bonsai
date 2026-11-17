@@ -137,6 +137,11 @@ export const commands = {
 	 *  with them until details load.
 	 */
 	playlists: () => __TAURI_INVOKE<PlaylistView[]>("playlists"),
+	/**
+	 *  Your accounts' playtime over `range` (`week`, `month`, `quarter`, `year` or `all`), narrowed
+	 *  to `account` when given. `offset_minutes` is local time's offset from UTC, east positive.
+	 */
+	playtime: (range: string, account: number | null, offsetMinutes: number) => __TAURI_INVOKE<PlaytimeView>("playtime", { range, account, offsetMinutes }),
 	bookmarks: () => __TAURI_INVOKE<BookmarkList>("bookmarks"),
 	catalogCategories: () => __TAURI_INVOKE<List<CategoryView>>("catalog_categories"),
 	catalogOptions: () => __TAURI_INVOKE<CatalogOptions>("catalog_options"),
@@ -560,6 +565,7 @@ export type ApproveView = {
 };
 
 export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "bookmarkFolder";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "playtimeRange";
 
 /**  What a plugin asks for, shown in Settings and the install dialog. */
 export type Asks = {
@@ -1878,6 +1884,47 @@ export type PlaylistView = {
 	id: Id,
 	name: string,
 	games: GameCard[],
+};
+
+/**  Seconds one account spent. */
+export type PlaytimeAccount = {
+	account: Id,
+	/**  The account's label, display name or username. */
+	label: string,
+	secs: number,
+};
+
+export type PlaytimeExperience = {
+	universeId: Id,
+	/**  The root place, to open the experience. 0 when unknown. */
+	placeId: Id,
+	/**  Empty until the experience has loaded. */
+	name: string,
+	secs: number,
+	sessions: number,
+	/**  Unix milliseconds. */
+	lastPlayed: number,
+	accounts: PlaytimeAccount[],
+};
+
+export type PlaytimeView = {
+	/**  Recording is on in Settings. */
+	enabled: boolean,
+	/**  Accounts other than the active one are recorded too. */
+	background: boolean,
+	range: string,
+	secs: number,
+	sessions: number,
+	experiences: PlaytimeExperience[],
+	/**  Every account with time in the range, even when narrowed to one. */
+	accounts: PlaytimeAccount[],
+	weeks: PlaytimeWeek[],
+};
+
+export type PlaytimeWeek = {
+	/**  Monday 00:00 local, in unix milliseconds. */
+	start: number,
+	secs: number,
 };
 
 /**  Actions a plugin command proposed, for the user to run or cancel. */

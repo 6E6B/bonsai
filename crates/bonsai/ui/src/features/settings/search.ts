@@ -48,6 +48,7 @@ export const extraEntries: SettingsEntry[] = [
     words: "backup export save friends outfits inventory csv json",
   },
   { section: "data", setting: "reset_all", title: "Reset all settings", words: "defaults restore factory" },
+  { section: "data", setting: "playtime_clear", title: "Recorded playtime", words: "playtime clear delete log hours" },
   { section: "data", setting: "diagnostics", title: "Diagnostics", words: "bug report version debug support" },
   { section: "developer", title: "Component gallery", words: "components ui" },
 ]

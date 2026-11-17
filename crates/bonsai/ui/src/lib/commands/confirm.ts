@@ -158,6 +158,12 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
     description: "Screens load again from Roblox. Drafts, pinned chats and your wishlist stay.",
     confirm: "Clear",
   }),
+  "playtime.clear": () => ({
+    title: "Clear the playtime log?",
+    description: "Every account's recorded time is deleted from this computer.",
+    confirm: "Clear",
+    danger: true,
+  }),
   "chat.leave": () => ({ title: "Leave this chat?", confirm: "Leave", danger: true }),
   "trade.accept": () => ({ title: "Accept this trade?", confirm: "Accept" }),
   "trade.decline": () => ({ title: "Decline this trade?", confirm: "Decline", danger: true }),

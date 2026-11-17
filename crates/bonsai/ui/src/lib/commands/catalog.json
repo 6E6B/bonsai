@@ -557,6 +557,44 @@
     },
     {
       "arg": "none",
+      "id": "nav.playtime",
+      "keywords": [
+        "playtime",
+        "hours",
+        "time played",
+        "stats",
+        "history",
+        "log"
+      ],
+      "title": "Go to Playtime"
+    },
+    {
+      "arg": "playtimeRange",
+      "id": "playtime.range",
+      "keywords": [
+        "playtime",
+        "week",
+        "month",
+        "year",
+        "hours",
+        "range"
+      ],
+      "title": "Show playtime for a range"
+    },
+    {
+      "arg": "none",
+      "id": "playtime.clear",
+      "keywords": [
+        "playtime",
+        "clear",
+        "delete",
+        "history",
+        "log"
+      ],
+      "title": "Clear the playtime log"
+    },
+    {
+      "arg": "none",
       "id": "nav.messages",
       "keywords": [
         "messages",
@@ -5139,6 +5177,21 @@
       "options": [],
       "section": "data",
       "title": "Item values"
+    },
+    {
+      "key": "playtime_log",
+      "keywords": [
+        "playtime",
+        "hours",
+        "time played",
+        "history",
+        "stats",
+        "log"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "data",
+      "title": "Playtime log"
     },
     {
       "key": "wiki",

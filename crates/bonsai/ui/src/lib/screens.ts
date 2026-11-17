@@ -34,6 +34,14 @@ export const screens: Screen[] = [
     sidebar: "top",
     group: "start",
   },
+  {
+    command: "nav.playtime",
+    label: "Playtime",
+    icon: "clock",
+    path: "/playtime",
+    sidebar: "top",
+    group: "start",
+  },
   { command: "nav.wiki", label: "Wiki", icon: "wiki", path: "/wiki", sidebar: "top", group: "start" },
   { command: "nav.avatar", label: "Avatar", icon: "avatar", path: "/avatar", sidebar: "top", group: "items" },
   {
