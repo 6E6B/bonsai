@@ -32,6 +32,7 @@ pub mod model_tree;
 pub mod moderation;
 pub mod people;
 pub mod playlists;
+pub mod playtime;
 pub mod plugins;
 pub mod prefs;
 pub mod purchase;

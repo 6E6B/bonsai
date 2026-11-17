@@ -440,6 +440,14 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "playtime_log",
+        "data",
+        "Playtime log",
+        "Record how long your accounts spend in each experience while Bonsai runs, from their presence. Kept on this computer only.",
+        &["playtime", "hours", "time played", "history", "stats", "log"],
+        PrefKind::Bool,
+    ),
+    pref(
         "wiki",
         "data",
         "Wiki articles",
@@ -531,6 +539,7 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "format_locale" => s.format_locale.clone(),
         "item_values" => on_off(s.item_values).to_owned(),
         "wiki" => on_off(s.wiki).to_owned(),
+        "playtime_log" => on_off(s.playtime_log).to_owned(),
         "motion" => s.motion.clone(),
         "time_format" => s.time_format.clone(),
         "relative_dates" => on_off(s.relative_dates).to_owned(),
@@ -604,6 +613,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
     match key {
         "item_values" => s.item_values = bool()?,
         "wiki" => s.wiki = bool()?,
+        "playtime_log" => s.playtime_log = bool()?,
         "background_accounts" => s.background_accounts = bool()?,
         "account_accent" => s.account_accent = bool()?,
         "relative_dates" => s.relative_dates = bool()?,

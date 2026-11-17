@@ -9,6 +9,7 @@ const groups: [string, string][] = [
   ["list", "Lists"],
   ["account", "Accounts"],
   ["game", "Experiences"],
+  ["playtime", "Experiences"],
   ["server", "Private servers"],
   ["user", "People"],
   ["friends", "People"],

@@ -735,6 +735,11 @@ fn warm_store(cache: &Cache, s: &mut StoreData) {
         ) {
             d.recent_servers = r.value;
         }
+        if let Some(p) =
+            cache.get::<Vec<crate::playtime::Session>>(Kind::Local, id, crate::playtime::PLAYTIME)
+        {
+            d.playtime = p.value;
+        }
         if let Some(w) = cache.get::<Vec<crate::market::WishItem>>(Kind::Wishlist, id, "wishlist") {
             d.wishlist = w.value;
         }
@@ -2059,6 +2064,9 @@ async fn health_loop(inner: Arc<Inner>) {
                     .and_then(|d| d.friends.data.clone())
                     .unwrap_or_default();
                 inner.refresh_presence(id, &friends).await;
+            } else if inner.settings.read().playtime_log {
+                // Only its own presence, for the playtime log.
+                inner.refresh_presence(id, &[]).await;
             }
         }
         inner.repaint();

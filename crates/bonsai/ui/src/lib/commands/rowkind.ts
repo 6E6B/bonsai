@@ -23,6 +23,7 @@ const BY_AREA: Record<string, IconName> = {
   message: "messages",
   notifications: "bell",
   playlist: "playlist",
+  playtime: "clock",
   plugin: "plugin",
   plugins: "plugin",
   privacy: "lock",

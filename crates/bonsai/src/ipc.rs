@@ -32,6 +32,7 @@ mod images;
 mod inbox;
 mod market;
 mod playlists;
+mod playtime;
 mod plugins;
 mod security;
 mod trades;
@@ -423,6 +424,7 @@ pub enum Arg {
     Plugin,
     Playlist,
     Bookmark,
+    PlaytimeRange,
 }
 
 impl From<ArgKind> for Arg {
@@ -445,6 +447,7 @@ impl From<ArgKind> for Arg {
             ArgKind::Plugin => Arg::Plugin,
             ArgKind::Playlist => Arg::Playlist,
             ArgKind::Bookmark => Arg::Bookmark,
+            ArgKind::PlaytimeRange => Arg::PlaytimeRange,
         }
     }
 }
@@ -1409,6 +1412,9 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         return r;
     }
     if let Some(r) = bookmarks::run(core, id, &inv, core.acting(picked)) {
+        return r;
+    }
+    if let Some(r) = playtime::run(core, id, &inv) {
         return r;
     }
     if let Some(r) = plugins::run(app, core, id, &inv, core.acting(picked)) {
@@ -3200,6 +3206,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             communities::forum_comments,
             communities::create_forum_post,
             playlists::playlists,
+            playtime::playtime,
             bookmarks::bookmarks,
             market::catalog_categories,
             market::catalog_options,

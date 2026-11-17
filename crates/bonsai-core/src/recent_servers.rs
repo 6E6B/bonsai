@@ -78,11 +78,12 @@ pub fn note(list: &mut Vec<RecentServer>, p: &Presence, at: i64) -> bool {
 }
 
 impl Inner {
-    /// A fresh presence for `account` itself: remember the server it is in.
+    /// A fresh presence for `account` itself: remember the server it is in and log playtime.
     pub(crate) fn note_own_presence(&self, account: AccountId, p: &Presence) {
         if account.is_anonymous() {
             return;
         }
+        self.note_playtime(account, p);
         let snapshot = {
             let mut s = self.store.write();
             let d = s.data.entry(account).or_default();

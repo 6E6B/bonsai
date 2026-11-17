@@ -51,5 +51,8 @@ Features beyond the website, with the command that reaches each.
 | Clothing template download, plain or masked | Item page | Download clothing template; Download clothing template, masked |
 | 3D viewer that plays animations and emotes, and tries on items and bundles | Avatar, item and bundle pages | Play an animation in the 3D view; Try on this item in 3D |
 | Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
+| Playtime log: time per experience, account and week, with a weekly card on your own profiles | Sidebar → Playtime; own profile; Settings → Data | Go to Playtime; Show playtime for a range; Clear the playtime log |
 
 Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.
+
+The playtime log is built from each account's own presence, read every two minutes while Bonsai runs (only the active account while background accounts are off). Sightings in the same experience at most five minutes apart join one session, so sessions shorter than one read count as no time. It never writes to Roblox, stays on this computer, survives clearing the cache, keeps 400 days (up to 5,000 sessions per account), and can be turned off or cleared in Settings → Data.

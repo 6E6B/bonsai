@@ -1,5 +1,6 @@
 import { entityRef, type Seen } from "~/lib/history"
 import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
+import { playtimeRanges } from "~/lib/playtime"
 import { fold } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
 import type { ThumbKind } from "~/lib/thumb"
@@ -213,6 +214,9 @@ export function paletteEntries(
           if ((c.id === "plugin.enable" && x.enabled) || (c.id === "plugin.disable" && !x.enabled)) continue
           choice(x.id, x.name)
         }
+        break
+      case "playtimeRange":
+        for (const r of playtimeRanges) choice(r.value, r.label)
         break
       case "bookmark":
         for (const b of bookmarks) choice(String(b.id), b.title)

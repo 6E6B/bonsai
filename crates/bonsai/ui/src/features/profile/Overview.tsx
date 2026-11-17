@@ -38,6 +38,7 @@ import {
   VirtualShelf,
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
+import { PlaytimeCard } from "./PlaytimeCard"
 import { TradingCard } from "./Trading"
 import { pageOf, shownOnOverview } from "./wearing"
 
@@ -138,6 +139,9 @@ export function Overview(props: {
 
         <aside class="flex h-fit min-w-0 flex-col gap-4">
           <Wearing userId={props.userId} look={look} onSeeAll={() => props.onSeeAll("outfits")} />
+          <Show when={shell.accounts.some((a) => a.id === props.userId)}>
+            <PlaytimeCard account={props.userId} />
+          </Show>
           <Facts class="h-fit">
             <FactGroup>
               <Show when={props.view.user && ms(props.view.user.created)}>
