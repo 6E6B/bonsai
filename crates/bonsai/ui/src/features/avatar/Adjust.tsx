@@ -1,5 +1,5 @@
 import { createEffect, createSignal, For, on, onCleanup, Show } from "solid-js"
-import { AvatarViewer } from "~/lib/avatar3d/viewer"
+import type { AdjustTarget } from "~/lib/avatar3d/viewer"
 import { handle, menuItem, run } from "~/lib/commands/registry"
 import type { AdjustRuleView, AvatarView, WornView } from "~/lib/ipc/bindings"
 import { shell } from "~/lib/store"
@@ -43,18 +43,20 @@ const TOOL_OPTIONS = [
 /** How long to wait for the edited look after a change before dropping the dragged placement. */
 const SETTLE_MS = 400
 
+/** The accessory being adjusted and its handle, shared by the stage and the Adjust panel. */
+export type AdjustState = ReturnType<typeof createAdjust>
+
 /**
  * Moving, turning and sizing worn accessories within the bounds Roblox sets per type. The
  * avatar shows each change as it is dragged; it goes into the edited look when the drag ends.
  */
-export function Adjust(props: {
-  view: AvatarView
-  image?: string
-  selected: number | null
-  onSelect: (id: number) => void
-}) {
-  const items = () => adjustable(props.view)
-  const current = () => items().find((w) => w.id === props.selected) ?? items()[0]
+export function createAdjust(view: () => AvatarView, selected: () => number | null) {
+  const items = () => adjustable(view())
+  const current = () => items().find((w) => w.id === selected()) ?? items()[0]
+  const rule = () => {
+    const c = current()
+    return c && ruleFor(view(), c.typeId)
+  }
   const [tool, setTool] = createSignal<Tool>("move")
   onCleanup(
     handle("avatar.adjust_tool", (arg) => {
@@ -63,7 +65,7 @@ export function Adjust(props: {
     }),
   )
 
-  // What the avatar shows while a change is dragged or being saved.
+  // What the avatar shows while a change is dragged or landing in the edited look.
   const [draft, setDraft] = createSignal<{ id: number; placement: Placement } | null>(null)
   const [saving, setSaving] = createSignal(false)
   const saved = () => toPlacement(current()?.placement ?? null)
@@ -71,7 +73,7 @@ export function Adjust(props: {
     const d = draft()
     return d && d.id === current()?.id ? d.placement : saved()
   }
-  // A saved change replaces the draft as soon as it arrives.
+  // A landed change replaces the dragged one as soon as it arrives.
   createEffect(
     on(
       () => JSON.stringify([current()?.id, current()?.placement]),
@@ -82,7 +84,7 @@ export function Adjust(props: {
       { defer: true },
     ),
   )
-  // A write that failed, or that Roblox left alone, leaves the saved placement where it was.
+  // A change that failed, or that changed nothing, leaves the placement where it was.
   createEffect(() => {
     if (!saving() || shell.jobs > 0) return
     const t = setTimeout(() => {
@@ -105,10 +107,42 @@ export function Adjust(props: {
       }
     })
   }
+  /** The handle the stage draws on the current accessory. */
+  const target = (): AdjustTarget | undefined => {
+    const item = current()
+    const r = rule()
+    if (!item || !r) return undefined
+    const steps = view().adjustSteps
+    return {
+      id: item.id,
+      placement: shown(),
+      tool: tool(),
+      min: toPlacement(r.min),
+      max: toPlacement(r.max),
+      steps: { position: steps.position ?? 0.01, rotation: steps.rotation ?? 0.1, scale: steps.scale ?? 0.01 },
+      onChange: (p) => change(item.id, p),
+      onCommit: (p) => commit(item.id, p),
+    }
+  }
+  /** The move, turn and size switch for the stage's corner. */
+  const toolSwitch = () => (
+    <SegmentedControl
+      aria-label="Adjust handle"
+      size="sm"
+      options={TOOL_OPTIONS}
+      value={tool()}
+      onChange={(v) => void run("avatar.adjust_tool", v)}
+    />
+  )
+  return { items, current, rule, shown, change, commit, target, toolSwitch }
+}
 
+/** The Adjust panel: the adjustable items and the sliders for the current one. The handle is on
+ * the editor's stage. */
+export function Adjust(props: { view: AvatarView; state: AdjustState; onSelect: (id: number) => void }) {
   return (
     <Show
-      when={current()}
+      when={props.state.current()}
       fallback={
         <EmptyState
           icon="avatar"
@@ -117,76 +151,38 @@ export function Adjust(props: {
         />
       }
     >
-      {(item) => {
-        const rule = () => ruleFor(props.view, item().typeId)
-        return (
-          <div class="grid grid-cols-1 gap-4 xl:grid-cols-[13rem_minmax(0,1fr)_17rem]">
-            <div class="-mx-2 flex flex-col">
-              <For each={items()}>
-                {(w) => (
-                  <ListItem
-                    leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
-                    title={<ItemName name={w.name} id={w.id} />}
-                    subtitle={isAdjusted(w.placement) ? `${w.typeName} · Adjusted` : w.typeName}
-                    selected={w.id === item().id}
-                    onClick={() => props.onSelect(w.id)}
-                  />
-                )}
-              </For>
-            </div>
-            <AvatarViewer
-              stage
-              class="h-[28rem] w-full"
-              source={{ kind: "draft" }}
-              colorHex={props.view.colors.map((c) => c.hex)}
-              image={props.image}
-              alt="Your avatar"
-              corner={
-                <SegmentedControl
-                  aria-label="Adjust handle"
-                  size="sm"
-                  options={TOOL_OPTIONS}
-                  value={tool()}
-                  onChange={(v) => void run("avatar.adjust_tool", v)}
-                />
-              }
-              adjust={
-                rule()
-                  ? {
-                      id: item().id,
-                      placement: shown(),
-                      tool: tool(),
-                      min: toPlacement(rule()?.min ?? null),
-                      max: toPlacement(rule()?.max ?? null),
-                      steps: {
-                        position: props.view.adjustSteps.position ?? 0.01,
-                        rotation: props.view.adjustSteps.rotation ?? 0.1,
-                        scale: props.view.adjustSteps.scale ?? 0.01,
-                      },
-                      onChange: (p) => change(item().id, p),
-                      onCommit: (p) => commit(item().id, p),
-                    }
-                  : undefined
-              }
-            />
-            <Show when={rule()}>
-              {(r) => (
-                <Editor
-                  item={item()}
-                  rule={r()}
-                  others={items()}
-                  canUndo={props.view.canUndo}
-                  canRedo={props.view.canRedo}
-                  steps={props.view.adjustSteps}
-                  placement={shown()}
-                  onChange={(p) => change(item().id, p)}
-                  onCommit={(p) => commit(item().id, p)}
+      {(item) => (
+        <div class="flex flex-col gap-4">
+          <div class="-mx-2 flex flex-col">
+            <For each={props.state.items()}>
+              {(w) => (
+                <ListItem
+                  leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
+                  title={<ItemName name={w.name} id={w.id} />}
+                  subtitle={isAdjusted(w.placement) ? `${w.typeName} · Adjusted` : w.typeName}
+                  selected={w.id === item().id}
+                  onClick={() => props.onSelect(w.id)}
                 />
               )}
-            </Show>
+            </For>
           </div>
-        )
-      }}
+          <Show when={props.state.rule()}>
+            {(r) => (
+              <Editor
+                item={item()}
+                rule={r()}
+                others={props.state.items()}
+                canUndo={props.view.canUndo}
+                canRedo={props.view.canRedo}
+                steps={props.view.adjustSteps}
+                placement={props.state.shown()}
+                onChange={(p) => props.state.change(item().id, p)}
+                onCommit={(p) => props.state.commit(item().id, p)}
+              />
+            )}
+          </Show>
+        </div>
+      )}
     </Show>
   )
 }

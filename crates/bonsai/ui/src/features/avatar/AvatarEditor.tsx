@@ -30,11 +30,12 @@ import {
   ListItem,
   Menu,
   type MenuEntry,
-  Page,
+  Pane,
   SectionHeader,
   SegmentedControl,
   Select,
   Slider,
+  Split,
   Swatch,
   TabPanel,
   Tabs,
@@ -45,9 +46,9 @@ import {
   VirtualGrid,
 } from "~/lib/ui"
 
-import { Adjust } from "./Adjust"
+import { Adjust, createAdjust } from "./Adjust"
 import { isAdjusted, resetArg, ruleFor } from "./adjust"
-import { matchesWear, named, sortOptions } from "./wardrobe"
+import { groupTypes, groupWorn, matchesWear, named, sectionFor, sortOptions, type WornGroup } from "./wardrobe"
 
 const WARDROBE = "wardrobe"
 const OUTFITS = "outfits"
@@ -66,7 +67,8 @@ const outfitImage = (o: OutfitView) => {
 /** Asset type id of an inventory slot key (`a<type>`). */
 const slotType = (slot: string) => (slot.startsWith("a") ? slot.slice(1) : "")
 
-/** Avatar editor: preview on the left, wardrobe on the right. Clicking an item puts it on or
+/** Avatar editor: what the look wears on the left, the avatar in the middle, the wardrobe on
+ * the right. Clicking an item puts it on or
  * takes it off the edited look; a full slot swaps its oldest item out. Nothing changes on
  * Roblox until the look is worn. */
 export default function AvatarEditor() {
@@ -111,6 +113,8 @@ export default function AvatarEditor() {
     setAdjusting(id)
     setSection(ADJUST)
   }
+  // The wardrobe slot a group's add button opened.
+  const [pick, setPick] = createSignal<{ section: string; slot: string } | null>(null)
   const [category, setCategory] = createSignal(RECENT)
   const categories = () => [
     { value: RECENT, label: "Recent" },
@@ -120,6 +124,7 @@ export default function AvatarEditor() {
     shell.active
     setSection(WARDROBE)
     setAdjusting(null)
+    setPick(null)
     setCategory(RECENT)
     setOutfitQuery("")
     setOutfitSort("default")
@@ -193,9 +198,93 @@ export default function AvatarEditor() {
     menuItem("avatar.redraw", { icon: "refresh" }),
   ]
   const layered = () => view.wearing.filter((w) => w.layer !== null).length
-  // Layered clothing outermost first, as it stacks; everything else after.
-  const wearing = () =>
-    [...view.wearing].sort((a, b) => (b.layer ?? Number.NEGATIVE_INFINITY) - (a.layer ?? Number.NEGATIVE_INFINITY))
+  const groups = createMemo(() => groupWorn(view.wearing))
+  // Opens the wardrobe on the first slot of these types that the account can wear.
+  const browse = (types: readonly number[], otherwise = WARDROBE) => {
+    const to = sectionFor(sections.items, types)
+    if (!to) return setSection(otherwise)
+    setPick({ ...to })
+    setCategory(to.section)
+    setSection(WARDROBE)
+  }
+  const add = (g: WornGroup) => browse(groupTypes(g), g === "body" ? BODY : WARDROBE)
+  // An accessory that can be moved opens in Adjust; anything else opens its wardrobe slot.
+  const select = (w: WornView) => (ruleFor(view, w.typeId) ? adjust(w.id) : browse([w.typeId]))
+  const WornRow = (p: { item: WornView }) => {
+    const w = () => p.item
+    const layerMenu = () =>
+      w().layer !== null && layered() > 1
+        ? [
+            {
+              kind: "submenu" as const,
+              label: "Layer",
+              icon: "list" as const,
+              items: [
+                menuItem("avatar.layer", { arg: `${w().id} up`, label: "Move up", icon: "chevron-up" }),
+                menuItem("avatar.layer", { arg: `${w().id} down`, label: "Move down", icon: "chevron-down" }),
+              ],
+            },
+          ]
+        : []
+    const adjustMenu = () =>
+      ruleFor(view, w().typeId)
+        ? [
+            { label: "Adjust…", icon: "settings" as const, onSelect: () => adjust(w().id) },
+            menuItem("avatar.adjust", {
+              arg: resetArg(w().id),
+              label: "Reset adjustment",
+              icon: "undo",
+              disabled: !isAdjusted(w().placement),
+            }),
+          ]
+        : []
+    return (
+      <ContextMenu
+        items={itemMenu(w().id, false, w().typeId, {
+          actions: [
+            menuItem("avatar.try", { arg: `${w().id}:${w().typeId}`, label: "Take off", icon: "x" }),
+            ...layerMenu(),
+            ...adjustMenu(),
+          ],
+        })}
+      >
+        <ListItem
+          leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w().id)} />}
+          title={<ItemName name={w().name} id={w().id} />}
+          subtitle={wornNote(w())}
+          dim={view.rig === "R6" && w().r15Only}
+          selected={section() === ADJUST && adjustState.current()?.id === w().id}
+          onClick={() => select(w())}
+          actionsOnHover
+          actions={
+            <>
+              <Show when={w().layer !== null && layered() > 1}>
+                <IconButton
+                  size="sm"
+                  icon="chevron-up"
+                  label="Move layer up"
+                  onClick={() => run("avatar.layer", `${w().id} up`)}
+                />
+                <IconButton
+                  size="sm"
+                  icon="chevron-down"
+                  label="Move layer down"
+                  onClick={() => run("avatar.layer", `${w().id} down`)}
+                />
+              </Show>
+              <IconButton
+                size="sm"
+                icon="x"
+                label="Take off"
+                onClick={() => run("avatar.try", `${w().id}:${w().typeId}`)}
+              />
+            </>
+          }
+        />
+      </ContextMenu>
+    )
+  }
+  const adjustState = createAdjust(() => view, adjusting)
   const wornNote = (w: WornView) => {
     if (view.rig === "R6" && w.r15Only) return `${w.typeName} · R15 only`
     return isAdjusted(w.placement) ? `${w.typeName} · Adjusted` : w.typeName
@@ -206,8 +295,8 @@ export default function AvatarEditor() {
   }
 
   return (
-    <Page>
-      <div class="mb-4 flex flex-wrap items-center gap-2">
+    <div class="flex min-h-0 flex-1 flex-col">
+      <div class="flex flex-wrap items-center gap-2 border-b border-line px-5 py-2">
         <span class="truncate font-semibold">{view.outfit?.name ?? "Your avatar"}</span>
         <Show when={view.loadingOutfit}>
           <span class="text-sm text-fg-muted">Loading outfit…</span>
@@ -268,150 +357,91 @@ export default function AvatarEditor() {
           Wear
         </Button>
       </div>
-      <div class="flex flex-col items-start gap-6 lg:flex-row">
-        {/* Adjust draws the avatar large itself; only one viewer shows the 3D model. */}
-        <Show when={section() !== ADJUST}>
-          <aside class="flex w-64 max-w-full shrink-0 flex-col gap-3 lg:sticky lg:top-4">
-            <AvatarViewer
-              colorHex={view.colors.map((c) => c.hex)}
-              source={{ kind: "draft" }}
-              image={view.edited ? undefined : preview()}
-              alt="Your avatar"
-              menu={previewMenu()}
-              controls
-            />
-            <div class="flex items-center justify-between">
-              <SegmentedControl
-                aria-label="Body type"
-                size="sm"
-                options={["R6", "R15"]}
-                value={view.rig}
-                onChange={(v) => void run("avatar.rig", v)}
-              />
-              <Menu
-                size="sm"
-                label="Outfits"
-                items={[
-                  { kind: "heading", label: "Open outfit" },
-                  ...outfits.list.items.map((o) => menuItem("avatar.load_outfit", { arg: o.id, label: o.name })),
-                ]}
-              >
-                Outfits
-              </Menu>
-            </div>
-            <Show when={view.error}>{(e) => <span class="text-sm text-fg-muted">{e()}</span>}</Show>
-            <SectionHeader title="Wearing" meta={view.wearing.length} size="group" />
-            <div class="-mx-2 -mt-2 flex flex-col">
-              <For each={wearing()}>
-                {(w) => (
+      <Split>
+        <Pane side class="w-64 gap-1 px-3">
+          <Show when={view.error}>{(e) => <span class="text-sm text-fg-muted">{e()}</span>}</Show>
+          <For each={groups()}>
+            {(g) => (
+              <section class="flex flex-col" aria-label={g.label}>
+                <SectionHeader
+                  title={g.label}
+                  meta={g.items.length || undefined}
+                  size="group"
+                  actions={
+                    <IconButton
+                      size="sm"
+                      icon="plus"
+                      label={`Add to ${g.label.toLowerCase()}`}
+                      onClick={() => add(g.key)}
+                    />
+                  }
+                />
+                <Show when={g.key === "body"}>
+                  <ListItem
+                    leading={<Swatch display color={view.colors[0]?.hex ?? ""} label="Skin color" />}
+                    title="Colors and scale"
+                    subtitle={view.rig || undefined}
+                    onClick={() => setSection(BODY)}
+                  />
+                </Show>
+                <div class="-mx-2 flex flex-col">
+                  <For each={g.items}>{(w) => <WornRow item={w} />}</For>
+                </div>
+              </section>
+            )}
+          </For>
+          <Show when={view.emotes.length > 0}>
+            <SectionHeader title="Emotes" meta={view.emotes.length} size="group" />
+            <div class="-mx-2 flex flex-col">
+              <For each={view.emotes}>
+                {(e) => (
                   <ContextMenu
-                    items={itemMenu(w.id, false, w.typeId, {
+                    items={itemMenu(e.id, false, undefined, {
                       actions: [
-                        menuItem("avatar.try", { arg: `${w.id}:${w.typeId}`, label: "Take off", icon: "x" }),
-                        ...(w.layer !== null && layered() > 1
-                          ? [
-                              {
-                                kind: "submenu" as const,
-                                label: "Layer",
-                                icon: "list" as const,
-                                items: [
-                                  menuItem("avatar.layer", { arg: `${w.id} up`, label: "Move up", icon: "chevron-up" }),
-                                  menuItem("avatar.layer", {
-                                    arg: `${w.id} down`,
-                                    label: "Move down",
-                                    icon: "chevron-down",
-                                  }),
-                                ],
-                              },
-                            ]
-                          : []),
-                        ...(ruleFor(view, w.typeId)
-                          ? [
-                              { label: "Adjust…", icon: "settings" as const, onSelect: () => adjust(w.id) },
-                              menuItem("avatar.adjust", {
-                                arg: resetArg(w.id),
-                                label: "Reset adjustment",
-                                icon: "undo",
-                                disabled: !isAdjusted(w.placement),
-                              }),
-                            ]
-                          : []),
+                        menuItem("avatar.play", { arg: `emote.${e.id}`, label: "Play in 3D", icon: "play" }),
+                        menuItem("avatar.emote", { arg: String(e.typeId), label: "Clear slot", icon: "x" }),
                       ],
                     })}
                   >
                     <ListItem
-                      leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
-                      title={<ItemName name={w.name} id={w.id} />}
-                      subtitle={wornNote(w)}
-                      dim={view.rig === "R6" && w.r15Only}
-                      onClick={() => run("market.open", String(w.id))}
-                      actionsOnHover
-                      actions={
-                        <>
-                          <Show when={w.layer !== null && layered() > 1}>
-                            <IconButton
-                              size="sm"
-                              icon="chevron-up"
-                              label="Move layer up"
-                              onClick={() => run("avatar.layer", `${w.id} up`)}
-                            />
-                            <IconButton
-                              size="sm"
-                              icon="chevron-down"
-                              label="Move layer down"
-                              onClick={() => run("avatar.layer", `${w.id} down`)}
-                            />
-                          </Show>
-                          <IconButton
-                            size="sm"
-                            icon="x"
-                            label="Take off"
-                            onClick={() => run("avatar.try", `${w.id}:${w.typeId}`)}
-                          />
-                        </>
-                      }
+                      leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", e.id)} />}
+                      title={e.name}
+                      subtitle={e.typeName}
+                      onClick={() => run("avatar.play", `emote.${e.id}`)}
                     />
                   </ContextMenu>
                 )}
               </For>
             </div>
-            <Show when={view.emotes.length > 0}>
-              <SectionHeader title="Emotes" meta={view.emotes.length} size="group" />
-              <div class="-mx-2 -mt-2 flex flex-col">
-                <For each={view.emotes}>
-                  {(e) => (
-                    <ContextMenu
-                      items={itemMenu(e.id, false, undefined, {
-                        actions: [
-                          menuItem("avatar.play", { arg: `emote.${e.id}`, label: "Play in 3D", icon: "play" }),
-                          menuItem("avatar.emote", { arg: String(e.typeId), label: "Clear slot", icon: "x" }),
-                        ],
-                      })}
-                    >
-                      <ListItem
-                        leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", e.id)} />}
-                        title={e.name}
-                        subtitle={e.typeName}
-                        onClick={() => run("market.open", String(e.id))}
-                        actionsOnHover
-                        actions={
-                          <IconButton
-                            size="sm"
-                            icon="play"
-                            label="Play in 3D"
-                            onClick={() => run("avatar.play", `emote.${e.id}`)}
-                          />
-                        }
-                      />
-                    </ContextMenu>
-                  )}
-                </For>
-              </div>
-            </Show>
-          </aside>
-        </Show>
+          </Show>
+        </Pane>
 
-        <div class="flex w-full min-w-0 flex-1 flex-col gap-3">
+        <div class="flex min-w-0 flex-1 p-4">
+          <AvatarViewer
+            stage
+            class="h-full min-h-80 w-full"
+            colorHex={view.colors.map((c) => c.hex)}
+            source={{ kind: "draft" }}
+            image={view.edited ? undefined : preview()}
+            alt="Your avatar"
+            menu={previewMenu()}
+            corner={
+              <>
+                <SegmentedControl
+                  aria-label="Body type"
+                  size="sm"
+                  options={["R6", "R15"]}
+                  value={view.rig}
+                  onChange={(v) => void run("avatar.rig", v)}
+                />
+                <Show when={section() === ADJUST && adjustState.target()}>{adjustState.toolSwitch()}</Show>
+              </>
+            }
+            adjust={section() === ADJUST ? adjustState.target() : undefined}
+          />
+        </div>
+
+        <Pane class="w-112 flex-none border-l border-line">
           <Tabs
             aria-label="Wardrobe"
             items={tabs()}
@@ -502,7 +532,11 @@ export default function AvatarEditor() {
                 <For each={sections.items}>
                   {(s) => (
                     <TabPanel value={s.name}>
-                      <Section section={s} worn={view.wearing.map((w) => w.id)} />
+                      <Section
+                        section={s}
+                        worn={view.wearing.map((w) => w.id)}
+                        pick={pick()?.section === s.name ? pick() : undefined}
+                      />
                     </TabPanel>
                   )}
                 </For>
@@ -512,13 +546,13 @@ export default function AvatarEditor() {
               <Body view={view} />
             </TabPanel>
             <TabPanel value={ADJUST}>
-              <Adjust view={view} image={preview()} selected={adjusting()} onSelect={setAdjusting} />
+              <Adjust view={view} state={adjustState} onSelect={setAdjusting} />
             </TabPanel>
           </Tabs>
           <Show when={sections.error}>{(e) => <span class="text-sm text-fg-muted">{e()}</span>}</Show>
-        </div>
-      </div>
-    </Page>
+        </Pane>
+      </Split>
+    </div>
   )
 }
 
@@ -542,8 +576,13 @@ function NoMatches(props: { reset: () => void }) {
   )
 }
 
-function Section(props: { section: WardrobeSection; worn: number[] }) {
+function Section(props: { section: WardrobeSection; worn: number[]; pick?: { slot: string } | null }) {
   const [slot, setSlot] = createSignal(props.section.slots[0]?.value ?? "")
+  // A slot asked for from the worn list.
+  createEffect(() => {
+    const want = props.pick?.slot
+    if (want) setSlot(want)
+  })
   createEffect(() => {
     if (!props.section.slots.some((s) => s.value === slot())) setSlot(props.section.slots[0]?.value ?? "")
   })
