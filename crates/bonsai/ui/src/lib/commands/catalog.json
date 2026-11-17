@@ -2558,6 +2558,24 @@
     },
     {
       "arg": "text",
+      "id": "avatar.adjust_tool",
+      "keywords": [
+        "gizmo",
+        "handle",
+        "move",
+        "rotate",
+        "turn",
+        "scale",
+        "size",
+        "adjust",
+        "accessory",
+        "3d",
+        "avatar"
+      ],
+      "title": "Pick the 3D adjust handle (move, turn or size)"
+    },
+    {
+      "arg": "text",
       "id": "avatar.scale",
       "keywords": [
         "height",

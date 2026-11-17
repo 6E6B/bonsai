@@ -13,7 +13,9 @@ import {
   type TryOnItem,
   toOutfitJson,
 } from "./outfit"
-import type { Lease, StageState } from "./stage"
+import type { Gizmo, GizmoTool, Lease, Placement, StageState } from "./stage"
+
+export type { GizmoTool, Placement } from "./stage"
 
 // Showing 3D or the image, once toggled. Each new viewer starts from the setting again.
 const [picked, setPicked] = createSignal<boolean | null>(null)
@@ -68,7 +70,18 @@ export interface AvatarViewerProps {
   stage?: boolean
   /** On a stage, controls for the top-left corner, like a view switch. */
   corner?: JSX.Element
+  /** A worn accessory being adjusted: drawn at `placement` as it changes, with a handle to drag. */
+  adjust?: AdjustTarget
 }
+
+export interface AdjustTarget extends Omit<Gizmo, "placement" | "tool"> {
+  placement: Placement
+  /** The handle to show; none draws the placement without one. */
+  tool: GizmoTool | null
+}
+
+/** Keys that pick the adjust handle while the viewer has focus, as in most 3D editors. */
+const TOOL_KEYS: Record<string, GizmoTool> = { w: "move", e: "turn", r: "size" }
 
 /**
  * An avatar in 3D with orbit, zoom, pan and animations, falling back to its image. Drag to
@@ -97,6 +110,8 @@ export function AvatarViewer(props: AvatarViewerProps) {
   const [drawn, setDrawn] = createSignal(false)
   // Bumped each time a new subject is shown, so its showcase animation plays again.
   const [shown, setShown] = createSignal(0)
+  // Bumped each time a model finishes drawing, so an unsaved placement is drawn on it again.
+  const [rendered, setRendered] = createSignal(0)
   let box!: HTMLDivElement
   let disposed = false
 
@@ -125,7 +140,10 @@ export function AvatarViewer(props: AvatarViewerProps) {
             },
             (st) => {
               setState(st)
-              if (st === "ready") setDrawn(true)
+              if (st === "ready") {
+                setDrawn(true)
+                setRendered((n) => n + 1)
+              }
             },
           ),
         )
@@ -162,6 +180,28 @@ export function AvatarViewer(props: AvatarViewerProps) {
       void l.play(a).then((ok) => ok && setAnim(a))
     }),
   )
+  createEffect(() => {
+    const l = lease()
+    const a = props.adjust
+    rendered()
+    if (l && a && !props.accessory) l.preview(a.id, a.placement)
+  })
+  createEffect(() => {
+    const l = lease()
+    const a = props.adjust
+    if (!l) return
+    if (!a?.tool || !drawn() || props.accessory) return l.gizmo(null)
+    l.gizmo({
+      id: a.id,
+      tool: a.tool,
+      min: a.min,
+      max: a.max,
+      steps: a.steps,
+      placement: () => props.adjust?.placement ?? a.placement,
+      onChange: (p) => props.adjust?.onChange(p),
+      onCommit: (p) => props.adjust?.onCommit(p),
+    })
+  })
   onCleanup(() => {
     disposed = true
     lease()?.release()
@@ -186,6 +226,13 @@ export function AvatarViewer(props: AvatarViewerProps) {
   onCleanup(handle("avatar.orbit", (arg) => lease()?.orbit(arg?.trim().toLowerCase() || "reset")))
 
   const onKey = (e: KeyboardEvent) => {
+    const tool = props.adjust && !e.ctrlKey && !e.metaKey && !e.altKey ? TOOL_KEYS[e.key.toLowerCase()] : undefined
+    if (tool) {
+      e.preventDefault()
+      e.stopPropagation()
+      void run("avatar.adjust_tool", tool)
+      return
+    }
     const how = ORBIT_KEYS[e.key]
     if (!how || !lease() || e.ctrlKey || e.metaKey || e.altKey) return
     e.preventDefault()
@@ -260,7 +307,8 @@ export function AvatarViewer(props: AvatarViewerProps) {
   const options = () => <Menu size="sm" label="Viewer options" icon="more" items={toolbarMenu()} />
   const hint = () => {
     if (want3d() && failed()) return "3D unavailable"
-    return lease() ? "Drag to turn · Scroll to zoom" : undefined
+    if (!lease()) return undefined
+    return props.adjust?.tool ? "Drag the handle · W move, E turn, R size" : "Drag to turn · Scroll to zoom"
   }
 
   return (

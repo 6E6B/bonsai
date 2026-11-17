@@ -1,6 +1,8 @@
-import { createEffect, createSignal, For, Show } from "solid-js"
-import { menuItem, run } from "~/lib/commands/registry"
+import { createEffect, createSignal, For, on, onCleanup, Show } from "solid-js"
+import { AvatarViewer } from "~/lib/avatar3d/viewer"
+import { handle, menuItem, run } from "~/lib/commands/registry"
 import type { AdjustRuleView, AvatarView, WornView } from "~/lib/ipc/bindings"
+import { shell } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { ItemName } from "~/lib/tiles"
 import {
@@ -11,29 +13,98 @@ import {
   Menu,
   type MenuEntry,
   SectionHeader,
+  SegmentedControl,
   Slider,
   Thumbnail,
 } from "~/lib/ui"
 
 import {
-  type Axis,
   adjustable,
-  axisValue,
   copyArg,
-  DEFAULT_PLACEMENT,
   formatValue,
   GROUPS,
-  type Group,
   isAdjusted,
+  type Placement,
+  parseTool,
+  placementArg,
   resetArg,
   ruleFor,
-  setArg,
+  type Tool,
+  toPlacement,
+  withAxis,
 } from "./adjust"
 
-/** Moving, turning and sizing worn accessories within the bounds Roblox sets per type. */
-export function Adjust(props: { view: AvatarView; selected: number | null; onSelect: (id: number) => void }) {
+const TOOL_OPTIONS = [
+  { value: "move", label: "Move", hint: "W" },
+  { value: "turn", label: "Turn", hint: "E" },
+  { value: "size", label: "Size", hint: "R" },
+]
+
+/** How long to wait for the saved look after a write finishes before dropping the draft. */
+const SETTLE_MS = 400
+
+/**
+ * Moving, turning and sizing worn accessories within the bounds Roblox sets per type. The
+ * avatar shows each change as it is dragged; it is saved when the drag ends.
+ */
+export function Adjust(props: {
+  view: AvatarView
+  image?: string
+  selected: number | null
+  onSelect: (id: number) => void
+}) {
   const items = () => adjustable(props.view)
   const current = () => items().find((w) => w.id === props.selected) ?? items()[0]
+  const [tool, setTool] = createSignal<Tool>("move")
+  onCleanup(
+    handle("avatar.adjust_tool", (arg) => {
+      const t = parseTool(arg)
+      if (t) setTool(t)
+    }),
+  )
+
+  // What the avatar shows while a change is dragged or being saved.
+  const [draft, setDraft] = createSignal<{ id: number; placement: Placement } | null>(null)
+  const [saving, setSaving] = createSignal(false)
+  const saved = () => toPlacement(current()?.placement ?? null)
+  const shown = () => {
+    const d = draft()
+    return d && d.id === current()?.id ? d.placement : saved()
+  }
+  // A saved change replaces the draft as soon as it arrives.
+  createEffect(
+    on(
+      () => JSON.stringify([current()?.id, current()?.placement]),
+      () => {
+        setDraft(null)
+        setSaving(false)
+      },
+      { defer: true },
+    ),
+  )
+  // A write that failed, or that Roblox left alone, leaves the saved placement where it was.
+  createEffect(() => {
+    if (!saving() || shell.jobs > 0) return
+    const t = setTimeout(() => {
+      setDraft(null)
+      setSaving(false)
+    }, SETTLE_MS)
+    onCleanup(() => clearTimeout(t))
+  })
+  const change = (id: number, placement: Placement) => setDraft({ id, placement })
+  const commit = (id: number, placement: Placement) => {
+    const arg = placementArg(id, placement, saved())
+    if (!arg) return setDraft(null)
+    setDraft({ id, placement })
+    setSaving(true)
+    void run("avatar.adjust", arg).then((ok) => {
+      if (!ok) {
+        setDraft(null)
+        setSaving(false)
+      }
+    })
+  }
+
   return (
     <Show
       when={current()}
@@ -45,32 +116,89 @@ export function Adjust(props: { view: AvatarView; selected: number | null; onSel
         />
       }
     >
-      {(item) => (
-        <div class="flex flex-col gap-4 md:flex-row">
-          <div class="-mx-2 flex shrink-0 flex-col md:w-56">
-            <For each={items()}>
-              {(w) => (
-                <ListItem
-                  leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
-                  title={<ItemName name={w.name} id={w.id} />}
-                  subtitle={isAdjusted(w.placement) ? `${w.typeName} · Adjusted` : w.typeName}
-                  selected={w.id === item().id}
-                  onClick={() => props.onSelect(w.id)}
+      {(item) => {
+        const rule = () => ruleFor(props.view, item().typeId)
+        return (
+          <div class="grid grid-cols-1 gap-4 xl:grid-cols-[13rem_minmax(0,1fr)_17rem]">
+            <div class="-mx-2 flex flex-col">
+              <For each={items()}>
+                {(w) => (
+                  <ListItem
+                    leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
+                    title={<ItemName name={w.name} id={w.id} />}
+                    subtitle={isAdjusted(w.placement) ? `${w.typeName} · Adjusted` : w.typeName}
+                    selected={w.id === item().id}
+                    onClick={() => props.onSelect(w.id)}
+                  />
+                )}
+              </For>
+            </div>
+            <AvatarViewer
+              stage
+              class="h-[28rem] w-full"
+              source={{ kind: "me" }}
+              colorHex={props.view.colors.map((c) => c.hex)}
+              image={props.image}
+              alt="Your avatar"
+              corner={
+                <SegmentedControl
+                  aria-label="Adjust handle"
+                  size="sm"
+                  options={TOOL_OPTIONS}
+                  value={tool()}
+                  onChange={(v) => void run("avatar.adjust_tool", v)}
+                />
+              }
+              adjust={
+                rule()
+                  ? {
+                      id: item().id,
+                      placement: shown(),
+                      tool: tool(),
+                      min: toPlacement(rule()?.min ?? null),
+                      max: toPlacement(rule()?.max ?? null),
+                      steps: {
+                        position: props.view.adjustSteps.position ?? 0.01,
+                        rotation: props.view.adjustSteps.rotation ?? 0.1,
+                        scale: props.view.adjustSteps.scale ?? 0.01,
+                      },
+                      onChange: (p) => change(item().id, p),
+                      onCommit: (p) => commit(item().id, p),
+                    }
+                  : undefined
+              }
+            />
+            <Show when={rule()}>
+              {(r) => (
+                <Editor
+                  item={item()}
+                  rule={r()}
+                  others={items()}
+                  steps={props.view.adjustSteps}
+                  placement={shown()}
+                  onChange={(p) => change(item().id, p)}
+                  onCommit={(p) => commit(item().id, p)}
                 />
               )}
-            </For>
+            </Show>
           </div>
-          <Show when={ruleFor(props.view, item().typeId)}>
-            {(rule) => <Editor view={props.view} item={item()} rule={rule()} others={items()} />}
-          </Show>
-        </div>
-      )}
+        )
+      }}
     </Show>
   )
 }
 
-function Editor(props: { view: AvatarView; item: WornView; rule: AdjustRuleView; others: WornView[] }) {
-  const placement = () => props.item.placement ?? DEFAULT_PLACEMENT
+function Editor(props: {
+  item: WornView
+  rule: AdjustRuleView
+  others: WornView[]
+  steps: AvatarView["adjustSteps"]
+  placement: Placement
+  onChange: (p: Placement) => void
+  onCommit: (p: Placement) => void
+}) {
+  const min = () => toPlacement(props.rule.min)
+  const max = () => toPlacement(props.rule.max)
   const copyMenu = (): MenuEntry[] => {
     const others = props.others.filter((o) => o.id !== props.item.id)
     if (!others.length) return [{ kind: "heading", label: "No other adjustable items worn" }]
@@ -83,9 +211,9 @@ function Editor(props: { view: AvatarView; item: WornView; rule: AdjustRuleView;
     ]
   }
   return (
-    <section class="flex min-w-0 flex-1 flex-col gap-4">
+    <section class="flex min-w-0 flex-col gap-4">
       <div class="flex flex-wrap items-center gap-2">
-        <SectionHeader title={props.item.name} meta={props.item.typeName} size="group" class="flex-1" />
+        <SectionHeader title={props.item.name} meta={props.item.typeName} size="group" class="min-w-0 flex-1" />
         <Menu size="sm" icon="copy" label="Copy placement" items={copyMenu()}>
           Copy from
         </Menu>
@@ -95,7 +223,7 @@ function Editor(props: { view: AvatarView; item: WornView; rule: AdjustRuleView;
           disabled={!isAdjusted(props.item.placement)}
           onClick={() => void run("avatar.adjust", resetArg(props.item.id))}
         >
-          Reset all
+          Reset
         </Button>
       </div>
       <For each={GROUPS}>
@@ -111,63 +239,29 @@ function Editor(props: { view: AvatarView; item: WornView; rule: AdjustRuleView;
                 onClick={() => void run("avatar.adjust", resetArg(props.item.id, g.key))}
               />
             </div>
-            <div class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-3">
-              <For each={g.axes}>
-                {(a) => (
-                  <AxisSlider
-                    id={props.item.id}
-                    group={g.key}
-                    axis={a.axis}
-                    label={a.label}
-                    neutral={g.neutral}
-                    value={axisValue(placement(), g.key, a.axis)}
-                    min={axisValue(props.rule.min, g.key, a.axis)}
-                    max={axisValue(props.rule.max, g.key, a.axis)}
-                    step={props.view.adjustSteps[g.key] ?? 0.01}
-                  />
-                )}
-              </For>
-            </div>
+            <For each={g.axes}>
+              {(a) => (
+                <Slider
+                  label={a.label}
+                  value={props.placement[g.key][a.axis]}
+                  min={min()[g.key][a.axis]}
+                  max={max()[g.key][a.axis]}
+                  step={props.steps[g.key] ?? 0.01}
+                  marks={[g.neutral]}
+                  resetValue={g.neutral}
+                  format={(v) => formatValue(g.key, v)}
+                  onChange={(v) => props.onChange(withAxis(props.placement, g.key, a.axis, v))}
+                  onChangeEnd={(v) => props.onCommit(withAxis(props.placement, g.key, a.axis, v))}
+                />
+              )}
+            </For>
           </div>
         )}
       </For>
       <p class="text-xs text-fg-muted">
-        Roblox limits each axis by accessory type. Double-click a slider or press Delete to reset it.
+        Drag the handle on the avatar or a slider; the change saves when you let go. Roblox limits each axis by
+        accessory type.
       </p>
     </section>
-  )
-}
-
-function AxisSlider(props: {
-  id: number
-  group: Group
-  axis: Axis
-  label: string
-  neutral: number
-  value: number
-  min: number
-  max: number
-  step: number
-}) {
-  // Follows the slider while dragging; the avatar catches up after the write.
-  const [value, setValue] = createSignal(props.value)
-  createEffect(() => setValue(props.value))
-  const commit = (v: number) => {
-    if (Math.abs(v - props.value) < 1e-6) return
-    void run("avatar.adjust", setArg(props.id, props.group, props.axis, v))
-  }
-  return (
-    <Slider
-      label={props.label}
-      value={value()}
-      min={props.min}
-      max={props.max}
-      step={props.step}
-      marks={[props.neutral]}
-      resetValue={props.neutral}
-      format={(v) => formatValue(props.group, v)}
-      onChange={setValue}
-      onChangeEnd={commit}
-    />
   )
 }

@@ -1,8 +1,21 @@
 import { convertFileSrc } from "@tauri-apps/api/core"
 import * as THREE from "three"
+import { TransformControls } from "three/examples/jsm/controls/TransformControls.js"
 import dracoUrl from "three/examples/jsm/libs/draco/draco_decoder.js?url"
 import { shell } from "~/lib/store"
-import { API, Authentication, CFrame, HOST, type Instance, Outfit, OutfitRenderer, RBXRenderer } from "./engine"
+import {
+  API,
+  Authentication,
+  CFrame,
+  getOriginalSize,
+  HOST,
+  type Instance,
+  Outfit,
+  OutfitRenderer,
+  RBXRenderer,
+  ScaleAccessoryForRig,
+  Vector3,
+} from "./engine"
 import { assetPath } from "./host"
 import { type OutfitJson, type Subject, subjectKey, type TryOnItem } from "./outfit"
 
@@ -14,12 +27,50 @@ import { type OutfitJson, type Subject, subjectKey, type TryOnItem } from "./out
 
 export type StageState = "loading" | "ready" | "error"
 
+export interface Xyz {
+  x: number
+  y: number
+  z: number
+}
+
+/** Where a worn accessory sits relative to where it attaches: studs, degrees and a factor. */
+export interface Placement {
+  position: Xyz
+  rotation: Xyz
+  scale: Xyz
+}
+
+export type PlacementGroup = keyof Placement
+
+/** Which handle the gizmo shows: arrows, rings or boxes. */
+export type GizmoTool = "move" | "turn" | "size"
+
+export interface Gizmo {
+  /** The worn accessory's asset id. */
+  id: number
+  tool: GizmoTool
+  min: Placement
+  max: Placement
+  /** Values snap to these steps, the ones Roblox stores. */
+  steps: Record<PlacementGroup, number>
+  /** The placement drawn now. Read when a drag starts. */
+  placement: () => Placement
+  /** While dragging, with the placement already clamped and drawn. */
+  onChange: (p: Placement) => void
+  /** When a drag that changed something ends. */
+  onCommit: (p: Placement) => void
+}
+
 export interface Lease {
   /** Draws an outfit or an accessory. False when it is already showing. */
   show(subject: Subject): boolean
   /** Plays a set animation (`idle`, `walk`) or `emote.<id>`. False when it couldn't. */
   play(name: string): Promise<boolean>
   orbit(how: string): void
+  /** Draws a worn accessory at a placement without saving it. False when it isn't drawn. */
+  preview(id: number, placement: Placement): boolean
+  /** Puts a move, turn or size handle on a worn accessory; null takes it away. */
+  gizmo(g: Gizmo | null): void
   resize(width: number, height: number): void
   release(): void
 }
@@ -255,6 +306,240 @@ function orbit(how: string) {
   controls.update()
 }
 
+// Adjusting worn accessories.
+
+const DEG = Math.PI / 180
+const GROUPS: readonly PlacementGroup[] = ["position", "rotation", "scale"]
+const AXES = ["x", "y", "z"] as const
+
+interface Worn {
+  rig: Instance
+  description: Instance
+  accessoryDescription: Instance
+  accessory: Instance
+  handle: Instance
+}
+
+/** The drawn accessory with this asset id, and what Roblox's placement math needs for it. */
+function worn(id: number): Worn | null {
+  const rig = renderer?.currentRig
+  const description = rig?.FindFirstChildOfClass("Humanoid")?.FindFirstChildOfClass("HumanoidDescription")
+  if (!rig || !description) return null
+  const want = BigInt(id)
+  for (const d of description.GetChildren()) {
+    if (d.className !== "AccessoryDescription" || d.Prop("AssetId") !== want) continue
+    const accessory = d.Prop("Instance") as Instance | undefined
+    const handle = accessory?.FindFirstChild("Handle")
+    if (accessory && handle && !accessory.destroyed && accessory.parent === rig) {
+      return { rig, description, accessoryDescription: d, accessory, handle }
+    }
+  }
+  return null
+}
+
+const vector = (v: Xyz) => new Vector3(v.x, v.y, v.z)
+const clone = (p: Placement): Placement => ({
+  position: { ...p.position },
+  rotation: { ...p.rotation },
+  scale: { ...p.scale },
+})
+const same = (a: Placement, b: Placement) => GROUPS.every((g) => AXES.every((x) => Math.abs(a[g][x] - b[g][x]) < 1e-6))
+
+/** Applies a placement the way the engine does for a new outfit, on just this accessory. */
+function place(id: number, p: Placement): boolean {
+  const w = worn(id)
+  if (!w || !renderer) return false
+  w.accessoryDescription.setProperty("Position", vector(p.position))
+  w.accessoryDescription.setProperty("Rotation", vector(p.rotation))
+  w.accessoryDescription.setProperty("Scale", vector(p.scale))
+  ScaleAccessoryForRig(w.accessory, w.rig, renderer.outfit, w.description)
+  return true
+}
+
+const quaternion = (cf: CFrame) =>
+  new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(cf.Orientation[0] * DEG, cf.Orientation[1] * DEG, cf.Orientation[2] * DEG, "YXZ"),
+  )
+const turn = (r: Xyz) => new THREE.Quaternion().setFromEuler(new THREE.Euler(r.x * DEG, r.y * DEG, r.z * DEG, "YXZ"))
+
+/**
+ * The axes an adjustment moves along. Roblox offsets the accessory in the frame of the body
+ * attachment it hangs from, scaled with the body, and turns it about the handle's center.
+ */
+interface Axes {
+  center: THREE.Vector3
+  basis: THREE.Quaternion
+  bodyScale: THREE.Vector3
+}
+
+function axesOf(w: Worn, p: Placement): Axes | null {
+  let body: Instance | undefined
+  for (const a of w.handle.GetChildren()) {
+    if (a.className !== "Attachment") continue
+    const name = a.Prop("Name")
+    for (const part of w.rig.GetChildren()) {
+      if (part.className !== "Part" && part.className !== "MeshPart") continue
+      body = part.GetChildren().find((c) => c.className === "Attachment" && c.Prop("Name") === name)
+      if (body) break
+    }
+    if (body) break
+  }
+  const part = body?.parent
+  if (!body || !part) return null
+  const world = (part.Prop("CFrame") as CFrame).multiply(body.Prop("CFrame") as CFrame)
+  const size = w.handle.Prop("Size") as Vector3
+  const original = getOriginalSize(w.handle)
+  const ratio = (s: number, o: number, a: number) => (o > 0 && a > 0 ? s / o / a : 1)
+  return {
+    center: new THREE.Vector3(...(w.handle.Prop("CFrame") as CFrame).Position),
+    basis: quaternion(world),
+    bodyScale: new THREE.Vector3(
+      ratio(size.X, original.X, p.scale.x),
+      ratio(size.Y, original.Y, p.scale.y),
+      ratio(size.Z, original.Z, p.scale.z),
+    ),
+  }
+}
+
+/** Keeps a placement inside the bounds, on the steps Roblox stores. */
+function limit(p: Placement, g: Gizmo): Placement {
+  const out = clone(p)
+  for (const group of GROUPS) {
+    const step = g.steps[group]
+    for (const x of AXES) {
+      const lo = g.min[group][x]
+      const hi = g.max[group][x]
+      const v = step > 0 ? Math.round(out[group][x] / step) * step : out[group][x]
+      out[group][x] = Math.min(Math.max(Number(v.toFixed(4)), lo), hi)
+    }
+  }
+  return out
+}
+
+let gizmo: Gizmo | null = null
+let transform: TransformControls | null = null
+let handleObject: THREE.Object3D | null = null
+let drag: { start: Placement; last: Placement; axes: Axes } | null = null
+let following = 0
+
+const MODES: Record<GizmoTool, "translate" | "rotate" | "scale"> = { move: "translate", turn: "rotate", size: "scale" }
+
+/** Sets the handle where the placement puts it; `from` is the drag start, if dragging. */
+function poseHandle(o: THREE.Object3D, axes: Axes, p: Placement, tool: GizmoTool, from?: Placement) {
+  const offset = from
+    ? new THREE.Vector3(p.position.x - from.position.x, p.position.y - from.position.y, p.position.z - from.position.z)
+        .multiply(axes.bodyScale)
+        .applyQuaternion(axes.basis)
+    : new THREE.Vector3()
+  o.position.copy(axes.center).add(offset)
+  // Arrows follow the body's axes; rings and boxes the accessory's turned ones.
+  o.quaternion.copy(axes.basis)
+  if (tool !== "move") o.quaternion.multiply(turn(p.rotation))
+  if (from && tool === "size") o.scale.set(p.scale.x / from.scale.x, p.scale.y / from.scale.y, p.scale.z / from.scale.z)
+  else o.scale.set(1, 1, 1)
+}
+
+function startDrag() {
+  const g = gizmo
+  const w = g && worn(g.id)
+  const start = g && clone(g.placement())
+  const axes = w && start && axesOf(w, start)
+  drag = g && start && axes ? { start, last: start, axes } : null
+}
+
+function dragged() {
+  const g = gizmo
+  const o = handleObject
+  if (!g || !o || !drag) return
+  const { start, axes } = drag
+  const p = clone(start)
+  const back = axes.basis.clone().invert()
+  if (g.tool === "move") {
+    const d = o.position.clone().sub(axes.center).applyQuaternion(back).divide(axes.bodyScale)
+    p.position = { x: start.position.x + d.x, y: start.position.y + d.y, z: start.position.z + d.z }
+  } else if (g.tool === "turn") {
+    const e = new THREE.Euler().setFromQuaternion(back.multiply(o.quaternion), "YXZ")
+    p.rotation = { x: e.x / DEG, y: e.y / DEG, z: e.z / DEG }
+  } else {
+    p.scale = { x: start.scale.x * o.scale.x, y: start.scale.y * o.scale.y, z: start.scale.z * o.scale.z }
+  }
+  const next = limit(p, g)
+  // The handle stops at the bounds instead of running ahead of the accessory.
+  poseHandle(o, axes, next, g.tool, start)
+  if (same(next, drag.last)) return
+  drag.last = next
+  place(g.id, next)
+  g.onChange(next)
+}
+
+function endDrag() {
+  const d = drag
+  drag = null
+  if (gizmo && d && !same(d.last, d.start)) gizmo.onCommit(d.last)
+}
+
+function transformControls() {
+  if (transform) return transform
+  const scene = RBXRenderer.firstScene
+  const canvas = RBXRenderer.renderer?.domElement
+  if (!canvas) return null
+  const o = new THREE.Object3D()
+  const t = new TransformControls(scene.camera, canvas)
+  t.setSpace("local")
+  t.setSize(0.8)
+  t.addEventListener("dragging-changed", (e) => {
+    if (scene.controls) scene.controls.enabled = !e.value
+  })
+  t.addEventListener("mouseDown", startDrag)
+  t.addEventListener("objectChange", dragged)
+  t.addEventListener("mouseUp", endDrag)
+  scene.scene.add(o, t.getHelper())
+  handleObject = o
+  transform = t
+  return t
+}
+
+/** Keeps the handle on the accessory between drags, as the camera and the avatar move. */
+function follow() {
+  following = 0
+  const g = gizmo
+  const t = transform
+  const o = handleObject
+  if (!g || !t || !o) return
+  following = requestAnimationFrame(follow)
+  if (renderer) renderer.deltaTimeMultiplier = 0
+  if (drag) return
+  const w = worn(g.id)
+  const axes = w && axesOf(w, g.placement())
+  if (!axes) {
+    if (t.object) t.detach()
+    return
+  }
+  if (!t.object) t.attach(o)
+  poseHandle(o, axes, g.placement(), g.tool)
+}
+
+function setGizmo(g: Gizmo | null) {
+  const before = gizmo
+  gizmo = g
+  if (!g) {
+    if (following) cancelAnimationFrame(following)
+    following = 0
+    drag = null
+    transform?.detach()
+    const controls = RBXRenderer.firstScene.controls
+    if (controls) controls.enabled = true
+    // The pose holds still while adjusting, so the handle stays put.
+    if (before && renderer) renderer.deltaTimeMultiplier = 1
+    return
+  }
+  const t = transformControls()
+  if (!t) return
+  if (before && (before.id !== g.id || before.tool !== g.tool)) drag = null
+  t.setMode(MODES[g.tool])
+  if (!following) follow()
+}
+
 /** Takes the canvas and mounts it in `el`. Rejects when WebGL or the engine won't start. */
 export async function acquire(el: HTMLElement, lost: () => void, state: (s: StageState) => void): Promise<Lease> {
   await boot()
@@ -302,6 +587,12 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
     orbit(how) {
       if (mine()) orbit(how)
     },
+    preview(id, placement) {
+      return mine() && place(id, placement)
+    },
+    gizmo(g) {
+      if (mine()) setGizmo(g)
+    },
     resize(width, height) {
       const [w, h] = [Math.round(width), Math.round(height)]
       const [cw, ch] = RBXRenderer.resolution
@@ -312,6 +603,7 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
       if (!mine()) return
       holder = null
       generation++
+      setGizmo(null)
       renderer?.stopAnimating()
       RBXRenderer.firstScene.shouldAnimate = false
       RBXRenderer.canvasContainer.remove()

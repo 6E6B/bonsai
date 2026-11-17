@@ -30,7 +30,8 @@ stay readable. Only `../stage.ts` imports it, and the app loads that module with
   because the CSP blocks blob workers.
 - `misc/flags.ts` points `ASSETS_PATH` and `RIG_PATH` at the bundled files in
   `ui/public/avatar3d/`, so the webview never loads them from the network.
-- `index.ts` exports only what the app uses.
+- `index.ts` exports only what the app uses, including `ScaleAccessoryForRig` and
+  `getOriginalSize`, so `../stage.ts` can redraw one adjusted accessory while it is dragged.
 - Failure handling, so one bad item can't stop every later outfit from drawing:
   - `HumanoidDescription.ts`: each part load settles as failed when it throws (`partFailed`).
   - `OutfitRenderer`: a thrown or failed update clears `currentlyUpdating` and
