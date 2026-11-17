@@ -853,9 +853,6 @@ function Body(props: { view: AvatarView }) {
               onToggle={togglePart}
             />
             <div class="flex min-w-0 flex-1 flex-col gap-2">
-              <p class="text-sm text-fg-muted">
-                Click parts to color them. With none selected, colors go on all parts.
-              </p>
               <div class="flex items-center gap-2 text-sm">
                 <Show
                   when={mixed()}
