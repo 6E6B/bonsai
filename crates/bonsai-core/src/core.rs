@@ -1303,6 +1303,12 @@ impl Inner {
             let d = s.data.entry(id).or_default();
             let before = d.presence.clone();
             d.presence.extend(all.clone());
+            // Drop people who are no longer friends; nothing refreshes them any more.
+            if let Some(friends) = &d.friends.data {
+                let friends: HashSet<u64> = friends.iter().copied().collect();
+                d.presence
+                    .retain(|u, _| *u == id.0 || friends.contains(u) || all.contains_key(u));
+            }
             let snapshot = d.presence.clone();
             drop(s);
             self.cache.put(Kind::Friends, id, "presence", &snapshot);

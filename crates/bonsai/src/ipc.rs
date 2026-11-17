@@ -1516,6 +1516,7 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
             let a = acting()?;
             core.send(Cmd::Refresh(a));
             core.reload_home(a);
+            core.expire_presence(a);
             core.refresh_thumbs();
             Ok(())
         }
