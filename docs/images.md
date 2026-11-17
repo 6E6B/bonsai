@@ -4,7 +4,8 @@
 and Copy Image URL for Roblox thumbnails across the app. This includes catalog/dependency
 images, outfits, game icons and thumbnails, badges, groups, and user avatars.
 
-Images inside an existing context menu append their actions there. Standalone images get a
+Images inside an existing context menu add their actions to its Share submenu, or to an Image
+submenu when it has none, so they never add top-level rows. Standalone images get a
 menu automatically, with a tab stop and Menu/Shift+F10 support. Right-clicking a particular
 image in a row selects that image. Keyboard row menus use the row's first image. The command
 palette uses the selected image, falling back to an open user/item/bundle/group/game page.

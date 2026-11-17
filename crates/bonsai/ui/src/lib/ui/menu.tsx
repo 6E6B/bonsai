@@ -25,6 +25,8 @@ import { Tooltip } from "./tooltip"
 export type MenuEntry =
   | {
       kind?: "item"
+      /** The registry command it runs, set by `menuItem()`. */
+      id?: string
       label: string
       onSelect: () => void
       icon?: IconName
@@ -33,7 +35,15 @@ export type MenuEntry =
       danger?: boolean
       disabled?: boolean
     }
-  | { kind: "submenu"; label: string; icon?: IconName; items: MenuEntry[]; disabled?: boolean }
+  | {
+      kind: "submenu"
+      /** Names the submenu so others can add to it, like `"share"` for image rows. */
+      id?: string
+      label: string
+      icon?: IconName
+      items: MenuEntry[]
+      disabled?: boolean
+    }
   | { kind: "heading"; label: string }
   | { kind: "separator" }
 
@@ -148,6 +158,23 @@ export interface ContextMenuProps extends ParentProps {
  * must also be reachable another way: the command bar or a visible button. */
 const ImageMenuContext = createContext(false)
 
+/** Adds image rows to a menu without growing its top level: into its Share submenu when it has
+ * one, else into an Image submenu placed before any trailing destructive rows. A menu with
+ * nothing else shows them flat. */
+export function withImageRows(items: MenuEntry[], rows: MenuEntry[]): MenuEntry[] {
+  if (items.length === 0) return rows
+  const share = items.findIndex((e) => e.kind === "submenu" && e.id === "share")
+  if (share >= 0) {
+    const s = items[share] as Extract<MenuEntry, { kind: "submenu" }>
+    return items.with(share, { ...s, items: [...s.items, { kind: "separator" as const }, ...rows] })
+  }
+  const image: MenuEntry = { kind: "submenu", id: "image", label: "Image", icon: "image", items: rows }
+  const sep = items.findLastIndex((e) => e.kind === "separator")
+  const dangerTail = sep >= 0 && items.slice(sep + 1).every((e) => "danger" in e && e.danger)
+  if (dangerTail) return [...items.slice(0, sep), image, ...items.slice(sep)]
+  return [...items, image]
+}
+
 /** Whether an image already belongs to a row/tile context menu. */
 export const useImageMenu = () => useContext(ImageMenuContext)
 
@@ -173,14 +200,13 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
   }
   const imageItems = (): MenuEntry[] => {
     const target = image()
-    if (!target) return []
+    if (!target) return props.items
     const arg = JSON.stringify(target)
-    return [
-      ...(props.items.length ? [{ kind: "separator" } as const] : []),
-      menuItem("image.save", { arg, label: "Save Image As…", icon: "download" }),
-      menuItem("image.copy", { arg, label: "Copy Image", icon: "copy" }),
-      menuItem("image.copy_url", { arg, label: "Copy Image URL", icon: "link" }),
-    ]
+    return withImageRows(props.items, [
+      menuItem("image.save", { arg, label: "Save image as…", icon: "download" }),
+      menuItem("image.copy", { arg, label: "Copy image", icon: "copy" }),
+      menuItem("image.copy_url", { arg, label: "Copy image URL", icon: "link" }),
+    ])
   }
   return (
     <ImageMenuContext.Provider value={true}>
@@ -212,7 +238,7 @@ export function ContextMenu(props: ContextMenuProps): JSX.Element {
         </KContextMenu.Trigger>
         <KContextMenu.Portal>
           <KContextMenu.Content data-component="menu">
-            <Entries parts={KContextMenu} items={[...props.items, ...imageItems()]} />
+            <Entries parts={KContextMenu} items={imageItems()} />
           </KContextMenu.Content>
         </KContextMenu.Portal>
       </KContextMenu>

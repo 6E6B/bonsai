@@ -170,21 +170,15 @@ export default function AvatarEditor() {
   const outfitMenu = (o: OutfitView): MenuEntry[] => [
     menuItem("avatar.load_outfit", { arg: o.id, label: "Open in editor", icon: "edit" }),
     menuItem("avatar.outfit", { arg: o.id, label: "Wear now", icon: "avatar" }),
-    menuItem("avatar.update_outfit", {
-      arg: o.id,
-      label: "Replace with edited look",
-      icon: "refresh",
-      disabled: !o.editable,
-    }),
-    { label: "Rename…", icon: "edit", disabled: !o.editable, onSelect: () => void renameOutfit(o) },
-    sep,
-    menuItem("avatar.delete_outfit", {
-      arg: o.id,
-      label: "Delete",
-      icon: "trash",
-      danger: true,
-      disabled: !o.editable,
-    }),
+    // Outfits Roblox made can only be worn or opened, so the editing rows are left out.
+    ...(o.editable
+      ? [
+          menuItem("avatar.update_outfit", { arg: o.id, label: "Replace with edited look", icon: "refresh" }),
+          { label: "Rename…", icon: "edit", onSelect: () => void renameOutfit(o) } as const,
+          sep,
+          menuItem("avatar.delete_outfit", { arg: o.id, label: "Delete", icon: "trash", danger: true }),
+        ]
+      : []),
   ]
   const [outfitQuery, setOutfitQuery] = createSignal("")
   const [outfitSort, setOutfitSort] = createSignal("default")
@@ -234,12 +228,9 @@ export default function AvatarEditor() {
       ruleFor(view, w().typeId)
         ? [
             { label: "Adjust…", icon: "settings" as const, onSelect: () => adjust(w().id) },
-            menuItem("avatar.adjust", {
-              arg: resetArg(w().id),
-              label: "Reset adjustment",
-              icon: "undo",
-              disabled: !isAdjusted(w().placement),
-            }),
+            ...(isAdjusted(w().placement)
+              ? [menuItem("avatar.adjust", { arg: resetArg(w().id), label: "Reset adjustment", icon: "undo" })]
+              : []),
           ]
         : []
     return (

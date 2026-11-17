@@ -507,7 +507,13 @@ function Badges(props: {
           <ContextMenu
             items={[
               menuItem("inventory.inspect", { arg: `badge:${b.id}`, icon: "info", label: "Inspect" }),
-              ...(b.placeId ? [{ kind: "separator" } as const, ...gameMenu(b.placeId)] : []),
+              // The badge's experience, not its whole menu: that is one click away.
+              ...(b.placeId
+                ? [
+                    menuItem("game.open", { arg: String(b.placeId), icon: "game" }),
+                    menuItem("game.join", { arg: String(b.placeId), icon: "play" }),
+                  ]
+                : []),
             ]}
           >
             <Tile

@@ -83,6 +83,7 @@ export interface ItemOptions {
 /** A menu row that runs a registry command, titled and labelled from the registry. */
 export function menuItem(id: string, opts: ItemOptions = {}): MenuEntry {
   return {
+    id,
     label: opts.label ?? command(id)?.title ?? id,
     shortcut: shortcutOf(id),
     icon: opts.icon,
