@@ -50,6 +50,9 @@ Features beyond the website, with the command that reaches each.
 | Item dependency browser | Item page → Dependencies | View this item's dependencies; Search this item's dependencies |
 | Clothing template download, plain or masked | Item page | Download clothing template; Download clothing template, masked |
 | 3D viewer that plays animations and emotes, and tries on items and bundles | Avatar, item and bundle pages | Play an animation in the 3D view; Try on this item in 3D |
+| Account backup: friends, current avatar, outfits with their items, inventory, playlists, bookmarks, nicknames and notes as JSON, plus CSV files for friends, notes, inventory and outfits. No cookie or other credential | Account rail menu; Settings → Data | Back up this account to a folder |
 | Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
 
 Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.
+
+A backup goes into a new `bonsai-backup-<name>-<date>` folder inside the folder you pick. It loads every page of outfits and of each avatar item and bundle inventory type, through the same cache the screens use. It stops at 10,000 items per list, and at 10 minutes in all. Items are saved for the first 500 outfits only. Anything it couldn't load is listed under `incomplete` in `backup.json` and in the notice when it finishes. Badges, game passes and places are not included.

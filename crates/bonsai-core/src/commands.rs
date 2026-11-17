@@ -326,6 +326,7 @@ commands! {
     SetAccountColor => "account.color", "Set account color tag", ["color", "colour", "tag"], Color, Local, [];
     MoveAccountUp => "account.move_up", "Move account up in the rail", ["reorder", "order"], None, Local, [];
     MoveAccountDown => "account.move_down", "Move account down in the rail", ["reorder", "order"], None, Local, [];
+    ExportAccount => "account.export", "Back up this account to a folder", ["backup", "export", "save", "download", "friends", "outfits", "inventory", "json", "csv"], None, Read, [];
     CopyAccountName => "account.copy_name", "Copy account username", ["copy", "username", "name"], None, Local, [];
     RemoveAccount => "account.remove", "Remove account from this app", ["delete", "forget", "remove"], Account, Write(Account), [];
     SignOut => "account.sign_out", "Sign out", ["logout", "log out", "sign out"], None, Write(Account), [];

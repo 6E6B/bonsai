@@ -801,6 +801,26 @@ fn export_theme(app: &AppHandle, theme: Theme) {
     });
 }
 
+/// Asks for a folder, then backs the account up into a new folder inside it. The dialog gets
+/// its own thread; the backup runs on a `bonsai-core` task.
+fn export_account(app: &AppHandle, account: AccountId) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let mut dialog = rfd::FileDialog::new().set_title("Choose where to save the backup");
+        if let Some(w) = app.get_webview_window("main") {
+            dialog = dialog.set_parent(&w);
+        }
+        let Some(dir) = dialog.pick_folder() else {
+            return;
+        };
+        if let Some(core) = app.try_state::<Arc<Core>>()
+            && let Err(e) = core.export_account(account, dir)
+        {
+            core.notice(e, true);
+        }
+    });
+}
+
 /// Asks where to save the settings file, then writes it. The dialog gets its own thread.
 fn export_settings(app: &AppHandle) {
     let app = app.clone();
@@ -1180,6 +1200,7 @@ pub(super) fn run(
         CommandId::RemovePasskey => acting().and_then(|a| core.remove_passkey(a, &arg())),
         // The dialog takes the code and calls `approve_enter`.
         CommandId::ApproveCode => Err("Open the command bar to enter the code.".into()),
+        CommandId::ExportAccount => acting().map(|a| export_account(app, a)),
         CommandId::ExportSettings => {
             export_settings(app);
             Ok(())

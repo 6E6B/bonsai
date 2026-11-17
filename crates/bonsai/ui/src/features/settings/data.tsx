@@ -38,6 +38,15 @@ export function DataSection() {
           </span>
         </SettingRow>
         <SettingRow
+          setting="account_backup"
+          label="Account backup"
+          description="Save the current account's friends, outfits, inventory, playlists, bookmarks, nicknames and notes as JSON and CSV. Never includes the cookie."
+        >
+          <Button size="sm" icon="download" onClick={() => run("account.export")}>
+            Back up
+          </Button>
+        </SettingRow>
+        <SettingRow
           setting="reset_all"
           label="Reset all settings"
           description="Themes, the background, the sidebar, shortcuts and accounts are kept."
