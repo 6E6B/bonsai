@@ -1,8 +1,9 @@
 import type { Account, OverlapPerson, SharedFriendsView } from "~/lib/ipc/bindings"
+import { shownAccountLabel } from "~/lib/streamer"
 
-/** An account's name as the rail shows it. */
+/** An account's name as the rail shows it, masked in streamer mode. */
 export function accountName(a: Account): string {
-  return a.label ?? a.displayName ?? a.name
+  return shownAccountLabel(a.id, a.label ?? a.displayName ?? a.name)
 }
 
 /** One line about two accounts' shared friends. */

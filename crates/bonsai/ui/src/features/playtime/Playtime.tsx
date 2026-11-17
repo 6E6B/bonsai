@@ -5,6 +5,7 @@ import { commands, type PlaytimeAccount, type PlaytimeExperience, type PlaytimeV
 import { gameMenu } from "~/lib/menus"
 import { duration, experienceName, hours, playtimeRanges, playtimeView, utcOffsetMinutes } from "~/lib/playtime"
 import { shell, useLive } from "~/lib/store"
+import { shownAccountLabel } from "~/lib/streamer"
 import { thumbUrl } from "~/lib/thumb"
 import {
   Alert,
@@ -45,7 +46,10 @@ export default function Playtime() {
   )
   const accountOptions = createMemo(() => [
     { value: ALL, label: "All accounts" },
-    ...shell.accounts.map((a) => ({ value: String(a.id), label: a.label || a.displayName || a.name })),
+    ...shell.accounts.map((a) => ({
+      value: String(a.id),
+      label: shownAccountLabel(a.id, a.label || a.displayName || a.name),
+    })),
   ])
   const average = () => weeklyAverage(view.weeks)
   return (
@@ -180,7 +184,9 @@ function Experiences(props: { rows: PlaytimeExperience[]; allAccounts: boolean }
             label: "Accounts",
             width: "minmax(6rem, 1fr)",
             cell: (r: PlaytimeExperience) => (
-              <span class="truncate text-fg-muted">{r.accounts.map((a) => a.label).join(", ")}</span>
+              <span class="truncate text-fg-muted">
+                {r.accounts.map((a) => shownAccountLabel(a.account, a.label)).join(", ")}
+              </span>
             ),
           },
         ]
@@ -224,7 +230,7 @@ function Accounts(props: { rows: PlaytimeAccount[]; selected: string; onSelect: 
               onClick={() => props.onSelect(props.selected === String(a.account) ? ALL : String(a.account))}
             >
               <span class="flex items-center justify-between gap-2">
-                <span class="truncate">{a.label}</span>
+                <span class="truncate">{shownAccountLabel(a.account, a.label)}</span>
                 <span class="shrink-0 tabular-nums">{duration(a.secs)}</span>
               </span>
               <Bar width={widths()[i()] ?? 0} />

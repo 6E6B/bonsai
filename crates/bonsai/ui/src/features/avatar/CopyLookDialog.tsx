@@ -1,6 +1,7 @@
 import { createMemo, createSignal, For, Show } from "solid-js"
 import { type CopyItemView, commands } from "~/lib/ipc/bindings"
 import { shell, useLive } from "~/lib/store"
+import { accountName } from "~/lib/streamer"
 import { Badge, Button, EmptyState, ListItem, Select, showToast } from "~/lib/ui"
 import { copySummary, copyTargets } from "./copy"
 
@@ -29,7 +30,7 @@ export function CopyLookDialog(props: { source: string; from: number | null; onD
   )
   const name = () => {
     const a = shell.accounts.find((x) => x.id === target())
-    return a ? (a.label ?? a.displayName) : ""
+    return a ? accountName(a) : ""
   }
   const missing = () => plan.items.filter((i) => i.owned !== "yes")
   const confirm = async () => {
@@ -49,7 +50,7 @@ export function CopyLookDialog(props: { source: string; from: number | null; onD
       >
         <Select
           label="Copy to"
-          options={targets().map((a) => ({ value: String(a.id), label: a.label ?? a.displayName }))}
+          options={targets().map((a) => ({ value: String(a.id), label: accountName(a) }))}
           value={target() === null ? undefined : String(target())}
           onChange={(v) => setPicked(Number(v))}
         />

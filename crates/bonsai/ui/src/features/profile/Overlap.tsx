@@ -2,6 +2,7 @@ import { For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { commands, type OverlapAccount, type OverlapView } from "~/lib/ipc/bindings"
 import { useLive } from "~/lib/store"
+import { shownAccountLabel } from "~/lib/streamer"
 import { thumbUrl } from "~/lib/thumb"
 import { Button, Card, Mention } from "~/lib/ui"
 import { overlapLine, overlapNote, personName, SHOWN } from "./overlap"
@@ -40,7 +41,7 @@ function AccountRow(props: { account: OverlapAccount }) {
   return (
     <div class="flex min-w-0 flex-col gap-0.5">
       <div class="flex items-baseline justify-between gap-2">
-        <span class="truncate font-medium">{a().label}</span>
+        <span class="truncate font-medium">{shownAccountLabel(a().account, a().label)}</span>
         <span class="shrink-0 text-xs text-fg-muted">{overlapLine(a().friend, a().mutuals.length)}</span>
       </div>
       <Show when={a().mutuals.length > 0}>
