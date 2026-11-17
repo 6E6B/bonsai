@@ -134,6 +134,7 @@ export const UNTHEMED: Readonly<Record<string, string>> = {
   "titlebar-h": "window chrome; same in every theme",
   duration: "motion",
   "duration-slow": "motion",
+  "blur-redacted": "streamer mode; same in every theme",
   ease: "motion",
   "ease-draw": "motion",
   sheen: "same in every theme",

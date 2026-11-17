@@ -7,7 +7,17 @@ import { privacyLabels, valueLabel } from "~/lib/privacy"
 import { shell, useLive } from "~/lib/store"
 import { maskedAccountLabel } from "~/lib/streamer"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, ContextMenu, Icon, type MenuEntry, RailItem, redacting, useConfirm, usePrompt } from "~/lib/ui"
+import {
+  Avatar,
+  ContextMenu,
+  Icon,
+  type MenuEntry,
+  RailItem,
+  Redacted,
+  redacting,
+  useConfirm,
+  usePrompt,
+} from "~/lib/ui"
 
 const colors: Color[] = ["none", "red", "orange", "yellow", "green", "blue", "purple", "pink"]
 const colorName = (c: Color) => (c === "none" ? "No color" : c[0].toUpperCase() + c.slice(1))
@@ -150,13 +160,16 @@ export function AccountRail() {
                 color={a.color}
                 onClick={() => run("account.switch", String(a.id))}
               >
-                <Avatar
-                  size="lg"
-                  name={masked() ? maskedAccountLabel(i()) : a.displayName}
-                  src={masked() ? undefined : thumbUrl("headshot", a.id)}
-                  count={a.unread}
-                  muted={accountUnusable(a, now())}
-                />
+                {/* Your own account stays recognizable to you: blurred until hovered. */}
+                <Redacted when={shell.active === a.id}>
+                  <Avatar
+                    size="lg"
+                    name={masked() ? maskedAccountLabel(i()) : a.displayName}
+                    src={masked() ? undefined : thumbUrl("headshot", a.id)}
+                    count={a.unread}
+                    muted={accountUnusable(a, now())}
+                  />
+                </Redacted>
               </RailItem>
             </ContextMenu>
           )

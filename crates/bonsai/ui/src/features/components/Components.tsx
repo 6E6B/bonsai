@@ -276,7 +276,7 @@ export default function Components() {
         <Switch checked={redacting()} onChange={setRedacting}>
           Hide private content
         </Switch>
-        <Redacted>Nickname: Best friend</Redacted>
+        <Redacted>Your account name</Redacted>
         <Robux amount={12400} private />
       </Section>
 

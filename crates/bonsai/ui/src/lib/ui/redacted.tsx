@@ -18,22 +18,19 @@ export function redactText<T>(text: T): T | undefined {
 export interface RedactedProps {
   /** What to hide. */
   children: JSX.Element
-  /** Shown in its place. Defaults to a short row of dots. */
-  fallback?: JSX.Element
+  /** `false` leaves it shown even in streamer mode. Defaults to `true`. */
+  when?: boolean
+  class?: string
 }
 
-/** Private content, replaced by a placeholder while streamer mode hides it. */
+/** Private content, blurred while streamer mode hides it and shown again while hovered. Use
+ * `redactText` instead for text that should disappear entirely. */
 export function Redacted(props: RedactedProps) {
   return (
-    <Show
-      when={!redacting()}
-      fallback={
-        <span data-component="redacted" role="img" aria-label="Hidden">
-          {props.fallback ?? "•••"}
-        </span>
-      }
-    >
-      {props.children}
+    <Show when={redacting() && props.when !== false} fallback={props.children}>
+      <span data-component="redacted" class={props.class}>
+        {props.children}
+      </span>
     </Show>
   )
 }

@@ -5,7 +5,7 @@ import type { Account, VoiceBanView } from "~/lib/ipc/bindings"
 import { activeVoiceBans, clock, useNowSecs } from "~/lib/moderation"
 import { shell } from "~/lib/store"
 import { maskedAccountLabel, streamerUi } from "~/lib/streamer"
-import { Badge, Divider, Icon, Menu, Robux, redacting, Spinner, TextLink, Tooltip } from "~/lib/ui"
+import { Badge, Divider, Icon, Menu, Redacted, Robux, redacting, Spinner, TextLink, Tooltip } from "~/lib/ui"
 
 /** Voice bans shown one by one before the rest fold into "+N". */
 const SHOWN_BANS = 3
@@ -22,7 +22,9 @@ export function StatusBar(props: { zoom: number }) {
         {(a) => (
           <>
             <TextLink tone="muted" onClick={() => run("nav.profile")}>
-              <span class="text-fg">{a().label ?? a().displayName}</span> @{a().name}
+              <Redacted>
+                <span class="text-fg">{a().label ?? a().displayName}</span>&nbsp;@{a().name}
+              </Redacted>
             </TextLink>
             <Show when={shell.robux !== null}>
               <Divider orientation="vertical" class="my-1.5" />
