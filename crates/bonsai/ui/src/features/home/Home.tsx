@@ -6,7 +6,17 @@ import { groupByGame } from "~/lib/presence"
 import { friends, shell, useHome } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { GameTile, ShelfSkeleton, tileGrid } from "~/lib/tiles"
-import { Alert, Button, ContextMenu, EmptyState, Page, PersonTile, SectionHeader, VirtualShelf } from "~/lib/ui"
+import {
+  Alert,
+  Button,
+  ContextMenu,
+  EmptyState,
+  Page,
+  PersonTile,
+  redactText,
+  SectionHeader,
+  VirtualShelf,
+} from "~/lib/ui"
 
 /** Landing screen: who is playing what, what you played last, and the Roblox home sorts. */
 export default function Home() {
@@ -132,7 +142,7 @@ function ContinueRow(props: { games: GameCard[] }) {
 /** A little wider than a friend on a profile, for more room between pictures. */
 const PERSON_WIDTH = 104
 
-const nameOf = (f: Friend) => f.nickname || f.displayName
+const nameOf = (f: Friend) => redactText(f.nickname) || f.displayName
 
 const menuFor = (f: Friend) => userMenu(f.id, { friend: true, inGame: f.presence === "game", placeId: f.placeId })
 

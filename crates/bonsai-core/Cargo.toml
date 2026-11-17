@@ -44,6 +44,7 @@ rbx_dom_weak.workspace = true
 rbx_reflection.workspace = true
 rbx_reflection_database.workspace = true
 futures.workspace = true
+sysinfo.workspace = true
 
 [dev-dependencies]
 bonsai-api = { workspace = true, features = ["replay"] }

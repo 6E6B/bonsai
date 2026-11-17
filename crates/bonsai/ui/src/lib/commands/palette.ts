@@ -2,6 +2,7 @@ import { entityRef, type Seen } from "~/lib/history"
 import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
 import { fold } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
+import { streamerDetectOptions } from "~/lib/streamer"
 import type { ThumbKind } from "~/lib/thumb"
 import type { RecentArg } from "./learn"
 import {
@@ -225,6 +226,9 @@ export function paletteEntries(
         break
       case "screen":
         for (const s of screens) choice(s.key, s.title)
+        break
+      case "streamerDetect":
+        for (const o of streamerDetectOptions) choice(o.value, o.label)
         break
       case "setting":
         out.push(...(c.id === "settings.reset" ? resetRows(c, prefs) : settingRows(c, prefs)))

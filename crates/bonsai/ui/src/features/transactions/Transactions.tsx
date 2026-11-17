@@ -255,7 +255,7 @@ function Summary(props: { view: TxView; query: Required<TxQuery>; onKind: (k: st
   const total = (label: string, amount: () => number | null, cls: () => string) => (
     <Stat size="lg" label={label}>
       <Show when={!t().loading} fallback={<Skeleton class="mt-1 h-5 w-20" />}>
-        <Robux class={(amount() ?? 0) === 0 ? "text-fg-muted" : cls()} amount={amount()} />
+        <Robux private class={(amount() ?? 0) === 0 ? "text-fg-muted" : cls()} amount={amount()} />
       </Show>
     </Stat>
   )
@@ -272,7 +272,7 @@ function Summary(props: { view: TxView; query: Required<TxQuery>; onKind: (k: st
       </Show>
       <div class="grid grid-cols-[minmax(8rem,auto)_1px_repeat(4,minmax(0,1fr))] gap-x-6 p-4">
         <Stat size="lg" label={props.query.scope === "me" ? "Balance" : "Community funds"}>
-          <Robux amount={props.view.balance} />
+          <Robux private amount={props.view.balance} />
         </Stat>
         <div class="bg-line" />
         {total(
@@ -311,7 +311,7 @@ function Summary(props: { view: TxView; query: Required<TxQuery>; onKind: (k: st
                   onClick={() => props.onKind(k.key)}
                 >
                   <span class="text-fg-muted">{k.label}</span>
-                  <Robux amount={k.amount} compact />
+                  <Robux private amount={k.amount} compact />
                   <Show when={k.count !== null}>
                     <span class="text-fg-faint">×{full(k.count ?? 0)}</span>
                   </Show>
@@ -397,6 +397,7 @@ function Amount(props: { amount: number | null; pending?: boolean; class?: strin
         <Badge variant="warning">Pending</Badge>
       </Show>
       <Robux
+        private
         class={(props.amount ?? 0) < 0 ? "text-danger" : (props.amount ?? 0) > 0 ? "text-success" : ""}
         amount={props.amount}
       />
@@ -726,9 +727,14 @@ function Insights(props: { query: Required<TxQuery> }) {
                       <Bar width={widths()[i() * 2] ?? 0} tone="in" />
                       <Bar width={widths()[i() * 2 + 1] ?? 0} tone="out" />
                     </div>
-                    <Robux class="justify-end text-success" amount={m.incoming} compact />
-                    <Robux class="justify-end text-danger" amount={m.outgoing} compact />
-                    <Robux class={`justify-end ${net() < 0 ? "text-danger" : "text-fg"}`} amount={net()} compact />
+                    <Robux private class="justify-end text-success" amount={m.incoming} compact />
+                    <Robux private class="justify-end text-danger" amount={m.outgoing} compact />
+                    <Robux
+                      private
+                      class={`justify-end ${net() < 0 ? "text-danger" : "text-fg"}`}
+                      amount={net()}
+                      compact
+                    />
                   </>
                 )
               }}
@@ -789,7 +795,7 @@ function Ranking(props: { title: string; rows: GroupView[]; empty: string; open:
                 <span class="truncate">{g.name}</span>
                 <span class="flex shrink-0 items-center gap-2">
                   <span class="text-fg-faint">×{full(g.count)}</span>
-                  <Robux amount={Math.abs(g.amount ?? 0)} compact />
+                  <Robux private amount={Math.abs(g.amount ?? 0)} compact />
                 </span>
               </span>
               <Bar width={widths()[i()] ?? 0} tone={(g.amount ?? 0) < 0 ? "out" : "in"} />
@@ -814,7 +820,7 @@ function Accounts(props: { period: string }) {
     (a: AccountTotalsView): JSX.Element => (
       <Show when={!a.totals.loading} fallback={<Skeleton class="h-4 w-16" />}>
         <Show when={!a.totals.error} fallback={<span class="text-danger text-sm">Failed</span>}>
-          <Robux class={(pick(a.totals) ?? 0) === 0 ? "text-fg-muted" : cls} amount={pick(a.totals)} />
+          <Robux private class={(pick(a.totals) ?? 0) === 0 ? "text-fg-muted" : cls} amount={pick(a.totals)} />
         </Show>
       </Show>
     )
@@ -830,7 +836,7 @@ function Accounts(props: { period: string }) {
         </span>
       ),
     },
-    { key: "balance", label: "Balance", width: "8rem", align: "end", cell: (a) => <Robux amount={a.robux} /> },
+    { key: "balance", label: "Balance", width: "8rem", align: "end", cell: (a) => <Robux private amount={a.robux} /> },
     { key: "in", label: "Incoming", width: "8rem", align: "end", cell: cell((t) => t.incoming, "text-success") },
     { key: "out", label: "Outgoing", width: "8rem", align: "end", cell: cell((t) => t.outgoing, "text-danger") },
     { key: "pending", label: "Pending", width: "8rem", align: "end", cell: cell((t) => t.pending, "text-warning") },
@@ -839,20 +845,21 @@ function Accounts(props: { period: string }) {
     <div class="flex flex-col gap-3">
       <Card class="grid grid-cols-[minmax(8rem,auto)_1px_repeat(4,minmax(0,1fr))] gap-x-6 p-4">
         <Stat size="lg" label="Total balance">
-          <Robux amount={sum((a) => a.robux)} />
+          <Robux private amount={sum((a) => a.robux)} />
         </Stat>
         <div class="bg-line" />
         <Stat size="lg" label="Accounts">
           {full(rows.list.length)}
         </Stat>
         <Stat size="lg" label="Incoming">
-          <Robux class="text-success" amount={sum((a) => a.totals.incoming)} />
+          <Robux private class="text-success" amount={sum((a) => a.totals.incoming)} />
         </Stat>
         <Stat size="lg" label="Outgoing">
-          <Robux class="text-danger" amount={sum((a) => a.totals.outgoing)} />
+          <Robux private class="text-danger" amount={sum((a) => a.totals.outgoing)} />
         </Stat>
         <Stat size="lg" label="Pending">
           <Robux
+            private
             class={sum((a) => a.totals.pending) === 0 ? "text-fg-muted" : "text-warning"}
             amount={sum((a) => a.totals.pending)}
           />

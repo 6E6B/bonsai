@@ -46,6 +46,7 @@ pub mod seen;
 pub mod settings;
 pub mod signin;
 pub mod store;
+pub mod streamer;
 pub mod template;
 pub mod text;
 pub mod themes;

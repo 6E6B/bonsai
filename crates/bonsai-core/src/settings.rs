@@ -368,6 +368,8 @@ pub struct Settings {
     pub update_checks: bool,
     /// Download signed updates after checks when opted in. Installing still requires a click.
     pub update_downloads: bool,
+    /// Streamer mode and the recording-app check.
+    pub streamer: crate::streamer::StreamerPrefs,
 }
 
 /// A daily stretch without notifications, in whole local hours. `start` is when it begins and
@@ -499,6 +501,7 @@ impl Default for Settings {
             start_hidden: false,
             update_checks: true,
             update_downloads: false,
+            streamer: crate::streamer::StreamerPrefs::default(),
         }
     }
 }

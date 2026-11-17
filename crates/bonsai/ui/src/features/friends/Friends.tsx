@@ -16,6 +16,7 @@ import {
   IconButton,
   ListItem,
   Page,
+  redactText,
   Select,
   showToast,
   TabPanel,
@@ -315,9 +316,9 @@ export default function Friends() {
                     data-index={i}
                     selected={i === cursor()}
                     leading={<Avatar name={f.displayName} presence={f.presence} src={thumbUrl("headshot", f.id)} />}
-                    title={f.nickname || f.displayName}
+                    title={redactText(f.nickname) || f.displayName}
                     subtitle={[
-                      f.nickname && f.displayName,
+                      redactText(f.nickname) && f.displayName,
                       f.name && `@${f.name}`,
                       section() === "friends"
                         ? presenceText(f)
@@ -325,7 +326,7 @@ export default function Friends() {
                           ? f.sentAt &&
                             Number.isFinite(Date.parse(f.sentAt)) &&
                             `Received ${date(Date.parse(f.sentAt))}`
-                          : f.note,
+                          : redactText(f.note),
                     ]
                       .filter(Boolean)
                       .join(" · ")}

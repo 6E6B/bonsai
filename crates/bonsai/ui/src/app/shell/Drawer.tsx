@@ -13,6 +13,7 @@ import {
   EmptyState,
   IconButton,
   ListItem,
+  redactText,
   SectionHeader,
   Skeleton,
   TabPanel,
@@ -107,7 +108,7 @@ function RecentChats() {
               <Avatar size="md" name={c.title} src={c.partnerId ? thumbUrl("headshot", c.partnerId) : undefined} />
             }
             title={c.title}
-            subtitle={c.last}
+            subtitle={redactText(c.last)}
             meta={Number.isNaN(t) ? undefined : ago(t)}
             unread={c.unread > 0}
             onClick={() => run("nav.chat")}

@@ -538,7 +538,7 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "streamerDetect";
 
 /**  What a plugin asks for, shown in Settings and the install dialog. */
 export type Asks = {
@@ -2378,6 +2378,8 @@ export type Shell = {
 	 *  adds them so the webview loads the new image instead of its cached copy.
 	 */
 	thumbRevs: { [key in string]: number },
+	/**  Streamer mode, the recording apps seen and the question about them. */
+	streamer: StreamerView,
 };
 
 export type ShoutView = {
@@ -2414,6 +2416,31 @@ export type StartTabs = {
 
 /**  Sent when the store changed. The UI refetches what it shows. */
 export type StoreChanged = null;
+
+/**
+ *  Asks to turn streamer mode on (`start`) or off because `app` opened or closed. Shown once
+ *  per `seq`.
+ */
+export type StreamerPromptView = {
+	seq: Id,
+	app: string,
+	start: boolean,
+};
+
+export type StreamerView = {
+	on: boolean,
+	/**  `ask`, `auto` or `off`. */
+	detect: string,
+	/**  Recording apps open now, by name. */
+	running: string[],
+	/**  Apps the user said not to ask about. */
+	ignored: string[],
+	hideMessages: boolean,
+	hideCapture: boolean,
+	/**  This system can keep the window out of screen capture. */
+	captureSupported: boolean,
+	prompt: StreamerPromptView | null,
+};
 
 export type SwatchView = {
 	id: number,

@@ -5,8 +5,9 @@ import { emptyList } from "~/lib/list-state"
 import { accountProblem, accountUnusable, canReactivate, useNowSecs } from "~/lib/moderation"
 import { privacyLabels, valueLabel } from "~/lib/privacy"
 import { shell, useLive } from "~/lib/store"
+import { maskedAccountLabel } from "~/lib/streamer"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, ContextMenu, Icon, type MenuEntry, RailItem, useConfirm, usePrompt } from "~/lib/ui"
+import { Avatar, ContextMenu, Icon, type MenuEntry, RailItem, redacting, useConfirm, usePrompt } from "~/lib/ui"
 
 const colors: Color[] = ["none", "red", "orange", "yellow", "green", "blue", "purple", "pink"]
 const colorName = (c: Color) => (c === "none" ? "No color" : c[0].toUpperCase() + c.slice(1))
@@ -137,25 +138,29 @@ export function AccountRail() {
       class="flex w-16 shrink-0 flex-col items-stretch gap-1 overflow-y-auto border-r border-line bg-deep py-2"
     >
       <For each={shell.accounts}>
-        {(a, i) => (
-          <ContextMenu items={menu(a, i())} onOpenChange={(open) => open && setMenuFor(a.id)}>
-            <RailItem
-              label={railLabel(a, now())}
-              shortcut={i() < 9 ? shortcutOf(`account.switch_${i() + 1}`) : undefined}
-              active={shell.active === a.id}
-              color={a.color}
-              onClick={() => run("account.switch", String(a.id))}
-            >
-              <Avatar
-                size="lg"
-                name={a.displayName}
-                src={thumbUrl("headshot", a.id)}
-                count={a.unread}
-                muted={accountUnusable(a, now())}
-              />
-            </RailItem>
-          </ContextMenu>
-        )}
+        {(a, i) => {
+          // Streamer mode shows other accounts by position only: no name, no picture.
+          const masked = () => redacting() && shell.active !== a.id
+          return (
+            <ContextMenu items={menu(a, i())} onOpenChange={(open) => open && setMenuFor(a.id)}>
+              <RailItem
+                label={railLabel(a, now(), masked() ? maskedAccountLabel(i()) : undefined)}
+                shortcut={i() < 9 ? shortcutOf(`account.switch_${i() + 1}`) : undefined}
+                active={shell.active === a.id}
+                color={a.color}
+                onClick={() => run("account.switch", String(a.id))}
+              >
+                <Avatar
+                  size="lg"
+                  name={masked() ? maskedAccountLabel(i()) : a.displayName}
+                  src={masked() ? undefined : thumbUrl("headshot", a.id)}
+                  count={a.unread}
+                  muted={accountUnusable(a, now())}
+                />
+              </RailItem>
+            </ContextMenu>
+          )
+        }}
       </For>
       <RailItem label="Add account" onClick={() => run("account.add")}>
         <span class="flex size-10 items-center justify-center rounded-full bg-control text-fg-muted">
@@ -166,9 +171,10 @@ export function AccountRail() {
   )
 }
 
-/** "Alt (Banned, 3 unread)": the name, then what's wrong, then the unread count. */
-function railLabel(a: Account, now: number) {
+/** "Alt (Banned, 3 unread)": the name, then what's wrong, then the unread count. `masked`
+ * replaces the name while streamer mode hides it. */
+function railLabel(a: Account, now: number, masked?: string) {
   const notes = [accountProblem(a, now), a.unread > 0 ? `${a.unread} unread` : ""].filter(Boolean)
-  const name = a.label ?? a.displayName
+  const name = masked ?? a.label ?? a.displayName
   return notes.length > 0 ? `${name} (${notes.join(", ")})` : name
 }

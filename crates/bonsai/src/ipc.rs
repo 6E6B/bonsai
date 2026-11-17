@@ -34,6 +34,7 @@ mod market;
 mod playlists;
 mod plugins;
 mod security;
+pub(crate) mod streamer;
 mod trades;
 mod transactions;
 mod wiki;
@@ -150,6 +151,8 @@ pub struct Shell {
     /// Revisions of thumbnails that changed during the run, by `thumb://` path. `thumbUrl`
     /// adds them so the webview loads the new image instead of its cached copy.
     pub thumb_revs: std::collections::HashMap<String, u32>,
+    /// Streamer mode, the recording apps seen and the question about them.
+    pub streamer: streamer::StreamerView,
 }
 
 /// A command still working: the account it acts as, its id and the argument it was run with.
@@ -423,6 +426,7 @@ pub enum Arg {
     Plugin,
     Playlist,
     Bookmark,
+    StreamerDetect,
 }
 
 impl From<ArgKind> for Arg {
@@ -445,6 +449,7 @@ impl From<ArgKind> for Arg {
             ArgKind::Plugin => Arg::Plugin,
             ArgKind::Playlist => Arg::Playlist,
             ArgKind::Bookmark => Arg::Bookmark,
+            ArgKind::StreamerDetect => Arg::StreamerDetect,
         }
     }
 }
@@ -1139,6 +1144,8 @@ pub struct EventRow {
 #[tauri::command]
 #[specta::specta]
 pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
+    // Before the store lock below: it takes its own.
+    let streamer = streamer::view(&core);
     let s = core.store();
     Shell {
         accounts: s
@@ -1225,6 +1232,7 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
             }
         },
         thumb_revs: s.thumb_revs.iter().map(|(k, r)| (k.path(), *r)).collect(),
+        streamer,
         robux: s
             .accounts
             .active
@@ -1409,6 +1417,9 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
         return r;
     }
     if let Some(r) = bookmarks::run(core, id, &inv, core.acting(picked)) {
+        return r;
+    }
+    if let Some(r) = streamer::run(core, id, &inv) {
         return r;
     }
     if let Some(r) = plugins::run(app, core, id, &inv, core.acting(picked)) {

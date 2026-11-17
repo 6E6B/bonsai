@@ -36,6 +36,7 @@ export const extraEntries: SettingsEntry[] = [
   { section: "appearance", title: "Fonts", words: "font typeface mono" },
   { section: "background", title: "Background picture", words: "wallpaper image" },
   { section: "background", title: "Background effects", words: "blur dim tint vignette scanlines grain" },
+  { section: "streamer", title: "Streamer mode", words: "stream obs record hide privacy twitch" },
   { section: "layout", title: "Sidebar screens", words: "sidebar screens order hide show" },
   { section: "shortcuts", title: "Keyboard shortcuts", words: "keys bindings hotkeys commands" },
   { section: "accounts", title: "Signed-in accounts", words: "add remove cookie switch" },

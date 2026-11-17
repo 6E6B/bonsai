@@ -19,6 +19,7 @@ export const settingsSections = [
   { value: "background", label: "Background", icon: "image", group: "app" },
   { value: "layout", label: "Layout", icon: "layout", group: "app" },
   { value: "notifications", label: "Notifications", icon: "bell", group: "app" },
+  { value: "streamer", label: "Streamer mode", icon: "video", group: "app" },
   { value: "shortcuts", label: "Keyboard", icon: "keyboard", group: "app" },
   { value: "desktop", label: "Desktop", icon: "devices", group: "app" },
   { value: "accounts", label: "Saved accounts", icon: "friends", group: "app" },

@@ -23,7 +23,7 @@ export function Revenue(props: { groupId: number; canSpend: boolean }) {
             when={view.funds !== null}
             fallback={<span class="text-fg-muted">{view.fundsError ?? "Loading…"}</span>}
           >
-            <Robux amount={view.funds} />
+            <Robux amount={view.funds} private />
           </Show>
         </Stat>
         <Show when={props.canSpend}>

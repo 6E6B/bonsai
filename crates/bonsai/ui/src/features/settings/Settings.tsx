@@ -20,6 +20,7 @@ import { PrivacySection } from "./privacy-section"
 import { entryPath, searchSettings } from "./search"
 import { ServersSection } from "./servers"
 import { ShortcutsSection } from "./shortcuts"
+import { StreamerSection } from "./streamer"
 
 const pages: Record<SettingsSectionId, Component> = {
   profile: ProfileSection,
@@ -31,6 +32,7 @@ const pages: Record<SettingsSectionId, Component> = {
   background: BackgroundSection,
   layout: LayoutSection,
   notifications: NotificationsSection,
+  streamer: StreamerSection,
   shortcuts: ShortcutsSection,
   desktop: DesktopSection,
   accounts: AccountsSection,
