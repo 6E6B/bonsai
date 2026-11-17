@@ -17,6 +17,10 @@ use crate::core::{Cmd, Core, Inner};
 /// How often running apps are checked.
 const EVERY: Duration = Duration::from_secs(5);
 
+/// Linux keeps only the first 15 bytes of a process name (`TASK_COMM_LEN` less the nul), so
+/// "streamlabs-desktop" shows up as "streamlabs-desk". Elsewhere names are whole.
+const NAME_CUT: Option<usize> = if cfg!(target_os = "linux") { Some(15) } else { None };
+
 /// Recording and streaming apps found by process name, as `(label, names)`. Names are
 /// lowercase without `.exe`. Discord is left out: it is open nearly all the time.
 pub const KNOWN_APPS: &[(&str, &[&str])] = &[
@@ -114,28 +118,56 @@ pub fn normalize(name: &str) -> String {
     n.strip_suffix(".exe").map(str::to_owned).unwrap_or(n)
 }
 
+/// `name` without a trailing `.exe` in any case, for showing.
+fn without_exe(name: &str) -> &str {
+    let cut = name.len().saturating_sub(4);
+    match name.get(cut..) {
+        Some(ext) if ext.eq_ignore_ascii_case(".exe") => &name[..cut],
+        _ => name,
+    }
+}
+
+/// Whether the normalized process name `seen` is the app name `want`. With `cut`, a name of
+/// exactly that many bytes also matches the start of a longer `want`, since the OS cut it.
+fn same_app(seen: &str, want: &str, cut: Option<usize>) -> bool {
+    seen == want
+        || cut.is_some_and(|n| {
+            seen.len() == n && want.len() > n && want.as_bytes().starts_with(seen.as_bytes())
+        })
+}
+
 /// The user's extra app names from `StreamerPrefs::apps`, as `(label, name)`.
 pub fn extra_apps(text: &str) -> Vec<(String, String)> {
     text.split([',', '\n'])
         .map(str::trim)
         .filter(|t| !t.is_empty())
-        .map(|t| {
-            let label = t.strip_suffix(".exe").unwrap_or(t).to_owned();
-            (label, normalize(t))
-        })
+        .map(|t| (without_exe(t).to_owned(), normalize(t)))
         .collect()
 }
 
 /// The labels of recording apps among `processes`, sorted and without repeats.
 pub fn detect<'a>(processes: impl IntoIterator<Item = &'a str>, extra: &[(String, String)]) -> Vec<String> {
+    detect_cut(processes, extra, NAME_CUT)
+}
+
+fn detect_cut<'a>(
+    processes: impl IntoIterator<Item = &'a str>,
+    extra: &[(String, String)],
+    cut: Option<usize>,
+) -> Vec<String> {
     let mut found = Vec::new();
     for p in processes {
         let n = normalize(p);
         let hit = KNOWN_APPS
             .iter()
-            .find(|(_, names)| names.contains(&n.as_str()))
+            .find(|(_, names)| names.iter().any(|w| same_app(&n, w, cut)))
             .map(|(label, _)| (*label).to_owned())
-            .or_else(|| extra.iter().find(|(_, x)| *x == n).map(|(l, _)| l.clone()));
+            .or_else(|| {
+                extra
+                    .iter()
+                    .find(|(_, x)| same_app(&n, x, cut))
+                    .map(|(l, _)| l.clone())
+            });
         if let Some(label) = hit
             && !found.contains(&label)
         {
@@ -198,6 +230,15 @@ pub struct Prompt {
     pub start: bool,
 }
 
+impl Prompt {
+    /// Whether the question still makes sense with `now` running and streamer mode `on`:
+    /// "turn on?" while off and the app is open, "turn off?" while on and it is closed.
+    pub fn still_fits(&self, now: &[String], on: bool) -> bool {
+        let open = now.iter().any(|a| a.eq_ignore_ascii_case(&self.app));
+        if self.start { !on && open } else { on && !open }
+    }
+}
+
 /// What the recording-app check knows this run.
 #[derive(Clone, Debug, Default)]
 pub struct StreamerState {
@@ -231,6 +272,8 @@ pub(crate) async fn watch_loop(inner: Arc<Inner>) {
     sysinfo::set_open_files_limit(0);
     let mut sys = Some(sysinfo::System::new());
     let mut tick = tokio::time::interval(EVERY);
+    // After sleep or a stall, check once instead of catching up on every missed tick.
+    tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
     loop {
         tick.tick().await;
         let prefs = inner.settings.read().streamer.clone();
@@ -250,9 +293,12 @@ pub(crate) async fn watch_loop(inner: Arc<Inner>) {
                 sysinfo::ProcessesToUpdate::All,
                 sysinfo::ProcessRefreshKind::new(),
             );
+            // Linux lists threads as processes too, named by the app that made them; only
+            // real processes count.
             let names: Vec<String> = system
                 .processes()
                 .values()
+                .filter(|p| p.thread_kind().is_none())
                 .map(|p| p.name().to_string_lossy().into_owned())
                 .collect();
             let found = detect(names.iter().map(String::as_str), &extra);
@@ -284,6 +330,15 @@ impl Inner {
                     app: app.clone(),
                     start: matches!(decided, Some(Step::AskOn(_))),
                 });
+            } else if s
+                .streamer
+                .prompt
+                .as_ref()
+                .is_some_and(|p| !p.still_fits(&s.streamer.running, prefs.on))
+            {
+                // The app closed before "turn on?" was answered, or reopened before "turn
+                // off?" was: the question is out of date.
+                s.streamer.prompt = None;
             }
             decided
         };
@@ -440,6 +495,39 @@ mod tests {
         );
         p.on = true;
         assert_eq!(step(&v(&["OBS"]), &[], &p), None);
+    }
+
+    #[test]
+    fn matches_names_linux_cut_short() {
+        let extra = extra_apps("streamlabs-desktop, Recorder.EXE");
+        assert_eq!(extra[1].0, "Recorder");
+        // Linux shows the first 15 bytes.
+        assert_eq!(
+            detect_cut(["streamlabs-desk", "com.obsproject."], &extra, Some(15)),
+            v(&["OBS", "streamlabs-desktop"])
+        );
+        // A shorter name is not a cut one, and other systems never cut.
+        assert!(detect_cut(["streamlabs-de"], &extra, Some(15)).is_empty());
+        assert!(detect_cut(["streamlabs-desk"], &extra, None).is_empty());
+    }
+
+    #[test]
+    fn prompts_go_stale() {
+        let ask_on = Prompt {
+            seq: 1,
+            app: "OBS".into(),
+            start: true,
+        };
+        assert!(ask_on.still_fits(&v(&["OBS"]), false));
+        assert!(!ask_on.still_fits(&[], false), "OBS closed before the answer");
+        assert!(!ask_on.still_fits(&v(&["OBS"]), true), "already on");
+        let ask_off = Prompt {
+            start: false,
+            ..ask_on
+        };
+        assert!(ask_off.still_fits(&[], true));
+        assert!(!ask_off.still_fits(&v(&["OBS"]), true), "OBS reopened");
+        assert!(!ask_off.still_fits(&[], false), "already off");
     }
 
     #[test]
