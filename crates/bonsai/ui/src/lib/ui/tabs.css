@@ -29,6 +29,20 @@
     padding-inline: 2px;
     overflow-x: auto;
     scrollbar-width: none;
+    --fade: 32px;
+  }
+
+  /* Fade out the edge that has more tabs past it, so a cut-off row reads as scrollable. */
+  [data-component="tabs"] > [data-slot="bar"] > [data-slot="list"][data-fade-end] {
+    mask-image: linear-gradient(to right, black calc(100% - var(--fade)), transparent);
+  }
+
+  [data-component="tabs"] > [data-slot="bar"] > [data-slot="list"][data-fade-start] {
+    mask-image: linear-gradient(to left, black calc(100% - var(--fade)), transparent);
+  }
+
+  [data-component="tabs"] > [data-slot="bar"] > [data-slot="list"][data-fade-start][data-fade-end] {
+    mask-image: linear-gradient(to right, transparent, black var(--fade), black calc(100% - var(--fade)), transparent);
   }
 
   [data-component="tabs"] > [data-slot="bar"] > [data-slot="actions"] {

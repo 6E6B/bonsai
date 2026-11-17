@@ -19,7 +19,7 @@ import { itemMenu } from "~/lib/menus"
 import { isSoundHat } from "~/lib/sound-hats"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl, withRev } from "~/lib/thumb"
-import { ItemName, ItemTile, SoundHatBadge, TILE_WIDTH } from "~/lib/tiles"
+import { ItemName, ItemTile, SoundHatBadge } from "~/lib/tiles"
 import {
   Badge,
   Button,
@@ -48,6 +48,7 @@ import {
 
 import { Adjust, createAdjust } from "./Adjust"
 import { isAdjusted, resetArg, ruleFor } from "./adjust"
+import { BodyFigure } from "./BodyFigure"
 import { groupTypes, groupWorn, matchesWear, named, sectionFor, sortOptions, type WornGroup } from "./wardrobe"
 
 const WARDROBE = "wardrobe"
@@ -55,6 +56,9 @@ const OUTFITS = "outfits"
 const RECENT = "recent"
 const BODY = "body"
 const ADJUST = "adjust"
+
+/** Narrow enough for three tile columns in the side pane. */
+const GRID_WIDTH = 116
 
 const sep: MenuEntry = { kind: "separator" }
 
@@ -505,7 +509,7 @@ export default function AvatarEditor() {
                       />
                     }
                   >
-                    <VirtualGrid items={shownOutfits()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+                    <VirtualGrid items={shownOutfits()} minItemWidth={GRID_WIDTH} estimateRowHeight={160} gap={10}>
                       {(o) => (
                         <ContextMenu items={outfitMenu(o)}>
                           <Tile
@@ -653,7 +657,7 @@ function Section(props: { section: WardrobeSection; worn: number[]; pick?: { slo
           <ResultStatus shown={shown().length} loaded={items.list.items.length} more={items.list.more} />
           <ListState list={items.list} icon="avatar" empty="No items in this category" more={items.moreKey}>
             <Show when={shown().length} fallback={<NoMatches reset={reset} />}>
-              <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+              <VirtualGrid items={shown()} minItemWidth={GRID_WIDTH} estimateRowHeight={160} gap={10}>
                 {(i) => (
                   <ItemTile
                     item={i}
@@ -738,7 +742,7 @@ function Recent() {
             />
           }
         >
-          <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+          <VirtualGrid items={shown()} minItemWidth={GRID_WIDTH} estimateRowHeight={160} gap={10}>
             {(r) => (
               <ContextMenu
                 items={
@@ -836,43 +840,49 @@ function Body(props: { view: AvatarView }) {
     >
       <TabPanel value="colors">
         <section class="flex flex-col gap-3">
-          <SectionHeader title="Body colors" meta={parts().length ? "Selected parts" : "All parts"} size="group" />
-          <p class="text-sm text-fg-muted">Choose all parts or select individual parts to color together.</p>
-          <div class="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant={parts().length ? "secondary" : "primary"}
-              aria-pressed={!parts().length}
-              onClick={() => setParts([])}
-            >
-              All parts
-            </Button>
-            <For each={props.view.colors}>
-              {(c) => (
+          <SectionHeader
+            title="Body colors"
+            meta={parts().length ? `${parts().length} selected` : "All parts"}
+            size="group"
+          />
+          <div class="flex items-start gap-4">
+            <BodyFigure
+              class="h-44 w-36 flex-none"
+              colors={props.view.colors}
+              selected={parts()}
+              onToggle={togglePart}
+            />
+            <div class="flex min-w-0 flex-1 flex-col gap-2">
+              <p class="text-sm text-fg-muted">
+                Click parts to color them. With none selected, colors go on all parts.
+              </p>
+              <div class="flex items-center gap-2 text-sm">
+                <Show
+                  when={mixed()}
+                  fallback={
+                    <>
+                      <Swatch display color={selectedColor()} label="Current color" />
+                      {selectedColor()}
+                    </>
+                  }
+                >
+                  <span class="text-fg-muted">Mixed colors</span>
+                </Show>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <Button size="sm" variant="secondary" disabled={!parts().length} onClick={() => setParts([])}>
+                  All parts
+                </Button>
                 <Button
                   size="sm"
-                  variant={parts().includes(c.part) ? "primary" : "secondary"}
-                  aria-pressed={parts().includes(c.part)}
-                  onClick={() => togglePart(c.part)}
+                  variant="secondary"
+                  disabled={parts().length === props.view.colors.length}
+                  onClick={() => setParts(props.view.colors.map((c) => c.part))}
                 >
-                  <Swatch display color={c.hex} label={c.label} />
-                  {c.label}
+                  Select all
                 </Button>
-              )}
-            </For>
-          </div>
-          <div class="flex items-center gap-2 text-sm text-fg-muted">
-            <Show
-              when={mixed()}
-              fallback={
-                <>
-                  <Swatch display color={selectedColor()} label="Current color" />
-                  {selectedColor()}
-                </>
-              }
-            >
-              Mixed colors
-            </Show>
+              </div>
+            </div>
           </div>
           <SegmentedControl
             aria-label="Color mode"
@@ -905,7 +915,7 @@ function Body(props: { view: AvatarView }) {
               value={query()}
               onChange={setQuery}
             />
-            <div class="flex max-w-xl flex-wrap gap-1.5">
+            <div class="flex flex-wrap gap-1.5">
               <For each={shownPalette()}>
                 {(s) => (
                   <Swatch
