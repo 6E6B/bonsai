@@ -554,6 +554,30 @@ impl Core {
         }
         Ok(out)
     }
+
+    /// Runs a folder edit for `account`, then for every other account, so private bookmarks
+    /// in the same folder move with the shared ones instead of staying under the old name.
+    /// Accounts with no private bookmark in the folder are left alone.
+    pub fn edit_bookmark_folder(
+        &self,
+        account: AccountId,
+        f: impl Fn(&mut Vec<Bookmark>) -> Result<(), String>,
+    ) -> Result<(), String> {
+        self.edit_bookmarks(account, &f)?;
+        let others: Vec<_> = self
+            .store()
+            .accounts
+            .accounts
+            .iter()
+            .map(|a| a.id)
+            .filter(|a| *a != account && !a.is_anonymous())
+            .collect();
+        for other in others {
+            // "No such folder" here only means this account has nothing private in it.
+            let _ = self.edit_bookmarks(other, &f);
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]

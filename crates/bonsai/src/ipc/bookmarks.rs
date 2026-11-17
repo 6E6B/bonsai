@@ -280,10 +280,11 @@ pub fn run(
             CommandId::RenameBookmarkFolder => {
                 let r: FolderRename =
                     serde_json::from_str(raw).map_err(|_| "Choose a folder and a new name.")?;
-                return core.edit_bookmarks(account, |all| bookmarks::rename_folder(all, &r.from, &r.to));
+                return core
+                    .edit_bookmark_folder(account, |all| bookmarks::rename_folder(all, &r.from, &r.to));
             }
             CommandId::RemoveBookmarkFolder => {
-                return core.edit_bookmarks(account, |all| bookmarks::remove_folder(all, raw));
+                return core.edit_bookmark_folder(account, |all| bookmarks::remove_folder(all, raw));
             }
             _ => {}
         }
