@@ -2575,6 +2575,32 @@
       "title": "Pick the 3D adjust handle (move, turn or size)"
     },
     {
+      "arg": "none",
+      "id": "avatar.adjust_undo",
+      "keywords": [
+        "undo",
+        "adjust",
+        "accessory",
+        "position",
+        "back",
+        "avatar"
+      ],
+      "title": "Undo the last accessory adjustment"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.adjust_redo",
+      "keywords": [
+        "redo",
+        "adjust",
+        "accessory",
+        "position",
+        "again",
+        "avatar"
+      ],
+      "title": "Redo an undone accessory adjustment"
+    },
+    {
       "arg": "text",
       "id": "avatar.scale",
       "keywords": [

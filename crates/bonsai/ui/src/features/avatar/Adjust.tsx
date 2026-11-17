@@ -20,13 +20,17 @@ import {
 
 import {
   adjustable,
+  changes,
   copyArg,
+  EMPTY_HISTORY,
   formatValue,
   GROUPS,
   isAdjusted,
   type Placement,
   parseTool,
   placementArg,
+  record,
+  replay,
   resetArg,
   ruleFor,
   type Tool,
@@ -93,7 +97,8 @@ export function Adjust(props: {
   })
   const change = (id: number, placement: Placement) => setDraft({ id, placement })
   const commit = (id: number, placement: Placement) => {
-    const arg = placementArg(id, placement, saved())
+    const was = items().find((w) => w.id === id)
+    const arg = was && placementArg(id, placement, toPlacement(was.placement))
     if (!arg) return setDraft(null)
     setDraft({ id, placement })
     setSaving(true)
@@ -104,6 +109,39 @@ export function Adjust(props: {
       }
     })
   }
+
+  // Every saved change while this tab is open, from the handle, sliders, menus or command bar.
+  const [history, setHistory] = createSignal(EMPTY_HISTORY)
+  let last = new Map<number, Placement>()
+  createEffect(() => {
+    const now = new Map(items().map((w) => [w.id, toPlacement(w.placement)]))
+    const steps = changes(last, now)
+    last = now
+    if (steps.length) setHistory((h) => record(h, steps))
+  })
+  const step = (dir: "undo" | "redo") => {
+    const r = replay(history(), dir)
+    if (!r || !items().some((w) => w.id === r.id)) return
+    setHistory(r.history)
+    props.onSelect(r.id)
+    commit(r.id, r.placement)
+  }
+  onCleanup(handle("avatar.adjust_undo", () => step("undo")))
+  onCleanup(handle("avatar.adjust_redo", () => step("redo")))
+  const onKey = (e: KeyboardEvent) => {
+    const t = e.target
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+    if (t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA"].includes(t.tagName))) return
+    const key = e.key.toLowerCase()
+    const id =
+      key === "y" || (key === "z" && e.shiftKey) ? "avatar.adjust_redo" : key === "z" ? "avatar.adjust_undo" : null
+    if (!id) return
+    e.preventDefault()
+    void run(id)
+  }
+  // While this tab is open, Ctrl+Z means undo an adjustment, unless a text field has focus.
+  window.addEventListener("keydown", onKey)
+  onCleanup(() => window.removeEventListener("keydown", onKey))
 
   return (
     <Show
@@ -174,6 +212,8 @@ export function Adjust(props: {
                   item={item()}
                   rule={r()}
                   others={items()}
+                  canUndo={history().undo.length > 0}
+                  canRedo={history().redo.length > 0}
                   steps={props.view.adjustSteps}
                   placement={shown()}
                   onChange={(p) => change(item().id, p)}
@@ -192,6 +232,8 @@ function Editor(props: {
   item: WornView
   rule: AdjustRuleView
   others: WornView[]
+  canUndo: boolean
+  canRedo: boolean
   steps: AvatarView["adjustSteps"]
   placement: Placement
   onChange: (p: Placement) => void
@@ -212,19 +254,36 @@ function Editor(props: {
   }
   return (
     <section class="flex min-w-0 flex-col gap-4">
-      <div class="flex flex-wrap items-center gap-2">
-        <SectionHeader title={props.item.name} meta={props.item.typeName} size="group" class="min-w-0 flex-1" />
-        <Menu size="sm" icon="copy" label="Copy placement" items={copyMenu()}>
-          Copy from
-        </Menu>
-        <Button
-          size="sm"
-          icon="undo"
-          disabled={!isAdjusted(props.item.placement)}
-          onClick={() => void run("avatar.adjust", resetArg(props.item.id))}
-        >
-          Reset
-        </Button>
+      <div class="flex flex-col gap-2">
+        <SectionHeader title={props.item.name} meta={props.item.typeName} size="group" />
+        <div class="flex items-center gap-1">
+          <IconButton
+            size="sm"
+            icon="undo"
+            label="Undo (Ctrl+Z)"
+            disabled={!props.canUndo}
+            onClick={() => void run("avatar.adjust_undo")}
+          />
+          <IconButton
+            size="sm"
+            icon="redo"
+            label="Redo (Ctrl+Shift+Z)"
+            disabled={!props.canRedo}
+            onClick={() => void run("avatar.adjust_redo")}
+          />
+          <span class="flex-1" />
+          <Menu size="sm" icon="copy" label="Copy placement" items={copyMenu()}>
+            Copy from
+          </Menu>
+          <Button
+            size="sm"
+            icon="refresh"
+            disabled={!isAdjusted(props.item.placement)}
+            onClick={() => void run("avatar.adjust", resetArg(props.item.id))}
+          >
+            Reset
+          </Button>
+        </div>
       </div>
       <For each={GROUPS}>
         {(g) => (
@@ -233,7 +292,7 @@ function Editor(props: {
               <SectionHeader title={g.label} size="group" class="flex-1" />
               <IconButton
                 size="sm"
-                icon="undo"
+                icon="refresh"
                 label={`Reset ${g.label.toLowerCase()}`}
                 disabled={!isAdjusted(props.item.placement, g.key)}
                 onClick={() => void run("avatar.adjust", resetArg(props.item.id, g.key))}
@@ -259,8 +318,8 @@ function Editor(props: {
         )}
       </For>
       <p class="text-xs text-fg-muted">
-        Drag the handle on the avatar or a slider; the change saves when you let go. Roblox limits each axis by
-        accessory type.
+        Drag the handle on the avatar or a slider; the change saves when you let go. Ctrl+Z undoes it. Roblox limits
+        each axis by accessory type.
       </p>
     </section>
   )

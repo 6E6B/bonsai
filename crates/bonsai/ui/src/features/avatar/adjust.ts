@@ -151,3 +151,60 @@ const TOOLS: Record<string, Tool> = {
 
 /** The handle an `avatar.adjust_tool` argument names. */
 export const parseTool = (arg: string | null): Tool | undefined => TOOLS[arg?.trim().toLowerCase() ?? ""]
+
+/** One saved change to an accessory's placement. */
+export interface Step {
+  id: number
+  before: Placement
+  after: Placement
+}
+
+/** Saved changes that can be undone and redone. `replaying` is the item an undo or redo is
+ * saving, so its change is not recorded as a new step. */
+export interface History {
+  undo: Step[]
+  redo: Step[]
+  replaying: number | null
+}
+
+export const EMPTY_HISTORY: History = { undo: [], redo: [], replaying: null }
+
+const LIMIT = 50
+
+/** The changes between two snapshots of worn placements, by item id. Items put on or taken
+ * off are not changes. */
+export function changes(before: Map<number, Placement>, after: Map<number, Placement>): Step[] {
+  const out: Step[] = []
+  for (const [id, now] of after) {
+    const was = before.get(id)
+    if (was && placementArg(id, now, was)) out.push({ id, before: was, after: now })
+  }
+  return out
+}
+
+/** Records saved changes. The one an undo or redo was waiting for is not a new step. */
+export function record(h: History, steps: Step[]): History {
+  let next = h
+  for (const s of steps) {
+    if (next.replaying === s.id) next = { ...next, replaying: null }
+    else next = { undo: [...next.undo, s].slice(-LIMIT), redo: [], replaying: next.replaying }
+  }
+  return next
+}
+
+/** Takes the last step off one stack and puts it on the other. Returns the step and the
+ * placement to save, or null when there is nothing to take. */
+export function replay(
+  h: History,
+  dir: "undo" | "redo",
+): { history: History; id: number; placement: Placement } | null {
+  const from = dir === "undo" ? h.undo : h.redo
+  const step = from.at(-1)
+  if (!step) return null
+  const rest = from.slice(0, -1)
+  const history =
+    dir === "undo"
+      ? { undo: rest, redo: [...h.redo, step], replaying: step.id }
+      : { undo: [...h.undo, step], redo: rest, replaying: step.id }
+  return { history, id: step.id, placement: dir === "undo" ? step.before : step.after }
+}
