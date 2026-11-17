@@ -165,16 +165,22 @@ impl Core {
 
     async fn collect_backup(&self, account: AccountId) -> Backup {
         let start = Instant::now();
-        let mut asked_names = false;
+        // Ids already asked for, so people who show up in a later round still get names.
+        let mut asked: HashSet<u64> = HashSet::new();
         loop {
             let changed = self.store_changed();
             tokio::pin!(changed);
             changed.as_mut().enable();
             let mut round = self.backup_round(account);
             let waiting_names = !round.unnamed.is_empty() && start.elapsed() < NAMES_WAIT;
-            if !asked_names && !round.unnamed.is_empty() {
-                self.want_users(&round.unnamed);
-                asked_names = true;
+            let new: Vec<u64> = round
+                .unnamed
+                .iter()
+                .copied()
+                .filter(|id| asked.insert(*id))
+                .collect();
+            if !new.is_empty() {
+                self.want_users(&new);
             }
             if (round.pending.is_empty() && !waiting_names) || start.elapsed() >= DEADLINE {
                 round
