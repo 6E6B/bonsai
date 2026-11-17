@@ -2177,6 +2177,80 @@
       "title": "Move bookmark before another (bookmark, then target)"
     },
     {
+      "arg": "bookmark",
+      "id": "bookmark.folder",
+      "keywords": [
+        "bookmark",
+        "folder",
+        "new folder",
+        "group",
+        "organize",
+        "file"
+      ],
+      "title": "Move bookmark to a folder (new or existing)"
+    },
+    {
+      "arg": "bookmarkFolder",
+      "id": "bookmark.folder_rename",
+      "keywords": [
+        "bookmark",
+        "folder",
+        "rename"
+      ],
+      "title": "Rename bookmark folder"
+    },
+    {
+      "arg": "bookmarkFolder",
+      "id": "bookmark.folder_remove",
+      "keywords": [
+        "bookmark",
+        "folder",
+        "remove",
+        "delete",
+        "ungroup"
+      ],
+      "title": "Remove bookmark folder (keeps its bookmarks)"
+    },
+    {
+      "arg": "bookmark",
+      "id": "bookmark.tag",
+      "keywords": [
+        "bookmark",
+        "tag",
+        "tags",
+        "label",
+        "hashtag"
+      ],
+      "title": "Tag bookmark"
+    },
+    {
+      "arg": "none",
+      "id": "bookmark.export",
+      "keywords": [
+        "bookmark",
+        "export",
+        "save",
+        "file",
+        "backup",
+        "json"
+      ],
+      "title": "Save bookmarks to a file"
+    },
+    {
+      "arg": "none",
+      "id": "bookmark.import",
+      "keywords": [
+        "bookmark",
+        "import",
+        "load",
+        "file",
+        "restore",
+        "backup",
+        "json"
+      ],
+      "title": "Load bookmarks from a file"
+    },
+    {
       "arg": "none",
       "id": "view.bookmarks",
       "keywords": [

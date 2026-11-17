@@ -10,7 +10,7 @@ use bonsai_core::{
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::sync::Arc;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 #[derive(Clone, Debug, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -58,6 +58,9 @@ pub struct BookmarkView {
     pub kind: BookmarkKindView,
     pub thumbnail: Option<BookmarkThumbnail>,
     pub status: String,
+    /// Empty outside folders.
+    pub folder: String,
+    pub tags: Vec<String>,
 }
 #[derive(Clone, Debug, Serialize, Type)]
 pub struct BookmarkList {
@@ -157,6 +160,8 @@ pub fn bookmarks(core: State<'_, Arc<Core>>) -> BookmarkList {
                 kind: b.kind.into(),
                 thumbnail,
                 status,
+                folder: b.folder,
+                tags: b.tags,
             }
         })
         .collect();
@@ -164,6 +169,66 @@ pub fn bookmarks(core: State<'_, Arc<Core>>) -> BookmarkList {
         account: Id(account.0),
         items,
     }
+}
+
+#[derive(Deserialize)]
+struct FolderRename {
+    from: String,
+    to: String,
+}
+
+/// Asks where to save, then writes the account's bookmarks. The dialog gets its own thread.
+fn export(app: &AppHandle, account: AccountId) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let mut dialog = rfd::FileDialog::new()
+            .set_title("Save bookmarks")
+            .set_file_name("bonsai-bookmarks.json")
+            .add_filter("Bookmarks", &["json"]);
+        if let Some(w) = app.get_webview_window("main") {
+            dialog = dialog.set_parent(&w);
+        }
+        let Some(path) = dialog.save_file() else {
+            return;
+        };
+        let Some(core) = app.try_state::<Arc<Core>>() else {
+            return;
+        };
+        match core.export_bookmarks(account, &path) {
+            Ok(n) => core.notice(format!("Saved {n} bookmarks to {}", path.display()), false),
+            Err(e) => core.notice(e, true),
+        }
+    });
+}
+
+/// Asks for a bookmarks file, then adds what it holds. The dialog gets its own thread.
+fn import(app: &AppHandle, account: AccountId) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let mut dialog = rfd::FileDialog::new()
+            .set_title("Load bookmarks")
+            .add_filter("Bookmarks", &["json"]);
+        if let Some(w) = app.get_webview_window("main") {
+            dialog = dialog.set_parent(&w);
+        }
+        let Some(path) = dialog.pick_file() else {
+            return;
+        };
+        let Some(core) = app.try_state::<Arc<Core>>() else {
+            return;
+        };
+        match core.import_bookmarks(account, &path) {
+            Ok(r) if r.skipped > 0 => core.notice(
+                format!(
+                    "Added {} bookmarks. Skipped {} already saved or not allowed.",
+                    r.added, r.skipped
+                ),
+                false,
+            ),
+            Ok(r) => core.notice(format!("Added {} bookmarks.", r.added), false),
+            Err(e) => core.notice(e, true),
+        }
+    });
 }
 
 #[derive(Deserialize)]
@@ -176,6 +241,7 @@ struct Target {
 }
 
 pub fn run(
+    app: &AppHandle,
     core: &Arc<Core>,
     id: CommandId,
     inv: &Invocation,
@@ -190,12 +256,37 @@ pub fn run(
             | CommandId::MoveBookmarkUp
             | CommandId::MoveBookmarkDown
             | CommandId::MoveBookmark
+            | CommandId::FolderBookmark
+            | CommandId::RenameBookmarkFolder
+            | CommandId::RemoveBookmarkFolder
+            | CommandId::TagBookmark
+            | CommandId::ExportBookmarks
+            | CommandId::ImportBookmarks
     ) {
         return None;
     }
     Some((|| {
         let account = acting.unwrap_or(AccountId::ANONYMOUS);
         let raw = inv.arg.as_deref().unwrap_or("").trim();
+        match id {
+            CommandId::ExportBookmarks => {
+                export(app, account);
+                return Ok(());
+            }
+            CommandId::ImportBookmarks => {
+                import(app, account);
+                return Ok(());
+            }
+            CommandId::RenameBookmarkFolder => {
+                let r: FolderRename =
+                    serde_json::from_str(raw).map_err(|_| "Choose a folder and a new name.")?;
+                return core.edit_bookmarks(account, |all| bookmarks::rename_folder(all, &r.from, &r.to));
+            }
+            CommandId::RemoveBookmarkFolder => {
+                return core.edit_bookmarks(account, |all| bookmarks::remove_folder(all, raw));
+            }
+            _ => {}
+        }
         if id == CommandId::ToggleBookmark {
             let target: Target = serde_json::from_str(raw).map_err(|_| "Choose a page to bookmark.")?;
             let (cached, _, _) = details(core, account, &target.path);
@@ -226,6 +317,8 @@ pub fn run(
         core.edit_bookmarks(account, |all| match id {
             CommandId::RenameBookmark => bookmarks::rename(all, bookmark, rest),
             CommandId::RemoveBookmark => bookmarks::remove(all, bookmark),
+            CommandId::FolderBookmark => bookmarks::set_folder(all, bookmark, rest),
+            CommandId::TagBookmark => bookmarks::set_tags(all, bookmark, rest),
             CommandId::MoveBookmarkUp => bookmarks::reorder(all, bookmark, -1, None),
             CommandId::MoveBookmarkDown => bookmarks::reorder(all, bookmark, 1, None),
             CommandId::MoveBookmark => bookmarks::reorder(

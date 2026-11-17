@@ -538,7 +538,7 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "bookmarkFolder";
 
 /**  What a plugin asks for, shown in Settings and the install dialog. */
 export type Asks = {
@@ -673,6 +673,9 @@ export type BookmarkView = {
 	kind: BookmarkKindView,
 	thumbnail: BookmarkThumbnail | null,
 	status: string,
+	/**  Empty outside folders. */
+	folder: string,
+	tags: string[],
 };
 
 /**  The budget dialog's plugin and account. */

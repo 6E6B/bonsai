@@ -23,7 +23,7 @@ import { ViewDialog } from "~/features/plugins/ViewDialog"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
 import { registerThemeCommands } from "~/features/themes/commands"
 import { ImportDialog, useThemeDrop } from "~/features/themes/ImportDialog"
-import { bookmarkPath, findBookmark } from "~/lib/bookmarks"
+import { bookmarkFolders, bookmarkPath, findBookmark } from "~/lib/bookmarks"
 import {
   commandContext,
   handle,
@@ -36,14 +36,14 @@ import {
 import { setClockFormat, setFormatLocale, setRelativeDates } from "~/lib/format"
 import { noteDetails, noteVisit } from "~/lib/history"
 import { registerHubCommands } from "~/lib/hub"
-import { commands } from "~/lib/ipc/bindings"
+import { type BookmarkView, commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { WISHLIST } from "~/lib/market-category"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { playlists, refreshBookmarks, setDrawerState, shell, startSync, visibleBookmarks } from "~/lib/store"
 import { activeTab, pathname, savedTabs, setTabDescriber, tabActions, tabLabel, tabs } from "~/lib/tabs"
 import { shownBackground } from "~/lib/theme"
-import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
+import { type PromptOptions, showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { useUpdateToasts } from "~/lib/update-view"
 import { useUpdates } from "~/lib/updates"
 import { withParams } from "~/lib/url-params"
@@ -237,6 +237,46 @@ export function Layout(props: ParentProps) {
     if (title && shell.active === account) void runBackend("bookmark.rename", `${b.id} ${title}`)
   }
 
+  /** `id text` goes straight to the backend; a bare id asks for the text first. */
+  const editBookmark = (id: string, ask: (b: BookmarkView) => PromptOptions) => async (arg: string | null) => {
+    const raw = arg?.trimStart() ?? ""
+    // "id " (trailing space) clears the value without asking.
+    if (/^\S+\s/.test(raw)) return void runBackend(id, raw)
+    const b = visibleBookmarks().find((b) => String(b.id) === raw.trim())
+    if (!b) return void showToast("Choose a bookmark first.")
+    const account = shell.active
+    const text = await prompt(ask(b))
+    if (text !== null && shell.active === account) void runBackend(id, `${b.id} ${text}`)
+  }
+  const folderBookmark = editBookmark("bookmark.folder", (b) => {
+    const folders = bookmarkFolders(visibleBookmarks())
+    return {
+      title: "Move to folder",
+      label: "Folder",
+      initial: b.folder,
+      placeholder: folders.length ? folders.slice(0, 3).join(", ") : "New folder name",
+      submit: "Move",
+      allowEmpty: true,
+      maxLength: 40,
+    }
+  })
+  const tagBookmark = editBookmark("bookmark.tag", (b) => ({
+    title: "Tag bookmark",
+    label: "Tags, separated by commas",
+    initial: b.tags.join(", "),
+    submit: "Save",
+    allowEmpty: true,
+    maxLength: 240,
+  }))
+  const renameBookmarkFolder = async (arg: string | null) => {
+    const raw = arg?.trim() ?? ""
+    if (raw.startsWith("{")) return void runBackend("bookmark.folder_rename", raw)
+    if (!bookmarkFolders(visibleBookmarks()).includes(raw)) return void showToast("Choose a folder first.")
+    const account = shell.active
+    const to = await prompt({ title: "Rename folder", label: "Name", initial: raw, submit: "Rename", maxLength: 40 })
+    if (to && shell.active === account) void runBackend("bookmark.folder_rename", JSON.stringify({ from: raw, to }))
+  }
+
   const addAccount = (mode: AddMode, title: string) => () =>
     dialog.show(() => <AddAccount mode={mode} onDone={() => dialog.close()} />, { title, size: "sm" })
 
@@ -377,6 +417,9 @@ export function Layout(props: ParentProps) {
     handle("user.note", editAbout("note")),
     handle("bookmark.toggle", toggleBookmark),
     handle("bookmark.rename", renameBookmark),
+    handle("bookmark.folder", folderBookmark),
+    handle("bookmark.tag", tagBookmark),
+    handle("bookmark.folder_rename", renameBookmarkFolder),
     handle("bookmark.open", async (arg) => {
       const b = visibleBookmarks().find((b) => String(b.id) === arg)
       const account = shell.active

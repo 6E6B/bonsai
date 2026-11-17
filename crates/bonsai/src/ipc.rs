@@ -423,6 +423,7 @@ pub enum Arg {
     Plugin,
     Playlist,
     Bookmark,
+    BookmarkFolder,
 }
 
 impl From<ArgKind> for Arg {
@@ -445,6 +446,7 @@ impl From<ArgKind> for Arg {
             ArgKind::Plugin => Arg::Plugin,
             ArgKind::Playlist => Arg::Playlist,
             ArgKind::Bookmark => Arg::Bookmark,
+            ArgKind::BookmarkFolder => Arg::BookmarkFolder,
         }
     }
 }
@@ -1408,7 +1410,7 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
     if let Some(r) = playlists::run(core, id, &inv, core.acting(picked)) {
         return r;
     }
-    if let Some(r) = bookmarks::run(core, id, &inv, core.acting(picked)) {
+    if let Some(r) = bookmarks::run(app, core, id, &inv, core.acting(picked)) {
         return r;
     }
     if let Some(r) = plugins::run(app, core, id, &inv, core.acting(picked)) {

@@ -51,5 +51,9 @@ Features beyond the website, with the command that reaches each.
 | Clothing template download, plain or masked | Item page | Download clothing template; Download clothing template, masked |
 | 3D viewer that plays animations and emotes, and tries on items and bundles | Avatar, item and bundle pages | Play an animation in the 3D view; Try on this item in 3D |
 | Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
+| Bookmark folders and tags, filter by `#tag`, drag a bookmark onto a folder | Bookmarks drawer, bookmark and folder menus | Move bookmark to a folder; Rename bookmark folder; Remove bookmark folder; Tag bookmark |
+| Save bookmarks to a JSON file and load them back, on this or another account | Bookmarks drawer → ⋯ | Save bookmarks to a file; Load bookmarks from a file |
 
 Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.
+
+Folders hold any kind of bookmark and are listed above the kind groups. A folder exists while it holds a bookmark; removing a folder puts its bookmarks back in their kind groups. Folder names are up to 40 characters, and a name that differs only in case joins the existing folder. Each bookmark takes up to 8 tags of 24 characters. A bookmarks file holds paths, titles, folders and tags only, never account ids or credentials. Loading one skips pages already bookmarked, and private views go to the account that loads the file.

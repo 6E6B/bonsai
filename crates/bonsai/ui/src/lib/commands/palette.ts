@@ -1,3 +1,4 @@
+import { bookmarkFolders } from "~/lib/bookmarks"
 import { entityRef, type Seen } from "~/lib/history"
 import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
 import { fold } from "~/lib/search"
@@ -216,6 +217,9 @@ export function paletteEntries(
         break
       case "bookmark":
         for (const b of bookmarks) choice(String(b.id), b.title)
+        break
+      case "bookmarkFolder":
+        for (const f of bookmarkFolders(bookmarks)) choice(f, f)
         break
       case "playlist":
         for (const p of playlists) choice(String(p.id), p.name)
@@ -579,7 +583,7 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
     (input.bookmarks ?? []).map((b) => ({
       key: `bookmark:${b.id}`,
       title: b.title,
-      words: b.title,
+      words: [b.title, b.folder, ...b.tags].join(" "),
       id: "bookmark.open",
       arg: String(b.id),
       subtitle: b.status || undefined,

@@ -405,6 +405,8 @@ describe("bookmark search", () => {
     kind: "experience",
     status: "12 playing",
     thumbnail: { kind: "game_icon", id: 7 },
+    folder: "Horror",
+    tags: ["scary"],
   }
   it("parses b: without requesting remote search", () => {
     expect(parseScope("  b: doors")).toEqual({ scope: "bookmarks", text: "doors" })
@@ -429,11 +431,24 @@ describe("bookmark search", () => {
       thumb: { kind: "game_icon", id: 7 },
     })
     expect(paletteSections({ ...input, scope: "bookmarks", text: "missing" })).toEqual([])
+    expect(paletteSections({ ...input, scope: "bookmarks", text: "scary" })[0].rows[0]).toMatchObject({ arg: "5" })
   })
   it("expands Bookmark arguments for commands", () => {
     const rows = paletteEntries([cmd("bookmark.rename", "bookmark")], [], [], [], [], [], [], [], [bookmark])
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ id: "bookmark.rename", arg: "5", title: "bookmark.rename: Doors" })
+    const folders = paletteEntries(
+      [cmd("bookmark.folder_rename", "bookmarkFolder")],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [bookmark, { ...bookmark, id: 6, folder: "" }],
+    )
+    expect(folders.map((r) => r.arg)).toEqual(["Horror"])
   })
 })
 

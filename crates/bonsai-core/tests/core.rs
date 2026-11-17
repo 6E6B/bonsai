@@ -3575,6 +3575,39 @@ async fn bookmarks_keep_scope_and_survive_cache_clear_and_restart() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn bookmarks_export_to_a_file_and_import_into_another_account() {
+    use bonsai_core::bookmarks;
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("bookmarks.json");
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, cookies);
+    let c = &r.core;
+    c.edit_bookmarks(ME, |all| {
+        bookmarks::toggle(all, ME, "/games/42", "Game")?;
+        bookmarks::toggle(all, ME, "/chat?conversation=3", "My chat")?;
+        let ids: Vec<_> = all.iter().map(|b| b.id).collect();
+        bookmarks::set_folder(all, ids[0], "Weekend")?;
+        bookmarks::set_tags(all, ids[1], "friends")
+    })
+    .unwrap();
+    assert_eq!(c.export_bookmarks(ME, &file), Ok(2));
+    let text = std::fs::read_to_string(&file).unwrap();
+    assert!(!text.contains(&ME.0.to_string()));
+
+    let got = c.import_bookmarks(ALT, &file).unwrap();
+    assert_eq!((got.added, got.skipped), (1, 1));
+    let alt = c.bookmarks(ALT);
+    assert_eq!(alt.len(), 2);
+    assert!(alt.iter().any(|b| b.folder == "Weekend" && b.account.is_none()));
+    assert!(
+        alt.iter()
+            .any(|b| b.tags == ["friends"] && b.account == Some(ALT))
+    );
+    // ME's private chat is untouched and not duplicated.
+    assert_eq!(c.bookmarks(ME).len(), 2);
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn bookmarks_cap_counts_other_accounts_and_allows_removal_at_the_limit() {
     use bonsai_core::bookmarks;
     let dir = tempfile::tempdir().unwrap();

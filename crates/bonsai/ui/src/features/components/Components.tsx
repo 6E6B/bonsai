@@ -106,6 +106,8 @@ const icons: IconName[] = [
   "play",
   "more",
   "refresh",
+  "folder",
+  "tag",
   "external",
   "robux",
   "dollar",

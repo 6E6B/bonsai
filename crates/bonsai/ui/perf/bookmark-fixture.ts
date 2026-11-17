@@ -15,9 +15,29 @@ export const bookmarkFixture: BookmarkList = {
           kind: "experience",
           status: "1,240 playing",
           thumbnail: null,
+          folder: "",
+          tags: [],
         },
-        { id: 2, title: "Night Shift", path: "/games/1001", kind: "experience", status: "86 playing", thumbnail: null },
-        { id: 3, title: "Builder", path: "/users/100", kind: "person", status: "In game", thumbnail: null },
+        {
+          id: 2,
+          title: "Night Shift",
+          path: "/games/1001",
+          kind: "experience",
+          status: "86 playing",
+          thumbnail: null,
+          folder: "",
+          tags: [],
+        },
+        {
+          id: 3,
+          title: "Builder",
+          path: "/users/100",
+          kind: "person",
+          status: "In game",
+          thumbnail: null,
+          folder: "",
+          tags: [],
+        },
         {
           id: 4,
           title: "Limited accessories",
@@ -25,6 +45,8 @@ export const bookmarkFixture: BookmarkList = {
           kind: "view",
           status: "",
           thumbnail: null,
+          folder: "",
+          tags: [],
         },
       ]
     : [],
@@ -44,6 +66,8 @@ export function bookmarkInvocation(inv: Invocation) {
         kind: "view",
         status: "",
         thumbnail: null,
+        folder: "",
+        tags: [],
       })
   } else if (inv.id === "bookmark.remove") {
     bookmarkFixture.items = bookmarkFixture.items.filter((b) => b.id !== Number(raw))

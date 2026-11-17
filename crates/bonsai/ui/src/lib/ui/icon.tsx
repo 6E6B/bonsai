@@ -63,6 +63,7 @@ import messages from "@phosphor-icons/core/assets/regular/envelope-simple.svg?ra
 import eye from "@phosphor-icons/core/assets/regular/eye.svg?raw"
 import hyped from "@phosphor-icons/core/assets/regular/fire.svg?raw"
 import flag from "@phosphor-icons/core/assets/regular/flag.svg?raw"
+import folder from "@phosphor-icons/core/assets/regular/folder-simple.svg?raw"
 import filter from "@phosphor-icons/core/assets/regular/funnel.svg?raw"
 import game from "@phosphor-icons/core/assets/regular/game-controller.svg?raw"
 import settings from "@phosphor-icons/core/assets/regular/gear-six.svg?raw"
@@ -104,6 +105,7 @@ import grid from "@phosphor-icons/core/assets/regular/squares-four.svg?raw"
 import star from "@phosphor-icons/core/assets/regular/star.svg?raw"
 import marketplace from "@phosphor-icons/core/assets/regular/storefront.svg?raw"
 import avatar from "@phosphor-icons/core/assets/regular/t-shirt.svg?raw"
+import tag from "@phosphor-icons/core/assets/regular/tag-simple.svg?raw"
 import thumbsDown from "@phosphor-icons/core/assets/regular/thumbs-down.svg?raw"
 import thumbsUp from "@phosphor-icons/core/assets/regular/thumbs-up.svg?raw"
 import pass from "@phosphor-icons/core/assets/regular/ticket.svg?raw"
@@ -227,6 +229,8 @@ const svgs = {
   edit,
   trash,
   archive,
+  folder,
+  tag,
   inbox,
   eye,
   "sign-out": signOut,

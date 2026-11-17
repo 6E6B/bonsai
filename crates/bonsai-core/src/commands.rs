@@ -42,6 +42,8 @@ pub enum ArgKind {
     Playlist,
     /// a local bookmark visible to the active account
     Bookmark,
+    /// a bookmark folder visible to the active account
+    BookmarkFolder,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -504,6 +506,12 @@ commands! {
     MoveBookmarkUp => "bookmark.move_up", "Move bookmark up", ["bookmark", "move", "order", "up"], Bookmark, Local, [];
     MoveBookmarkDown => "bookmark.move_down", "Move bookmark down", ["bookmark", "move", "order", "down"], Bookmark, Local, [];
     MoveBookmark => "bookmark.move", "Move bookmark before another (bookmark, then target)", ["bookmark", "move", "reorder"], Text, Local, [];
+    FolderBookmark => "bookmark.folder", "Move bookmark to a folder (new or existing)", ["bookmark", "folder", "new folder", "group", "organize", "file"], Bookmark, Local, [];
+    RenameBookmarkFolder => "bookmark.folder_rename", "Rename bookmark folder", ["bookmark", "folder", "rename"], BookmarkFolder, Local, [];
+    RemoveBookmarkFolder => "bookmark.folder_remove", "Remove bookmark folder (keeps its bookmarks)", ["bookmark", "folder", "remove", "delete", "ungroup"], BookmarkFolder, Local, [];
+    TagBookmark => "bookmark.tag", "Tag bookmark", ["bookmark", "tag", "tags", "label", "hashtag"], Bookmark, Local, [];
+    ExportBookmarks => "bookmark.export", "Save bookmarks to a file", ["bookmark", "export", "save", "file", "backup", "json"], None, Local, [];
+    ImportBookmarks => "bookmark.import", "Load bookmarks from a file", ["bookmark", "import", "load", "file", "restore", "backup", "json"], None, Local, [];
     ShowBookmarks => "view.bookmarks", "Show bookmarks", ["bookmark", "saved", "drawer", "panel"], None, Local, [Shortcut::ctrl_shift("B")];
     NewPlaylist => "playlist.new", "New game playlist", ["playlist", "list", "collection", "create", "new"], Text, Write(Harmless), [];
     AddToPlaylist => "playlist.add", "Add this experience to a playlist", ["playlist", "list", "collection", "add", "save"], Playlist, Write(Harmless), [];
