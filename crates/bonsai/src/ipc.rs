@@ -3254,6 +3254,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             avatar::avatar,
             avatar::outfits,
             avatar::wardrobe,
+            avatar::wardrobe_search,
             avatar::body_palette,
             avatar::recent_items,
             avatar::profile_look,

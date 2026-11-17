@@ -104,6 +104,26 @@ pub struct InvTotals {
     pub on_hold: usize,
 }
 
+/// A name search: every word must appear in the name, ignoring case.
+#[derive(Clone, Debug, Default)]
+pub struct NameQuery(Vec<String>);
+
+impl NameQuery {
+    pub fn new(query: &str) -> Self {
+        NameQuery(query.split_whitespace().map(str::to_lowercase).collect())
+    }
+
+    /// No words: matches everything.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn matches(&self, name: &str) -> bool {
+        let name = name.to_lowercase();
+        self.0.iter().all(|w| name.contains(w.as_str()))
+    }
+}
+
 /// Copies of the same item folded into one entry with a count, in first-seen order. Copies
 /// with a serial number stay apart: each is its own collectible.
 pub fn stack(items: &[InvItem]) -> Vec<(&InvItem, u32)> {
@@ -609,6 +629,18 @@ impl crate::core::Inner {
 mod tests {
     use super::*;
     use crate::values::ItemValue;
+
+    #[test]
+    fn name_query_needs_every_word_in_any_case() {
+        let q = NameQuery::new("  red  HAT ");
+        assert!(q.matches("Red Baseball Hat"));
+        assert!(q.matches("hat of the RED king"));
+        assert!(!q.matches("Red Cap"));
+        assert!(!q.is_empty());
+        let all = NameQuery::new("   ");
+        assert!(all.is_empty());
+        assert!(all.matches("anything"));
+    }
 
     #[test]
     fn slot_keys_round_trip() {

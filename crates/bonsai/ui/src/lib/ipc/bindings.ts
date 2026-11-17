@@ -259,6 +259,11 @@ export const commands = {
 	avatar: () => __TAURI_INVOKE<AvatarView>("avatar"),
 	outfits: () => __TAURI_INVOKE<Paged<OutfitView>>("outfits"),
 	wardrobe: () => __TAURI_INVOKE<List<WardrobeSection>>("wardrobe"),
+	/**
+	 *  Searches item names in every wearable inventory type. Types not loaded yet start loading in
+	 *  the background; their matches arrive with later `storeChanged` events.
+	 */
+	wardrobeSearch: (query: string) => __TAURI_INVOKE<WardrobeSearch>("wardrobe_search", { query }),
 	/**  Body colors to pick from, basic ones first. */
 	bodyPalette: () => __TAURI_INVOKE<SwatchView[]>("body_palette"),
 	/**  Items and outfits the active account wore lately. */
@@ -2772,6 +2777,28 @@ export type VoiceView = {
 	bannedUntil: number | null,
 	cameraEnabled: boolean,
 	cameraEligible: boolean,
+};
+
+/**  An item found by a wardrobe search, with the slot it was found in. */
+export type WardrobeHit = {
+	item: ItemCard,
+	slot: string,
+};
+
+/**  Wardrobe search results across every wearable type. */
+export type WardrobeSearch = {
+	loading: boolean,
+	error: string | null,
+	items: WardrobeHit[],
+	/**  Types whose first page has loaded (or failed), of `total`. */
+	loaded: number,
+	total: number,
+	/**  Types that failed to load. */
+	failed: number,
+	/**  Some types have more pages than were searched. */
+	partial: boolean,
+	/**  More matches than `items` holds. */
+	truncated: boolean,
 };
 
 /**  A wardrobe section: inventory slots (`a<asset type>`) the avatar can wear. */

@@ -11,6 +11,7 @@ import {
   type RecentView,
   type ScaleView,
   type SwatchView,
+  type WardrobeSearch,
   type WardrobeSection,
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
@@ -42,8 +43,9 @@ import {
   usePrompt,
   VirtualGrid,
 } from "~/lib/ui"
+import { useParamDraft } from "~/lib/url-params"
 
-import { matchesWear, named, sortOptions } from "./wardrobe"
+import { matchesWear, named, searchStatus, sortOptions } from "./wardrobe"
 
 const WARDROBE = "wardrobe"
 const OUTFITS = "outfits"
@@ -90,6 +92,7 @@ export default function AvatarEditor() {
     { value: OUTFITS, label: "Outfits" },
     { value: BODY, label: "Body" },
   ]
+  const find = useParamDraft("find", 200)
   const [category, setCategory] = createSignal(RECENT)
   const categories = () => [
     { value: RECENT, label: "Recent" },
@@ -373,19 +376,33 @@ export default function AvatarEditor() {
                 </ListState>
               </div>
             </TabPanel>
-            <TabPanel value={WARDROBE}>
-              <Tabs aria-label="Wardrobe category" items={categories()} value={category()} onChange={setCategory}>
-                <TabPanel value={RECENT}>
-                  <Recent />
-                </TabPanel>
-                <For each={sections.items}>
-                  {(s) => (
-                    <TabPanel value={s.name}>
-                      <Section section={s} worn={view.wearing.map((w) => w.id)} />
+            <TabPanel value={WARDROBE} class="flex flex-col gap-3">
+              <TextField
+                icon="search"
+                aria-label="Search all items"
+                placeholder="Search everything you can wear"
+                value={find.value()}
+                onChange={find.set}
+              />
+              <Show
+                when={find.value().trim()}
+                fallback={
+                  <Tabs aria-label="Wardrobe category" items={categories()} value={category()} onChange={setCategory}>
+                    <TabPanel value={RECENT}>
+                      <Recent />
                     </TabPanel>
-                  )}
-                </For>
-              </Tabs>
+                    <For each={sections.items}>
+                      {(s) => (
+                        <TabPanel value={s.name}>
+                          <Section section={s} worn={view.wearing.map((w) => w.id)} />
+                        </TabPanel>
+                      )}
+                    </For>
+                  </Tabs>
+                }
+              >
+                {(q) => <AllItems query={q()} worn={view.wearing.map((w) => w.id)} />}
+              </Show>
             </TabPanel>
             <TabPanel value={BODY}>
               <Body view={view} />
@@ -404,6 +421,54 @@ function ResultStatus(props: { shown: number; loaded: number; more?: boolean }) 
       {props.shown} of {props.loaded} loaded
       <Show when={props.more}> · More items available. Search and name sorting cover loaded items.</Show>
     </p>
+  )
+}
+
+/** Name matches across every wearable type. Types load in the background as the search needs them. */
+function AllItems(props: { query: string; worn: number[] }) {
+  const result = useLive(
+    () => [shell.active, props.query] as const,
+    ([, q]) => commands.wardrobeSearch(q),
+    (): WardrobeSearch => ({
+      loading: true,
+      error: null,
+      items: [],
+      loaded: 0,
+      total: 0,
+      failed: 0,
+      partial: false,
+      truncated: false,
+    }),
+    { keep: true },
+  )
+  const list = () => ({ loading: result.loading, error: result.error, items: result.items, more: false })
+  const wearArg = (i: ItemCard) => `${i.id}:${i.assetType}`
+  return (
+    <div class="flex flex-col gap-3">
+      <p class="text-xs text-fg-muted" role="status">
+        {searchStatus(result)}
+      </p>
+      <ListState list={list()} icon="search" empty="No matches" description="Nothing you own has that name.">
+        <VirtualGrid items={result.items} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+          {(h) => (
+            <ItemTile
+              item={h.item}
+              selected={props.worn.includes(h.item.id)}
+              onClick={() => run("avatar.wear", wearArg(h.item))}
+              menu={{
+                actions: [
+                  menuItem("avatar.wear", {
+                    arg: wearArg(h.item),
+                    icon: "avatar",
+                    label: props.worn.includes(h.item.id) ? "Take off" : "Wear",
+                  }),
+                ],
+              }}
+            />
+          )}
+        </VirtualGrid>
+      </ListState>
+    </div>
   )
 }
 

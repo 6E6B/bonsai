@@ -372,6 +372,7 @@ export function Layout(props: ParentProps) {
       const wishlist = new URLSearchParams(location.search).get("cat") === WISHLIST
       navigate(withParams(location, "/marketplace", { q: q?.trim() || null, ...(wishlist ? { cat: null } : {}) }))
     }),
+    handle("avatar.search", (q) => navigate(withParams(location, "/avatar", { find: q?.trim() || null }))),
     handle("market.category", (c) => navigate(withParams(location, "/marketplace", { cat: c?.trim() || null }))),
     handle("user.nickname", editAbout("nickname")),
     handle("user.note", editAbout("note")),

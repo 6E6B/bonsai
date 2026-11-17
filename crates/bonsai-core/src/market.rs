@@ -778,15 +778,17 @@ impl Core {
     /// Current tile data for a list of items (wishlist, recommendations). Unknown ids drop out.
     pub fn items(&self, items: &[ItemRef]) -> Res<Vec<CatalogItem>> {
         let items = items.to_vec();
-        let id = items
-            .iter()
-            .map(|i| format!("{:?}{}", i.kind, i.id))
-            .collect::<Vec<_>>()
-            .join(",");
+        self.inner.res(items_key(&items), ITEM_AGE, move |f| async move {
+            fetch_items(&f.client, &items).await
+        })
+    }
+
+    /// What [`Core::items`] has cached for exactly these items, without fetching.
+    pub fn cached_items(&self, items: &[ItemRef]) -> Option<std::sync::Arc<Vec<CatalogItem>>> {
         self.inner
-            .res(Key::shared("items", id), ITEM_AGE, move |f| async move {
-                fetch_items(&f.client, &items).await
-            })
+            .res
+            .snapshot::<Vec<CatalogItem>>(&items_key(items))?
+            .data
     }
 
     /// Items like this one.
@@ -1200,6 +1202,15 @@ impl crate::core::Inner {
             },
         )
     }
+}
+
+fn items_key(items: &[ItemRef]) -> Key {
+    let id = items
+        .iter()
+        .map(|i| format!("{:?}{}", i.kind, i.id))
+        .collect::<Vec<_>>()
+        .join(",");
+    Key::shared("items", id)
 }
 
 #[cfg(test)]

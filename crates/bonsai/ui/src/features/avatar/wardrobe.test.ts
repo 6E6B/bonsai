@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { matchesWear, named } from "./wardrobe"
+import { matchesWear, named, searchStatus } from "./wardrobe"
 
 describe("wardrobe results", () => {
   const items = [
@@ -23,5 +23,20 @@ describe("wardrobe results", () => {
     expect(matchesWear(1, [1], "unworn")).toBe(false)
     expect(matchesWear(2, [1], "unworn")).toBe(true)
     expect(matchesWear(1, [1], "all")).toBe(true)
+  })
+})
+
+describe("wardrobe search status", () => {
+  const base = { items: [1, 2], loaded: 3, total: 3, failed: 0, partial: false, truncated: false }
+
+  it("counts matches once every type has loaded", () => {
+    expect(searchStatus(base)).toBe("2 matches")
+    expect(searchStatus({ ...base, items: [1] })).toBe("1 match")
+  })
+
+  it("says what is still loading, failed or left out", () => {
+    expect(searchStatus({ ...base, loaded: 1, failed: 1, partial: true, truncated: true })).toBe(
+      "First 2 matches · loading 1 of 3 types · 1 type failed to load · some types have more items; open their tab to load them",
+    )
   })
 })

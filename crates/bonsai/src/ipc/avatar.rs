@@ -2,11 +2,12 @@
 //! categories it can wear). `avatar.wear` takes `<asset id>` or `<asset id>:<asset type id>`;
 //! with the type, a full slot swaps its oldest item out.
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use bonsai_core::avatar::{Look, Part, Rig, Scale};
 use bonsai_core::commands::CommandId;
-use bonsai_core::inventory::InvSlot;
+use bonsai_core::inventory::{InvCategory, InvSlot, NameQuery};
 use bonsai_core::market::ItemRef;
 use bonsai_core::res::Res;
 use bonsai_core::{AccountId, Core};
@@ -389,46 +390,168 @@ pub struct WardrobeSection {
     pub slots: Vec<Choice>,
 }
 
-#[tauri::command]
-#[specta::specta]
-pub fn wardrobe(core: State<'_, Arc<Core>>) -> List<WardrobeSection> {
-    let a = viewer(&core);
+/// The viewer's wearable inventory slots by section, or the list state to show instead.
+fn wearable_sections<T>(core: &Core, a: AccountId) -> Result<Vec<InvCategory>, List<T>> {
     if a.is_anonymous() {
-        return List {
+        return Err(List {
             loading: false,
             error: Some("Sign in to change your avatar.".to_owned()),
             items: Vec::new(),
             more: false,
-        };
+        });
     }
     let rules = core.avatar_rules();
     let Some(rules) = rules.data else {
-        return List {
+        return Err(List {
             loading: rules.loading || rules.error.is_none(),
             error: rules.error,
             items: Vec::new(),
             more: false,
-        };
+        });
     };
-    let wearable = &rules.slots;
     let cats = core.inventory_categories(a.0);
-    let mut list = List::of(cats, |c| WardrobeSection {
-        name: c.name.clone(),
-        slots: c
-            .slots
-            .iter()
-            .filter(|(_, s)| match s {
-                InvSlot::Asset(t) => wearable.iter().any(|w| w.type_id == *t as i64 && w.max > 0),
-                _ => false,
-            })
-            .map(|(label, s)| Choice {
-                value: s.key(),
-                label: label.clone(),
-            })
-            .collect(),
-    });
-    list.items.retain(|s| !s.slots.is_empty());
-    list
+    let Some(data) = cats.data else {
+        return Err(List {
+            loading: cats.loading || cats.error.is_none(),
+            error: cats.error,
+            items: Vec::new(),
+            more: false,
+        });
+    };
+    let wearable = |s: &InvSlot| match s {
+        InvSlot::Asset(t) => rules.slots.iter().any(|w| w.type_id == *t as i64 && w.max > 0),
+        _ => false,
+    };
+    Ok(data
+        .iter()
+        .map(|c| {
+            let slots = c.slots.iter().filter(|(_, s)| wearable(s)).cloned().collect();
+            InvCategory {
+                name: c.name.clone(),
+                slots,
+            }
+        })
+        .filter(|c| !c.slots.is_empty())
+        .collect())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn wardrobe(core: State<'_, Arc<Core>>) -> List<WardrobeSection> {
+    let a = viewer(&core);
+    match wearable_sections(&core, a) {
+        Err(state) => state,
+        Ok(sections) => List {
+            loading: false,
+            error: None,
+            more: false,
+            items: sections
+                .into_iter()
+                .map(|c| WardrobeSection {
+                    name: c.name,
+                    slots: c
+                        .slots
+                        .into_iter()
+                        .map(|(label, s)| Choice {
+                            value: s.key(),
+                            label,
+                        })
+                        .collect(),
+                })
+                .collect(),
+        },
+    }
+}
+
+/// Most results a wardrobe search returns.
+const SEARCH_MAX: usize = 300;
+
+/// An item found by a wardrobe search, with the slot it was found in.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct WardrobeHit {
+    pub item: ItemCard,
+    pub slot: String,
+}
+
+/// Wardrobe search results across every wearable type.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct WardrobeSearch {
+    pub loading: bool,
+    pub error: Option<String>,
+    pub items: Vec<WardrobeHit>,
+    /// Types whose first page has loaded (or failed), of `total`.
+    pub loaded: u32,
+    pub total: u32,
+    /// Types that failed to load.
+    pub failed: u32,
+    /// Some types have more pages than were searched.
+    pub partial: bool,
+    /// More matches than `items` holds.
+    pub truncated: bool,
+}
+
+/// Searches item names in every wearable inventory type. Types not loaded yet start loading in
+/// the background; their matches arrive with later `storeChanged` events.
+#[tauri::command]
+#[specta::specta]
+pub fn wardrobe_search(core: State<'_, Arc<Core>>, query: String) -> WardrobeSearch {
+    let a = viewer(&core);
+    let mut out = WardrobeSearch {
+        loading: false,
+        error: None,
+        items: Vec::new(),
+        loaded: 0,
+        total: 0,
+        failed: 0,
+        partial: false,
+        truncated: false,
+    };
+    let sections = match wearable_sections::<()>(&core, a) {
+        Ok(s) => s,
+        Err(state) => {
+            out.loading = state.loading;
+            out.error = state.error;
+            return out;
+        }
+    };
+    let query = NameQuery::new(&query);
+    if query.is_empty() {
+        return out;
+    }
+    let mut seen = HashSet::new();
+    for (label, slot) in sections.into_iter().flat_map(|c| c.slots) {
+        let InvSlot::Asset(t) = slot else { continue };
+        if !seen.insert(t) {
+            continue;
+        }
+        out.total += 1;
+        let r = core.inventory(a, a.0, slot, false, false);
+        out.loading |= r.loading;
+        let Some(page) = r.data else {
+            if r.error.is_some() {
+                out.loaded += 1;
+                out.failed += 1;
+            }
+            continue;
+        };
+        out.loaded += 1;
+        out.partial |= page.next.is_some();
+        let cards = market::inventory_cards(&core, &page.items, t, true, |i| query.matches(&i.name));
+        out.items.extend(cards.into_iter().map(|item| WardrobeHit {
+            item,
+            slot: label.clone(),
+        }));
+    }
+    if out.items.len() > SEARCH_MAX {
+        out.items.truncate(SEARCH_MAX);
+        out.truncated = true;
+    }
+    if out.failed > 0 && out.failed == out.total {
+        out.error = Some("Couldn't load your inventory.".to_owned());
+    }
+    out
 }
 
 pub(super) fn run(
