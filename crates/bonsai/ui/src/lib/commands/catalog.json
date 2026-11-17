@@ -2005,6 +2005,22 @@
       "title": "Ignore all friend requests"
     },
     {
+      "arg": "account",
+      "id": "friends.compare",
+      "keywords": [
+        "friends",
+        "mutual",
+        "mutuals",
+        "shared",
+        "overlap",
+        "compare",
+        "accounts",
+        "alt",
+        "common"
+      ],
+      "title": "Compare friends between two of your accounts"
+    },
+    {
       "arg": "text",
       "id": "friends.sort",
       "keywords": [

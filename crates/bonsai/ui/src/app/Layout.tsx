@@ -14,6 +14,7 @@ import {
 } from "solid-js"
 import { CopyLookDialog } from "~/features/avatar/CopyLookDialog"
 import { NewChat } from "~/features/chat/NewChat"
+import { CompareFriendsDialog } from "~/features/friends/CompareFriendsDialog"
 import { HubDialogs } from "~/features/hub/Dialogs"
 import { CommandPalette } from "~/features/palette/CommandPalette"
 import { ActionsDialog } from "~/features/plugins/ActionsDialog"
@@ -494,6 +495,14 @@ export function Layout(props: ParentProps) {
     handle("palette.open", () =>
       dialog.show(() => <CommandPalette />, { position: "top", label: "Command bar", size: "xl" }),
     ),
+    handle("friends.compare", (arg) => {
+      const other = arg?.trim() ? Number(arg) : null
+      const b = other !== null && Number.isFinite(other) ? other : null
+      dialog.show(() => <CompareFriendsDialog a={shell.active} b={b} onDone={() => dialog.close()} />, {
+        title: "Compare friends",
+        size: "md",
+      })
+    }),
     handle("help.shortcuts", () => dialog.show(() => <ShortcutsDialog />, { title: "Keyboard shortcuts", size: "lg" })),
     // Saved, so the window opens the same way next time.
     handle("view.sidebar", () => runBackend("settings.set", `sidebar_mode ${compact() ? "expanded" : "collapsed"}`)),

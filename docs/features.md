@@ -53,6 +53,7 @@ Features beyond the website, with the command that reaches each.
 | 3D viewer that plays animations and emotes, and tries on items and bundles | Avatar, item and bundle pages | Play an animation in the 3D view; Try on this item in 3D |
 | Account backup: friends, current avatar, outfits with their items, inventory, playlists, bookmarks, nicknames and notes as JSON, plus CSV files for friends, notes, inventory and outfits. No cookie or other credential | Account rail menu; Settings → Data | Back up this account to a folder |
 | Copy an outfit or the current look to another of your accounts, wearing only items it owns after you confirm | Avatar → outfit menu, preview menu | Copy a look to another account |
+| Social overlap: which of your accounts know someone, directly or through a friend, and friends two of your accounts share | Profile → About (Your accounts); account rail menu | Compare friends between two of your accounts |
 | Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
 | Bookmark folders and tags, filter by `#tag`, drag a bookmark onto a folder | Bookmarks drawer, bookmark and folder menus | Move bookmark to a folder; Rename bookmark folder; Remove bookmark folder; Tag bookmark |
 | Save bookmarks to a JSON file and load them back, on this or another account | Bookmarks drawer → ⋯ | Save bookmarks to a file; Load bookmarks from a file |
@@ -63,3 +64,4 @@ Folders hold any kind of bookmark and are listed above the kind groups. A folder
 
 A backup goes into a new `bonsai-backup-<name>-<date>` folder inside the folder you pick. It loads every page of outfits and of each avatar item and bundle inventory type, through the same cache the screens use. It stops at 10,000 items per list, and at 10 minutes in all. Items are saved for the first 500 outfits only. Anything it couldn't load is listed under `incomplete` in `backup.json` and in the notice when it finishes. Badges, game passes and places are not included.
 Copying a look checks which items the target account owns and lists the ones it lacks before anything changes. The target account is only changed after you click to wear it. Body type, colors and scales are copied too; emotes are not.
+Social overlap uses cached friend lists and shows them at once. On a profile it checks their friends as far as they have loaded; "Check more" loads the next page.

@@ -284,6 +284,12 @@ export const commands = {
 	 *  found `target` owns) and the look's body type, colors and scales on `target`.
 	 */
 	copyLook: (source: string, target: Id, wear: Id[]) => typedError<null, string>(__TAURI_INVOKE("copy_look", { source, target, wear })),
+	 *  Which of your accounts are friends with `user_id` or share friends with them, using their
+	 *  friends as the active account has loaded them.
+	 */
+	socialOverlap: (userId: Id) => __TAURI_INVOKE<OverlapView>("social_overlap", { userId }),
+	/**  Friends that two of your accounts share, from their cached friend lists. */
+	sharedFriends: (a: Id, b: Id) => __TAURI_INVOKE<SharedFriendsView>("shared_friends", { a, b }),
 	avatar3d: (source: AvatarSource) => __TAURI_INVOKE<Avatar3dView>("avatar_3d", { source }),
 	/**  Email, phone, birthday and Premium of the active account. */
 	accountInfo: () => __TAURI_INVOKE<AccountInfoView>("account_info"),
@@ -1724,6 +1730,33 @@ export type OutfitView = {
 	rev: number | null,
 };
 
+/**  One of your accounts and how it connects to the person on screen. */
+export type OverlapAccount = {
+	account: Id,
+	/**  The account's label, display name or username. */
+	label: string,
+	/**  The account is friends with them itself. */
+	friend: boolean,
+	mutuals: OverlapPerson[],
+};
+
+/**  A person in an overlap list. Names are empty until the user is known. */
+export type OverlapPerson = {
+	id: Id,
+	name: string,
+	displayName: string,
+};
+
+export type OverlapView = {
+	loading: boolean,
+	error: string | null,
+	/**  How many of their friends have loaded. */
+	checked: number,
+	/**  All of their friends have loaded. */
+	complete: boolean,
+	accounts: OverlapAccount[],
+};
+
 export type OwnerRow = {
 	/**  `None` when they hide their inventory. */
 	userId: Id | null,
@@ -2359,6 +2392,15 @@ export type SettingRow = {
 	key: string,
 	label: string,
 	on: boolean,
+};
+
+export type SharedFriendsView = {
+	loading: boolean,
+	aCount: number,
+	bCount: number,
+	/**  The two accounts are friends with each other. */
+	linked: boolean,
+	friends: OverlapPerson[],
 };
 
 /**  Shell state every screen needs: accounts, toasts, connectivity. */
