@@ -1,4 +1,4 @@
-import type { PlaytimeExperience, PlaytimeWeek } from "~/lib/ipc/bindings"
+import type { PlaytimeWeek } from "~/lib/ipc/bindings"
 
 /** Bar lengths in percent of the largest value. */
 export function barWidths(values: readonly number[]): number[] {
@@ -10,9 +10,4 @@ export function barWidths(values: readonly number[]): number[] {
 export function weeklyAverage(weeks: readonly PlaytimeWeek[]): number {
   if (weeks.length === 0) return 0
   return weeks.reduce((n, w) => n + w.secs, 0) / weeks.length
-}
-
-/** The experience's name, or a placeholder until it loads. */
-export function experienceName(e: Pick<PlaytimeExperience, "name" | "universeId">): string {
-  return e.name || `Experience ${e.universeId}`
 }

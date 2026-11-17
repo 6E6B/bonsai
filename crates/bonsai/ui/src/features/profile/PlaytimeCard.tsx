@@ -1,7 +1,7 @@
 import { For, Show } from "solid-js"
 import { run } from "~/lib/commands/registry"
 import { commands, type PlaytimeView } from "~/lib/ipc/bindings"
-import { duration, utcOffsetMinutes } from "~/lib/playtime"
+import { duration, experienceName, utcOffsetMinutes } from "~/lib/playtime"
 import { useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import { Button, Card, SectionHeader, Thumbnail } from "~/lib/ui"
@@ -39,7 +39,9 @@ export function PlaytimeCard(props: { account: number }) {
         when={view.secs > 0}
         fallback={
           <span class="text-sm text-fg-muted">
-            {view.enabled ? "Nothing recorded this week." : "The playtime log is off."}
+            <Show when={view.enabled} fallback="The playtime log is off.">
+              Nothing recorded this week.
+            </Show>
           </span>
         }
       >
@@ -58,7 +60,7 @@ export function PlaytimeCard(props: { account: number }) {
                 src={thumbUrl("game_icon", g.universeId)}
                 fallback="game"
               />
-              <span class="min-w-0 flex-1 truncate">{g.name || `Experience ${g.universeId}`}</span>
+              <span class="min-w-0 flex-1 truncate">{experienceName(g)}</span>
               <span class="shrink-0 text-fg-muted tabular-nums">{duration(g.secs)}</span>
             </button>
           )}

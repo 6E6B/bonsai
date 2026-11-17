@@ -1,4 +1,5 @@
 import { createStore } from "solid-js/store"
+import type { PlaytimeExperience } from "~/lib/ipc/bindings"
 
 /** A span of the playtime log, as `playtime.range` takes it. */
 export type PlaytimeRange = "week" | "month" | "quarter" | "year" | "all"
@@ -36,4 +37,9 @@ export function hours(secs: number): string {
   if (h <= 0) return "0h"
   if (h < 10) return `${Math.round(h * 10) / 10}h`
   return `${Math.round(h)}h`
+}
+
+/** The experience's name, or a placeholder until it loads. */
+export function experienceName(e: Pick<PlaytimeExperience, "name" | "universeId">): string {
+  return e.name || `Experience ${e.universeId}`
 }

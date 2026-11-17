@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { barWidths, experienceName, weeklyAverage } from "./shape"
+import { experienceName } from "~/lib/playtime"
+import { barWidths, weeklyAverage } from "./shape"
 
 describe("barWidths", () => {
   it("scales to the largest", () => {

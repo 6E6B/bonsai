@@ -3,7 +3,7 @@ import { run } from "~/lib/commands/registry"
 import { ago, date, full } from "~/lib/format"
 import { commands, type PlaytimeAccount, type PlaytimeExperience, type PlaytimeView } from "~/lib/ipc/bindings"
 import { gameMenu } from "~/lib/menus"
-import { duration, hours, playtimeRanges, playtimeView, utcOffsetMinutes } from "~/lib/playtime"
+import { duration, experienceName, hours, playtimeRanges, playtimeView, utcOffsetMinutes } from "~/lib/playtime"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
@@ -21,7 +21,7 @@ import {
   Stat,
   Thumbnail,
 } from "~/lib/ui"
-import { barWidths, experienceName, weeklyAverage } from "./shape"
+import { barWidths, weeklyAverage } from "./shape"
 
 const ALL = "all"
 

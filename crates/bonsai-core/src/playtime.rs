@@ -7,6 +7,8 @@ use std::collections::HashMap;
 use bonsai_api::AccountId;
 use serde::{Deserialize, Serialize};
 
+use parking_lot::Mutex;
+
 use crate::cache::{Kind, now};
 use crate::core::{Core, Inner};
 use crate::store::{Presence, PresenceKind};
@@ -22,6 +24,10 @@ pub const KEEP_SECS: i64 = 400 * DAY;
 
 /// At most this many sessions per account; the oldest go first.
 const MAX: usize = 5000;
+
+/// Held while a change to the log is made and saved, so the cache gets the same order of
+/// changes as the store.
+static SAVE: Mutex<()> = Mutex::new(());
 
 const DAY: i64 = 24 * 60 * 60;
 pub const WEEK: i64 = 7 * DAY;
@@ -47,6 +53,14 @@ pub fn prune(list: &mut Vec<Session>, at: i64) -> bool {
     list.len() != n
 }
 
+/// A session last seen at `end` was over by `at`: it ended somewhere in between, so credit half
+/// of that time, when it is short enough to be one missed or regular read.
+fn finish(last: &mut Session, at: i64) {
+    if at > last.end && at - last.end <= GAP_SECS {
+        last.end += (at - last.end) / 2;
+    }
+}
+
 /// Note the account's own presence `p` at `at`. In an experience, it extends the last session
 /// when that is the same experience and recent enough, or starts a new one. Out of one, it
 /// closes the last session. True when the list changed.
@@ -58,6 +72,7 @@ pub fn note(list: &mut Vec<Session>, p: &Presence, at: i64) -> bool {
         (PresenceKind::InGame, _) => return changed,
         _ => {
             if let Some(last) = list.last_mut().filter(|l| !l.closed) {
+                finish(last, at);
                 last.closed = true;
                 changed = true;
             }
@@ -75,6 +90,14 @@ pub fn note(list: &mut Vec<Session>, p: &Presence, at: i64) -> bool {
         }
         last.end = at;
         return true;
+    }
+    // Moved straight to another experience: the last one ended on the way.
+    if let Some(last) = list
+        .last_mut()
+        .filter(|l| !l.closed && l.universe_id != universe_id)
+    {
+        finish(last, at);
+        last.closed = true;
     }
     list.push(Session {
         universe_id,
@@ -254,6 +277,7 @@ impl Inner {
         if account.is_anonymous() || !self.settings.read().playtime_log {
             return;
         }
+        let _save = SAVE.lock();
         let snapshot = {
             let mut s = self.store.write();
             let d = s.data.entry(account).or_default();
@@ -305,6 +329,7 @@ impl Core {
 
     /// Deletes the playtime log of every account.
     pub fn clear_playtime(&self) {
+        let _save = SAVE.lock();
         let ids: Vec<AccountId> = {
             let mut s = self.inner.store.write();
             s.data
@@ -321,6 +346,7 @@ impl Core {
                 .cache
                 .put(Kind::Local, id, PLAYTIME, &Vec::<Session>::new());
         }
+        drop(_save);
         self.inner.repaint();
         self.inner.toast(None, "Playtime log cleared.", false);
     }
@@ -389,8 +415,23 @@ mod tests {
         note(&mut l, &in_game(1), 1320);
         assert_eq!(l.len(), 2);
         assert!(l[0].closed);
-        assert_eq!((l[0].start, l[0].end), (1000, 1100));
+        // Last seen at 1100, gone at 1200: half the gap counts.
+        assert_eq!((l[0].start, l[0].end), (1000, 1150));
         assert_eq!((l[1].start, l[1].end), (1320, 1320));
+    }
+
+    #[test]
+    fn one_sighting_counts_until_halfway_to_the_next_read() {
+        let mut l = Vec::new();
+        note(&mut l, &in_game(1), 1000);
+        note(&mut l, &in_game(2), 1120);
+        note(&mut l, &online(), 1240);
+        assert_eq!((l[0].start, l[0].end, l[0].closed), (1000, 1060, true));
+        assert_eq!((l[1].start, l[1].end, l[1].closed), (1120, 1180, true));
+        // A gap longer than one missed read says nothing about when it ended.
+        note(&mut l, &in_game(3), 2000);
+        note(&mut l, &online(), 2000 + GAP_SECS + 1);
+        assert_eq!(l[2].end, 2000);
     }
 
     #[test]
