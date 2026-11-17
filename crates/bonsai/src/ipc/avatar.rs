@@ -5,7 +5,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use bonsai_core::avatar::{Look, Part, Rig, Scale};
+use bonsai_core::avatar::{Look, LookSource, Owned, Part, Rig, Scale};
 use bonsai_core::commands::CommandId;
 use bonsai_core::inventory::{InvCategory, InvSlot, NameQuery};
 use bonsai_core::market::ItemRef;
@@ -552,6 +552,84 @@ pub fn wardrobe_search(core: State<'_, Arc<Core>>, query: String) -> WardrobeSea
         out.error = Some("Couldn't load your inventory.".to_owned());
     }
     out
+}
+
+/// One item of a look being copied, and whether the target account owns it.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CopyItemView {
+    pub id: Id,
+    pub name: String,
+    pub type_name: String,
+    /// "yes", "no", "checking" or "unknown".
+    pub owned: &'static str,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CopyPlanView {
+    pub loading: bool,
+    pub error: Option<String>,
+    /// "R6" or "R15"; empty until loaded.
+    pub rig: String,
+    pub items: Vec<CopyItemView>,
+    /// Every item has been checked; the copy can go ahead.
+    pub ready: bool,
+    /// What the copy wears: the items the target owns.
+    pub wear: Vec<Id>,
+}
+
+/// What copying a look (`outfit:<id>`, `avatar:<user id>`, or empty for the active account's
+/// avatar) to `target` would wear and what it lacks. Reads only.
+#[tauri::command]
+#[specta::specta]
+pub fn copy_look_plan(core: State<'_, Arc<Core>>, source: String, target: Id) -> CopyPlanView {
+    let from = match LookSource::parse(&source, core.acting(None)) {
+        Ok(f) => f,
+        Err(e) => {
+            return CopyPlanView {
+                error: Some(e),
+                ..Default::default()
+            };
+        }
+    };
+    let plan = core.copy_plan(from, AccountId(target.0));
+    CopyPlanView {
+        loading: plan.loading,
+        error: plan.error.clone(),
+        rig: plan.rig.clone(),
+        ready: plan.checked(),
+        wear: plan.wearable().into_iter().map(Id).collect(),
+        items: plan
+            .items
+            .into_iter()
+            .map(|(w, o)| CopyItemView {
+                id: Id(w.id),
+                name: w.name,
+                type_name: w.type_name,
+                owned: match o {
+                    Owned::Yes => "yes",
+                    Owned::No => "no",
+                    Owned::Checking => "checking",
+                    Owned::Unknown => "unknown",
+                },
+            })
+            .collect(),
+    }
+}
+
+/// The confirm step of the dialog `avatar.copy_to` opens: wears `wear` (the items the plan
+/// found `target` owns) and the look's body type, colors and scales on `target`.
+#[tauri::command]
+#[specta::specta]
+pub fn copy_look(
+    core: State<'_, Arc<Core>>,
+    source: String,
+    target: Id,
+    wear: Vec<Id>,
+) -> Result<(), String> {
+    let from = LookSource::parse(&source, core.acting(None))?;
+    core.copy_look(from, AccountId(target.0), wear.into_iter().map(|i| i.0).collect())
 }
 
 pub(super) fn run(
