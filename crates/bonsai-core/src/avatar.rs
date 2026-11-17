@@ -1192,6 +1192,271 @@ impl Core {
     }
 }
 
+// ---------------------------------------------------------------- Copy a look to another account
+
+/// Where a look to copy comes from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LookSource {
+    /// Any outfit, by id.
+    Outfit(u64),
+    /// What one of your accounts wears now.
+    Avatar(AccountId),
+}
+
+impl LookSource {
+    /// `outfit:<id>`, `avatar:<user id>`, a bare outfit id, or empty for `active`'s avatar.
+    pub fn parse(text: &str, active: Option<AccountId>) -> Result<LookSource, String> {
+        let text = text.trim();
+        let id = |s: &str| s.trim().parse::<u64>().ok().filter(|n| *n > 0);
+        if text.is_empty() {
+            return active
+                .filter(|a| !a.is_anonymous())
+                .map(LookSource::Avatar)
+                .ok_or_else(|| "Add an account first.".to_owned());
+        }
+        if let Some(rest) = text.strip_prefix("avatar:") {
+            return id(rest)
+                .map(|n| LookSource::Avatar(AccountId(n)))
+                .ok_or_else(|| "Not an account id.".to_owned());
+        }
+        id(text.strip_prefix("outfit:").unwrap_or(text))
+            .map(LookSource::Outfit)
+            .ok_or_else(|| "Not an outfit id.".to_owned())
+    }
+}
+
+/// Whether the target account owns one item of the look.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Owned {
+    Checking,
+    Yes,
+    No,
+    /// Roblox didn't say.
+    Unknown,
+}
+
+/// What copying a look to an account would do, before anything changes.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct CopyPlan {
+    pub loading: bool,
+    pub error: Option<String>,
+    pub rig: String,
+    pub items: Vec<(Worn, Owned)>,
+}
+
+impl CopyPlan {
+    /// Every item's ownership is known (or unknowable).
+    pub fn checked(&self) -> bool {
+        !self.loading && self.error.is_none() && self.items.iter().all(|(_, o)| *o != Owned::Checking)
+    }
+
+    /// The ids to wear: only what the account is known to own.
+    pub fn wearable(&self) -> Vec<u64> {
+        self.items
+            .iter()
+            .filter(|(_, o)| *o == Owned::Yes)
+            .map(|(w, _)| w.id)
+            .collect()
+    }
+}
+
+/// The parts of a look a copy carries over, in the shape the write endpoints take.
+struct Carried {
+    assets: Vec<avatar::v2::AssetWearModel>,
+    rig: Option<Rig>,
+    colors: Option<avatar::v2::BodyColorsModelV2>,
+    scales: Option<avatar::v1::ScaleModel>,
+}
+
+/// Keeps the assets in `ids`, so only what the user confirmed is worn.
+fn keep_assets(assets: Vec<avatar::v2::AssetWearModel>, ids: &[u64]) -> Vec<avatar::v2::AssetWearModel> {
+    assets
+        .into_iter()
+        .filter(|a| a.id.is_some_and(|id| ids.contains(&(id as u64))))
+        .collect()
+}
+
+#[allow(deprecated)]
+async fn carried(client: &Client, from: LookSource) -> Result<Carried, Error> {
+    Ok(match from {
+        LookSource::Outfit(id) => {
+            let o = rgb_outfit(client, id).await?;
+            Carried {
+                assets: o
+                    .assets
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|a| avatar::v2::AssetWearModel {
+                        id: a.id,
+                        meta: convert(a.meta),
+                    })
+                    .collect(),
+                rig: o.player_avatar_type.as_deref().and_then(Rig::parse),
+                colors: convert(o.body_color3s),
+                scales: convert(o.scale),
+            }
+        }
+        LookSource::Avatar(user) => {
+            let a = avatar::v2::get_avatar_users_by_user_id_avatar(client, user.0 as i64).await?;
+            Carried {
+                assets: a
+                    .assets
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|x| avatar::v2::AssetWearModel {
+                        id: x.id,
+                        meta: x.meta,
+                    })
+                    .collect(),
+                rig: match a.player_avatar_type {
+                    Some(avatar::v2::AvatarModelV3PlayerAvatarType::R6) => Some(Rig::R6),
+                    Some(avatar::v2::AvatarModelV3PlayerAvatarType::R15) => Some(Rig::R15),
+                    _ => None,
+                },
+                colors: convert(a.body_color3s),
+                scales: convert(a.scales),
+            }
+        }
+    })
+}
+
+impl Core {
+    /// What copying `from` to `target` would wear and what it lacks. Reads only; asks Roblox
+    /// whether `target` owns each item, once per item.
+    pub fn copy_plan(&self, from: LookSource, target: AccountId) -> CopyPlan {
+        let look = match from {
+            LookSource::Outfit(id) => self.outfit(id),
+            LookSource::Avatar(a) => self.avatar(a),
+        };
+        let Some(l) = look.data.as_deref() else {
+            return CopyPlan {
+                loading: look.error.is_none(),
+                error: look.error,
+                ..Default::default()
+            };
+        };
+        let items = l
+            .assets
+            .iter()
+            .map(|w| {
+                let r = self.owns(target, ItemRef::asset(w.id));
+                let owned = match (r.data.as_deref(), r.error) {
+                    (Some(true), _) => Owned::Yes,
+                    (Some(false), _) => Owned::No,
+                    (None, Some(_)) => Owned::Unknown,
+                    (None, None) => Owned::Checking,
+                };
+                (w.clone(), owned)
+            })
+            .collect();
+        CopyPlan {
+            loading: false,
+            error: None,
+            rig: l.rig.clone(),
+            items,
+        }
+    }
+
+    /// Puts `from` on `target`: the items in `assets` (the ones the user confirmed), then the
+    /// body type, colors and scales. Everything else `target` wore comes off, as when wearing an
+    /// outfit.
+    pub fn copy_look(&self, from: LookSource, target: AccountId, assets: Vec<u64>) -> Result<(), String> {
+        if self.accounts_locked() {
+            return Err("Unlock Bonsai first.".into());
+        }
+        if target.is_anonymous() {
+            return Err("Pick an account to copy to.".into());
+        }
+        if from == LookSource::Avatar(target) {
+            return Err("That account already wears this.".into());
+        }
+        let name = self
+            .store()
+            .accounts
+            .get(target)
+            .map(|a| a.name.clone())
+            .unwrap_or_default();
+        self.inner.mutate(
+            target,
+            "copy the look",
+            &format!("Copied the look to {name}."),
+            &[Effect::Avatar],
+            move |f| async move {
+                let c = carried(&f.client, from).await?;
+                set_wearing(&f.client, keep_assets(c.assets, &assets)).await?;
+                if let Some(rig) = c.rig {
+                    set_rig(&f.client, rig).await?;
+                }
+                if let Some(colors) = c.colors {
+                    avatar::v2::post_avatar_set_body_colors(&f.client, &colors).await?;
+                }
+                if let Some(s) = c.scales {
+                    avatar::v1::post_avatar_set_scales(&f.client, &s).await?;
+                }
+                forget_images(&f.inner, target.0);
+                Ok(())
+            },
+        );
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod copy_tests {
+    use super::*;
+
+    #[test]
+    fn look_sources_parse() {
+        let me = Some(AccountId(5));
+        assert_eq!(LookSource::parse("", me), Ok(LookSource::Avatar(AccountId(5))));
+        assert!(LookSource::parse("", None).is_err());
+        assert_eq!(LookSource::parse("outfit:12", me), Ok(LookSource::Outfit(12)));
+        assert_eq!(LookSource::parse(" 12 ", me), Ok(LookSource::Outfit(12)));
+        assert_eq!(
+            LookSource::parse("avatar:7", me),
+            Ok(LookSource::Avatar(AccountId(7)))
+        );
+        assert!(LookSource::parse("outfit:x", me).is_err());
+        assert!(LookSource::parse("avatar:0", me).is_err());
+    }
+
+    #[test]
+    fn only_confirmed_owned_items_are_worn() {
+        let worn = |id| Worn {
+            id,
+            ..Default::default()
+        };
+        let plan = CopyPlan {
+            items: vec![
+                (worn(1), Owned::Yes),
+                (worn(2), Owned::No),
+                (worn(3), Owned::Unknown),
+                (worn(4), Owned::Yes),
+            ],
+            ..Default::default()
+        };
+        assert!(plan.checked());
+        assert_eq!(plan.wearable(), [1, 4]);
+        let assets = (1..=4)
+            .map(|id| avatar::v2::AssetWearModel {
+                id: Some(id),
+                meta: None,
+            })
+            .collect();
+        let kept: Vec<_> = keep_assets(assets, &plan.wearable())
+            .into_iter()
+            .filter_map(|a| a.id)
+            .collect();
+        assert_eq!(kept, [1, 4]);
+
+        let checking = CopyPlan {
+            items: vec![(worn(1), Owned::Checking)],
+            ..Default::default()
+        };
+        assert!(!checking.checked());
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

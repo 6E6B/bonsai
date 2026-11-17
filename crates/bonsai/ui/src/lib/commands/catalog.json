@@ -2444,6 +2444,21 @@
       "title": "Wear or take off an item"
     },
     {
+      "arg": "text",
+      "id": "avatar.copy_to",
+      "keywords": [
+        "copy",
+        "outfit",
+        "look",
+        "avatar",
+        "account",
+        "transfer",
+        "clone",
+        "alt"
+      ],
+      "title": "Copy a look to another account (outfit id, or empty for what you wear)"
+    },
+    {
       "arg": "outfit",
       "id": "avatar.outfit",
       "keywords": [

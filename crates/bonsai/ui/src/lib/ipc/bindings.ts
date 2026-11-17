@@ -269,6 +269,16 @@ export const commands = {
 	profileOutfits: (userId: Id) => __TAURI_INVOKE<List<OutfitView>>("profile_outfits", { userId }),
 	/**  What an outfit puts on. Public. */
 	outfitLook: (outfitId: string) => __TAURI_INVOKE<LookView>("outfit_look", { outfitId }),
+	/**
+	 *  What copying a look (`outfit:<id>`, `avatar:<user id>`, or empty for the active account's
+	 *  avatar) to `target` would wear and what it lacks. Reads only.
+	 */
+	copyLookPlan: (source: string, target: Id) => __TAURI_INVOKE<CopyPlanView>("copy_look_plan", { source, target }),
+	/**
+	 *  The confirm step of the dialog `avatar.copy_to` opens: wears `wear` (the items the plan
+	 *  found `target` owns) and the look's body type, colors and scales on `target`.
+	 */
+	copyLook: (source: string, target: Id, wear: Id[]) => typedError<null, string>(__TAURI_INVOKE("copy_look", { source, target, wear })),
 	avatar3d: (source: AvatarSource) => __TAURI_INVOKE<Avatar3dView>("avatar_3d", { source }),
 	/**  Email, phone, birthday and Premium of the active account. */
 	accountInfo: () => __TAURI_INVOKE<AccountInfoView>("account_info"),
@@ -959,6 +969,27 @@ export type ConversationRow = {
 	/**  The last line, as the list shows it. */
 	last: string,
 	pinned: boolean,
+};
+
+/**  One item of a look being copied, and whether the target account owns it. */
+export type CopyItemView = {
+	id: Id,
+	name: string,
+	typeName: string,
+	/**  "yes", "no", "checking" or "unknown". */
+	owned: string,
+};
+
+export type CopyPlanView = {
+	loading: boolean,
+	error: string | null,
+	/**  "R6" or "R15"; empty until loaded. */
+	rig: string,
+	items: CopyItemView[],
+	/**  Every item has been checked; the copy can go ahead. */
+	ready: boolean,
+	/**  What the copy wears: the items the target owns. */
+	wear: Id[],
 };
 
 export type DependenciesView = {

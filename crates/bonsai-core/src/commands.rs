@@ -529,6 +529,7 @@ commands! {
     RefreshServers => "game.refresh_servers", "Refresh server list", ["reload", "servers"], None, Read, [Shortcut::key("R")];
 
     WearItem => "avatar.wear", "Wear or take off an item", ["wear", "equip", "remove", "take off", "avatar"], Text, Write(Harmless), [];
+    CopyLookTo => "avatar.copy_to", "Copy a look to another account (outfit id, or empty for what you wear)", ["copy", "outfit", "look", "avatar", "account", "transfer", "clone", "alt"], Text, Read, [];
     WearOutfit => "avatar.outfit", "Wear an outfit", ["outfit", "wear", "costume", "avatar"], Outfit, Write(Harmless), [];
     SaveOutfit => "avatar.save_outfit", "Save current look as an outfit", ["outfit", "save", "create", "avatar"], Text, Write(Harmless), [];
     SetRig => "avatar.rig", "Switch body type (R6 or R15)", ["r6", "r15", "rig", "body", "avatar"], Text, Write(Harmless), [];

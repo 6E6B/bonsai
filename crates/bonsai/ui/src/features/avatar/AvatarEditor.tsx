@@ -122,6 +122,7 @@ export default function AvatarEditor() {
       disabled: !o.editable,
     }),
     { label: "Rename…", icon: "edit", disabled: !o.editable, onSelect: () => void renameOutfit(o) },
+    menuItem("avatar.copy_to", { arg: `outfit:${o.id}`, label: "Copy to another account…", icon: "copy" }),
     sep,
     menuItem("avatar.delete_outfit", {
       arg: o.id,
@@ -145,6 +146,7 @@ export default function AvatarEditor() {
     { label: "Save as outfit…", icon: "plus", onSelect: () => void saveOutfit() },
     menuItem("avatar.rig", { label: view.rig === "R6" ? "Switch to R15" : "Switch to R6", icon: "avatar" }),
     menuItem("avatar.redraw", { icon: "refresh" }),
+    menuItem("avatar.copy_to", { label: "Copy look to another account…", icon: "copy" }),
   ]
   const layered = () => view.wearing.filter((w) => w.layer !== null).length
   // Layered clothing outermost first, as it stacks; everything else after.

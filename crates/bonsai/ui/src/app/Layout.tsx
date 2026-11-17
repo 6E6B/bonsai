@@ -12,6 +12,7 @@ import {
   Show,
   untrack,
 } from "solid-js"
+import { CopyLookDialog } from "~/features/avatar/CopyLookDialog"
 import { NewChat } from "~/features/chat/NewChat"
 import { HubDialogs } from "~/features/hub/Dialogs"
 import { CommandPalette } from "~/features/palette/CommandPalette"
@@ -434,6 +435,18 @@ export function Layout(props: ParentProps) {
     handle("group.search", (q) =>
       navigate(q?.trim() ? `/communities?q=${encodeURIComponent(q.trim())}` : "/communities"),
     ),
+    handle("avatar.copy_to", (arg, asAccount) => {
+      const text = arg?.trim() ?? ""
+      const own = asAccount ?? shell.active
+      const avatar = /^avatar:(\d+)$/.exec(text)
+      // Pin "what you wear now" to the account it means, in case the active one changes.
+      const source = text || (own === null ? "" : `avatar:${own}`)
+      const from = avatar ? Number(avatar[1]) : own
+      dialog.show(() => <CopyLookDialog source={source} from={from} onDone={() => dialog.close()} />, {
+        title: avatar || !text ? "Copy look to another account" : "Copy outfit to another account",
+        size: "sm",
+      })
+    }),
     handle("palette.open", () =>
       dialog.show(() => <CommandPalette />, { position: "top", label: "Command bar", size: "xl" }),
     ),

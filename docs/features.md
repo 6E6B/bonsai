@@ -50,6 +50,9 @@ Features beyond the website, with the command that reaches each.
 | Item dependency browser | Item page → Dependencies | View this item's dependencies; Search this item's dependencies |
 | Clothing template download, plain or masked | Item page | Download clothing template; Download clothing template, masked |
 | 3D viewer that plays animations and emotes, and tries on items and bundles | Avatar, item and bundle pages | Play an animation in the 3D view; Try on this item in 3D |
+| Copy an outfit or the current look to another of your accounts, wearing only items it owns after you confirm | Avatar → outfit menu, preview menu | Copy a look to another account |
 | Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
 
 Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.
+
+Copying a look checks which items the target account owns and lists the ones it lacks before anything changes. The target account is only changed after you click to wear it. Body type, colors and scales are copied too; emotes are not.
