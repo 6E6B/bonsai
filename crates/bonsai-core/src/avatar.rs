@@ -21,6 +21,9 @@ pub use placement::{Adjust, Group, Placement, PlacementRule};
 
 const AGE: i64 = 120;
 const RULES_AGE: i64 = 6 * 3_600;
+/// Cache key of the avatar rules. Bump the suffix when [`Rules`] gains a field, so a row
+/// cached by an older build (which would load with the field empty) is not used.
+const RULES_KEY: &str = "avatar_rules_v2";
 
 /// An asset type an avatar can wear, and how many at once.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -1500,7 +1503,7 @@ mod rgb_tests {
 
 impl Inner {
     pub(crate) fn avatar_rules(self: &std::sync::Arc<Self>) -> Res<Rules> {
-        self.res(Key::shared("avatar_rules", ""), RULES_AGE, |f| async move {
+        self.res(Key::shared(RULES_KEY, ""), RULES_AGE, |f| async move {
             Ok(rules(avatar::v1::get_avatar_rules(&f.client).await?))
         })
     }
