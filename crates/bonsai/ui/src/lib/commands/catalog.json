@@ -2709,6 +2709,20 @@
     },
     {
       "arg": "text",
+      "id": "avatar.search",
+      "keywords": [
+        "wardrobe",
+        "find",
+        "inventory",
+        "items",
+        "clothes",
+        "accessories",
+        "avatar"
+      ],
+      "title": "Search everything you can wear"
+    },
+    {
+      "arg": "text",
       "id": "market.search",
       "keywords": [
         "catalog",

@@ -552,6 +552,7 @@ commands! {
     SetAvatarView => "avatar.default_view", "Open avatars in 3D or as an image (3d or 2d)", ["3d", "2d", "default", "model", "image", "setting", "avatar"], Text, Local, [];
     PlayAnimation => "avatar.play", "Play an animation in the 3D view (idle, walk, run, jump, fall, climb, swim, or an emote id)", ["animation", "emote", "dance", "play", "pose", "3d", "avatar"], Text, Read, [];
     Orbit3d => "avatar.orbit", "Move the 3D camera (left, right, up, down, in, out or reset)", ["camera", "rotate", "orbit", "zoom", "turn", "reset", "3d", "avatar"], Text, Read, [];
+    SearchWardrobe => "avatar.search", "Search everything you can wear", ["wardrobe", "find", "inventory", "items", "clothes", "accessories", "avatar"], Text, Read, [];
 
     SearchMarketplace => "market.search", "Search the Marketplace", ["catalog", "shop", "items", "find item"], Text, Read, [];
     MarketCategory => "market.category", "Open a Marketplace category or the wishlist", ["catalog", "category", "browse", "shop", "wishlist"], Text, Local, [];

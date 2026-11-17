@@ -1065,7 +1065,6 @@ pub fn inventory_items(
             more_key,
         };
     };
-    let v = values(&core);
     let asset_type = match slot {
         InvSlot::Asset(t) => t,
         _ => 0,
@@ -1074,17 +1073,44 @@ pub fn inventory_items(
     let page = r.data.clone();
     let mut list = List::paged(r, |_: &InvItem| ());
     let items = page.as_deref().map(|p| p.items.as_slice()).unwrap_or_default();
-    // Creator and price come from the catalog, a page (100 items) per request so the cache
-    // keys stay put as pages load.
+    let cards = inventory_cards(&core, items, asset_type, false, |_| true);
+    Paged {
+        list: List {
+            loading: list.loading,
+            error: list.error.take(),
+            items: cards,
+            more: list.more,
+        },
+        more_key,
+    }
+}
+
+/// Cards for a loaded inventory page, keeping the rows `keep` accepts. Creator and price come
+/// from the catalog, a chunk of 100 items per request so cache keys stay put as pages load.
+/// With `cached_only`, catalog details come from the cache and nothing is fetched.
+pub(super) fn inventory_cards(
+    core: &Core,
+    items: &[InvItem],
+    asset_type: i32,
+    cached_only: bool,
+    keep: impl Fn(&InvItem) -> bool,
+) -> Vec<ItemCard> {
+    let v = values(core);
     let mut known: HashMap<ItemRef, CatalogItem> = HashMap::new();
     for chunk in items.chunks(100) {
         let refs: Vec<ItemRef> = chunk.iter().map(|i| i.item).collect();
-        if let Some(d) = core.items(&refs).data {
+        let found = if cached_only {
+            core.cached_items(&refs)
+        } else {
+            core.items(&refs).data
+        };
+        if let Some(d) = found {
             known.extend(d.iter().map(|c| (c.item, c.clone())));
         }
     }
-    let cards = stack(items)
+    stack(items)
         .into_iter()
+        .filter(|(i, _)| keep(i))
         .map(|(i, n)| {
             let mut c = inv_card(i, asset_type, v.as_deref());
             c.copies = n;
@@ -1098,16 +1124,7 @@ pub fn inventory_items(
             }
             c
         })
-        .collect();
-    Paged {
-        list: List {
-            loading: list.loading,
-            error: list.error.take(),
-            items: cards,
-            more: list.more,
-        },
-        more_key,
-    }
+        .collect()
 }
 
 /// A game pass in someone's inventory.

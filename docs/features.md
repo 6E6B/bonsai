@@ -49,6 +49,7 @@ Features beyond the website, with the command that reaches each.
 | Fandom wiki articles for experiences and items | Wiki; experience and item pages | Search the wiki; Read the wiki article about this; Turn wiki articles from Fandom on or off |
 | Item dependency browser | Item page → Dependencies | View this item's dependencies; Search this item's dependencies |
 | Clothing template download, plain or masked | Item page | Download clothing template; Download clothing template, masked |
+| Search everything you can wear at once, loading types in the background | Avatar → Wardrobe | Search everything you can wear |
 | 3D viewer that plays animations and emotes, and tries on items and bundles | Avatar, item and bundle pages | Play an animation in the 3D view; Try on this item in 3D |
 | Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
 | Bookmark folders and tags, filter by `#tag`, drag a bookmark onto a folder | Bookmarks drawer, bookmark and folder menus | Move bookmark to a folder; Rename bookmark folder; Remove bookmark folder; Tag bookmark |

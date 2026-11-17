@@ -1,10 +1,16 @@
 import { cleanup, fireEvent, render, waitFor } from "@solidjs/testing-library"
-import { For } from "solid-js"
+import { createSignal, For } from "solid-js"
 import { afterEach, expect, test, vi } from "vitest"
 import AvatarEditor from "./AvatarEditor"
 
 const mocks = vi.hoisted(() => ({ run: vi.fn() }))
 vi.mock("~/lib/avatar3d/viewer", () => ({ AvatarViewer: () => <div>Avatar preview</div> }))
+vi.mock("~/lib/url-params", () => ({
+  useParamDraft: () => {
+    const [value, set] = createSignal("")
+    return { value, set, reset: () => set("") }
+  },
+}))
 vi.mock("~/lib/commands/hooks", () => ({ useSubTabs: vi.fn() }))
 vi.mock("~/lib/commands/registry", async (original) => ({ ...(await original<object>()), run: mocks.run }))
 vi.mock("~/lib/ui", async (original) => ({
@@ -25,7 +31,37 @@ vi.mock("~/lib/store", async () => {
   const list = (items: unknown[]) => ({ loading: false, error: null, items, more: false })
   return {
     shell: { active: 1, running: [] },
-    useLive: (_source: unknown, fetch: unknown) => {
+    useLive: (source: () => unknown, fetch: unknown) => {
+      const key = source()
+      if (Array.isArray(key) && key[1] === "red")
+        return {
+          loading: true,
+          error: null,
+          items: [
+            {
+              slot: "Hats",
+              item: {
+                id: 7,
+                bundle: false,
+                name: "Red Hat",
+                creator: "",
+                creatorVerified: false,
+                copies: 1,
+                assetType: 8,
+                price: null,
+                limited: false,
+                serial: null,
+                rap: null,
+                values: null,
+              },
+            },
+          ],
+          loaded: 1,
+          total: 2,
+          failed: 0,
+          partial: false,
+          truncated: false,
+        }
       if (fetch === commands.avatar)
         return {
           loading: false,
@@ -102,4 +138,13 @@ test("custom colors are applied explicitly to the selected body part", async () 
   expect(mocks.run).not.toHaveBeenCalled()
   fireEvent.click(r.getByRole("button", { name: "Apply to 1 selected part" }))
   expect(mocks.run).toHaveBeenCalledWith("avatar.color", "head:#AABBCC")
+})
+
+test("searches every wearable type from one field", async () => {
+  const r = render(() => <AvatarEditor />)
+  fireEvent.input(r.getByRole("textbox", { name: "Search all items" }), { target: { value: "red" } })
+  expect(r.getByText("1 match · loading 1 of 2 types")).toBeTruthy()
+  expect(r.queryByRole("tab", { name: "Accessories" })).toBeNull()
+  fireEvent.click(r.getByText("Red Hat"))
+  expect(mocks.run).toHaveBeenCalledWith("avatar.wear", "7:8")
 })

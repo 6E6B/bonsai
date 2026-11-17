@@ -13,7 +13,7 @@ Remove a line when it ships.
 
 - A moderated account's human check (Roblox's "locked" state) and moderation appeals happen on the website. "Open on website" opens the system browser, which may be signed in as a different account.
 
-- Avatar category tabs search only their loaded inventory type. There is no cross-type wardrobe search.
+- Wardrobe search covers the first page of each wearable type, plus pages already loaded in its tab. It does not load further pages.
 - Avatar **Recent** lists only what was put on through Bonsai on this computer. Roblox has no recent-items endpoint.
 
 - The Model tab shows one model at a time and is read only: no 3D preview of the selected instance, no export, and script sources are cut at 4 KiB.
