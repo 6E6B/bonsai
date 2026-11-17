@@ -3,6 +3,7 @@ import { commandList, menuItem } from "~/lib/commands/registry"
 import type { TrustedStatus } from "~/lib/ipc/bindings"
 import { type PluginContext, pluginCommandsFor } from "~/lib/plugins"
 import { playlists, shell, visibleBookmarks } from "~/lib/store"
+import { accountName } from "~/lib/streamer"
 import { trustedActions } from "~/lib/trusted-friends"
 import type { MenuEntry } from "~/lib/ui"
 
@@ -20,14 +21,14 @@ export const joinUser = (userId: number) => `user:${userId}`
 export function joinAsItems(id: string, target: string): MenuEntry[] {
   return shell.accounts
     .filter((a) => a.id !== shell.active)
-    .map((a) => menuItem(id, { arg: target, asAccount: a.id, label: a.label ?? a.displayName }))
+    .map((a) => menuItem(id, { arg: target, asAccount: a.id, label: accountName(a) }))
 }
 
 /** "Buy as" rows: one per account other than the active one, with the account as the argument. */
 export function accountItems(id: string): MenuEntry[] {
   return shell.accounts
     .filter((a) => a.id !== shell.active)
-    .map((a) => menuItem(id, { arg: String(a.id), label: a.label ?? a.displayName }))
+    .map((a) => menuItem(id, { arg: String(a.id), label: accountName(a) }))
 }
 
 /** "Join as" submenu, or nothing when there is no other account. */

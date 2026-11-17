@@ -344,7 +344,9 @@ impl Inner {
         };
         match decided {
             Some(Step::TurnOn(app)) => {
+                // Same as `update_settings`, from inside the loop that handles `SetSettings`.
                 self.settings.write().streamer.on = true;
+                self.store.write().streamer.prompt = None;
                 self.toast(None, format!("{app} is running. Streamer mode is on."), false);
                 self.clone().handle(Cmd::SetSettings).await;
             }

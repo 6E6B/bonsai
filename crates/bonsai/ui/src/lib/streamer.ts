@@ -54,16 +54,21 @@ export const friendsHidden = () => streamerHidden() && !ui.friendsShown
 /** The name an account shows while streamer mode hides it: by position, not name. */
 export const maskedAccountLabel = (index: number) => `Account ${index + 1}`
 
-/** An account's name as the shell shows it: its label or display name, or "Account N" while
- * streamer mode hides private content. */
-export function accountName(a: { id: number; label: string | null; displayName: string }) {
-  if (!streamerHidden()) return a.label ?? a.displayName
+/** `name` for account `id`, or "Account N" while streamer mode hides private content. */
+export function shownAccountLabel(id: number, name: string) {
+  if (!streamerHidden()) return name
   return maskedAccountLabel(
     Math.max(
       0,
-      shell.accounts.findIndex((b) => b.id === a.id),
+      shell.accounts.findIndex((b) => b.id === id),
     ),
   )
+}
+
+/** An account's name as the shell shows it: its label or display name, or "Account N" while
+ * streamer mode hides private content. */
+export function accountName(a: { id: number; label: string | null; displayName: string }) {
+  return shownAccountLabel(a.id, a.label ?? a.displayName)
 }
 
 export interface PromptButton {

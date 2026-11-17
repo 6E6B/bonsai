@@ -427,7 +427,8 @@ export function Layout(props: ParentProps) {
       showFriends()
     }),
     handle("streamer.show_messages", () => {
-      showMessages()
+      // Only a hidden screen is unhidden, so turning streamer mode on later still hides it.
+      if (shell.streamer.on) showMessages()
       visitPath("/messages")
     }),
     handle("user.nickname", editAbout("nickname")),
