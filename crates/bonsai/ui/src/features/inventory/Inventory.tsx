@@ -146,7 +146,15 @@ const noAvatar = (loading: boolean): AvatarView => ({
   emotes: [],
   colors: [],
   scales: [],
+  adjustRules: [],
+  adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
   rev: null,
+  edited: false,
+  outfit: null,
+  outfitEdited: false,
+  loadingOutfit: false,
+  canUndo: false,
+  canRedo: false,
 })
 
 /** The active account's avatar and wardrobe, to wear and take off items from its own
@@ -154,7 +162,7 @@ const noAvatar = (loading: boolean): AvatarView => ({
 function useWardrobe(own: () => boolean) {
   const avatar = useLive(
     () => (own() ? shell.active : null),
-    (me) => (me !== null ? commands.avatar() : Promise.resolve(noAvatar(false))),
+    (me) => (me !== null ? commands.avatar(false) : Promise.resolve(noAvatar(false))),
     () => noAvatar(true),
   )
   const sections = useLive(
@@ -499,7 +507,13 @@ function Badges(props: {
           <ContextMenu
             items={[
               menuItem("inventory.inspect", { arg: `badge:${b.id}`, icon: "info", label: "Inspect" }),
-              ...(b.placeId ? [{ kind: "separator" } as const, ...gameMenu(b.placeId)] : []),
+              // The badge's experience, not its whole menu: that is one click away.
+              ...(b.placeId
+                ? [
+                    menuItem("game.open", { arg: String(b.placeId), icon: "game" }),
+                    menuItem("game.join", { arg: String(b.placeId), icon: "play" }),
+                  ]
+                : []),
             ]}
           >
             <Tile

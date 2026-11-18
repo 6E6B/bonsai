@@ -26,6 +26,9 @@ export interface TileProps {
   /** Opens the thing. Put other actions in a ContextMenu around the tile. The event says
    * whether Ctrl was held, for screens that preview on Ctrl+click. */
   onClick: (e: MouseEvent) => void
+  /** A second, stronger action, like wearing an outfit that a click only opens. Keep it
+   * reachable from the keyboard elsewhere, such as the tile's context menu. */
+  onDblClick?: (e: MouseEvent) => void
   class?: string
 }
 
@@ -39,6 +42,7 @@ export function Tile(props: TileProps) {
       data-fixed={props.fixed ? "" : undefined}
       class={props.class}
       onClick={props.onClick}
+      onDblClick={props.onDblClick}
     >
       <span data-slot="media">
         <Thumbnail src={props.src} alt={props.title} shape={props.shape} fallback={props.fallback} />

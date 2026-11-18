@@ -261,7 +261,11 @@ export const commands = {
 	discover: (device: string, country: string) => __TAURI_INVOKE<DiscoverView>("discover", { device, country }),
 	/**  Every game in one chart ("See all"). */
 	discoverChart: (sortId: string, device: string, country: string) => __TAURI_INVOKE<ChartPage>("discover_chart", { sortId, device, country }),
-	avatar: () => __TAURI_INVOKE<AvatarView>("avatar"),
+	/**
+	 *  The active account's avatar: the look being edited when `edited`, otherwise what is worn
+	 *  on Roblox now.
+	 */
+	avatar: (edited: boolean) => __TAURI_INVOKE<AvatarView>("avatar", { edited }),
 	outfits: () => __TAURI_INVOKE<Paged<OutfitView>>("outfits"),
 	wardrobe: () => __TAURI_INVOKE<List<WardrobeSection>>("wardrobe"),
 	/**
@@ -513,6 +517,20 @@ export type ActivityView = {
 	robux: Id | null,
 };
 
+/**  How far accessories of one type can be adjusted. */
+export type AdjustRuleView = {
+	typeId: number,
+	min: PlacementView,
+	max: PlacementView,
+};
+
+/**  What one press of a slider moves, per group. */
+export type AdjustSteps = {
+	position: number | null,
+	rotation: number | null,
+	scale: number | null,
+};
+
 /**  Allied and enemy communities. */
 export type AffiliatesView = {
 	loading: boolean,
@@ -624,6 +642,8 @@ export type Avatar3dView = {
 export type AvatarSource = 
 /**  The active account's avatar. */
 { kind: "me" } | 
+/**  The look being edited in the avatar editor. */
+{ kind: "draft" } | 
 /**  A user's current avatar. Public. */
 { kind: "user"; id: Id } | 
 /**  A saved outfit. Public. The id is a string because outfit ids can exceed 2^53. */
@@ -640,8 +660,21 @@ export type AvatarView = {
 	colors: PartColor[],
 	/**  The scales Roblox lets this account change. */
 	scales: ScaleView[],
+	/**  Accessory types that can be moved, turned and sized, with their bounds. */
+	adjustRules: AdjustRuleView[],
+	adjustSteps: AdjustSteps,
 	/**  Changes when the avatar was read again, so the preview image reloads. */
 	rev: number | null,
+	/**  The look differs from what is worn on Roblox. */
+	edited: boolean,
+	/**  The saved outfit the look started from. */
+	outfit: DraftOutfitView | null,
+	/**  The look differs from that outfit. */
+	outfitEdited: boolean,
+	/**  An outfit is still loading into the editor. */
+	loadingOutfit: boolean,
+	canUndo: boolean,
+	canRedo: boolean,
 };
 
 /**  The app background picture and how see-through things are over it. */
@@ -1043,6 +1076,12 @@ export type DiscoverView = {
 	charts: ChartView[],
 	more: boolean,
 	moreKey: string,
+};
+
+export type DraftOutfitView = {
+	/**  Outfit ids can pass 2^53. */
+	id: string,
+	name: string,
 };
 
 export type DraftView = {
@@ -1878,6 +1917,13 @@ export type PlaceCard = {
 	creator: string,
 	/**  Paid access price; `None` when free to play. */
 	price: number | null,
+};
+
+/**  Position in studs, rotation in degrees, scale as a factor. */
+export type PlacementView = {
+	position: Vec3,
+	rotation: Vec3,
+	scale: Vec3,
 };
 
 export type PlaylistView = {
@@ -2889,6 +2935,12 @@ export type VaultView = {
 	systemLockWarning: string | null,
 };
 
+export type Vec3 = {
+	x: number | null,
+	y: number | null,
+	z: number | null,
+};
+
 export type ViewButtonStyle = "default" | "primary" | "danger";
 
 /**  A table cell or stat value. Numbers are shown in the user's number format. */
@@ -3103,6 +3155,8 @@ export type WornView = {
 	r15Only: boolean,
 	/**  Layer of layered clothing; higher sits on top. */
 	layer: number | null,
+	/**  How a rigid accessory is moved, turned and sized; `None` when it is not adjusted. */
+	placement: PlacementView | null,
 };
 
 /* Tauri Specta runtime */

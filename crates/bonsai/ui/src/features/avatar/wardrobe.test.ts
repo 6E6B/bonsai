@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { matchesWear, named, searchStatus } from "./wardrobe"
+import { groupTypes, groupWorn, matchesWear, named, searchStatus, sectionFor } from "./wardrobe"
 
 describe("wardrobe results", () => {
   const items = [
@@ -38,5 +38,27 @@ describe("wardrobe search status", () => {
     expect(searchStatus({ ...base, loaded: 1, failed: 1, partial: true, truncated: true })).toBe(
       "First 2 matches · loading 1 of 3 types · 1 type failed to load · some types have more items; open their tab to load them",
     )
+  })
+})
+
+describe("worn groups", () => {
+  const w = (id: number, typeId: number, layer: number | null = null) => ({ id, typeId, layer })
+  it("groups by type and stacks layered clothing outermost first", () => {
+    const g = groupWorn([w(1, 11), w(2, 8), w(3, 64, 1), w(4, 65, 2), w(5, 41), w(6, 999), w(7, 51)])
+    expect(g.map((x) => x.key)).toEqual(["head", "accessories", "clothing", "body", "animation"])
+    expect(g[0].items.map((x) => x.id)).toEqual([2, 5])
+    expect(g[1].items.map((x) => x.id)).toEqual([6])
+    expect(g[2].items.map((x) => x.id)).toEqual([4, 3, 1])
+    expect(g[3].items).toEqual([])
+    expect(g[4].items.map((x) => x.id)).toEqual([7])
+  })
+  it("finds the section to add to", () => {
+    const sections = [
+      { name: "Clothing", slots: [{ value: "a11" }] },
+      { name: "Accessories", slots: [{ value: "a41" }, { value: "a8" }] },
+    ]
+    expect(sectionFor(sections, groupTypes("head"))).toEqual({ section: "Accessories", slot: "a8" })
+    expect(sectionFor(sections, groupTypes("clothing"))).toEqual({ section: "Clothing", slot: "a11" })
+    expect(sectionFor(sections, groupTypes("body"))).toBeUndefined()
   })
 })

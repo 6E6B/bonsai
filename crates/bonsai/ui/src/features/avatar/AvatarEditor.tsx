@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { AvatarViewer } from "~/lib/avatar3d/viewer"
 import { useSubTabs } from "~/lib/commands/hooks"
 import { isRunning, menuItem, run } from "~/lib/commands/registry"
@@ -13,14 +13,16 @@ import {
   type SwatchView,
   type WardrobeSearch,
   type WardrobeSection,
+  type WornView,
 } from "~/lib/ipc/bindings"
 import { emptyList, ListState } from "~/lib/list-state"
 import { itemMenu } from "~/lib/menus"
 import { isSoundHat } from "~/lib/sound-hats"
 import { shell, useLive } from "~/lib/store"
 import { thumbUrl, withRev } from "~/lib/thumb"
-import { ItemName, ItemTile, SoundHatBadge, TILE_WIDTH } from "~/lib/tiles"
+import { ItemName, ItemTile, SoundHatBadge } from "~/lib/tiles"
 import {
+  Badge,
   Button,
   ColorPicker,
   ContextMenu,
@@ -29,11 +31,12 @@ import {
   ListItem,
   Menu,
   type MenuEntry,
-  Page,
+  Pane,
   SectionHeader,
   SegmentedControl,
   Select,
   Slider,
+  Split,
   Swatch,
   TabPanel,
   Tabs,
@@ -45,12 +48,28 @@ import {
 } from "~/lib/ui"
 import { useParamDraft } from "~/lib/url-params"
 
-import { matchesWear, named, searchStatus, sortOptions } from "./wardrobe"
+import { Adjust, createAdjust } from "./Adjust"
+import { isAdjusted, resetArg, ruleFor } from "./adjust"
+import { BodyFigure } from "./BodyFigure"
+import {
+  groupTypes,
+  groupWorn,
+  matchesWear,
+  named,
+  searchStatus,
+  sectionFor,
+  sortOptions,
+  type WornGroup,
+} from "./wardrobe"
 
 const WARDROBE = "wardrobe"
 const OUTFITS = "outfits"
 const RECENT = "recent"
 const BODY = "body"
+const ADJUST = "adjust"
+
+/** Narrow enough for three tile columns in the side pane. */
+const GRID_WIDTH = 116
 
 const sep: MenuEntry = { kind: "separator" }
 
@@ -63,12 +82,14 @@ const outfitImage = (o: OutfitView) => {
 /** Asset type id of an inventory slot key (`a<type>`). */
 const slotType = (slot: string) => (slot.startsWith("a") ? slot.slice(1) : "")
 
-/** Avatar editor: preview on the left, wardrobe on the right. Clicking an item wears or
- * removes it; a full slot swaps its oldest item out. */
+/** Avatar editor: what the look wears on the left, the avatar in the middle, the wardrobe on
+ * the right. Clicking an item puts it on or
+ * takes it off the edited look; a full slot swaps its oldest item out. Nothing changes on
+ * Roblox until the look is worn. */
 export default function AvatarEditor() {
   const view = useLive(
     () => shell.active,
-    commands.avatar,
+    () => commands.avatar(true),
     (): AvatarView => ({
       loading: true,
       error: null,
@@ -77,7 +98,15 @@ export default function AvatarEditor() {
       emotes: [],
       colors: [],
       scales: [],
+      adjustRules: [],
+      adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
       rev: 0,
+      edited: false,
+      outfit: null,
+      outfitEdited: false,
+      loadingOutfit: false,
+      canUndo: false,
+      canRedo: false,
     }),
   )
   const outfits = useLive(
@@ -91,8 +120,17 @@ export default function AvatarEditor() {
     { value: WARDROBE, label: "Wardrobe" },
     { value: OUTFITS, label: "Outfits" },
     { value: BODY, label: "Body" },
+    { value: ADJUST, label: "Adjust" },
   ]
   const find = useParamDraft("find", 200)
+  // The accessory the Adjust tab edits.
+  const [adjusting, setAdjusting] = createSignal<number | null>(null)
+  const adjust = (id: number) => {
+    setAdjusting(id)
+    setSection(ADJUST)
+  }
+  // The wardrobe slot a group's add button opened.
+  const [pick, setPick] = createSignal<{ section: string; slot: string } | null>(null)
   const [category, setCategory] = createSignal(RECENT)
   const categories = () => [
     { value: RECENT, label: "Recent" },
@@ -101,6 +139,8 @@ export default function AvatarEditor() {
   createEffect(() => {
     shell.active
     setSection(WARDROBE)
+    setAdjusting(null)
+    setPick(null)
     setCategory(RECENT)
     setOutfitQuery("")
     setOutfitSort("default")
@@ -116,24 +156,42 @@ export default function AvatarEditor() {
     const name = await prompt({ title: "Rename outfit", label: "Name", initial: o.name, submit: "Rename" })
     if (name?.trim() && name.trim() !== o.name) void run("avatar.rename_outfit", `${o.id} ${name.trim()}`)
   }
+  // Ctrl+S updates the outfit the look came from, or saves a new one.
+  const save = () => {
+    const o = view.outfit
+    if (o && view.outfitEdited) void run("avatar.update_outfit", o.id)
+    else if (!o) void saveOutfit()
+  }
+  const onKey = (e: KeyboardEvent) => {
+    const t = e.target
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+    if (t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA"].includes(t.tagName))) return
+    const key = e.key.toLowerCase()
+    if (key === "enter") void run("avatar.apply")
+    else if (key === "s") save()
+    else if (key === "y" || (key === "z" && e.shiftKey)) void run("avatar.redo")
+    else if (key === "z") void run("avatar.undo")
+    else return
+    e.preventDefault()
+  }
+  window.addEventListener("keydown", onKey)
+  onCleanup(() => window.removeEventListener("keydown", onKey))
+  const saveMenu = (): MenuEntry[] => [
+    { label: "Save as new outfit…", icon: "plus", onSelect: () => void saveOutfit() },
+  ]
   const outfitMenu = (o: OutfitView): MenuEntry[] => [
-    menuItem("avatar.outfit", { arg: o.id, label: "Wear", icon: "avatar" }),
-    menuItem("avatar.update_outfit", {
-      arg: o.id,
-      label: "Replace with current look",
-      icon: "refresh",
-      disabled: !o.editable,
-    }),
-    { label: "Rename…", icon: "edit", disabled: !o.editable, onSelect: () => void renameOutfit(o) },
+    menuItem("avatar.load_outfit", { arg: o.id, label: "Open in editor", icon: "edit" }),
+    menuItem("avatar.outfit", { arg: o.id, label: "Wear now", icon: "avatar" }),
+    // Outfits Roblox made can only be worn or opened, so the editing rows are left out.
+    ...(o.editable
+      ? [
+          menuItem("avatar.update_outfit", { arg: o.id, label: "Replace with edited look", icon: "refresh" }),
+          { label: "Rename…", icon: "edit", onSelect: () => void renameOutfit(o) } as const,
+          sep,
+          menuItem("avatar.delete_outfit", { arg: o.id, label: "Delete", icon: "trash", danger: true }),
+        ]
+      : []),
     menuItem("avatar.copy_to", { arg: `outfit:${o.id}`, label: "Copy to another account…", icon: "copy" }),
-    sep,
-    menuItem("avatar.delete_outfit", {
-      arg: o.id,
-      label: "Delete",
-      icon: "trash",
-      danger: true,
-      disabled: !o.editable,
-    }),
   ]
   const [outfitQuery, setOutfitQuery] = createSignal("")
   const [outfitSort, setOutfitSort] = createSignal("default")
@@ -152,114 +210,198 @@ export default function AvatarEditor() {
     menuItem("avatar.copy_to", { label: "Copy look to another account…", icon: "copy" }),
   ]
   const layered = () => view.wearing.filter((w) => w.layer !== null).length
-  // Layered clothing outermost first, as it stacks; everything else after.
-  const wearing = () =>
-    [...view.wearing].sort((a, b) => (b.layer ?? Number.NEGATIVE_INFINITY) - (a.layer ?? Number.NEGATIVE_INFINITY))
+  const groups = createMemo(() => groupWorn(view.wearing))
+  // Opens the wardrobe on the first slot of these types that the account can wear.
+  const browse = (types: readonly number[], otherwise = WARDROBE) => {
+    const to = sectionFor(sections.items, types)
+    if (!to) return setSection(otherwise)
+    setPick({ ...to })
+    setCategory(to.section)
+    setSection(WARDROBE)
+  }
+  const add = (g: WornGroup) => browse(groupTypes(g), g === "body" ? BODY : WARDROBE)
+  // An accessory that can be moved opens in Adjust; anything else opens its wardrobe slot.
+  const select = (w: WornView) => (ruleFor(view, w.typeId) ? adjust(w.id) : browse([w.typeId]))
+  const WornRow = (p: { item: WornView }) => {
+    const w = () => p.item
+    const layerMenu = () =>
+      w().layer !== null && layered() > 1
+        ? [
+            {
+              kind: "submenu" as const,
+              label: "Layer",
+              icon: "list" as const,
+              items: [
+                menuItem("avatar.layer", { arg: `${w().id} up`, label: "Move up", icon: "chevron-up" }),
+                menuItem("avatar.layer", { arg: `${w().id} down`, label: "Move down", icon: "chevron-down" }),
+              ],
+            },
+          ]
+        : []
+    const adjustMenu = () =>
+      ruleFor(view, w().typeId)
+        ? [
+            { label: "Adjust…", icon: "settings" as const, onSelect: () => adjust(w().id) },
+            ...(isAdjusted(w().placement)
+              ? [menuItem("avatar.adjust", { arg: resetArg(w().id), label: "Reset adjustment", icon: "undo" })]
+              : []),
+          ]
+        : []
+    return (
+      <ContextMenu
+        items={itemMenu(w().id, false, w().typeId, {
+          actions: [
+            menuItem("avatar.try", { arg: `${w().id}:${w().typeId}`, label: "Take off", icon: "x" }),
+            ...layerMenu(),
+            ...adjustMenu(),
+          ],
+        })}
+      >
+        <ListItem
+          leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w().id)} />}
+          title={<ItemName name={w().name} id={w().id} />}
+          subtitle={wornNote(w())}
+          dim={view.rig === "R6" && w().r15Only}
+          selected={section() === ADJUST && adjustState.current()?.id === w().id}
+          onClick={() => select(w())}
+          actionsOnHover
+          actions={
+            <>
+              <Show when={w().layer !== null && layered() > 1}>
+                <IconButton
+                  size="sm"
+                  icon="chevron-up"
+                  label="Move layer up"
+                  onClick={() => run("avatar.layer", `${w().id} up`)}
+                />
+                <IconButton
+                  size="sm"
+                  icon="chevron-down"
+                  label="Move layer down"
+                  onClick={() => run("avatar.layer", `${w().id} down`)}
+                />
+              </Show>
+              <IconButton
+                size="sm"
+                icon="x"
+                label="Take off"
+                onClick={() => run("avatar.try", `${w().id}:${w().typeId}`)}
+              />
+            </>
+          }
+        />
+      </ContextMenu>
+    )
+  }
+  const adjustState = createAdjust(() => view, adjusting)
+  const wornNote = (w: WornView) => {
+    if (view.rig === "R6" && w.r15Only) return `${w.typeName} · R15 only`
+    return isAdjusted(w.placement) ? `${w.typeName} · Adjusted` : w.typeName
+  }
   const preview = () => {
     const url = shell.active !== null ? thumbUrl("avatar", shell.active, true) : undefined
     return url && withRev(url, view.rev)
   }
 
   return (
-    <Page>
-      <div class="flex flex-col items-start gap-6 lg:flex-row">
-        <aside class="flex w-64 max-w-full shrink-0 flex-col gap-3 lg:sticky lg:top-4">
-          <AvatarViewer
-            colorHex={view.colors.map((c) => c.hex)}
-            source={{ kind: "me" }}
-            image={preview()}
-            alt="Your avatar"
-            menu={previewMenu()}
-            controls
-          />
-          <div class="flex items-center justify-between">
-            <SegmentedControl
-              aria-label="Body type"
-              size="sm"
-              options={["R6", "R15"]}
-              value={view.rig}
-              onChange={(v) => void run("avatar.rig", v)}
-            />
-            <Menu
-              size="sm"
-              label="Outfits"
-              items={[
-                { kind: "heading", label: "Wear outfit" },
-                ...outfits.list.items.map((o) => menuItem("avatar.outfit", { arg: o.id, label: o.name })),
-              ]}
-            >
-              Outfits
-            </Menu>
-          </div>
+    <div class="flex min-h-0 flex-1 flex-col">
+      <div class="flex flex-wrap items-center gap-2 border-b border-line px-5 py-2">
+        <span class="truncate font-semibold">{view.outfit?.name ?? "Your avatar"}</span>
+        <Show when={view.loadingOutfit}>
+          <span class="text-sm text-fg-muted">Loading outfit…</span>
+        </Show>
+        <Show when={view.edited}>
+          <Badge>Not worn</Badge>
+        </Show>
+        <Show when={view.outfit && view.outfitEdited}>
+          <span class="text-sm text-fg-muted">Edited</span>
+        </Show>
+        <span class="flex-1" />
+        <IconButton
+          size="sm"
+          icon="undo"
+          label="Undo (Ctrl+Z)"
+          disabled={!view.canUndo}
+          onClick={() => void run("avatar.undo")}
+        />
+        <IconButton
+          size="sm"
+          icon="redo"
+          label="Redo (Ctrl+Shift+Z)"
+          disabled={!view.canRedo}
+          onClick={() => void run("avatar.redo")}
+        />
+        <Button size="sm" disabled={!view.edited && !view.outfit} onClick={() => void run("avatar.revert")}>
+          Revert
+        </Button>
+        <Show
+          when={view.outfit}
+          fallback={
+            <Button size="sm" icon="plus" onClick={saveOutfit}>
+              Save as outfit
+            </Button>
+          }
+        >
+          {(o) => (
+            <>
+              <Button
+                size="sm"
+                disabled={!view.outfitEdited}
+                loading={isRunning("avatar.update_outfit", o().id)}
+                onClick={() => void run("avatar.update_outfit", o().id)}
+              >
+                Update “{o().name}”
+              </Button>
+              <Menu size="sm" icon="chevron-down" label="More save options" items={saveMenu()} />
+            </>
+          )}
+        </Show>
+        <Button
+          size="sm"
+          variant="primary"
+          disabled={!view.edited}
+          loading={isRunning("avatar.apply")}
+          onClick={() => void run("avatar.apply")}
+        >
+          Wear
+        </Button>
+      </div>
+      <Split>
+        <Pane side class="w-64 gap-1 px-3">
           <Show when={view.error}>{(e) => <span class="text-sm text-fg-muted">{e()}</span>}</Show>
-          <SectionHeader title="Wearing" meta={view.wearing.length} size="group" />
-          <div class="-mx-2 -mt-2 flex flex-col">
-            <For each={wearing()}>
-              {(w) => (
-                <ContextMenu
-                  items={itemMenu(w.id, false, w.typeId, {
-                    actions: [
-                      menuItem("avatar.wear", { arg: `${w.id}:${w.typeId}`, label: "Take off", icon: "x" }),
-                      ...(w.layer !== null && layered() > 1
-                        ? [
-                            {
-                              kind: "submenu" as const,
-                              label: "Layer",
-                              icon: "list" as const,
-                              items: [
-                                menuItem("avatar.layer", { arg: `${w.id} up`, label: "Move up", icon: "chevron-up" }),
-                                menuItem("avatar.layer", {
-                                  arg: `${w.id} down`,
-                                  label: "Move down",
-                                  icon: "chevron-down",
-                                }),
-                              ],
-                            },
-                          ]
-                        : []),
-                    ],
-                  })}
-                >
+          <For each={groups()}>
+            {(g) => (
+              <section class="flex flex-col" aria-label={g.label}>
+                <SectionHeader
+                  title={g.label}
+                  meta={g.items.length || undefined}
+                  size="group"
+                  actions={
+                    <IconButton
+                      size="sm"
+                      icon="plus"
+                      label={`Add to ${g.label.toLowerCase()}`}
+                      onClick={() => add(g.key)}
+                    />
+                  }
+                />
+                <Show when={g.key === "body"}>
                   <ListItem
-                    leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", w.id)} />}
-                    title={<ItemName name={w.name} id={w.id} />}
-                    subtitle={view.rig === "R6" && w.r15Only ? `${w.typeName} · R15 only` : w.typeName}
-                    dim={view.rig === "R6" && w.r15Only}
-                    onClick={() => run("market.open", String(w.id))}
-                    actionsOnHover
-                    actions={
-                      <>
-                        <Show when={w.layer !== null && layered() > 1}>
-                          <IconButton
-                            size="sm"
-                            icon="chevron-up"
-                            label="Move layer up"
-                            onClick={() => run("avatar.layer", `${w.id} up`)}
-                          />
-                          <IconButton
-                            size="sm"
-                            icon="chevron-down"
-                            label="Move layer down"
-                            onClick={() => run("avatar.layer", `${w.id} down`)}
-                          />
-                        </Show>
-                        <IconButton
-                          size="sm"
-                          icon="x"
-                          label="Take off"
-                          loading={isRunning("avatar.wear", `${w.id}:${w.typeId}`)}
-                          onClick={() => run("avatar.wear", `${w.id}:${w.typeId}`)}
-                        />
-                      </>
-                    }
+                    leading={<Swatch display color={view.colors[0]?.hex ?? ""} label="Skin color" />}
+                    title="Colors and scale"
+                    subtitle={view.rig || undefined}
+                    onClick={() => setSection(BODY)}
                   />
-                </ContextMenu>
-              )}
-            </For>
-          </div>
+                </Show>
+                <div class="-mx-2 flex flex-col">
+                  <For each={g.items}>{(w) => <WornRow item={w} />}</For>
+                </div>
+              </section>
+            )}
+          </For>
           <Show when={view.emotes.length > 0}>
             <SectionHeader title="Emotes" meta={view.emotes.length} size="group" />
-            <div class="-mx-2 -mt-2 flex flex-col">
+            <div class="-mx-2 flex flex-col">
               <For each={view.emotes}>
                 {(e) => (
                   <ContextMenu
@@ -274,43 +416,54 @@ export default function AvatarEditor() {
                       leading={<Thumbnail class="w-8" alt="" fallback="avatar" src={thumbUrl("asset", e.id)} />}
                       title={e.name}
                       subtitle={e.typeName}
-                      onClick={() => run("market.open", String(e.id))}
-                      actionsOnHover
-                      actions={
-                        <IconButton
-                          size="sm"
-                          icon="play"
-                          label="Play in 3D"
-                          onClick={() => run("avatar.play", `emote.${e.id}`)}
-                        />
-                      }
+                      onClick={() => run("avatar.play", `emote.${e.id}`)}
                     />
                   </ContextMenu>
                 )}
               </For>
             </div>
           </Show>
-        </aside>
+        </Pane>
 
-        <div class="flex w-full min-w-0 flex-1 flex-col gap-3">
+        <div class="flex min-w-0 flex-1 p-4">
+          <AvatarViewer
+            stage
+            class="h-full min-h-80 w-full"
+            colorHex={view.colors.map((c) => c.hex)}
+            source={{ kind: "draft" }}
+            image={view.edited ? undefined : preview()}
+            alt="Your avatar"
+            menu={previewMenu()}
+            corner={
+              <>
+                <SegmentedControl
+                  aria-label="Body type"
+                  size="sm"
+                  options={["R6", "R15"]}
+                  value={view.rig}
+                  onChange={(v) => void run("avatar.rig", v)}
+                />
+                <Show when={section() === ADJUST && adjustState.target()}>{adjustState.toolSwitch()}</Show>
+              </>
+            }
+            adjust={section() === ADJUST ? adjustState.target() : undefined}
+          />
+        </div>
+
+        <Pane class="w-112 flex-none border-l border-line">
           <Tabs
             aria-label="Wardrobe"
             items={tabs()}
             value={section()}
             onChange={setSection}
             actions={
-              <>
-                <IconButton
-                  size="sm"
-                  icon="refresh"
-                  label="Redraw avatar image"
-                  loading={isRunning("avatar.redraw")}
-                  onClick={() => run("avatar.redraw")}
-                />
-                <Button size="sm" icon="plus" onClick={saveOutfit}>
-                  Save as outfit
-                </Button>
-              </>
+              <IconButton
+                size="sm"
+                icon="refresh"
+                label="Redraw avatar image"
+                loading={isRunning("avatar.redraw")}
+                onClick={() => run("avatar.redraw")}
+              />
             }
           >
             <TabPanel value={OUTFITS}>
@@ -361,7 +514,7 @@ export default function AvatarEditor() {
                       />
                     }
                   >
-                    <VirtualGrid items={shownOutfits()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+                    <VirtualGrid items={shownOutfits()} minItemWidth={GRID_WIDTH} estimateRowHeight={160} gap={10}>
                       {(o) => (
                         <ContextMenu items={outfitMenu(o)}>
                           <Tile
@@ -369,7 +522,9 @@ export default function AvatarEditor() {
                             subtitle={o.editable ? undefined : "From a bundle"}
                             src={outfitImage(o)}
                             fallback="avatar"
-                            onClick={() => run("avatar.outfit", o.id)}
+                            selected={view.outfit?.id === o.id}
+                            onClick={() => run("avatar.load_outfit", o.id)}
+                            onDblClick={() => run("avatar.outfit", o.id)}
                           />
                         </ContextMenu>
                       )}
@@ -396,7 +551,11 @@ export default function AvatarEditor() {
                     <For each={sections.items}>
                       {(s) => (
                         <TabPanel value={s.name}>
-                          <Section section={s} worn={view.wearing.map((w) => w.id)} />
+                          <Section
+                            section={s}
+                            worn={view.wearing.map((w) => w.id)}
+                            pick={pick()?.section === s.name ? pick() : undefined}
+                          />
                         </TabPanel>
                       )}
                     </For>
@@ -409,11 +568,14 @@ export default function AvatarEditor() {
             <TabPanel value={BODY}>
               <Body view={view} />
             </TabPanel>
+            <TabPanel value={ADJUST}>
+              <Adjust view={view} state={adjustState} onSelect={setAdjusting} />
+            </TabPanel>
           </Tabs>
           <Show when={sections.error}>{(e) => <span class="text-sm text-fg-muted">{e()}</span>}</Show>
-        </div>
-      </div>
-    </Page>
+        </Pane>
+      </Split>
+    </div>
   )
 }
 
@@ -485,8 +647,13 @@ function NoMatches(props: { reset: () => void }) {
   )
 }
 
-function Section(props: { section: WardrobeSection; worn: number[] }) {
+function Section(props: { section: WardrobeSection; worn: number[]; pick?: { slot: string } | null }) {
   const [slot, setSlot] = createSignal(props.section.slots[0]?.value ?? "")
+  // A slot asked for from the worn list.
+  createEffect(() => {
+    const want = props.pick?.slot
+    if (want) setSlot(want)
+  })
   createEffect(() => {
     if (!props.section.slots.some((s) => s.value === slot())) setSlot(props.section.slots[0]?.value ?? "")
   })
@@ -557,15 +724,15 @@ function Section(props: { section: WardrobeSection; worn: number[] }) {
           <ResultStatus shown={shown().length} loaded={items.list.items.length} more={items.list.more} />
           <ListState list={items.list} icon="avatar" empty="No items in this category" more={items.moreKey}>
             <Show when={shown().length} fallback={<NoMatches reset={reset} />}>
-              <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+              <VirtualGrid items={shown()} minItemWidth={GRID_WIDTH} estimateRowHeight={160} gap={10}>
                 {(i) => (
                   <ItemTile
                     item={i}
                     selected={props.worn.includes(i.id)}
-                    onClick={() => run("avatar.wear", `${i.id}:${i.assetType || slotType(slot())}`)}
+                    onClick={() => run("avatar.try", `${i.id}:${i.assetType || slotType(slot())}`)}
                     menu={{
                       actions: [
-                        menuItem("avatar.wear", {
+                        menuItem("avatar.try", {
                           arg: `${i.id}:${i.assetType || slotType(slot())}`,
                           icon: "avatar",
                           label: props.worn.includes(i.id) ? "Take off" : "Wear",
@@ -583,7 +750,7 @@ function Section(props: { section: WardrobeSection; worn: number[] }) {
   )
 }
 
-/** Items and outfits worn lately. Clicking wears them again. */
+/** Items and outfits worn lately. Clicking puts them on the edited look again. */
 function Recent() {
   const recent = useLive(() => shell.active, commands.recentItems, emptyList<RecentView>)
   const [query, setQuery] = createSignal("")
@@ -596,7 +763,8 @@ function Recent() {
       sort(),
     ),
   )
-  const wear = (r: RecentView) => (r.outfit ? run("avatar.outfit", r.id) : run("avatar.wear", `${r.id}:${r.typeId}`))
+  const wear = (r: RecentView) =>
+    r.outfit ? run("avatar.load_outfit", r.id) : run("avatar.try", `${r.id}:${r.typeId}`)
   return (
     <div class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
@@ -641,17 +809,20 @@ function Recent() {
             />
           }
         >
-          <VirtualGrid items={shown()} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+          <VirtualGrid items={shown()} minItemWidth={GRID_WIDTH} estimateRowHeight={160} gap={10}>
             {(r) => (
               <ContextMenu
                 items={
                   r.outfit
-                    ? [menuItem("avatar.outfit", { arg: r.id, label: "Wear", icon: "avatar" })]
+                    ? [
+                        menuItem("avatar.load_outfit", { arg: r.id, label: "Open in editor", icon: "edit" }),
+                        menuItem("avatar.outfit", { arg: r.id, label: "Wear now", icon: "avatar" }),
+                      ]
                     : itemMenu(Number(r.id), false, r.typeId, {
                         actions: [
-                          menuItem("avatar.wear", {
+                          menuItem("avatar.try", {
                             arg: `${r.id}:${r.typeId}`,
-                            label: "Wear or take off",
+                            label: "Put on or take off",
                             icon: "avatar",
                           }),
                         ],
@@ -736,43 +907,46 @@ function Body(props: { view: AvatarView }) {
     >
       <TabPanel value="colors">
         <section class="flex flex-col gap-3">
-          <SectionHeader title="Body colors" meta={parts().length ? "Selected parts" : "All parts"} size="group" />
-          <p class="text-sm text-fg-muted">Choose all parts or select individual parts to color together.</p>
-          <div class="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant={parts().length ? "secondary" : "primary"}
-              aria-pressed={!parts().length}
-              onClick={() => setParts([])}
-            >
-              All parts
-            </Button>
-            <For each={props.view.colors}>
-              {(c) => (
+          <SectionHeader
+            title="Body colors"
+            meta={parts().length ? `${parts().length} selected` : "All parts"}
+            size="group"
+          />
+          <div class="flex items-start gap-4">
+            <BodyFigure
+              class="h-44 w-36 flex-none"
+              colors={props.view.colors}
+              selected={parts()}
+              onToggle={togglePart}
+            />
+            <div class="flex min-w-0 flex-1 flex-col gap-2">
+              <div class="flex items-center gap-2 text-sm">
+                <Show
+                  when={mixed()}
+                  fallback={
+                    <>
+                      <Swatch display color={selectedColor()} label="Current color" />
+                      {selectedColor()}
+                    </>
+                  }
+                >
+                  <span class="text-fg-muted">Mixed colors</span>
+                </Show>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <Button size="sm" variant="secondary" disabled={!parts().length} onClick={() => setParts([])}>
+                  All parts
+                </Button>
                 <Button
                   size="sm"
-                  variant={parts().includes(c.part) ? "primary" : "secondary"}
-                  aria-pressed={parts().includes(c.part)}
-                  onClick={() => togglePart(c.part)}
+                  variant="secondary"
+                  disabled={parts().length === props.view.colors.length}
+                  onClick={() => setParts(props.view.colors.map((c) => c.part))}
                 >
-                  <Swatch display color={c.hex} label={c.label} />
-                  {c.label}
+                  Select all
                 </Button>
-              )}
-            </For>
-          </div>
-          <div class="flex items-center gap-2 text-sm text-fg-muted">
-            <Show
-              when={mixed()}
-              fallback={
-                <>
-                  <Swatch display color={selectedColor()} label="Current color" />
-                  {selectedColor()}
-                </>
-              }
-            >
-              Mixed colors
-            </Show>
+              </div>
+            </div>
           </div>
           <SegmentedControl
             aria-label="Color mode"
@@ -805,7 +979,7 @@ function Body(props: { view: AvatarView }) {
               value={query()}
               onChange={setQuery}
             />
-            <div class="flex max-w-xl flex-wrap gap-1.5">
+            <div class="flex flex-wrap gap-1.5">
               <For each={shownPalette()}>
                 {(s) => (
                   <Swatch
@@ -836,7 +1010,7 @@ function Body(props: { view: AvatarView }) {
 }
 
 function ScaleSlider(props: { scale: ScaleView; disabled: boolean }) {
-  // Follows the slider while dragging; the avatar catches up after the write.
+  // Follows the slider while dragging; the avatar catches up when the edit lands.
   const [value, setValue] = createSignal(props.scale.value ?? 0)
   createEffect(() => setValue(props.scale.value ?? 0))
   return (

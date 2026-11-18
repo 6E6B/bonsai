@@ -2281,6 +2281,81 @@ async fn communities_member_admin_forums_and_public_pages() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn avatar_draft_edits_undo_and_wear() {
+    use bonsai_core::avatar::Part;
+    let replay = Replay::from_fixture(&replay::load("avatar")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let idle = |s: &StoreData| s.jobs == 0;
+
+    poll(|| c.avatar(ME)).await;
+    poll(|| c.avatar_rules()).await;
+    assert!(!c.draft(ME).edited);
+
+    // Edits change only the draft: nothing is sent to Roblox.
+    c.draft_wear(ME, 1_080_951, Some(8)).unwrap();
+    c.draft_color(ME, vec![Part::LeftArm], 1003).unwrap();
+    let d = c.draft(ME);
+    assert!(d.edited && d.can_undo && !d.can_redo);
+    let look = d.look.data.unwrap();
+    assert_eq!(look.assets.len(), 1);
+    assert_eq!(look.color_hex["left_arm"], "#111111");
+    let writes = replay
+        .requests()
+        .await
+        .iter()
+        .filter(|q| q.method.as_str() != "GET")
+        .count();
+    assert_eq!(writes, 0);
+
+    c.draft_undo(ME).unwrap();
+    assert_ne!(c.draft(ME).look.data.unwrap().color_hex["left_arm"], "#111111");
+    c.draft_redo(ME).unwrap();
+    assert!(c.draft_redo(ME).is_err(), "nothing left to redo");
+
+    // Revert shows what is worn; undo brings the edits back.
+    c.revert_draft(ME).unwrap();
+    assert!(!c.draft(ME).edited);
+    c.draft_undo(ME).unwrap();
+    assert!(c.draft(ME).edited);
+
+    // Putting the hat back on and taking it off again is no change.
+    c.draft_wear(ME, 1_080_951, Some(8)).unwrap();
+    c.draft_wear(ME, 1_080_951, Some(8)).unwrap();
+    assert_eq!(c.draft(ME).look.data.unwrap().assets.len(), 1);
+
+    c.wear_draft(ME).unwrap();
+    wait_for(c, "worn", idle).await;
+    let reqs = replay.requests().await;
+    let body = |path: &str| -> serde_json::Value {
+        let q = reqs.iter().rfind(|q| q.url.path() == path).unwrap();
+        serde_json::from_slice(&q.body).unwrap()
+    };
+    let colors = body("/avatar.roblox.com/v2/avatar/set-body-colors");
+    assert_eq!(colors["leftArmColor3"], "111111");
+    assert_eq!(colors["headColor3"], "F5CD30");
+    let wear = body("/avatar.roblox.com/v2/avatar/set-wearing-assets");
+    assert_eq!(wear["assets"].as_array().unwrap().len(), 1);
+    assert_eq!(wear["assets"][0]["id"], 1_142_116);
+
+    // Loading an outfit is one undoable step and names the outfit.
+    poll(|| c.outfits(ME, false)).await;
+    c.load_outfit(ME, 24_477_597).unwrap();
+    let start = std::time::Instant::now();
+    while c.draft(ME).outfit.is_none() {
+        assert!(start.elapsed() < Duration::from_secs(10), "outfit never loaded");
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    let d = c.draft(ME);
+    assert_eq!(d.outfit.unwrap().name, "2015");
+    assert!(!d.outfit_edited);
+    c.draft_undo(ME).unwrap();
+    assert!(c.draft(ME).outfit.is_none());
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn avatar_wear_outfits_and_rig() {
     use bonsai_core::avatar::Rig;
     let replay = Replay::from_fixture(&replay::load("avatar")).await;

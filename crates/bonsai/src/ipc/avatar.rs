@@ -5,7 +5,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use bonsai_core::avatar::{Look, LookSource, Owned, Part, Rig, Scale};
+use bonsai_core::avatar::{Group, Look, LookSource, Owned, Part, Placement, Rig, Scale, Worn};
 use bonsai_core::commands::CommandId;
 use bonsai_core::inventory::{InvCategory, InvSlot, NameQuery};
 use bonsai_core::market::ItemRef;
@@ -29,6 +29,68 @@ pub struct WornView {
     pub r15_only: bool,
     /// Layer of layered clothing; higher sits on top.
     pub layer: Option<i32>,
+    /// How a rigid accessory is moved, turned and sized; `None` when it is not adjusted.
+    pub placement: Option<PlacementView>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+pub struct Vec3 {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+impl From<[f64; 3]> for Vec3 {
+    fn from([x, y, z]: [f64; 3]) -> Self {
+        Vec3 { x, y, z }
+    }
+}
+
+/// Position in studs, rotation in degrees, scale as a factor.
+#[derive(Clone, Copy, Debug, Serialize, Type)]
+pub struct PlacementView {
+    pub position: Vec3,
+    pub rotation: Vec3,
+    pub scale: Vec3,
+}
+
+impl From<Placement> for PlacementView {
+    fn from(p: Placement) -> Self {
+        PlacementView {
+            position: p.position.into(),
+            rotation: p.rotation.into(),
+            scale: p.scale.into(),
+        }
+    }
+}
+
+/// How far accessories of one type can be adjusted.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AdjustRuleView {
+    pub type_id: i32,
+    pub min: PlacementView,
+    pub max: PlacementView,
+}
+
+/// What one press of a slider moves, per group.
+#[derive(Clone, Debug, Serialize, Type)]
+pub struct AdjustSteps {
+    pub position: f64,
+    pub rotation: f64,
+    pub scale: f64,
+}
+
+fn worn_view(a: &Worn) -> WornView {
+    WornView {
+        id: Id(a.id),
+        name: a.name.clone(),
+        type_id: a.type_id as i32,
+        type_name: a.type_name.clone(),
+        r15_only: bonsai_core::avatar::r15_only(a.type_id),
+        layer: a.layer,
+        placement: a.placement.map(Into::into),
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -44,8 +106,28 @@ pub struct AvatarView {
     pub colors: Vec<PartColor>,
     /// The scales Roblox lets this account change.
     pub scales: Vec<ScaleView>,
+    /// Accessory types that can be moved, turned and sized, with their bounds.
+    pub adjust_rules: Vec<AdjustRuleView>,
+    pub adjust_steps: AdjustSteps,
     /// Changes when the avatar was read again, so the preview image reloads.
     pub rev: f64,
+    /// The look differs from what is worn on Roblox.
+    pub edited: bool,
+    /// The saved outfit the look started from.
+    pub outfit: Option<DraftOutfitView>,
+    /// The look differs from that outfit.
+    pub outfit_edited: bool,
+    /// An outfit is still loading into the editor.
+    pub loading_outfit: bool,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+pub struct DraftOutfitView {
+    /// Outfit ids can pass 2^53.
+    pub id: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -118,10 +200,21 @@ fn part_colors(look: &Look, hex: impl Fn(i32) -> String) -> Vec<PartColor> {
         .collect()
 }
 
+/// The active account's avatar: the look being edited when `edited`, otherwise what is worn
+/// on Roblox now.
 #[tauri::command]
 #[specta::specta]
-pub fn avatar(core: State<'_, Arc<Core>>) -> AvatarView {
-    let r = core.avatar(viewer(&core));
+pub fn avatar(core: State<'_, Arc<Core>>, edited: bool) -> AvatarView {
+    let me = viewer(&core);
+    let d = if edited {
+        core.draft(me)
+    } else {
+        bonsai_core::avatar::DraftState {
+            look: core.avatar(me),
+            ..Default::default()
+        }
+    };
+    let r = &d.look;
     let look = r.data.as_deref();
     let rules = core.avatar_rules().data;
     let hex = |id: i32| {
@@ -155,19 +248,7 @@ pub fn avatar(core: State<'_, Arc<Core>>) -> AvatarView {
         error: r.error.clone(),
         rig: look.map(|l| l.rig.clone()).unwrap_or_default(),
         wearing: look
-            .map(|l| {
-                l.assets
-                    .iter()
-                    .map(|a| WornView {
-                        id: Id(a.id),
-                        name: a.name.clone(),
-                        type_id: a.type_id as i32,
-                        type_name: a.type_name.clone(),
-                        r15_only: bonsai_core::avatar::r15_only(a.type_id),
-                        layer: a.layer,
-                    })
-                    .collect()
-            })
+            .map(|l| l.assets.iter().map(worn_view).collect())
             .unwrap_or_default(),
         emotes: look
             .map(|l| {
@@ -180,13 +261,41 @@ pub fn avatar(core: State<'_, Arc<Core>>) -> AvatarView {
                         type_name: format!("Slot {}", e.slot),
                         r15_only: false,
                         layer: None,
+                        placement: None,
                     })
                     .collect()
             })
             .unwrap_or_default(),
         colors,
         scales,
+        adjust_rules: rules
+            .as_deref()
+            .map(|r| {
+                r.placements
+                    .iter()
+                    .map(|p| AdjustRuleView {
+                        type_id: p.type_id as i32,
+                        min: p.min.into(),
+                        max: p.max.into(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
+        adjust_steps: AdjustSteps {
+            position: Group::Position.step(),
+            rotation: Group::Rotation.step(),
+            scale: Group::Scale.step(),
+        },
         rev: r.fetched_at as f64,
+        edited: d.edited,
+        outfit: d.outfit.as_ref().map(|o| DraftOutfitView {
+            id: o.id.to_string(),
+            name: o.name.clone(),
+        }),
+        outfit_edited: d.outfit_edited,
+        loading_outfit: d.loading_outfit,
+        can_undo: d.can_undo,
+        can_redo: d.can_redo,
     }
 }
 
@@ -685,7 +794,12 @@ pub(super) fn run(
                 "down" | "in" | "under" => false,
                 _ => return Err("Say up or down.".to_owned()),
             };
-            core.move_layer(a, asset, outward)
+            core.draft_layer(a, asset, outward)
+        })(),
+        CommandId::AdjustAccessory => (|| {
+            let a = need()?;
+            let (asset, adjust) = bonsai_core::avatar::placement::parse(arg.unwrap_or(""))?;
+            core.draft_adjust(a, asset, adjust)
         })(),
         CommandId::SetBodyColor => (|| {
             let a = need()?;
@@ -701,13 +815,13 @@ pub(super) fn run(
                 None => (Vec::new(), text),
             };
             if color.trim().starts_with('#') {
-                return core.set_body_color_hex(a, parts, color);
+                return core.draft_color_hex(a, parts, color);
             }
             let color = color
                 .trim()
                 .parse()
                 .map_err(|_| "Use a color id or #RRGGBB.".to_owned())?;
-            core.set_body_color(a, parts, color)
+            core.draft_color(a, parts, color)
         })(),
         CommandId::SetScale => (|| {
             let a = need()?;
@@ -720,7 +834,7 @@ pub(super) fn run(
                 .trim_end_matches('%')
                 .parse::<f64>()
                 .map_err(|_| "Not a number.".to_owned())?;
-            core.set_scale(a, scale, value)
+            core.draft_scale(a, scale, value)
         })(),
         CommandId::SetEmote => (|| {
             let a = need()?;
@@ -742,19 +856,29 @@ pub(super) fn run(
         })(),
         CommandId::SetRig => (|| {
             let a = need()?;
+            // No argument: switch to the other one.
             let rig = match arg.map(Rig::parse) {
-                Some(Some(r)) => r,
                 Some(None) => return Err("Pick R6 or R15.".to_owned()),
-                // No argument: switch to the other one.
-                None => match core.avatar(a).data.as_deref().map(|l| l.rig.as_str()) {
-                    Some("R6") => Rig::R15,
-                    Some(_) => Rig::R6,
-                    None => return Err("Your avatar has not loaded yet.".to_owned()),
-                },
+                r => r.flatten(),
             };
-            core.set_rig(a, rig);
-            Ok(())
+            core.draft_rig(a, rig)
         })(),
+        CommandId::TryItem => (|| {
+            let a = need()?;
+            let text = arg.ok_or("Which item?")?;
+            let (asset, t) = text.split_once(':').unwrap_or((text, ""));
+            let asset = asset.parse().map_err(|_| "Not an item id.".to_owned())?;
+            core.draft_wear(a, asset, t.parse().ok())
+        })(),
+        CommandId::LoadOutfit => (|| {
+            let a = need()?;
+            let outfit = arg.and_then(|o| o.parse().ok()).ok_or("Not an outfit id.")?;
+            core.load_outfit(a, outfit)
+        })(),
+        CommandId::WearDraft => (|| core.wear_draft(need()?))(),
+        CommandId::UndoAvatar => (|| core.draft_undo(need()?))(),
+        CommandId::RedoAvatar => (|| core.draft_redo(need()?))(),
+        CommandId::RevertAvatar => (|| core.revert_draft(need()?))(),
         CommandId::LoadMore if arg == Some("outfits") => {
             drop(core.outfits(account.unwrap_or(AccountId::ANONYMOUS), true));
             Ok(())
@@ -770,6 +894,8 @@ pub(super) fn run(
 pub enum AvatarSource {
     /// The active account's avatar.
     Me,
+    /// The look being edited in the avatar editor.
+    Draft,
     /// A user's current avatar. Public.
     User(Id),
     /// A saved outfit. Public. The id is a string because outfit ids can exceed 2^53.
@@ -810,6 +936,7 @@ pub struct Avatar3dScales {
 pub fn avatar_3d(core: State<'_, Arc<Core>>, source: AvatarSource) -> Avatar3dView {
     let r = match source {
         AvatarSource::Me => core.avatar(viewer(&core)),
+        AvatarSource::Draft => core.draft(viewer(&core)).look,
         AvatarSource::User(id) => core.user_look(id.0),
         AvatarSource::Outfit(id) => match id.parse() {
             Ok(id) => core.outfit(id),
@@ -824,20 +951,12 @@ pub fn avatar_3d(core: State<'_, Arc<Core>>, source: AvatarSource) -> Avatar3dVi
 
 fn avatar_3d_view(r: Res<Look>) -> Avatar3dView {
     let look = r.data.as_deref();
-    let worn = |a: &bonsai_core::avatar::Worn| WornView {
-        id: Id(a.id),
-        name: a.name.clone(),
-        type_id: a.type_id as i32,
-        type_name: a.type_name.clone(),
-        r15_only: bonsai_core::avatar::r15_only(a.type_id),
-        layer: a.layer,
-    };
     Avatar3dView {
         loading: r.loading,
         error: r.error.clone(),
         rig: look.map(|l| l.rig.clone()).unwrap_or_default(),
         assets: look
-            .map(|l| l.assets.iter().map(worn).collect())
+            .map(|l| l.assets.iter().map(worn_view).collect())
             .unwrap_or_default(),
         emotes: look
             .map(|l| {
@@ -850,6 +969,7 @@ fn avatar_3d_view(r: Res<Look>) -> Avatar3dView {
                         type_name: "Emote".to_owned(),
                         r15_only: true,
                         layer: None,
+                        placement: None,
                     })
                     .collect()
             })

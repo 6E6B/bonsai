@@ -173,6 +173,8 @@ pub(crate) struct Inner {
     pub(crate) challenge: Mutex<crate::challenge::ChallengeState>,
     /// Desktop alerts waiting for the shell (see [`crate::alerts`]).
     pub(crate) alerts: Mutex<crate::alerts::AlertState>,
+    /// Looks being put together in the avatar editor, per account. In memory only.
+    pub(crate) drafts: Mutex<HashMap<AccountId, crate::avatar::draft::Draft>>,
     search_seq: Mutex<u64>,
     /// The last query sent to remote search, so asking again every frame sends it once.
     search_last: Mutex<String>,
@@ -281,6 +283,7 @@ impl Core {
             toast_seq: Mutex::new(0),
             challenge: Default::default(),
             alerts: Default::default(),
+            drafts: Default::default(),
             search_seq: Mutex::new(0),
             search_last: Mutex::new(String::new()),
             session_id: random_uuid(),

@@ -11,7 +11,7 @@ import {
 } from "~/lib/bookmarks"
 import { menuItem, run } from "~/lib/commands/registry"
 import type { BookmarkView } from "~/lib/ipc/bindings"
-import { entityMenu, gameMenu, itemMenu, userMenu } from "~/lib/menus"
+import { entityMenu, gameMenu, itemMenu, userMenu, withoutCommand } from "~/lib/menus"
 import { visibleBookmarks } from "~/lib/store"
 import { thumbUrl } from "~/lib/thumb"
 import {
@@ -73,17 +73,24 @@ export function BookmarkList() {
     ],
   })
   const menu = (b: BookmarkView): MenuEntry[] => {
-    const normal = normalMenu(b).filter(
-      (entry) => !("onSelect" in entry && (entry.icon === "bookmark" || entry.icon === "bookmark-fill")),
-    )
+    // The thing's own menu first, then the bookmark's. Its bookmark toggle would repeat Remove.
+    const normal = withoutCommand(normalMenu(b), "bookmark.toggle")
+    const id = String(b.id)
     return [
-      menuItem("bookmark.rename", { arg: String(b.id), label: "Rename…", icon: "edit" }),
+      ...(normal.length ? [...normal, { kind: "separator" } as const] : []),
+      menuItem("bookmark.rename", { arg: id, label: "Rename bookmark…", icon: "edit" }),
       folderMenu(b),
-      menuItem("bookmark.tag", { arg: String(b.id), label: "Tags…", icon: "tag" }),
-      menuItem("bookmark.remove", { arg: String(b.id), label: "Remove bookmark", icon: "bookmark-fill" }),
-      menuItem("bookmark.move_up", { arg: String(b.id), label: "Move up", icon: "chevron-up" }),
-      menuItem("bookmark.move_down", { arg: String(b.id), label: "Move down", icon: "chevron-down" }),
-      ...(normal.length ? [{ kind: "separator" } as const, ...normal] : []),
+      menuItem("bookmark.tag", { arg: id, label: "Tags…", icon: "tag" }),
+      {
+        kind: "submenu",
+        label: "Move",
+        icon: "sort-asc",
+        items: [
+          menuItem("bookmark.move_up", { arg: id, label: "Up", icon: "chevron-up" }),
+          menuItem("bookmark.move_down", { arg: id, label: "Down", icon: "chevron-down" }),
+        ],
+      },
+      menuItem("bookmark.remove", { arg: id, label: "Remove bookmark", icon: "bookmark-fill" }),
     ]
   }
   const headerMenu = (g: BookmarkGroup): MenuEntry[] =>
