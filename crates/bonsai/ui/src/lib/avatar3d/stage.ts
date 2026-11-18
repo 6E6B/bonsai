@@ -125,6 +125,24 @@ let alone: { root: Instance; accessory: Instance } | null = null
 let generation = 0
 const auth = new Authentication()
 
+/** Until when a still scene keeps drawing, so late texture and mesh updates make it to screen. */
+let drawUntil = 0
+/** Whether the canvas is on screen. Scrolled away or in a hidden tab, nothing is drawn. */
+let onScreen = true
+
+/** Draws the next frames. A still scene (an accessory, a paused rig) is drawn only after
+ * something changes, instead of every frame: redrawing an unchanged WebGL canvas makes the
+ * webview recomposite the page each frame, which is what made the item page lag. */
+function invalidate(ms = 500) {
+  drawUntil = Math.max(drawUntil, performance.now() + ms)
+}
+
+function tick(now: number) {
+  requestAnimationFrame(tick)
+  if (!holder || !onScreen) return
+  if (renderer?.animationInterval !== undefined || now < drawUntil) RBXRenderer.animateAll(false)
+}
+
 function loadScript(src: string) {
   return new Promise<void>((resolve, reject) => {
     const el = document.createElement("script")
@@ -149,10 +167,16 @@ async function setup() {
   RBXRenderer.setupScene("WellLit")
   RBXRenderer.setBackgroundTransparent(true)
   RBXRenderer.setupControls()
+  RBXRenderer.firstScene.controls?.addEventListener("change", () => invalidate())
+  RBXRenderer.firstScene.compiledRenderDesc.Connect(() => invalidate())
   RBXRenderer.canvasContainer.style.position = "absolute"
   RBXRenderer.canvasContainer.style.inset = "0"
   RBXRenderer.firstScene.shouldAnimate = false
-  RBXRenderer.animateAll()
+  new IntersectionObserver(([e]) => {
+    onScreen = e.isIntersecting
+    if (onScreen) invalidate()
+  }).observe(RBXRenderer.canvasContainer)
+  requestAnimationFrame(tick)
   log("engine started")
 }
 
@@ -181,6 +205,7 @@ function ensureRenderer(outfit: Outfit) {
   const r = new OutfitRenderer(auth, outfit)
   r.onSuccess.Connect(() => log("outfit applied"))
   r.onRenderSuccess.Connect(() => {
+    invalidate(1000)
     snapshot("outfit drawn")
     holder?.state("ready")
   })
@@ -280,6 +305,7 @@ async function showAccessory(id: number, gen: number, state: (s: StageState) => 
     return state("error")
   }
   frame(parts)
+  invalidate(1000)
   snapshot("accessory drawn")
   state("ready")
 }
@@ -549,6 +575,7 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
   holder = me
   el.prepend(RBXRenderer.canvasContainer)
   RBXRenderer.firstScene.shouldAnimate = true
+  invalidate()
   let shown = ""
 
   const mine = () => holder === me
@@ -565,6 +592,7 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
       shown = key
       const gen = ++generation
       state("loading")
+      invalidate()
       dropAlone()
       if (subject.kind === "accessory") {
         dropRenderer()
@@ -581,6 +609,7 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
     async play(name) {
       if (!mine() || !renderer) return false
       const ok = await renderer.setMainAnimation(name)
+      invalidate()
       log("play", name, ok)
       return ok
     },
@@ -597,7 +626,10 @@ export async function acquire(el: HTMLElement, lost: () => void, state: (s: Stag
       const [w, h] = [Math.round(width), Math.round(height)]
       const [cw, ch] = RBXRenderer.resolution
       // Resizing to the same size re-lays out the canvas and loops the ResizeObserver.
-      if (mine() && w > 0 && h > 0 && (w !== cw || h !== ch)) RBXRenderer.setRendererSize(w, h)
+      if (mine() && w > 0 && h > 0 && (w !== cw || h !== ch)) {
+        RBXRenderer.setRendererSize(w, h)
+        invalidate()
+      }
     },
     release() {
       if (!mine()) return
