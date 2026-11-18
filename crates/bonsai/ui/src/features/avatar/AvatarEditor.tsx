@@ -613,7 +613,7 @@ function AllItems(props: { query: string; worn: number[] }) {
         {searchStatus(result)}
       </p>
       <ListState list={list()} icon="search" empty="No matches" description="Nothing you own has that name.">
-        <VirtualGrid items={result.items} minItemWidth={TILE_WIDTH} estimateRowHeight={170} gap={12}>
+        <VirtualGrid items={result.items} minItemWidth={GRID_WIDTH} estimateRowHeight={160} gap={10}>
           {(h) => (
             <ItemTile
               item={h.item}
