@@ -150,6 +150,80 @@ pub struct Shell {
     /// Revisions of thumbnails that changed during the run, by `thumb://` path. `thumbUrl`
     /// adds them so the webview loads the new image instead of its cached copy.
     pub thumb_revs: std::collections::HashMap<String, u32>,
+    /// The last Roblox launch: where it is now, or how it ended.
+    pub launch: Option<LaunchView>,
+    /// A Roblox player is running, launched by Bonsai or not.
+    pub player_open: bool,
+}
+
+/// Where a launch is. Mirrors `bonsai_core::launcher::session::Phase`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum LaunchPhase {
+    Preparing,
+    Opening,
+    Starting,
+    Joining,
+    InGame,
+    Teleporting,
+    Menu,
+    Disconnected,
+    Closed,
+    Crashed,
+    AlreadyRunning,
+    DidNotStart,
+    CommandFailed,
+    Replaced,
+    Failed,
+    Untracked,
+}
+
+impl From<bonsai_core::launcher::session::Phase> for LaunchPhase {
+    fn from(p: bonsai_core::launcher::session::Phase) -> Self {
+        use bonsai_core::launcher::session::Phase as P;
+        match p {
+            P::Preparing => Self::Preparing,
+            P::Opening => Self::Opening,
+            P::Starting => Self::Starting,
+            P::Joining => Self::Joining,
+            P::InGame => Self::InGame,
+            P::Teleporting => Self::Teleporting,
+            P::Menu => Self::Menu,
+            P::Disconnected => Self::Disconnected,
+            P::Closed => Self::Closed,
+            P::Crashed => Self::Crashed,
+            P::AlreadyRunning => Self::AlreadyRunning,
+            P::DidNotStart => Self::DidNotStart,
+            P::CommandFailed => Self::CommandFailed,
+            P::Replaced => Self::Replaced,
+            P::Failed => Self::Failed,
+            P::Untracked => Self::Untracked,
+        }
+    }
+}
+
+/// The last launch, for the status bar and join buttons.
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct LaunchView {
+    pub account: Id,
+    pub phase: LaunchPhase,
+    /// The player still runs (or is about to).
+    pub live: bool,
+    pub place_id: Option<Id>,
+    pub universe_id: Option<Id>,
+    pub job_id: Option<String>,
+    /// The experience's name, once known.
+    pub game: Option<String>,
+    /// The disconnect code, or the launch command's exit code.
+    pub code: Option<f64>,
+    /// Why it disconnected, in plain words.
+    pub reason: Option<String>,
+    /// Unix ms.
+    pub started_at: f64,
+    pub phase_at: f64,
+    pub joined_at: Option<f64>,
+    pub ended_at: Option<f64>,
 }
 
 /// A command still working: the account it acts as, its id and the argument it was run with.
@@ -385,6 +459,17 @@ pub struct Toast {
     pub error: bool,
     pub host: Option<String>,
     pub retry_after_secs: Option<u32>,
+    /// A button that runs a command, like "Rejoin".
+    pub action: Option<ToastActionView>,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ToastActionView {
+    pub label: String,
+    /// A registry command id.
+    pub command: String,
+    pub arg: Option<String>,
 }
 
 /// One entry of the command registry, for the palette, menus and shortcut handling.
@@ -1191,8 +1276,41 @@ pub fn shell(core: State<'_, Arc<Core>>) -> Shell {
                 error: t.error,
                 host: t.host.clone(),
                 retry_after_secs: t.retry_after_secs,
+                action: t.action.as_ref().map(|a| ToastActionView {
+                    label: a.label.clone(),
+                    command: a.command.clone(),
+                    arg: a.arg.clone(),
+                }),
             })
             .collect(),
+        launch: s.launch.as_ref().map(|l| {
+            use bonsai_core::launcher::session::{Phase, disconnect_reason};
+            let reason = match (l.phase, l.code) {
+                (Phase::Disconnected, Some(c)) => Some(disconnect_reason(c).to_owned()),
+                _ => None,
+            };
+            LaunchView {
+                account: Id(l.account.0),
+                phase: l.phase.into(),
+                live: l.live(),
+                place_id: l.place_id.map(Id),
+                universe_id: l.universe_id.map(Id),
+                job_id: l.job_id.clone(),
+                game: l
+                    .universe_id
+                    .and_then(|u| s.games.get(&u))
+                    .or_else(|| l.place_id.and_then(|p| s.game_for_place(p)))
+                    .map(|g| g.name.clone())
+                    .filter(|n| !n.is_empty()),
+                code: l.code.map(|c| c as f64),
+                reason,
+                started_at: l.started_at as f64,
+                phase_at: l.phase_at as f64,
+                joined_at: l.joined_at.map(|t| t as f64),
+                ended_at: l.ended_at.map(|t| t as f64),
+            }
+        }),
+        player_open: s.player_open,
         keychain_warning: s.keychain_warning.clone(),
         item_values: core.values_enabled(),
         wiki: core.wiki_enabled(),
@@ -1548,6 +1666,14 @@ pub fn dispatch(app: &AppHandle, core: &Arc<Core>, inv: Invocation) -> Result<()
                 account: acting()?,
                 target: JoinTarget::Server { place_id, job_id },
             });
+            Ok(())
+        }
+        CommandId::Rejoin => {
+            core.send(Cmd::Rejoin);
+            Ok(())
+        }
+        CommandId::CloseGame => {
+            core.send(Cmd::CloseGame);
             Ok(())
         }
         CommandId::JoinBestServer => pick(ServerPick::Best),
