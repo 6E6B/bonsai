@@ -196,6 +196,17 @@ pub fn encode(s: &str) -> String {
     out
 }
 
+/// Percent-encode a single URL path segment, escaping `.` / `..` dot-segments and marking
+/// empty segments invalid so `Client::build` refuses collapsed paths.
+pub fn encode_path_segment(s: &str) -> String {
+    match s {
+        "" => "\0".to_string(),
+        "." => "%2E".to_string(),
+        ".." => "%2E%2E".to_string(),
+        _ => encode(s),
+    }
+}
+
 /// Values that can go in a query string, header or form field.
 pub trait ParamValue {
     fn param_values(&self, out: &mut Vec<String>);
@@ -210,7 +221,7 @@ macro_rules! display_param {
         }
         impl PathValue for $t {
             fn path_string(&self) -> String {
-                encode(&self.to_string())
+                encode_path_segment(&self.to_string())
             }
         }
     )*};
@@ -354,7 +365,9 @@ macro_rules! api_enum {
 
         impl $crate::rt::PathValue for $name {
             fn path_string(&self) -> String {
-                self.wire().map(|w| $crate::rt::encode(&w)).unwrap_or_default()
+                self.wire()
+                    .map(|w| $crate::rt::encode_path_segment(&w))
+                    .unwrap_or_else(|| "\0".to_string())
             }
         }
     };
@@ -369,7 +382,7 @@ macro_rules! api_enum {
 }
 
 #[cfg(test)]
-#[allow(dead_code)]
+#[allow(dead_code, clippy::unwrap_used)]
 mod tests {
     use super::*;
 
@@ -423,6 +436,11 @@ mod tests {
         );
         assert_eq!(path_value(&"a/b"), "a%2Fb");
         assert_eq!(path_value(&Privacy::Friends), "2");
+        assert_eq!(path_value(&"."), "%2E");
+        assert_eq!(path_value(&".."), "%2E%2E");
+        assert_eq!(path_value(&""), "\0");
+        assert_eq!(path_value(&Sort::Unknown), "\0");
+        assert_eq!(path_value(&Privacy::Unknown), "\0");
     }
 }
 

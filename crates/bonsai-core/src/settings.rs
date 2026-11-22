@@ -294,6 +294,18 @@ pub fn valid_format_locale(s: &str) -> bool {
         || s.is_empty()
 }
 
+/// A Roblox client locale tag (`en_us`, `pt_br`, `es-419`), matching `^[a-zA-Z]{2,3}([_-][a-zA-Z0-9]{2,4})?$`.
+pub fn valid_roblox_locale(s: &str) -> bool {
+    let (lang, rest) = match s.split_once(['_', '-']) {
+        Some((l, r)) => (l, Some(r)),
+        None => (s, None),
+    };
+    let lang_ok = (2..=3).contains(&lang.len()) && lang.bytes().all(|b| b.is_ascii_alphabetic());
+    let region_ok =
+        rest.is_none_or(|r| (2..=4).contains(&r.len()) && r.bytes().all(|b| b.is_ascii_alphanumeric()));
+    lang_ok && region_ok
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
@@ -505,10 +517,14 @@ impl Default for Settings {
 
 impl Settings {
     pub fn load(p: &Path) -> Settings {
-        std::fs::read_to_string(p)
+        let mut s: Settings = std::fs::read_to_string(p)
             .ok()
             .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default()
+            .unwrap_or_default();
+        if !valid_roblox_locale(&s.locale) {
+            s.locale = "en_us".into();
+        }
+        s
     }
     pub fn save(&self, p: &Path) -> std::io::Result<()> {
         write_json(p, self)

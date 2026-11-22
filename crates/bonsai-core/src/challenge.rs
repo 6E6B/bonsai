@@ -355,6 +355,24 @@ impl Inner {
         self.repaint();
     }
 
+    pub(crate) fn forget_challenge_account(&self, account: AccountId) {
+        {
+            let mut st = self.challenge.lock();
+            if st.pending.as_ref().is_some_and(|p| p.account == account) {
+                st.pending = None;
+            }
+        }
+        let mut s = self.store.write();
+        if s.challenge.as_ref().is_some_and(|c| c.account == account) {
+            s.challenge = None;
+        }
+    }
+
+    pub(crate) fn clear_challenge(&self) {
+        self.challenge.lock().pending = None;
+        self.store.write().challenge = None;
+    }
+
     /// Change the open dialog, if it is still `seq`.
     fn update_prompt(&self, seq: u64, f: impl FnOnce(&mut ChallengePrompt)) {
         let mut s = self.store.write();

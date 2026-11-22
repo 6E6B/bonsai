@@ -199,7 +199,30 @@ pub(super) fn read_zip(zip: &[u8]) -> Result<Files, String> {
         total += size;
         files.push((path, data));
     }
-    Ok(strip_folder(files))
+    let stripped = strip_folder(files);
+    for (path, _) in &stripped {
+        if path.split('/').count() > MAX_DEPTH + 1 {
+            return Err(format!(
+                "The package has a file outside the plugin folder: \"{path}\"."
+            ));
+        }
+    }
+    Ok(stripped)
+}
+
+/// SHA-256 hex digest of a `.bonsaiplugin` archive file on disk.
+pub(super) fn archive_sha256(package: &Path) -> Option<String> {
+    let meta = std::fs::metadata(package).ok()?;
+    if meta.len() > MAX_BYTES {
+        return None;
+    }
+    let bytes = std::fs::read(package).ok()?;
+    Some(
+        Sha256::digest(&bytes)
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect(),
+    )
 }
 
 /// A zip made by compressing the plugin folder itself holds `<folder>/plugin.toml`; drop that
@@ -508,5 +531,24 @@ mod tests {
             "return 2"
         );
         assert!(!dir.join(".secret").exists());
+
+        // A flat zip without a stripped top folder cannot exceed MAX_DEPTH + 1 components.
+        let too_deep = (0..=MAX_DEPTH + 1)
+            .map(|i| {
+                if i == MAX_DEPTH + 1 {
+                    "leaf.luau".to_owned()
+                } else {
+                    format!("d{i}")
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("/");
+        let bad_zip = write_zip(&files(&[
+            ("plugin.toml", "id = \"hello\"\nentry = \"main.luau\""),
+            ("main.luau", "return 1"),
+            (&too_deep, "return 2"),
+        ]))
+        .unwrap();
+        assert!(read_zip(&bad_zip).is_err());
     }
 }

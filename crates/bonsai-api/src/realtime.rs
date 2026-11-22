@@ -77,9 +77,16 @@ pub fn parse_frame(account: AccountId, text: &str) -> (Vec<Event>, bool) {
     (out, close)
 }
 
+/// Maximum WebSocket frame/message size accepted from SignalR (1 MiB).
+const MAX_WS_MESSAGE: usize = 1024 * 1024;
+
 /// Connect and deliver events until the connection ends. Returns `Ok(())` when the hub
 /// closes cleanly.
 pub async fn run(client: &Client, mut on_event: impl FnMut(Event) + Send) -> Result<()> {
+    let mut revoked = client.subscribe_revoked();
+    if *revoked.borrow_and_update() {
+        return Err(Error::Message("Account session is locked.".into()));
+    }
     if !client.signed_in() {
         return Err(Error::Unauthorized);
     }
@@ -105,22 +112,41 @@ pub async fn run(client: &Client, mut on_event: impl FnMut(Event) + Send) -> Res
     } else {
         None
     };
-    let (ws, _) = tokio::time::timeout(
+    let ws_cfg = tokio_tungstenite::tungstenite::protocol::WebSocketConfig::default()
+        .max_message_size(Some(MAX_WS_MESSAGE))
+        .max_frame_size(Some(MAX_WS_MESSAGE));
+    let connect = tokio::time::timeout(
         Duration::from_secs(15),
-        tokio_tungstenite::connect_async_tls_with_config(req, None, false, connector),
-    )
-    .await
-    .map_err(|_| Error::Network("realtime: connect timed out".into()))?
-    .map_err(|e| Error::Network(format!("realtime: {}", redact(&e.to_string()))))?;
+        tokio_tungstenite::connect_async_tls_with_config(req, Some(ws_cfg), false, connector),
+    );
+    let (ws, _) = tokio::select! {
+        biased;
+        _ = revoked.changed() => return Err(Error::Message("Account session is locked.".into())),
+        res = connect => res
+            .map_err(|_| Error::Network("realtime: connect timed out".into()))?
+            .map_err(|e| Error::Network(format!("realtime: {}", redact(&e.to_string()))))?,
+    };
     let (mut tx, mut rx) = ws.split();
     let send = |m: String| Message::Text(m.into());
-    tx.send(send(format!("{{\"protocol\":\"json\",\"version\":1}}{RS}")))
-        .await
-        .map_err(|e| Error::Network(format!("realtime: {e}")))?;
+    tokio::select! {
+        biased;
+        _ = revoked.changed() => {
+            let _ = tx.send(Message::Close(None)).await;
+            return Err(Error::Message("Account session is locked.".into()));
+        }
+        res = tx.send(send(format!("{{\"protocol\":\"json\",\"version\":1}}{RS}"))) => {
+            res.map_err(|e| Error::Network(format!("realtime: {e}")))?;
+        }
+    }
     let mut ping = tokio::time::interval(PING_EVERY);
     ping.tick().await;
     loop {
         tokio::select! {
+            biased;
+            _ = revoked.changed() => {
+                let _ = tx.send(Message::Close(None)).await;
+                return Err(Error::Message("Account session is locked.".into()));
+            }
             _ = ping.tick() => {
                 tx.send(send(format!("{{\"type\":6}}{RS}")))
                     .await
@@ -157,6 +183,7 @@ fn redact(s: &str) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -182,5 +209,48 @@ mod tests {
     #[test]
     fn redacts_cookie() {
         assert_eq!(redact("bad header .ROBLOSECURITY=abc"), "bad header .<redacted>");
+    }
+
+    #[tokio::test]
+    async fn revoking_client_terminates_live_websocket_immediately() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (connected_tx, connected_rx) = tokio::sync::oneshot::channel();
+        let server = tokio::spawn(async move {
+            let (stream, _) = listener.accept().await.unwrap();
+            let mut ws = tokio_tungstenite::accept_async(stream).await.unwrap();
+            let _handshake = ws.next().await;
+            let _ = connected_tx.send(());
+            while let Some(Ok(msg)) = ws.next().await {
+                if msg.is_close() {
+                    break;
+                }
+            }
+        });
+
+        let client = Client::builder(AccountId(42))
+            .base(crate::Base::Replay(format!("http://{addr}")))
+            .cookie(crate::Secret::new("synthetic-ws-cookie"))
+            .build()
+            .unwrap();
+        let task_client = client.clone();
+        let runner = tokio::spawn(async move { run(&task_client, |_| {}).await });
+
+        tokio::time::timeout(Duration::from_secs(2), connected_rx)
+            .await
+            .unwrap()
+            .unwrap();
+        client.revoke();
+
+        let err = tokio::time::timeout(Duration::from_secs(1), runner)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap_err();
+        assert!(matches!(err, Error::Message(_)), "unexpected err: {err:?}");
+        tokio::time::timeout(Duration::from_secs(1), server)
+            .await
+            .unwrap()
+            .unwrap();
     }
 }

@@ -182,10 +182,12 @@ impl Core {
                 .spawn_blocking(move || {
                     let _io = reader.inner.hub.keychain_io.lock();
                     // An explicit local-only development session. Never read this for remote hubs.
-                    let local = reader.inner.hub.client.as_ref().is_some_and(|c| {
-                        c.origin().starts_with("http://127.0.0.1:")
-                            || c.origin().starts_with("http://localhost:")
-                    });
+                    let local = reader
+                        .inner
+                        .hub
+                        .client
+                        .as_ref()
+                        .is_some_and(|c| c.is_loopback_http());
                     if local && let Ok(value) = std::env::var("BONSAI_HUB_SESSION") {
                         return Some(value);
                     }
@@ -394,10 +396,10 @@ impl Core {
                             return Err("Plugin requires an unsupported API version.".into());
                         }
                         let revoked = client.revocations().await?;
-                        if revoked
-                            .iter()
-                            .any(|r| r.id == entry.id && r.version == entry.version)
-                        {
+                        if revoked.iter().any(|r| {
+                            (r.id == entry.id && (r.version.is_empty() || r.version == entry.version))
+                                || (!r.sha256.is_empty() && r.sha256.eq_ignore_ascii_case(&entry.sha256))
+                        }) {
                             return Err("This plugin release was revoked.".into());
                         }
                         let bytes = client.download(&entry).await?;

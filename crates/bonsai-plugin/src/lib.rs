@@ -8,17 +8,19 @@ mod view;
 
 pub use manifest::{Manifest, Permission, Refused, Setting, SettingKind};
 pub use sandbox::{
-    Action, Arg, Command, Ctx, EVENTS, Host, HttpRequest, Limits, Outcome, Plugin, Read, TradeStatus,
+    Action, Arg, Command, Ctx, EVENTS, Host, HttpRequest, Limits, MAX_ACTIONS, Outcome, Plugin, Read,
+    TradeStatus,
 };
 pub use view::{ButtonStyle, Cell, MAX_ROWS, Node, TableColumn, ViewEvent, is_action};
 
 /// The plugin API version this build provides. A manifest asking for a newer one is refused.
 pub const API_VERSION: u32 = 1;
 
-/// Plugin and plugin command ids: lowercase letters, digits and dashes.
+/// Plugin and plugin command ids: lowercase letters, digits and dashes, without a leading dash.
 pub fn is_plugin_id(s: &str) -> bool {
     !s.is_empty()
         && s.len() <= 64
+        && !s.starts_with('-')
         && s.bytes()
             .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
 }

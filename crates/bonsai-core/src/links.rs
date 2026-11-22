@@ -116,10 +116,23 @@ pub fn report_target(target: &str, me: Option<u64>) -> Option<String> {
 /// Whether a web link points at a Roblox site (www/web/help). Notification links are only
 /// opened when this holds.
 pub fn is_roblox_url(url: &str) -> bool {
-    let Some(rest) = url.strip_prefix("https://") else {
+    if url.contains('\\') {
+        return false;
+    }
+    let Ok(parsed) = url::Url::parse(url) else {
         return false;
     };
-    let host = rest.split(['/', '?', '#']).next().unwrap_or("");
+    if parsed.scheme() != "https"
+        || !parsed.username().is_empty()
+        || parsed.password().is_some()
+        || parsed.port().is_some()
+    {
+        return false;
+    }
+    let Some(host) = parsed.domain() else {
+        return false;
+    };
+    let host = host.to_ascii_lowercase();
     host == "roblox.com" || host.ends_with(".roblox.com")
 }
 
@@ -241,5 +254,16 @@ mod tests {
         assert_eq!(target_id("12"), None);
         assert_eq!(target_id("group:7/forum/a/b"), Some(7));
         assert_eq!(page("group:7/forum/a/b", None), page("group:7", None));
+    }
+
+    #[test]
+    fn roblox_url_rejects_spoofed_hosts() {
+        assert!(is_roblox_url("https://www.roblox.com/home"));
+        assert!(is_roblox_url("https://roblox.com/"));
+        assert!(!is_roblox_url("https://attacker.com@.roblox.com/"));
+        assert!(!is_roblox_url("https://attacker.com\\.roblox.com/"));
+        assert!(!is_roblox_url("https://www.roblox.com:8443/home"));
+        assert!(!is_roblox_url("http://www.roblox.com/home"));
+        assert!(!is_roblox_url("https://127.0.0.1/"));
     }
 }

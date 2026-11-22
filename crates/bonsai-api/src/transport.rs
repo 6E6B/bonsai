@@ -192,7 +192,12 @@ impl RateLimiter {
     /// How long to wait before the next request on bucket `host` may go out; takes the token.
     /// Requests line up behind each other, and behind a hold: one asked for during a hold goes
     /// after it ends, spaced at the bucket's rate, not all at once when it lifts.
+    #[cfg(test)]
     fn reserve(&self, host: &str) -> Duration {
+        self.reserve_queued(host).0
+    }
+
+    fn reserve_queued(&self, host: &str) -> (Duration, Duration) {
         let (rate, burst) = self.limits(host);
         let now = Instant::now();
         let mut map = self.buckets.lock();
@@ -220,7 +225,7 @@ impl RateLimiter {
         } else {
             Duration::ZERO
         };
-        held + queued
+        (held + queued, queued)
     }
 
     /// How much longer bucket `host` is held, if at all.
@@ -235,15 +240,17 @@ impl RateLimiter {
 
     pub async fn acquire(&self, host: &str) {
         let start = Instant::now();
-        let mut wait = self.reserve(host);
+        let (mut wait, queued) = self.reserve_queued(host);
         while !wait.is_zero() {
             tokio::time::sleep(wait).await;
             // A 429 or a spent quota may have held the bucket while this one waited. Going
-            // now would only earn another 429, so take a new place after the hold.
-            wait = if self.held_for(host).is_zero() {
+            // now would only earn another 429, so wait out the hold plus our already-paid
+            // queue offset without deducting a second token.
+            let held = self.held_for(host);
+            wait = if held.is_zero() {
                 Duration::ZERO
             } else {
-                self.reserve(host)
+                held + queued
             };
         }
         let waited = start.elapsed();
@@ -425,11 +432,20 @@ type ChallengeHook = Box<
 /// How many challenges one request may go through (a captcha can lead to two-step, and so on).
 const MAX_CHALLENGES: u32 = 3;
 
+/// Maximum API JSON/text response size buffered by [`Client::send`].
+const MAX_API_RESPONSE: usize = 32 * 1024 * 1024;
+/// Maximum download size for [`Client::fetch_cdn`] and [`Client::fetch_wiki_image`].
+const MAX_CDN_BYTES: usize = 25 * 1024 * 1024;
+/// Maximum download size for [`Client::fetch_font`].
+const MAX_FONT_BYTES: usize = 10 * 1024 * 1024;
+
 struct Inner {
     revoked: tokio::sync::watch::Sender<bool>,
     http: reqwest::Client,
     /// For [`Client::fetch_user_image`]: reaches public addresses only. Built on first use.
     public_http: OnceLock<reqwest::Client>,
+    /// For production [`Client::fetch_file_limited`]: public addresses only, manual hop checks.
+    cdn_http: OnceLock<reqwest::Client>,
     user_agent: String,
     account: AccountId,
     cookie: RwLock<Option<Secret>>,
@@ -540,6 +556,7 @@ impl ClientBuilder {
                 revoked: tokio::sync::watch::channel(false).0,
                 http,
                 public_http: OnceLock::new(),
+                cdn_http: OnceLock::new(),
                 user_agent: self.user_agent,
                 account: self.account,
                 cookie: RwLock::new(self.cookie),
@@ -586,6 +603,10 @@ impl Client {
 
     pub fn limiter(&self) -> &Arc<RateLimiter> {
         &self.inner.limiter
+    }
+
+    pub(crate) fn subscribe_revoked(&self) -> tokio::sync::watch::Receiver<bool> {
+        self.inner.revoked.subscribe()
     }
 
     /// Send a request. Handles CSRF, 429 and 5xx retries; returns typed errors for 401 and
@@ -643,11 +664,12 @@ impl Client {
             if landed_on_roblox {
                 self.capture_rotated_cookie(&headers);
             }
-            let body = resp
-                .bytes()
-                .await
-                .map_err(|e| Error::Network(e.without_url().to_string()))?
-                .to_vec();
+            let body = read_body_limited(
+                resp,
+                MAX_API_RESPONSE,
+                "The server response exceeds the download size limit.",
+            )
+            .await?;
             let response = Response {
                 status,
                 headers,
@@ -667,7 +689,7 @@ impl Client {
                 None => {}
             }
 
-            if let Some(ch) = challenge_from(&response.headers) {
+            if landed_on_roblox && let Some(ch) = challenge_from(&response.headers) {
                 let hook =
                     self.inner.on_challenge.as_ref().filter(|_| {
                         req.method != Method::GET && self.signed_in() && challenges < MAX_CHALLENGES
@@ -742,9 +764,11 @@ impl Client {
     /// `https://*.rbxcdn.com` and `https://contentdelivery.roblox.com` URLs are allowed (asset
     /// delivery sometimes returns the latter); no cookie is sent.
     pub async fn fetch_cdn(&self, url: &str) -> Result<Vec<u8>> {
-        self.fetch_file(url, |h| {
-            h == "rbxcdn.com" || h.ends_with(".rbxcdn.com") || h == "contentdelivery.roblox.com"
-        })
+        self.fetch_file_limited(
+            url,
+            |h| h == "rbxcdn.com" || h.ends_with(".rbxcdn.com") || h == "contentdelivery.roblox.com",
+            MAX_CDN_BYTES,
+        )
         .await
     }
 
@@ -762,13 +786,15 @@ impl Client {
     /// Download an image from a Fandom wiki article (see [`crate::fandom::IMAGE_HOST`]). Only
     /// that host is allowed; no cookie is sent.
     pub async fn fetch_wiki_image(&self, url: &str) -> Result<Vec<u8>> {
-        self.fetch_file(url, |h| h == crate::fandom::IMAGE_HOST).await
+        self.fetch_file_limited(url, |h| h == crate::fandom::IMAGE_HOST, MAX_CDN_BYTES)
+            .await
     }
 
     /// Download a font file (a URL from Google Fonts' CSS API). Only `https://fonts.gstatic.com`
     /// URLs are allowed; no cookie is sent.
     pub async fn fetch_font(&self, url: &str) -> Result<Vec<u8>> {
-        self.fetch_file(url, |h| h == "fonts.gstatic.com").await
+        self.fetch_file_limited(url, |h| h == "fonts.gstatic.com", MAX_FONT_BYTES)
+            .await
     }
 
     /// Download an image the user pasted a link to, for the app background. Any public `https`
@@ -776,25 +802,18 @@ impl Client {
     /// through DNS or a redirect. No cookie is sent. Fails past `max` bytes without reading on.
     /// The caller checks that the bytes are an image.
     pub async fn fetch_user_image(&self, url: &str, max: usize) -> Result<Vec<u8>> {
-        let host = https_host(url);
-        if host.is_empty() || host.contains(['@', '\\']) {
-            return Err(Error::Encode("only https links work".into()));
-        }
-        let (url, http) = match &self.inner.base {
-            Base::Production => {
-                if literal_ip(host).is_some_and(|ip| !is_public_ip(ip)) {
-                    return Err(Error::Message(PRIVATE_ADDRESS.into()));
-                }
-                (url.to_string(), self.public_http()?)
-            }
+        let check_ip = matches!(self.inner.base, Base::Production);
+        let (parsed, host) = checked_user_image_url(url, check_ip)?;
+        let (target, http) = match &self.inner.base {
+            Base::Production => (parsed.to_string(), self.public_http()?),
             Base::Replay(_) => (
-                self.inner.base.url(host, &url[8 + host.len()..]),
+                self.inner.base.url(&host, &path_and_query(&parsed)),
                 &self.inner.http,
             ),
         };
-        self.inner.limiter.acquire(host).await;
-        let mut resp = http
-            .get(url)
+        self.inner.limiter.acquire(&host).await;
+        let resp = http
+            .get(target)
             .send()
             .await
             .map_err(|e| Error::Network(e.without_url().to_string()))?;
@@ -802,32 +821,20 @@ impl Client {
         if !(200..300).contains(&status) {
             return Err(Error::Message(format!("The link answered {status}.")));
         }
-        let too_big = || Error::Message(format!("The image is over {} MB.", max >> 20));
-        if resp.content_length().is_some_and(|n| n > max as u64) {
-            return Err(too_big());
-        }
-        let mut body = Vec::new();
-        while let Some(chunk) = resp
-            .chunk()
-            .await
-            .map_err(|e| Error::Network(e.without_url().to_string()))?
-        {
-            if body.len() + chunk.len() > max {
-                return Err(too_big());
-            }
-            body.extend_from_slice(&chunk);
-        }
-        Ok(body)
+        let too_big = format!("The image is over {} MB.", max >> 20);
+        read_body_limited(resp, max, &too_big).await
     }
 
-    /// The client for [`Self::fetch_user_image`]: its resolver drops non-public addresses and
-    /// its redirects stay on https and off non-public address literals.
+    /// The client for [`Self::fetch_user_image`]: its resolver drops non-public addresses,
+    /// ignores proxy environment variables, and keeps redirects on https port 443 and off
+    /// non-public address literals.
     fn public_http(&self) -> Result<&reqwest::Client> {
         if let Some(c) = self.inner.public_http.get() {
             return Ok(c);
         }
         let c = reqwest::Client::builder()
             .user_agent(&self.inner.user_agent)
+            .no_proxy()
             .connect_timeout(Duration::from_secs(10))
             .timeout(Duration::from_secs(30))
             .dns_resolver(PublicOnly)
@@ -837,9 +844,20 @@ impl Client {
         Ok(self.inner.public_http.get_or_init(|| c))
     }
 
-    /// GET a public file by URL with no credentials, if `allowed` accepts its host.
-    async fn fetch_file(&self, url: &str, allowed: impl Fn(&str) -> bool) -> Result<Vec<u8>> {
-        self.fetch_file_limited(url, allowed, usize::MAX).await
+    fn cdn_http(&self) -> Result<&reqwest::Client> {
+        if let Some(c) = self.inner.cdn_http.get() {
+            return Ok(c);
+        }
+        let c = reqwest::Client::builder()
+            .user_agent(&self.inner.user_agent)
+            .no_proxy()
+            .connect_timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(30))
+            .dns_resolver(PublicOnly)
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|e| Error::Network(e.to_string()))?;
+        Ok(self.inner.cdn_http.get_or_init(|| c))
     }
 
     async fn fetch_file_limited(
@@ -848,47 +866,55 @@ impl Client {
         allowed: impl Fn(&str) -> bool,
         max: usize,
     ) -> Result<Vec<u8>> {
-        let host = https_host(url);
-        if !allowed(host) {
-            return Err(Error::Encode(format!("refusing to fetch url host {host}")));
-        }
-        let url = match &self.inner.base {
-            Base::Production => url.to_string(),
-            Base::Replay(_) => self.inner.base.url(host, &url[8 + host.len()..]),
+        let (mut current, mut host) = checked_allowed_https_url(url, &allowed)?;
+        let resp = match &self.inner.base {
+            Base::Production => {
+                let http = self.cdn_http()?;
+                let mut hops = 0usize;
+                loop {
+                    self.inner.limiter.acquire(&host).await;
+                    let r = http
+                        .get(current.clone())
+                        .send()
+                        .await
+                        .map_err(|e| Error::Network(e.without_url().to_string()))?;
+                    if r.status().is_redirection() {
+                        if hops >= 10 {
+                            return Err(Error::Encode("too many redirects".into()));
+                        }
+                        let loc = r
+                            .headers()
+                            .get(reqwest::header::LOCATION)
+                            .and_then(|v| v.to_str().ok())
+                            .ok_or_else(|| Error::Encode("redirect missing location".into()))?;
+                        if loc.contains('\\') {
+                            return Err(Error::Encode("refusing malformed redirect location".into()));
+                        }
+                        let joined = current
+                            .join(loc)
+                            .map_err(|_| Error::Encode("refusing malformed redirect location".into()))?;
+                        let (next_url, next_host) = checked_allowed_https_url(joined.as_str(), &allowed)?;
+                        current = next_url;
+                        host = next_host;
+                        hops += 1;
+                        continue;
+                    }
+                    break r;
+                }
+            }
+            Base::Replay(_) => {
+                let target = self.inner.base.url(&host, &path_and_query(&current));
+                self.inner.limiter.acquire(&host).await;
+                self.inner
+                    .http
+                    .get(target)
+                    .send()
+                    .await
+                    .map_err(|e| Error::Network(e.without_url().to_string()))?
+            }
         };
-        self.inner.limiter.acquire(host).await;
-        let mut resp = self
-            .inner
-            .http
-            .get(url)
-            .send()
-            .await
-            .map_err(|e| Error::Network(e.without_url().to_string()))?;
-        if matches!(self.inner.base, Base::Production) {
-            let landed = resp.url().host_str().unwrap_or("");
-            if !allowed(landed) {
-                return Err(Error::Encode(format!("refusing a redirect to host {landed}")));
-            }
-        }
         let status = resp.status().as_u16();
-        if resp.content_length().is_some_and(|size| size > max as u64) {
-            return Err(Error::Message(
-                "The asset exceeds the download size limit.".into(),
-            ));
-        }
-        let mut body = Vec::new();
-        while let Some(chunk) = resp
-            .chunk()
-            .await
-            .map_err(|e| Error::Network(e.without_url().to_string()))?
-        {
-            if chunk.len() > max.saturating_sub(body.len()) {
-                return Err(Error::Message(
-                    "The asset exceeds the download size limit.".into(),
-                ));
-            }
-            body.extend_from_slice(&chunk);
-        }
+        let body = read_body_limited(resp, max, "The asset exceeds the download size limit.").await?;
         if !(200..300).contains(&status) {
             return Err(status_error(status, &body));
         }
@@ -918,6 +944,9 @@ impl Client {
     fn build(&self, req: &Request) -> Result<reqwest::RequestBuilder> {
         if *self.inner.revoked.borrow() {
             return Err(Error::Message("Account session is locked.".into()));
+        }
+        if !valid_request_path(&req.path) {
+            return Err(Error::Encode("invalid request path segment".into()));
         }
         let method = match req.method {
             Method::GET => reqwest::Method::GET,
@@ -974,7 +1003,7 @@ impl Client {
             v.set_sensitive(true);
             b = b.header("x-csrf-token", v);
         }
-        if let Some(ch) = &req.challenge {
+        if roblox && let Some(ch) = &req.challenge {
             b = b
                 .header("rblx-challenge-id", ch.id.as_str())
                 .header("rblx-challenge-type", ch.kind.as_str())
@@ -1036,37 +1065,144 @@ impl Client {
     }
 }
 
-/// The host of an `https://` URL, or empty.
 const PRIVATE_ADDRESS: &str = "That link points to a local or private address.";
 
-fn is_rbxcdn_host(host: &str) -> bool {
-    host == "rbxcdn.com" || host.ends_with(".rbxcdn.com")
+async fn read_body_limited(mut resp: reqwest::Response, max: usize, err_msg: &str) -> Result<Vec<u8>> {
+    if resp.content_length().is_some_and(|n| n > max as u64) {
+        return Err(Error::Message(err_msg.into()));
+    }
+    let mut body = Vec::new();
+    while let Some(chunk) = resp
+        .chunk()
+        .await
+        .map_err(|e| Error::Network(e.without_url().to_string()))?
+    {
+        if chunk.len() > max.saturating_sub(body.len()) {
+            return Err(Error::Message(err_msg.into()));
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(body)
 }
 
-/// Follows a redirect only if it stays on https once there, and, when the request started at
-/// Roblox, only to Roblox or its CDN. reqwest drops the cookie on a cross-host hop but keeps
-/// the CSRF token and every other header.
+fn path_and_query(url: &reqwest::Url) -> String {
+    let mut out = url.path().to_string();
+    if let Some(q) = url.query() {
+        out.push('?');
+        out.push_str(q);
+    }
+    out
+}
+
+fn valid_request_path(path: &str) -> bool {
+    path.starts_with('/')
+        && !path.contains(['\0', '\\'])
+        && !path.contains("//")
+        && !path.split('/').skip(1).any(|seg| {
+            matches!(
+                seg.to_ascii_lowercase().as_str(),
+                "." | ".." | "%2e" | "%2e%2e" | ".%2e" | "%2e."
+            )
+        })
+}
+
+fn url_host_ok(url: &reqwest::Url, check_ip: bool) -> std::result::Result<bool, Error> {
+    if let Some(d) = url.domain() {
+        return Ok(!d.is_empty());
+    }
+    let Some(h) = url.host_str() else {
+        return Ok(false);
+    };
+    let Ok(ip) = h.trim_start_matches('[').trim_end_matches(']').parse::<IpAddr>() else {
+        return Ok(false);
+    };
+    if check_ip && !is_public_ip(ip) {
+        return Err(Error::Message(PRIVATE_ADDRESS.into()));
+    }
+    Ok(true)
+}
+
+fn checked_allowed_https_url(raw: &str, allowed: &impl Fn(&str) -> bool) -> Result<(reqwest::Url, String)> {
+    if raw.is_empty() || raw.len() > 8192 || raw.contains('\\') {
+        return Err(Error::Encode("refusing malformed https url".into()));
+    }
+    let parsed =
+        reqwest::Url::parse(raw).map_err(|_| Error::Encode("refusing malformed https url".into()))?;
+    if parsed.scheme() != "https"
+        || !parsed.username().is_empty()
+        || parsed.password().is_some()
+        || parsed.port_or_known_default() != Some(443)
+    {
+        return Err(Error::Encode(
+            "refusing url outside https port 443 without credentials".into(),
+        ));
+    }
+    let Some(host) = parsed.domain().map(str::to_owned) else {
+        return Err(Error::Encode("refusing ip literal url".into()));
+    };
+    if !allowed(&host) {
+        return Err(Error::Encode(format!("refusing to fetch url host {host}")));
+    }
+    Ok((parsed, host))
+}
+
+fn checked_user_image_url(raw: &str, check_ip: bool) -> Result<(reqwest::Url, String)> {
+    if raw.is_empty() || raw.len() > 8192 || raw.contains('\\') {
+        return Err(Error::Encode("only https links work".into()));
+    }
+    let parsed = reqwest::Url::parse(raw).map_err(|_| Error::Encode("only https links work".into()))?;
+    if parsed.scheme() != "https"
+        || !parsed.username().is_empty()
+        || parsed.password().is_some()
+        || parsed.port_or_known_default() != Some(443)
+    {
+        return Err(Error::Encode("only https links work".into()));
+    }
+    if !url_host_ok(&parsed, check_ip)? {
+        return Err(Error::Encode("only https links work".into()));
+    }
+    let host = parsed
+        .host_str()
+        .ok_or_else(|| Error::Encode("only https links work".into()))?
+        .to_owned();
+    Ok((parsed, host))
+}
+
+/// Follows a redirect only if it stays on https port 443 without credentials and, when the
+/// request started at Roblox, stays strictly on `*.roblox.com` so `x-csrf-token` and
+/// `rblx-challenge-*` headers never cross to another domain; non-Roblox API hosts must stay
+/// on their initial host.
 fn redirect_policy(a: reqwest::redirect::Attempt) -> reqwest::redirect::Action {
     let prev = a.previous();
-    let from_roblox = prev
-        .first()
-        .and_then(|u| u.host_str())
-        .is_some_and(is_roblox_host);
+    let first_host = prev.first().and_then(|u| u.host_str());
+    let from_roblox = first_host.is_some_and(is_roblox_host);
     let was_https = prev.iter().any(|u| u.scheme() == "https");
     let next = a.url();
     let host = next.host_str().unwrap_or("");
+    let same_trust_zone = if from_roblox {
+        is_roblox_host(host)
+    } else {
+        first_host == Some(host)
+    };
     let ok = prev.len() < 10
-        && (!was_https || next.scheme() == "https")
-        && (!from_roblox || is_roblox_host(host) || is_rbxcdn_host(host));
+        && (!was_https || (next.scheme() == "https" && next.port_or_known_default() == Some(443)))
+        && next.username().is_empty()
+        && next.password().is_none()
+        && (!was_https || same_trust_zone);
     if ok { a.follow() } else { a.stop() }
 }
 
-/// [`redirect_policy`] for user links: https only, and never to a non-public address literal
-/// (names go through [`PublicOnly`]).
+/// [`redirect_policy`] for user links: https port 443 without credentials only, and never to a
+/// non-public address literal (names go through [`PublicOnly`]).
 fn public_redirect_policy(a: reqwest::redirect::Attempt) -> reqwest::redirect::Action {
     let next = a.url();
-    let host = next.host_str().unwrap_or("");
-    let ok = a.previous().len() < 10 && next.scheme() == "https" && literal_ip(host).is_none_or(is_public_ip);
+    let host_ok = matches!(url_host_ok(next, true), Ok(true));
+    let ok = a.previous().len() < 10
+        && next.scheme() == "https"
+        && next.username().is_empty()
+        && next.password().is_none()
+        && next.port_or_known_default() == Some(443)
+        && host_ok;
     if ok { a.follow() } else { a.stop() }
 }
 
@@ -1088,11 +1224,6 @@ impl reqwest::dns::Resolve for PublicOnly {
             Ok(Box::new(addrs.into_iter()) as reqwest::dns::Addrs)
         })
     }
-}
-
-/// The address in a URL host that is an IP literal (`1.2.3.4`, `[::1]`).
-fn literal_ip(host: &str) -> Option<IpAddr> {
-    host.trim_start_matches('[').trim_end_matches(']').parse().ok()
 }
 
 /// Whether `ip` is a globally routed unicast address: not loopback, private, link-local, shared
@@ -1119,22 +1250,21 @@ pub fn is_public_ip(ip: IpAddr) -> bool {
                 return is_public_ip(IpAddr::V4(v4));
             }
             let s = v6.segments();
-            // NAT64 carries an IPv4 address in its low 32 bits.
-            if s[..6] == [0x64, 0xff9b, 0, 0, 0, 0] {
+            // NAT64 (64:ff9b::/96 and 64:ff9b:1::/48) carries an IPv4 address in its low 32 bits.
+            if s[..6] == [0x64, 0xff9b, 0, 0, 0, 0] || (s[0] == 0x64 && s[1] == 0xff9b && s[2] == 1) {
                 let [.., hi, lo] = s;
                 let v4 = std::net::Ipv4Addr::from((u32::from(hi) << 16) | u32::from(lo));
                 return is_public_ip(IpAddr::V4(v4));
             }
-            // Global unicast is 2000::/3; drop documentation (2001:db8::/32) inside it.
-            (s[0] & 0xe000) == 0x2000 && !(s[0] == 0x2001 && s[1] == 0x0db8)
+            // Global unicast is 2000::/3; drop IETF/Teredo/benchmarking (2001::/23),
+            // documentation (2001:db8::/32 and 3fff::/20), and 6to4 (2002::/16).
+            (s[0] & 0xe000) == 0x2000
+                && !(s[0] == 0x2001 && s[1] < 0x0200)
+                && !(s[0] == 0x2001 && s[1] == 0x0db8)
+                && s[0] != 0x2002
+                && !(s[0] == 0x3fff && (s[1] & 0xf000) == 0x0000)
         }
     }
-}
-
-fn https_host(url: &str) -> &str {
-    url.strip_prefix("https://")
-        .and_then(|r| r.split(['/', '?', '#']).next())
-        .unwrap_or("")
 }
 
 fn status_error(status: u16, body: &[u8]) -> Error {
@@ -1256,11 +1386,19 @@ mod tests {
             "::1",
             "::ffff:127.0.0.1",
             "64:ff9b::a00:1",
+            "64:ff9b:1::7f00:1",
             "fc00::1",
             "fd12:3456::1",
             "fe80::1",
             "ff02::1",
+            "2001::1",
+            "2001:2::1",
+            "2001:1ff::1",
             "2001:db8::1",
+            "2002:7f00:0001::1",
+            "2002:0101:0101::1",
+            "3fff::1",
+            "3fff:0fff::1",
         ] {
             assert!(!is_public_ip(ip.parse().unwrap()), "{ip}");
         }
@@ -1269,6 +1407,7 @@ mod tests {
             "172.32.0.1",
             "100.128.0.1",
             "::ffff:8.8.8.8",
+            "2001:4860:4860::8888",
             "2606:4700::1111",
         ] {
             assert!(is_public_ip(ip.parse().unwrap()), "{ip}");
@@ -1276,10 +1415,52 @@ mod tests {
     }
 
     #[test]
-    fn literal_ip_reads_bracketed_v6() {
-        assert_eq!(literal_ip("[::1]"), Some("::1".parse().unwrap()));
-        assert_eq!(literal_ip("127.0.0.1"), Some("127.0.0.1".parse().unwrap()));
-        assert_eq!(literal_ip("example.com"), None);
+    fn url_and_path_validators_reject_differentials_and_private_ips() {
+        let allow_cdn =
+            |h: &str| h == "rbxcdn.com" || h.ends_with(".rbxcdn.com") || h == "contentdelivery.roblox.com";
+        assert!(checked_allowed_https_url("https://tr.rbxcdn.com/abc/150/150/Png", &allow_cdn).is_ok());
+        for bad in [
+            "http://tr.rbxcdn.com/abc",
+            "https://127.0.0.1:8443\\.rbxcdn.com/abc",
+            "https://evil.example\\.rbxcdn.com/abc",
+            "https://user@tr.rbxcdn.com/abc",
+            "https://tr.rbxcdn.com:8443/abc",
+            "https://127.0.0.1/abc",
+            "https://[::1]/abc",
+        ] {
+            assert!(checked_allowed_https_url(bad, &allow_cdn).is_err(), "{bad}");
+        }
+
+        assert!(checked_user_image_url("https://example.com/bg.png", true).is_ok());
+        assert!(checked_user_image_url("https://1.1.1.1/bg.png", true).is_ok());
+        for bad in [
+            "http://example.com/bg.png",
+            "https://example.com:8443/bg.png",
+            "https://user:pass@example.com/bg.png",
+            "https://127.0.0.1\\.example.com/bg.png",
+            "https://127.0.0.1/bg.png",
+            "https://127.1/bg.png",
+            "https://2130706433/bg.png",
+            "https://0x7f000001/bg.png",
+            "https://[::1]/bg.png",
+            "https://[2002:7f00:0001::1]/bg.png",
+        ] {
+            assert!(checked_user_image_url(bad, true).is_err(), "{bad}");
+        }
+
+        assert!(valid_request_path("/v1/users/123/profile"));
+        assert!(valid_request_path("/report-abuse/"));
+        for bad_path in [
+            "/v1/users//profile",
+            "/v1/users/./profile",
+            "/v1/users/../profile",
+            "/v1/users/%2E/profile",
+            "/v1/users/%2E%2E/profile",
+            "/v1/users/\0/profile",
+            "/v1/users\\admin",
+        ] {
+            assert!(!valid_request_path(bad_path), "{bad_path}");
+        }
     }
 
     #[test]
@@ -1338,6 +1519,9 @@ mod tests {
             "{:?}",
             start.elapsed()
         );
+        // Must have deducted only one token for `waiter`, not a second token on wakeup.
+        let tokens = l.buckets.lock().get("a").unwrap().tokens;
+        assert!(tokens >= -1.0, "deducted extra tokens: {tokens}");
     }
 
     #[test]

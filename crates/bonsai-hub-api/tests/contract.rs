@@ -101,3 +101,42 @@ fn vendored_contract_version_matches() {
         assert!(contract["paths"][p].is_object());
     }
 }
+
+#[tokio::test]
+async fn version_paths_loopback_and_revocations_are_validated() {
+    for bad in [".", "..", "1..0", ".1", "1.", "-1", "1-", "../x"] {
+        assert!(!bonsai_hub_api::valid_version_path(bad), "{bad}");
+        let mut entry = bonsai_hub_api::Entry {
+            id: "ok".into(),
+            kind: Kind::Plugins,
+            version: bad.into(),
+            sha256: "a".repeat(64),
+            ..Default::default()
+        };
+        assert!(client("https://hub.6e6b.dev").download(&entry).await.is_err());
+        entry.version = "1.0.0".into();
+    }
+    for ok in ["1.0.0", "1.2.3-rc.1", "0.1.0+build1"] {
+        assert!(bonsai_hub_api::valid_version_path(ok), "{ok}");
+    }
+    for local in [
+        "http://127.0.0.1:8787",
+        "http://localhost:8787",
+        "http://[::1]:8787",
+        "http://localhost",
+        "http://127.0.0.1",
+    ] {
+        assert!(client(local).is_loopback_http(), "{local}");
+    }
+    assert!(!client("https://hub.6e6b.dev").is_loopback_http());
+
+    let server = MockServer::start().await;
+    Mock::given(path("/v1/revocations"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({"items":[{"id":"../evil","version":"..","sha256":"nope"}]})),
+        )
+        .mount(&server)
+        .await;
+    assert!(client(&server.uri()).revocations().await.is_err());
+}
