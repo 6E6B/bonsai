@@ -488,8 +488,10 @@ fn snap(v: f64, r: &ScaleRule) -> f64 {
 }
 
 /// Rigid accessory asset types: hat, hair, face, neck, shoulder, front, back, waist. They share
-/// one cap instead of the per-type `maxNumber` from avatar rules, which says one hair at a time
-/// although the website wears several.
+/// one cap instead of the per-type `maxNumber` from avatar rules, which still says one hair and
+/// three hats. Checked live on 2026-11-22 with v2 set-wearing-assets: five hairs, four hats or
+/// three necklaces are accepted, ten mixed are accepted, and an eleventh fails the whole request
+/// with `LimitExceeded`. Layered clothing does not count toward the ten.
 const RIGID_ACCESSORIES: [i64; 8] = [8, 41, 42, 43, 44, 45, 46, 47];
 
 /// How many rigid accessories an avatar wears at once, across all their types.
