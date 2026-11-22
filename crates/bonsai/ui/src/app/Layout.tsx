@@ -598,6 +598,12 @@ export function Layout(props: ParentProps) {
         variant: t.error ? "error" : t.retryAfterSecs ? "warning" : "neutral",
         countdownSecs: t.retryAfterSecs ?? undefined,
         key: t.host ?? undefined,
+        action: t.action
+          ? {
+              label: t.action.label,
+              onClick: () => void run(t.action?.command ?? "", t.action?.arg ?? null, t.account, true),
+            }
+          : undefined,
       })
       void commands.dismissToast(t.id)
     }

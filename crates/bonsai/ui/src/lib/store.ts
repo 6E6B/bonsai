@@ -78,6 +78,8 @@ const shellMirror = mirror<Shell>(
     pluginOpen: null,
     pluginRev: 0,
     thumbRevs: {},
+    launch: null,
+    playerOpen: false,
     pluginAutomation: null,
     pluginBudget: null,
     pluginWrote: null,

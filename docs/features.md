@@ -38,6 +38,7 @@ Features beyond the website, with the command that reaches each.
 | Tabs: pin, duplicate, reopen closed, saved across restarts | Tab bar | New tab; Reopen closed tab; Pin or unpin tab |
 | Server picker: best, smallest, random, by job id; player faces; recently played servers | Experience → Servers | Join best server for me; Join smallest server; Join server by job id; Copy server invite link |
 | Custom Roblox launch command | Settings | Set how Roblox is launched |
+| Launch tracking: opening, joining, in game, teleporting, disconnected with the reason, crashed; closes a running player before a join | Status bar, Join buttons, account rail | Rejoin the last server; Close Roblox |
 | Private nicknames and notes on people | Profile | Set a nickname for someone; Write a private note about someone |
 | Filter friends by status, including followers you don't follow back | Friends | Filter friends by status |
 | Desktop alerts for friend joins, trades, chats, requests and experience updates; quiet hours, mute while playing, sound | Settings → Notifications | Turn a notification kind on or off; Turn update notifications on or off |

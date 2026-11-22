@@ -19,4 +19,6 @@ Remove a line when it ships.
 - The Model tab shows one model at a time and is read only: no 3D preview of the selected instance, no export, and script sources are cut at 4 KiB.
 - Dependency browsing inspects references in downloadable source and processed accessory/head models. It does not traverse dependency files recursively, list embedded/built-in resources, or bypass Roblox asset permissions. Non-model assets show an explicit unavailable-model state.
 
+- Launch tracking reads the player's own log and the process list. Sober logs its lifecycle, so a crash there is certain; on Windows, macOS and Wine a crash is inferred from the player closing mid-game without leaving. The Windows path (`tasklist`, `taskkill`, `%LOCALAPPDATA%\Roblox\logs`) has not been run on a Windows machine yet. Custom launch commands for other players show as "Opened" when Bonsai finds neither a log nor a process.
+
 - Bookmarks are local only. Folders, tags, import/export, alerts and individual server bookmarks are not included.

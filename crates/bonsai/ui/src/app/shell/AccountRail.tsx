@@ -152,6 +152,7 @@ export function AccountRail() {
                 src={thumbUrl("headshot", a.id)}
                 count={a.unread}
                 muted={accountUnusable(a, now())}
+                presence={playing(a.id) ? "game" : undefined}
               />
             </RailItem>
           </ContextMenu>
@@ -166,9 +167,19 @@ export function AccountRail() {
   )
 }
 
-/** "Alt (Banned, 3 unread)": the name, then what's wrong, then the unread count. */
+/** Roblox runs as this account, launched by Bonsai. */
+function playing(id: number) {
+  const l = shell.launch
+  return !!l?.live && l.account === id && l.phase !== "untracked"
+}
+
+/** "Alt (Banned, playing, 3 unread)": the name, then what's wrong, then the unread count. */
 function railLabel(a: Account, now: number) {
-  const notes = [accountProblem(a, now), a.unread > 0 ? `${a.unread} unread` : ""].filter(Boolean)
+  const notes = [
+    accountProblem(a, now),
+    playing(a.id) ? "playing" : "",
+    a.unread > 0 ? `${a.unread} unread` : "",
+  ].filter(Boolean)
   const name = a.label ?? a.displayName
   return notes.length > 0 ? `${name} (${notes.join(", ")})` : name
 }
