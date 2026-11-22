@@ -150,6 +150,8 @@ export const browserShell: Shell = {
     captureSupported: false,
     prompt: null,
   },
+  launch: null,
+  playerOpen: false,
   pluginAutomation: null,
   pluginBudget: null,
   pluginWrote: null,

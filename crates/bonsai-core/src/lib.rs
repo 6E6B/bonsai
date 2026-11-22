@@ -33,6 +33,7 @@ pub mod model_tree;
 pub mod moderation;
 pub mod overlap;
 pub mod people;
+mod play;
 pub mod playlists;
 pub mod playtime;
 pub mod plugins;

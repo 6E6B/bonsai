@@ -1528,6 +1528,31 @@ export type KindOption = {
 	label: string,
 };
 
+/**  Where a launch is. Mirrors `bonsai_core::launcher::session::Phase`. */
+export type LaunchPhase = "preparing" | "opening" | "starting" | "joining" | "inGame" | "teleporting" | "menu" | "disconnected" | "closed" | "crashed" | "alreadyRunning" | "didNotStart" | "commandFailed" | "replaced" | "failed" | "untracked";
+
+/**  The last launch, for the status bar and join buttons. */
+export type LaunchView = {
+	account: Id,
+	phase: LaunchPhase,
+	/**  The player still runs (or is about to). */
+	live: boolean,
+	placeId: Id | null,
+	universeId: Id | null,
+	jobId: string | null,
+	/**  The experience's name, once known. */
+	game: string | null,
+	/**  The disconnect code, or the launch command's exit code. */
+	code: number | null,
+	/**  Why it disconnected, in plain words. */
+	reason: string | null,
+	/**  Unix ms. */
+	startedAt: number | null,
+	phaseAt: number | null,
+	joinedAt: number | null,
+	endedAt: number | null,
+};
+
 /**  Limited 1.0 (`classic`) or Limited 2.0 (`new`). */
 export type LimitedVersion = "classic" | "new" | "unknown";
 
@@ -2554,6 +2579,10 @@ export type Shell = {
 	thumbRevs: { [key in string]: number },
 	/**  Streamer mode, the recording apps seen and the question about them. */
 	streamer: StreamerView,
+	/**  The last Roblox launch: where it is now, or how it ended. */
+	launch: LaunchView | null,
+	/**  A Roblox player is running, launched by Bonsai or not. */
+	playerOpen: boolean,
 };
 
 export type ShoutView = {
@@ -2661,6 +2690,15 @@ export type Toast = {
 	error: boolean,
 	host: string | null,
 	retryAfterSecs: number | null,
+	/**  A button that runs a command, like "Rejoin". */
+	action: ToastActionView | null,
+};
+
+export type ToastActionView = {
+	label: string,
+	/**  A registry command id. */
+	command: string,
+	arg: string | null,
 };
 
 /**  Robux in and out. Outgoing is negative. */

@@ -486,6 +486,8 @@ commands! {
     JoinSmallestServer => "game.join_smallest", "Join smallest server", ["small", "empty", "server"], None, Write(Social), [];
     JoinRandomServer => "game.join_random", "Join random server", ["random", "server"], None, Write(Social), [];
     JoinJobId => "game.join_job", "Join server by job id", ["job", "instance", "server id"], Text, Write(Social), [];
+    Rejoin => "game.rejoin", "Rejoin the last server", ["rejoin", "reconnect", "again", "last", "server", "play"], None, Write(Social), [];
+    CloseGame => "game.close", "Close Roblox", ["close", "quit", "exit", "kill", "stop", "leave", "player", "sober"], None, Local, [];
     CopyServerLink => "game.copy_server_link", "Copy server invite link", ["invite", "share", "server"], None, Read, [];
     CopyJobId => "game.copy_job_id", "Copy server job id", ["job", "instance", "server id", "copy"], None, Read, [];
     OpenProfile => "user.open", "Open profile", ["profile", "user", "player"], User, Read, [];
@@ -766,6 +768,22 @@ impl Invocation {
 impl CommandId {
     pub fn from_key(key: &str) -> Option<CommandId> {
         CommandId::ALL.iter().copied().find(|c| c.key() == key)
+    }
+
+    /// Launches Roblox into a server, closing a player that is already open.
+    pub fn is_join(self) -> bool {
+        matches!(
+            self,
+            CommandId::Join
+                | CommandId::JoinAs
+                | CommandId::JoinServer
+                | CommandId::JoinBestServer
+                | CommandId::JoinSmallestServer
+                | CommandId::JoinRandomServer
+                | CommandId::JoinJobId
+                | CommandId::JoinPrivateServer
+                | CommandId::Rejoin
+        )
     }
 }
 
@@ -1078,6 +1096,7 @@ mod tests {
         // Launching another program or reading files is never a plugin action.
         for id in [
             CommandId::SetPlayerCommand,
+            CommandId::CloseGame,
             CommandId::ImportSettings,
             CommandId::ImportTheme,
             CommandId::SetBackground,

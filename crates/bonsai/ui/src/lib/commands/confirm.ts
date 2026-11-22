@@ -1,5 +1,7 @@
 import { full } from "~/lib/format"
+import { JOIN_COMMANDS, joinConfirm } from "~/lib/launch"
 import { settingsSections } from "~/lib/sections"
+import { shell } from "~/lib/store"
 import type { ConfirmOptions } from "~/lib/ui"
 
 /**
@@ -179,6 +181,8 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
     confirm: "Remove",
     danger: true,
   }),
+  // Joining closes a running player first.
+  ...Object.fromEntries(JOIN_COMMANDS.map((id) => [id, () => joinConfirm(shell.launch, shell.playerOpen)])),
 }
 
 /** "Buy for R$ 50?" when `arg` matches `form`, whose second group is the price, else null. */

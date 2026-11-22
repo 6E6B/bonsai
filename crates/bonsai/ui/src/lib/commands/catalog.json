@@ -1956,6 +1956,34 @@
     },
     {
       "arg": "none",
+      "id": "game.rejoin",
+      "keywords": [
+        "rejoin",
+        "reconnect",
+        "again",
+        "last",
+        "server",
+        "play"
+      ],
+      "title": "Rejoin the last server"
+    },
+    {
+      "arg": "none",
+      "id": "game.close",
+      "keywords": [
+        "close",
+        "quit",
+        "exit",
+        "kill",
+        "stop",
+        "leave",
+        "player",
+        "sober"
+      ],
+      "title": "Close Roblox"
+    },
+    {
+      "arg": "none",
       "id": "game.copy_server_link",
       "keywords": [
         "invite",

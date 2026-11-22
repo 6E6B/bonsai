@@ -2,8 +2,15 @@
 //! `roblox-player:` URI around a PlaceLauncher URL, and hand it to the OS (or a custom player
 //! command such as Sober).
 
+pub mod log;
+pub mod player;
+pub mod session;
+
 use bonsai_api::generated::{auth, www};
 use bonsai_api::{Client, Error, Secret};
+
+pub use log::LogDir;
+pub use player::{PlayerKind, PlayerProcess};
 
 /// The four join modes.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -146,10 +153,52 @@ pub async fn mint_ticket(client: &Client) -> Result<Secret, Error> {
         })
 }
 
-/// Hands the URI to the player, and website links to the browser.
+/// Hands the URI to the player, and website links to the browser. Also finds the player once
+/// it runs, so a launch can be followed (see [`session`]).
 pub trait Opener: Send + Sync {
     fn open(&self, uri: &Secret) -> Result<(), String>;
     fn open_web(&self, url: &str) -> Result<(), String>;
+    /// Like [`Opener::open`], keeping the launch command's process when one ran.
+    fn launch(&self, uri: &Secret) -> Result<Launched, String> {
+        self.open(uri).map(|()| Launched::Handoff)
+    }
+    /// Player and bootstrapper processes running now.
+    fn players(&self) -> Vec<PlayerProcess> {
+        Vec::new()
+    }
+    /// Where the player writes its logs.
+    fn log_dirs(&self) -> Vec<LogDir> {
+        Vec::new()
+    }
+    /// Asks a player process to close; `force` kills it.
+    fn close(&self, _pid: u32, _force: bool) -> Result<(), String> {
+        Err("closing Roblox isn't supported here".into())
+    }
+}
+
+/// How a launch reached the player.
+pub enum Launched {
+    /// The OS handler took the URI; whatever it started is not Bonsai's child.
+    Handoff,
+    /// The custom launch command, still running.
+    Child(Box<dyn ChildProcess>),
+}
+
+/// A process Bonsai started and must reap.
+pub trait ChildProcess: Send {
+    /// `None` while it runs, else its exit code (`None` inside when a signal ended it).
+    fn exited(&mut self) -> Option<Option<i32>>;
+}
+
+impl ChildProcess for std::process::Child {
+    fn exited(&mut self) -> Option<Option<i32>> {
+        match self.try_wait() {
+            Ok(Some(s)) => Some(s.code()),
+            Ok(None) => None,
+            // Can't be waited on any more: treat as gone.
+            Err(_) => Some(None),
+        }
+    }
 }
 
 /// Splits a custom player command into argv words, honoring single and double quotes so
@@ -217,8 +266,22 @@ pub struct SystemOpener {
 
 impl Opener for SystemOpener {
     fn open(&self, uri: &Secret) -> Result<(), String> {
+        match self.launch(uri)? {
+            Launched::Handoff => Ok(()),
+            Launched::Child(mut child) => {
+                std::thread::spawn(move || {
+                    while child.exited().is_none() {
+                        std::thread::sleep(std::time::Duration::from_secs(1));
+                    }
+                });
+                Ok(())
+            }
+        }
+    }
+    fn launch(&self, uri: &Secret) -> Result<Launched, String> {
         match self.command.as_deref().map(str::trim).filter(|c| !c.is_empty()) {
             None => open_detached(uri.expose())
+                .map(|()| Launched::Handoff)
                 .map_err(|e| format!("no app is registered for roblox-player: links ({e})")),
             Some(cmd) => {
                 let mut parts = split_command_words(cmd)?;
@@ -232,9 +295,20 @@ impl Opener for SystemOpener {
                 let (prog, args) = parts.split_first().ok_or("empty player command")?;
                 let mut cmd = std::process::Command::new(prog);
                 cmd.args(args);
-                spawn_reaped(&mut cmd).map_err(|e| format!("could not start {prog}: {e}"))
+                spawn(&mut cmd)
+                    .map(|c| Launched::Child(Box::new(c)))
+                    .map_err(|e| format!("could not start {prog}: {e}"))
             }
         }
+    }
+    fn players(&self) -> Vec<PlayerProcess> {
+        player::find()
+    }
+    fn log_dirs(&self) -> Vec<LogDir> {
+        player::log_dirs()
+    }
+    fn close(&self, pid: u32, force: bool) -> Result<(), String> {
+        player::close(pid, force)
     }
     /// Always the default browser; the player command is only for `roblox-player:`.
     fn open_web(&self, url: &str) -> Result<(), String> {
@@ -266,6 +340,15 @@ pub fn open_detached(target: &str) -> std::io::Result<()> {
 /// The child gets its own process group, so a signal to Bonsai's group (Ctrl+C in the
 /// terminal, `tauri dev` stopping) doesn't take the game down with it.
 fn spawn_reaped(cmd: &mut std::process::Command) -> std::io::Result<()> {
+    let mut child = spawn(cmd)?;
+    std::thread::spawn(move || child.wait());
+    Ok(())
+}
+
+/// [`spawn_reaped`] without the reaping: the caller waits for the child.
+///
+/// Output goes nowhere: a player command's output can hold the launch URI and its ticket.
+fn spawn(cmd: &mut std::process::Command) -> std::io::Result<std::process::Child> {
     #[cfg(unix)]
     std::os::unix::process::CommandExt::process_group(cmd, 0);
     for (k, v) in launch_env_fixes(std::env::vars()) {
@@ -274,13 +357,10 @@ fn spawn_reaped(cmd: &mut std::process::Command) -> std::io::Result<()> {
             None => cmd.env_remove(k),
         };
     }
-    let mut child = cmd
-        .stdin(std::process::Stdio::null())
+    cmd.stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
-        .spawn()?;
-    std::thread::spawn(move || child.wait());
-    Ok(())
+        .spawn()
 }
 
 /// NVIDIA driver switch that `main` turns on for WebKitGTK on Wayland.
@@ -346,11 +426,17 @@ pub fn appimage_env_fixes(
     out
 }
 
-/// Records URIs instead of opening them (tests).
+/// Records URIs instead of opening them (tests). `players`, `logs` and `closed` stand in for
+/// the player's processes, its log folder and what Bonsai closed.
 #[derive(Default)]
 pub struct RecordingOpener {
     pub opened: parking_lot::Mutex<Vec<Secret>>,
     pub web: parking_lot::Mutex<Vec<String>>,
+    pub players: parking_lot::Mutex<Vec<PlayerProcess>>,
+    pub logs: parking_lot::Mutex<Vec<LogDir>>,
+    pub closed: parking_lot::Mutex<Vec<u32>>,
+    /// Players that ignore a polite close.
+    pub stubborn: parking_lot::Mutex<Vec<u32>>,
 }
 
 impl Opener for RecordingOpener {
@@ -360,6 +446,19 @@ impl Opener for RecordingOpener {
     }
     fn open_web(&self, url: &str) -> Result<(), String> {
         self.web.lock().push(url.to_string());
+        Ok(())
+    }
+    fn players(&self) -> Vec<PlayerProcess> {
+        self.players.lock().clone()
+    }
+    fn log_dirs(&self) -> Vec<LogDir> {
+        self.logs.lock().clone()
+    }
+    fn close(&self, pid: u32, force: bool) -> Result<(), String> {
+        self.closed.lock().push(pid);
+        if force || !self.stubborn.lock().contains(&pid) {
+            self.players.lock().retain(|p| p.pid != pid);
+        }
         Ok(())
     }
 }

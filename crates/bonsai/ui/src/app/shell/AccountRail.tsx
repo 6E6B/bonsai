@@ -172,10 +172,17 @@ export function AccountRail() {
                     src={thumbUrl("headshot", a.id)}
                     count={a.unread}
                     muted={accountUnusable(a, now())}
+                    presence={playing(a.id) ? "game" : undefined}
                   />
                 }
               >
-                <Avatar size="lg" name={String(i() + 1)} count={a.unread} muted={accountUnusable(a, now())} />
+                <Avatar
+                  size="lg"
+                  name={String(i() + 1)}
+                  count={a.unread}
+                  muted={accountUnusable(a, now())}
+                  presence={playing(a.id) ? "game" : undefined}
+                />
               </Show>
             </RailItem>
           </ContextMenu>
@@ -190,10 +197,20 @@ export function AccountRail() {
   )
 }
 
-/** "Alt (Banned, 3 unread)": the name, then what's wrong, then the unread count. `masked`
- * replaces the name while streamer mode hides it. */
+/** Roblox runs as this account, launched by Bonsai. */
+function playing(id: number) {
+  const l = shell.launch
+  return !!l?.live && l.account === id && l.phase !== "untracked"
+}
+
+/** "Alt (Banned, playing, 3 unread)": the name, then what's wrong, then the unread count.
+ * `masked` replaces the name while streamer mode hides it. */
 function railLabel(a: Account, now: number, masked?: string) {
-  const notes = [accountProblem(a, now), a.unread > 0 ? `${a.unread} unread` : ""].filter(Boolean)
+  const notes = [
+    accountProblem(a, now),
+    playing(a.id) ? "playing" : "",
+    a.unread > 0 ? `${a.unread} unread` : "",
+  ].filter(Boolean)
   const name = masked ?? a.label ?? a.displayName
   return notes.length > 0 ? `${name} (${notes.join(", ")})` : name
 }
