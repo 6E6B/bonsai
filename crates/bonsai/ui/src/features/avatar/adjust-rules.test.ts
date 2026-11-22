@@ -13,7 +13,7 @@ import {
   setArg,
   toPlacement,
   withAxis,
-} from "./adjust"
+} from "./adjust-rules"
 
 const worn = (id: number, typeId: number): WornView => ({
   id,

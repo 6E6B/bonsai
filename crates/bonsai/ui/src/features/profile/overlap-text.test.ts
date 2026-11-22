@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { OverlapView } from "~/lib/ipc/bindings"
-import { overlapLine, overlapNote, personName } from "./overlap"
+import { overlapLine, overlapNote, personName } from "./overlap-text"
 
 const view = (v: Partial<OverlapView>): OverlapView => ({
   loading: false,
