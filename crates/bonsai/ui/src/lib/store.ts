@@ -26,6 +26,8 @@ function mirror<T extends object>(initial: T, fetch: () => Promise<T>, key = "id
   let inflight: Promise<void> | undefined
   let again = false
   let started = false
+  // Bumped when the mirror's key changes, so a fetch for the old key never lands over the new one.
+  let gen = 0
 
   function refresh(): Promise<void> {
     if (inflight) {
@@ -36,7 +38,10 @@ function mirror<T extends object>(initial: T, fetch: () => Promise<T>, key = "id
       try {
         do {
           again = false
-          setState(reconcile(await fetch(), { key }))
+          const mine = gen
+          const next = await fetch()
+          if (mine === gen) setState(reconcile(next, { key }))
+          else again = true
         } while (again)
       } finally {
         inflight = undefined
@@ -56,6 +61,10 @@ function mirror<T extends object>(initial: T, fetch: () => Promise<T>, key = "id
     },
     started: () => started,
     set: (v: T) => setState(reconcile(v, { key })),
+    /** The key changed: drop any fetch still in flight for the old one. */
+    invalidate() {
+      gen++
+    },
   }
 }
 
@@ -182,6 +191,7 @@ export function useLive<K, T extends object>(
   if (!isTauri()) return m.state
   createEffect(
     on(source, (_, prev) => {
+      if (prev !== undefined) m.invalidate()
       if (prev !== undefined && !opts.keep) m.set(initial())
       if (m.started()) void m.refresh()
       else m.start()
