@@ -1670,6 +1670,10 @@ impl Inner {
                 return;
             }
         };
+        // A newer join took over while the ticket was minted; let that one close and open.
+        if !self.launch_current(seq) {
+            return;
+        }
         // One player at a time: joining was confirmed to close the open one.
         if !self.close_players().await {
             self.fail_launch(seq);
@@ -1686,6 +1690,9 @@ impl Inner {
             .unwrap_or(0);
         let locale = self.settings.read().locale.clone();
         let uri = launcher::launch_uri(&ticket, &target, self.browser_tracker_id, now_ms, &locale);
+        if !self.launch_current(seq) {
+            return;
+        }
         match self.open_player(seq, &uri).await {
             Ok(()) => {
                 if let Some(p) = target.place_id() {

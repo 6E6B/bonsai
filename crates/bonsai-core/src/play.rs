@@ -62,6 +62,12 @@ impl crate::Core {
         let s = self.inner.store.read();
         s.player_open || s.launch.as_ref().is_some_and(|l| l.live())
     }
+
+    /// [`Self::roblox_open`], also checking the process list now instead of the last poll.
+    /// Blocks on the process list: call it off the main thread.
+    pub fn roblox_open_now(&self) -> bool {
+        self.roblox_open() || self.inner.opener().players().iter().any(|p| p.is_game())
+    }
 }
 
 impl Inner {
@@ -94,6 +100,15 @@ impl Inner {
         Some(r)
     }
 
+    /// Session `seq` is still the latest launch and hasn't ended.
+    pub(crate) fn launch_current(&self, seq: u64) -> bool {
+        self.store
+            .read()
+            .launch
+            .as_ref()
+            .is_some_and(|l| l.seq == seq && l.live())
+    }
+
     pub(crate) fn fail_launch(&self, seq: u64) {
         self.with_session(seq, |l| l.end(Phase::Failed, now_ms()));
     }
@@ -112,6 +127,7 @@ impl Inner {
         let mut left = blocking(move || games(&o)).await;
         for force in [false, true] {
             if left.is_empty() {
+                self.set_player_open(false);
                 return true;
             }
             for pid in &left {
@@ -148,6 +164,10 @@ impl Inner {
         let opener = self.opener();
         let o = opener.clone();
         let before = blocking(move || snapshot(&*o)).await;
+        // A newer join replaced this one while it waited: don't start a second player.
+        if !self.launch_current(seq) {
+            return Ok(());
+        }
         let launched = opener.launch(uri)?;
         self.with_session(seq, |l| l.opened(now_ms()));
         let child = match launched {

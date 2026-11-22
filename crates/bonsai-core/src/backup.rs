@@ -139,12 +139,20 @@ impl Core {
         );
         let core = self.handle();
         self.inner.rt.spawn(async move {
+            // Clears `RUNNING` however the task ends, panics included.
+            struct Done;
+            impl Drop for Done {
+                fn drop(&mut self) {
+                    RUNNING.store(false, Ordering::SeqCst);
+                }
+            }
+            let done = Done;
             let backup = core.collect_backup(account).await;
             let saved = tokio::task::spawn_blocking(move || write(&parent, &name, &backup))
                 .await
                 .map_err(|e| e.to_string())
                 .and_then(|r| r);
-            RUNNING.store(false, Ordering::SeqCst);
+            drop(done);
             match saved {
                 Ok((dir, missing)) if missing.is_empty() => {
                     core.notice(format!("Saved backup to {}", dir.display()), false)
@@ -364,8 +372,8 @@ fn noted_ids(notes: &std::collections::HashMap<u64, UserNote>) -> Vec<u64> {
 }
 
 fn csv_field(s: &str) -> String {
-    // A leading = + - @ makes spreadsheets run the cell as a formula.
-    let s = if s.starts_with(['=', '+', '-', '@']) {
+    // A leading = + - @, tab or carriage return makes spreadsheets run the cell as a formula.
+    let s = if s.starts_with(['=', '+', '-', '@', '\t', '\r']) {
         format!("'{s}")
     } else {
         s.to_owned()
@@ -492,6 +500,14 @@ fn write(parent: &Path, account_name: &str, b: &Backup) -> Result<(PathBuf, Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn csv_fields_never_start_a_formula() {
+        assert_eq!(csv_field("=1+1"), "'=1+1");
+        assert_eq!(csv_field("\t=cmd"), "'\t=cmd");
+        assert_eq!(csv_field("\r=cmd"), "\"'\r=cmd\"");
+        assert_eq!(csv_field("plain"), "plain");
+    }
 
     fn sample() -> Backup {
         Backup {

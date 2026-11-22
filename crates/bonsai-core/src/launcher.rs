@@ -284,7 +284,10 @@ impl Opener for SystemOpener {
                 .map(|()| Launched::Handoff)
                 .map_err(|e| format!("no app is registered for roblox-player: links ({e})")),
             Some(cmd) => {
-                let mut parts = split_command_words(cmd)?;
+                // Commands saved before quoting was understood may hold a lone apostrophe
+                // (`Nick's Games/...`); split those on whitespace as before.
+                let mut parts = split_command_words(cmd)
+                    .unwrap_or_else(|_| cmd.split_whitespace().map(str::to_owned).collect());
                 if !parts.iter().any(|p| p.contains("{uri}")) {
                     parts.push("{uri}".into());
                 }

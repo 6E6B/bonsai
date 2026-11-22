@@ -105,7 +105,7 @@ pub fn run() {
                     .try_state::<Arc<Core>>()
                     .ok_or_else(|| "Not started.".to_owned())?;
                 // Joining closes a running player first. Only the user may ask for that.
-                if id.is_join() && core.roblox_open() {
+                if id.is_join() && core.roblox_open_now() {
                     return Err("Roblox is open. Close it before a plugin joins a game.".to_owned());
                 }
                 let inv = ipc::Invocation {

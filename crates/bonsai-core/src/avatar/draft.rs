@@ -168,16 +168,15 @@ pub(crate) fn relayer(assets: &mut [Worn], asset: u64, outward: bool) -> Result<
     } else {
         at.checked_sub(1).ok_or("It is already the innermost layer.")?
     };
-    let &(theirs, j) = layers.get(other).ok_or("It is already the outermost layer.")?;
-    let (mine, i) = layers[at];
-    // Equal orders would not move anything; step past the neighbour instead.
-    let (mine, theirs) = if mine == theirs {
-        (if outward { theirs + 1 } else { theirs - 1 }, theirs)
-    } else {
-        (theirs, mine)
-    };
-    assets[i].layer = Some(mine);
-    assets[j].layer = Some(theirs);
+    let &(_, j) = layers.get(other).ok_or("It is already the outermost layer.")?;
+    let i = layers[at].1;
+    // Number the layers 1..n in their current order first, so equal orders can't hide a move
+    // or collide with a third item, then swap the two neighbours.
+    for (k, &(_, idx)) in layers.iter().enumerate() {
+        assets[idx].layer = Some(k as i32 + 1);
+    }
+    assets[i].layer = Some(other as i32 + 1);
+    assets[j].layer = Some(at as i32 + 1);
     Ok(())
 }
 
@@ -801,6 +800,15 @@ mod tests {
         let mut tied = vec![item(1, 65, Some(4)), item(2, 66, Some(4))];
         relayer(&mut tied, 1, true).unwrap();
         assert!(tied[0].layer > tied[1].layer);
+        // A tie next to a third item: each move still changes the order, with no new tie.
+        let mut three = vec![item(1, 65, Some(5)), item(2, 66, Some(5)), item(3, 67, Some(6))];
+        relayer(&mut three, 1, true).unwrap();
+        relayer(&mut three, 1, true).unwrap();
+        let mut orders: Vec<_> = three.iter().map(|a| a.layer.unwrap()).collect();
+        assert_eq!(three[0].layer, Some(3), "moved to the top");
+        orders.sort();
+        orders.dedup();
+        assert_eq!(orders.len(), 3, "no two items share an order");
     }
 
     #[test]

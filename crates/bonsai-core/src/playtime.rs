@@ -327,8 +327,14 @@ impl Core {
         out
     }
 
-    /// Deletes the playtime log of every account.
+    /// Deletes the playtime log of every account. Waits for a save in progress and writes the
+    /// cache, so it runs off the calling (main) thread.
     pub fn clear_playtime(&self) {
+        let core = self.handle();
+        self.inner.rt.spawn_blocking(move || core.clear_playtime_now());
+    }
+
+    fn clear_playtime_now(&self) {
         let _save = SAVE.lock();
         let ids: Vec<AccountId> = {
             let mut s = self.inner.store.write();
