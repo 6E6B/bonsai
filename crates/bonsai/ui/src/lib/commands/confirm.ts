@@ -1,5 +1,7 @@
 import { full } from "~/lib/format"
+import { JOIN_COMMANDS, joinConfirm } from "~/lib/launch"
 import { settingsSections } from "~/lib/sections"
+import { shell } from "~/lib/store"
 import type { ConfirmOptions } from "~/lib/ui"
 
 /**
@@ -143,7 +145,7 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
   "avatar.delete_outfit": () => ({ title: "Delete this outfit?", confirm: "Delete", danger: true }),
   "avatar.update_outfit": () => ({
     title: "Replace this outfit?",
-    description: "It gets what you wear now. Its name stays.",
+    description: "It gets the edited look. Its name stays.",
     confirm: "Replace",
   }),
   "user.unblock": () => ({ title: "Unblock this user?", confirm: "Unblock" }),
@@ -157,6 +159,12 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
     title: "Clear the cache?",
     description: "Screens load again from Roblox. Drafts, pinned chats and your wishlist stay.",
     confirm: "Clear",
+  }),
+  "playtime.clear": () => ({
+    title: "Clear the playtime log?",
+    description: "Every account's recorded time is deleted from this computer.",
+    confirm: "Clear",
+    danger: true,
   }),
   "chat.leave": () => ({ title: "Leave this chat?", confirm: "Leave", danger: true }),
   "trade.accept": () => ({ title: "Accept this trade?", confirm: "Accept" }),
@@ -173,6 +181,8 @@ export const confirmations: Record<string, (arg: string | null) => ConfirmOption
     confirm: "Remove",
     danger: true,
   }),
+  // Joining closes a running player first.
+  ...Object.fromEntries(JOIN_COMMANDS.map((id) => [id, () => joinConfirm(shell.launch, shell.playerOpen)])),
 }
 
 /** "Buy for R$ 50?" when `arg` matches `form`, whose second group is the price, else null. */

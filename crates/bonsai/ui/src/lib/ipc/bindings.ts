@@ -137,6 +137,11 @@ export const commands = {
 	 *  with them until details load.
 	 */
 	playlists: () => __TAURI_INVOKE<PlaylistView[]>("playlists"),
+	/**
+	 *  Your accounts' playtime over `range` (`week`, `month`, `quarter`, `year` or `all`), narrowed
+	 *  to `account` when given. `offset_minutes` is local time's offset from UTC, east positive.
+	 */
+	playtime: (range: string, account: number | null, offsetMinutes: number) => __TAURI_INVOKE<PlaytimeView>("playtime", { range, account, offsetMinutes }),
 	bookmarks: () => __TAURI_INVOKE<BookmarkList>("bookmarks"),
 	catalogCategories: () => __TAURI_INVOKE<List<CategoryView>>("catalog_categories"),
 	catalogOptions: () => __TAURI_INVOKE<CatalogOptions>("catalog_options"),
@@ -256,9 +261,18 @@ export const commands = {
 	discover: (device: string, country: string) => __TAURI_INVOKE<DiscoverView>("discover", { device, country }),
 	/**  Every game in one chart ("See all"). */
 	discoverChart: (sortId: string, device: string, country: string) => __TAURI_INVOKE<ChartPage>("discover_chart", { sortId, device, country }),
-	avatar: () => __TAURI_INVOKE<AvatarView>("avatar"),
+	/**
+	 *  The active account's avatar: the look being edited when `edited`, otherwise what is worn
+	 *  on Roblox now.
+	 */
+	avatar: (edited: boolean) => __TAURI_INVOKE<AvatarView>("avatar", { edited }),
 	outfits: () => __TAURI_INVOKE<Paged<OutfitView>>("outfits"),
 	wardrobe: () => __TAURI_INVOKE<List<WardrobeSection>>("wardrobe"),
+	/**
+	 *  Searches item names in every wearable inventory type. Types not loaded yet start loading in
+	 *  the background; their matches arrive with later `storeChanged` events.
+	 */
+	wardrobeSearch: (query: string) => __TAURI_INVOKE<WardrobeSearch>("wardrobe_search", { query }),
 	/**  Body colors to pick from, basic ones first. */
 	bodyPalette: () => __TAURI_INVOKE<SwatchView[]>("body_palette"),
 	/**  Items and outfits the active account wore lately. */
@@ -269,6 +283,23 @@ export const commands = {
 	profileOutfits: (userId: Id) => __TAURI_INVOKE<List<OutfitView>>("profile_outfits", { userId }),
 	/**  What an outfit puts on. Public. */
 	outfitLook: (outfitId: string) => __TAURI_INVOKE<LookView>("outfit_look", { outfitId }),
+	/**
+	 *  What copying a look (`outfit:<id>`, `avatar:<user id>`, or empty for the active account's
+	 *  avatar) to `target` would wear and what it lacks. Reads only.
+	 */
+	copyLookPlan: (source: string, target: Id) => __TAURI_INVOKE<CopyPlanView>("copy_look_plan", { source, target }),
+	/**
+	 *  The confirm step of the dialog `avatar.copy_to` opens: wears `wear` (the items the plan
+	 *  found `target` owns) and the look's body type, colors and scales on `target`.
+	 */
+	copyLook: (source: string, target: Id, wear: Id[]) => typedError<null, string>(__TAURI_INVOKE("copy_look", { source, target, wear })),
+	/**
+	 *  Which of your accounts are friends with `user_id` or share friends with them, using their
+	 *  friends as the active account has loaded them.
+	 */
+	socialOverlap: (userId: Id) => __TAURI_INVOKE<OverlapView>("social_overlap", { userId }),
+	/**  Friends that two of your accounts share, from their cached friend lists. */
+	sharedFriends: (a: Id, b: Id) => __TAURI_INVOKE<SharedFriendsView>("shared_friends", { a, b }),
 	avatar3d: (source: AvatarSource) => __TAURI_INVOKE<Avatar3dView>("avatar_3d", { source }),
 	/**  Email, phone, birthday and Premium of the active account. */
 	accountInfo: () => __TAURI_INVOKE<AccountInfoView>("account_info"),
@@ -486,6 +517,20 @@ export type ActivityView = {
 	robux: Id | null,
 };
 
+/**  How far accessories of one type can be adjusted. */
+export type AdjustRuleView = {
+	typeId: number,
+	min: PlacementView,
+	max: PlacementView,
+};
+
+/**  What one press of a slider moves, per group. */
+export type AdjustSteps = {
+	position: number | null,
+	rotation: number | null,
+	scale: number | null,
+};
+
 /**  Allied and enemy communities. */
 export type AffiliatesView = {
 	loading: boolean,
@@ -538,7 +583,7 @@ export type ApproveView = {
 	error: string | null,
 };
 
-export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark";
+export type Arg = "none" | "account" | "gameOrFriend" | "user" | "settingsSection" | "text" | "color" | "outfit" | "mode" | "theme" | "font" | "tab" | "screen" | "setting" | "plugin" | "playlist" | "bookmark" | "bookmarkFolder" | "playtimeRange" | "streamerDetect";
 
 /**  What a plugin asks for, shown in Settings and the install dialog. */
 export type Asks = {
@@ -597,6 +642,8 @@ export type Avatar3dView = {
 export type AvatarSource = 
 /**  The active account's avatar. */
 { kind: "me" } | 
+/**  The look being edited in the avatar editor. */
+{ kind: "draft" } | 
 /**  A user's current avatar. Public. */
 { kind: "user"; id: Id } | 
 /**  A saved outfit. Public. The id is a string because outfit ids can exceed 2^53. */
@@ -613,8 +660,21 @@ export type AvatarView = {
 	colors: PartColor[],
 	/**  The scales Roblox lets this account change. */
 	scales: ScaleView[],
+	/**  Accessory types that can be moved, turned and sized, with their bounds. */
+	adjustRules: AdjustRuleView[],
+	adjustSteps: AdjustSteps,
 	/**  Changes when the avatar was read again, so the preview image reloads. */
 	rev: number | null,
+	/**  The look differs from what is worn on Roblox. */
+	edited: boolean,
+	/**  The saved outfit the look started from. */
+	outfit: DraftOutfitView | null,
+	/**  The look differs from that outfit. */
+	outfitEdited: boolean,
+	/**  An outfit is still loading into the editor. */
+	loadingOutfit: boolean,
+	canUndo: boolean,
+	canRedo: boolean,
 };
 
 /**  The app background picture and how see-through things are over it. */
@@ -673,6 +733,9 @@ export type BookmarkView = {
 	kind: BookmarkKindView,
 	thumbnail: BookmarkThumbnail | null,
 	status: string,
+	/**  Empty outside folders. */
+	folder: string,
+	tags: string[],
 };
 
 /**  The budget dialog's plugin and account. */
@@ -961,6 +1024,27 @@ export type ConversationRow = {
 	pinned: boolean,
 };
 
+/**  One item of a look being copied, and whether the target account owns it. */
+export type CopyItemView = {
+	id: Id,
+	name: string,
+	typeName: string,
+	/**  "yes", "no", "checking" or "unknown". */
+	owned: string,
+};
+
+export type CopyPlanView = {
+	loading: boolean,
+	error: string | null,
+	/**  "R6" or "R15"; empty until loaded. */
+	rig: string,
+	items: CopyItemView[],
+	/**  Every item has been checked; the copy can go ahead. */
+	ready: boolean,
+	/**  What the copy wears: the items the target owns. */
+	wear: Id[],
+};
+
 export type DependenciesView = {
 	list: List<DependencyView>,
 	note: string | null,
@@ -992,6 +1076,12 @@ export type DiscoverView = {
 	charts: ChartView[],
 	more: boolean,
 	moreKey: string,
+};
+
+export type DraftOutfitView = {
+	/**  Outfit ids can pass 2^53. */
+	id: string,
+	name: string,
 };
 
 export type DraftView = {
@@ -1438,6 +1528,31 @@ export type KindOption = {
 	label: string,
 };
 
+/**  Where a launch is. Mirrors `bonsai_core::launcher::session::Phase`. */
+export type LaunchPhase = "preparing" | "opening" | "starting" | "joining" | "inGame" | "teleporting" | "menu" | "disconnected" | "closed" | "crashed" | "alreadyRunning" | "didNotStart" | "commandFailed" | "replaced" | "failed" | "untracked";
+
+/**  The last launch, for the status bar and join buttons. */
+export type LaunchView = {
+	account: Id,
+	phase: LaunchPhase,
+	/**  The player still runs (or is about to). */
+	live: boolean,
+	placeId: Id | null,
+	universeId: Id | null,
+	jobId: string | null,
+	/**  The experience's name, once known. */
+	game: string | null,
+	/**  The disconnect code, or the launch command's exit code. */
+	code: number | null,
+	/**  Why it disconnected, in plain words. */
+	reason: string | null,
+	/**  Unix ms. */
+	startedAt: number | null,
+	phaseAt: number | null,
+	joinedAt: number | null,
+	endedAt: number | null,
+};
+
 /**  Limited 1.0 (`classic`) or Limited 2.0 (`new`). */
 export type LimitedVersion = "classic" | "new" | "unknown";
 
@@ -1685,6 +1800,33 @@ export type OutfitView = {
 	rev: number | null,
 };
 
+/**  One of your accounts and how it connects to the person on screen. */
+export type OverlapAccount = {
+	account: Id,
+	/**  The account's label, display name or username. */
+	label: string,
+	/**  The account is friends with them itself. */
+	friend: boolean,
+	mutuals: OverlapPerson[],
+};
+
+/**  A person in an overlap list. Names are empty until the user is known. */
+export type OverlapPerson = {
+	id: Id,
+	name: string,
+	displayName: string,
+};
+
+export type OverlapView = {
+	loading: boolean,
+	error: string | null,
+	/**  How many of their friends have loaded. */
+	checked: number,
+	/**  All of their friends have loaded. */
+	complete: boolean,
+	accounts: OverlapAccount[],
+};
+
 export type OwnerRow = {
 	/**  `None` when they hide their inventory. */
 	userId: Id | null,
@@ -1802,10 +1944,58 @@ export type PlaceCard = {
 	price: number | null,
 };
 
+/**  Position in studs, rotation in degrees, scale as a factor. */
+export type PlacementView = {
+	position: Vec3,
+	rotation: Vec3,
+	scale: Vec3,
+};
+
 export type PlaylistView = {
 	id: Id,
 	name: string,
 	games: GameCard[],
+};
+
+/**  Seconds one account spent. */
+export type PlaytimeAccount = {
+	account: Id,
+	/**  The account's label, display name or username. */
+	label: string,
+	secs: number,
+};
+
+export type PlaytimeExperience = {
+	universeId: Id,
+	/**  The root place, to open the experience. 0 when unknown. */
+	placeId: Id,
+	/**  Empty until the experience has loaded. */
+	name: string,
+	secs: number,
+	sessions: number,
+	/**  Unix milliseconds. */
+	lastPlayed: number,
+	accounts: PlaytimeAccount[],
+};
+
+export type PlaytimeView = {
+	/**  Recording is on in Settings. */
+	enabled: boolean,
+	/**  Accounts other than the active one are recorded too. */
+	background: boolean,
+	range: string,
+	secs: number,
+	sessions: number,
+	experiences: PlaytimeExperience[],
+	/**  Every account with time in the range, even when narrowed to one. */
+	accounts: PlaytimeAccount[],
+	weeks: PlaytimeWeek[],
+};
+
+export type PlaytimeWeek = {
+	/**  Monday 00:00 local, in unix milliseconds. */
+	start: number,
+	secs: number,
 };
 
 /**  Actions a plugin command proposed, for the user to run or cancel. */
@@ -2322,6 +2512,15 @@ export type SettingRow = {
 	on: boolean,
 };
 
+export type SharedFriendsView = {
+	loading: boolean,
+	aCount: number,
+	bCount: number,
+	/**  The two accounts are friends with each other. */
+	linked: boolean,
+	friends: OverlapPerson[],
+};
+
 /**  Shell state every screen needs: accounts, toasts, connectivity. */
 export type Shell = {
 	accounts: Account[],
@@ -2378,6 +2577,12 @@ export type Shell = {
 	 *  adds them so the webview loads the new image instead of its cached copy.
 	 */
 	thumbRevs: { [key in string]: number },
+	/**  Streamer mode, the recording apps seen and the question about them. */
+	streamer: StreamerView,
+	/**  The last Roblox launch: where it is now, or how it ended. */
+	launch: LaunchView | null,
+	/**  A Roblox player is running, launched by Bonsai or not. */
+	playerOpen: boolean,
 };
 
 export type ShoutView = {
@@ -2414,6 +2619,31 @@ export type StartTabs = {
 
 /**  Sent when the store changed. The UI refetches what it shows. */
 export type StoreChanged = null;
+
+/**
+ *  Asks to turn streamer mode on (`start`) or off because `app` opened or closed. Shown once
+ *  per `seq`.
+ */
+export type StreamerPromptView = {
+	seq: Id,
+	app: string,
+	start: boolean,
+};
+
+export type StreamerView = {
+	on: boolean,
+	/**  `ask`, `auto` or `off`. */
+	detect: string,
+	/**  Recording apps open now, by name. */
+	running: string[],
+	/**  Apps the user said not to ask about. */
+	ignored: string[],
+	hideMessages: boolean,
+	hideCapture: boolean,
+	/**  This system can keep the window out of screen capture. */
+	captureSupported: boolean,
+	prompt: StreamerPromptView | null,
+};
 
 export type SwatchView = {
 	id: number,
@@ -2460,6 +2690,15 @@ export type Toast = {
 	error: boolean,
 	host: string | null,
 	retryAfterSecs: number | null,
+	/**  A button that runs a command, like "Rejoin". */
+	action: ToastActionView | null,
+};
+
+export type ToastActionView = {
+	label: string,
+	/**  A registry command id. */
+	command: string,
+	arg: string | null,
 };
 
 /**  Robux in and out. Outgoing is negative. */
@@ -2734,6 +2973,12 @@ export type VaultView = {
 	systemLockWarning: string | null,
 };
 
+export type Vec3 = {
+	x: number | null,
+	y: number | null,
+	z: number | null,
+};
+
 export type ViewButtonStyle = "default" | "primary" | "danger";
 
 /**  A table cell or stat value. Numbers are shown in the user's number format. */
@@ -2772,6 +3017,28 @@ export type VoiceView = {
 	bannedUntil: number | null,
 	cameraEnabled: boolean,
 	cameraEligible: boolean,
+};
+
+/**  An item found by a wardrobe search, with the slot it was found in. */
+export type WardrobeHit = {
+	item: ItemCard,
+	slot: string,
+};
+
+/**  Wardrobe search results across every wearable type. */
+export type WardrobeSearch = {
+	loading: boolean,
+	error: string | null,
+	items: WardrobeHit[],
+	/**  Types whose first page has loaded (or failed), of `total`. */
+	loaded: number,
+	total: number,
+	/**  Types that failed to load. */
+	failed: number,
+	/**  Some types have more pages than were searched. */
+	partial: boolean,
+	/**  More matches than `items` holds. */
+	truncated: boolean,
 };
 
 /**  A wardrobe section: inventory slots (`a<asset type>`) the avatar can wear. */
@@ -2926,6 +3193,8 @@ export type WornView = {
 	r15Only: boolean,
 	/**  Layer of layered clothing; higher sits on top. */
 	layer: number | null,
+	/**  How a rigid accessory is moved, turned and sized; `None` when it is not adjusted. */
+	placement: PlacementView | null,
 };
 
 /* Tauri Specta runtime */

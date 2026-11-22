@@ -21,6 +21,7 @@ import {
   Menu,
   type MenuEntry,
   Pane,
+  redactText,
   Skeleton,
   Split,
   showToast,
@@ -144,7 +145,7 @@ export default function Chat() {
                       {c.title}
                     </span>
                   }
-                  subtitle={c.last}
+                  subtitle={redactText(c.last)}
                   meta={ms(c.updated) ? ago(ms(c.updated) ?? 0) : undefined}
                   onClick={() => {
                     setCursor(i)

@@ -278,9 +278,10 @@ pub struct AccountData {
     pub favorites: Loadable<Vec<u64>>,
     /// Local wishlist, newest first.
     pub wishlist: Vec<crate::market::WishItem>,
-    pub last_launch: Option<String>,
     /// Public servers this account played in over the last day, newest first. Local.
     pub recent_servers: Vec<crate::recent_servers::RecentServer>,
+    /// Time spent in experiences, oldest first. Local.
+    pub playtime: Vec<crate::playtime::Session>,
     /// Connected to the realtime hub.
     pub realtime: bool,
     /// Who is typing, per conversation: user id -> until (unix ms). From realtime.
@@ -388,6 +389,16 @@ pub struct Toast {
     pub error: bool,
     pub host: Option<String>,
     pub retry_after_secs: Option<u32>,
+    /// A button that runs a command, as the toast's account.
+    pub action: Option<ToastAction>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ToastAction {
+    pub label: String,
+    /// A command registry id.
+    pub command: String,
+    pub arg: Option<String>,
 }
 
 /// A remote search result row (merged into the command bar).
@@ -450,6 +461,8 @@ pub struct StoreData {
     pub place_universe: HashMap<u64, u64>,
     pub servers: HashMap<u64, Loadable<Vec<Server>>>,
     pub server_cursor: HashMap<u64, Option<String>>,
+    /// Which account populated `servers` (`Server.friends`), if any.
+    pub servers_account: Option<AccountId>,
     pub thumbs: HashMap<ThumbKey, ThumbState>,
     /// Bumped when an image changes during the run, so the UI asks for it again instead of
     /// showing the copy it already has. Images that never changed are left out.
@@ -483,6 +496,12 @@ pub struct StoreData {
     /// Turning on the authenticator app or making recovery codes (see [`crate::security`]).
     pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,
+    /// Recording apps seen and the streamer mode question on screen.
+    pub streamer: crate::streamer::StreamerState,
+    /// The latest launch, while it runs and after it ends (see [`crate::play`]).
+    pub launch: Option<crate::launcher::session::LaunchSession>,
+    /// A Roblox player is running, whether or not Bonsai started it.
+    pub player_open: bool,
     pub jobs: u32,
     /// User commands with work still in flight, by how many tasks each has (see
     /// [`crate::running`]).

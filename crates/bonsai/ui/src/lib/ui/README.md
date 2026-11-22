@@ -178,8 +178,10 @@ Virtualization limits native browser Find and screen-reader enumeration to mount
 ### Image actions
 
 `Avatar` and `Thumbnail` expose **Save Image As…**, **Copy Image**, and **Copy Image URL** for
-`thumbUrl()` sources. Images join an enclosing `ContextMenu`; standalone images supply their
-own menu and support the Menu key or Shift+F10. Existing row/tile actions stay in the same menu.
+`thumbUrl()` sources. Images join an enclosing `ContextMenu` without growing its top level:
+they go into its Share submenu (`shareMenu()`, `id: "share"`) or an Image submenu
+(`withImageRows()`). Standalone images supply their own flat menu and support the Menu key or
+Shift+F10.
 Use a descriptive `alt`/`name` for the suggested filename. `Tile` uses its title automatically.
 The command palette acts on the selected image or the entity page's main thumbnail.
 These actions save rendered thumbnails. Original clothing templates and model/texture downloads

@@ -1,9 +1,10 @@
 //! Turns bonsai-core's repaint calls into at most one [`StoreChanged`] event per frame, so a
 //! burst of background writes costs the UI one refetch instead of hundreds. Also shows
-//! bonsai-core's desktop alerts as system notifications while the window is in the background.
+//! bonsai-core's desktop alerts as system notifications while the window is in the background,
+//! and keeps the window out of screen capture while streamer mode asks for it.
 
 use std::io;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::thread;
 use std::time::Duration;
@@ -34,6 +35,7 @@ pub fn spawn(app: AppHandle) -> io::Result<Repaint> {
                     tracing::warn!("could not emit store change: {e}");
                 }
                 show_alerts(&app);
+                sync_capture(&app);
             }
         })?;
     let thread = worker.thread().clone();
@@ -88,6 +90,12 @@ fn show_alerts(app: &AppHandle) {
         return;
     }
     for a in alerts {
+        // Streamer mode keeps names and message text off a captured screen.
+        let a = if settings.streamer.on {
+            bonsai_core::streamer::redact(&a)
+        } else {
+            a
+        };
         let mut n = app.notification().builder().title(&a.title).body(&a.body);
         if settings.notify_sound {
             n = n.sound(SOUND);
@@ -96,6 +104,32 @@ fn show_alerts(app: &AppHandle) {
             tracing::warn!("could not show a notification: {e}");
         }
     }
+}
+
+/// What the window was last set to: 0 capturable, 1 protected, 2 not set yet.
+static CAPTURE: AtomicU8 = AtomicU8::new(2);
+
+/// Keeps the window blank in screen capture while streamer mode is on with "Hide from screen
+/// capture", where the system allows it. Only calls into the window when that changes.
+fn sync_capture(app: &AppHandle) {
+    if !crate::ipc::streamer::CAPTURE_SUPPORTED {
+        return;
+    }
+    let Some(core) = app.try_state::<Arc<Core>>() else {
+        return;
+    };
+    let want = core.hide_from_capture();
+    if CAPTURE.swap(u8::from(want), Ordering::AcqRel) == u8::from(want) {
+        return;
+    }
+    let main = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        if let Some(w) = main.get_webview_window("main")
+            && let Err(e) = w.set_content_protected(want)
+        {
+            tracing::warn!("could not change screen capture protection: {e}");
+        }
+    });
 }
 
 /// The system's own message sound.

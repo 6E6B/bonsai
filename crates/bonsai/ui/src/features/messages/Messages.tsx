@@ -9,6 +9,8 @@ import { LinkedText } from "~/lib/linked-text"
 import { experienceLinks, externalHosts } from "~/lib/links"
 import { emptyList, ListState } from "~/lib/list-state"
 import { shell, useLive } from "~/lib/store"
+import { messagesHidden } from "~/lib/streamer"
+import { StreamerCover } from "~/lib/streamer-cover"
 import { thumbUrl } from "~/lib/thumb"
 import {
   Alert,
@@ -35,6 +37,14 @@ const ms = (iso: string) => {
  * mark read or unread, Shift+R to reply; read on the right. Roblox no longer
  * takes new private messages, so Reply starts a chat. */
 export default function Messages() {
+  return (
+    <Show when={!messagesHidden()} fallback={<StreamerCover what="messages" class="h-full" />}>
+      <Inbox />
+    </Show>
+  )
+}
+
+function Inbox() {
   const [box, setBox] = createSignal("inbox")
   const [cursor, setCursor] = createSignal(0)
   const [query, setQuery] = createSignal("")

@@ -1,12 +1,13 @@
-import { createSignal, For } from "solid-js"
+import { createSignal, For, Show } from "solid-js"
 import { menuItem, run, shortcutOf } from "~/lib/commands/registry"
 import { type Account, type Color, commands, type PrivacyRow } from "~/lib/ipc/bindings"
 import { emptyList } from "~/lib/list-state"
 import { accountProblem, accountUnusable, canReactivate, useNowSecs } from "~/lib/moderation"
 import { privacyLabels, valueLabel } from "~/lib/privacy"
 import { shell, useLive } from "~/lib/store"
+import { maskedAccountLabel } from "~/lib/streamer"
 import { thumbUrl } from "~/lib/thumb"
-import { Avatar, ContextMenu, Icon, type MenuEntry, RailItem, useConfirm, usePrompt } from "~/lib/ui"
+import { Avatar, ContextMenu, Icon, type MenuEntry, RailItem, redacting, useConfirm, usePrompt } from "~/lib/ui"
 
 const colors: Color[] = ["none", "red", "orange", "yellow", "green", "blue", "purple", "pink"]
 const colorName = (c: Color) => (c === "none" ? "No color" : c[0].toUpperCase() + c.slice(1))
@@ -51,15 +52,28 @@ export function AccountRail() {
   const menu = (a: Account, index: number): MenuEntry[] => {
     const as = { asAccount: a.id }
     return [
-      menuItem("account.switch", {
-        arg: String(a.id),
-        label: "Switch to this account",
-        icon: "user",
-        disabled: shell.active === a.id,
-      }),
-      { kind: "separator" },
-      menuItem("entity.copy_id", { arg: `user:${a.id}`, label: "Copy user ID", icon: "copy" }),
-      menuItem("account.copy_name", { ...as, label: "Copy username", icon: "copy" }),
+      ...(shell.active === a.id
+        ? []
+        : [
+            menuItem("account.switch", { arg: String(a.id), label: "Switch to this account", icon: "user" }),
+            menuItem("friends.compare", {
+              arg: String(a.id),
+              label: "Compare friends with this account…",
+              icon: "user",
+              disabled: shell.active === null,
+            }),
+            { kind: "separator" } as const,
+          ]),
+      {
+        kind: "submenu",
+        label: "Copy",
+        icon: "copy",
+        items: [
+          menuItem("account.copy_name", { ...as, label: "Username" }),
+          menuItem("entity.copy_id", { arg: `user:${a.id}`, label: "User ID" }),
+        ],
+      },
+      menuItem("account.export", { ...as, label: "Back up…", icon: "download" }),
       {
         kind: "submenu",
         label: "Privacy",
@@ -140,19 +154,36 @@ export function AccountRail() {
         {(a, i) => (
           <ContextMenu items={menu(a, i())} onOpenChange={(open) => open && setMenuFor(a.id)}>
             <RailItem
-              label={railLabel(a, now())}
+              label={railLabel(a, now(), redacting() ? maskedAccountLabel(i()) : undefined)}
               shortcut={i() < 9 ? shortcutOf(`account.switch_${i() + 1}`) : undefined}
               active={shell.active === a.id}
               color={a.color}
               onClick={() => run("account.switch", String(a.id))}
             >
-              <Avatar
-                size="lg"
-                name={a.displayName}
-                src={thumbUrl("headshot", a.id)}
-                count={a.unread}
-                muted={accountUnusable(a, now())}
-              />
+              {/* Streamer mode shows every account by position: its number in place of the
+                  picture, inside its color tag. A separate Avatar, so the loaded picture
+                  can't linger in place of the number. */}
+              <Show
+                when={redacting()}
+                fallback={
+                  <Avatar
+                    size="lg"
+                    name={a.displayName}
+                    src={thumbUrl("headshot", a.id)}
+                    count={a.unread}
+                    muted={accountUnusable(a, now())}
+                    presence={playing(a.id) ? "game" : undefined}
+                  />
+                }
+              >
+                <Avatar
+                  size="lg"
+                  name={String(i() + 1)}
+                  count={a.unread}
+                  muted={accountUnusable(a, now())}
+                  presence={playing(a.id) ? "game" : undefined}
+                />
+              </Show>
             </RailItem>
           </ContextMenu>
         )}
@@ -166,9 +197,20 @@ export function AccountRail() {
   )
 }
 
-/** "Alt (Banned, 3 unread)": the name, then what's wrong, then the unread count. */
-function railLabel(a: Account, now: number) {
-  const notes = [accountProblem(a, now), a.unread > 0 ? `${a.unread} unread` : ""].filter(Boolean)
-  const name = a.label ?? a.displayName
+/** Roblox runs as this account, launched by Bonsai. */
+function playing(id: number) {
+  const l = shell.launch
+  return !!l?.live && l.account === id && l.phase !== "untracked"
+}
+
+/** "Alt (Banned, playing, 3 unread)": the name, then what's wrong, then the unread count.
+ * `masked` replaces the name while streamer mode hides it. */
+function railLabel(a: Account, now: number, masked?: string) {
+  const notes = [
+    accountProblem(a, now),
+    playing(a.id) ? "playing" : "",
+    a.unread > 0 ? `${a.unread} unread` : "",
+  ].filter(Boolean)
+  const name = masked ?? a.label ?? a.displayName
   return notes.length > 0 ? `${name} (${notes.join(", ")})` : name
 }

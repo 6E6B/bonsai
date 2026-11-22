@@ -1,7 +1,10 @@
+import { bookmarkFolders } from "~/lib/bookmarks"
 import { entityRef, type Seen } from "~/lib/history"
 import type { Arg, BookmarkView, CommandInfo, PrefView, Presence, RemoteKind, RemoteRow } from "~/lib/ipc/bindings"
+import { playtimeRanges } from "~/lib/playtime"
 import { fold } from "~/lib/search"
 import { settingsSections } from "~/lib/sections"
+import { accountName, streamerDetectOptions, streamerHidden } from "~/lib/streamer"
 import type { ThumbKind } from "~/lib/thumb"
 import type { RecentArg } from "./learn"
 import {
@@ -193,7 +196,7 @@ export function paletteEntries(
         out.push({ ...base, key: c.id, title: c.title, arg: null })
         break
       case "account":
-        for (const a of accounts) choice(String(a.id), a.label ?? a.displayName, a.name)
+        for (const a of accounts) choice(String(a.id), accountName(a), streamerHidden() ? "" : a.name)
         break
       case "settingsSection":
         out.push({ ...base, key: c.id, title: c.title, arg: null })
@@ -214,8 +217,14 @@ export function paletteEntries(
           choice(x.id, x.name)
         }
         break
+      case "playtimeRange":
+        for (const r of playtimeRanges) choice(r.value, r.label)
+        break
       case "bookmark":
         for (const b of bookmarks) choice(String(b.id), b.title)
+        break
+      case "bookmarkFolder":
+        for (const f of bookmarkFolders(bookmarks)) choice(f, f)
         break
       case "playlist":
         for (const p of playlists) choice(String(p.id), p.name)
@@ -225,6 +234,9 @@ export function paletteEntries(
         break
       case "screen":
         for (const s of screens) choice(s.key, s.title)
+        break
+      case "streamerDetect":
+        for (const o of streamerDetectOptions) choice(o.value, o.label)
         break
       case "setting":
         out.push(...(c.id === "settings.reset" ? resetRows(c, prefs) : settingRows(c, prefs)))
@@ -579,7 +591,7 @@ export function paletteSections(input: SectionInput): PaletteSection[] {
     (input.bookmarks ?? []).map((b) => ({
       key: `bookmark:${b.id}`,
       title: b.title,
-      words: b.title,
+      words: [b.title, b.folder, ...b.tags].join(" "),
       id: "bookmark.open",
       arg: String(b.id),
       subtitle: b.status || undefined,

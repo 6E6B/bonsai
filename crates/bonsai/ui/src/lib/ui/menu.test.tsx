@@ -1,9 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@solidjs/testing-library"
-import { afterEach, expect, test, vi } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
+import type { MenuEntry } from "./menu"
 
 const runCommand = vi.fn(async () => ({ status: "ok" as const, data: null }))
 vi.mock("~/lib/ipc/bindings", () => ({ commands: { runCommand, commands: async () => [] } }))
-const { ContextMenu, ImageMenu } = await import("./menu")
+const { ContextMenu, ImageMenu, withImageRows } = await import("./menu")
 const { Avatar } = await import("./avatar")
 const { Thumbnail } = await import("./thumbnail")
 
@@ -13,7 +14,7 @@ afterEach(() => {
 })
 const src = "thumb://localhost/asset.123.s"
 
-test("adds image actions to the existing menu and sends an opaque identity", async () => {
+test("adds image actions to the existing menu under one row", async () => {
   const action = vi.fn()
   const r = render(() => (
     <ContextMenu items={[{ label: "Open item", onSelect: action }]}>
@@ -25,14 +26,42 @@ test("adds image actions to the existing menu and sends an opaque identity", asy
   expect(r.container.querySelectorAll("[data-slot=context-trigger]")).toHaveLength(1)
   fireEvent.contextMenu(r.getByAltText("Catalog item"))
   expect(await screen.findByRole("menuitem", { name: "Open item" })).toBeTruthy()
-  fireEvent.keyDown(screen.getByRole("menuitem", { name: "Save Image As…" }), { key: "Enter" })
-  expect(runCommand).toHaveBeenCalledWith(
-    expect.objectContaining({
-      id: "image.save",
-      arg: JSON.stringify({ key: "asset.123.s", name: "Catalog item" }),
-    }),
-  )
+  expect(screen.getByRole("menuitem", { name: "Image" })).toBeTruthy()
+  expect(screen.queryByRole("menuitem", { name: "Save image as…" })).toBeNull()
   expect(action).not.toHaveBeenCalled()
+})
+
+describe("withImageRows", () => {
+  const row = (label: string, danger = false): MenuEntry => ({ label, onSelect: () => {}, danger })
+  const img = [row("Save image as…")]
+  const labels = (rows: MenuEntry[]) => rows.map((r) => ("label" in r ? r.label : r.kind))
+
+  test("shows image rows flat when there is nothing else", () => {
+    expect(withImageRows([], img)).toBe(img)
+  })
+
+  test("adds them to Share when the menu has one", () => {
+    const share: MenuEntry = { kind: "submenu", id: "share", label: "Share", items: [row("Copy link")] }
+    const rows = withImageRows([row("Open"), share], img)
+    expect(labels(rows)).toEqual(["Open", "Share"])
+    const s = rows[1]
+    expect(s.kind === "submenu" && labels(s.items)).toEqual(["Copy link", "separator", "Save image as…"])
+    expect(share.kind === "submenu" && share.items).toHaveLength(1)
+  })
+
+  test("puts an Image submenu above trailing destructive rows", () => {
+    const rows = withImageRows([row("Open"), { kind: "separator" }, row("Delete", true)], img)
+    expect(labels(rows)).toEqual(["Open", "Image", "separator", "Delete"])
+  })
+
+  test("puts an Image submenu last otherwise", () => {
+    expect(labels(withImageRows([row("Open"), { kind: "separator" }, row("Edit")], img))).toEqual([
+      "Open",
+      "separator",
+      "Edit",
+      "Image",
+    ])
+  })
 })
 
 test("standalone images open a menu with the keyboard", async () => {
@@ -44,8 +73,8 @@ test("standalone images open a menu with the keyboard", async () => {
     </ImageMenu>
   ))
   fireEvent.keyDown(r.getByAltText("Outfit"), { key: "F10", shiftKey: true })
-  expect(await screen.findByRole("menuitem", { name: "Copy Image" })).toBeTruthy()
-  expect(screen.getByRole("menuitem", { name: "Copy Image URL" })).toBeTruthy()
+  expect(await screen.findByRole("menuitem", { name: "Copy image" })).toBeTruthy()
+  expect(screen.getByRole("menuitem", { name: "Copy image URL" })).toBeTruthy()
 })
 
 test("shared images provide menus only when outside an existing menu", () => {
@@ -69,7 +98,7 @@ test("a loading thumbnail retains its image identity", async () => {
   expect(image).toBeTruthy()
   if (!image) return
   fireEvent.contextMenu(image)
-  fireEvent.keyDown(await screen.findByRole("menuitem", { name: "Copy Image URL" }), { key: "Enter" })
+  fireEvent.keyDown(await screen.findByRole("menuitem", { name: "Copy image URL" }), { key: "Enter" })
   expect(runCommand).toHaveBeenCalledWith(
     expect.objectContaining({
       id: "image.copy_url",

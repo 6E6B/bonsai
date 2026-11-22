@@ -8,7 +8,8 @@ use bonsai_api::replay::{self, Fixture, Interaction, Replay};
 use bonsai_api::{AccountId, Base, RateLimiter, Secret};
 use bonsai_core::account::{AccountList, CookieStore, MemoryCookies};
 use bonsai_core::cache::{Cache, Kind};
-use bonsai_core::launcher::{JoinTarget, RecordingOpener};
+use bonsai_core::launcher::session::Phase;
+use bonsai_core::launcher::{JoinTarget, LogDir, PlayerKind, PlayerProcess, RecordingOpener};
 use bonsai_core::me::ServersTab;
 use bonsai_core::moderation::ModerationKind;
 use bonsai_core::search::{Group, Scope, Target};
@@ -266,6 +267,135 @@ fn repeat(f: &Fixture, n: usize) -> Fixture {
     let mut out = f.clone();
     out.interactions = (0..n).flat_map(|_| f.interactions.clone()).collect();
     out
+}
+
+/// The start of a Sober session, joined to `job` in place 920587237.
+fn sober_join(job: &str) -> String {
+    let l = |tag: &str, msg: &str| {
+        format!("info: Roblox: 2026-11-22T06:58:37.554Z,1.5,901d86c0,6 [FLog::{tag}] {msg}\n")
+    };
+    [
+        "info: app: lifecycle: enter_main_loop delta=0.002ms\n".to_owned(),
+        l("SingleSurfaceApp", "launchUGCGameInternal"),
+        l(
+            "Output",
+            &format!("! Joining game '{job}' place 920587237 at 10.0.0.1"),
+        ),
+        l("Network", "serverId: 10.0.0.2|51675"),
+    ]
+    .concat()
+}
+
+fn append(path: &std::path::Path, text: &str) {
+    use std::io::Write;
+    let mut f = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .unwrap();
+    f.write_all(text.as_bytes()).unwrap();
+}
+
+/// Waits up to 20 s: the tracker looks every half second and wants two scans to call a
+/// player gone.
+async fn wait_launch(
+    core: &Core,
+    what: &str,
+    f: impl Fn(&bonsai_core::launcher::session::LaunchSession) -> bool,
+) {
+    let start = Instant::now();
+    while !core.store().launch.as_ref().is_some_and(&f) {
+        assert!(
+            start.elapsed() < Duration::from_secs(20),
+            "timed out waiting for {what}; launch: {:?}; toasts: {:?}",
+            core.store().launch,
+            core.store().toasts
+        );
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn follows_a_launch_from_join_to_kick_and_crash() {
+    let mut flow = replay::load("client_assertion");
+    flow.interactions.extend(replay::load("auth_ticket").interactions);
+    let replay = Replay::from_fixture(&repeat(&flow, 2)).await;
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let sober = |pid| PlayerProcess {
+        pid,
+        kind: PlayerKind::Sober,
+    };
+    *r.opener.logs.lock() = vec![LogDir {
+        dir: logs.path().to_path_buf(),
+        name_has: None,
+    }];
+    // An old log and an open player from before: the log is not this session's, and the
+    // player closes before the join.
+    append(
+        &logs.path().join("old.log"),
+        &sober_join("00000000-0000-4000-8000-000000000000"),
+    );
+    r.opener.players.lock().push(sober(10));
+
+    let job = "11111111-2222-4333-8444-555555555555";
+    r.core.send(Cmd::Launch {
+        account: ME,
+        target: JoinTarget::Place { place_id: 920587237 },
+    });
+    wait_launch(&r.core, "the player to open", |l| l.phase == Phase::Opening).await;
+    assert_eq!(*r.opener.closed.lock(), vec![10]);
+    r.opener.players.lock().push(sober(11));
+    let log = logs.path().join("a.log");
+    append(&log, &sober_join(job));
+    wait_launch(&r.core, "in game", |l| l.phase == Phase::InGame).await;
+    {
+        let s = r.core.store();
+        let l = s.launch.as_ref().unwrap();
+        assert_eq!(l.account, ME);
+        assert_eq!(l.place_id, Some(920587237));
+        assert_eq!(l.job_id.as_deref(), Some(job));
+        assert!(l.joined_at.is_some() && l.live());
+        assert!(s.player_open);
+    }
+
+    // Kicked: the player shows the reason until the user closes it.
+    append(
+        &log,
+        "info: Roblox: 2026-11-22T07:01:02.300Z,145.3,925e16c0,7 [FLog::Network] Disconnection Notification. Reason: 267\n",
+    );
+    wait_launch(&r.core, "the kick", |l| l.phase == Phase::Disconnected).await;
+    assert_eq!(r.core.store().launch.as_ref().unwrap().code, Some(267));
+    wait_for(&r.core, "the kick toast", |s| {
+        s.toasts.iter().any(|t| {
+            t.text.contains("(267)") && t.action.as_ref().is_some_and(|a| a.command == "game.rejoin")
+        })
+    })
+    .await;
+    r.opener.players.lock().clear();
+    wait_launch(&r.core, "the player to close", |l| !l.live()).await;
+    assert_eq!(r.core.store().launch.as_ref().unwrap().phase, Phase::Disconnected);
+
+    // Rejoin goes back to the same server.
+    r.core.send(Cmd::Rejoin);
+    wait_launch(&r.core, "the rejoin", |l| l.seq == 2 && l.phase == Phase::Opening).await;
+    let uri = r.opener.opened.lock()[1].expose().to_string();
+    assert!(uri.contains(&format!("gameId%3D{job}")), "{uri}");
+    r.opener.players.lock().push(sober(12));
+    let log = logs.path().join("b.log");
+    append(&log, &sober_join(job));
+    wait_launch(&r.core, "in game again", |l| l.phase == Phase::InGame).await;
+
+    // Gone mid-game without leaving: a crash.
+    r.opener.players.lock().clear();
+    wait_launch(&r.core, "the crash", |l| l.phase == Phase::Crashed && !l.live()).await;
+    wait_for(&r.core, "the crash toast", |s| {
+        s.toasts.iter().any(|t| t.text.contains("closed unexpectedly"))
+    })
+    .await;
+    assert!(!r.core.roblox_open());
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -2281,6 +2411,81 @@ async fn communities_member_admin_forums_and_public_pages() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn avatar_draft_edits_undo_and_wear() {
+    use bonsai_core::avatar::Part;
+    let replay = Replay::from_fixture(&replay::load("avatar")).await;
+    let dir = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let c = &r.core;
+    let idle = |s: &StoreData| s.jobs == 0;
+
+    poll(|| c.avatar(ME)).await;
+    poll(|| c.avatar_rules()).await;
+    assert!(!c.draft(ME).edited);
+
+    // Edits change only the draft: nothing is sent to Roblox.
+    c.draft_wear(ME, 1_080_951, Some(8)).unwrap();
+    c.draft_color(ME, vec![Part::LeftArm], 1003).unwrap();
+    let d = c.draft(ME);
+    assert!(d.edited && d.can_undo && !d.can_redo);
+    let look = d.look.data.unwrap();
+    assert_eq!(look.assets.len(), 1);
+    assert_eq!(look.color_hex["left_arm"], "#111111");
+    let writes = replay
+        .requests()
+        .await
+        .iter()
+        .filter(|q| q.method.as_str() != "GET")
+        .count();
+    assert_eq!(writes, 0);
+
+    c.draft_undo(ME).unwrap();
+    assert_ne!(c.draft(ME).look.data.unwrap().color_hex["left_arm"], "#111111");
+    c.draft_redo(ME).unwrap();
+    assert!(c.draft_redo(ME).is_err(), "nothing left to redo");
+
+    // Revert shows what is worn; undo brings the edits back.
+    c.revert_draft(ME).unwrap();
+    assert!(!c.draft(ME).edited);
+    c.draft_undo(ME).unwrap();
+    assert!(c.draft(ME).edited);
+
+    // Putting the hat back on and taking it off again is no change.
+    c.draft_wear(ME, 1_080_951, Some(8)).unwrap();
+    c.draft_wear(ME, 1_080_951, Some(8)).unwrap();
+    assert_eq!(c.draft(ME).look.data.unwrap().assets.len(), 1);
+
+    c.wear_draft(ME).unwrap();
+    wait_for(c, "worn", idle).await;
+    let reqs = replay.requests().await;
+    let body = |path: &str| -> serde_json::Value {
+        let q = reqs.iter().rfind(|q| q.url.path() == path).unwrap();
+        serde_json::from_slice(&q.body).unwrap()
+    };
+    let colors = body("/avatar.roblox.com/v2/avatar/set-body-colors");
+    assert_eq!(colors["leftArmColor3"], "111111");
+    assert_eq!(colors["headColor3"], "F5CD30");
+    let wear = body("/avatar.roblox.com/v2/avatar/set-wearing-assets");
+    assert_eq!(wear["assets"].as_array().unwrap().len(), 1);
+    assert_eq!(wear["assets"][0]["id"], 1_142_116);
+
+    // Loading an outfit is one undoable step and names the outfit.
+    poll(|| c.outfits(ME, false)).await;
+    c.load_outfit(ME, 24_477_597).unwrap();
+    let start = std::time::Instant::now();
+    while c.draft(ME).outfit.is_none() {
+        assert!(start.elapsed() < Duration::from_secs(10), "outfit never loaded");
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    let d = c.draft(ME);
+    assert_eq!(d.outfit.unwrap().name, "2015");
+    assert!(!d.outfit_edited);
+    c.draft_undo(ME).unwrap();
+    assert!(c.draft(ME).outfit.is_none());
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn avatar_wear_outfits_and_rig() {
     use bonsai_core::avatar::Rig;
     let replay = Replay::from_fixture(&replay::load("avatar")).await;
@@ -3572,6 +3777,39 @@ async fn bookmarks_keep_scope_and_survive_cache_clear_and_restart() {
     );
     assert_eq!(restarted.bookmarks(ME), expected_me);
     assert_eq!(restarted.bookmarks(ALT), expected_alt);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn bookmarks_export_to_a_file_and_import_into_another_account() {
+    use bonsai_core::bookmarks;
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("bookmarks.json");
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay("http://127.0.0.1:9".into()), dir, cookies);
+    let c = &r.core;
+    c.edit_bookmarks(ME, |all| {
+        bookmarks::toggle(all, ME, "/games/42", "Game")?;
+        bookmarks::toggle(all, ME, "/chat?conversation=3", "My chat")?;
+        let ids: Vec<_> = all.iter().map(|b| b.id).collect();
+        bookmarks::set_folder(all, ids[0], "Weekend")?;
+        bookmarks::set_tags(all, ids[1], "friends")
+    })
+    .unwrap();
+    assert_eq!(c.export_bookmarks(ME, &file), Ok(2));
+    let text = std::fs::read_to_string(&file).unwrap();
+    assert!(!text.contains(&ME.0.to_string()));
+
+    let got = c.import_bookmarks(ALT, &file).unwrap();
+    assert_eq!((got.added, got.skipped), (1, 1));
+    let alt = c.bookmarks(ALT);
+    assert_eq!(alt.len(), 2);
+    assert!(alt.iter().any(|b| b.folder == "Weekend" && b.account.is_none()));
+    assert!(
+        alt.iter()
+            .any(|b| b.tags == ["friends"] && b.account == Some(ALT))
+    );
+    // ME's private chat is untouched and not duplicated.
+    assert_eq!(c.bookmarks(ME).len(), 2);
 }
 
 #[tokio::test(flavor = "multi_thread")]

@@ -21,6 +21,7 @@ import {
   type Servers,
   type WikiPageView,
 } from "~/lib/ipc/bindings"
+import { launchFor, onTheWay } from "~/lib/launch"
 import { Description } from "~/lib/linked-text"
 import { emptyList, ListState } from "~/lib/list-state"
 import { entityMenu, joinAsItems, playlistItems } from "~/lib/menus"
@@ -316,7 +317,7 @@ function Header(props: { game: GameView; details: GameDetails }) {
             size="lg"
             icon="play"
             class="w-36"
-            loading={isRunning("game.join", id())}
+            loading={isRunning("game.join", id()) || onTheWay(launchFor(shell.launch, placeId()))}
             onClick={() => run("game.join", id())}
           >
             Join

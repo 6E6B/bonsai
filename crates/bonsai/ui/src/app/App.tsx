@@ -29,6 +29,7 @@ const Themes = lazy(() => import("~/features/themes/Themes"))
 const ThemeEditor = lazy(() => import("~/features/themes/Editor"))
 const Components = lazy(() => import("~/features/components/Components"))
 const Playlists = lazy(() => import("~/features/playlists/Playlists"))
+const Playtime = lazy(() => import("~/features/playtime/Playtime"))
 const Wiki = lazy(() => import("~/features/wiki/Wiki"))
 const WikiArticle = lazy(() => import("~/features/wiki/Article"))
 // A layout experiment; left out of release builds.
@@ -64,6 +65,7 @@ export function App() {
           <Route path="/themes" component={Themes} />
           <Route path="/themes/:id" component={ThemeEditor} />
           <Route path="/playlists/:id?" component={Playlists} />
+          <Route path="/playtime" component={Playtime} />
           <Route path="/wiki" component={Wiki} />
           <Route path="/wiki/:slug" component={WikiArticle} />
           <Route path="/components" component={Components} />

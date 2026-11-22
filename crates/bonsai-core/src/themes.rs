@@ -286,6 +286,10 @@ impl Themes {
             if p.extension().is_none_or(|x| x != "json") {
                 continue;
             }
+            if std::fs::metadata(&p).map(|m| m.len()).unwrap_or(u64::MAX) > MAX_BYTES as u64 {
+                tracing::warn!("theme {}: exceeds {MAX_BYTES} bytes", p.display());
+                continue;
+            }
             let parsed = std::fs::read_to_string(&p)
                 .map_err(|e| e.to_string())
                 .and_then(|s| Theme::parse(&s));
@@ -594,13 +598,18 @@ impl Core {
 
     /// Adds or replaces a user theme and writes it to disk.
     pub fn save_theme(&self, theme: Theme) -> Result<(), String> {
+        if self.accounts_locked() {
+            return Err("Unlock Bonsai to change themes.".into());
+        }
         theme.check()?;
         self.inner.theme_writes.fetch_add(1, Ordering::AcqRel);
         if let Err(e) = self.inner.themes.write().insert(theme.clone()) {
             self.inner.theme_writes.fetch_sub(1, Ordering::AcqRel);
             return Err(e);
         }
-        self.send(Cmd::SaveTheme(Box::new(theme)));
+        if !self.try_send(Cmd::SaveTheme(Box::new(theme))) {
+            self.inner.theme_writes.fetch_sub(1, Ordering::AcqRel);
+        }
         self.inner.repaint();
         Ok(())
     }
@@ -668,6 +677,9 @@ impl Core {
 
     /// Deletes a user theme. A slot that used it goes back to the built-in for its base.
     pub fn delete_theme(&self, id: &str) -> Result<(), String> {
+        if self.accounts_locked() {
+            return Err("Unlock Bonsai to change themes.".into());
+        }
         self.inner.theme_writes.fetch_add(1, Ordering::AcqRel);
         let gone = match self.inner.themes.write().remove(id) {
             Ok(t) => t,
@@ -680,7 +692,9 @@ impl Core {
         if a.slot(gone.base) == id {
             self.update_settings(|s| *s.appearance.slot_mut(gone.base) = default_id(gone.base).into());
         }
-        self.send(Cmd::DeleteTheme(gone.id));
+        if !self.try_send(Cmd::DeleteTheme(gone.id)) {
+            self.inner.theme_writes.fetch_sub(1, Ordering::AcqRel);
+        }
         self.inner.repaint();
         Ok(())
     }

@@ -385,12 +385,50 @@ impl Inner {
 pub(super) fn load_log(inner: &Inner) {
     let text = std::fs::read_to_string(inner.paths.plugin_activity_file()).unwrap_or_default();
     let mut p = inner.plugins.lock();
+    p.log.entries.clear();
     for line in text.lines() {
         if let Ok(a) = serde_json::from_str::<Activity>(line) {
             p.log.entries.push_back(a);
         }
     }
     p.log.trim();
+}
+
+pub(super) fn forget_activity_account(inner: &Inner, account: AccountId) {
+    let _f = FILE.lock();
+    let text = {
+        let mut p = inner.plugins.lock();
+        p.log.stop_gen += 1;
+        let before = p.log.entries.len();
+        p.log.entries.retain(|a| a.account != account);
+        if p.log.entries.len() == before {
+            return;
+        }
+        let mut text = String::new();
+        for a in &p.log.entries {
+            if let Ok(l) = serde_json::to_string(a) {
+                text.push_str(&l);
+                text.push('\n');
+            }
+        }
+        text
+    };
+    let path = inner.paths.plugin_activity_file();
+    if text.is_empty() {
+        let _ = std::fs::remove_file(path);
+    } else {
+        let _ = std::fs::write(path, text);
+    }
+}
+
+pub(super) fn clear_activity_file(inner: &Inner) {
+    let _f = FILE.lock();
+    {
+        let mut p = inner.plugins.lock();
+        p.log.stop_gen += 1;
+        p.log.entries.clear();
+    }
+    let _ = std::fs::remove_file(inner.paths.plugin_activity_file());
 }
 
 /// One tier 2 action's cap for one plugin.

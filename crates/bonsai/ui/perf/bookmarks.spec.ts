@@ -41,7 +41,7 @@ test("row menus have one remove action and normal entity actions", async ({ page
   await page.goto("/marketplace?rows=8&bookmarks=1")
   await page.getByRole("complementary", { name: drawerName }).getByText("Industrial Outpost").click({ button: "right" })
   await expect(page.getByRole("menuitem", { name: "Remove bookmark", exact: true })).toHaveCount(1)
-  await expect(page.getByRole("menuitem", { name: "Rename…", exact: true })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: "Rename bookmark…", exact: true })).toBeVisible()
   await expect(page.getByRole("menuitem", { name: "Share", exact: true })).toBeVisible()
 })
 

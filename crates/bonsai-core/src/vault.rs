@@ -155,8 +155,8 @@ pub struct Vault {
     blocked: AtomicBool,
     enabled: AtomicBool,
     status: AtomicU8,
-    // Held for the process lifetime. Never allow independent read/modify/write vault writers.
-    _writer: Option<File>,
+    // Held for the process lifetime until an explicit pre-restart handoff.
+    writer: Mutex<Option<File>>,
 }
 
 impl Vault {
@@ -166,9 +166,18 @@ impl Vault {
             .iter()
             .map(|b| format!("{b:02x}"))
             .collect();
-        Self::with_device(dir, unprotected, Arc::new(OsDevice { account }))
+        Self::open_with_device(dir, unprotected, Arc::new(OsDevice { account }), true)
     }
+    #[cfg(test)]
     fn with_device(dir: &Path, unprotected: Arc<dyn CookieStore>, device: Arc<dyn DeviceStore>) -> Self {
+        Self::open_with_device(dir, unprotected, device, false)
+    }
+    fn open_with_device(
+        dir: &Path,
+        unprotected: Arc<dyn CookieStore>,
+        device: Arc<dyn DeviceStore>,
+        retry_lock: bool,
+    ) -> Self {
         let file = dir.join("account-vault.json");
         let writer = (|| -> Result<File> {
             std::fs::create_dir_all(dir).map_err(|_| "Cannot create vault directory.")?;
@@ -182,9 +191,16 @@ impl Vault {
             let f = opts
                 .open(dir.join("account-vault.lock"))
                 .map_err(|_| "Cannot open vault process lock.")?;
-            f.try_lock_exclusive()
-                .map_err(|_| "Another Bonsai process is using this account vault.")?;
-            Ok(f)
+            let attempts = if retry_lock { 12 } else { 1 };
+            for attempt in 0..attempts {
+                if f.try_lock_exclusive().is_ok() {
+                    return Ok(f);
+                }
+                if attempt + 1 < attempts {
+                    std::thread::sleep(Duration::from_millis(40));
+                }
+            }
+            Err("Another Bonsai process is using this account vault.".into())
         })();
         let mode = match &writer {
             Err(e) => Mode::Unavailable(e.clone()),
@@ -217,7 +233,20 @@ impl Vault {
             blocked: AtomicBool::new(blocked),
             enabled: AtomicBool::new(blocked),
             status: AtomicU8::new(status),
-            _writer: writer.ok(),
+            writer: Mutex::new(writer.ok()),
+        }
+    }
+    /// Release the process lock right before `app.restart()` spawns a replacement process.
+    /// Closes admission permanently in this process so no further vault writes can occur.
+    pub fn release_lock(&self) {
+        self.blocked.store(true, Ordering::Release);
+        let mut s = self.state.lock();
+        if matches!(s.mode, Mode::Open(_)) {
+            self.status.store(1, Ordering::Release);
+            s.mode = Mode::Locked;
+        }
+        if let Some(f) = self.writer.lock().take() {
+            let _ = f.unlock();
         }
     }
     pub fn status(&self) -> Status {
@@ -474,7 +503,7 @@ impl Vault {
     /// This never decrypts the vault and keeps admission closed on any failure.
     pub fn prepare_forget(&self, accounts: &[AccountId]) -> Result<()> {
         let _state = self.state.lock();
-        if self._writer.is_none() || !self.protected() {
+        if self.writer.lock().is_none() || !self.protected() {
             return Err("Cannot reset this account vault.".into());
         }
         self.blocked.store(true, Ordering::Release);
@@ -487,7 +516,7 @@ impl Vault {
     /// The caller must restart; this process never reopens account access.
     pub fn forget(&self, accounts: &[AccountId]) -> Result<()> {
         let mut state = self.state.lock();
-        if self._writer.is_none() || !self.protected() {
+        if self.writer.lock().is_none() || !self.protected() {
             return Err("Cannot reset this account vault.".into());
         }
         self.blocked.store(true, Ordering::Release);
@@ -593,6 +622,13 @@ impl CookieStore for Vault {
                 Ok(())
             }
             _ => Err(LOCKED.into()),
+        }
+    }
+    fn take_warning(&self) -> Option<String> {
+        if self.protected() {
+            None
+        } else {
+            self.unprotected.take_warning()
         }
     }
 }

@@ -38,6 +38,7 @@ Features beyond the website, with the command that reaches each.
 | Tabs: pin, duplicate, reopen closed, saved across restarts | Tab bar | New tab; Reopen closed tab; Pin or unpin tab |
 | Server picker: best, smallest, random, by job id; player faces; recently played servers | Experience → Servers | Join best server for me; Join smallest server; Join server by job id; Copy server invite link |
 | Custom Roblox launch command | Settings | Set how Roblox is launched |
+| Launch tracking: opening, joining, in game, teleporting, disconnected with the reason, crashed; closes a running player before a join | Status bar, Join buttons, account rail | Rejoin the last server; Close Roblox |
 | Private nicknames and notes on people | Profile | Set a nickname for someone; Write a private note about someone |
 | Filter friends by status, including followers you don't follow back | Friends | Filter friends by status |
 | Desktop alerts for friend joins, trades, chats, requests and experience updates; quiet hours, mute while playing, sound | Settings → Notifications | Turn a notification kind on or off; Turn update notifications on or off |
@@ -49,7 +50,29 @@ Features beyond the website, with the command that reaches each.
 | Fandom wiki articles for experiences and items | Wiki; experience and item pages | Search the wiki; Read the wiki article about this; Turn wiki articles from Fandom on or off |
 | Item dependency browser | Item page → Dependencies | View this item's dependencies; Search this item's dependencies |
 | Clothing template download, plain or masked | Item page | Download clothing template; Download clothing template, masked |
+| Search everything you can wear at once, loading types in the background | Avatar → Wardrobe | Search everything you can wear |
 | 3D viewer that plays animations and emotes, and tries on items and bundles | Avatar, item and bundle pages | Play an animation in the 3D view; Try on this item in 3D |
+| Account backup: friends, current avatar, outfits with their items, inventory, playlists, bookmarks, nicknames and notes as JSON, plus CSV files for friends, notes, inventory and outfits. No cookie or other credential | Account rail menu; Settings → Data | Back up this account to a folder |
+| Copy an outfit or the current look to another of your accounts, wearing only items it owns after you confirm | Avatar → outfit menu, preview menu | Copy a look to another account |
+| Social overlap: which of your accounts know someone, directly or through a friend, and friends two of your accounts share | Profile → About (Your accounts); account rail menu | Compare friends between two of your accounts |
 | Bookmarks for any tab, with grouped drawer, cached status, rename, reorder and command bar search (`b:`) | Title bar → Bookmarks; entity and tab menus | Bookmark or remove bookmark for this page (`Ctrl+D`); Show bookmarks (`Ctrl+Shift+B`) |
+| Bookmark folders and tags, filter by `#tag`, drag a bookmark onto a folder | Bookmarks drawer, bookmark and folder menus | Move bookmark to a folder; Rename bookmark folder; Remove bookmark folder; Tag bookmark |
+| Save bookmarks to a JSON file and load them back, on this or another account | Bookmarks drawer → ⋯ | Save bookmarks to a file; Load bookmarks from a file |
 
 Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.
+
+Folders hold any kind of bookmark and are listed above the kind groups. A folder exists while it holds a bookmark; removing a folder puts its bookmarks back in their kind groups. Folder names are up to 40 characters, and a name that differs only in case joins the existing folder. Each bookmark takes up to 8 tags of 24 characters. A bookmarks file holds paths, titles, folders and tags only, never account ids or credentials. Loading one skips pages already bookmarked, and private views go to the account that loads the file.
+
+A backup goes into a new `bonsai-backup-<name>-<date>` folder inside the folder you pick. It loads every page of outfits and of each avatar item and bundle inventory type, through the same cache the screens use. It stops at 10,000 items per list, and at 10 minutes in all. Items are saved for the first 500 outfits only. Anything it couldn't load is listed under `incomplete` in `backup.json` and in the notice when it finishes. Badges, game passes and places are not included.
+Copying a look checks which items the target account owns and lists the ones it lacks before anything changes. The target account is only changed after you click to wear it. Body type, colors and scales are copied too; emotes are not.
+Social overlap uses cached friend lists and shows them at once. On a profile it checks their friends as far as they have loaded; "Check more" loads the next page.
+| Playtime log: time per experience, account and week, with a weekly card on your own profiles | Sidebar → Playtime; own profile; Settings → Data | Go to Playtime; Show playtime for a range; Clear the playtime log |
+
+Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.
+
+The playtime log is built from each account's own presence, read every two minutes while Bonsai runs (only the active account while background accounts are off). Sightings in the same experience at most five minutes apart join one session, so sessions shorter than one read count as no time. It never writes to Roblox, stays on this computer, survives clearing the cache, keeps 400 days (up to 5,000 sessions per account), and can be turned off or cleared in Settings → Data.
+| Streamer mode: shows accounts as "Account 1", "Account 2", hides Robux amounts, friend lists, nicknames, notes, chat previews, notification text and optionally Messages; notices OBS and other recording apps | Status bar pill; Settings → Streamer mode | Turn streamer mode on or off (`Ctrl+Shift+S`); Show hidden content for 10 seconds; When a recording app opens |
+
+Bookmarks stay on this computer and survive clearing the cache. Public entity pages and wiki are shared across accounts; other views belong to the account that saved them. Entity sub-tabs identify the same bookmark, while view filters and queries identify separate bookmarks. Titles are limited to 120 characters, with up to 1,000 bookmarks per computer across all accounts.
+
+Streamer mode checks running processes every 5 seconds for OBS, Streamlabs, XSplit, Twitch Studio, Medal and NVIDIA ShadowPlay, plus names added in Settings (case-insensitive, `.exe` ignored; Discord never counts). It can only tell that an app is open, not whether it is live. By default it asks before turning on, and asks again when the app closes; it never turns off on its own. "Hide from screen capture" works on Windows, partly on macOS, and is not supported on Linux. Hiding your own reputation votes waits on reputation itself.

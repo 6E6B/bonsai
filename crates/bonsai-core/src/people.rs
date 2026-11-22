@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::Core;
 use crate::effects::Effect;
 use crate::res::{Key, Page, Res};
-use crate::store::{Presence, UserInfo};
+use crate::store::{AccountData, Presence, UserInfo};
 
 /// Profile header data, shared by every viewer.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -227,11 +227,13 @@ impl Core {
     /// Where a user is right now, as `account` can see it. Friends' presence comes from the
     /// friends list refresh; this is for everyone else.
     pub fn presence_of(&self, account: AccountId, user_id: u64) -> Res<Presence> {
-        if let Some(p) = self
+        // The friends refresh keeps only current friends (and the account) up to date, so an
+        // entry for anyone else is stale: ask Roblox instead.
+        let kept = self
             .store()
             .account_data(account)
-            .and_then(|d| d.presence.get(&user_id).cloned())
-        {
+            .and_then(|d| tracked_presence(d, account, user_id));
+        if let Some(p) = kept {
             return Res {
                 data: Some(std::sync::Arc::new(p)),
                 ..Default::default()
@@ -512,6 +514,13 @@ impl Core {
                     .collect())
             },
         )
+    }
+
+    /// Fetch the presence of people who are not `account`'s friends again on next read (the
+    /// refresh command). Friends' presence comes back with the friends refresh.
+    pub fn expire_presence(&self, account: AccountId) {
+        self.inner.expire_kind(account, "presence");
+        self.inner.expire_kind(account, "presences");
     }
 
     /// Nicknames and notes `account` keeps, by user id.
@@ -1052,9 +1061,39 @@ impl crate::core::Inner {
     }
 }
 
+/// `user_id`'s presence from the friends refresh, if it keeps theirs current: the account
+/// itself and its friends. Anyone else's entry is left over from before.
+fn tracked_presence(d: &AccountData, account: AccountId, user_id: u64) -> Option<Presence> {
+    let tracked = user_id == account.0 || d.friends.data.as_ref().is_some_and(|f| f.contains(&user_id));
+    tracked.then(|| d.presence.get(&user_id).cloned()).flatten()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn stale_presence_of_non_friends_is_ignored() {
+        let me = AccountId(1);
+        let mut d = AccountData::default();
+        d.friends.done(vec![2]);
+        for id in [1, 2, 3] {
+            d.presence.insert(
+                id,
+                Presence {
+                    kind: crate::store::PresenceKind::InGame,
+                    ..Default::default()
+                },
+            );
+        }
+        assert!(tracked_presence(&d, me, 1).is_some());
+        assert!(tracked_presence(&d, me, 2).is_some());
+        assert!(
+            tracked_presence(&d, me, 3).is_none(),
+            "an ex-friend's entry is stale"
+        );
+        assert!(tracked_presence(&d, me, 4).is_none());
+    }
 
     #[test]
     fn mutuals_go_first_in_order() {

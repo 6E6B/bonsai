@@ -151,6 +151,10 @@ impl Client {
     pub fn origin(&self) -> String {
         self.base.origin().ascii_serialization()
     }
+    pub fn is_loopback_http(&self) -> bool {
+        self.base.scheme() == "http"
+            && matches!(self.base.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"))
+    }
     async fn send(
         &self,
         method: reqwest::Method,
@@ -428,10 +432,13 @@ impl Client {
         struct List {
             items: Vec<Revocation>,
         }
-        Ok(self
+        let list = self
             .json::<List>(reqwest::Method::GET, "v1/revocations", None, None)
-            .await?
-            .items)
+            .await?;
+        if list.items.len() > MAX_REVOCATIONS || list.items.iter().any(|r| !valid_revocation(r)) {
+            return Err("Hub returned invalid revocation data.".into());
+        }
+        Ok(list.items)
     }
     pub async fn unlist(&self, kind: Kind, id: &str, session: &Secret) -> Result<(), String> {
         if !valid_id(id) {
@@ -475,6 +482,13 @@ impl Client {
         Ok(())
     }
 }
+pub const MAX_REVOCATIONS: usize = 10_000;
+pub fn valid_revocation(r: &Revocation) -> bool {
+    (r.id.is_empty() || valid_id(&r.id))
+        && (r.version.is_empty() || valid_version_path(&r.version))
+        && (r.sha256.is_empty() || valid_hash(&r.sha256))
+        && (!r.id.is_empty() || !r.sha256.is_empty())
+}
 fn valid_entry(e: &Entry) -> bool {
     valid_id(&e.id)
         && valid_version_path(&e.version)
@@ -494,10 +508,16 @@ pub fn valid_id(id: &str) -> bool {
             .bytes()
             .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-')
 }
-fn valid_version_path(v: &str) -> bool {
-    !v.is_empty() && v.len() <= 64 && v.bytes().all(|c| c.is_ascii_alphanumeric() || b".-".contains(&c))
+pub fn valid_version_path(v: &str) -> bool {
+    !v.is_empty()
+        && v.len() <= 64
+        && !v.starts_with(['.', '-'])
+        && !v.ends_with(['.', '-'])
+        && !v.contains("..")
+        && v.bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b".-+_".contains(&c))
 }
-fn valid_hash(hash: &str) -> bool {
+pub fn valid_hash(hash: &str) -> bool {
     hash.len() == 64 && hash.bytes().all(|c| c.is_ascii_hexdigit())
 }
 pub fn verify(bytes: &[u8], hash: &str) -> Result<(), String> {

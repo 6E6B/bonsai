@@ -1,5 +1,5 @@
 import { Tabs as KTabs } from "@kobalte/core/tabs"
-import { For, type JSX, type ParentProps, Show } from "solid-js"
+import { createEffect, createSignal, For, type JSX, onCleanup, onMount, type ParentProps, Show } from "solid-js"
 
 export interface TabItem {
   value: string
@@ -28,10 +28,39 @@ export interface TabsProps extends ParentProps {
  * `children`; only the selected one renders. Wire `[` and `]` to `view.prev_subtab` /
  * `view.next_subtab` with `cycle()`. */
 export function Tabs(props: TabsProps) {
+  let list: HTMLDivElement | undefined
+  // Which ends have tabs scrolled out of view, for the fade on that side.
+  const [start, setStart] = createSignal(false)
+  const [end, setEnd] = createSignal(false)
+  const measure = () => {
+    if (!list) return
+    setStart(list.scrollLeft > 1)
+    setEnd(list.scrollLeft + list.clientWidth < list.scrollWidth - 1)
+  }
+  // Tabs added or relabelled change the scroll width without resizing the list.
+  createEffect(() => {
+    props.items.map((t) => t.label)
+    queueMicrotask(measure)
+  })
+  onMount(() => {
+    if (!list) return
+    measure()
+    if (typeof ResizeObserver === "undefined") return
+    const ro = new ResizeObserver(measure)
+    ro.observe(list)
+    onCleanup(() => ro.disconnect())
+  })
   return (
     <KTabs data-component="tabs" class={props.class} value={props.value} onChange={props.onChange}>
       <div data-slot="bar">
-        <KTabs.List data-slot="list" aria-label={props["aria-label"]}>
+        <KTabs.List
+          ref={list}
+          data-slot="list"
+          aria-label={props["aria-label"]}
+          data-fade-start={start() ? "" : undefined}
+          data-fade-end={end() ? "" : undefined}
+          onScroll={measure}
+        >
           <For each={props.items}>
             {(t) => (
               <KTabs.Trigger

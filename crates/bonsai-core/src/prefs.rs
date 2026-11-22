@@ -440,6 +440,14 @@ pub const PREFS: &[Pref] = &[
         PrefKind::Bool,
     ),
     pref(
+        "playtime_log",
+        "data",
+        "Playtime log",
+        "Record how long your accounts spend in each experience while Bonsai runs, from their presence. Kept on this computer only.",
+        &["playtime", "hours", "time played", "history", "stats", "log"],
+        PrefKind::Bool,
+    ),
+    pref(
         "wiki",
         "data",
         "Wiki articles",
@@ -495,6 +503,45 @@ pub const PREFS: &[Pref] = &[
         &["accent", "color", "colour", "tag", "theme"],
         PrefKind::Bool,
     ),
+    pref(
+        "streamer_detect",
+        "streamer",
+        "When a recording app opens",
+        "Bonsai checks running apps every few seconds for OBS, Streamlabs, XSplit, Twitch Studio, Medal and NVIDIA ShadowPlay. Discord isn't counted. It can't tell whether you're live, only that the app is open.",
+        &[
+            "obs",
+            "streaming",
+            "recording",
+            "detect",
+            "automatic",
+            "streamlabs",
+        ],
+        PrefKind::Choice(crate::streamer::Detect::CHOICES),
+    ),
+    pref(
+        "streamer_apps",
+        "streamer",
+        "Other recording apps",
+        "Process names to look for too, separated by commas. \".exe\" and capitals don't matter.",
+        &["obs", "recording", "process", "app", "custom"],
+        PrefKind::Text { placeholder: "None" },
+    ),
+    pref(
+        "streamer_hide_messages",
+        "streamer",
+        "Hide Messages",
+        "The Messages screen stays hidden while streamer mode is on, until you show it.",
+        &["messages", "inbox", "private", "hide"],
+        PrefKind::Bool,
+    ),
+    pref(
+        "streamer_hide_capture",
+        "streamer",
+        "Hide from screen capture",
+        "While streamer mode is on, Bonsai is blank in OBS, Discord and screenshots. Works on Windows; on macOS newer capture can ignore it.",
+        &["capture", "obs", "screenshot", "blank", "content protection"],
+        PrefKind::Bool,
+    ),
 ];
 
 /// The setting with this key.
@@ -531,6 +578,7 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "format_locale" => s.format_locale.clone(),
         "item_values" => on_off(s.item_values).to_owned(),
         "wiki" => on_off(s.wiki).to_owned(),
+        "playtime_log" => on_off(s.playtime_log).to_owned(),
         "motion" => s.motion.clone(),
         "time_format" => s.time_format.clone(),
         "relative_dates" => on_off(s.relative_dates).to_owned(),
@@ -556,6 +604,10 @@ pub fn get(s: &Settings, key: &str) -> Option<String> {
         "start_hidden" => on_off(s.start_hidden).to_owned(),
         "update_checks" => on_off(s.update_checks).to_owned(),
         "update_downloads" => on_off(s.update_downloads).to_owned(),
+        "streamer_detect" => s.streamer.detect().name().to_owned(),
+        "streamer_apps" => s.streamer.apps.clone(),
+        "streamer_hide_messages" => on_off(s.streamer.hide_messages).to_owned(),
+        "streamer_hide_capture" => on_off(s.streamer.hide_capture).to_owned(),
         _ => return None,
     })
 }
@@ -593,6 +645,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
             "cache_days" => s.cache_days = v.parse().unwrap_or(30),
             "image_cache_mb" => s.image_cache_mb = v.parse().unwrap_or(1024),
             "vault_idle_minutes" => s.vault_idle_minutes = v.parse().unwrap_or(5),
+            "streamer_detect" => v.clone_into(&mut s.streamer.detect),
             _ => unreachable!("choice without a setter: {key}"),
         }
         return Ok(());
@@ -604,6 +657,7 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
     match key {
         "item_values" => s.item_values = bool()?,
         "wiki" => s.wiki = bool()?,
+        "playtime_log" => s.playtime_log = bool()?,
         "background_accounts" => s.background_accounts = bool()?,
         "account_accent" => s.account_accent = bool()?,
         "relative_dates" => s.relative_dates = bool()?,
@@ -623,6 +677,9 @@ pub fn set(s: &mut Settings, key: &str, value: &str) -> Result<(), String> {
         "start_hidden" => s.start_hidden = bool()?,
         "update_checks" => s.update_checks = bool()?,
         "update_downloads" => s.update_downloads = bool()?,
+        "streamer_hide_messages" => s.streamer.hide_messages = bool()?,
+        "streamer_hide_capture" => s.streamer.hide_capture = bool()?,
+        "streamer_apps" => value.clone_into(&mut s.streamer.apps),
         "player_command" => s.player_command = Some(value.to_owned()).filter(|c| !c.is_empty()),
         "format_locale" => {
             if !valid_format_locale(value) {
@@ -650,8 +707,8 @@ pub fn apply(s: &mut Settings, arg: &str) -> Result<&'static Pref, String> {
     Ok(p)
 }
 
-/// Settings not at their defaults, as `(key, value)`, for diagnostics. The launch command
-/// only says whether it is set, since it can hold paths.
+/// Settings not at their defaults, as `(key, value)`, for diagnostics. The launch command and
+/// extra recording apps only say whether they are set, since they can hold paths and names.
 pub fn changed(s: &Settings) -> Vec<(&'static str, String)> {
     let fresh = Settings::default();
     PREFS
@@ -661,7 +718,7 @@ pub fn changed(s: &Settings) -> Vec<(&'static str, String)> {
             if get(&fresh, p.key).as_deref() == Some(v.as_str()) {
                 return None;
             }
-            let v = if p.key == "player_command" {
+            let v = if matches!(p.key, "player_command" | "streamer_apps") {
                 "(set)".to_owned()
             } else {
                 v

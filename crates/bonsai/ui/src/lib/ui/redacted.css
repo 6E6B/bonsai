@@ -1,0 +1,10 @@
+@layer components {
+  [data-component="redacted"] {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-fg-muted);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    user-select: none;
+  }
+}

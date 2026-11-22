@@ -130,27 +130,45 @@ export default function Themes() {
                 const t = drafts[r.id]?.theme ?? r.theme
                 return t ? resolve(t) : {}
               })
+              // Built-in themes can't be renamed, published or deleted, so those rows are left out
+              // rather than shown disabled. Sharing rows wait for the theme to be saved.
               const actions = (): MenuEntry[] => [
                 menuItem("theme.apply", { arg: r.id, icon: "check", disabled: !r.onDisk }),
                 menuItem("theme.edit", { arg: r.id, icon: "edit" }),
                 menuItem("theme.duplicate", { arg: r.id, icon: "copy", disabled: !r.onDisk }),
-                menuItem("theme.rename", { arg: r.id, icon: "edit", disabled: r.builtin }),
+                ...(r.builtin ? [] : [menuItem("theme.rename", { arg: r.id, icon: "edit" })]),
                 { kind: "separator" },
-                menuItem("theme.export", { arg: r.id, icon: "archive", disabled: !r.onDisk }),
-                menuItem("hub.publish", {
-                  arg: JSON.stringify({ kind: "themes", id: r.id }),
-                  label: "Publish to hub",
-                  disabled: r.builtin || !r.onDisk || !!(drafts[r.id] && changed(drafts[r.id])),
-                }),
-                menuItem("theme.copy_code", { arg: r.id, icon: "share", disabled: !r.onDisk }),
-                { kind: "separator" },
-                menuItem("theme.delete", {
-                  arg: r.id,
-                  icon: "trash",
-                  danger: true,
-                  label: r.onDisk ? "Delete theme" : "Discard draft",
-                  disabled: r.builtin,
-                }),
+                {
+                  kind: "submenu",
+                  label: "Share",
+                  icon: "share",
+                  disabled: !r.onDisk,
+                  items: [
+                    menuItem("theme.copy_code", { arg: r.id, icon: "copy" }),
+                    menuItem("theme.export", { arg: r.id, icon: "archive" }),
+                    ...(r.builtin
+                      ? []
+                      : [
+                          menuItem("hub.publish", {
+                            arg: JSON.stringify({ kind: "themes", id: r.id }),
+                            label: "Publish to hub",
+                            icon: "upload",
+                            disabled: !!(drafts[r.id] && changed(drafts[r.id])),
+                          }),
+                        ]),
+                  ],
+                },
+                ...(r.builtin
+                  ? []
+                  : [
+                      { kind: "separator" } as const,
+                      menuItem("theme.delete", {
+                        arg: r.id,
+                        icon: "trash",
+                        danger: true,
+                        label: r.onDisk ? "Delete theme" : "Discard draft",
+                      }),
+                    ]),
               ]
               return (
                 <ContextMenu items={actions()}>

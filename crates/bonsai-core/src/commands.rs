@@ -42,6 +42,12 @@ pub enum ArgKind {
     Playlist,
     /// a local bookmark visible to the active account
     Bookmark,
+    /// a bookmark folder visible to the active account
+    BookmarkFolder,
+    /// a playtime range: week, month, quarter, year or all
+    PlaytimeRange,
+    /// what a recording app opening does: ask, auto or off
+    StreamerDetect,
 }
 
 /// A keyboard shortcut in egui key names (`"K"`, `"1"`, `"Tab"`, `"Backslash"`, ...).
@@ -326,6 +332,7 @@ commands! {
     SetAccountColor => "account.color", "Set account color tag", ["color", "colour", "tag"], Color, Local, [];
     MoveAccountUp => "account.move_up", "Move account up in the rail", ["reorder", "order"], None, Local, [];
     MoveAccountDown => "account.move_down", "Move account down in the rail", ["reorder", "order"], None, Local, [];
+    ExportAccount => "account.export", "Back up this account to a folder", ["backup", "export", "save", "download", "friends", "outfits", "inventory", "json", "csv"], None, Read, [];
     CopyAccountName => "account.copy_name", "Copy account username", ["copy", "username", "name"], None, Local, [];
     RemoveAccount => "account.remove", "Remove account from this app", ["delete", "forget", "remove"], Account, Write(Account), [];
     SignOut => "account.sign_out", "Sign out", ["logout", "log out", "sign out"], None, Write(Account), [];
@@ -352,6 +359,9 @@ commands! {
     GoTrades => "nav.trades", "Go to Trades", ["trades", "trading"], None, Read, [Shortcut::seq("G", "T")];
     GoValues => "nav.values", "Go to Values (Rolimons)", ["values", "rolimons", "limiteds", "rap", "demand", "worth"], None, Read, [Shortcut::seq("G", "V")];
     GoTransactions => "nav.transactions", "Go to Transactions", ["transactions", "robux", "sales", "purchases", "spending", "income", "stipend", "ledger", "money"], None, Read, [Shortcut::seq("G", "R")];
+    GoPlaytime => "nav.playtime", "Go to Playtime", ["playtime", "hours", "time played", "stats", "history", "log"], None, Read, [];
+    PlaytimeRange => "playtime.range", "Show playtime for a range", ["playtime", "week", "month", "year", "hours", "range"], PlaytimeRange, Read, [];
+    ClearPlaytime => "playtime.clear", "Clear the playtime log", ["playtime", "clear", "delete", "history", "log"], None, Local, [];
     GoMessages => "nav.messages", "Go to Messages", ["messages", "inbox", "pm"], None, Read, [Shortcut::seq("G", "N")];
     GoCommunities => "nav.communities", "Go to Communities", ["groups", "communities"], None, Read, [Shortcut::seq("G", "C")];
     GoProfile => "nav.profile", "Go to your profile", ["profile", "me"], None, Read, [Shortcut::seq("G", "P")];
@@ -387,6 +397,13 @@ commands! {
     HubRevocations => "hub.revocations", "Check installed plugins for revocations", ["hub", "plugin", "revoked", "security"], None, Read, [];
     GoThemes => "nav.themes", "Go to Themes", ["themes", "appearance", "colors", "palette", "editor", "customize"], None, Read, [Shortcut::seq("G", "E")];
 
+    ToggleStreamer => "streamer.toggle", "Turn streamer mode on or off", ["streamer", "streaming", "recording", "obs", "twitch", "hide", "privacy", "private"], None, Local, [Shortcut::ctrl_shift("S")];
+    StreamerDetect => "streamer.detect", "When a recording app opens", ["streamer", "obs", "recording", "detect", "automatic", "ask"], StreamerDetect, Local, [];
+    StreamerReveal => "streamer.reveal", "Show hidden content for 10 seconds", ["streamer", "reveal", "show", "unhide", "peek"], None, Read, [];
+    StreamerShowMessages => "streamer.show_messages", "Show Messages in streamer mode", ["streamer", "messages", "inbox", "unhide"], None, Read, [];
+    StreamerShowFriends => "streamer.show_friends", "Show friends in streamer mode", ["streamer", "friends", "people", "unhide"], None, Read, [];
+    StreamerIgnore => "streamer.ignore", "Don't ask about a recording app", ["streamer", "obs", "ignore", "don't ask"], Text, Local, [];
+    StreamerAskAgain => "streamer.ask_again", "Ask about every recording app again", ["streamer", "obs", "ignored", "reset"], None, Local, [];
     ToggleDrawer => "view.drawer", "Toggle friends and chat drawer", ["friends", "chat", "drawer", "panel"], None, Local, [Shortcut::ctrl("Backslash")];
     ToggleSidebar => "view.sidebar", "Collapse or expand the sidebar", ["sidebar", "collapse"], None, Local, [Shortcut::ctrl("B")];
     ToggleSidebarScreen => "view.sidebar_toggle", "Show or hide in the sidebar", ["sidebar", "hide", "show", "remove", "customize", "screens"], Screen, Local, [];
@@ -469,6 +486,8 @@ commands! {
     JoinSmallestServer => "game.join_smallest", "Join smallest server", ["small", "empty", "server"], None, Write(Social), [];
     JoinRandomServer => "game.join_random", "Join random server", ["random", "server"], None, Write(Social), [];
     JoinJobId => "game.join_job", "Join server by job id", ["job", "instance", "server id"], Text, Write(Social), [];
+    Rejoin => "game.rejoin", "Rejoin the last server", ["rejoin", "reconnect", "again", "last", "server", "play"], None, Write(Social), [];
+    CloseGame => "game.close", "Close Roblox", ["close", "quit", "exit", "kill", "stop", "leave", "player", "sober"], None, Local, [];
     CopyServerLink => "game.copy_server_link", "Copy server invite link", ["invite", "share", "server"], None, Read, [];
     CopyJobId => "game.copy_job_id", "Copy server job id", ["job", "instance", "server id", "copy"], None, Read, [];
     OpenProfile => "user.open", "Open profile", ["profile", "user", "player"], User, Read, [];
@@ -486,6 +505,7 @@ commands! {
     RemoveTrustedFriend => "user.remove_trusted_friend", "Remove trusted friend", ["trusted", "remove"], User, Write(Social), [];
     DeclineFriend => "user.decline_friend", "Decline friend request", ["decline", "ignore", "request"], User, Write(Social), [];
     DeclineAllFriends => "friends.decline_all", "Ignore all friend requests", ["decline", "ignore", "requests"], None, Write(Social), [];
+    CompareFriends => "friends.compare", "Compare friends between two of your accounts", ["friends", "mutual", "mutuals", "shared", "overlap", "compare", "accounts", "alt", "common"], Account, Read, [];
     SortFriends => "friends.sort", "Sort the friends list (status, name; requests: newest, oldest, mutuals, name)", ["friends", "sort", "order", "name", "status", "requests", "mutuals"], Text, Local, [];
     FilterFriends => "friends.show", "Filter friends by status (all, online, game, studio, offline; followers: not_followed)", ["friends", "filter", "show only", "online", "in game", "offline", "studio", "followers"], Text, Local, [];
     Follow => "user.follow", "Follow", ["follow"], User, Write(Social), [];
@@ -504,6 +524,12 @@ commands! {
     MoveBookmarkUp => "bookmark.move_up", "Move bookmark up", ["bookmark", "move", "order", "up"], Bookmark, Local, [];
     MoveBookmarkDown => "bookmark.move_down", "Move bookmark down", ["bookmark", "move", "order", "down"], Bookmark, Local, [];
     MoveBookmark => "bookmark.move", "Move bookmark before another (bookmark, then target)", ["bookmark", "move", "reorder"], Text, Local, [];
+    FolderBookmark => "bookmark.folder", "Move bookmark to a folder (new or existing)", ["bookmark", "folder", "new folder", "group", "organize", "file"], Bookmark, Local, [];
+    RenameBookmarkFolder => "bookmark.folder_rename", "Rename bookmark folder", ["bookmark", "folder", "rename"], BookmarkFolder, Local, [];
+    RemoveBookmarkFolder => "bookmark.folder_remove", "Remove bookmark folder (keeps its bookmarks)", ["bookmark", "folder", "remove", "delete", "ungroup"], BookmarkFolder, Local, [];
+    TagBookmark => "bookmark.tag", "Tag bookmark", ["bookmark", "tag", "tags", "label", "hashtag"], Bookmark, Local, [];
+    ExportBookmarks => "bookmark.export", "Save bookmarks to a file", ["bookmark", "export", "save", "file", "backup", "json"], None, Local, [];
+    ImportBookmarks => "bookmark.import", "Load bookmarks from a file", ["bookmark", "import", "load", "file", "restore", "backup", "json"], None, Local, [];
     ShowBookmarks => "view.bookmarks", "Show bookmarks", ["bookmark", "saved", "drawer", "panel"], None, Local, [Shortcut::ctrl_shift("B")];
     NewPlaylist => "playlist.new", "New game playlist", ["playlist", "list", "collection", "create", "new"], Text, Write(Harmless), [];
     AddToPlaylist => "playlist.add", "Add this experience to a playlist", ["playlist", "list", "collection", "add", "save"], Playlist, Write(Harmless), [];
@@ -529,14 +555,23 @@ commands! {
     RefreshServers => "game.refresh_servers", "Refresh server list", ["reload", "servers"], None, Read, [Shortcut::key("R")];
 
     WearItem => "avatar.wear", "Wear or take off an item", ["wear", "equip", "remove", "take off", "avatar"], Text, Write(Harmless), [];
+    CopyLookTo => "avatar.copy_to", "Copy a look to another account (outfit id, or empty for what you wear)", ["copy", "outfit", "look", "avatar", "account", "transfer", "clone", "alt"], Text, Read, [];
     WearOutfit => "avatar.outfit", "Wear an outfit", ["outfit", "wear", "costume", "avatar"], Outfit, Write(Harmless), [];
-    SaveOutfit => "avatar.save_outfit", "Save current look as an outfit", ["outfit", "save", "create", "avatar"], Text, Write(Harmless), [];
-    SetRig => "avatar.rig", "Switch body type (R6 or R15)", ["r6", "r15", "rig", "body", "avatar"], Text, Write(Harmless), [];
-    UpdateOutfit => "avatar.update_outfit", "Update outfit with current look", ["outfit", "overwrite", "replace", "save", "avatar"], Outfit, Write(Harmless), [];
+    SaveOutfit => "avatar.save_outfit", "Save the edited look as a new outfit", ["outfit", "save", "save as", "new", "create", "avatar"], Text, Write(Harmless), [];
+    TryItem => "avatar.try", "Put an item on or take it off in the avatar editor", ["try", "wear", "equip", "remove", "take off", "draft", "avatar"], Text, Write(Harmless), [];
+    LoadOutfit => "avatar.load_outfit", "Open an outfit in the avatar editor", ["outfit", "edit", "open", "load", "draft", "avatar"], Outfit, Write(Harmless), [];
+    WearDraft => "avatar.apply", "Wear the edited look", ["wear", "apply", "put on", "look", "draft", "avatar"], None, Write(Harmless), [];
+    UndoAvatar => "avatar.undo", "Undo the last avatar edit", ["undo", "back", "draft", "avatar"], None, Write(Harmless), [];
+    RedoAvatar => "avatar.redo", "Redo an undone avatar edit", ["redo", "again", "draft", "avatar"], None, Write(Harmless), [];
+    RevertAvatar => "avatar.revert", "Revert avatar edits to what you are wearing", ["revert", "discard", "reset", "cancel", "draft", "avatar"], None, Write(Harmless), [];
+    SetRig => "avatar.rig", "Switch body type in the avatar editor (R6 or R15)", ["r6", "r15", "rig", "body", "avatar"], Text, Write(Harmless), [];
+    UpdateOutfit => "avatar.update_outfit", "Update outfit with the edited look", ["outfit", "overwrite", "replace", "save", "avatar"], Outfit, Write(Harmless), [];
     RenameOutfit => "avatar.rename_outfit", "Rename outfit (id, then name)", ["outfit", "rename", "name", "avatar"], Text, Write(Harmless), [];
     DeleteOutfit => "avatar.delete_outfit", "Delete outfit", ["outfit", "delete", "remove", "avatar"], Outfit, Write(Harmless), [];
     MoveLayer => "avatar.layer", "Move layered clothing up or down (item id, then up or down)", ["layer", "order", "layered clothing", "on top", "under", "avatar"], Text, Write(Harmless), [];
     SetBodyColor => "avatar.color", "Set body color (color id or #RRGGBB, optionally part:color)", ["skin", "color", "colour", "tone", "body", "avatar"], Text, Write(Harmless), [];
+    AdjustAccessory => "avatar.adjust", "Adjust an accessory (item id, then position, rotation or scale values, reset, or match or mirror another item id)", ["adjust", "accessory", "position", "move", "rotate", "turn", "tilt", "size", "resize", "hat", "offset", "avatar"], Text, Write(Harmless), [];
+    AdjustTool => "avatar.adjust_tool", "Pick the 3D adjust handle (move, turn or size)", ["gizmo", "handle", "move", "rotate", "turn", "scale", "size", "adjust", "accessory", "3d", "avatar"], Text, Local, [];
     SetScale => "avatar.scale", "Set body scale (scale, then value)", ["height", "width", "head", "proportion", "body type", "scale", "size", "avatar"], Text, Write(Harmless), [];
     SetEmote => "avatar.emote", "Put an emote in a hotbar slot (slot 1-8, then item id; slot alone clears it)", ["emote", "hotbar", "slot", "dance", "avatar"], Text, Write(Harmless), [];
     RedrawAvatar => "avatar.redraw", "Redraw avatar image", ["redraw", "refresh", "thumbnail", "render", "avatar"], None, Write(Harmless), [];
@@ -544,6 +579,7 @@ commands! {
     SetAvatarView => "avatar.default_view", "Open avatars in 3D or as an image (3d or 2d)", ["3d", "2d", "default", "model", "image", "setting", "avatar"], Text, Local, [];
     PlayAnimation => "avatar.play", "Play an animation in the 3D view (idle, walk, run, jump, fall, climb, swim, or an emote id)", ["animation", "emote", "dance", "play", "pose", "3d", "avatar"], Text, Read, [];
     Orbit3d => "avatar.orbit", "Move the 3D camera (left, right, up, down, in, out or reset)", ["camera", "rotate", "orbit", "zoom", "turn", "reset", "3d", "avatar"], Text, Read, [];
+    SearchWardrobe => "avatar.search", "Search everything you can wear", ["wardrobe", "find", "inventory", "items", "clothes", "accessories", "avatar"], Text, Read, [];
 
     SearchMarketplace => "market.search", "Search the Marketplace", ["catalog", "shop", "items", "find item"], Text, Read, [];
     MarketCategory => "market.category", "Open a Marketplace category or the wishlist", ["catalog", "category", "browse", "shop", "wishlist"], Text, Local, [];
@@ -732,6 +768,22 @@ impl Invocation {
 impl CommandId {
     pub fn from_key(key: &str) -> Option<CommandId> {
         CommandId::ALL.iter().copied().find(|c| c.key() == key)
+    }
+
+    /// Launches Roblox into a server, closing a player that is already open.
+    pub fn is_join(self) -> bool {
+        matches!(
+            self,
+            CommandId::Join
+                | CommandId::JoinAs
+                | CommandId::JoinServer
+                | CommandId::JoinBestServer
+                | CommandId::JoinSmallestServer
+                | CommandId::JoinRandomServer
+                | CommandId::JoinJobId
+                | CommandId::JoinPrivateServer
+                | CommandId::Rejoin
+        )
     }
 }
 
@@ -1044,6 +1096,7 @@ mod tests {
         // Launching another program or reading files is never a plugin action.
         for id in [
             CommandId::SetPlayerCommand,
+            CommandId::CloseGame,
             CommandId::ImportSettings,
             CommandId::ImportTheme,
             CommandId::SetBackground,

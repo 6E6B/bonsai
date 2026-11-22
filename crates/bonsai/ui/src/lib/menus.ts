@@ -3,6 +3,7 @@ import { commandList, menuItem } from "~/lib/commands/registry"
 import type { TrustedStatus } from "~/lib/ipc/bindings"
 import { type PluginContext, pluginCommandsFor } from "~/lib/plugins"
 import { playlists, shell, visibleBookmarks } from "~/lib/store"
+import { accountName } from "~/lib/streamer"
 import { trustedActions } from "~/lib/trusted-friends"
 import type { MenuEntry } from "~/lib/ui"
 
@@ -20,14 +21,14 @@ export const joinUser = (userId: number) => `user:${userId}`
 export function joinAsItems(id: string, target: string): MenuEntry[] {
   return shell.accounts
     .filter((a) => a.id !== shell.active)
-    .map((a) => menuItem(id, { arg: target, asAccount: a.id, label: a.label ?? a.displayName }))
+    .map((a) => menuItem(id, { arg: target, asAccount: a.id, label: accountName(a) }))
 }
 
 /** "Buy as" rows: one per account other than the active one, with the account as the argument. */
 export function accountItems(id: string): MenuEntry[] {
   return shell.accounts
     .filter((a) => a.id !== shell.active)
-    .map((a) => menuItem(id, { arg: String(a.id), label: a.label ?? a.displayName }))
+    .map((a) => menuItem(id, { arg: String(a.id), label: accountName(a) }))
 }
 
 /** "Join as" submenu, or nothing when there is no other account. */
@@ -46,6 +47,7 @@ export function pluginMenu(kind: PluginContext, id: number): MenuEntry[] {
 export function shareMenu(target: string): MenuEntry {
   return {
     kind: "submenu",
+    id: "share",
     label: "Share",
     icon: "share",
     items: [
@@ -85,14 +87,15 @@ export interface UserMenuOptions {
 }
 
 /**
- * Everyday actions at the top level; relationship changes and the rare and destructive ones
- * under Manage; copy and browser rows under Share.
+ * Everyday actions at the top level; bookmarking, relationship changes and the rare and
+ * destructive ones under Manage; copy and browser rows under Share.
  */
 export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[] {
   const id = String(userId)
   const target = `user:${id}`
   const friendAs = joinAsItems("user.add_friend_as", id)
   const manage: MenuEntry[] = [
+    bookmarkMenu(target),
     ...(opts.trusted === undefined
       ? opts.friend
         ? [menuItem("user.open", { arg: id, icon: "shield", label: "Trusted friendship…" })]
@@ -139,7 +142,6 @@ export function userMenu(userId: number, opts: UserMenuOptions = {}): MenuEntry[
     sep,
     { kind: "submenu", label: "Manage", icon: "sliders", items: manage },
     ...pluginMenu("user", userId),
-    bookmarkMenu(target),
     shareMenu(target),
   ]
 }
@@ -159,10 +161,10 @@ export function gameMenu(placeId: number): MenuEntry[] {
     menuItem("game.open", { arg: id, icon: "game" }),
     menuItem("game.join", { arg: id, icon: "play" }),
     ...joinAs(id),
-    { kind: "submenu", label: "Add to playlist", icon: "playlist", items: playlistItems(placeId) },
     sep,
-    ...pluginMenu("game", placeId),
+    { kind: "submenu", label: "Add to playlist", icon: "playlist", items: playlistItems(placeId) },
     bookmarkMenu(`game:${id}`),
+    ...pluginMenu("game", placeId),
     shareMenu(`game:${id}`),
   ]
 }
@@ -218,11 +220,18 @@ export function itemMenu(itemId: number, bundle = false, assetType?: number, ext
     menuItem("market.open", { arg: target, icon: "marketplace" }),
     ...(extras.actions ?? []),
     sep,
-    menuItem("market.favorite", { arg: target, icon: "star", label: "Toggle favorite" }),
-    menuItem("market.wishlist", { arg: target, icon: "heart", label: "Toggle wishlist" }),
+    {
+      kind: "submenu",
+      label: "Save",
+      icon: "star",
+      items: [
+        menuItem("market.favorite", { arg: target, icon: "star", label: "Toggle favorite" }),
+        menuItem("market.wishlist", { arg: target, icon: "heart", label: "Toggle wishlist" }),
+        bookmarkMenu(target),
+      ],
+    },
     ...(bundle ? [] : templateMenu(itemId, assetType)),
     ...(bundle ? [] : pluginMenu("item", itemId)),
-    bookmarkMenu(target),
     shareMenu(target),
     ...(extras.danger?.length ? [sep, ...extras.danger] : []),
   ]
@@ -242,6 +251,17 @@ export function entityMenu(target: string, first: MenuEntry[] = []): MenuEntry[]
     sep,
     menuItem("entity.report", { arg: target, icon: "flag", label: "Report", danger: true }),
   ]
+}
+
+/** A menu without the rows that run `command`, at any depth. Submenus left empty go too. */
+export function withoutCommand(items: MenuEntry[], command: string): MenuEntry[] {
+  return items.flatMap((e): MenuEntry[] => {
+    if (e.kind === "submenu") {
+      const rest = withoutCommand(e.items, command)
+      return rest.some((r) => r.kind !== "separator" && r.kind !== "heading") ? [{ ...e, items: rest }] : []
+    }
+    return (e.kind === undefined || e.kind === "item") && e.id === command ? [] : [e]
+  })
 }
 
 /** Display text for a friend's presence line. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { MenuEntry } from "~/lib/ui"
-import { itemMenu, templateItems, userMenu } from "./menus"
+import { gameMenu, itemMenu, templateItems, userMenu, withoutCommand } from "./menus"
 
 const labels = (rows: MenuEntry[]) => rows.map((r) => ("label" in r ? r.label : r.kind))
 const sub = (rows: MenuEntry[], label: string) => {
@@ -45,6 +45,11 @@ describe("itemMenu", () => {
     expect(rows.at(-1)).toBe(del)
   })
 
+  it("keeps favorite, wishlist and bookmark in Save", () => {
+    expect(sub(itemMenu(1), "Save")).toHaveLength(3)
+    expect(labels(itemMenu(1))).not.toContain("Toggle favorite")
+  })
+
   it("keeps copy and website rows in Share", () => {
     expect(labels(sub(itemMenu(1), "Share") ?? [])).toHaveLength(3)
   })
@@ -61,7 +66,25 @@ describe("userMenu", () => {
     expect(manage).toEqual(expect.arrayContaining(["user.unfriend", "user.block", "Report"]))
   })
 
+  it("keeps the bookmark row under Manage", () => {
+    expect(sub(userMenu(1), "Manage")?.[0]?.kind).toBeUndefined()
+    expect(userMenu(1).some((r) => "id" in r && r.id === "bookmark.toggle")).toBe(false)
+  })
+
   it("leaves out Open profile on the profile itself", () => {
     expect(labels(userMenu(1, { onProfile: true }))).not.toContain("user.open")
+  })
+})
+
+describe("withoutCommand", () => {
+  it("drops a command at any depth and leaves the rest", () => {
+    const rows = withoutCommand(itemMenu(1), "bookmark.toggle")
+    expect(sub(rows, "Save")).toHaveLength(2)
+    expect(withoutCommand(gameMenu(1), "bookmark.toggle")).toHaveLength(gameMenu(1).length - 1)
+  })
+
+  it("drops a submenu it empties", () => {
+    const rows: MenuEntry[] = [{ kind: "submenu", label: "Only", items: [{ id: "x", label: "X", onSelect: () => {} }] }]
+    expect(withoutCommand(rows, "x")).toEqual([])
   })
 })

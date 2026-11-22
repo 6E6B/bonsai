@@ -263,6 +263,22 @@
     },
     {
       "arg": "none",
+      "id": "account.export",
+      "keywords": [
+        "backup",
+        "export",
+        "save",
+        "download",
+        "friends",
+        "outfits",
+        "inventory",
+        "json",
+        "csv"
+      ],
+      "title": "Back up this account to a folder"
+    },
+    {
+      "arg": "none",
       "id": "account.copy_name",
       "keywords": [
         "copy",
@@ -538,6 +554,44 @@
         "money"
       ],
       "title": "Go to Transactions"
+    },
+    {
+      "arg": "none",
+      "id": "nav.playtime",
+      "keywords": [
+        "playtime",
+        "hours",
+        "time played",
+        "stats",
+        "history",
+        "log"
+      ],
+      "title": "Go to Playtime"
+    },
+    {
+      "arg": "playtimeRange",
+      "id": "playtime.range",
+      "keywords": [
+        "playtime",
+        "week",
+        "month",
+        "year",
+        "hours",
+        "range"
+      ],
+      "title": "Show playtime for a range"
+    },
+    {
+      "arg": "none",
+      "id": "playtime.clear",
+      "keywords": [
+        "playtime",
+        "clear",
+        "delete",
+        "history",
+        "log"
+      ],
+      "title": "Clear the playtime log"
     },
     {
       "arg": "none",
@@ -922,6 +976,90 @@
         "customize"
       ],
       "title": "Go to Themes"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.toggle",
+      "keywords": [
+        "streamer",
+        "streaming",
+        "recording",
+        "obs",
+        "twitch",
+        "hide",
+        "privacy",
+        "private"
+      ],
+      "title": "Turn streamer mode on or off"
+    },
+    {
+      "arg": "streamerDetect",
+      "id": "streamer.detect",
+      "keywords": [
+        "streamer",
+        "obs",
+        "recording",
+        "detect",
+        "automatic",
+        "ask"
+      ],
+      "title": "When a recording app opens"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.reveal",
+      "keywords": [
+        "streamer",
+        "reveal",
+        "show",
+        "unhide",
+        "peek"
+      ],
+      "title": "Show hidden content for 10 seconds"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.show_messages",
+      "keywords": [
+        "streamer",
+        "messages",
+        "inbox",
+        "unhide"
+      ],
+      "title": "Show Messages in streamer mode"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.show_friends",
+      "keywords": [
+        "streamer",
+        "friends",
+        "people",
+        "unhide"
+      ],
+      "title": "Show friends in streamer mode"
+    },
+    {
+      "arg": "text",
+      "id": "streamer.ignore",
+      "keywords": [
+        "streamer",
+        "obs",
+        "ignore",
+        "don't ask"
+      ],
+      "title": "Don't ask about a recording app"
+    },
+    {
+      "arg": "none",
+      "id": "streamer.ask_again",
+      "keywords": [
+        "streamer",
+        "obs",
+        "ignored",
+        "reset"
+      ],
+      "title": "Ask about every recording app again"
     },
     {
       "arg": "none",
@@ -1818,6 +1956,34 @@
     },
     {
       "arg": "none",
+      "id": "game.rejoin",
+      "keywords": [
+        "rejoin",
+        "reconnect",
+        "again",
+        "last",
+        "server",
+        "play"
+      ],
+      "title": "Rejoin the last server"
+    },
+    {
+      "arg": "none",
+      "id": "game.close",
+      "keywords": [
+        "close",
+        "quit",
+        "exit",
+        "kill",
+        "stop",
+        "leave",
+        "player",
+        "sober"
+      ],
+      "title": "Close Roblox"
+    },
+    {
+      "arg": "none",
       "id": "game.copy_server_link",
       "keywords": [
         "invite",
@@ -1987,6 +2153,22 @@
         "requests"
       ],
       "title": "Ignore all friend requests"
+    },
+    {
+      "arg": "account",
+      "id": "friends.compare",
+      "keywords": [
+        "friends",
+        "mutual",
+        "mutuals",
+        "shared",
+        "overlap",
+        "compare",
+        "accounts",
+        "alt",
+        "common"
+      ],
+      "title": "Compare friends between two of your accounts"
     },
     {
       "arg": "text",
@@ -2175,6 +2357,80 @@
         "reorder"
       ],
       "title": "Move bookmark before another (bookmark, then target)"
+    },
+    {
+      "arg": "bookmark",
+      "id": "bookmark.folder",
+      "keywords": [
+        "bookmark",
+        "folder",
+        "new folder",
+        "group",
+        "organize",
+        "file"
+      ],
+      "title": "Move bookmark to a folder (new or existing)"
+    },
+    {
+      "arg": "bookmarkFolder",
+      "id": "bookmark.folder_rename",
+      "keywords": [
+        "bookmark",
+        "folder",
+        "rename"
+      ],
+      "title": "Rename bookmark folder"
+    },
+    {
+      "arg": "bookmarkFolder",
+      "id": "bookmark.folder_remove",
+      "keywords": [
+        "bookmark",
+        "folder",
+        "remove",
+        "delete",
+        "ungroup"
+      ],
+      "title": "Remove bookmark folder (keeps its bookmarks)"
+    },
+    {
+      "arg": "bookmark",
+      "id": "bookmark.tag",
+      "keywords": [
+        "bookmark",
+        "tag",
+        "tags",
+        "label",
+        "hashtag"
+      ],
+      "title": "Tag bookmark"
+    },
+    {
+      "arg": "none",
+      "id": "bookmark.export",
+      "keywords": [
+        "bookmark",
+        "export",
+        "save",
+        "file",
+        "backup",
+        "json"
+      ],
+      "title": "Save bookmarks to a file"
+    },
+    {
+      "arg": "none",
+      "id": "bookmark.import",
+      "keywords": [
+        "bookmark",
+        "import",
+        "load",
+        "file",
+        "restore",
+        "backup",
+        "json"
+      ],
+      "title": "Load bookmarks from a file"
     },
     {
       "arg": "none",
@@ -2444,6 +2700,21 @@
       "title": "Wear or take off an item"
     },
     {
+      "arg": "text",
+      "id": "avatar.copy_to",
+      "keywords": [
+        "copy",
+        "outfit",
+        "look",
+        "avatar",
+        "account",
+        "transfer",
+        "clone",
+        "alt"
+      ],
+      "title": "Copy a look to another account (outfit id, or empty for what you wear)"
+    },
+    {
       "arg": "outfit",
       "id": "avatar.outfit",
       "keywords": [
@@ -2460,10 +2731,87 @@
       "keywords": [
         "outfit",
         "save",
+        "save as",
+        "new",
         "create",
         "avatar"
       ],
-      "title": "Save current look as an outfit"
+      "title": "Save the edited look as a new outfit"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.try",
+      "keywords": [
+        "try",
+        "wear",
+        "equip",
+        "remove",
+        "take off",
+        "draft",
+        "avatar"
+      ],
+      "title": "Put an item on or take it off in the avatar editor"
+    },
+    {
+      "arg": "outfit",
+      "id": "avatar.load_outfit",
+      "keywords": [
+        "outfit",
+        "edit",
+        "open",
+        "load",
+        "draft",
+        "avatar"
+      ],
+      "title": "Open an outfit in the avatar editor"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.apply",
+      "keywords": [
+        "wear",
+        "apply",
+        "put on",
+        "look",
+        "draft",
+        "avatar"
+      ],
+      "title": "Wear the edited look"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.undo",
+      "keywords": [
+        "undo",
+        "back",
+        "draft",
+        "avatar"
+      ],
+      "title": "Undo the last avatar edit"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.redo",
+      "keywords": [
+        "redo",
+        "again",
+        "draft",
+        "avatar"
+      ],
+      "title": "Redo an undone avatar edit"
+    },
+    {
+      "arg": "none",
+      "id": "avatar.revert",
+      "keywords": [
+        "revert",
+        "discard",
+        "reset",
+        "cancel",
+        "draft",
+        "avatar"
+      ],
+      "title": "Revert avatar edits to what you are wearing"
     },
     {
       "arg": "text",
@@ -2475,7 +2823,7 @@
         "body",
         "avatar"
       ],
-      "title": "Switch body type (R6 or R15)"
+      "title": "Switch body type in the avatar editor (R6 or R15)"
     },
     {
       "arg": "outfit",
@@ -2487,7 +2835,7 @@
         "save",
         "avatar"
       ],
-      "title": "Update outfit with current look"
+      "title": "Update outfit with the edited look"
     },
     {
       "arg": "text",
@@ -2536,6 +2884,43 @@
         "avatar"
       ],
       "title": "Set body color (color id or #RRGGBB, optionally part:color)"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.adjust",
+      "keywords": [
+        "adjust",
+        "accessory",
+        "position",
+        "move",
+        "rotate",
+        "turn",
+        "tilt",
+        "size",
+        "resize",
+        "hat",
+        "offset",
+        "avatar"
+      ],
+      "title": "Adjust an accessory (item id, then position, rotation or scale values, reset, or match or mirror another item id)"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.adjust_tool",
+      "keywords": [
+        "gizmo",
+        "handle",
+        "move",
+        "rotate",
+        "turn",
+        "scale",
+        "size",
+        "adjust",
+        "accessory",
+        "3d",
+        "avatar"
+      ],
+      "title": "Pick the 3D adjust handle (move, turn or size)"
     },
     {
       "arg": "text",
@@ -2632,6 +3017,20 @@
         "avatar"
       ],
       "title": "Move the 3D camera (left, right, up, down, in, out or reset)"
+    },
+    {
+      "arg": "text",
+      "id": "avatar.search",
+      "keywords": [
+        "wardrobe",
+        "find",
+        "inventory",
+        "items",
+        "clothes",
+        "accessories",
+        "avatar"
+      ],
+      "title": "Search everything you can wear"
     },
     {
       "arg": "text",
@@ -5006,6 +5405,21 @@
       "title": "Item values"
     },
     {
+      "key": "playtime_log",
+      "keywords": [
+        "playtime",
+        "hours",
+        "time played",
+        "history",
+        "stats",
+        "log"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "data",
+      "title": "Playtime log"
+    },
+    {
       "key": "wiki",
       "keywords": [
         "wiki",
@@ -5151,6 +5565,75 @@
       "options": [],
       "section": "accounts",
       "title": "Account color as accent"
+    },
+    {
+      "key": "streamer_detect",
+      "keywords": [
+        "obs",
+        "streaming",
+        "recording",
+        "detect",
+        "automatic",
+        "streamlabs"
+      ],
+      "kind": "choice",
+      "options": [
+        {
+          "label": "Ask",
+          "value": "ask"
+        },
+        {
+          "label": "Turn on automatically",
+          "value": "auto"
+        },
+        {
+          "label": "Off",
+          "value": "off"
+        }
+      ],
+      "section": "streamer",
+      "title": "When a recording app opens"
+    },
+    {
+      "key": "streamer_apps",
+      "keywords": [
+        "obs",
+        "recording",
+        "process",
+        "app",
+        "custom"
+      ],
+      "kind": "text",
+      "options": [],
+      "section": "streamer",
+      "title": "Other recording apps"
+    },
+    {
+      "key": "streamer_hide_messages",
+      "keywords": [
+        "messages",
+        "inbox",
+        "private",
+        "hide"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "streamer",
+      "title": "Hide Messages"
+    },
+    {
+      "key": "streamer_hide_capture",
+      "keywords": [
+        "capture",
+        "obs",
+        "screenshot",
+        "blank",
+        "content protection"
+      ],
+      "kind": "bool",
+      "options": [],
+      "section": "streamer",
+      "title": "Hide from screen capture"
     }
   ]
 }

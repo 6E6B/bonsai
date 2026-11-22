@@ -658,10 +658,18 @@ pub fn top_buyers<'a>(rows: impl IntoIterator<Item = &'a Txn>, n: usize) -> Vec<
 }
 
 fn csv_field(s: &str) -> String {
-    if s.contains([',', '"', '\n', '\r']) {
-        format!("\"{}\"", s.replace('"', "\"\""))
+    let trimmed = s.trim_start_matches([' ', '\t', '\r', '\n']);
+    let safe = if s.starts_with(['=', '+', '-', '@', '\t', '\r'])
+        || trimmed.starts_with(['=', '+', '-', '@', '\t', '\r'])
+    {
+        std::borrow::Cow::Owned(format!("'{s}"))
     } else {
-        s.to_owned()
+        std::borrow::Cow::Borrowed(s)
+    };
+    if safe.contains([',', '"', '\n', '\r']) {
+        format!("\"{}\"", safe.replace('"', "\"\""))
+    } else {
+        safe.into_owned()
     }
 }
 
@@ -1276,11 +1284,34 @@ impl Core {
     /// Save rows as CSV in the downloads folder. Returns the file's path.
     pub fn save_ledger_csv(&self, name: &str, rows: &[Txn]) -> Result<String, String> {
         let dir = self.inner.paths.downloads.clone();
-        let path = crate::template::free_path(&dir, name, "csv");
+        let path = crate::template::free_path(&dir, &csv_stem(name), "csv");
         std::fs::create_dir_all(&dir)
             .and_then(|()| std::fs::write(&path, csv(rows)))
             .map_err(|e| format!("Can't save to {}: {e}", dir.display()))?;
         Ok(path.display().to_string())
+    }
+}
+
+fn csv_stem(name: &str) -> String {
+    let mut clean: String = name
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || matches!(c, ' ' | '-' | '_' | '.' | '(' | ')') {
+                c
+            } else {
+                '_'
+            }
+        })
+        .take(80)
+        .collect();
+    while clean.contains("..") {
+        clean = clean.replace("..", "");
+    }
+    let clean = clean.trim().trim_matches('.').trim();
+    if clean.is_empty() {
+        "transactions".into()
+    } else {
+        clean.to_owned()
     }
 }
 
@@ -1583,6 +1614,28 @@ mod tests {
         let lines: Vec<&str> = out.lines().collect();
         assert_eq!(lines.len(), 2);
         assert!(lines[1].contains("purchases,-95,false,\",, plaid \"\"bat\"\" beret\",Asset,3"));
+    }
+
+    #[test]
+    fn csv_defuses_formula_prefixes_and_sanitizes_stems() {
+        let mut r = row(TxKind::Purchase, "  @id", 0, -50);
+        r.item = Some(TxItem {
+            id: 7,
+            name: "=CMD|' /C calc'!A0".into(),
+            kind: "  +SUM(A1:A2)".into(),
+            place: None,
+        });
+        r.agent = Some(Agent {
+            id: 9,
+            group: false,
+            name: "\t=1+1".into(),
+        });
+        let out = csv(&[r]);
+        let row_line = out.lines().nth(1).unwrap();
+        assert!(row_line.contains(",'=CMD|' /C calc'!A0,'  +SUM(A1:A2),7,"));
+        assert!(row_line.contains(",'\t=1+1,user,9,'  @id"));
+        assert_eq!(csv_stem("../../evil/path"), "__evil_path");
+        assert_eq!(csv_stem("..."), "transactions");
     }
 
     #[test]

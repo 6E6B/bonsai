@@ -31,6 +31,7 @@ import {
   Icon,
   IconButton,
   PersonTile,
+  redactText,
   SectionHeader,
   Thumbnail,
   Tile,
@@ -38,6 +39,8 @@ import {
   VirtualShelf,
 } from "~/lib/ui"
 import { VALUES_SOURCE } from "~/lib/values"
+import { OverlapCard } from "./Overlap"
+import { PlaytimeCard } from "./PlaytimeCard"
 import { TradingCard } from "./Trading"
 import { pageOf, shownOnOverview } from "./wearing"
 
@@ -86,7 +89,7 @@ export function Overview(props: {
     <div class="@container">
       <div class="grid grid-cols-1 gap-x-6 gap-y-5 @2xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
         <div class="flex min-w-0 flex-col gap-5">
-          <Show when={props.view.note}>
+          <Show when={redactText(props.view.note)}>
             {(n) => (
               <Card class="flex h-fit min-w-0 flex-col gap-1.5 px-3.5 py-3">
                 <h3 class="flex items-center justify-between text-sm font-medium text-fg-muted">
@@ -138,6 +141,12 @@ export function Overview(props: {
 
         <aside class="flex h-fit min-w-0 flex-col gap-4">
           <Wearing userId={props.userId} look={look} onSeeAll={() => props.onSeeAll("outfits")} />
+          <Show when={!props.view.mine}>
+            <OverlapCard userId={props.userId} />
+          </Show>
+          <Show when={shell.accounts.some((a) => a.id === props.userId)}>
+            <PlaytimeCard account={props.userId} />
+          </Show>
           <Facts class="h-fit">
             <FactGroup>
               <Show when={props.view.user && ms(props.view.user.created)}>

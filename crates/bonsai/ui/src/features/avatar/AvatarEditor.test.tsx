@@ -1,10 +1,16 @@
 import { cleanup, fireEvent, render, waitFor } from "@solidjs/testing-library"
-import { For } from "solid-js"
+import { createSignal, For } from "solid-js"
 import { afterEach, expect, test, vi } from "vitest"
 import AvatarEditor from "./AvatarEditor"
 
 const mocks = vi.hoisted(() => ({ run: vi.fn() }))
 vi.mock("~/lib/avatar3d/viewer", () => ({ AvatarViewer: () => <div>Avatar preview</div> }))
+vi.mock("~/lib/url-params", () => ({
+  useParamDraft: () => {
+    const [value, set] = createSignal("")
+    return { value, set, reset: () => set("") }
+  },
+}))
 vi.mock("~/lib/commands/hooks", () => ({ useSubTabs: vi.fn() }))
 vi.mock("~/lib/commands/registry", async (original) => ({ ...(await original<object>()), run: mocks.run }))
 vi.mock("~/lib/ui", async (original) => ({
@@ -25,9 +31,42 @@ vi.mock("~/lib/store", async () => {
   const list = (items: unknown[]) => ({ loading: false, error: null, items, more: false })
   return {
     shell: { active: 1, running: [] },
-    useLive: (_source: unknown, fetch: unknown) => {
-      if (fetch === commands.avatar)
+    useLive: (source: () => unknown, fetch: unknown, init: () => unknown) => {
+      const key = source()
+      if (Array.isArray(key) && key[1] === "red")
         return {
+          loading: true,
+          error: null,
+          items: [
+            {
+              slot: "Hats",
+              item: {
+                id: 7,
+                bundle: false,
+                name: "Red Hat",
+                creator: "",
+                creatorVerified: false,
+                copies: 1,
+                assetType: 8,
+                price: null,
+                limited: false,
+                serial: null,
+                rap: null,
+                values: null,
+              },
+            },
+          ],
+          loaded: 1,
+          total: 2,
+          failed: 0,
+          partial: false,
+          truncated: false,
+        }
+      // The editor reads the edited look through its own closure; its empty view says which.
+      const empty = init?.()
+      if (empty && typeof empty === "object" && "canUndo" in empty)
+        return {
+          ...empty,
           loading: false,
           error: null,
           rig: "R6",
@@ -39,6 +78,13 @@ vi.mock("~/lib/store", async () => {
             { part: "torso", label: "Torso", color: 2, hex: "#654321" },
           ],
           scales: [{ name: "height", label: "Height", value: 1, min: 0.9, max: 1.05, step: 0.01 }],
+          adjustRules: [],
+          adjustSteps: { position: 0.01, rotation: 0.1, scale: 0.01 },
+          edited: true,
+          outfit: { id: "1", name: "Explorer" },
+          outfitEdited: true,
+          canUndo: true,
+          canRedo: false,
         }
       if (fetch === commands.outfits)
         return { list: list([{ id: "1", name: "Explorer", editable: true, rev: 1 }]), moreKey: "" }
@@ -102,4 +148,29 @@ test("custom colors are applied explicitly to the selected body part", async () 
   expect(mocks.run).not.toHaveBeenCalled()
   fireEvent.click(r.getByRole("button", { name: "Apply to 1 selected part" }))
   expect(mocks.run).toHaveBeenCalledWith("avatar.color", "head:#AABBCC")
+})
+
+test("searches every wearable type from one field", async () => {
+  const r = render(() => <AvatarEditor />)
+  fireEvent.input(r.getByRole("textbox", { name: "Search all items" }), { target: { value: "red" } })
+  expect(r.getByText("1 match · loading 1 of 2 types")).toBeTruthy()
+  expect(r.queryByRole("tab", { name: "Accessories" })).toBeNull()
+  fireEvent.click(r.getByText("Red Hat"))
+  expect(mocks.run).toHaveBeenCalledWith("avatar.wear", "7:8")
+})
+
+test("edits stay local until the look is worn or saved", () => {
+  const r = render(() => <AvatarEditor />)
+  fireEvent.click(r.getByRole("button", { name: "Wear" }))
+  expect(mocks.run).toHaveBeenCalledWith("avatar.apply")
+  fireEvent.click(r.getByRole("button", { name: "Update “Explorer”" }))
+  expect(mocks.run).toHaveBeenCalledWith("avatar.update_outfit", "1")
+  expect((r.getByRole("button", { name: "Redo (Ctrl+Shift+Z)" }) as HTMLButtonElement).disabled).toBe(true)
+  mocks.run.mockReset()
+  fireEvent.keyDown(window, { key: "z", ctrlKey: true })
+  expect(mocks.run).toHaveBeenCalledWith("avatar.undo")
+  fireEvent.keyDown(window, { key: "Enter", ctrlKey: true })
+  expect(mocks.run).toHaveBeenCalledWith("avatar.apply")
+  fireEvent.keyDown(window, { key: "s", ctrlKey: true })
+  expect(mocks.run).toHaveBeenCalledWith("avatar.update_outfit", "1")
 })

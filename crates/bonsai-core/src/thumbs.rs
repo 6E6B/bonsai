@@ -140,11 +140,16 @@ impl ThumbKey {
             "player" => ThumbKind::Player,
             _ => return None,
         };
+        let max_id = if kind == ThumbKind::Outfit {
+            i64::MAX as u64
+        } else {
+            9_007_199_254_740_991
+        };
         let id = parts
             .next()?
             .parse::<u64>()
             .ok()
-            .filter(|id| (1..=9_007_199_254_740_991).contains(id))?;
+            .filter(|id| (1..=max_id).contains(id))?;
         let large = match parts.next()? {
             "s" => false,
             "l" => true,
@@ -507,10 +512,12 @@ mod tests {
             ThumbKey::small(ThumbKind::Headshot, 1),
             ThumbKey::large(ThumbKind::GameThumbnail, 9_007_199_254_740_991),
             ThumbKey::large(ThumbKind::Outfit, 42),
+            ThumbKey::large(ThumbKind::Outfit, 18_014_398_509_481_984),
             ThumbKey::small(ThumbKind::Player, player_token_id("ABC")),
         ] {
             assert_eq!(ThumbKey::parse(&k.path()), Some(k));
         }
+        assert!(ThumbKey::parse("headshot.18014398509481984.s").is_none());
     }
 
     #[test]

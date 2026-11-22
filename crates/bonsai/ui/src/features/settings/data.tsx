@@ -38,6 +38,15 @@ export function DataSection() {
           </span>
         </SettingRow>
         <SettingRow
+          setting="account_backup"
+          label="Account backup"
+          description="Save the current account's friends, outfits, inventory, playlists, bookmarks, nicknames and notes as JSON and CSV. Never includes the cookie."
+        >
+          <Button size="sm" icon="download" onClick={() => run("account.export")}>
+            Back up
+          </Button>
+        </SettingRow>
+        <SettingRow
           setting="reset_all"
           label="Reset all settings"
           description="Themes, the background, the sidebar, shortcuts and accounts are kept."
@@ -45,6 +54,23 @@ export function DataSection() {
           <Button size="sm" variant="danger" onClick={() => run("settings.reset", "all")}>
             Reset
           </Button>
+        </SettingRow>
+      </SettingsGroup>
+      <SettingsGroup title="Playtime">
+        <PrefRow name="playtime_log" />
+        <SettingRow
+          setting="playtime_clear"
+          label="Recorded playtime"
+          description="Time per experience for every account, kept on this computer."
+        >
+          <span class="flex gap-2">
+            <Button size="sm" icon="clock" onClick={() => run("nav.playtime")}>
+              Open
+            </Button>
+            <Button size="sm" icon="trash" onClick={() => run("playtime.clear")}>
+              Clear
+            </Button>
+          </span>
         </SettingRow>
       </SettingsGroup>
       <SettingsGroup title="Third-party data">

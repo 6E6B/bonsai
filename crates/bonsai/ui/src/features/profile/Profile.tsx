@@ -38,6 +38,7 @@ import {
   Page,
   PremiumBadge,
   Robux,
+  redactText,
   SegmentedControl,
   Select,
   Skeleton,
@@ -281,7 +282,7 @@ export default function Profile() {
             subtitle={
               <>
                 @{u().name}
-                <Show when={view.nickname}>
+                <Show when={redactText(view.nickname)}>
                   {(n) => (
                     <Tooltip content="Your nickname for them" class="ml-2">
                       <Badge>{n()}</Badge>

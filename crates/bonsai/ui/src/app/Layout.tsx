@@ -12,7 +12,9 @@ import {
   Show,
   untrack,
 } from "solid-js"
+import { CopyLookDialog } from "~/features/avatar/CopyLookDialog"
 import { NewChat } from "~/features/chat/NewChat"
+import { CompareFriendsDialog } from "~/features/friends/CompareFriendsDialog"
 import { HubDialogs } from "~/features/hub/Dialogs"
 import { CommandPalette } from "~/features/palette/CommandPalette"
 import { ActionsDialog } from "~/features/plugins/ActionsDialog"
@@ -23,7 +25,7 @@ import { ViewDialog } from "~/features/plugins/ViewDialog"
 import { ShortcutsDialog } from "~/features/shortcuts/ShortcutsDialog"
 import { registerThemeCommands } from "~/features/themes/commands"
 import { ImportDialog, useThemeDrop } from "~/features/themes/ImportDialog"
-import { bookmarkPath, findBookmark } from "~/lib/bookmarks"
+import { bookmarkFolders, bookmarkPath, findBookmark } from "~/lib/bookmarks"
 import {
   commandContext,
   handle,
@@ -36,14 +38,16 @@ import {
 import { setClockFormat, setFormatLocale, setRelativeDates } from "~/lib/format"
 import { noteDetails, noteVisit } from "~/lib/history"
 import { registerHubCommands } from "~/lib/hub"
-import { commands } from "~/lib/ipc/bindings"
+import { type BookmarkView, commands } from "~/lib/ipc/bindings"
 import { ItemPreview, parseItemTarget } from "~/lib/item-preview"
 import { WISHLIST } from "~/lib/market-category"
+import { isPlaytimeRange, setPlaytimeView } from "~/lib/playtime"
 import { describePath, nudgeScreen, screens } from "~/lib/screens"
 import { playlists, refreshBookmarks, setDrawerState, shell, startSync, visibleBookmarks } from "~/lib/store"
+import { promptToast, resetStreamerUi, revealFor, showFriends, showMessages, streamerHidden } from "~/lib/streamer"
 import { activeTab, pathname, savedTabs, setTabDescriber, tabActions, tabLabel, tabs } from "~/lib/tabs"
 import { shownBackground } from "~/lib/theme"
-import { showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
+import { dismissToast, type PromptOptions, setRedacting, showToast, useConfirm, useDialog, usePrompt } from "~/lib/ui"
 import { useUpdateToasts } from "~/lib/update-view"
 import { useUpdates } from "~/lib/updates"
 import { withParams } from "~/lib/url-params"
@@ -237,6 +241,46 @@ export function Layout(props: ParentProps) {
     if (title && shell.active === account) void runBackend("bookmark.rename", `${b.id} ${title}`)
   }
 
+  /** `id text` goes straight to the backend; a bare id asks for the text first. */
+  const editBookmark = (id: string, ask: (b: BookmarkView) => PromptOptions) => async (arg: string | null) => {
+    const raw = arg?.trimStart() ?? ""
+    // "id " (trailing space) clears the value without asking.
+    if (/^\S+\s/.test(raw)) return void runBackend(id, raw)
+    const b = visibleBookmarks().find((b) => String(b.id) === raw.trim())
+    if (!b) return void showToast("Choose a bookmark first.")
+    const account = shell.active
+    const text = await prompt(ask(b))
+    if (text !== null && shell.active === account) void runBackend(id, `${b.id} ${text}`)
+  }
+  const folderBookmark = editBookmark("bookmark.folder", (b) => {
+    const folders = bookmarkFolders(visibleBookmarks())
+    return {
+      title: "Move to folder",
+      label: "Folder",
+      initial: b.folder,
+      placeholder: folders.length ? folders.slice(0, 3).join(", ") : "New folder name",
+      submit: "Move",
+      allowEmpty: true,
+      maxLength: 40,
+    }
+  })
+  const tagBookmark = editBookmark("bookmark.tag", (b) => ({
+    title: "Tag bookmark",
+    label: "Tags, separated by commas",
+    initial: b.tags.join(", "),
+    submit: "Save",
+    allowEmpty: true,
+    maxLength: 240,
+  }))
+  const renameBookmarkFolder = async (arg: string | null) => {
+    const raw = arg?.trim() ?? ""
+    if (raw.startsWith("{")) return void runBackend("bookmark.folder_rename", raw)
+    if (!bookmarkFolders(visibleBookmarks()).includes(raw)) return void showToast("Choose a folder first.")
+    const account = shell.active
+    const to = await prompt({ title: "Rename folder", label: "Name", initial: raw, submit: "Rename", maxLength: 40 })
+    if (to && shell.active === account) void runBackend("bookmark.folder_rename", JSON.stringify({ from: raw, to }))
+  }
+
   const addAccount = (mode: AddMode, title: string) => () =>
     dialog.show(() => <AddAccount mode={mode} onDone={() => dialog.close()} />, { title, size: "sm" })
 
@@ -372,11 +416,28 @@ export function Layout(props: ParentProps) {
       const wishlist = new URLSearchParams(location.search).get("cat") === WISHLIST
       navigate(withParams(location, "/marketplace", { q: q?.trim() || null, ...(wishlist ? { cat: null } : {}) }))
     }),
+    handle("avatar.search", (q) => navigate(withParams(location, "/avatar", { find: q?.trim() || null }))),
     handle("market.category", (c) => navigate(withParams(location, "/marketplace", { cat: c?.trim() || null }))),
+    handle("streamer.reveal", () => {
+      if (!shell.streamer.on) return void showToast("Streamer mode is off.")
+      revealFor()
+    }),
+    handle("streamer.show_friends", () => {
+      if (!shell.streamer.on) return void showToast("Streamer mode is off.")
+      showFriends()
+    }),
+    handle("streamer.show_messages", () => {
+      // Only a hidden screen is unhidden, so turning streamer mode on later still hides it.
+      if (shell.streamer.on) showMessages()
+      visitPath("/messages")
+    }),
     handle("user.nickname", editAbout("nickname")),
     handle("user.note", editAbout("note")),
     handle("bookmark.toggle", toggleBookmark),
     handle("bookmark.rename", renameBookmark),
+    handle("bookmark.folder", folderBookmark),
+    handle("bookmark.tag", tagBookmark),
+    handle("bookmark.folder_rename", renameBookmarkFolder),
     handle("bookmark.open", async (arg) => {
       const b = visibleBookmarks().find((b) => String(b.id) === arg)
       const account = shell.active
@@ -393,6 +454,11 @@ export function Layout(props: ParentProps) {
     handle("playlist.new", newPlaylist),
     handle("playlist.rename", renamePlaylist),
     handle("playlist.open", open("/playlists")),
+    handle("playtime.range", (r) => {
+      const range = r?.trim() ?? ""
+      if (isPlaytimeRange(range)) setPlaytimeView("range", range)
+      visitPath("/playtime")
+    }),
     handle("search.open", (q) => {
       const t = q?.trim() ?? ""
       if (t) void runBackend("search.open", t)
@@ -434,9 +500,29 @@ export function Layout(props: ParentProps) {
     handle("group.search", (q) =>
       navigate(q?.trim() ? `/communities?q=${encodeURIComponent(q.trim())}` : "/communities"),
     ),
+    handle("avatar.copy_to", (arg, asAccount) => {
+      const text = arg?.trim() ?? ""
+      const own = asAccount ?? shell.active
+      const avatar = /^avatar:(\d+)$/.exec(text)
+      // Pin "what you wear now" to the account it means, in case the active one changes.
+      const source = text || (own === null ? "" : `avatar:${own}`)
+      const from = avatar ? Number(avatar[1]) : own
+      dialog.show(() => <CopyLookDialog source={source} from={from} onDone={() => dialog.close()} />, {
+        title: avatar || !text ? "Copy look to another account" : "Copy outfit to another account",
+        size: "sm",
+      })
+    }),
     handle("palette.open", () =>
       dialog.show(() => <CommandPalette />, { position: "top", label: "Command bar", size: "xl" }),
     ),
+    handle("friends.compare", (arg) => {
+      const other = arg?.trim() ? Number(arg) : null
+      const b = other !== null && Number.isFinite(other) ? other : null
+      dialog.show(() => <CompareFriendsDialog a={shell.active} b={b} onDone={() => dialog.close()} />, {
+        title: "Compare friends",
+        size: "md",
+      })
+    }),
     handle("help.shortcuts", () => dialog.show(() => <ShortcutsDialog />, { title: "Keyboard shortcuts", size: "lg" })),
     // Saved, so the window opens the same way next time.
     handle("view.sidebar", () => runBackend("settings.set", `sidebar_mode ${compact() ? "expanded" : "collapsed"}`)),
@@ -498,6 +584,42 @@ export function Layout(props: ParentProps) {
 
   // Every navigation lands in a tab: screens replace the current tab, entities get their own.
   createEffect(on(here, (path) => tabActions.visit(path)))
+
+  // Streamer mode: mask private content, forget reveals once it's off, and ask about
+  // recording apps opening or closing. One question at a time; bonsai-core clears it
+  // once streamer mode changes.
+  createEffect(() => setRedacting(streamerHidden()))
+  createEffect(
+    on(
+      () => shell.streamer.on,
+      (on) => !on && resetStreamerUi(),
+      { defer: true },
+    ),
+  )
+  let streamerToast: number | undefined
+  createEffect(
+    on(
+      () => shell.streamer.prompt?.seq,
+      () => {
+        if (streamerToast !== undefined) dismissToast(streamerToast)
+        streamerToast = undefined
+        const p = untrack(() => shell.streamer.prompt)
+        if (!p || p.start === untrack(() => shell.streamer.on)) return
+        const t = promptToast(p)
+        streamerToast = showToast({
+          title: t.title,
+          persistent: true,
+          actions: t.buttons.map((b) => ({
+            label: b.label,
+            onClick: () => {
+              if (b.run) void run(b.run[0], b.run[1])
+            },
+          })),
+        })
+      },
+    ),
+  )
+
   // The start screen, or the tabs from last time. A reload on another page stays there.
   // Tabs are saved only after this, so the single launch tab never replaces the saved ones.
   const [started, setStarted] = createSignal(false)
@@ -598,6 +720,12 @@ export function Layout(props: ParentProps) {
         variant: t.error ? "error" : t.retryAfterSecs ? "warning" : "neutral",
         countdownSecs: t.retryAfterSecs ?? undefined,
         key: t.host ?? undefined,
+        action: t.action
+          ? {
+              label: t.action.label,
+              onClick: () => void run(t.action?.command ?? "", t.action?.arg ?? null, t.account, true),
+            }
+          : undefined,
       })
       void commands.dismissToast(t.id)
     }

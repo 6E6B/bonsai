@@ -1088,3 +1088,78 @@ fn http_exposes_status_text_and_parsed_json() {
         )]
     );
 }
+
+#[test]
+fn store_set_rejects_shared_table_dag_and_cycles_quickly() {
+    let start = std::time::Instant::now();
+    let dag = run(r#"
+        local t = { "leaf" }
+        for i = 1, 15 do
+            local next = {}
+            for j = 1, 16 do next[j] = t end
+            t = next
+        end
+        ctx.store.set("bomb", t)
+    "#);
+    assert!(dag.is_err(), "{dag:?}");
+    assert!(start.elapsed() < Duration::from_secs(1));
+
+    let err = script_error(run("local t = {}; t.self = t; ctx.store.set('cycle', t)"));
+    assert!(err.contains("circular"), "{err}");
+}
+
+#[test]
+fn outcome_caps_actions_args_and_columns_without_heap_amplification() {
+    let start = std::time::Instant::now();
+    let many_actions = run(r#"
+        local big = string.rep("x", 1024 * 1024)
+        local item = { id = "user.unfriend", arg = "1" }
+        local list = {}
+        for i = 1, 20000 do list[i] = item end
+        return { actions = list, ignored = big }
+    "#);
+    let err = script_error(many_actions);
+    assert!(err.contains("more than 100 actions"), "{err}");
+    assert!(start.elapsed() < Duration::from_secs(1));
+
+    let huge_arg = run(r#"
+        local big = string.rep("1", 8192)
+        return { actions = { { id = "user.unfriend", arg = big } } }
+    "#);
+    assert!(script_error(huge_arg).contains("arg is at most"));
+
+    let many_cols = run(r#"
+        local cols = {}
+        for i = 1, 10000 do cols[i] = "c" end
+        return { view = bonsai.ui.table { columns = cols, rows = {} } }
+    "#);
+    assert!(script_error(many_cols).contains("1 to 12 columns"));
+}
+
+#[test]
+fn string_patterns_reject_catastrophic_backtracking_and_keep_plain_and_normal_matches() {
+    let start = std::time::Instant::now();
+    for bad in [
+        "local s = string.rep('a', 4096) return { toast = tostring(string.find(s, '.-.-.-.-.-.-b')) }",
+        "local s = string.rep('a', 4096) return { toast = tostring(s:match('a*a*a*a*a*b')) }",
+        "local s = string.rep('a', 64) return { toast = tostring(string.match(s, string.rep('a?', 20) .. string.rep('a', 20))) }",
+        "local s = string.rep(' ', 2000) .. 'x' return { toast = tostring(string.match(s, '^%s*(.-)%s*$')) }",
+    ] {
+        assert!(run(bad).is_err(), "{bad}");
+    }
+    assert!(start.elapsed() < Duration::from_secs(1));
+
+    let ok = run(r#"
+        local big = string.rep("a", 20000) .. "\nneedle"
+        local at = string.find(big, "needle", 1, true)
+        local trimmed = ("  hello world  "):match("^%s*(.-)%s*$")
+        local words = {}
+        for w in string.gmatch("one two three", "%w+") do
+            table.insert(words, w)
+        end
+        local sub = string.gsub("runtime error: oops", "^runtime error: ", "")
+        return { toast = string.format("%d:%s:%s:%s", at, trimmed, table.concat(words, ","), sub) }
+    "#)
+    .unwrap();
+    assert_eq!(ok, Outcome::Toast("20002:hello world:one,two,three:oops".into()));
+}

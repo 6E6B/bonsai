@@ -1,10 +1,12 @@
 import { For, Show } from "solid-js"
-import { run, shortcutOf } from "~/lib/commands/registry"
+import { menuItem, run, shortcutOf } from "~/lib/commands/registry"
 import { dateTime } from "~/lib/format"
-import type { Account, VoiceBanView } from "~/lib/ipc/bindings"
+import type { Account, LaunchView, VoiceBanView } from "~/lib/ipc/bindings"
+import { launchElapsed, launchStatus, onTheWay, showLaunch } from "~/lib/launch"
 import { activeVoiceBans, clock, useNowSecs } from "~/lib/moderation"
 import { shell } from "~/lib/store"
-import { Badge, Divider, Icon, Robux, Spinner, TextLink, Tooltip } from "~/lib/ui"
+import { accountName, streamerUi } from "~/lib/streamer"
+import { Badge, Divider, Icon, Menu, type MenuEntry, Robux, redacting, Spinner, TextLink, Tooltip } from "~/lib/ui"
 
 /** Voice bans shown one by one before the rest fold into "+N". */
 const SHOWN_BANS = 3
@@ -21,11 +23,12 @@ export function StatusBar(props: { zoom: number }) {
         {(a) => (
           <>
             <TextLink tone="muted" onClick={() => run("nav.profile")}>
-              <span class="text-fg">{a().label ?? a().displayName}</span> @{a().name}
+              <span class="text-fg">{accountName(a())}</span>
+              <Show when={!redacting()}> @{a().name}</Show>
             </TextLink>
             <Show when={shell.robux !== null}>
               <Divider orientation="vertical" class="my-1.5" />
-              <Robux amount={shell.robux ?? 0} />
+              <Robux amount={shell.robux ?? 0} private />
             </Show>
           </>
         )}
@@ -40,7 +43,9 @@ export function StatusBar(props: { zoom: number }) {
         <Badge variant="warning">Offline</Badge>
       </Show>
       <VoiceBans />
+      <NowPlaying />
       <div class="ml-auto flex items-center gap-3">
+        <StreamerPill />
         <Show when={props.zoom !== 1}>
           <TextLink tone="muted" onClick={() => run("view.zoom_reset")}>
             {Math.round(props.zoom * 100)}%
@@ -56,7 +61,7 @@ export function StatusBar(props: { zoom: number }) {
 
 type Banned = Account & { voiceBan: VoiceBanView }
 
-const banName = (a: Banned) => a.label ?? a.displayName
+const banName = (a: Banned) => accountName(a)
 const banLeft = (a: Banned, now: number) => (a.voiceBan.until === null ? "no end date" : clock(a.voiceBan.until - now))
 
 const banTip = (a: Banned) =>
@@ -106,6 +111,80 @@ function VoiceBans() {
           </Tooltip>
         </Show>
       </span>
+    </Show>
+  )
+}
+
+/** Shown while streamer mode is on. Opens a menu to peek, turn it off or change it. */
+function StreamerPill() {
+  return (
+    <Show when={shell.streamer.on}>
+      <Menu
+        variant="ghost"
+        size="sm"
+        placement="top-start"
+        items={[
+          menuItem("streamer.reveal", { icon: "eye", disabled: streamerUi.revealing }),
+          menuItem("streamer.toggle", { label: "Turn off streamer mode", arg: "off" }),
+          menuItem("nav.settings", { label: "Streamer mode settings", arg: "streamer", icon: "settings" }),
+        ]}
+      >
+        <span data-streamer-pill class="flex items-center gap-1.5">
+          <Icon name="video" size={14} />
+          <Show when={streamerUi.revealing} fallback="Streamer mode">
+            Showing hidden content
+          </Show>
+        </span>
+      </Menu>
+    </Show>
+  )
+}
+
+/** The player Bonsai launched: where it is, for how long, and Rejoin / Close. A disconnect or
+ * crash stays a few minutes so the user can rejoin from here. */
+function NowPlaying() {
+  const now = useNowSecs(1000)
+  const l = () => shell.launch
+  const shown = () => showLaunch(l(), now() * 1000)
+  const who = (v: LaunchView) => {
+    const a = shell.accounts.find((x) => x.id === v.account)
+    return a ? accountName(a) : "Roblox"
+  }
+  const bad = (v: LaunchView) => v.phase === "disconnected" || v.phase === "crashed"
+  const items = (v: LaunchView): MenuEntry[] => [
+    ...(v.placeId === null
+      ? []
+      : [menuItem("game.open", { arg: String(v.placeId), label: "Open experience", icon: "game" })]),
+    menuItem("game.rejoin", { label: "Rejoin", icon: "refresh" }),
+    ...(v.live ? [menuItem("game.close", { label: "Close Roblox", icon: "x", danger: true })] : []),
+  ]
+  return (
+    <Show when={shown() && l()}>
+      {(v) => (
+        <span class="flex min-w-0 items-center gap-1.5">
+          <Divider orientation="vertical" class="my-1.5" />
+          <Show
+            when={onTheWay(v())}
+            fallback={
+              <span classList={{ "text-danger": bad(v()), "text-presence-game": !bad(v()) }}>
+                <Icon name={bad(v()) ? "alert" : "game"} size={14} />
+              </span>
+            }
+          >
+            <Spinner size="sm" />
+          </Show>
+          <Tooltip content={`${who(v())}: ${launchStatus(v())}`}>
+            <span class="flex min-w-0 items-center gap-1.5">
+              <Show when={v().game}>{(g) => <span class="truncate text-fg">{g()}</span>}</Show>
+              <span class="truncate">{launchStatus(v())}</span>
+              <Show when={v().phase === "inGame" || bad(v())}>
+                <span class="tabular-nums">{launchElapsed(v(), now() * 1000)}</span>
+              </Show>
+            </span>
+          </Tooltip>
+          <Menu size="sm" icon="more" label="Roblox" placement="top-start" items={items(v())} />
+        </span>
+      )}
     </Show>
   )
 }

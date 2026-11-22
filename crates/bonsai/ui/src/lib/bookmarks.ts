@@ -39,25 +39,58 @@ export function bookmarkPath(target: string): string | undefined {
   }
   return match ? `/${routes[match[1]]}/${match[2]}` : undefined
 }
+/** Folders in use, sorted ignoring case. */
+export function bookmarkFolders(items: readonly BookmarkView[]): string[] {
+  return [...new Set(items.map((b) => b.folder).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" }),
+  )
+}
+
+/** A folder, or one kind outside folders. Rows only reorder inside their group. */
+export type BookmarkGroup = { folder: string; kind: null } | { folder: null; kind: BookmarkKindView }
+export function bookmarkGroup(b: BookmarkView): BookmarkGroup {
+  return b.folder ? { folder: b.folder, kind: null } : { folder: null, kind: b.kind }
+}
+export function groupKey(g: BookmarkGroup): string {
+  return g.folder === null ? g.kind : `folder:${g.folder}`
+}
+export function groupLabel(g: BookmarkGroup): string {
+  return g.folder ?? bookmarkLabels[g.kind]
+}
+
+/** Every word matches the title, path or folder; `#word` matches the start of a tag. */
+export function matchesBookmark(b: BookmarkView, words: readonly string[]): boolean {
+  const text = `${b.title} ${b.path} ${b.folder}`.toLocaleLowerCase()
+  const tags = b.tags.map((t) => t.toLocaleLowerCase())
+  return words.every((w) =>
+    w.startsWith("#") && w.length > 1
+      ? tags.some((t) => t.startsWith(w.slice(1)))
+      : text.includes(w) || tags.some((t) => t.includes(w.replace(/^#/, ""))),
+  )
+}
+
 export type BookmarkRow =
-  | { type: "header"; kind: BookmarkKindView; count: number }
+  | { type: "header"; group: BookmarkGroup; count: number }
   | { type: "bookmark"; bookmark: BookmarkView }
+/** Folders first, then the kinds outside folders. `collapsed` is keyed by `groupKey`. */
 export function bookmarkRows(
   items: readonly BookmarkView[],
   query: string,
-  collapsed: Partial<Record<BookmarkKindView, boolean>> = {},
+  collapsed: Partial<Record<string, boolean>> = {},
 ): BookmarkRow[] {
   const words = query.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean)
-  return bookmarkKinds.flatMap((kind): BookmarkRow[] => {
-    const group = items.filter(
-      (b) => b.kind === kind && words.every((w) => `${b.title} ${b.path}`.toLocaleLowerCase().includes(w)),
-    )
-    if (!group.length) return []
+  const shown = items.filter((b) => matchesBookmark(b, words))
+  const groups: BookmarkGroup[] = [
+    ...bookmarkFolders(shown).map((folder): BookmarkGroup => ({ folder, kind: null })),
+    ...bookmarkKinds.map((kind): BookmarkGroup => ({ folder: null, kind })),
+  ]
+  return groups.flatMap((group): BookmarkRow[] => {
+    const key = groupKey(group)
+    const rows = shown.filter((b) => groupKey(bookmarkGroup(b)) === key)
+    if (!rows.length) return []
     return [
-      { type: "header", kind, count: group.length },
-      ...(collapsed[kind] && !words.length
-        ? []
-        : group.map((bookmark): BookmarkRow => ({ type: "bookmark", bookmark }))),
+      { type: "header", group, count: rows.length },
+      ...(collapsed[key] && !words.length ? [] : rows.map((bookmark): BookmarkRow => ({ type: "bookmark", bookmark }))),
     ]
   })
 }

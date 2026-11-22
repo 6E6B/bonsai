@@ -19,6 +19,7 @@ const worn = (id: number, typeId: number, layer: number | null = null): WornView
   typeName: "",
   r15Only: false,
   layer,
+  placement: null,
 })
 
 const view = (over: Partial<Avatar3dView> = {}): Avatar3dView => ({
@@ -51,6 +52,21 @@ describe("toOutfitJson", () => {
     ])
     expect(j.scale.depth).toBeUndefined()
     expect(j.scale.bodyType).toBe(0.3)
+  })
+
+  it("passes accessory adjustments to meta", () => {
+    const placement = {
+      position: { x: 0.1, y: 0, z: -0.2 },
+      rotation: { x: 0, y: 15, z: 0 },
+      scale: { x: 1.1, y: 1.1, z: 1 },
+    }
+    const j = toOutfitJson(view({ assets: [{ ...worn(1, 8), placement }] }))
+    expect(j.assets[0].meta).toEqual({
+      version: 1,
+      position: { X: 0.1, Y: 0, Z: -0.2 },
+      rotation: { X: 0, Y: 15, Z: 0 },
+      scale: { X: 1.1, Y: 1.1, Z: 1 },
+    })
   })
 
   it("passes exact custom colors through to the 3D engine", () => {
