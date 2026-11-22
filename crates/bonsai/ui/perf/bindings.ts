@@ -156,6 +156,7 @@ const fixtures = {
     canRedo: false,
   }),
   wardrobe: () => list([]),
+  socialOverlap: () => ({ loading: false, error: null, checked: 0, complete: true, accounts: [] }),
   findUser: () => ({ loading: false, error: null, id: 100 }),
   catalogSearch: () => ({ list: list(items), moreKey: "" }),
   wishlist: () => list(items),
