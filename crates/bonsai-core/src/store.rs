@@ -278,7 +278,6 @@ pub struct AccountData {
     pub favorites: Loadable<Vec<u64>>,
     /// Local wishlist, newest first.
     pub wishlist: Vec<crate::market::WishItem>,
-    pub last_launch: Option<String>,
     /// Public servers this account played in over the last day, newest first. Local.
     pub recent_servers: Vec<crate::recent_servers::RecentServer>,
     /// Connected to the realtime hub.
@@ -388,6 +387,16 @@ pub struct Toast {
     pub error: bool,
     pub host: Option<String>,
     pub retry_after_secs: Option<u32>,
+    /// A button that runs a command, as the toast's account.
+    pub action: Option<ToastAction>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ToastAction {
+    pub label: String,
+    /// A command registry id.
+    pub command: String,
+    pub arg: Option<String>,
 }
 
 /// A remote search result row (merged into the command bar).
@@ -483,6 +492,10 @@ pub struct StoreData {
     /// Turning on the authenticator app or making recovery codes (see [`crate::security`]).
     pub security: Option<crate::security::SecurityFlow>,
     pub toasts: Vec<Toast>,
+    /// The latest launch, while it runs and after it ends (see [`crate::play`]).
+    pub launch: Option<crate::launcher::session::LaunchSession>,
+    /// A Roblox player is running, whether or not Bonsai started it.
+    pub player_open: bool,
     pub jobs: u32,
     /// User commands with work still in flight, by how many tasks each has (see
     /// [`crate::running`]).

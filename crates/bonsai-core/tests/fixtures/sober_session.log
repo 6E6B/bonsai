@@ -1,0 +1,36 @@
+info: app: lifecycle: logging_started delta=141.3313129991293ms
+info: app: app tag: s0000-00000-x86_64-gnu
+info: app: lifecycle: fs_init delta=102.97584899514914ms
+info: app: lifecycle: interface_start delta=555.5477039963007ms
+info: app: lifecycle: enter_main_loop delta=0.002034001052379608ms
+info: Roblox: 2026-11-22T06:58:36.816Z,0.816138,a0af76c0,6 [FLog::SingleSurfaceApp] launchUGCGame: (stage:Native).
+info: Roblox: 2026-11-22T06:58:36.816Z,0.816424,a0af76c0,6 [FLog::SingleSurfaceApp] launchUGCGameInternal
+info: Roblox: 2026-11-22T06:58:37.554Z,1.554858,901d86c0,6 [FLog::Output] ! Joining game '11111111-2222-4333-8444-555555555555' place 920587237 at 10.0.0.1
+info: Roblox: 2026-11-22T06:58:37.554Z,1.554920,901d86c0,6 [FLog::GameJoinLoadTime] Report game_join_loadtime: sid:00000000-0000-4000-8000-000000000000, clienttime:1795330718.08, placeid:920587237, userid:1, universeid:383310974, join_time:0.35,
+info: Roblox: 2026-11-22T06:58:37.556Z,1.556393,901d86c0,7 [FLog::Network] UDMUX Address = 10.0.0.1, Port = 51675 | RCC Server Address = 10.0.0.2, Port = 51675
+info: Roblox: 2026-11-22T06:58:37.600Z,1.600000,901d86c0,6 [FLog::SessionTransitionFSM] Entered play session.
+info: Roblox: 2026-11-22T06:58:37.653Z,1.653120,901d86c0,7 [FLog::Network] serverId: 10.0.0.2|51675
+info: Roblox: 2026-11-22T06:58:37.653Z,1.653184,901d86c0,7 [FLog::Network] Replicator created: 0x7fb37c90f060
+info: Roblox: 2026-11-22T07:01:02.100Z,145.100000,901d86c0,6 [FLog::UgcExperienceController] UgcExperienceController: doTeleport: joinScriptUrl https://gamejoin.example/join?ticket=REDACTED
+info: Roblox: 2026-11-22T07:01:02.300Z,145.300000,925e16c0,7 [FLog::Network] Sending disconnect with reason: 285
+info: Roblox: 2026-11-22T07:01:02.300Z,145.300000,925e16c0,7 [FLog::Network] Sending disconnect with reason: 285
+info: Roblox: 2026-11-22T07:01:02.310Z,145.310000,8fdd76c0,6,Info [DFLog::RbxTransportDummyClient] Disconnected from server for reason: Player: 285 (DisconnectClientInitiated)
+info: Roblox: 2026-11-22T07:01:03.000Z,146.000000,905d96c0,6 [FLog::SessionTransitionFSM] Teleported.
+info: Roblox: 2026-11-22T07:01:03.000Z,146.000000,905d96c0,6 [FLog::SessionTransitionFSM] Session history: IPSAPJ
+info: Roblox: 2026-11-22T07:01:03.500Z,146.500000,901d86c0,6 [FLog::Output] ! Joining game '66666666-7777-4888-9999-aaaaaaaaaaaa' place 920587237 at 10.0.0.3
+info: Roblox: 2026-11-22T07:01:03.900Z,146.900000,901d86c0,7 [FLog::Network] serverId: 10.0.0.4|60442
+info: Roblox: 2026-11-22T07:10:24.531Z,708.531982,a0af76c0,6 [FLog::SingleSurfaceApp] returnToLuaApp: (stage:UGCGame).
+info: Roblox: 2026-11-22T07:10:24.532Z,708.532043,a0af76c0,6 [FLog::SingleSurfaceApp] leaveUGCGameInternal
+info: Roblox: 2026-11-22T07:10:24.534Z,708.534241,8fdd76c0,6,Info [DFLog::NetworkClient] Client:Disconnect
+info: Roblox: 2026-11-22T07:10:24.544Z,708.544128,925e16c0,7 [FLog::Network] Time to disconnect replication data: 0.180714
+info: Roblox: 2026-11-22T07:10:24.544Z,708.544373,925e16c0,7 [FLog::Network] Sending disconnect with reason: 285
+info: Roblox: 2026-11-22T07:10:24.544Z,708.544495,8dd7a6c0,7 [FLog::Network] Connection lost: connectMode: Disconnect ASAP, timeMS:708544, connectionTime 1609
+info: Roblox: 2026-11-22T07:10:24.544Z,708.544495,8dd7a6c0,7 [FLog::Network] Disconnection Notification. Reason: 285
+info: Roblox: 2026-11-22T07:10:24.911Z,708.911316,90ddb6c0,7 [DFLog::MegaReplicatorLogDisconnectCleanUpLog] Destroying MegaReplicator.
+info: Roblox: 2026-11-22T07:10:25.056Z,709.056458,a0af76c0,6 [FLog::SingleSurfaceApp] returnToLuaApp: (stage:LuaApp).
+info: Roblox: 2026-11-22T07:10:25.143Z,709.143066,905d96c0,6 [FLog::SessionTransitionFSM] Entered app session.
+info: app: lifecycle: will_do_clean_exit delta=807883.7014109939ms
+info: Roblox: 2026-11-22T07:12:04.698Z,808.698853,80f78440,6 [DFLog::SignalRCoreError] ID: 1 Disconnected - stop() called
+info: Roblox: 2026-11-22T07:12:04.698Z,808.698914,a0af76c0,6 [FLog::SingleSurfaceApp] leaveUGCGame: (stage:LuaApp) blocking=1.
+info: Roblox: 2026-11-22T07:12:04.698Z,808.698975,a0af76c0,6 [FLog::SingleSurfaceApp] leaveUGCGame: ... no-op, not in-game
+info: app: lifecycle: clean_exit_success delta=209.16714700311422ms

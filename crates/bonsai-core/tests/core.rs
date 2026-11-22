@@ -8,7 +8,8 @@ use bonsai_api::replay::{self, Fixture, Interaction, Replay};
 use bonsai_api::{AccountId, Base, RateLimiter, Secret};
 use bonsai_core::account::{AccountList, CookieStore, MemoryCookies};
 use bonsai_core::cache::{Cache, Kind};
-use bonsai_core::launcher::{JoinTarget, RecordingOpener};
+use bonsai_core::launcher::session::Phase;
+use bonsai_core::launcher::{JoinTarget, LogDir, PlayerKind, PlayerProcess, RecordingOpener};
 use bonsai_core::me::ServersTab;
 use bonsai_core::moderation::ModerationKind;
 use bonsai_core::search::{Group, Scope, Target};
@@ -266,6 +267,135 @@ fn repeat(f: &Fixture, n: usize) -> Fixture {
     let mut out = f.clone();
     out.interactions = (0..n).flat_map(|_| f.interactions.clone()).collect();
     out
+}
+
+/// The start of a Sober session, joined to `job` in place 920587237.
+fn sober_join(job: &str) -> String {
+    let l = |tag: &str, msg: &str| {
+        format!("info: Roblox: 2026-11-22T06:58:37.554Z,1.5,901d86c0,6 [FLog::{tag}] {msg}\n")
+    };
+    [
+        "info: app: lifecycle: enter_main_loop delta=0.002ms\n".to_owned(),
+        l("SingleSurfaceApp", "launchUGCGameInternal"),
+        l(
+            "Output",
+            &format!("! Joining game '{job}' place 920587237 at 10.0.0.1"),
+        ),
+        l("Network", "serverId: 10.0.0.2|51675"),
+    ]
+    .concat()
+}
+
+fn append(path: &std::path::Path, text: &str) {
+    use std::io::Write;
+    let mut f = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .unwrap();
+    f.write_all(text.as_bytes()).unwrap();
+}
+
+/// Waits up to 20 s: the tracker looks every half second and wants two scans to call a
+/// player gone.
+async fn wait_launch(
+    core: &Core,
+    what: &str,
+    f: impl Fn(&bonsai_core::launcher::session::LaunchSession) -> bool,
+) {
+    let start = Instant::now();
+    while !core.store().launch.as_ref().is_some_and(&f) {
+        assert!(
+            start.elapsed() < Duration::from_secs(20),
+            "timed out waiting for {what}; launch: {:?}; toasts: {:?}",
+            core.store().launch,
+            core.store().toasts
+        );
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn follows_a_launch_from_join_to_kick_and_crash() {
+    let mut flow = replay::load("client_assertion");
+    flow.interactions.extend(replay::load("auth_ticket").interactions);
+    let replay = Replay::from_fixture(&repeat(&flow, 2)).await;
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let cookies = seeded(&dir);
+    let r = rig(Base::Replay(replay.server.uri()), dir, cookies);
+    let sober = |pid| PlayerProcess {
+        pid,
+        kind: PlayerKind::Sober,
+    };
+    *r.opener.logs.lock() = vec![LogDir {
+        dir: logs.path().to_path_buf(),
+        name_has: None,
+    }];
+    // An old log and an open player from before: the log is not this session's, and the
+    // player closes before the join.
+    append(
+        &logs.path().join("old.log"),
+        &sober_join("00000000-0000-4000-8000-000000000000"),
+    );
+    r.opener.players.lock().push(sober(10));
+
+    let job = "11111111-2222-4333-8444-555555555555";
+    r.core.send(Cmd::Launch {
+        account: ME,
+        target: JoinTarget::Place { place_id: 920587237 },
+    });
+    wait_launch(&r.core, "the player to open", |l| l.phase == Phase::Opening).await;
+    assert_eq!(*r.opener.closed.lock(), vec![10]);
+    r.opener.players.lock().push(sober(11));
+    let log = logs.path().join("a.log");
+    append(&log, &sober_join(job));
+    wait_launch(&r.core, "in game", |l| l.phase == Phase::InGame).await;
+    {
+        let s = r.core.store();
+        let l = s.launch.as_ref().unwrap();
+        assert_eq!(l.account, ME);
+        assert_eq!(l.place_id, Some(920587237));
+        assert_eq!(l.job_id.as_deref(), Some(job));
+        assert!(l.joined_at.is_some() && l.live());
+        assert!(s.player_open);
+    }
+
+    // Kicked: the player shows the reason until the user closes it.
+    append(
+        &log,
+        "info: Roblox: 2026-11-22T07:01:02.300Z,145.3,925e16c0,7 [FLog::Network] Disconnection Notification. Reason: 267\n",
+    );
+    wait_launch(&r.core, "the kick", |l| l.phase == Phase::Disconnected).await;
+    assert_eq!(r.core.store().launch.as_ref().unwrap().code, Some(267));
+    wait_for(&r.core, "the kick toast", |s| {
+        s.toasts.iter().any(|t| {
+            t.text.contains("(267)") && t.action.as_ref().is_some_and(|a| a.command == "game.rejoin")
+        })
+    })
+    .await;
+    r.opener.players.lock().clear();
+    wait_launch(&r.core, "the player to close", |l| !l.live()).await;
+    assert_eq!(r.core.store().launch.as_ref().unwrap().phase, Phase::Disconnected);
+
+    // Rejoin goes back to the same server.
+    r.core.send(Cmd::Rejoin);
+    wait_launch(&r.core, "the rejoin", |l| l.seq == 2 && l.phase == Phase::Opening).await;
+    let uri = r.opener.opened.lock()[1].expose().to_string();
+    assert!(uri.contains(&format!("gameId%3D{job}")), "{uri}");
+    r.opener.players.lock().push(sober(12));
+    let log = logs.path().join("b.log");
+    append(&log, &sober_join(job));
+    wait_launch(&r.core, "in game again", |l| l.phase == Phase::InGame).await;
+
+    // Gone mid-game without leaving: a crash.
+    r.opener.players.lock().clear();
+    wait_launch(&r.core, "the crash", |l| l.phase == Phase::Crashed && !l.live()).await;
+    wait_for(&r.core, "the crash toast", |s| {
+        s.toasts.iter().any(|t| t.text.contains("closed unexpectedly"))
+    })
+    .await;
+    assert!(!r.core.roblox_open());
 }
 
 #[tokio::test(flavor = "multi_thread")]

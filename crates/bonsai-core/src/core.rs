@@ -118,6 +118,10 @@ pub enum Cmd {
         account: AccountId,
         target: JoinTarget,
     },
+    /// Closes the running Roblox player.
+    CloseGame,
+    /// Joins the last session's server again.
+    Rejoin,
     Search {
         account: AccountId,
         query: String,
@@ -325,6 +329,7 @@ impl Core {
             rt.spawn(crate::themes::watch_loop(inner.clone()));
             rt.spawn(crate::plugins::watch_loop(inner.clone()));
             rt.spawn(crate::hub::revocation_loop(inner.clone()));
+            rt.spawn(crate::play::player_watch_loop(inner.clone()));
         }
         let core = Core {
             inner,
@@ -825,6 +830,10 @@ impl Inner {
         self.clients.read().get(&id).cloned()
     }
 
+    pub(crate) fn opener(&self) -> Arc<dyn Opener> {
+        self.opener.read().clone()
+    }
+
     pub(crate) fn save_accounts(&self) {
         let list = self.store.read().accounts.clone();
         if let Err(e) = list.save(&self.paths.accounts_file()) {
@@ -833,6 +842,17 @@ impl Inner {
     }
 
     pub(crate) fn toast(&self, account: Option<AccountId>, text: impl Into<String>, error: bool) {
+        self.toast_with(account, text, error, None);
+    }
+
+    /// A toast with a button that runs a command.
+    pub(crate) fn toast_with(
+        &self,
+        account: Option<AccountId>,
+        text: impl Into<String>,
+        error: bool,
+        action: Option<ToastAction>,
+    ) {
         let id = {
             let mut n = self.toast_seq.lock();
             *n += 1;
@@ -846,6 +866,7 @@ impl Inner {
             error,
             host: None,
             retry_after_secs: None,
+            action,
         });
         if s.toasts.len() > 5 {
             s.toasts.remove(0);
@@ -873,6 +894,7 @@ impl Inner {
                 error: false,
                 host: Some(host.to_string()),
                 retry_after_secs: Some(secs),
+                action: None,
             });
             if s.toasts.len() > 5 {
                 s.toasts.remove(0);
@@ -922,7 +944,7 @@ impl Inner {
         }
     }
 
-    async fn handle(self: Arc<Self>, cmd: Cmd) {
+    pub(crate) async fn handle(self: Arc<Self>, cmd: Cmd) {
         if self.vault.blocked()
             || self.vault_busy.load(std::sync::atomic::Ordering::Acquire)
             || self.vault_ending.load(std::sync::atomic::Ordering::Acquire)
@@ -966,6 +988,8 @@ impl Inner {
                 more,
             } => self.load_servers(account, place_id, more).await,
             Cmd::Launch { account, target } => self.launch(account, target).await,
+            Cmd::CloseGame => self.close_game().await,
+            Cmd::Rejoin => self.rejoin().await,
             Cmd::Search { account, query } => self.remote_search(account, query).await,
             Cmd::LoadHome(account) => self.load_home(account).await,
             Cmd::SetSettings => {
@@ -1532,9 +1556,14 @@ impl Inner {
             self.toast(Some(account), "That account is not signed in.", true);
             return;
         };
+        let Some(seq) = self.begin_launch(account, &target) else {
+            self.toast(Some(account), format!("Already starting Roblox as {name}"), false);
+            return;
+        };
         let ticket = match launcher::mint_ticket(&c).await {
             Ok(t) => t,
             Err(e) => {
+                self.fail_launch(seq);
                 self.note_error(account, &e);
                 self.toast(
                     Some(account),
@@ -1544,19 +1573,26 @@ impl Inner {
                 return;
             }
         };
+        // One player at a time: joining was confirmed to close the open one.
+        if !self.close_players().await {
+            self.fail_launch(seq);
+            self.toast(
+                Some(account),
+                "Couldn't close Roblox. Close it, then join again.",
+                true,
+            );
+            return;
+        }
         let now_ms = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_millis() as u64)
             .unwrap_or(0);
         let locale = self.settings.read().locale.clone();
         let uri = launcher::launch_uri(&ticket, &target, self.browser_tracker_id, now_ms, &locale);
-        let opener = self.opener.read().clone();
-        match opener.open(&uri) {
+        match self.open_player(seq, &uri).await {
             Ok(()) => {
                 if let Some(p) = target.place_id() {
                     let mut s = self.store.write();
-                    let d = s.data.entry(account).or_default();
-                    d.last_launch = Some(format!("{target:?}"));
                     if let Some(u) = s.place_universe.get(&p).copied() {
                         let d = s.data.entry(account).or_default();
                         d.recent.retain(|x| *x != u);
@@ -1570,7 +1606,10 @@ impl Inner {
                 self.watch_launch(account);
                 self.toast(Some(account), format!("Starting Roblox as {name}"), false);
             }
-            Err(e) => self.toast(Some(account), e, true),
+            Err(e) => {
+                self.fail_launch(seq);
+                self.toast(Some(account), e, true);
+            }
         }
     }
 

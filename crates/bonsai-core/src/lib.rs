@@ -31,6 +31,7 @@ pub mod messages;
 pub mod model_tree;
 pub mod moderation;
 pub mod people;
+mod play;
 pub mod playlists;
 pub mod plugins;
 pub mod prefs;
