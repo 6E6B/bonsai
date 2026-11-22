@@ -30,8 +30,18 @@ const MAX_RUNS: usize = 50;
 const MAX_TIMERS: usize = 10;
 const MIN_EVERY: u64 = 60;
 const MAX_EVERY: u64 = 86_400;
-/// How deep a stored table may nest.
+/// Most actions one handler call may return.
+pub const MAX_ACTIONS: usize = 100;
+/// Longest action argument in bytes.
+const MAX_ARG_BYTES: usize = 4096;
+/// Longest toast, alert title, alert body, and alert command returned by a handler.
+const MAX_TOAST_CHARS: usize = 500;
+const MAX_ALERT_TITLE: usize = 200;
+const MAX_ALERT_BODY: usize = 1000;
+const MAX_ALERT_CMD: usize = 128;
+/// How deep a stored table may nest, and the largest JSON budget one `ctx.store.set` may build.
 const MAX_DEPTH: usize = 16;
+const MAX_STORE_BYTES: usize = 256 * 1024;
 
 /// What `bonsai.on` can listen for. See `docs/plugins.md#events`.
 pub const EVENTS: [&str; 6] = [
@@ -245,6 +255,16 @@ impl Clock {
     fn stop(&self) {
         self.deadline.set(None);
     }
+    fn check_deadline(&self) -> mlua::Result<()> {
+        match self.deadline.get() {
+            Some(d) if self.tripped.get() || Instant::now() > d => {
+                // Keeps failing once tripped, so a `pcall` can't swallow it and carry on.
+                self.tripped.set(true);
+                Err(mlua::Error::runtime("time limit reached"))
+            }
+            _ => Ok(()),
+        }
+    }
     /// Runs `f` off the clock.
     fn pause<T>(&self, f: impl FnOnce() -> T) -> T {
         let t = Instant::now();
@@ -307,14 +327,7 @@ impl Plugin {
 
         let clock = Rc::new(Clock::default());
         let c = clock.clone();
-        lua.set_interrupt(move |_| match c.deadline.get() {
-            Some(d) if c.tripped.get() || Instant::now() > d => {
-                // Keeps failing once tripped, so a `pcall` can't swallow it and carry on.
-                c.tripped.set(true);
-                Err(mlua::Error::runtime("time limit reached"))
-            }
-            _ => Ok(VmState::Continue),
-        });
+        lua.set_interrupt(move |_| c.check_deadline().map(|()| VmState::Continue));
 
         let registered = Rc::new(RefCell::new(Registered::default()));
         let loading = Rc::new(Cell::new(true));
@@ -415,7 +428,9 @@ impl Plugin {
         self.runs.set(0);
         self.clock.start(self.limits.call);
         // Reading the result can run the plugin's metamethods, so it stays on the clock.
-        let ran = f.call::<Value>((ctx, arg)).map(|v| outcome(&self.manifest, v));
+        let ran = f
+            .call::<Value>((ctx, arg))
+            .map(|v| outcome(&self.manifest, &self.clock, v));
         self.clock.stop();
         check(&self.clock, &self.lua, self.limits, self.limits.call, ran)?
     }
@@ -509,7 +524,12 @@ impl Plugin {
                     )));
                 }
                 sets.set(sets.get() + 1);
-                let value = from_lua(&value, 0)?;
+                let mut walk = StoreWalk {
+                    clock: &clock,
+                    bytes: 0,
+                    ancestors: Vec::with_capacity(MAX_DEPTH),
+                };
+                let value = walk.convert(&value, 0)?;
                 clock
                     .pause(|| host.store_set(&id, account, &key, value))
                     .map_err(mlua::Error::runtime)
@@ -720,63 +740,119 @@ fn limit_arg(what: &str, f: &Table, default: usize, max: usize) -> mlua::Result<
 fn store_key(v: &Value) -> mlua::Result<String> {
     match v {
         Value::String(s) => {
-            let s = s.to_str()?.to_owned();
-            if s.is_empty() || s.len() > 128 {
+            let len = s.as_bytes().len();
+            if len == 0 || len > 128 {
                 return Err(mlua::Error::runtime("ctx.store keys are 1 to 128 bytes."));
             }
-            Ok(s)
+            Ok(s.to_str()?.to_owned())
         }
         _ => Err(mlua::Error::runtime("ctx.store keys are strings.")),
     }
 }
 
-/// A Luau value to store: nil, booleans, numbers, strings, and tables of them. A table whose
-/// keys are 1 to n is a list; any other table needs string keys.
-fn from_lua(v: &Value, depth: usize) -> mlua::Result<serde_json::Value> {
-    use serde_json::Value as J;
-    let bad = |what: &str| mlua::Error::runtime(format!("ctx.store can't keep {what}."));
-    Ok(match v {
-        Value::Nil => J::Null,
-        Value::Boolean(b) => J::Bool(*b),
-        Value::Integer(n) => J::from(*n),
-        Value::Number(n) if !n.is_finite() => return Err(bad("nan or infinity")),
-        Value::Number(n) if n.fract() == 0.0 && n.abs() < (1u64 << 53) as f64 => J::from(*n as i64),
-        Value::Number(n) => serde_json::Number::from_f64(*n).map_or(J::Null, J::Number),
-        Value::String(s) => J::String(s.to_str().map_err(|_| bad("text that isn't UTF-8"))?.to_owned()),
-        Value::Table(t) => {
-            if depth >= MAX_DEPTH {
-                return Err(bad(&format!("tables nested more than {MAX_DEPTH} deep")));
-            }
-            let len = t.raw_len();
-            let mut pairs = 0;
-            let mut list = len > 0;
-            for pair in t.pairs::<Value, Value>() {
-                let (k, _) = pair?;
-                pairs += 1;
-                list &= matches!(k, Value::Integer(i) if i >= 1 && i as usize <= len)
-                    || matches!(k, Value::Number(n) if n >= 1.0 && n.fract() == 0.0 && n as usize <= len);
-            }
-            if list && pairs == len {
-                let mut out = Vec::with_capacity(len);
-                for i in 1..=len {
-                    out.push(from_lua(&t.raw_get::<Value>(i)?, depth + 1)?);
-                }
-                J::Array(out)
-            } else {
-                let mut out = serde_json::Map::new();
-                for pair in t.pairs::<Value, Value>() {
-                    let (k, x) = pair?;
-                    let Value::String(k) = k else {
-                        return Err(bad("tables with keys that aren't strings, unless it is a list"));
-                    };
-                    let k = k.to_str().map_err(|_| bad("keys that aren't UTF-8"))?.to_owned();
-                    out.insert(k, from_lua(&x, depth + 1)?);
-                }
-                J::Object(out)
-            }
+struct StoreWalk<'a> {
+    clock: &'a Clock,
+    bytes: usize,
+    ancestors: Vec<*const std::ffi::c_void>,
+}
+
+impl StoreWalk<'_> {
+    fn charge(&mut self, n: usize) -> mlua::Result<()> {
+        self.clock.check_deadline()?;
+        self.bytes = self.bytes.saturating_add(n);
+        if self.bytes > MAX_STORE_BYTES {
+            return Err(mlua::Error::runtime(format!(
+                "ctx.store values are at most {} KB.",
+                MAX_STORE_BYTES / 1024
+            )));
         }
-        other => return Err(bad(&format!("a {}", other.type_name()))),
-    })
+        Ok(())
+    }
+
+    /// A Luau value to store: nil, booleans, numbers, strings, and tables of them. A table whose
+    /// keys are 1 to n is a list; any other table needs string keys.
+    fn convert(&mut self, v: &Value, depth: usize) -> mlua::Result<serde_json::Value> {
+        use serde_json::Value as J;
+        let bad = |what: &str| mlua::Error::runtime(format!("ctx.store can't keep {what}."));
+        Ok(match v {
+            Value::Nil => {
+                self.charge(4)?;
+                J::Null
+            }
+            Value::Boolean(b) => {
+                self.charge(4)?;
+                J::Bool(*b)
+            }
+            Value::Integer(n) => {
+                self.charge(4)?;
+                J::from(*n)
+            }
+            Value::Number(n) if !n.is_finite() => return Err(bad("nan or infinity")),
+            Value::Number(n) if n.fract() == 0.0 && n.abs() < (1u64 << 53) as f64 => {
+                self.charge(4)?;
+                J::from(*n as i64)
+            }
+            Value::Number(n) => {
+                self.charge(8)?;
+                serde_json::Number::from_f64(*n).map_or(J::Null, J::Number)
+            }
+            Value::String(s) => {
+                self.charge(s.as_bytes().len().saturating_add(3))?;
+                J::String(s.to_str().map_err(|_| bad("text that isn't UTF-8"))?.to_owned())
+            }
+            Value::Table(t) => {
+                let ptr = t.to_pointer();
+                if self.ancestors.contains(&ptr) {
+                    return Err(bad("circular tables"));
+                }
+                if depth >= MAX_DEPTH {
+                    return Err(bad(&format!("tables nested more than {MAX_DEPTH} deep")));
+                }
+                self.charge(2)?;
+                let len = t.raw_len();
+                let mut pairs = 0usize;
+                let mut list = len > 0;
+                for pair in t.pairs::<Value, Value>() {
+                    if pairs & 63 == 0 {
+                        self.clock.check_deadline()?;
+                    }
+                    let (k, _) = pair?;
+                    pairs += 1;
+                    if pairs.saturating_mul(2) > MAX_STORE_BYTES {
+                        return Err(mlua::Error::runtime(format!(
+                            "ctx.store values are at most {} KB.",
+                            MAX_STORE_BYTES / 1024
+                        )));
+                    }
+                    list &= matches!(k, Value::Integer(i) if i >= 1 && i as usize <= len)
+                        || matches!(k, Value::Number(n) if n >= 1.0 && n.fract() == 0.0 && n as usize <= len);
+                }
+                self.ancestors.push(ptr);
+                let res: mlua::Result<J> = if list && pairs == len {
+                    let mut out = Vec::with_capacity(len);
+                    for i in 1..=len {
+                        out.push(self.convert(&t.raw_get::<Value>(i)?, depth + 1)?);
+                    }
+                    Ok(J::Array(out))
+                } else {
+                    let mut out = serde_json::Map::new();
+                    for pair in t.pairs::<Value, Value>() {
+                        let (k, x) = pair?;
+                        let Value::String(k) = k else {
+                            return Err(bad("tables with keys that aren't strings, unless it is a list"));
+                        };
+                        self.charge(k.as_bytes().len().saturating_add(4))?;
+                        let k = k.to_str().map_err(|_| bad("keys that aren't UTF-8"))?.to_owned();
+                        out.insert(k, self.convert(&x, depth + 1)?);
+                    }
+                    Ok(J::Object(out))
+                };
+                self.ancestors.pop();
+                res?
+            }
+            other => return Err(bad(&format!("a {}", other.type_name()))),
+        })
+    }
 }
 
 /// Host data as Luau values: objects and arrays become tables, `null` becomes `nil`.
@@ -826,13 +902,25 @@ fn install_globals(
         g.raw_set(name, Value::Nil)?;
     }
 
+    wrap_string_patterns(lua, &g, clock)?;
+
     let (h, m) = (host.clone(), manifest.clone());
     g.raw_set(
         "print",
         lua.create_function(move |_, args: MultiValue| {
             let parts: Vec<String> = args
                 .iter()
-                .map(|v| v.to_string().unwrap_or_else(|_| v.type_name().to_owned()))
+                .take(32)
+                .map(|v| match v {
+                    Value::String(s) => s
+                        .to_str()
+                        .map(|t| t.chars().take(500).collect())
+                        .unwrap_or_else(|_| "string".to_owned()),
+                    _ => v
+                        .to_string()
+                        .map(|t| t.chars().take(500).collect())
+                        .unwrap_or_else(|_| v.type_name().to_owned()),
+                })
                 .collect();
             h.log(&m.id, &parts.join("\t"));
             Ok(())
@@ -1039,8 +1127,195 @@ fn command_spec(spec: &Table) -> mlua::Result<(Command, Function, Option<Functio
     ))
 }
 
+fn wrap_string_patterns(lua: &Lua, g: &Table, clock: &Rc<Clock>) -> mlua::Result<()> {
+    let string_lib: Table = g.get("string")?;
+    let orig_find: Function = string_lib.get("find")?;
+    let orig_match: Function = string_lib.get("match")?;
+    let orig_gmatch: Function = string_lib.get("gmatch")?;
+    let orig_gsub: Function = string_lib.get("gsub")?;
+
+    let c = clock.clone();
+    string_lib.raw_set(
+        "find",
+        lua.create_function(move |_, args: MultiValue| {
+            c.check_deadline()?;
+            let plain = !matches!(args.get(3), None | Some(Value::Nil | Value::Boolean(false)));
+            if !plain && let (Some(s), Some(pat)) = (coerced_bytes(args.front()), coerced_bytes(args.get(1))) {
+                guard_pattern(s.len(), &pat, true)?;
+            }
+            orig_find.call::<MultiValue>(args)
+        })?,
+    )?;
+
+    let c = clock.clone();
+    string_lib.raw_set(
+        "match",
+        lua.create_function(move |_, args: MultiValue| {
+            c.check_deadline()?;
+            if let (Some(s), Some(pat)) = (coerced_bytes(args.front()), coerced_bytes(args.get(1))) {
+                guard_pattern(s.len(), &pat, true)?;
+            }
+            orig_match.call::<MultiValue>(args)
+        })?,
+    )?;
+
+    let c = clock.clone();
+    string_lib.raw_set(
+        "gmatch",
+        lua.create_function(move |lua, args: MultiValue| {
+            c.check_deadline()?;
+            if let (Some(s), Some(pat)) = (coerced_bytes(args.front()), coerced_bytes(args.get(1))) {
+                guard_pattern(s.len(), &pat, false)?;
+            }
+            let iter = orig_gmatch.call::<Function>(args)?;
+            let step_clock = c.clone();
+            lua.create_function(move |_, ()| {
+                step_clock.check_deadline()?;
+                iter.call::<MultiValue>(())
+            })
+        })?,
+    )?;
+
+    let c = clock.clone();
+    string_lib.raw_set(
+        "gsub",
+        lua.create_function(move |_, args: MultiValue| {
+            c.check_deadline()?;
+            if let (Some(s), Some(pat)) = (coerced_bytes(args.front()), coerced_bytes(args.get(1))) {
+                guard_pattern(s.len(), &pat, true)?;
+            }
+            orig_gsub.call::<MultiValue>(args)
+        })?,
+    )?;
+
+    Ok(())
+}
+
+fn coerced_bytes(v: Option<&Value>) -> Option<Vec<u8>> {
+    match v? {
+        Value::String(s) => Some(s.as_bytes().to_vec()),
+        Value::Integer(n) => Some(n.to_string().into_bytes()),
+        Value::Number(n) => Some(n.to_string().into_bytes()),
+        _ => None,
+    }
+}
+
+fn skip_bracket_class(pat: &[u8], mut i: usize) -> usize {
+    i += 1;
+    if i < pat.len() && pat[i] == b'^' {
+        i += 1;
+    }
+    if i < pat.len() && pat[i] == b']' {
+        i += 1;
+    }
+    while i < pat.len() && pat[i] != b']' {
+        if pat[i] == b'%' && i + 1 < pat.len() {
+            i += 2;
+        } else {
+            i += 1;
+        }
+    }
+    (i + 1).min(pat.len())
+}
+
+/// Bounds Luau's non-interruptible C++ backtracking matcher (`lstrlib.cpp`) so no single call can
+/// stall the shared plugin worker past its deadline.
+fn guard_pattern(subject_len: usize, pat: &[u8], allow_anchor: bool) -> mlua::Result<()> {
+    if pat.len() > 256 {
+        return Err(mlua::Error::runtime("string pattern is at most 256 bytes."));
+    }
+    let anchored = allow_anchor && pat.first() == Some(&b'^');
+    let mut i = usize::from(pat.first() == Some(&b'^'));
+    let mut var_q = 0usize;
+    let mut opt_q = 0usize;
+    while i < pat.len() {
+        let quantifiable = match pat[i] {
+            b'%' => {
+                if i + 1 >= pat.len() {
+                    break;
+                }
+                match pat[i + 1] {
+                    b'b' => {
+                        i = (i + 4).min(pat.len());
+                        false
+                    }
+                    b'f' => {
+                        i += 2;
+                        if i < pat.len() && pat[i] == b'[' {
+                            i = skip_bracket_class(pat, i);
+                        }
+                        false
+                    }
+                    b'1'..=b'9' => {
+                        var_q += 1;
+                        i += 2;
+                        false
+                    }
+                    _ => {
+                        i += 2;
+                        true
+                    }
+                }
+            }
+            b'[' => {
+                i = skip_bracket_class(pat, i);
+                true
+            }
+            b'(' | b')' => {
+                i += 1;
+                false
+            }
+            b'$' if i + 1 == pat.len() => {
+                i += 1;
+                false
+            }
+            _ => {
+                i += 1;
+                true
+            }
+        };
+        if quantifiable && i < pat.len() {
+            match pat[i] {
+                b'*' | b'+' | b'-' => {
+                    var_q += 1;
+                    i += 1;
+                }
+                b'?' => {
+                    opt_q += 1;
+                    i += 1;
+                }
+                _ => {}
+            }
+        }
+    }
+    if var_q > 4 || opt_q > 6 {
+        return Err(mlua::Error::runtime(
+            "string pattern has too many quantifiers; use plain string.find or simplify the pattern.",
+        ));
+    }
+    let max_len = match (var_q, opt_q, anchored) {
+        (0, 0, _) => 1_048_576,
+        (0, _, _) => 65_536,
+        (1, _, true) => 65_536,
+        (1, _, false) => 8_192,
+        (2, _, true) => 4_096,
+        (2, _, false) => 512,
+        (3, _, true) => 512,
+        (3, _, false) => 128,
+        (_, _, true) => 128,
+        (_, _, false) => 64,
+    };
+    if subject_len > max_len {
+        return Err(mlua::Error::runtime(
+            "string pattern input is too large for its quantifiers; use plain string.find or simplify the pattern.",
+        ));
+    }
+    Ok(())
+}
+
 /// Reads what a handler returned into an [`Outcome`], refusing undeclared actions.
-fn outcome(manifest: &Manifest, value: Value) -> Result<Outcome, Error> {
+fn outcome(manifest: &Manifest, clock: &Clock, value: Value) -> Result<Outcome, Error> {
+    clock.check_deadline().map_err(script)?;
     let t = match value {
         Value::Nil => return Ok(Outcome::Nothing),
         Value::Table(t) => t,
@@ -1055,8 +1330,14 @@ fn outcome(manifest: &Manifest, value: Value) -> Result<Outcome, Error> {
     if let Value::Table(list) = get("actions")? {
         let mut out = Vec::new();
         for item in list.sequence_values::<Table>() {
+            clock.check_deadline().map_err(script)?;
+            if out.len() >= MAX_ACTIONS {
+                return Err(Error::Script(format!(
+                    "Proposed more than {MAX_ACTIONS} actions at once."
+                )));
+            }
             let item = item.map_err(script)?;
-            let id: String = item.get("id").map_err(script)?;
+            let id = clipped_field(&item, "id", 128)?.unwrap_or_default();
             if !manifest.declares(&id) {
                 return Err(Error::Undeclared(id));
             }
@@ -1069,7 +1350,13 @@ fn outcome(manifest: &Manifest, value: Value) -> Result<Outcome, Error> {
         return Ok(Outcome::Actions(out));
     }
     if let Value::String(s) = get("toast")? {
-        return Ok(Outcome::Toast(s.to_str().map_err(script)?.to_owned()));
+        let text: String = s
+            .to_str()
+            .map_err(script)?
+            .chars()
+            .take(MAX_TOAST_CHARS)
+            .collect();
+        return Ok(Outcome::Toast(text));
     }
     if let Value::Table(o) = get("open")? {
         let kind: String = o.get("kind").map_err(script)?;
@@ -1085,14 +1372,11 @@ fn outcome(manifest: &Manifest, value: Value) -> Result<Outcome, Error> {
         return Ok(Outcome::Open { kind, id: id as u64 });
     }
     if let Value::Table(a) = get("alert")? {
-        return Ok(Outcome::Alert {
-            title: a.get("title").map_err(script)?,
-            body: a
-                .get::<Option<String>>("body")
-                .map_err(script)?
-                .unwrap_or_default(),
-            command: a.get("command").map_err(script)?,
-        });
+        let title = clipped_field(&a, "title", MAX_ALERT_TITLE)?
+            .ok_or_else(|| Error::Script("alert needs a string title.".into()))?;
+        let body = clipped_field(&a, "body", MAX_ALERT_BODY)?.unwrap_or_default();
+        let command = clipped_field(&a, "command", MAX_ALERT_CMD)?;
+        return Ok(Outcome::Alert { title, body, command });
     }
     match get("view")? {
         Value::Nil => {}
@@ -1106,9 +1390,29 @@ fn outcome(manifest: &Manifest, value: Value) -> Result<Outcome, Error> {
     ))
 }
 
+fn clipped_field(t: &Table, key: &str, max_chars: usize) -> Result<Option<String>, Error> {
+    match t.get::<Value>(key).map_err(script)? {
+        Value::Nil => Ok(None),
+        Value::String(s) => Ok(Some(
+            s.to_str().map_err(script)?.chars().take(max_chars).collect(),
+        )),
+        other => Err(Error::Script(format!(
+            "{key} must be a string, not a {}.",
+            other.type_name()
+        ))),
+    }
+}
+
 fn arg_text(v: &Value) -> mlua::Result<String> {
     match v {
-        Value::String(s) => Ok(s.to_str()?.to_owned()),
+        Value::String(s) => {
+            if s.as_bytes().len() > MAX_ARG_BYTES {
+                return Err(mlua::Error::runtime(format!(
+                    "An action's arg is at most {MAX_ARG_BYTES} bytes."
+                )));
+            }
+            Ok(s.to_str()?.to_owned())
+        }
         Value::Integer(n) => Ok(n.to_string()),
         Value::Number(n) if n.fract() == 0.0 && n.abs() < (1u64 << 53) as f64 => Ok(format!("{n:.0}")),
         other => Err(mlua::Error::runtime(format!(

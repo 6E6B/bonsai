@@ -855,7 +855,12 @@ pub(crate) async fn realtime_loop(inner: Arc<Inner>) {
     let mut tick = tokio::time::interval(Duration::from_secs(10));
     loop {
         tick.tick().await;
-        let want: HashSet<AccountId> = {
+        let want: HashSet<AccountId> = if inner.vault.blocked()
+            || inner.vault_busy.load(std::sync::atomic::Ordering::Acquire)
+            || inner.vault_ending.load(std::sync::atomic::Ordering::Acquire)
+        {
+            HashSet::new()
+        } else {
             let s = inner.store.read();
             let all = inner.settings.read().background_accounts;
             s.accounts

@@ -107,6 +107,11 @@ pub fn launch_uri(
     now_ms: u64,
     locale: &str,
 ) -> Secret {
+    let locale = if crate::settings::valid_roblox_locale(locale) {
+        locale
+    } else {
+        "en_us"
+    };
     let url = place_launcher_url(target, browser_tracker_id, &uuid_v4());
     Secret::new(format!(
         "roblox-player:1+launchmode:play+gameinfo:{}+launchtime:{now_ms}+placelauncherurl:{}+browsertrackerid:{browser_tracker_id}+robloxLocale:{locale}+gameLocale:{locale}+channel:+LaunchExp:InApp",
@@ -147,6 +152,62 @@ pub trait Opener: Send + Sync {
     fn open_web(&self, url: &str) -> Result<(), String>;
 }
 
+/// Splits a custom player command into argv words, honoring single and double quotes so
+/// executable paths containing spaces work on Windows, macOS, and Linux.
+pub fn split_command_words(cmd: &str) -> Result<Vec<String>, String> {
+    let mut words = Vec::new();
+    let mut cur = String::new();
+    let mut in_word = false;
+    let mut quote: Option<char> = None;
+    let mut chars = cmd.chars().peekable();
+    while let Some(c) = chars.next() {
+        match quote {
+            Some('\'') => {
+                if c == '\'' {
+                    quote = None;
+                } else {
+                    cur.push(c);
+                }
+            }
+            Some('"') => {
+                if c == '"' {
+                    quote = None;
+                } else if c == '\\' && matches!(chars.peek(), Some('"' | '\\')) {
+                    if let Some(escaped) = chars.next() {
+                        cur.push(escaped);
+                    }
+                } else {
+                    cur.push(c);
+                }
+            }
+            Some(_) => unreachable!(),
+            None => match c {
+                '\'' | '"' => {
+                    quote = Some(c);
+                    in_word = true;
+                }
+                c if c.is_whitespace() => {
+                    if in_word {
+                        words.push(std::mem::take(&mut cur));
+                        in_word = false;
+                    }
+                }
+                _ => {
+                    cur.push(c);
+                    in_word = true;
+                }
+            },
+        }
+    }
+    if quote.is_some() {
+        return Err("unclosed quote in player command".into());
+    }
+    if in_word {
+        words.push(cur);
+    }
+    Ok(words)
+}
+
 /// The OS handler for `roblox-player:`, or a custom command with `{uri}` in it
 /// (e.g. `flatpak run org.vinegarhq.Sober {uri}`).
 #[derive(Default)]
@@ -160,7 +221,7 @@ impl Opener for SystemOpener {
             None => open_detached(uri.expose())
                 .map_err(|e| format!("no app is registered for roblox-player: links ({e})")),
             Some(cmd) => {
-                let mut parts: Vec<String> = cmd.split_whitespace().map(str::to_string).collect();
+                let mut parts = split_command_words(cmd)?;
                 if !parts.iter().any(|p| p.contains("{uri}")) {
                     parts.push("{uri}".into());
                 }
@@ -395,5 +456,29 @@ mod tests {
         let u = uuid_v4();
         assert_eq!(u.len(), 36);
         assert_eq!(&u[14..15], "4");
+    }
+
+    #[test]
+    fn launch_uri_rejects_injected_locale_and_splits_quoted_commands() {
+        let t = Secret::new("TICKET");
+        let uri = launch_uri(
+            &t,
+            &JoinTarget::Place { place_id: 1818 },
+            4242,
+            1_700_000_000_000,
+            "en_us+placelauncherurl:https://evil.example/x",
+        );
+        assert!(uri.expose().contains("+robloxLocale:en_us+gameLocale:en_us+"));
+        assert!(!uri.expose().contains("evil.example"));
+
+        assert_eq!(
+            split_command_words(r#""C:\Program Files\Roblox Wrapper\run.exe" --flag "{uri}""#).unwrap(),
+            vec![r"C:\Program Files\Roblox Wrapper\run.exe", "--flag", "{uri}",]
+        );
+        assert_eq!(
+            split_command_words("'/Applications/My Launcher.app/Contents/MacOS/run' {uri}").unwrap(),
+            vec!["/Applications/My Launcher.app/Contents/MacOS/run", "{uri}"]
+        );
+        assert!(split_command_words("\"unclosed {uri}").is_err());
     }
 }

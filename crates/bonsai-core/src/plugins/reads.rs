@@ -151,8 +151,7 @@ impl Inner {
         request: &bonsai_plugin::HttpRequest,
     ) -> Result<Value, String> {
         let (hosts, epoch) = self.network_grant(plugin, account)?;
-        let client =
-            bonsai_api::plugin_http::PluginHttp::new(self.limiter.clone()).map_err(|e| e.user_message())?;
+        let client = self.plugin_http_client()?;
         self.rt.block_on(async {
             let future = client.request(&hosts, &request.url, &request.method, request.body.as_deref());
             tokio::pin!(future);

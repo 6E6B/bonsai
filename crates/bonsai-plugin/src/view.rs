@@ -121,11 +121,11 @@ fn clip(s: &str, max: usize) -> String {
     s.chars().take(max).collect()
 }
 
-/// A string or number field as text.
+/// A string or number field as text, clipped to [`MAX_TEXT`] before allocating.
 fn text_of(v: &Value) -> mlua::Result<Option<String>> {
     Ok(match v {
         Value::Nil => None,
-        Value::String(s) => Some(s.to_str()?.to_owned()),
+        Value::String(s) => Some(clip(&s.to_str()?, MAX_TEXT)),
         Value::Integer(n) => Some(n.to_string()),
         Value::Number(n) if n.fract() == 0.0 && n.abs() < (1u64 << 53) as f64 => Some(format!("{n:.0}")),
         Value::Number(n) => Some(n.to_string()),
@@ -276,6 +276,9 @@ impl Parser {
         let mut columns = Vec::new();
         if let Some(cols) = t.get::<Option<Table>>("columns")? {
             for c in cols.sequence_values::<Value>() {
+                if columns.len() >= MAX_COLUMNS {
+                    return Err(err(format!("a table has 1 to {MAX_COLUMNS} columns.")));
+                }
                 let col = match c? {
                     Value::Table(c) => TableColumn {
                         label: clip(
@@ -298,7 +301,7 @@ impl Parser {
                 columns.push(col);
             }
         }
-        if columns.is_empty() || columns.len() > MAX_COLUMNS {
+        if columns.is_empty() {
             return Err(err(format!("a table has 1 to {MAX_COLUMNS} columns.")));
         }
         let mut rows = Vec::new();

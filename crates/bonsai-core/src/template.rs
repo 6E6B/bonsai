@@ -143,6 +143,16 @@ async fn asset_file(c: &Client, id: u64) -> Result<(Vec<u8>, i32), Error> {
     Ok((c.fetch_cdn(&url).await?, r.asset_type_id.unwrap_or(0)))
 }
 
+fn decode_template_image(bytes: &[u8], format: ImageFormat) -> image::ImageResult<image::DynamicImage> {
+    let mut reader = image::ImageReader::with_format(std::io::Cursor::new(bytes), format);
+    let mut limits = image::Limits::default();
+    limits.max_image_width = Some(4096);
+    limits.max_image_height = Some(4096);
+    limits.max_alloc = Some(64 * 1024 * 1024);
+    reader.limits(limits);
+    reader.decode()
+}
+
 impl Core {
     /// Saves the image of a shirt, pants or T-shirt to the downloads folder, masked or not.
     /// `name` names the file; the id is used when it is empty.
@@ -165,7 +175,7 @@ impl Core {
                 let format = image::guess_format(&bytes)
                     .map_err(|_| Error::Message("The template isn't an image.".into()))?;
                 let (bytes, ext) = if masked {
-                    let img = image::load_from_memory_with_format(&bytes, format)
+                    let img = decode_template_image(&bytes, format)
                         .map_err(|e| Error::Message(format!("Can't read the template: {e}")))?
                         .to_rgba8();
                     let mut out = std::io::Cursor::new(Vec::new());
@@ -237,5 +247,21 @@ mod tests {
         assert_eq!(file_stem("a/b:c", 5, true), "a_b_c (5) masked");
         assert_eq!(file_stem("..", 5, false), "5");
         assert_eq!(file_stem("", 7, true), "7 masked");
+    }
+
+    #[test]
+    fn template_decode_rejects_oversized_dimensions() {
+        // Minimal PNG signature + IHDR declaring 8192x8192 RGBA (>4096x4096 limit).
+        let mut png = vec![137, 80, 78, 71, 13, 10, 26, 10];
+        png.extend_from_slice(&13u32.to_be_bytes());
+        let mut ihdr = Vec::from(*b"IHDR");
+        ihdr.extend_from_slice(&8192u32.to_be_bytes());
+        ihdr.extend_from_slice(&8192u32.to_be_bytes());
+        ihdr.extend_from_slice(&[8, 6, 0, 0, 0]);
+        let mut crc = flate2::Crc::new();
+        crc.update(&ihdr);
+        png.extend_from_slice(&ihdr);
+        png.extend_from_slice(&crc.sum().to_be_bytes());
+        assert!(decode_template_image(&png, ImageFormat::Png).is_err());
     }
 }

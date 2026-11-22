@@ -108,9 +108,9 @@ impl Setting {
         match (&self.kind, v) {
             (SettingKind::Bool, J::Bool(_)) => true,
             (SettingKind::Choice(o), J::String(s)) => o.iter().any(|(k, _)| k == s),
-            (SettingKind::Range { min, max, step }, J::Number(n)) => n
-                .as_i64()
-                .is_some_and(|n| n >= *min && n <= *max && (n - min) % step == 0),
+            (SettingKind::Range { min, max, step }, J::Number(n)) => n.as_i64().is_some_and(|n| {
+                *step >= 1 && n >= *min && n <= *max && n.abs_diff(*min) % (*step as u64) == 0
+            }),
             (SettingKind::Text { .. }, J::String(s)) => s.chars().count() <= MAX_TEXT,
             _ => false,
         }
@@ -378,14 +378,22 @@ impl Manifest {
             }
         }
 
+        let version = raw.version.map(|v| v.trim().to_owned()).unwrap_or_default();
+        if !version.is_empty() && !valid_version(&version) {
+            return Err(Error::Manifest(format!(
+                "version \"{version}\" must be up to 64 letters, digits, dots or dashes."
+            )));
+        }
+
         Ok(Manifest {
             name: raw
                 .name
-                .filter(|n| !n.trim().is_empty())
+                .map(|n| clean_label(&n, 120))
+                .filter(|n| !n.is_empty())
                 .unwrap_or_else(|| id.clone()),
             id,
-            version: raw.version.unwrap_or_default(),
-            author: raw.author,
+            version,
+            author: raw.author.map(|a| clean_label(&a, 120)).filter(|a| !a.is_empty()),
             entry,
             api,
             permissions,
@@ -416,6 +424,20 @@ impl Manifest {
     pub fn declares(&self, action: &str) -> bool {
         self.actions.iter().any(|a| a == action)
     }
+}
+
+fn clean_label(s: &str, max: usize) -> String {
+    let filtered: String = s.chars().filter(|c| !c.is_control()).collect();
+    filtered.trim().chars().take(max).collect()
+}
+
+fn valid_version(v: &str) -> bool {
+    v.len() <= 64
+        && !v.starts_with(['.', '-'])
+        && !v.ends_with(['.', '-'])
+        && !v.contains("..")
+        && v.bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b".-+_".contains(&c))
 }
 
 fn valid_network_host(host: &str) -> bool {
@@ -626,5 +648,40 @@ kind = "colour"
         ] {
             assert!(module_name(bad).is_none(), "{bad}");
         }
+    }
+
+    #[test]
+    fn range_settings_handle_extreme_i64_bounds_without_overflow() {
+        let m = Manifest::parse(&format!(
+            "id = \"x\"\nentry = \"main.luau\"\n[[settings]]\nkey = \"big\"\nkind = \"range\"\nmin = {}\nmax = {}\nstep = 2\ndefault = 0",
+            i64::MIN,
+            i64::MAX
+        ))
+        .unwrap();
+        let s = &m.settings[0];
+        assert!(s.valid(&serde_json::json!(0)));
+        assert!(!s.valid(&serde_json::json!(1)));
+        assert!(s.valid(&serde_json::json!(i64::MIN)));
+        assert!(!s.valid(&serde_json::json!(i64::MAX)));
+    }
+
+    #[test]
+    fn refuses_leading_dash_ids_and_bounds_metadata_strings() {
+        assert!(!is_plugin_id("-bad"));
+        assert!(Manifest::parse("id = \"-bad\"\nentry = \"main.luau\"").is_err());
+        for bad_ver in ["..", ".", "1..0", "../x", ".1", "1-", &"1".repeat(65)] {
+            let doc = format!("id = \"x\"\nversion = \"{bad_ver}\"\nentry = \"main.luau\"");
+            assert!(Manifest::parse(&doc).is_err(), "{bad_ver}");
+        }
+        let doc = format!(
+            "id = \"x\"\nname = \"  hi\\u0007{}  \"\nauthor = \"\\n{}\"\nversion = \"1.2.3-rc.1\"\nentry = \"main.luau\"",
+            "a".repeat(200),
+            "b".repeat(200)
+        );
+        let m = Manifest::parse(&doc).unwrap();
+        assert_eq!(m.name.chars().count(), 120);
+        assert!(!m.name.chars().any(char::is_control));
+        assert_eq!(m.author.as_deref().map(|a| a.chars().count()), Some(120));
+        assert_eq!(m.version, "1.2.3-rc.1");
     }
 }

@@ -118,6 +118,9 @@ struct Saved {
     /// Content hash of the files installed, from the package or folder they came from.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     hash: Option<String>,
+    /// SHA-256 of the `.bonsaiplugin` archive file when installed from a package.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    archive_hash: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -130,26 +133,48 @@ struct SavedFile {
     /// Accounts plugins may run tier 2 actions on without a click. Off by default.
     #[serde(default)]
     automation: Vec<AccountId>,
-    /// Known revoked hub releases. Retained offline and across reinstall attempts.
+    /// Known revoked hub releases (`"*"` means every version of that id). Retained offline and across reinstall attempts.
     #[serde(default)]
     revoked: BTreeMap<String, Vec<String>>,
+    /// Known revoked release hashes (content or archive SHA-256, lowercase).
+    #[serde(default)]
+    revoked_hashes: Vec<String>,
 }
 
 impl SavedFile {
-    fn is_revoked(&self, manifest: &Manifest) -> bool {
+    fn is_revoked_hash(&self, hash: Option<&str>) -> bool {
+        hash.is_some_and(|h| self.revoked_hashes.iter().any(|r| r.eq_ignore_ascii_case(h)))
+    }
+
+    fn is_revoked(&self, manifest: &Manifest, hash: Option<&str>, archive_hash: Option<&str>) -> bool {
         self.revoked
             .get(&manifest.id)
-            .is_some_and(|versions| versions.contains(&manifest.version))
+            .is_some_and(|versions| versions.iter().any(|v| v == "*" || v == &manifest.version))
+            || self.is_revoked_hash(hash)
+            || self.is_revoked_hash(archive_hash)
     }
 
     fn remember_revocations(&mut self, releases: &[bonsai_hub_api::Revocation]) {
         for release in releases {
-            if release.id.is_empty() || release.version.is_empty() {
+            if !bonsai_hub_api::valid_revocation(release) {
                 continue;
             }
-            let versions = self.revoked.entry(release.id.clone()).or_default();
-            if !versions.contains(&release.version) {
-                versions.push(release.version.clone());
+            if !release.id.is_empty() {
+                let version = if release.version.is_empty() {
+                    "*".to_owned()
+                } else {
+                    release.version.clone()
+                };
+                let versions = self.revoked.entry(release.id.clone()).or_default();
+                if !versions.contains(&version) {
+                    versions.push(version);
+                }
+            }
+            if !release.sha256.is_empty() {
+                let sha = release.sha256.to_ascii_lowercase();
+                if !self.revoked_hashes.contains(&sha) {
+                    self.revoked_hashes.push(sha);
+                }
             }
         }
     }
@@ -192,6 +217,8 @@ pub struct PluginInfo {
     pub status: Status,
     /// Content hash of what was installed. `None` for unpacked plugins.
     pub hash: Option<String>,
+    /// Archive SHA-256 when installed from a `.bonsaiplugin` package.
+    pub archive_hash: Option<String>,
 }
 
 /// A plugin folder picked to install or load, shown in the install dialog until confirmed.
@@ -209,6 +236,8 @@ pub struct PendingInstall {
     pub accounts: Vec<AccountId>,
     /// Content hash of the files it would install, for comparing with what the author published.
     pub hash: Option<String>,
+    /// Archive SHA-256 when staged from a `.bonsaiplugin` package.
+    pub archive_hash: Option<String>,
     /// The folder a package was unpacked into, deleted once the dialog closes.
     pub staged: Option<PathBuf>,
 }
@@ -282,6 +311,7 @@ pub(crate) struct Plugins {
     /// `ctx.store` files read so far.
     data: storage::Data,
     log: automation::Log,
+    http: std::sync::OnceLock<bonsai_api::plugin_http::PluginHttp>,
 }
 
 struct Entry {
@@ -523,6 +553,17 @@ struct Scanned {
     stamp: u64,
 }
 
+/// Computes `(content_hash, canonical_archive_sha256)` for a plugin folder on disk.
+fn folder_hashes(dir: &Path) -> Option<(String, Option<String>)> {
+    use sha2::{Digest, Sha256};
+    let files = package::read_folder(dir).ok()?;
+    let content = package::content_hash(&files);
+    let archive = package::write_zip(&files)
+        .ok()
+        .map(|zip| Sha256::digest(&zip).iter().map(|b| format!("{b:02x}")).collect());
+    Some((content, archive))
+}
+
 /// Reads every installed and unpacked plugin. Disk only; touches no state.
 fn scan(dir: &Path, saved: &SavedFile) -> Vec<Scanned> {
     let mut dirs: Vec<(PathBuf, bool)> = std::fs::read_dir(dir)
@@ -546,14 +587,32 @@ fn scan(dir: &Path, saved: &SavedFile) -> Vec<Scanned> {
         let read = read_manifest(&path);
         let id = read.as_ref().map(|m| m.id.clone()).unwrap_or(folder);
         let s = saved.plugins.get(&id);
-        let enabled = s.is_some_and(|s| s.enabled) && !read.as_ref().is_ok_and(|m| saved.is_revoked(m));
+        let disk_hashes = (!saved.revoked_hashes.is_empty())
+            .then(|| folder_hashes(&path))
+            .flatten();
+        let hash = disk_hashes
+            .as_ref()
+            .map(|(c, _)| c.clone())
+            .or_else(|| s.and_then(|s| s.hash.clone()).filter(|_| !unpacked));
+        let archive_hash = s
+            .and_then(|s| s.archive_hash.clone())
+            .filter(|_| !unpacked)
+            .or_else(|| disk_hashes.and_then(|(_, a)| a));
+        let revoked_on_disk = read.as_ref().is_ok_and(|m| {
+            saved.is_revoked(m, hash.as_deref(), archive_hash.as_deref())
+                || s.and_then(|s| s.hash.as_deref())
+                    .is_some_and(|h| saved.is_revoked_hash(Some(h)))
+                || s.and_then(|s| s.archive_hash.as_deref())
+                    .is_some_and(|h| saved.is_revoked_hash(Some(h)))
+        });
+        let enabled = s.is_some_and(|s| s.enabled) && !revoked_on_disk;
         let taken = out.iter().any(|o| o.info.id == id);
         let (manifest, status) = match read {
             _ if taken => (None, Status::Failed("Another plugin has the same id.".into())),
             Err(e) => (None, Status::Failed(e)),
             Ok(m) => {
                 let more = asks_more(&m, s);
-                let status = if saved.is_revoked(&m) {
+                let status = if revoked_on_disk {
                     Status::Failed(format!(
                         "{} {} was revoked by the hub and cannot run. Install a newer reviewed release.",
                         m.id, m.version
@@ -578,7 +637,8 @@ fn scan(dir: &Path, saved: &SavedFile) -> Vec<Scanned> {
                 enabled,
                 accounts: s.map(|s| s.accounts.clone()).unwrap_or_default(),
                 status,
-                hash: s.and_then(|s| s.hash.clone()).filter(|_| !unpacked),
+                hash: hash.filter(|_| !unpacked),
+                archive_hash: archive_hash.filter(|_| !unpacked),
             },
         });
     }
@@ -586,12 +646,153 @@ fn scan(dir: &Path, saved: &SavedFile) -> Vec<Scanned> {
 }
 
 impl Inner {
+    pub(super) fn plugin_http_client(&self) -> Result<bonsai_api::plugin_http::PluginHttp, String> {
+        let p = self.plugins.lock();
+        if let Some(http) = p.http.get() {
+            return Ok(http.clone());
+        }
+        let built = bonsai_api::plugin_http::PluginHttp::new(Arc::new(bonsai_api::RateLimiter::default()))
+            .map_err(|e| e.to_string())?;
+        let _ = p.http.set(built.clone());
+        Ok(built)
+    }
+
+    pub(crate) fn stop_plugin_workers(&self) {
+        let mut changed = false;
+        let dropped: Vec<Option<Worker>> = {
+            let mut p = self.plugins.lock();
+            p.log.stop_gen += 1;
+            p.entries
+                .iter_mut()
+                .map(|e| {
+                    let w = e.worker.take();
+                    if w.is_some() || matches!(e.info.status, Status::Running { .. } | Status::Loading) {
+                        e.info.status = Status::Off;
+                        changed = true;
+                    }
+                    w
+                })
+                .collect()
+        };
+        drop(dropped);
+        {
+            let mut s = self.store.write();
+            if s.plugin_view.take().is_some() {
+                changed = true;
+            }
+            if s.plugin_actions.take().is_some() {
+                changed = true;
+            }
+            if changed {
+                s.plugin_rev += 1;
+            }
+        }
+        if changed {
+            self.repaint();
+        }
+    }
+
+    pub(crate) fn forget_plugin_account(&self, id: AccountId) {
+        let _io = IO.lock();
+        let plugin_ids: Vec<String> = {
+            let mut p = self.plugins.lock();
+            p.saved.automation.retain(|a| *a != id);
+            for s in p.saved.plugins.values_mut() {
+                s.accounts.retain(|a| *a != id);
+                s.budgets.remove(&id);
+            }
+            for e in &mut p.entries {
+                e.info.accounts.retain(|a| *a != id);
+            }
+            p.data.retain(|(_, acc), _| *acc != id.0);
+            let mut ids: Vec<String> = p.saved.plugins.keys().cloned().collect();
+            for e in &p.entries {
+                if !ids.contains(&e.info.id) {
+                    ids.push(e.info.id.clone());
+                }
+            }
+            ids
+        };
+        self.save_plugins();
+        for pid in plugin_ids {
+            let file = self
+                .paths
+                .plugin_data_dir()
+                .join(pid)
+                .join(format!("{}.json", id.0));
+            let _ = std::fs::remove_file(file);
+        }
+        if let Ok(rd) = std::fs::read_dir(self.paths.plugin_data_dir()) {
+            for entry in rd.flatten() {
+                let _ = std::fs::remove_file(entry.path().join(format!("{}.json", id.0)));
+            }
+        }
+        automation::forget_activity_account(self, id);
+        {
+            let mut s = self.store.write();
+            if s.plugin_automation == Some(id) {
+                s.plugin_automation = None;
+            }
+            if s.plugin_budget.as_ref().is_some_and(|b| b.current.account == id) {
+                s.plugin_budget = None;
+            }
+            if s.plugin_actions.as_ref().is_some_and(|a| a.account == id) {
+                s.plugin_actions = None;
+            }
+            if s.plugin_view.as_ref().is_some_and(|v| v.account == id) {
+                s.plugin_view = None;
+            }
+            s.plugin_rev += 1;
+        }
+        self.repaint();
+    }
+
+    pub(crate) fn forget_all_plugin_account_data(&self) {
+        let _io = IO.lock();
+        self.stop_plugin_workers();
+        {
+            let mut p = self.plugins.lock();
+            p.saved.automation.clear();
+            for s in p.saved.plugins.values_mut() {
+                s.accounts.clear();
+                s.budgets.clear();
+            }
+            for e in &mut p.entries {
+                e.info.accounts.clear();
+            }
+            p.data.clear();
+        }
+        self.save_plugins();
+        let _ = remove_dir(&self.paths.plugin_data_dir());
+        automation::clear_activity_file(self);
+        {
+            let mut s = self.store.write();
+            s.plugin_automation = None;
+            s.plugin_budget = None;
+            s.plugin_actions = None;
+            s.plugin_view = None;
+            s.plugin_wrote = None;
+            s.plugin_rev += 1;
+        }
+        self.repaint();
+    }
+
     pub(crate) fn revoked_plugin_warnings(&self) -> Vec<String> {
         let p = self.plugins.lock();
-        p.entries.iter().filter_map(|e| {
-            let m = e.info.manifest.as_ref()?;
-            p.saved.is_revoked(m).then(|| format!("{} {} was revoked and is blocked from running. Install a newer reviewed release in Settings > Plugins.", m.id, m.version))
-        }).collect()
+        p.entries
+            .iter()
+            .filter_map(|e| {
+                let m = e.info.manifest.as_ref()?;
+                p.saved
+                    .is_revoked(m, e.info.hash.as_deref(), e.info.archive_hash.as_deref())
+                    .then(|| {
+                        format!(
+                            "{} {} was revoked and is blocked from running. Install a newer reviewed release in Settings > Plugins.",
+                            m.id, m.version
+                        )
+                    })
+            })
+            .collect()
     }
 
     fn persist_plugins(&self) -> Result<(), String> {
@@ -622,6 +823,7 @@ impl Inner {
             || self.vault_busy.load(std::sync::atomic::Ordering::Acquire)
             || self.vault_ending.load(std::sync::atomic::Ordering::Acquire)
         {
+            self.stop_plugin_workers();
             return;
         }
         let saved = self.plugins.lock().saved.clone();
@@ -1173,7 +1375,19 @@ pub(crate) async fn enforce_revocations(
                 .iter()
                 .filter_map(|e| {
                     let m = e.info.manifest.as_ref()?;
-                    (e.info.enabled && p.saved.is_revoked(m))
+                    let disk_hashes = (!p.saved.revoked_hashes.is_empty())
+                        .then(|| folder_hashes(&e.info.dir))
+                        .flatten();
+                    let h = disk_hashes
+                        .as_ref()
+                        .map(|(c, _)| c.as_str())
+                        .or(e.info.hash.as_deref());
+                    let ah = e
+                        .info
+                        .archive_hash
+                        .as_deref()
+                        .or_else(|| disk_hashes.as_ref().and_then(|(_, a)| a.as_deref()));
+                    (e.info.enabled && p.saved.is_revoked(m, h, ah))
                         .then(|| format!("Blocked revoked plugin {} {}.", m.id, m.version))
                 })
                 .collect()
@@ -1332,10 +1546,11 @@ impl Core {
             if unpacked {
                 return Err("Load unpacked takes a folder. Install the package instead.".into());
             }
+            let archive_hash = package::archive_sha256(&dir);
             let staging = self.inner.paths.plugins_dir().join(STAGING);
             let (dir, hash) = package::unpack(&dir, &staging)?;
             let staged = dir.parent().map(Path::to_path_buf);
-            let r = self.stage_dir(dir, false, Some(hash), staged.clone());
+            let r = self.stage_dir(dir, false, Some(hash), archive_hash, staged.clone());
             if r.is_err()
                 && let Some(s) = staged
             {
@@ -1349,12 +1564,18 @@ impl Core {
         let dir = std::fs::canonicalize(&dir)
             .map_err(|_| "Pick a plugin package or a folder with a plugin.toml.".to_owned())?;
         // Unpacked plugins change as they are edited, so only installs get a hash.
-        let hash = if unpacked {
-            None
+        let (hash, archive_hash) = if unpacked {
+            (None, None)
         } else {
-            Some(package::content_hash(&package::read_folder(&dir)?))
+            let files = package::read_folder(&dir)?;
+            let content = package::content_hash(&files);
+            let archive = package::write_zip(&files).ok().map(|zip| {
+                use sha2::{Digest, Sha256};
+                Sha256::digest(&zip).iter().map(|b| format!("{b:02x}")).collect()
+            });
+            (Some(content), archive)
         };
-        self.stage_dir(dir, unpacked, hash, None)
+        self.stage_dir(dir, unpacked, hash, archive_hash, None)
     }
 
     fn stage_dir(
@@ -1362,6 +1583,7 @@ impl Core {
         dir: PathBuf,
         unpacked: bool,
         hash: Option<String>,
+        archive_hash: Option<String>,
         staged: Option<PathBuf>,
     ) -> Result<(), String> {
         let manifest = read_manifest(&dir)?;
@@ -1401,6 +1623,7 @@ impl Core {
             unpacked,
             replaces,
             hash,
+            archive_hash,
             staged,
         };
         drop(p);
@@ -1436,6 +1659,7 @@ impl Core {
             source: e.info.dir.clone(),
             unpacked: e.info.unpacked,
             hash: e.info.hash.clone(),
+            archive_hash: e.info.archive_hash.clone(),
             staged: None,
         };
         drop(p);
@@ -1455,7 +1679,27 @@ impl Core {
         let accounts: Vec<AccountId> = accounts.into_iter().filter(|a| known.contains(a)).collect();
         self.inner.plugin_job(move |inner| {
             let m = &pending.manifest;
-            if inner.plugins.lock().saved.is_revoked(m) {
+            let disk_hashes = (!inner.plugins.lock().saved.revoked_hashes.is_empty())
+                .then(|| folder_hashes(&pending.source))
+                .flatten();
+            let check_hash = disk_hashes
+                .as_ref()
+                .map(|(c, _)| c.as_str())
+                .or(pending.hash.as_deref());
+            let check_archive = pending
+                .archive_hash
+                .as_deref()
+                .or_else(|| disk_hashes.as_ref().and_then(|(_, a)| a.as_deref()));
+            if inner
+                .plugins
+                .lock()
+                .saved
+                .is_revoked(m, check_hash, check_archive)
+                || disk_hashes
+                    .as_ref()
+                    .and_then(|(_, a)| a.as_deref())
+                    .is_some_and(|a| inner.plugins.lock().saved.is_revoked_hash(Some(a)))
+            {
                 if let Some(dir) = &pending.staged {
                     let _ = remove_dir(dir);
                 }
@@ -1515,6 +1759,7 @@ impl Core {
                         caps,
                         budgets,
                         hash: pending.hash.clone().filter(|_| !pending.unpacked),
+                        archive_hash: pending.archive_hash.clone().filter(|_| !pending.unpacked),
                     },
                 );
             }
@@ -1659,7 +1904,19 @@ impl Core {
             let p = self.inner.plugins.lock();
             if on
                 && p.entries.iter().any(|e| {
-                    e.info.id == id && e.info.manifest.as_ref().is_some_and(|m| p.saved.is_revoked(m))
+                    e.info.id == id
+                        && e.info.manifest.as_ref().is_some_and(|m| {
+                            let disk = (!p.saved.revoked_hashes.is_empty())
+                                .then(|| folder_hashes(&e.info.dir))
+                                .flatten();
+                            let h = disk.as_ref().map(|(c, _)| c.as_str()).or(e.info.hash.as_deref());
+                            let ah = e
+                                .info
+                                .archive_hash
+                                .as_deref()
+                                .or_else(|| disk.as_ref().and_then(|(_, a)| a.as_deref()));
+                            p.saved.is_revoked(m, h, ah)
+                        })
                 })
             {
                 return Err("This plugin release was revoked and cannot run.".into());
@@ -1833,13 +2090,41 @@ mod tests {
         };
         saved.remember_revocations(&[release.clone(), release]);
         saved.remember_revocations(&[]);
-        assert!(saved.is_revoked(&m));
+        assert!(saved.is_revoked(&m, None, None));
         assert_eq!(saved.revoked[&m.id].len(), 1);
         let mut newer = m.clone();
         newer.version = "2.0.0".into();
-        assert!(!saved.is_revoked(&newer));
+        assert!(!saved.is_revoked(&newer, None, None));
         let restored: SavedFile = serde_json::from_str(&serde_json::to_string(&saved).unwrap()).unwrap();
-        assert!(restored.is_revoked(&m));
+        assert!(restored.is_revoked(&m, None, None));
+    }
+
+    #[test]
+    fn revocations_match_wildcard_version_and_sha256() {
+        let mut saved = SavedFile::default();
+        let sha = "a".repeat(64);
+        saved.remember_revocations(&[
+            bonsai_hub_api::Revocation {
+                id: "wild-plugin".into(),
+                version: String::new(),
+                sha256: String::new(),
+            },
+            bonsai_hub_api::Revocation {
+                id: "hash-plugin".into(),
+                version: "1.0.0".into(),
+                sha256: sha.to_ascii_uppercase(),
+            },
+        ]);
+        let mut wild = Manifest::parse("id = \"wild-plugin\"\nentry = \"main.luau\"").unwrap();
+        assert!(saved.is_revoked(&wild, None, None));
+        wild.version = "9.9.9".into();
+        assert!(saved.is_revoked(&wild, None, None));
+
+        let renamed =
+            Manifest::parse("id = \"renamed-plugin\"\nversion = \"2.0.0\"\nentry = \"main.luau\"").unwrap();
+        assert!(saved.is_revoked(&renamed, Some(&sha), None));
+        assert!(saved.is_revoked(&renamed, None, Some(&sha)));
+        assert!(!saved.is_revoked(&renamed, Some(&"b".repeat(64)), None));
     }
 
     #[test]

@@ -452,6 +452,8 @@ pub struct StoreData {
     pub place_universe: HashMap<u64, u64>,
     pub servers: HashMap<u64, Loadable<Vec<Server>>>,
     pub server_cursor: HashMap<u64, Option<String>>,
+    /// Which account populated `servers` (`Server.friends`), if any.
+    pub servers_account: Option<AccountId>,
     pub thumbs: HashMap<ThumbKey, ThumbState>,
     /// Bumped when an image changes during the run, so the UI asks for it again instead of
     /// showing the copy it already has. Images that never changed are left out.

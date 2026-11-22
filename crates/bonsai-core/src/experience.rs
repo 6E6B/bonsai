@@ -761,9 +761,33 @@ impl Core {
                 .get(&place_id)
                 .and_then(|l| l.data.as_ref())
                 .ok_or_else(|| "Servers are still loading.".to_owned())?;
-            pick_server(list, how)
-                .map(|s| s.job_id.clone())
-                .ok_or_else(|| "No server has room.".to_owned())?
+            if how == ServerPick::Best && s.servers_account != Some(account) {
+                let adjusted: Vec<crate::store::Server> = list
+                    .iter()
+                    .map(|srv| {
+                        let mut copy = srv.clone();
+                        copy.friends = s
+                            .data
+                            .get(&account)
+                            .map(|d| {
+                                d.presence
+                                    .iter()
+                                    .filter(|(_, p)| p.job_id.as_deref() == Some(srv.job_id.as_str()))
+                                    .map(|(id, _)| *id)
+                                    .collect()
+                            })
+                            .unwrap_or_default();
+                        copy
+                    })
+                    .collect();
+                pick_server(&adjusted, how)
+                    .map(|srv| srv.job_id.clone())
+                    .ok_or_else(|| "No server has room.".to_owned())?
+            } else {
+                pick_server(list, how)
+                    .map(|srv| srv.job_id.clone())
+                    .ok_or_else(|| "No server has room.".to_owned())?
+            }
         };
         self.send(Cmd::Launch {
             account,

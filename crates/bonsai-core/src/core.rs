@@ -139,6 +139,7 @@ pub(crate) struct Inner {
     pub(crate) cache: Cache,
     cache_available: bool,
     pub(crate) disk: DiskCache,
+    pub(crate) private_assets: crate::assets::PrivateAssetCache,
     clients: RwLock<HashMap<AccountId, Client>>,
     pub(crate) anon: Client,
     cookies: Arc<dyn CookieStore>,
@@ -254,6 +255,7 @@ impl Core {
             hub: crate::hub::Hub::new(cfg.limiter.clone()),
             store: Arc::new(RwLock::new(store)),
             disk: DiskCache::new(&cfg.paths.thumbs_dir()),
+            private_assets: Default::default(),
             cache,
             cache_available,
             clients: RwLock::new(HashMap::new()),
@@ -363,11 +365,15 @@ impl Core {
         }
     }
 
-    pub fn send(&self, cmd: Cmd) {
+    pub(crate) fn try_send(&self, cmd: Cmd) -> bool {
         if self.accounts_locked() {
-            return;
+            return false;
         }
-        let _ = self.tx.send((cmd, self.inner.busy()));
+        self.tx.send((cmd, self.inner.busy())).is_ok()
+    }
+
+    pub fn send(&self, cmd: Cmd) {
+        let _ = self.try_send(cmd);
     }
 
     pub fn store(&self) -> RwLockReadGuard<'_, StoreData> {
@@ -407,7 +413,14 @@ impl Core {
     pub fn switch(&self, id: AccountId) -> bool {
         let ok = {
             let mut s = self.inner.store.write();
-            s.accounts.switch(id)
+            let prev = s.accounts.active;
+            let switched = s.accounts.switch(id);
+            if switched && prev != Some(id) {
+                s.servers.clear();
+                s.server_cursor.clear();
+                s.servers_account = None;
+            }
+            switched
         };
         if ok {
             self.inner.save_accounts();
@@ -503,14 +516,14 @@ impl Core {
 
     /// Load a place's public servers if missing or older than two minutes. Cheap every frame.
     pub fn ensure_servers(&self, account: AccountId, place_id: u64) {
-        let fresh = self
-            .inner
-            .store
-            .read()
-            .servers
-            .get(&place_id)
-            .is_some_and(|l| l.loading || (l.data.is_some() && l.age_secs() < 120));
-        if !fresh && self.inner.due(&format!("servers:{place_id}"), 30) {
+        let fresh = {
+            let s = self.inner.store.read();
+            s.servers_account == Some(account)
+                && s.servers
+                    .get(&place_id)
+                    .is_some_and(|l| l.loading || (l.data.is_some() && l.age_secs() < 120))
+        };
+        if !fresh && self.inner.due(&format!("servers:{}:{place_id}", account.0), 30) {
             self.send(Cmd::LoadServers {
                 account,
                 place_id,
@@ -639,7 +652,13 @@ impl Core {
     }
 
     pub fn update_settings(&self, f: impl FnOnce(&mut Settings)) {
-        f(&mut self.inner.settings.write());
+        {
+            let mut s = self.inner.settings.write();
+            f(&mut s);
+            if !crate::settings::valid_roblox_locale(&s.locale) {
+                s.locale = "en_us".into();
+            }
+        }
         self.send(Cmd::SetSettings);
     }
 
@@ -795,6 +814,9 @@ impl Inner {
                 }
             }
         }
+        if let Some(w) = self.cookies.take_warning() {
+            self.store.write().keychain_warning = Some(w);
+        }
     }
 
     fn build_client(self: &Arc<Self>, id: AccountId, cookie: Secret) -> Result<Client, Error> {
@@ -806,12 +828,15 @@ impl Inner {
             .base(self.base.clone())
             .limiter(self.limiter.clone())
             .on_cookie_rotated(move |acc, c| {
-                if let Some(me) = me.upgrade()
-                    && let Err(e) = me.cookies.set(acc, c)
-                {
-                    // A rotated session must not appear durably saved when the write failed.
-                    me.store.write().keychain_warning = Some(e);
-                    me.repaint();
+                if let Some(me) = me.upgrade() {
+                    if let Err(e) = me.cookies.set(acc, c) {
+                        // A rotated session must not appear durably saved when the write failed.
+                        me.store.write().keychain_warning = Some(e);
+                        me.repaint();
+                    } else if let Some(w) = me.cookies.take_warning() {
+                        me.store.write().keychain_warning = Some(w);
+                        me.repaint();
+                    }
                 }
             })
             .on_challenge(move |acc, ch| {
@@ -1076,6 +1101,7 @@ impl Inner {
                 Some(LoginState::Failed(format!("Could not save to the keychain: {e}")));
             return;
         }
+        let warning = self.cookies.take_warning();
         match self.build_client(id, cookie) {
             Ok(c) => {
                 self.clients.write().insert(id, c);
@@ -1087,6 +1113,7 @@ impl Inner {
         }
         {
             let mut s = self.store.write();
+            let prev = s.accounts.active;
             s.accounts.upsert(AccountMeta {
                 id,
                 name: user.name.clone(),
@@ -1095,6 +1122,14 @@ impl Inner {
                 ..Default::default()
             });
             s.accounts.switch(id);
+            if prev != Some(id) {
+                s.servers.clear();
+                s.server_cursor.clear();
+                s.servers_account = None;
+            }
+            if let Some(w) = warning {
+                s.keychain_warning = Some(w);
+            }
             s.data.entry(id).or_default().session = SessionState::Ok;
             s.users.insert(user.id, user.clone());
             s.login = None;
@@ -1129,14 +1164,41 @@ impl Inner {
             self.toast(Some(id), format!("Could not remove the saved account: {e}"), true);
             return;
         }
-        self.clients.write().remove(&id);
+        if let Some(c) = self.clients.write().remove(&id) {
+            c.revoke();
+        }
+        self.private_assets.forget_account(id);
+        self.forget_plugin_account(id);
+        self.forget_challenge_account(id);
         self.cache.forget_account(id);
         self.res.forget_account(id);
         self.ledgers.forget_account(id);
+        let ui_state = self.paths.ui_state_file();
+        if ui_state.exists() {
+            let mut states = crate::settings::load_ui_states(&ui_state);
+            if states.remove(&id).is_some() {
+                if states.is_empty() {
+                    let _ = std::fs::remove_file(&ui_state);
+                } else {
+                    let _ = crate::settings::save_ui_states(&ui_state, &states);
+                }
+            }
+        }
         {
             let mut s = self.store.write();
             s.accounts.remove(id);
             s.data.remove(&id);
+            if s.servers_account == Some(id) || s.accounts.active != s.servers_account {
+                s.servers.clear();
+                s.server_cursor.clear();
+                s.servers_account = None;
+            }
+            if s.security.as_ref().is_some_and(|f| f.account == id) {
+                s.security = None;
+            }
+            if s.approve.as_ref().is_some_and(|a| a.account == id) {
+                s.approve = None;
+            }
         }
         self.save_accounts();
     }
@@ -1465,14 +1527,28 @@ impl Inner {
 
     pub(crate) async fn load_servers(&self, account: AccountId, place_id: u64, more: bool) {
         let cursor = if more {
-            self.store.read().server_cursor.get(&place_id).cloned().flatten()
+            let s = self.store.read();
+            (s.servers_account == Some(account))
+                .then(|| s.server_cursor.get(&place_id).cloned().flatten())
+                .flatten()
         } else {
             None
         };
         if more && cursor.is_none() {
             return;
         }
-        self.store.write().servers.entry(place_id).or_default().start();
+        {
+            let mut s = self.store.write();
+            if s.accounts.active.is_some_and(|a| a != account) {
+                return;
+            }
+            if s.servers_account != Some(account) {
+                s.servers.clear();
+                s.server_cursor.clear();
+                s.servers_account = Some(account);
+            }
+            s.servers.entry(place_id).or_default().start();
+        }
         let c = self.client(account).unwrap_or_else(|| self.anon.clone());
         let p = games::v1::GetGamesByPlaceIdServersByServerTypeParams {
             sort_order: Some(2),
@@ -1500,6 +1576,14 @@ impl Inner {
                     })
                     .collect();
                 let mut s = self.store.write();
+                if s.accounts.active.is_some_and(|a| a != account) {
+                    return;
+                }
+                if s.servers_account != Some(account) {
+                    s.servers.clear();
+                    s.server_cursor.clear();
+                    s.servers_account = Some(account);
+                }
                 // Mark friends of the viewing account by their presence job id.
                 if let Some(d) = s.data.get(&account) {
                     for srv in &mut list {
@@ -1525,12 +1609,10 @@ impl Inner {
             }
             Err(e) => {
                 self.note_error(c.account(), &e);
-                self.store
-                    .write()
-                    .servers
-                    .entry(place_id)
-                    .or_default()
-                    .fail(e.user_message());
+                let mut s = self.store.write();
+                if s.servers_account == Some(account) {
+                    s.servers.entry(place_id).or_default().fail(e.user_message());
+                }
             }
         }
     }
@@ -2150,7 +2232,19 @@ impl Core {
         for client in self.inner.clients.read().values() {
             client.revoke();
         }
+        self.inner.stop_plugin_workers();
+        self.inner.private_assets.clear();
+        self.inner.clear_challenge();
         true
+    }
+    /// Ends any active vault session, stops workers, and releases `account-vault.lock` so a
+    /// replacement `app.restart()` process can open the vault without lock contention.
+    pub fn release_vault_lock(&self) {
+        let _ = self.close_vault_session();
+        self.inner.stop_plugin_workers();
+        self.inner.private_assets.clear();
+        self.inner.clear_challenge();
+        self.inner.vault.release_lock();
     }
     pub fn vault_action(&self, action: &str, current: &str, next: &str) -> Result<(), String> {
         use std::sync::atomic::Ordering;
@@ -2187,6 +2281,11 @@ impl Core {
                         client.revoke();
                     }
                     self.inner.clients.write().clear();
+                    self.inner.forget_all_plugin_account_data();
+                    self.inner.private_assets.clear();
+                    self.inner.clear_challenge();
+                    self.inner.res.clear();
+                    self.inner.ledgers.clear();
                     let ids: Vec<_> = self.store().accounts.accounts.iter().map(|a| a.id).collect();
                     // Remove transitional source credentials before clearing the only
                     // plaintext account index, so an interrupted reset can retry cleanup.
@@ -2196,6 +2295,17 @@ impl Core {
                         .save(&self.inner.paths.accounts_file())
                         .map_err(|_| "Cannot reset the local account list.")?;
                     v.forget(&ids)?;
+                    let _ = std::fs::remove_file(self.inner.paths.ui_state_file());
+                    {
+                        let mut s = self.inner.store.write();
+                        s.accounts = Default::default();
+                        s.data.clear();
+                        s.servers.clear();
+                        s.server_cursor.clear();
+                        s.servers_account = None;
+                        s.security = None;
+                        s.approve = None;
+                    }
                 }
                 "enable" => {
                     crate::vault::Vault::validate_pin(next)?;
@@ -2208,6 +2318,9 @@ impl Core {
                         client.revoke();
                     }
                     self.inner.clients.write().clear();
+                    self.inner.stop_plugin_workers();
+                    self.inner.private_assets.clear();
+                    self.inner.clear_challenge();
                     let ids: Vec<_> = self.store().accounts.accounts.iter().map(|a| a.id).collect();
                     v.enable(next, &ids)?;
                     self.inner.cache.migrate_vault(v, true)?;
@@ -2226,6 +2339,13 @@ impl Core {
                 }
                 "disable" => {
                     v.prepare_disable(current)?;
+                    for client in self.inner.clients.read().values() {
+                        client.revoke();
+                    }
+                    self.inner.clients.write().clear();
+                    self.inner.stop_plugin_workers();
+                    self.inner.private_assets.clear();
+                    self.inner.clear_challenge();
                     self.inner.cache.migrate_vault(v, false)?;
                     if let Err(e) = v.disable(current) {
                         // Restore encrypted cache on a failed disable. A restart also resumes
@@ -2240,11 +2360,20 @@ impl Core {
         })();
         if result.is_err() && v.protected() && v.blocked() {
             v.lock();
+            self.inner.stop_plugin_workers();
+            self.inner.private_assets.clear();
+            self.inner.clear_challenge();
         }
         self.vault_activity();
         self.inner.repaint();
         drop(_busy);
-        if result.is_ok() && !self.accounts_locked() && matches!(action, "unlock" | "enable") {
+        if result.is_err() && !self.accounts_locked() && self.inner.clients.read().is_empty() {
+            self.inner.load_clients();
+            crate::plugins::load(&self.inner);
+        } else if result.is_ok()
+            && !self.accounts_locked()
+            && matches!(action, "unlock" | "enable" | "disable")
+        {
             self.inner.load_clients();
             crate::plugins::load(&self.inner);
             let ids: Vec<_> = self.store().accounts.accounts.iter().map(|a| a.id).collect();

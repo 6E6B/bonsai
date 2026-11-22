@@ -198,6 +198,10 @@ pub trait CookieStore: Send + Sync {
         }
         Ok(())
     }
+    /// Non-fatal fallback warning accumulated during a keychain read or write, if any.
+    fn take_warning(&self) -> Option<String> {
+        None
+    }
 }
 
 const SERVICE: &str = "io.github.6e6b.bonsai";
@@ -256,45 +260,68 @@ impl CookieStore for MemoryCookies {
 }
 
 /// Keychain first; if it fails, keep the cookie in memory for this session only.
-pub struct KeychainWithFallback {
-    keychain: Keychain,
+pub struct FallbackCookies<K: CookieStore = Keychain> {
+    keychain: K,
     memory: MemoryCookies,
     pub keychain_failed: Mutex<Option<String>>,
 }
 
-impl Default for KeychainWithFallback {
-    fn default() -> Self {
+pub type KeychainWithFallback = FallbackCookies<Keychain>;
+
+impl<K: CookieStore> FallbackCookies<K> {
+    pub fn with_store(keychain: K) -> Self {
         Self {
-            keychain: Keychain,
+            keychain,
             memory: MemoryCookies::default(),
             keychain_failed: Mutex::new(None),
         }
     }
 }
 
-impl CookieStore for KeychainWithFallback {
+impl Default for KeychainWithFallback {
+    fn default() -> Self {
+        Self::with_store(Keychain)
+    }
+}
+
+impl<K: CookieStore> CookieStore for FallbackCookies<K> {
     fn set_persistent(&self, id: AccountId, cookie: &Secret) -> Result<(), String> {
-        self.keychain.set_persistent(id, cookie)
+        self.keychain.set_persistent(id, cookie)?;
+        let _ = self.memory.delete(id);
+        Ok(())
     }
     fn get(&self, id: AccountId) -> Result<Option<Secret>, String> {
         if let Ok(Some(c)) = self.memory.get(id) {
             return Ok(Some(c));
         }
         self.keychain.get(id).inspect_err(|e| {
-            *self.keychain_failed.lock() = Some(e.clone());
+            *self.keychain_failed.lock() = Some(format!(
+                "Could not read from the OS keychain ({e}). Unlock your system keychain and restart Bonsai."
+            ));
         })
     }
     fn set(&self, id: AccountId, cookie: &Secret) -> Result<(), String> {
-        if let Err(e) = self.keychain.set(id, cookie) {
-            tracing::warn!("keychain unavailable, keeping the cookie for this session only: {e}");
-            *self.keychain_failed.lock() = Some(e);
-            self.memory.set(id, cookie)?;
+        match self.keychain.set(id, cookie) {
+            Ok(()) => {
+                let _ = self.memory.delete(id);
+                *self.keychain_failed.lock() = None;
+                Ok(())
+            }
+            Err(e) => {
+                tracing::warn!("keychain unavailable, keeping the cookie for this session only: {e}");
+                *self.keychain_failed.lock() = Some(format!(
+                    "Could not save to the OS keychain ({e}). Session is kept for this run only."
+                ));
+                self.memory.set(id, cookie)
+            }
         }
-        Ok(())
     }
     fn delete(&self, id: AccountId) -> Result<(), String> {
         let _ = self.memory.delete(id);
         self.keychain.delete(id)
+    }
+    fn take_warning(&self) -> Option<String> {
+        self.keychain_failed.lock().take()
     }
 }
 
@@ -495,5 +522,49 @@ mod tests {
         l.save(&p).unwrap();
         assert_eq!(AccountList::load(&p), l);
         assert!(!std::fs::read_to_string(&p).unwrap().contains("WARNING"));
+    }
+
+    #[test]
+    fn fallback_clears_stale_memory_cookie_when_keychain_recovers() {
+        struct FlakyKeychain {
+            fail: std::sync::atomic::AtomicBool,
+            inner: MemoryCookies,
+        }
+        impl CookieStore for FlakyKeychain {
+            fn get(&self, id: AccountId) -> Result<Option<Secret>, String> {
+                if self.fail.load(std::sync::atomic::Ordering::SeqCst) {
+                    return Err("locked".into());
+                }
+                self.inner.get(id)
+            }
+            fn set(&self, id: AccountId, cookie: &Secret) -> Result<(), String> {
+                if self.fail.load(std::sync::atomic::Ordering::SeqCst) {
+                    return Err("locked".into());
+                }
+                self.inner.set(id, cookie)
+            }
+            fn delete(&self, id: AccountId) -> Result<(), String> {
+                self.inner.delete(id)
+            }
+        }
+        let store = FallbackCookies::with_store(FlakyKeychain {
+            fail: std::sync::atomic::AtomicBool::new(true),
+            inner: MemoryCookies::default(),
+        });
+        let id = AccountId(42);
+        let stale = Secret::new("cookie-v1-stale");
+        let fresh = Secret::new("cookie-v2-fresh");
+
+        store.set(id, &stale).unwrap();
+        assert!(store.take_warning().is_some());
+        assert_eq!(store.get(id).unwrap().unwrap().expose(), "cookie-v1-stale");
+
+        store
+            .keychain
+            .fail
+            .store(false, std::sync::atomic::Ordering::SeqCst);
+        store.set(id, &fresh).unwrap();
+        assert!(store.take_warning().is_none());
+        assert_eq!(store.get(id).unwrap().unwrap().expose(), "cookie-v2-fresh");
     }
 }
