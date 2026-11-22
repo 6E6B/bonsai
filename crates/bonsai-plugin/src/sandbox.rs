@@ -1140,7 +1140,8 @@ fn wrap_string_patterns(lua: &Lua, g: &Table, clock: &Rc<Clock>) -> mlua::Result
         lua.create_function(move |_, args: MultiValue| {
             c.check_deadline()?;
             let plain = !matches!(args.get(3), None | Some(Value::Nil | Value::Boolean(false)));
-            if !plain && let (Some(s), Some(pat)) = (coerced_bytes(args.front()), coerced_bytes(args.get(1))) {
+            if !plain && let (Some(s), Some(pat)) = (coerced_bytes(args.front()), coerced_bytes(args.get(1)))
+            {
                 guard_pattern(s.len(), &pat, true)?;
             }
             orig_find.call::<MultiValue>(args)
