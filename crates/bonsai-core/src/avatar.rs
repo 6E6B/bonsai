@@ -511,8 +511,19 @@ fn snap(v: f64, r: &ScaleRule) -> f64 {
     (v * 10_000.0).round() / 10_000.0
 }
 
+/// Rigid accessory asset types: hat, hair, face, neck, shoulder, front, back, waist. They share
+/// one cap instead of the per-type `maxNumber` from avatar rules, which still says one hair and
+/// three hats. Checked live on 2026-11-22 with v2 set-wearing-assets: five hairs, four hats or
+/// three necklaces are accepted, ten mixed are accepted, and an eleventh fails the whole request
+/// with `LimitExceeded`. Layered clothing does not count toward the ten.
+const RIGID_ACCESSORIES: [i64; 8] = [8, 41, 42, 43, 44, 45, 46, 47];
+
+/// How many rigid accessories an avatar wears at once, across all their types.
+const MAX_RIGID_ACCESSORIES: usize = 10;
+
 /// `worn` with `asset` taken off, or put on when it isn't worn. Putting on an item of a type
-/// that is full (one shirt, three hats) takes off the oldest of that type.
+/// that is full (one shirt) takes off the oldest of that type. Rigid accessories share one cap
+/// of ten, and the oldest of them comes off when it is reached.
 fn toggled(
     mut worn: Vec<avatar::v1::AssetModelV2>,
     asset: u64,
@@ -524,19 +535,15 @@ fn toggled(
     if worn.len() < before {
         return worn;
     }
-    if let (Some(t), Some(max)) = (type_id, max) {
-        let same = |a: &avatar::v1::AssetModelV2| a.asset_type.as_ref().and_then(|x| x.id) == Some(t);
-        let n = worn.iter().filter(|a| same(a)).count();
-        let extra = (n + 1).saturating_sub(max.max(1) as usize);
-        let mut dropped = 0;
-        worn.retain(|a| {
-            if dropped < extra && same(a) {
-                dropped += 1;
-                false
-            } else {
-                true
-            }
-        });
+    let type_of = |a: &avatar::v1::AssetModelV2| a.asset_type.as_ref().and_then(|x| x.id);
+    match (type_id, max) {
+        (Some(t), _) if RIGID_ACCESSORIES.contains(&t) => {
+            drop_oldest(&mut worn, MAX_RIGID_ACCESSORIES, |a| {
+                type_of(a).is_some_and(|x| RIGID_ACCESSORIES.contains(&x))
+            })
+        }
+        (Some(t), Some(max)) => drop_oldest(&mut worn, max.max(1) as usize, |a| type_of(a) == Some(t)),
+        _ => {}
     }
     worn.push(avatar::v1::AssetModelV2 {
         id: Some(asset as i64),
@@ -547,6 +554,24 @@ fn toggled(
         ..Default::default()
     });
     worn
+}
+
+/// Take the oldest items matching `same` off `worn` so one more fits under `max`.
+fn drop_oldest(
+    worn: &mut Vec<avatar::v1::AssetModelV2>,
+    max: usize,
+    same: impl Fn(&avatar::v1::AssetModelV2) -> bool,
+) {
+    let n = worn.iter().filter(|a| same(a)).count();
+    let mut extra = (n + 1).saturating_sub(max);
+    worn.retain(|a| {
+        if extra > 0 && same(a) {
+            extra -= 1;
+            false
+        } else {
+            true
+        }
+    });
 }
 
 /// `worn` with `asset` moved one layer out (on top) or in, by swapping layer orders with its
@@ -1564,8 +1589,8 @@ mod tests {
         assert_eq!(ids(toggled(now.clone(), 4, Some(8), Some(3))), [1, 2, 3, 4]);
         assert_eq!(
             ids(toggled(now.clone(), 4, Some(8), Some(2))),
-            [2, 3, 4],
-            "oldest hat off"
+            [1, 2, 3, 4],
+            "hats ignore the per-type limit"
         );
         assert_eq!(
             ids(toggled(now.clone(), 5, Some(11), Some(1))),
@@ -1573,6 +1598,26 @@ mod tests {
             "shirt swapped"
         );
         assert_eq!(ids(toggled(now, 5, None, None)), [1, 2, 3, 5]);
+    }
+
+    #[test]
+    fn rigid_accessories_share_a_cap_of_ten() {
+        let ids = |v: Vec<avatar::v1::AssetModelV2>| v.iter().map(|a| a.id.unwrap()).collect::<Vec<_>>();
+        let hairs = vec![worn(1, 41), worn(2, 11)];
+        assert_eq!(
+            ids(toggled(hairs, 3, Some(41), Some(1))),
+            [1, 2, 3],
+            "second hair stays with the first"
+        );
+        let mut full: Vec<_> = (1..=10)
+            .map(|i| worn(i, if i % 2 == 0 { 41 } else { 8 }))
+            .collect();
+        full.insert(1, worn(99, 11));
+        assert_eq!(
+            ids(toggled(full, 11, Some(42), Some(1))),
+            [99, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            "oldest accessory off, shirt kept"
+        );
     }
 
     fn layer(id: i64, order: i32) -> avatar::v1::AssetModelV2 {
