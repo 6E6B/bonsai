@@ -5,7 +5,7 @@ import { useLive } from "~/lib/store"
 import { shownAccountLabel } from "~/lib/streamer"
 import { thumbUrl } from "~/lib/thumb"
 import { Button, Card, Mention } from "~/lib/ui"
-import { overlapLine, overlapNote, personName, SHOWN } from "./overlap"
+import { overlapLine, overlapNote, personName, SHOWN } from "./overlap-text"
 
 const empty = (): OverlapView => ({ loading: true, error: null, checked: 0, complete: false, accounts: [] })
 

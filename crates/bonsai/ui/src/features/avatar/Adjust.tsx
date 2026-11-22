@@ -32,7 +32,7 @@ import {
   type Tool,
   toPlacement,
   withAxis,
-} from "./adjust"
+} from "./adjust-rules"
 
 const TOOL_OPTIONS = [
   { value: "move", label: "Move", hint: "W" },

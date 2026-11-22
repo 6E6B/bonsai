@@ -49,7 +49,7 @@ import {
 import { useParamDraft } from "~/lib/url-params"
 
 import { Adjust, createAdjust } from "./Adjust"
-import { isAdjusted, resetArg, ruleFor } from "./adjust"
+import { isAdjusted, resetArg, ruleFor } from "./adjust-rules"
 import { BodyFigure } from "./BodyFigure"
 import {
   groupTypes,
